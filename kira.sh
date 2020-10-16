@@ -5,44 +5,48 @@ export KIRA_WORKDIR=$(cd $(dirname $0) && pwd)
 
 clear
 
+chmod +x $KIRA_WORKDIR/utils.sh
+source $KIRA_WORKDIR/utils.sh
+
+printWidth=47
 echo -e "-------------------------------------------------"
-echo "|         KIRA MANAGEMENT TOOL v$(cat $KIRA_WORKDIR/VERSION)           |"
-echo "|             $(date '+%d/%m/%Y %H:%M:%S')               |"
+displayAlign center $printWidth "KIRA MANAGEMENT TOOL v$(cat $KIRA_WORKDIR/VERSION)"
+displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
-echo "|               Deployment Mode                 |"
-echo "| [1] | Demo Mode (local testnet)               |"
-echo "| [2] | Full Node Mode                          |"
-echo "| [3] | Validator Mode                          |"
+displayAlign center $printWidth "Deployment Mode"
+displayAlign left $printWidth " [1] | Demo Mode (local testnet)"
+displayAlign left $printWidth " [2] | Full Node Mode"
+displayAlign left $printWidth " [3] | Validator Mode"
 echo "|-----------------------------------------------|"
-echo "| [X] | Exit | [W] | Refresh Window             |"
+displayAlign left $printWidth " [X] | Exit | [W] | Refresh Window"
 echo -e "-------------------------------------------------"
 
 while :; do
-  echo -en "Input option then press [ENTER] or [SPACE]: "
+  echo -en "Input option: "
 
-  read -n 1 -t 5 KEY
+  read -n 1 KEY
 
   echo ""
 
   case ${KEY,,} in
   1*)
     echo "INFO: Starting Demo Deployment..."
-    chmod +x ./deploy/start.sh
-    ./deploy/start.sh --demo
+    chmod +x $KIRA_WORKDIR/deploy/start.sh
+    $KIRA_WORKDIR/deploy/start.sh --demo
     break
     ;;
 
   2*)
     echo "INFO: Starting Full Node Deployment..."
-    chmod +x ./deploy/start.sh
-    ./deploy/start.sh --full
+    chmod +x $KIRA_WORKDIR/start.sh
+    $KIRA_WORKDIR/start.sh --full
     break
     ;;
 
   3*)
     echo "INFO: Starting Validator Node Deployment..."
-    chmod +x ./deploy/start.sh
-    ./deploy/start.sh --validator
+    chmod +x $KIRA_WORKDIR/start.sh
+    $KIRA_WORKDIR/start.sh --validator
     break
     ;;
 

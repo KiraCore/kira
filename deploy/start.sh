@@ -2,19 +2,20 @@
 
 set -e
 
-clear
-
 while :; do
   case "$1" in
   -d | --demo)
+    mode="demo"
     title="Demo Mode (local testnet)"
     shift
     ;;
   -f | --full)
+    mode="full"
     title="Full Node Mode"
     shift
     ;;
   -v | --validator)
+    mode="validator"
     title="Validator Mode"
     shift
     ;;
@@ -45,8 +46,40 @@ echo -e "-------------------------------------------------"
 displayAlign center $printWidth "$title"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
-echo "| [1] | Quick Setup                             |"
-echo "| [2] | Advanced Setup                          |"
+displayAlign left $printWidth " [1] | Quick Setup"
+displayAlign left $printWidth " [2] | Advanced Setup"
 echo "|-----------------------------------------------|"
-echo "| [X] | Exit | [B] | Go Back                    |"
+displayAlign left $printWidth " [X] | Exit | [B] | Go Back"
 echo -e "-------------------------------------------------"
+
+while :; do
+  echo -en "Input option: "
+
+  read -n 1 KEY
+
+  echo ""
+
+  case ${KEY,,} in
+  1*)
+    echo "INFO: Starting Quick Setup..."
+    chmod +x $KIRA_WORKDIR/deploy/$mode/setup.sh
+    $KIRA_WORKDIR/deploy/$mode/setup.sh -q
+    break
+    ;;
+
+  2*)
+    echo "INFO: Starting Advanced Setup..."
+    chmod +x $KIRA_WORKDIR/deploy/$mode/setup.sh
+    $KIRA_WORKDIR/deploy/$mode/setup.sh -a
+    break
+    ;;
+
+  x*)
+    exit 0
+    ;;
+
+  *)
+    echo "Try again."
+    ;;
+  esac
+done
