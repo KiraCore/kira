@@ -1,2 +1,0 @@
-# kira
-Kira Management Tool
