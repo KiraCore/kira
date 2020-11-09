@@ -7,8 +7,7 @@ set -x
 source "/etc/profile" &>/dev/null
 
 SEKAI_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_SEKAI)
-SDK_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_SDK)
-SEKAI_INTEGRITY="_${SEKAI_HASH}_${SDK_HASH}"
+SEKAI_INTEGRITY="_${SEKAI_HASH}"
 
 VALIDATOR_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/validator" "validator" "latest" "$SEKAI_INTEGRITY" || echo "error")
 if [ "$VALIDATOR_IMAGE_EXISTS" == "False" ]; then

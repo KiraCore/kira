@@ -16,7 +16,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 # curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 # curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 
-# add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
+add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing

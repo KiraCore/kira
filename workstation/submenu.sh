@@ -59,7 +59,7 @@ while :; do
   case ${KEY,,} in
   1*)
     echo "INFO: Starting Quick Setup..."
-    SEKAI_BRANCH=""
+    SEKAI_BRANCH="v0.1.7.1"
     $KIRA_WORKSTATION/start.sh "False"
     break
     ;;
