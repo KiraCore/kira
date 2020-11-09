@@ -2,6 +2,8 @@
 
 set -e
 
+source $KIRA_WORKSTATION/utils.sh
+
 while :; do
   case "$1" in
   -d | --demo)
