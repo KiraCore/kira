@@ -9,7 +9,7 @@ set -x
 
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common apt-transport-https ca-certificates gnupg curl wget git
+    software-properties-common curl wget git
 
 # apt-get update -y --fix-missing
 # curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
@@ -22,7 +22,6 @@ echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     build-essential \
-    git \
     hashdeep \
     make \
     nodejs \
