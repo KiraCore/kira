@@ -39,7 +39,6 @@ else
 fi
 
 $KIRA_SCRIPTS/cdhelper-update.sh "v0.6.13"
-$KIRA_SCRIPTS/awshelper-update.sh "v0.12.4"
 
 NEW_INIT_HASH=$(CDHelper hash SHA256 -p="$KIRA_WORKSTATION/init.sh" --silent=true)
 
@@ -56,6 +55,7 @@ $KIRA_WORKSTATION/setup/certs.sh
 $KIRA_WORKSTATION/setup/envs.sh
 $KIRA_WORKSTATION/setup/hosts.sh
 $KIRA_WORKSTATION/setup/system.sh
+$KIRA_WORKSTATION/setup/tools.sh
 $KIRA_WORKSTATION/setup/systemctl2.sh
 $KIRA_WORKSTATION/setup/docker.sh
 $KIRA_WORKSTATION/setup/nginx.sh
