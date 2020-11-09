@@ -9,7 +9,9 @@ source "/etc/profile" &>/dev/null
 BASE_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" "base-image" || echo "error")
 if [ "$BASE_IMAGE_EXISTS" == "False" ]; then
     # todo: delete valdiator, sentry, kms, frontend images
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/tools-image" "tools-image"
+    # $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend-image" "frontend-image"
+    # $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kms-image" "kms-image"
+    # $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
     $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
     echo "INFO: Updating base image..."

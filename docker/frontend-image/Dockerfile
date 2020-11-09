@@ -1,9 +1,5 @@
 FROM registry.local:5000/base-image:latest
 
-# Local Update
-# (rm -fv $KIRA_INFRA/docker/tools-image/Dockerfile) && nano $KIRA_INFRA/docker/tools-image/Dockerfile
-# (rm -fv $KIRA_INFRA/docker/tools-image/docker-compose.yml) && nano $KIRA_INFRA/docker/tools-image/docker-compose.yml
-
 ENV PROFILE_PATH="/etc/profile"
 ENV BASHRC_PATH="/root/.bashrc"
 

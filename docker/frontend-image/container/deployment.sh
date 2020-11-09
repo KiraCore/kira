@@ -4,9 +4,6 @@ exec 2>&1
 set -e
 set -x
 
-# Local Update
-# (rm -fv $KIRA_INFRA/docker/tools-image/container/deployment.sh) && nano $KIRA_INFRA/docker/tools-image/container/deployment.sh
-
 apt-get update -y --fix-missing
 
 echo "Intalling NPM..."
@@ -79,7 +76,7 @@ systemctl2 --version
 
 echo "NGINX Setup..."
 
-cat > $NGINX_CONFIG << EOL
+cat >$NGINX_CONFIG <<EOL
 worker_processes 1;
 events { worker_connections 512; }
 http { 
@@ -89,7 +86,7 @@ http {
 EOL
 
 mkdir -v $NGINX_SERVICED_PATH
-printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" > $NGINX_SERVICED_PATH/override.conf
+printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" >$NGINX_SERVICED_PATH/override.conf
 
 systemctl2 enable nginx.service
 
@@ -116,4 +113,3 @@ go build
 ln -s $GRPCURL_PATH/grpcurl-$GRPCURL_VERSION/cmd/grpcurl/grpcurl /bin/grpcurl
 
 printenv
-

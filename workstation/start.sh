@@ -29,8 +29,10 @@ $KIRA_SCRIPTS/container-restart.sh "registry"
 # todo: delete existing containers
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
-source $WORKSTATION_SCRIPTS/update-tools-image.sh
 source $WORKSTATION_SCRIPTS/update-validator-image.sh
+# source $WORKSTATION_SCRIPTS/update-sentry-image.sh
+# source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+# source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 cd $KIRA_WORKSTATION
 
