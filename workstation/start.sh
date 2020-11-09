@@ -37,7 +37,7 @@ cd $KIRA_WORKSTATION
 docker network rm kiranet || echo "Failed to remove kira network"
 docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
-GENESIS_SOUCE="/root/.sekaid/config/genesis.json"
+GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
 rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
@@ -67,7 +67,7 @@ else
 fi
 
 echo "INFO: Saving genesis file..."
-docker cp $NAME:$GENESIS_SOUCE $GENESIS_DESTINATION
+docker cp $NAME:$GENESIS_SOURCE $GENESIS_DESTINATION
 
 if [ ! -f "$GENESIS_DESTINATION" ]; then
     echo "ERROR: Failed to copy genesis file from validator-$VALIDATOR_INDEX"
