@@ -18,8 +18,6 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     tar \
     zip
 
-  # https://linuxhint.com/install_aws_cli_ubuntu/
-  aws --version
   touch $KIRA_SETUP_BASE_TOOLS
 
   #allow to execute scripts just like .exe files with double click

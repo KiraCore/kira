@@ -19,6 +19,16 @@ cd /home/$SUDO_USER && \
  ./setup.sh
 ```
 
+Demo Mode Example:
+
+```
+cd /home/$SUDO_USER && \
+ rm -f ./setup.sh && \
+ wget ttps://raw.githubusercontent.com/KiraCore/kira/KIP_51/workstation/init.sh -O ./setup.sh && \
+ chmod 555 ./setup.sh && \
+ ./setup.sh
+```
+
 ### 4. Setup script will further download and install kira management tool
 
 ### 5. By typing kira in the terminal user will have ability to deploy, scale and manage his infrastructure
