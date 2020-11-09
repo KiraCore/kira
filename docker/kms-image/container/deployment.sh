@@ -17,8 +17,6 @@ curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 
 add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
-add-apt-repository "deb [arch=amd64] http://dl.google.com/linux/chrome/deb/ stable main"
-add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
