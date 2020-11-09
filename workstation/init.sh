@@ -20,7 +20,7 @@ INTERACTIVE=$4
 # in the non interactive mode always use explicit shell
 [ "$INTERACTIVE" != "True" ] && set -x
 
-[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
+[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="KIP_51"
 [ -z "$KIRA_STOP" ] && KIRA_STOP="False"
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
