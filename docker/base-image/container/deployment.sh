@@ -11,12 +11,12 @@ apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common apt-transport-https ca-certificates gnupg curl wget git
 
-apt-get update -y --fix-missing
-curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+# apt-get update -y --fix-missing
+# curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
+# curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
+# curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 
-add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
+# add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
