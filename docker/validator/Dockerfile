@@ -11,14 +11,14 @@ ENV COMMON_DIR="/common"
 
 RUN echo "Build hash: ${BUILD_HASH}"
 
+ADD ./configs ${SELF_CONFIGS}
+ADD ./container ${SELF_CONTAINER}
+ADD ./scripts ${SELF_SCRIPTS}
+
 RUN ${SELF_SCRIPTS}/git-pull.sh "${REPO}" "${BRANCH}" "${SEKAI}"
 RUN cd ${SEKAI} && make install
 RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
-
-ADD ./configs ${SELF_CONFIGS}
-ADD ./container ${SELF_CONTAINER}
-ADD ./scripts ${SELF_SCRIPTS}
 
 RUN chmod 777 -R ${SELF_HOME}
 

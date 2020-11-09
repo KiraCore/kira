@@ -1,35 +1,29 @@
 FROM registry.local:5000/base-image:latest
 
-ENV PROFILE_PATH="/etc/profile"
-ENV BASHRC_PATH="/root/.bashrc"
+# Prerequisites
+RUN apt update && apt install -y curl git unzip xz-utils zip libglu1-mesa openjdk-8-jdk wget
+   
+# Set up new user
+RUN useradd -ms /bin/bash developer
+USER developer
+WORKDIR /home/developer
+   
+# Prepare Android directories and system variables
+RUN mkdir -p Android/sdk
+ENV ANDROID_SDK_ROOT /home/developer/Android/sdk
+RUN mkdir -p .android && touch .android/repositories.cfg
+   
+# Set up Android SDK
+RUN wget -O sdk-tools.zip https://dl.google.com/android/repository/sdk-tools-linux-4333796.zip
+RUN unzip sdk-tools.zip && rm sdk-tools.zip
+RUN mv tools Android/sdk/tools
+RUN cd Android/sdk/tools/bin && yes | ./sdkmanager --licenses
+RUN cd Android/sdk/tools/bin && ./sdkmanager "build-tools;29.0.2" "patcher;v4" "platform-tools" "platforms;android-29" "sources;android-29"
+ENV PATH "$PATH:/home/developer/Android/sdk/platform-tools"
 
-ENV GOROOT="/usr/local/go"
-ENV GOPATH="/home/go"
-ENV GOBIN="${GOROOT}/bin"
-ENV GO_VERSION="1.14.2"
-ENV DOTNET_ROOT="/usr/bin/dotnet"
-ENV PATH="/root/.cargo/bin:${PATH}:${GOBIN}:${GOROOT}:${GOPATH}:/usr/local/bin/CDHelper:/usr/local/bin/AWSHelper"
-ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
-ENV GO111MODULE=on
-ENV NGINX_CONFIG="/etc/nginx/nginx.conf"
-ENV NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
-
-ADD ./scripts ${SELF_SCRIPTS}
-#ADD ./configs ${SELF_CONFIGS}
-ADD ./container ${SELF_CONTAINER}
-
-RUN chmod -R 777 ${SELF_HOME} && chmod 777 ${PROFILE_PATH} && chmod 777 ${BASHRC_PATH}
-
-ARG DEBIAN_FRONTEND=noninteractive
-RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
-
-ENV AWSHelperVersion="$(AWSHelper version --silent=true)"
-ENV CDHelperVersion="$(CDHelper version --silent=true)"
-
-RUN git config --global url.https://github.com/.insteadOf git://github.com/
-
-RUN npm install -g @angular/cli
-RUN npm install -g web3 --unsafe-perm=true --allow-root
-
-RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
-RUN cargo --version
+# Download Flutter SDK
+RUN git clone https://github.com/flutter/flutter.git
+ENV PATH "$PATH:/home/developer/flutter/bin"
+   
+# Run basic check to download Dark SDK
+RUN flutter doctor
