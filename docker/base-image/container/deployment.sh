@@ -22,6 +22,7 @@ echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     build-essential \
+    golang-go \
     hashdeep \
     make \
     nodejs \
