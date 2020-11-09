@@ -31,21 +31,21 @@ while :; do
   1*)
     echo "INFO: Starting Demo Deployment..."
     chmod +x $KIRA_WORKSTATION/submenu.sh
-    $KIRA_WORKSTATION/submenu.sh --demo
+    source $KIRA_WORKSTATION/submenu.sh --demo
     break
     ;;
 
   2*)
     echo "INFO: Starting Full Node Deployment..."
     chmod +x $KIRA_WORKSTATION/submenu.sh
-    $KIRA_WORKSTATION/submenu.sh --full
+    source $KIRA_WORKSTATION/submenu.sh --full
     break
     ;;
 
   3*)
     echo "INFO: Starting Validator Node Deployment..."
     chmod +x $KIRA_WORKSTATION/submenu.sh
-    $KIRA_WORKSTATION/submenu.sh --validator
+    source $KIRA_WORKSTATION/submenu.sh --validator
     break
     ;;
 
