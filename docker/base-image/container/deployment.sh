@@ -22,7 +22,6 @@ echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     build-essential \
-    golang-go \
     hashdeep \
     make \
     nodejs \
@@ -31,3 +30,11 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     unzip \
     yarn \
     zip
+
+ETC_PROFILE="/etc/profile"
+curl -O https://storage.googleapis.com/golang/go1.15.3.linux-amd64.tar.gz >/dev/null
+tar -xvf go1.15.3.linux-amd64.tar.gz >/dev/null
+echo "export GOPATH=$HOME/go" >>$ETC_PROFILE
+echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >>$ETC_PROFILE
+source $ETC_PROFILE
+go version
