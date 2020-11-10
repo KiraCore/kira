@@ -37,4 +37,3 @@ tar -xvf go1.15.3.linux-amd64.tar.gz >/dev/null
 echo "export GOPATH=$HOME/go" >>$ETC_PROFILE
 echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >>$ETC_PROFILE
 source $ETC_PROFILE
-go version
