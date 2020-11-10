@@ -32,9 +32,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     zip
 
 ETC_PROFILE="/etc/profile"
-curl -O https://storage.googleapis.com/golang/go1.15.3.linux-amd64.tar.gz >/dev/null
-tar -xvf go1.15.3.linux-amd64.tar.gz >/dev/null
-echo "export GOPATH=$HOME/go" >>$ETC_PROFILE
-echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >>$ETC_PROFILE
+wget -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local >/dev/null
+echo "export PATH=$PATH:/usr/local/go/bin" >>$ETC_PROFILE
 source $ETC_PROFILE
 go version
