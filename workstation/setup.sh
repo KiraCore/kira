@@ -51,7 +51,6 @@ if [ "$UPDATED" == "True" ] && [ "$NEW_INIT_HASH" != "$INIT_HASH" ]; then
     exit 0
 fi
 
-$KIRA_WORKSTATION/setup/certs.sh
 $KIRA_WORKSTATION/setup/envs.sh
 $KIRA_WORKSTATION/setup/hosts.sh
 $KIRA_WORKSTATION/setup/system.sh

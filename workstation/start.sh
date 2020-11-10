@@ -4,6 +4,7 @@ exec 2>&1
 set -e
 set -x
 
+echo $SEKAI_BRANCH
 source "/etc/profile" &>/dev/null
 
 SKIP_UPDATE=$1
@@ -25,6 +26,18 @@ if [ "$KIRA_STOP" == "True" ]; then
 fi
 
 $KIRA_SCRIPTS/container-restart.sh "registry"
+
+VALIDATORS_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "validator" || echo "error")
+if [ "$VALIDATORS_EXIST" == "True" ]; then
+    $KIRA_SCRIPTS/container-delete.sh "validator"
+
+    VALIDATOR_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
+
+    if [ "$VALIDATOR_EXISTS" != "False" ]; then
+        echo "ERROR: Failed to delete validator container, status: ${VALIDATOR_EXISTS}"
+        exit 1
+    fi
+fi
 
 # todo: delete existing containers
 
@@ -48,16 +61,19 @@ rm -f $GENESIS_DESTINATION
 SEEDS=""
 PEERS=""
 
+echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP}"
+
 docker run -d \
     --restart=always \
-    --name "validator" \
+    --name validator \
     --network kiranet \
-    --ip "10.2.0.1" \
+    --ip $KIRA_VALIDATOR_IP \
+    -e DEBUG_MODE="True" \
     validator:latest
 
 echo "INFO: Waiting for validator to start..."
 sleep 10
-source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
+# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
 
 echo "INFO: Inspecting if validator is running..."
 SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
@@ -69,15 +85,15 @@ else
 fi
 
 echo "INFO: Saving genesis file..."
-docker cp $NAME:$GENESIS_SOURCE $GENESIS_DESTINATION
+docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
 
 if [ ! -f "$GENESIS_DESTINATION" ]; then
-    echo "ERROR: Failed to copy genesis file from validator-$VALIDATOR_INDEX"
+    echo "ERROR: Failed to copy genesis file from validator"
     exit 1
 fi
 
 NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id || echo "error")
 # NOTE: New lines have to be removed
-SEEDS=$(echo "${NODE_ID}@10.2.0.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SEEDS=$(echo "${NODE_ID}@$KIRA_VALIDATOR_IP:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"

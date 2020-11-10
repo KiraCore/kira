@@ -16,7 +16,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 # curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
 # curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
 
-add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
+# add-apt-repository "deb [arch=amd64] http://archive.ubuntu.com/ubuntu/ bionic universe"
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
@@ -31,9 +31,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     yarn \
     zip
 
-ETC_PROFILE="/etc/profile"
-curl -O https://storage.googleapis.com/golang/go1.15.3.linux-amd64.tar.gz >/dev/null
-tar -xvf go1.15.3.linux-amd64.tar.gz >/dev/null
-echo "export GOPATH=$HOME/go" >>$ETC_PROFILE
-echo "export PATH=$PATH:/usr/local/go/bin:$GOPATH/bin" >>$ETC_PROFILE
-source $ETC_PROFILE
+GO_VERSION="1.14.2"
+echo "INFO: Installing latest go version $GO_VERSION https://golang.org/doc/install ..."
+wget https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz &>/dev/null
+tar -C /usr/local -xvf go$GO_VERSION.linux-amd64.tar.gz &>/dev/null
