@@ -32,7 +32,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     zip
 
 ETC_PROFILE="/etc/profile"
-wget -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local >/dev/null
+wget -c https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz -O - | sudo tar -xz -C /usr/local
 echo "export PATH=$PATH:/usr/local/go/bin" >>$ETC_PROFILE
 source $ETC_PROFILE
 go version
