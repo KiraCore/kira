@@ -24,7 +24,7 @@ Demo Mode Example:
 ```
 cd /home/$SUDO_USER && \
  rm -f ./setup.sh && \
- wget https://raw.githubusercontent.com/KiraCore/kira/KIP_51/workstation/init.sh -O ./setup.sh && \
+ wget https://raw.githubusercontent.com/KiraCore/kira/initial-validator/workstation/init.sh -O ./setup.sh && \
  chmod 555 ./setup.sh && \
  ./setup.sh
 ```
