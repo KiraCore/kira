@@ -73,7 +73,7 @@ docker run -d \
 
 echo "INFO: Waiting for validator to start..."
 sleep 10
-# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
+source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
 
 echo "INFO: Inspecting if validator is running..."
 SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
