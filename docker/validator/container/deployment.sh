@@ -6,3 +6,5 @@ set -x
 
 echo "Building node..."
 
+cd $SEKAI
+sh ./sekaitestsetup.sh

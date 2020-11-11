@@ -72,7 +72,7 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start..."
-sleep 1000
+sleep 10
 # source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
 
 echo "INFO: Inspecting if validator is running..."
