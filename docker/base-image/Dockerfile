@@ -39,3 +39,6 @@ RUN chmod -R 777 ${SELF_HOME} && chmod 777 ${PROFILE_PATH} && chmod 777 ${BASHRC
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
+
+ENV PATH=$PATH:/usr/local/go/bin
+RUN go version

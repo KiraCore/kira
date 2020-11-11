@@ -11,12 +11,13 @@ CARGO_ENV="/home/$KIRA_USER/.cargo/env"
 
 KIRA_STATE=/kira/state
 KIRA_REGISTRY_PORT=5000
-KIRA_REGISTRY_SUBNET="10.0.0.0/8"
+KIRA_REGISTRY_SUBNET="100.0.0.0/8"
 KIRA_KMS_SUBNET="10.1.0.0/8"
 KIRA_VALIDATOR_SUBNET="10.2.0.0/8"
+KIRA_VALIDATOR_IP="10.2.0.1"
 KIRA_SENTRY_SUBNET="10.3.0.0/8"
 KIRA_FRONTEND_SUBNET="10.4.0.0/8"
-KIRA_REGISTRY_IP="10.0.0.1"
+KIRA_REGISTRY_IP="100.0.1.1"
 KIRA_REGISTRY_NAME="registry.local"
 KIRA_REGISTRY="$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT"
 
@@ -71,6 +72,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_REGISTRY_NAME=$KIRA_REGISTRY_NAME" --prefix="KIRA_REGISTRY_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_REGISTRY_IP=$KIRA_REGISTRY_IP" --prefix="KIRA_REGISTRY_IP=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_VALIDATOR_IP=$KIRA_VALIDATOR_IP" --prefix="KIRA_VALIDATOR_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_REGISTRY=$KIRA_REGISTRY" --prefix="KIRA_REGISTRY=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_DOCKER=$KIRA_DOCKER" --prefix="KIRA_DOCKER=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="NGINX_CONFIG=$NGINX_CONFIG" --prefix="NGINX_CONFIG=" --path=$ETC_PROFILE --append-if-found-not=True
