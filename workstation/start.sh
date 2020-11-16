@@ -114,7 +114,7 @@ docker run -d \
     --restart=always \
     --name sentry \
     --network sentrynet \
-    --ip 103.0.0.1 \
+    --ip 103.0.1.1 \
     -e DEBUG_MODE="True" \
     sentry:latest
 
