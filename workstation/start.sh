@@ -106,7 +106,13 @@ docker network create --subnet=103.0.0.0/8 sentrynet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
+cp $GENESIS_DESTINATION $KIRA_DOCKER/validator/configs
 cp $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
+
+CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="persistent_peers = \"$PEERS\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="private_peer_ids = \"$NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
 
 source $WORKSTATION_SCRIPTS/update-sentry-image.sh
 
@@ -120,3 +126,14 @@ docker run -d \
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
+
+SENTRY_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id || echo "error")
+echo $SENTRY_ID
+
+SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_PEER=$SENTRY_SEED
+echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
+
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs

@@ -22,8 +22,6 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   touch $KIRA_SETUP_BASE_TOOLS
 
-  #allow to execute scripts just like .exe files with double click
-  gsettings set org.gnome.nautilus.preferences executable-text-activation 'launch'
 else
   echo "INFO: Base tools were already installed."
 fi
