@@ -8,7 +8,7 @@ ENV SELF_KMS_RELEASE=${SELF_KMS}/target/release
 RUN apt update && apt install -y clang gcc g++ pkg-config libusb-1.0-0-dev
 
 RUN curl -y --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-ENV ETC_PROFILE="~/.profile"
+ENV ETC_PROFILE="/etc/profile"
 RUN echo "export RUSTFLAGS=-Ctarget-feature=+aes,+ssse3" >>"${ETC_PROFILE}"
 
 RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms
