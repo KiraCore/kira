@@ -39,6 +39,18 @@ if [ "$VALIDATORS_EXIST" == "True" ]; then
     fi
 fi
 
+SENTRY_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "sentry" || echo "error")
+if [ "$SENTRY_EXIST" == "True" ]; then
+    $KIRA_SCRIPTS/container-delete.sh "sentry"
+
+    SENTRY_EXIST=$($KIRA_SCRIPTS/container-exists.sh "sentry" || echo "error")
+
+    if [ "$SENTRY_EXIST" != "False" ]; then
+        echo "ERROR: Failed to delete sentry container, status: ${SENTRY_EXIST}"
+        exit 1
+    fi
+fi
+
 # todo: delete existing containers
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
