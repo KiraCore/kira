@@ -153,3 +153,5 @@ echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
+
+docker cp $KIRA_DOCKER/validator/configs/config.toml validator:$GENESIS_SOURCE
