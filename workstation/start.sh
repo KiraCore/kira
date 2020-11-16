@@ -85,6 +85,7 @@ else
 fi
 
 TEST_DIR=$(docker exec -i "validator" cd /root/.sekaid && ls || echo "error")
+echo $TEST_DIR
 
 echo "INFO: Saving genesis file..."
 docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
