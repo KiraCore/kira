@@ -51,12 +51,22 @@ if [ "$SENTRY_EXIST" == "True" ]; then
     fi
 fi
 
+KMS_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "kms" || echo "error")
+if [ "$KMS_EXIST" == "True" ]; then
+    $KIRA_SCRIPTS/container-delete.sh "kms"
+
+    KMS_EXIST=$($KIRA_SCRIPTS/container-exists.sh "kms" || echo "error")
+
+    if [ "$KMS_EXIST" != "False" ]; then
+        echo "ERROR: Failed to delete kms container, status: ${KMS_EXIST}"
+        exit 1
+    fi
+fi
+
 # todo: delete existing containers
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
 source $WORKSTATION_SCRIPTS/update-validator-image.sh
-# source $WORKSTATION_SCRIPTS/update-frontend-image.sh
-# source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 cd $KIRA_WORKSTATION
 
@@ -153,5 +163,16 @@ echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
+
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --subnet=101.0.0.0/8 kmsnet
+
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
+echo KMS_NODE_ID
+
+echo "INFO: Waiting for kms to start..."
+sleep 10
 
 docker cp $KIRA_DOCKER/validator/configs/config.toml validator:$GENESIS_SOURCE

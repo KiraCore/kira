@@ -11,7 +11,6 @@ RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ENV ETC_PROFILE="~/.profile"
 RUN echo "export RUSTFLAGS=-Ctarget-feature=+aes,+ssse3" >>"${ETC_PROFILE}"
 
-
 RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms
 
 RUN cargo build --release --features=softsign
