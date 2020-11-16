@@ -291,7 +291,7 @@ temp_dir = ""
 #######################################################
 ###       Fast Sync Configuration Connections       ###
 #######################################################
-fastsync]
+[fastsync]
 
 # Fast Sync version to use:
 #   1) "v0" (default) - the legacy fast sync implementation

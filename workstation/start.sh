@@ -141,6 +141,10 @@ sleep 10
 
 SENTRY_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id || echo "error")
 echo $SENTRY_ID
+if [ "$SENTRY_ID" == "error" ]; then
+    echo "ERROR: sentry node error"
+    exit 1
+fi
 
 SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_PEER=$SENTRY_SEED
