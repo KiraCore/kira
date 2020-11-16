@@ -43,14 +43,13 @@ fi
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
 source $WORKSTATION_SCRIPTS/update-validator-image.sh
-# source $WORKSTATION_SCRIPTS/update-sentry-image.sh
 # source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 # source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 cd $KIRA_WORKSTATION
 
-docker network rm kiranet || echo "Failed to remove kira network"
-docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
+docker network rm validatornet || echo "Failed to remove validator sub-network"
+docker network create --subnet=$KIRA_VALIDATOR_SUBNET validatornet
 
 GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
@@ -66,7 +65,7 @@ echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP}"
 docker run -d \
     --restart=always \
     --name validator \
-    --network kiranet \
+    --network validatornet \
     --ip $KIRA_VALIDATOR_IP \
     -e DEBUG_MODE="True" \
     validator:latest
@@ -92,8 +91,32 @@ if [ ! -f "$GENESIS_DESTINATION" ]; then
     exit 1
 fi
 
+P2P_LOCAL_PORT="26656"
+P2P_PROXY_PORT="10000"
+RPC_PROXY_PORT="10001"
+
 NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id || echo "error")
 # NOTE: New lines have to be removed
 SEEDS=$(echo "${NODE_ID}@$KIRA_VALIDATOR_IP:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"
+
+docker network rm sentrynet || echo "Failed to remove setnry sub network"
+docker network create --subnet=$KIRA_SENTRY_SUBNET sentrynet
+
+echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
+
+cp $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
+
+source $WORKSTATION_SCRIPTS/update-sentry-image.sh
+
+docker run -d \
+    --restart=always \
+    --name sentry \
+    --network sentrynet \
+    --ip $KIRA_SENTRY_IP \
+    -e DEBUG_MODE="True" \
+    sentry:latest
+
+echo "INFO: Waiting for sentry to start..."
+sleep 10
