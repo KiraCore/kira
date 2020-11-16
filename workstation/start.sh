@@ -102,7 +102,7 @@ PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"
 
 docker network rm sentrynet || echo "Failed to remove setnry network"
-docker network create --subnet=10.3.0.0/8 sentrynet
+docker network create --subnet=103.0.0.0/8 sentrynet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -114,7 +114,7 @@ docker run -d \
     --restart=always \
     --name sentry \
     --network sentrynet \
-    --ip 10.3.0.1 \
+    --ip 103.0.0.1 \
     -e DEBUG_MODE="True" \
     sentry:latest
 
