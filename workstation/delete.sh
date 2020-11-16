@@ -36,7 +36,8 @@ docker volume prune -f || echo "WARNING: Failed to prune volumes"
 
 $KIRA_SCRIPTS/progress-touch.sh "+1" #6
 
-docker network rm validatornet || echo "WARNING: Failed to remove kira network"
+docker network rm sentrynet || echo "WARNING: Failed to remove sentry network"
+docker network rm kiranet || echo "WARNING: Failed to remove kira network"
 docker network rm regnet || echo "WARNING: Failed to remove registry network"
 docker network prune -f || echo "WARNING: Failed to prune all networks"
 

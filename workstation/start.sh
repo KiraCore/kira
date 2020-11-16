@@ -48,8 +48,8 @@ source $WORKSTATION_SCRIPTS/update-validator-image.sh
 
 cd $KIRA_WORKSTATION
 
-docker network rm validatornet || echo "Failed to remove validator sub-network"
-docker network create --subnet=$KIRA_VALIDATOR_SUBNET validatornet
+docker network rm kiranet || echo "Failed to remove kira network"
+docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
 GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
@@ -65,7 +65,7 @@ echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP}"
 docker run -d \
     --restart=always \
     --name validator \
-    --network validatornet \
+    --network kiranet \
     --ip $KIRA_VALIDATOR_IP \
     -e DEBUG_MODE="True" \
     validator:latest
