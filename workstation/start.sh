@@ -60,7 +60,7 @@ rm -f $GENESIS_DESTINATION
 SEEDS=""
 PEERS=""
 
-echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP}"
+echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP} Sentry IP: ${KIRA_SENTRY_IP}"
 
 docker run -d \
     --restart=always \
@@ -101,8 +101,8 @@ SEEDS=$(echo "${NODE_ID}@$KIRA_VALIDATOR_IP:$P2P_LOCAL_PORT" | xargs | tr -d '\n
 PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"
 
-docker network rm sentrynet || echo "Failed to remove setnry sub network"
-docker network create --subnet=$KIRA_SENTRY_SUBNET sentrynet
+docker network rm sentrynet || echo "Failed to remove setnry network"
+docker network create --subnet=10.3.0.0/8 sentrynet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -114,7 +114,7 @@ docker run -d \
     --restart=always \
     --name sentry \
     --network sentrynet \
-    --ip $KIRA_SENTRY_IP \
+    --ip 10.3.0.1 \
     -e DEBUG_MODE="True" \
     sentry:latest
 
