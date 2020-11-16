@@ -72,8 +72,8 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start..."
-sleep 10
-source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
+sleep 20
+# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
 
 echo "INFO: Inspecting if validator is running..."
 SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
@@ -83,6 +83,8 @@ if [ "$SEKAID_VERSION" == "error" ]; then
 else
     echo "SUCCESS: sekaid $SEKAID_VERSION was found"
 fi
+
+TEST_DIR=$(docker exec -i "validator" cd /root/.sekaid && ls || echo "error")
 
 echo "INFO: Saving genesis file..."
 docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION

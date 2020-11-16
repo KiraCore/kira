@@ -14,6 +14,7 @@ RUN echo "Build hash: ${BUILD_HASH}"
 
 RUN ${SELF_SCRIPTS}/git-pull.sh "${REPO}" "${BRANCH}" "${SEKAI}"
 RUN cd ${SEKAI} && go install ./cmd/sekaid
+# RUN echo ${GOBIN} && cd ${GOBIN} && ls
 RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
 
