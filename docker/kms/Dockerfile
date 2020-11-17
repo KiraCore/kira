@@ -14,7 +14,7 @@ ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo --version
 
-RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms
+RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms && ls
 
 RUN cargo build --release --features=softsign
 RUN cargo test --all-features
