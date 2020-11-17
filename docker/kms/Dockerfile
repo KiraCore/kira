@@ -5,7 +5,7 @@ ENV SELF_KMS=${SELF_HOME}/kms
 ENV SELF_CONFIGS=${SELF_HOME}/configs
 ENV SELF_KMS_RELEASE=${SELF_KMS}/target/release
 
-RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages clang cmake gcc g++ pkg-config libusb-1.0-0-dev curl
+RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages clang cmake gcc g++ pkg-config libudev libusb-1.0-0-dev curl
 
 RUN apt-get update
 
