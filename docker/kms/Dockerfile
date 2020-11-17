@@ -7,7 +7,7 @@ ENV SELF_KMS_RELEASE=${SELF_KMS}/target/release
 
 RUN apt update && apt install -y clang gcc g++ pkg-config libusb-1.0-0-dev
 
-ENV PATH=$PATH:/root/.cargo
+ENV PATH=$PATH:$HOME/.cargo/bin
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 
