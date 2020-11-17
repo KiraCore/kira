@@ -9,8 +9,9 @@ RUN apt update && apt install -y clang gcc g++ pkg-config libusb-1.0-0-dev
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
-ENV PATH=$PATH:$HOME/.cargo/bin
+ENV PATH="${HOME}/.cargo/bin:${PATH}"
 RUN . $HOME/.cargo/env
+RUN cargo --version
 
 RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms
 
