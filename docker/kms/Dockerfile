@@ -16,8 +16,8 @@ RUN cargo --version
 
 RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/kms.git && cd kms && ls
 
-RUN cargo build --release --features=softsign
-RUN cargo test --all-features
+RUN cd ${SELF_HOME}/kms && cargo build --release --features=softsign
+RUN cd ${SELF_HOME}/kms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
 RUN tmkms softsign keygen ~/.tmkms/secret_connection.key
