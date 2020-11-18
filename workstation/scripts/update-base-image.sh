@@ -10,7 +10,7 @@ BASE_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-ima
 if [ "$BASE_IMAGE_EXISTS" == "False" ]; then
     # todo: delete valdiator, sentry, kms, frontend images
     # $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend-image" "frontend-image"
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kms-image" "kms-image"
+    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kms" "kms"
     $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
     $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
