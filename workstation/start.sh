@@ -171,9 +171,9 @@ CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
-docker cp $PRIV_VALIDATOR_KEY_DESTINATION kms:/root
-
 # ---------- KMS ----------
+
+cp $PRIV_VALIDATOR_KEY_DESTINATION $DOCKER_COMMON/kms/config
 
 docker network rm kmsnet || echo "Failed to remove kms network"
 docker network create --subnet=101.0.0.0/8 kmsnet
