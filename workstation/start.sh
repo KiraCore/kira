@@ -171,7 +171,7 @@ CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
-docker cp $PRIV_VALIDATOR_KEY_DESTINATION kms:~/.tmkms/
+docker cp $PRIV_VALIDATOR_KEY_DESTINATION kms:/root
 
 # ---------- KMS ----------
 
