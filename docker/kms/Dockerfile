@@ -20,7 +20,7 @@ RUN cd ${SELF_HOME}/kms && cargo build --release --features=softsign
 RUN cd ${SELF_HOME}/kms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
-RUN tmkms softsign keygen ~/.tmkms/secret_connection.key
+RUN mkdir ~/.tmkms/ && tmkms softsign keygen ~/.tmkms/secret_connection.key
 
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 
