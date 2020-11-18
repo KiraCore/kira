@@ -113,6 +113,12 @@ if [ ! -f "$GENESIS_DESTINATION" ]; then
     exit 1
 fi
 
+echo "INFO: Saving priv_validator_key.json file..."
+PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
+PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
+rm -f $PRIV_VALIDATOR_KEY_DESTINATION
+docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
+
 P2P_LOCAL_PORT="26656"
 P2P_PROXY_PORT="10000"
 RPC_PROXY_PORT="10001"
@@ -164,6 +170,8 @@ CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCK
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
 
+cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
+
 docker network rm kmsnet || echo "Failed to remove kms network"
 docker network create --subnet=101.0.0.0/8 kmsnet
 
@@ -174,5 +182,3 @@ echo KMS_NODE_ID
 
 echo "INFO: Waiting for kms to start..."
 sleep 10
-
-docker cp $KIRA_DOCKER/validator/configs/config.toml validator:$GENESIS_SOURCE

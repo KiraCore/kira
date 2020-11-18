@@ -21,6 +21,8 @@ RUN cd ${SELF_HOME}/kms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
 RUN mkdir ~/.tmkms/ && tmkms softsign keygen ~/.tmkms/secret_connection.key
+ADD ./config/priv_validator_key.json ~/.tmkms/
+RUN tmkms softsign import ~/.tmkms/priv_validator_key.json ~/.tmkms/gaia_signing.key
 
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 
