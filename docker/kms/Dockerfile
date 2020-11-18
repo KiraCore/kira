@@ -23,5 +23,7 @@ RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 ADD ./container ${SELF_CONTAINER}
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 
+RUN mkdir ~/.tmkms/
+
 ARG DEBIAN_FRONTEND=noninteractive
 RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*

@@ -4,8 +4,6 @@ exec 2>&1
 set -e
 set -x
 
-mkdir ~/.tmkms/
-
 tmkms softsign keygen ~/.tmkms/secret_connection.key
 
 cd ~/.tmkms/ && ls
