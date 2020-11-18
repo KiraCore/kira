@@ -173,7 +173,7 @@ CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\
 
 # ---------- KMS ----------
 
-cp $PRIV_VALIDATOR_KEY_DESTINATION $DOCKER_COMMON/kms/config
+cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
 
 docker network rm kmsnet || echo "Failed to remove kms network"
 docker network create --subnet=101.0.0.0/8 kmsnet
