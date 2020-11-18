@@ -10,7 +10,7 @@ reconnect = true
 secret_key = "~/.tmkms/secret_connection.key"
 
 ## Signing provider configuration
-[[providers.softsign]]
-chain_ids = ["testing"]
-key_format = "base64"
-path = "~/.tmkms/gaia_signing.key"
+## [[providers.softsign]]
+## chain_ids = ["testing"]
+## key_format = "base64"
+## path = "~/.tmkms/gaia_signing.key"
