@@ -20,6 +20,7 @@ RUN cd ${SELF_HOME}/kms && cargo build --release --features=softsign
 RUN cd ${SELF_HOME}/kms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
+ADD ./container ${SELF_CONTAINER}
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 
 ARG DEBIAN_FRONTEND=noninteractive
