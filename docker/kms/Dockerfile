@@ -24,4 +24,4 @@ RUN mkdir ~/.tmkms/ && tmkms softsign keygen ~/.tmkms/secret_connection.key
 
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 
-RUN tmkms start
+RUN tmkms start -c ${SELF_KMS_RELEASE}}/tmkms.toml
