@@ -8,4 +8,7 @@ mkdir ~/.tmkms/
 
 tmkms softsign keygen ~/.tmkms/secret_connection.key
 
+cd ~/.tmkms/ && ls
+tmkms softsign import ~/.tmkms/priv_validator_key.json ~/.tmkms/signing.key
+
 tmkms start -c ${SELF_KMS_RELEASE}/tmkms.toml

@@ -70,21 +70,6 @@ source $WORKSTATION_SCRIPTS/update-validator-image.sh
 
 cd $KIRA_WORKSTATION
 
-# ---------- KMS ----------
-
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --subnet=101.0.0.0/8 kmsnet
-
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
-
-KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
-echo KMS_NODE_ID
-
-echo "INFO: Waiting for kms to start..."
-sleep 10
-
-# ---------- KMS ----------
-
 docker network rm kiranet || echo "Failed to remove kira network"
 docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
@@ -186,4 +171,19 @@ CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
-# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
+docker cp $PRIV_VALIDATOR_KEY_DESTINATION kms:~/.tmkms/
+
+# ---------- KMS ----------
+
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --subnet=101.0.0.0/8 kmsnet
+
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
+echo KMS_NODE_ID
+
+echo "INFO: Waiting for kms to start..."
+sleep 10
+
+# ---------- KMS ----------
