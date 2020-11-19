@@ -7,7 +7,7 @@ key_format = { type = "bech32", account_key_prefix = "kirapub", consensus_key_pr
 addr = "tcp://10.2.0.1:26658"
 chain_id = "testing"
 reconnect = true
-secret_key = "~/.tmkms/secret_connection.key"
+secret_key = "/root/.tmkms/secret_connection.key"
 
 ## Signing provider configuration
 [[providers.softsign]]

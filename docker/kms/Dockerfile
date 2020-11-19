@@ -24,7 +24,7 @@ ADD ./container ${SELF_CONTAINER}
 ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
 ADD ./config/priv_validator_key.json ${SELF_KMS_RELEASE}
 
-RUN mkdir ~/.tmkms/
+RUN mkdir /root/.tmkms/
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
