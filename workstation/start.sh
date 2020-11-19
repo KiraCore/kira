@@ -63,6 +63,30 @@ if [ "$KMS_EXIST" == "True" ]; then
     fi
 fi
 
+INTERX_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "interx" || echo "error")
+if [ "$INTERX_EXIST" == "True" ]; then
+    $KIRA_SCRIPTS/container-delete.sh "interx"
+
+    INTERX_EXIST=$($KIRA_SCRIPTS/container-exists.sh "interx" || echo "error")
+
+    if [ "$INTERX_EXIST" != "False" ]; then
+        echo "ERROR: Failed to delete interx container, status: ${INTERX_EXIST}"
+        exit 1
+    fi
+fi
+
+FRONTEND_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "frontend" || echo "error")
+if [ "$FRONTEND_EXIST" == "True" ]; then
+    $KIRA_SCRIPTS/container-delete.sh "frontend"
+
+    FRONTEND_EXIST=$($KIRA_SCRIPTS/container-exists.sh "frontend" || echo "error")
+
+    if [ "$FRONTEND_EXIST" != "False" ]; then
+        echo "ERROR: Failed to delete frontend container, status: ${FRONTEND_EXIST}"
+        exit 1
+    fi
+fi
+
 # todo: delete existing containers
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
