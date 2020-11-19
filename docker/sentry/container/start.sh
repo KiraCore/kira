@@ -4,7 +4,7 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring validator..."
+echo "Staring sentry..."
 SEKAID_HOME=$HOME/.sekaid
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME

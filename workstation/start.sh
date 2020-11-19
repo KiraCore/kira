@@ -173,19 +173,34 @@ CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\
 
 docker cp $KIRA_DOCKER/validator/configs/config.toml validator:/root/.sekaid/config/
 
-# ---------- KMS ----------
+# ---------- INTERX BEGIN ----------
+docker network rm servicenet || echo "Failed to remove service network"
+docker network create --subnet=104.0.0.0/8 servicenet
 
-cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
+source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --subnet=101.0.0.0/8 kmsnet
+docker run -d \
+    --restart=always \
+    --name interx \
+    --network servicenet \
+    --ip 104.0.1.1 \
+    -e DEBUG_MODE="True" \
+    interx:latest
+# ---------- INTERX END ----------
 
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
+# ---------- KMS BEGIN ----------
 
-KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
-echo KMS_NODE_ID
+# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
 
-echo "INFO: Waiting for kms to start..."
-sleep 10
+# docker network rm kmsnet || echo "Failed to remove kms network"
+# docker network create --subnet=101.0.0.0/8 kmsnet
 
-# ---------- KMS ----------
+# source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+# KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
+# echo KMS_NODE_ID
+
+# echo "INFO: Waiting for kms to start..."
+# sleep 10
+
+# ---------- KMS END ----------

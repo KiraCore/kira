@@ -24,7 +24,7 @@ done
 $KIRA_SCRIPTS/progress-touch.sh "+1" #2
 
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/base-image" "base-image"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend-image" "frontend-image"
+$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kms" "kms"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry-image" "sentry-image"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
