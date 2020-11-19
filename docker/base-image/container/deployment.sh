@@ -21,6 +21,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+    file \
     build-essential \
     hashdeep \
     make \
@@ -28,6 +29,8 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     node-gyp \
     tar \
     unzip \
+    which \
+    xz-utils \
     yarn \
     zip
 

@@ -25,6 +25,7 @@ INFRA_BRANCH="initial-validator"
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
+[ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
@@ -127,6 +128,7 @@ CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRA
 CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_STOP=$KIRA_STOP" --prefix="KIRA_STOP=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
 

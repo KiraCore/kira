@@ -186,7 +186,25 @@ docker run -d \
     --ip 104.0.1.1 \
     -e DEBUG_MODE="True" \
     interx:latest
+
+echo "INFO: Waiting for sentry to start..."
+sleep 10
 # ---------- INTERX END ----------
+
+# ---------- FRONTEND BEGIN ----------
+source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+
+docker run -d \
+    --restart=always \
+    --name frontend \
+    --network servicenet \
+    --ip 104.0.1.2 \
+    -e DEBUG_MODE="True" \
+    frontend:latest
+
+echo "INFO: Waiting for frontend to start..."
+sleep 10
+# ---------- FRONTEND END ----------
 
 # ---------- KMS BEGIN ----------
 
