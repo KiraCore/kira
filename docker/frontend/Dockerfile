@@ -13,7 +13,7 @@ RUN ${SELF_SCRIPTS}/git-pull.sh "${REPO}" "${BRANCH}" "/root"
 
 RUN ${SELF_SCRIPTS}/git-pull.sh "https://github.com/flutter/flutter" "v1.16.3" "$FLUTTERROOT"
 
-RUN cd ${FLUTTERROOT} && git remote get-url origin
+ENV PATH=${FLUTTERROOT}/bin:${PATH}
 
 RUN flutter channel stable || echo "Failed to checkout flutter stable"
 RUN flutter upgrade || echo "Failed to upgrade flutter"
