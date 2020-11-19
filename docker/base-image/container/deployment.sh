@@ -29,7 +29,6 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     node-gyp \
     tar \
     unzip \
-    which \
     xz-utils \
     yarn \
     zip
