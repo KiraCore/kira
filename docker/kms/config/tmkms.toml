@@ -13,4 +13,4 @@ secret_key = "~/.tmkms/secret_connection.key"
 [[providers.softsign]]
 chain_ids = ["testing"]
 key_format = "base64"
-path = "~/.tmkms/signing.key"
+path = "/root/.tmkms/signing.key"
