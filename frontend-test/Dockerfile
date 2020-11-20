@@ -1,11 +1,26 @@
-# (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.local:5000/base-image:latest
+FROM ubuntu:20.04
 
-ARG BUILD_HASH
-ARG BRANCH
-ARG REPO
+ARG DEBIAN_FRONTEND=noninteractive
 
-RUN echo "Build hash: ${BUILD_HASH}"
+RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+
+RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+  clang \
+  cmake \
+  gcc \
+  g++ \
+  software-properties-common \
+  curl \
+  wget \
+  git \
+  build-essential \
+  make \
+  tar \
+  unzip \
+  zip \
+  nginx
+
+RUN apt-get update
 
 ENV FLUTTERROOT="/usr/lib/flutter"
 
@@ -29,9 +44,7 @@ RUN cd /root/kira-frontend/src && git checkout dev
 # ADD ./container /root
 ADD ./configs /root
 
-RUN cd /root/kira-frontend/src && flutter pub get
-
-RUN flutter build web
+RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
 RUN mv /root/kira-frontend/src/web /var/www/html
 
