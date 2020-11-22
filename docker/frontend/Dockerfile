@@ -29,9 +29,7 @@ RUN cd /root/kira-frontend/src && git checkout dev
 # ADD ./container /root
 ADD ./configs /root
 
-RUN cd /root/kira-frontend/src && flutter pub get
-
-RUN flutter build web
+RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
 RUN mv /root/kira-frontend/src/web /var/www/html
 
