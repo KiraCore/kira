@@ -9,7 +9,7 @@ set -x
 
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common curl wget git
+    software-properties-common curl wget git nginx
 
 # apt-get update -y --fix-missing
 # curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
