@@ -1,0 +1,180 @@
++ echo 'Staring validator...'
+
+Staring validator...
+
++ SEKAID_HOME=/root/.sekaid
+
++ sekaid init --chain-id=testing testing --home=/root/.sekaid
+
+{"app_message":{"auth":{"accounts":[],"params":{"max_memo_characters":"256","sig_verify_cost_ed25519":"590","sig_verify_cost_secp256k1":"1000","tx_sig_limit":"7","tx_size_cost_per_byte":"10"}},"bank":{"balances":[],"denom_metadata":[],"params":{"default_send_enabled":true,"send_enabled":[]},"supply":[]},"capability":{"index":"1","owners":[]},"crisis":{"constant_fee":{"amount":"1000","denom":"stake"}},"customgov":{"execution_fees":[{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Claim Validator Seat","timeout":"10","transaction_type":"claim-validator-seat"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Claim Governance Seat","timeout":"10","transaction_type":"claim-governance-seat"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Claim Proposal Type X","timeout":"10","transaction_type":"claim-proposal-type-x"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Vote Proposal Type X","timeout":"10","transaction_type":"vote-proposal-type-x"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Submit Proposal Type X","timeout":"10","transaction_type":"submit-proposal-type-x"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Veto Proposal Type X","timeout":"10","transaction_type":"veto-proposal-type-x"},{"default_parameters":"0","execution_fee":"10","failure_fee":"1","name":"Upsert Token Alias Execution Fee","timeout":"10","transaction_type":"upsert-token-alias"}],"network_actors":[],"network_properties":{"enable_foreign_fee_payments":true,"max_tx_fee":"1000000","min_tx_fee":"100","proposal_enactment_time":"2","proposal_end_time":"1","vote_quorum":"33"},"permissions":{"1":{"blacklist":[],"whitelist":[1,3,2,4,5,12,13,10,11,9]},"2":{"blacklist":[],"whitelist":[2]}},"starting_proposal_id":"1"},"customstaking":null,"evidence":{"evidence":[]},"feeprocessing":{},"genutil":{"gen_txs":[]},"gov":{"deposit_params":{"max_deposit_period":"172800s","min_deposit":[{"amount":"10000000","denom":"stake"}]},"deposits":[],"proposals":[],"starting_proposal_id":"1","tally_params":{"quorum":"0.334000000000000000","threshold":"0.500000000000000000","veto_threshold":"0.334000000000000000"},"votes":[],"voting_params":{"voting_period":"172800s"}},"ibc":{"channel_genesis":{"ack_sequences":[],"acknowledgements":[],"channels":[],"commitments":[],"recv_sequences":[],"send_sequences":[]},"client_genesis":{"clients":[],"clients_consensus":[],"create_localhost":true},"connection_genesis":{"client_connection_paths":[],"connections":[]}},"params":null,"slashing":{"missed_blocks":[],"params":{"downtime_jail_duration":"600s","min_signed_per_window":"0.500000000000000000","signed_blocks_window":"100","slash_fraction_double_sign":"0.050000000000000000","slash_fraction_downtime":"0.010000000000000000"},"signing_infos":[]},"staking":{"delegations":[],"exported":false,"last_total_power":"0","last_validator_powers":[],"params":{"bond_denom":"stake","historical_entries":100,"max_entries":7,"max_validators":100,"unbonding_time":"1814400s"},"redelegations":[],"unbonding_delegations":[],"validators":[]},"tokens":{"aliases":{"KEX":{"allowed_vote_types":["yes","no"],"decimals":6,"denoms":["ukex","mkex"],"enactment":0,"expiration":0,"icon":"","name":"Kira","status":"active","symbol":"KEX"}},"rates":{"ubtc":{"denom":"ubtc","fee_payments":true,"rate":"10.000000000000000000"},"ukex":{"denom":"ukex","fee_payments":true,"rate":"1.000000000000000000"},"xeth":{"denom":"xeth","fee_payments":true,"rate":"0.100000000000000000"}}},"transfer":{"denom_traces":[],"params":{"receive_enabled":true,"send_enabled":true},"port_id":"transfer"},"upgrade":{}},"chain_id":"testing","gentxs_dir":"","moniker":"testing","node_id":"9556ad694e33b2e3bf1f6531e80e0e06982eebba"}
+
++ sekaid keys add validator --keyring-backend=test --home=/root/.sekaid
+
+
+- name: validator
+
+type: local
+
+address: kira1lu8z7z3jkz3fkz0w96rk7xa9eyjcmyhwxq0qup
+
+pubkey: kirapub1addwnpepq067lfpmfw2g0r83qnczw2jk9fwa40fkq0u4jw5t7zcnyzvdwzdgch7l4c9
+
+mnemonic: ""
+
+threshold: 0
+
+pubkeys: []
+
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+It is the only way to recover your account if you ever forget your password.
+
+
+wait category fury injury glare second echo lens section rule ill venue chicken crazy wealth valley outside debate capital giraffe turkey gauge extend acid
+
+++ sekaid keys show validator -a --keyring-backend=test --home=/root/.sekaid
+
++ sekaid add-genesis-account kira1lu8z7z3jkz3fkz0w96rk7xa9eyjcmyhwxq0qup 1000000000ukex,1000000000validatortoken,1000000000stake --home=/root/.sekaid
+
++ sekaid keys add frontend --keyring-backend=test --home=/root/.sekaid
+
+
+- name: frontend
+
+type: local
+
+address: kira1tt3r4klchfcx4hvnvywal4zhxsl3ucc35uj6k2
+
+pubkey: kirapub1addwnpepqv9l79mzak0van9yca87uqhkr6q4qx4w4j60snf295rknrwq3khh7fjlw3s
+
+mnemonic: ""
+
+threshold: 0
+
+pubkeys: []
+
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+It is the only way to recover your account if you ever forget your password.
+
+
+garment cigar drift pluck broccoli person twin gloom plunge reason jacket genuine engage remove fiction cricket caution void sign diary absent entire extra fetch
+
+++ sekaid keys show frontend -a --keyring-backend=test --home=/root/.sekaid
+
++ sekaid add-genesis-account kira1tt3r4klchfcx4hvnvywal4zhxsl3ucc35uj6k2 1000000000ukex,1000000000validatortoken,1000000000stake --home=/root/.sekaid
+
++ sekaid keys add signer --keyring-backend=test --home=/root/.sekaid
+
+
+- name: signer
+
+type: local
+
+address: kira1d94qh7cn9vfpcp6jtnx2vu4edn2xl454nhrf96
+
+pubkey: kirapub1addwnpepqtr6hmlzq3n8zg3cuaa2gyr227shyf55car0snsypdd57jmkmq7rk9tpe8q
+
+mnemonic: ""
+
+threshold: 0
+
+pubkeys: []
+
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+It is the only way to recover your account if you ever forget your password.
+
+
+chief drip promote message thing bread describe morning tiger box toe supreme quit during occur nest abstract brown paddle resource antique decide draw matter
+
+++ sekaid keys show signer -a --keyring-backend=test --home=/root/.sekaid
+
++ sekaid add-genesis-account kira1d94qh7cn9vfpcp6jtnx2vu4edn2xl454nhrf96 1000000000ukex,1000000000validatortoken,1000000000stake --home=/root/.sekaid
+
++ sekaid keys add faucet --keyring-backend=test --home=/root/.sekaid
+
+
+- name: faucet
+
+type: local
+
+address: kira163xhuavnpmrmt2h5pezh02ryu8f7uzlzuzy4z2
+
+pubkey: kirapub1addwnpepqwpjdfk7ncsjw0r69wmuxemfsdtpgq9dw35yrrwgxdt3xa9v3nfyjsyrtkz
+
+mnemonic: ""
+
+threshold: 0
+
+pubkeys: []
+
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+It is the only way to recover your account if you ever forget your password.
+
+
+slender boss course crane monitor grass brick save muffin depend glow soccer faculty argue open category increase impulse churn blood degree trophy mercy ecology
+
+++ sekaid keys show faucet -a --keyring-backend=test --home=/root/.sekaid
+
++ sekaid add-genesis-account kira163xhuavnpmrmt2h5pezh02ryu8f7uzlzuzy4z2 1000000000ukex,1000000000validatortoken,1000000000stake --home=/root/.sekaid
+
++ sekaid keys add test --keyring-backend=test --home=/root/.sekaid
+
+
+- name: test
+
+type: local
+
+address: kira132uv4m0vlmrm2r6nm7qfradnhm3an7lsnxws2x
+
+pubkey: kirapub1addwnpepq2g2cjagfcwjjsd3rgjhl0hdzmpaaarg44zp0j2gctxujdvmpm64usu62z4
+
+mnemonic: ""
+
+threshold: 0
+
+pubkeys: []
+
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+
+**Important** write this mnemonic phrase in a safe place.
+
+It is the only way to recover your account if you ever forget your password.
+
+
+blade notice match april shaft round region van dance panda hill cause define digital sword goddess false alter emotion outside bargain cram cheese begin
+
+++ sekaid keys show test -a --keyring-backend=test --home=/root/.sekaid
+
++ sekaid add-genesis-account kira132uv4m0vlmrm2r6nm7qfradnhm3an7lsnxws2x 1000000000ukex,1000000000validatortoken,1000000000stake --home=/root/.sekaid
+
++ sekaid gentx-claim validator --keyring-backend=test --moniker=hello --home=/root/.sekaid
+
+genesis state updated to include validator
+
++ sekaid start --home=/root/.sekaid

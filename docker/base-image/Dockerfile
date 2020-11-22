@@ -40,5 +40,13 @@ RUN chmod -R 777 ${SELF_HOME} && chmod 777 ${PROFILE_PATH} && chmod 777 ${BASHRC
 ARG DEBIAN_FRONTEND=noninteractive
 RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
 
-ENV PATH=$PATH:/usr/local/go/bin
+ENV GOROOT=/usr/local/go
+ENV GOPATH=/home/go
+ENV GOBIN=/usr/local/go/bin
+ENV PATH=$PATH:$GOROOT:$GOPATH:$GOBIN
 RUN go version
+
+RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
+ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN cargo --version

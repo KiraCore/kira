@@ -8,20 +8,20 @@ ARG REPO
 ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
 ENV SEKAID_BIN="${GOBIN}/sekaid"
 ENV COMMON_DIR="/common"
-ENV GOBIN=/usr/local/go/bin
 
-RUN echo "Build hash: ${BUILD_HASH}"
+RUN go get -u github.com/golang/protobuf/proto
+RUN go get google.golang.org/protobuf/cmd/protoc-gen-go
 
-RUN ${SELF_SCRIPTS}/git-pull.sh "${REPO}" "${BRANCH}" "${SEKAI}"
+RUN mkdir ${SEKAI} -p
+RUN cd ${GOPATH}/src/github.com/kiracore && git clone https://github.com/kiracore/sekai
+RUN cd ${SEKAI} && git checkout KIP_31
 
-ADD ./configs ${SELF_CONFIGS}
-ADD ./container ${SELF_CONTAINER}
-
-RUN chmod 777 -R ${SELF_HOME}
+ADD ./container /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]
+EXPOSE 11000
 
+CMD ["sh", "-c", "/bin/bash /root/start.sh"]

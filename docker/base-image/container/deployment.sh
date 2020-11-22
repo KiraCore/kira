@@ -31,7 +31,19 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     unzip \
     xz-utils \
     yarn \
-    zip
+    zip \
+    protobuf-compiler \
+    golang-goprotobuf-dev \
+    golang-grpc-gateway \
+    golang-github-grpc-ecosystem-grpc-gateway-dev \
+    clang \
+    cmake \
+    gcc \
+    g++ \
+    pkg-config \
+    libudev-dev \
+    libusb-1.0-0-dev \
+    curl
 
 GO_VERSION="1.14.2"
 echo "INFO: Installing latest go version $GO_VERSION https://golang.org/doc/install ..."
