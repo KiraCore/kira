@@ -31,12 +31,12 @@ ADD ./configs /root
 
 RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
-RUN mv /root/kira-frontend/src/web /var/www/html
+RUN mv /root/kira-frontend/src/web /var/www/html && cd /var/www/html/web && ls
 
 RUN mv /root/default /etc/nginx/sites-available/
 
-RUN service nginx restart
-
 EXPOSE 80
+
+RUN service nginx restart
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
