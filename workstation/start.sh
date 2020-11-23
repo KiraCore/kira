@@ -208,10 +208,11 @@ docker run -d \
     --name interx \
     --network servicenet \
     --ip 104.0.1.1 \
+    -p 11000:11000/tcp \
     -e DEBUG_MODE="True" \
     interx:latest
 
-echo "INFO: Waiting for sentry to start..."
+echo "INFO: Waiting for INTERX to start..."
 sleep 10
 # ---------- INTERX END ----------
 
@@ -223,6 +224,7 @@ docker run -d \
     --name frontend \
     --network servicenet \
     --ip 104.0.1.2 \
+    -p 80:80/tcp \
     -e DEBUG_MODE="True" \
     frontend:latest
 
