@@ -37,6 +37,10 @@ RUN mv /root/default /etc/nginx/sites-available/
 
 EXPOSE 80
 
+RUN nginx -t
+
+RUN service nginx reload
+
 RUN service nginx restart
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
