@@ -27,7 +27,7 @@ $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/base-image" "base-image"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kms" "kms"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry-image" "sentry-image"
+$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
 $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
 docker stop $(docker ps -qa) || echo "WARNING: Faile to docker stop all processess"
