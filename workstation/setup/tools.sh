@@ -19,8 +19,13 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     software-properties-common \
     tar \
     zip \
-    nodejs \
-    npm
+    nodejs
+
+  apt update
+  apt install nodejs
+  nodejs -v
+  apt install npm
+  npm -v
 
   npm install -g bip39-cli
 
