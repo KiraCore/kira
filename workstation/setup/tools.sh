@@ -18,7 +18,11 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     python3-pip \
     software-properties-common \
     tar \
-    zip
+    zip \
+    nodejs \
+    npm
+
+  npm install -g bip39-cli
 
   touch $KIRA_SETUP_BASE_TOOLS
 

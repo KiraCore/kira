@@ -106,6 +106,12 @@ rm -f $GENESIS_DESTINATION
 SEEDS=""
 PEERS=""
 
+SIGNER_MNEMONIC=$(bip39-cli generate)
+FAUCET_MNEMONIC=$(bip39-cli generate)
+
+echo $SIGNER_MNEMONIC
+echo $FAUCET_MNEMONIC
+
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP} Sentry IP: ${KIRA_SENTRY_IP}"
 
 docker run -d \
