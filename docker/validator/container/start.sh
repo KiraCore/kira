@@ -25,4 +25,8 @@ yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEK
 sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
-sekaid start --home=$SEKAID_HOME
+
+rm -f /root/output.log
+touch /root/output.log
+
+sekaid start --home=$SEKAID_HOME >/root/output.log
