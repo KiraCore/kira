@@ -123,7 +123,7 @@ echo $SIGNER_MNEMONIC
 echo $FAUCET_MNEMONIC
 
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP} Sentry IP: ${KIRA_SENTRY_IP}"
-"simple grab cart duty bind decide page mesh chunk sunny era swear organ uncle reason pepper pull zebra infant poem excuse pelican bulk custom"
+
 docker run -d \
     --restart=always \
     --name validator \
