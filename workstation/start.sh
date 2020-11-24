@@ -220,6 +220,9 @@ docker cp $KIRA_DOCKER/validator/configs/config.toml validator:/root/.sekaid/con
 docker network rm servicenet || echo "Failed to remove service network"
 docker network create --subnet=104.0.0.0/8 servicenet
 
+jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
+jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
+
 source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
 docker run -d \

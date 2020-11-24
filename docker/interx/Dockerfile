@@ -17,6 +17,7 @@ RUN cd ${GOPATH}/src/github.com/kiracore && git clone https://github.com/kiracor
 RUN cd ${SEKAI} && git checkout KIP_31
 
 ADD ./container /root
+ADD ./configs /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 
