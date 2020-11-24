@@ -106,8 +106,12 @@ rm -f $GENESIS_DESTINATION
 SEEDS=""
 PEERS=""
 
-SIGNER_MNEMONIC=$(bip39-cli generate)
-FAUCET_MNEMONIC=$(bip39-cli generate)
+git clone https://github.com/dan-da/hd-wallet-derive.git
+cd hd-wallet-derive
+composer install
+
+SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 
 echo $SIGNER_MNEMONIC
 echo $FAUCET_MNEMONIC

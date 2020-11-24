@@ -6,7 +6,7 @@ set -e
 ETC_PROFILE="/etc/profile"
 source $ETC_PROFILE &>/dev/null
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.0"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.1"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -19,15 +19,13 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     software-properties-common \
     tar \
     zip \
-    nodejs
+    jq \
+    php-cli \
+    unzip
 
-  apt update
-  apt install nodejs
-  nodejs -v
-  apt install npm
-  npm -v
-
-  npm install -g bip39-cli
+  curl -sS https://getcomposer.org/installer -o composer-setup.php
+  php composer-setup.php --install-dir=/usr/local/bin --filename=composer
+  composer
 
   touch $KIRA_SETUP_BASE_TOOLS
 
