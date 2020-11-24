@@ -6,7 +6,7 @@ set -e
 ETC_PROFILE="/etc/profile"
 source $ETC_PROFILE &>/dev/null
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.2"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.3"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -22,7 +22,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     jq \
     php-cli \
     unzip \
-    php7.4-gmp
+    php7.4-gmp \
+    php-mbstring
 
   curl -sS https://getcomposer.org/installer -o composer-setup.php
   php composer-setup.php --install-dir=/usr/local/bin --filename=composer
