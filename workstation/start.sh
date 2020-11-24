@@ -108,7 +108,7 @@ PEERS=""
 
 git clone https://github.com/dan-da/hd-wallet-derive.git
 cd hd-wallet-derive
-composer install
+yes "yes" | composer install
 
 SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
