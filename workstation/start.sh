@@ -113,12 +113,13 @@ yes "yes" | composer install
 SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 
-# SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
-# SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
+SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
+SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
 
-# FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
-# FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
+FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
+FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
 
+echo "********************************************"
 echo $SIGNER_MNEMONIC
 echo $FAUCET_MNEMONIC
 
@@ -130,8 +131,8 @@ docker run -d \
     --network kiranet \
     --ip $KIRA_VALIDATOR_IP \
     -e DEBUG_MODE="True" \
-    --env SIGNER_MNEMONIC=$SIGNER_MNEMONIC \
-    --env FAUCET_MNEMONIC=$FAUCET_MNEMONIC \
+    --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
+    --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
     validator:latest
 
 echo "INFO: Waiting for validator to start..."
