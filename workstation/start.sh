@@ -113,11 +113,11 @@ yes "yes" | composer install
 SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 
-SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
-SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
+# SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
+# SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
 
-FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
-FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
+# FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
+# FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
 
 echo $SIGNER_MNEMONIC
 echo $FAUCET_MNEMONIC
