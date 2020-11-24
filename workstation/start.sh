@@ -90,9 +90,43 @@ fi
 # todo: delete existing containers
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
 
 cd $KIRA_WORKSTATION
+
+docker network rm sentrynet || echo "Failed to remove setnry network"
+docker network create --subnet=103.0.0.0/8 sentrynet
+
+echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
+
+source $WORKSTATION_SCRIPTS/update-sentry-image.sh
+
+docker run -d \
+    --restart=always \
+    --name sentry \
+    --network sentrynet \
+    --ip 103.0.1.1 \
+    -p 9090:9090/tcp \
+    -e DEBUG_MODE="True" \
+    sentry:latest
+
+echo "INFO: Waiting for sentry to start..."
+sleep 10
+
+SENTRY_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id || echo "error")
+echo $SENTRY_ID
+if [ "$SENTRY_ID" == "error" ]; then
+    echo "ERROR: sentry node error"
+    exit 1
+fi
+
+SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_PEER=$SENTRY_SEED
+echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
+
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
 docker network rm kiranet || echo "Failed to remove kira network"
 docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
@@ -124,6 +158,8 @@ echo $SIGNER_MNEMONIC
 echo $FAUCET_MNEMONIC
 
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP} Sentry IP: ${KIRA_SENTRY_IP}"
+
+source $WORKSTATION_SCRIPTS/update-validator-image.sh
 
 docker run -d \
     --restart=always \
@@ -172,50 +208,13 @@ SEEDS=$(echo "${NODE_ID}@$KIRA_VALIDATOR_IP:$P2P_LOCAL_PORT" | xargs | tr -d '\n
 PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"
 
-docker network rm sentrynet || echo "Failed to remove setnry network"
-docker network create --subnet=103.0.0.0/8 sentrynet
-
-echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
-
-cp $GENESIS_DESTINATION $KIRA_DOCKER/validator/configs
-cp $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
-
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
 CDHelper text lineswap --insert="persistent_peers = \"$PEERS\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
 CDHelper text lineswap --insert="private_peer_ids = \"$NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
 
-source $WORKSTATION_SCRIPTS/update-sentry-image.sh
-
-docker run -d \
-    --restart=always \
-    --name sentry \
-    --network sentrynet \
-    --ip 103.0.1.1 \
-    -p 9090:9090/tcp \
-    -e DEBUG_MODE="True" \
-    sentry:latest
-
-echo "INFO: Waiting for sentry to start..."
-sleep 10
-
-SENTRY_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id || echo "error")
-echo $SENTRY_ID
-if [ "$SENTRY_ID" == "error" ]; then
-    echo "ERROR: sentry node error"
-    exit 1
-fi
-
-SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_PEER=$SENTRY_SEED
-echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
-
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
-
-docker cp $KIRA_DOCKER/validator/configs/config.toml validator:/root/.sekaid/config/
+docker cp $GENESIS_DESTINATION sentry:/root/.sekaid/config
+docker cp $KIRA_DOCKER/sentry/configs/config.toml sentry:/root/.sekaid/config/
 
 # ---------- INTERX BEGIN ----------
 docker network rm servicenet || echo "Failed to remove service network"

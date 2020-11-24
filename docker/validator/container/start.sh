@@ -7,6 +7,8 @@ set -x
 echo "Staring validator..."
 SEKAID_HOME=$HOME/.sekaid
 
+cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
+
 rm -f /root/output.log
 touch /root/output.log
 
