@@ -10,6 +10,8 @@ SEKAID_HOME=$HOME/.sekaid
 rm -f /root/output.log
 touch /root/output.log
 
+rm -rf $SEKAID_HOME/config
+
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 # cp $SELF_CONFIGS/genesis.json $SEKAID_HOME/config/genesis.json
 # cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
