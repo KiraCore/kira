@@ -7,8 +7,8 @@ set -x
 echo "Staring validator..."
 SEKAID_HOME=$HOME/.sekaid
 
-rm -f /root/output.log
-touch /root/output.log
+# rm -f /root/output.log
+# touch /root/output.log
 
 rm -rf $SEKAID_HOME/config
 
@@ -25,7 +25,7 @@ sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --h
 sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME
 sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover >/root/output.log
+yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
 sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
 yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover

@@ -119,6 +119,10 @@ if [ "$SENTRY_ID" == "error" ]; then
     exit 1
 fi
 
+P2P_LOCAL_PORT="26656"
+P2P_PROXY_PORT="10000"
+RPC_PROXY_PORT="10001"
+
 SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_PEER=$SENTRY_SEED
 echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
@@ -197,10 +201,6 @@ PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
 PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
 rm -f $PRIV_VALIDATOR_KEY_DESTINATION
 docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
-
-P2P_LOCAL_PORT="26656"
-P2P_PROXY_PORT="10000"
-RPC_PROXY_PORT="10001"
 
 NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id || echo "error")
 # NOTE: New lines have to be removed

@@ -7,8 +7,8 @@ set -x
 echo "Staring sentry..."
 SEKAID_HOME=$HOME/.sekaid
 
-rm -f /root/output.log
-touch /root/output.log
+# rm -f /root/output.log
+# touch /root/output.log
 
 rm -rf $SEKAID_HOME/config
 
@@ -21,4 +21,4 @@ sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=tes
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
-sekaid start --home=$SEKAID_HOME >/root/output.log
+sekaid start --home=$SEKAID_HOME
