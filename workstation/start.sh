@@ -104,9 +104,10 @@ docker run -d \
     --restart=always \
     --name sentry \
     --network host \
-    --ip 103.0.1.1 \
+    -p 103.0.1.1:26657:26657 \
+    -p 103.0.1.1:9090:9090 \
     -e DEBUG_MODE="True" \
-    sentry:latest
+    sentry:latest # --ip 103.0.1.1 \
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
