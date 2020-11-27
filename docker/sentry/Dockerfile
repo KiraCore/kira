@@ -26,6 +26,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 RUN printenv
 
 EXPOSE 9090
+EXPOSE 26657
 
 CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]
 
