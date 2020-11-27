@@ -11,6 +11,8 @@ cd $SEKAI/INTERX
 # rm -f /root/output.log
 # touch /root/output.log
 
+mkdir cache
+
 rm -f $SEKAI/INTERX/config.json
 mv /root/config.json $SEKAI/INTERX
 
