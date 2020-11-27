@@ -240,19 +240,19 @@ sleep 10
 # ---------- INTERX END ----------
 
 # ---------- FRONTEND BEGIN ----------
-source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+# source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
-docker run -d \
-    --restart=always \
-    --name frontend \
-    --network servicenet \
-    --ip 104.0.1.2 \
-    -p 80:80/tcp \
-    -e DEBUG_MODE="True" \
-    frontend:latest
+# docker run -d \
+#     --restart=always \
+#     --name frontend \
+#     --network servicenet \
+#     --ip 104.0.1.2 \
+#     -p 80:80/tcp \
+#     -e DEBUG_MODE="True" \
+#     frontend:latest
 
-echo "INFO: Waiting for frontend to start..."
-sleep 10
+# echo "INFO: Waiting for frontend to start..."
+# sleep 10
 # ---------- FRONTEND END ----------
 
 # ---------- KMS BEGIN ----------
