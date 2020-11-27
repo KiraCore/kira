@@ -106,6 +106,7 @@ docker run -d \
     --network sentrynet \
     --ip 103.0.1.1 \
     -p 9090:9090/tcp \
+    -p 26657:26657/tcp \
     -e DEBUG_MODE="True" \
     sentry:latest
 
