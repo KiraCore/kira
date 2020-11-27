@@ -77,6 +77,7 @@ abci = "socket"
 # so the app can decide if we should keep the connection or not
 filter_peers = false
 
+
 #######################################################################
 ###                 Advanced Configuration Options                  ###
 #######################################################################
@@ -112,7 +113,6 @@ grpc_laddr = ""
 # Should be < {ulimit -Sn} - {MaxNumInboundPeers} - {MaxNumOutboundPeers} - {N of wal, db and other open files}
 # 1024 - 40 - 10 - 50 = 924 = ~900
 grpc_max_open_connections = 900
-
 
 # Activate unsafe RPC commands like /dial_seeds and /unsafe_flush_mempool
 unsafe = false
@@ -182,6 +182,7 @@ external_address = ""
 
 # Comma separated list of seed nodes to connect to
 seeds = ""
+
 # Comma separated list of nodes to keep persistent connections to
 persistent_peers = ""
 
@@ -193,7 +194,7 @@ addr_book_file = "config/addrbook.json"
 
 # Set true for strict address routability rules
 # Set false for private or local networks
-addr_book_strict = false
+addr_book_strict = true
 
 # Maximum number of inbound peers
 max_num_inbound_peers = 40
@@ -220,7 +221,7 @@ send_rate = 5120000
 recv_rate = 5120000
 
 # Set true to enable the peer-exchange reactor
-pex = false
+pex = true
 
 # Seed mode, in which node constantly crawls the network and looks for
 # peers. If another node asks it for addresses, it responds and disconnects.
@@ -253,7 +254,7 @@ size = 5000
 # Limit the total size of all txs in the mempool.
 # This only accounts for raw transactions (e.g. given 1MB transactions and
 # max_txs_bytes=5MB, mempool will only accept 5 transactions).
-ax_txs_bytes = 1073741824
+max_txs_bytes = 1073741824
 
 # Size of the cache (used to filter transactions we saw earlier) in transactions
 cache_size = 10000
@@ -327,7 +328,6 @@ skip_timeout_commit = false
 create_empty_blocks = true
 create_empty_blocks_interval = "0s"
 
-
 # Reactor sleep duration parameters
 peer_gossip_sleep_duration = "100ms"
 peer_query_maj23_sleep_duration = "2s"
@@ -345,7 +345,7 @@ peer_query_maj23_sleep_duration = "2s"
 # Options:
 #   1) "null"
 #   2) "kv" (default) - the simplest possible indexer, backed by key-value storage (defaults to levelDB; see DBBackend).
-#               - When "kv" is chosen "tx.height" and "tx.hash" will always be indexed.
+# 		- When "kv" is chosen "tx.height" and "tx.hash" will always be indexed.
 indexer = "kv"
 
 #######################################################
