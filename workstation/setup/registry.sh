@@ -23,7 +23,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     docker run -d \
         --network regnet \
         --hostname $KIRA_REGISTRY_NAME \
-        --ip 10.0.0.1 \
+        --ip 10.0.0.2 \
         --restart=always \
         --name registry \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
