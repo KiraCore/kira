@@ -17,15 +17,13 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     ${KIRA_SCRIPTS}/container-delete.sh "registry"
     docker network rm regnet || echo "Failed to remove registry network"
     docker network create \
-        --driver=bridge \
         --subnet=10.0.0.0/16 \
-        --gateway=10.0.0.1 \
         regnet
 
     docker run -d \
-        --net=regnet \
+        --network regnet \
         --hostname $KIRA_REGISTRY_NAME \
-        --ip 10.0.0.2 \
+        --ip 10.0.0.1 \
         --restart=always \
         --name registry \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
