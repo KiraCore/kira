@@ -20,7 +20,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
         --driver=bridge \
         --subnet=10.0.0.0/16 \
         --gateway=10.0.0.1 \
-        regnet # --gateway=10.0.0.1 \
+        regnet
 
     docker run -d \
         --net=regnet \
