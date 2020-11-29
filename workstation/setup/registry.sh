@@ -10,7 +10,7 @@ CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.14-$KIRA_REGISTRY_IP-$KIRA_REGISTRY_NAME"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.15-$KIRA_REGISTRY_IP-$KIRA_REGISTRY_NAME"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "$CONTAINER_REACHABLE" == "False" ]; then
     echo "Container 'registry' does NOT exist or update is required, creating..."
 
@@ -24,12 +24,13 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
 
     docker run -d \
         --net=regnet \
+        --hostname $KIRA_REGISTRY_NAME \
         --ip 10.0.0.2 \
         --restart=always \
         --name registry \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
-        registry:2.7.1 # --hostname $KIRA_REGISTRY_NAME \
+        registry:2.7.1
 
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
     rm -f -v $DOCKER_DAEMON_JSON
