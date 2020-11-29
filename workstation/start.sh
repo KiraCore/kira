@@ -169,7 +169,7 @@ docker run -d \
     --restart=always \
     --name validator \
     --network kiranet \
-    --ip $10.2.0.1 \
+    --ip 10.2.0.1 \
     -e DEBUG_MODE="True" \
     --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
     --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
