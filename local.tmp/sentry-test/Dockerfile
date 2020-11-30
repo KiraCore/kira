@@ -44,9 +44,12 @@ RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
 
 ADD ./container /root
+ADD ./configs /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
+
+EXPOSE 26657
 
 CMD ["sh", "-c", "/bin/bash /root/start.sh"]

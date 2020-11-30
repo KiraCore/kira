@@ -14,7 +14,7 @@ rm -rf $SEKAID_HOME/config
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 # cp $SELF_CONFIGS/genesis.json $SEKAID_HOME/config/genesis.json
-# cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
+cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
 
 sekaid keys add temp --keyring-backend=test --home=$SEKAID_HOME
 sekaid add-genesis-account $(sekaid keys show temp -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME

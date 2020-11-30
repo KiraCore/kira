@@ -17,6 +17,7 @@ RUN cd ${SEKAI} && go install ./cmd/sekaid
 RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
 
+ADD ./configs ${SELF_CONFIGS}
 ADD ./container ${SELF_CONTAINER}
 
 RUN chmod 777 -R ${SELF_HOME}
