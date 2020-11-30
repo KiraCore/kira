@@ -96,9 +96,6 @@ cd $KIRA_WORKSTATION
 docker network rm kiranet || echo "Failed to remove kira network"
 docker network create \
     --driver=bridge \
-    --subnet=10.2.0.0/16 \
-    --subnet=10.3.0.0/16 \
-    --subnet=10.4.0.0/16 \
     kiranet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
