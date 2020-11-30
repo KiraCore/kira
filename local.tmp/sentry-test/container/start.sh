@@ -6,6 +6,7 @@ set -x
 
 echo "Staring sentry..."
 SEKAID_HOME=$HOME/.sekaid
+rm -rf $SEKAID_HOME/config
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 # cp root/config.toml $SEKAID_HOME/config/config.toml
@@ -15,4 +16,4 @@ sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=tes
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
-sekaid start --home=$SEKAID_HOME --abci=grpc --rpc.laddr="tcp://0.0.0.0:26657"
+sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657"

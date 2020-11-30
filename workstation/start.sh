@@ -93,11 +93,13 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 
 cd $KIRA_WORKSTATION
 
-docker network rm sentrynet || echo "Failed to remove setnry network"
+docker network rm kiranet || echo "Failed to remove kira network"
 docker network create \
     --driver=bridge \
+    --subnet=10.2.0.0/16 \
     --subnet=10.3.0.0/16 \
-    sentrynet
+    --subnet=10.4.0.0/16 \
+    kiranet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -106,7 +108,7 @@ source $WORKSTATION_SCRIPTS/update-sentry-image.sh
 docker run -d \
     --restart=always \
     --name sentry \
-    --net=sentrynet \
+    --net=kiranet \
     --ip 10.3.0.2 \
     \
     \
@@ -136,12 +138,6 @@ CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCK
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
 # CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
-
-docker network rm kiranet || echo "Failed to remove kira network"
-docker network create \
-    --driver=bridge \
-    --subnet=10.2.0.0/16 \
-    kiranet
 
 GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
@@ -225,11 +221,6 @@ docker cp $GENESIS_DESTINATION sentry:/root/.sekaid/config
 docker cp $KIRA_DOCKER/sentry/configs/config.toml sentry:/root/.sekaid/config/
 
 # ---------- INTERX BEGIN ----------
-docker network rm servicenet || echo "Failed to remove service network"
-docker network create \
-    --driver=bridge \
-    --subnet=10.4.0.0/16 \
-    servicenet
 
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
 jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
@@ -239,7 +230,7 @@ source $WORKSTATION_SCRIPTS/update-interx-image.sh
 docker run -d \
     --restart=always \
     --name interx \
-    --net=servicenet \
+    --net=kiranet \
     --ip 10.4.0.2 \
     \
     -e DEBUG_MODE="True" \

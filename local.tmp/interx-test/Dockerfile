@@ -51,6 +51,7 @@ RUN cd ${SEKAI} && git checkout KIP_31
 # RUN cd ${SEKAI}/INTERX && make generate
 
 ADD ./container /root
+ADD ./configs /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 

@@ -6,10 +6,6 @@ set -x
 
 echo "Staring sentry..."
 SEKAID_HOME=$HOME/.sekaid
-
-# rm -f /root/output.log
-# touch /root/output.log
-
 rm -rf $SEKAID_HOME/config
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME

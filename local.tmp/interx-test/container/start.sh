@@ -8,4 +8,9 @@ echo "Staring INTERX..."
 
 cd $SEKAI/INTERX
 
-RPC=http://103.0.1.1:26657 make start
+mkdir cache
+
+rm -f $SEKAI/INTERX/config.json
+mv /root/config.json $SEKAI/INTERX
+
+GRPC=dns:///10.3.0.2:9090 RPC=http://10.3.0.2:26657 make start
