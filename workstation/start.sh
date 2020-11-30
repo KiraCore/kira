@@ -94,7 +94,10 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 cd $KIRA_WORKSTATION
 
 docker network rm sentrynet || echo "Failed to remove setnry network"
-docker network create --subnet=103.0.0.0/8 sentrynet
+docker network create \
+    --driver=bridge \
+    --subnet=10.3.0.0/16 \
+    sentrynet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -103,11 +106,12 @@ source $WORKSTATION_SCRIPTS/update-sentry-image.sh
 docker run -d \
     --restart=always \
     --name sentry \
-    --network host \
-    -p 103.0.1.1:26657:26657 \
-    -p 103.0.1.1:9090:9090 \
+    --net=sentrynet \
+    --ip 10.3.0.2 \
+    -p 10.3.0.2:26657:26657 \
+    -p 10.3.0.2:9090:9090 \
     -e DEBUG_MODE="True" \
-    sentry:latest # --ip 103.0.1.1 \
+    sentry:latest
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
@@ -123,7 +127,7 @@ P2P_LOCAL_PORT="26656"
 P2P_PROXY_PORT="10000"
 RPC_PROXY_PORT="10001"
 
-SENTRY_SEED=$(echo "${SENTRY_ID}@103.0.1.1:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_ID}@10.3.0.2:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_PEER=$SENTRY_SEED
 echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
 
@@ -133,7 +137,10 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 # CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
 docker network rm kiranet || echo "Failed to remove kira network"
-docker network create --subnet=$KIRA_VALIDATOR_SUBNET kiranet
+docker network create \
+    --driver=bridge \
+    --subnet=10.2.0.0/16 \
+    kiranet
 
 GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
@@ -168,8 +175,8 @@ source $WORKSTATION_SCRIPTS/update-validator-image.sh
 docker run -d \
     --restart=always \
     --name validator \
-    --network kiranet \
-    --ip $KIRA_VALIDATOR_IP \
+    --net=kiranet \
+    --ip 10.2.0.2 \
     -e DEBUG_MODE="True" \
     --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
     --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
@@ -204,7 +211,7 @@ docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
 
 NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id || echo "error")
 # NOTE: New lines have to be removed
-SEEDS=$(echo "${NODE_ID}@$KIRA_VALIDATOR_IP:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SEEDS=$(echo "${NODE_ID}@10.2.0.2:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PEERS=$SEEDS
 echo "SUCCESS: validator is up and running, seed: $SEEDS"
 
@@ -218,7 +225,10 @@ docker cp $KIRA_DOCKER/sentry/configs/config.toml sentry:/root/.sekaid/config/
 
 # ---------- INTERX BEGIN ----------
 docker network rm servicenet || echo "Failed to remove service network"
-docker network create --subnet=104.0.0.0/8 servicenet
+docker network create \
+    --driver=bridge \
+    --subnet=10.4.0.0/16 \
+    servicenet
 
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
 jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
@@ -228,8 +238,8 @@ source $WORKSTATION_SCRIPTS/update-interx-image.sh
 docker run -d \
     --restart=always \
     --name interx \
-    --network servicenet \
-    --ip 104.0.1.1 \
+    --net=servicenet \
+    --ip 10.4.0.2 \
     -p 11000:11000/tcp \
     -e DEBUG_MODE="True" \
     interx:latest
