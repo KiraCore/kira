@@ -108,10 +108,11 @@ docker run -d \
     --name sentry \
     --net=sentrynet \
     --ip 10.3.0.2 \
-    -p 10.3.0.2:26657:26657 \
-    -p 10.3.0.2:9090:9090 \
+    \
+    \
     -e DEBUG_MODE="True" \
-    sentry:latest
+    sentry:latest # -p 10.3.0.2:26657:26657 \
+# -p 10.3.0.2:9090:9090 \
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
@@ -240,9 +241,9 @@ docker run -d \
     --name interx \
     --net=servicenet \
     --ip 10.4.0.2 \
-    -p 11000:11000/tcp \
+    \
     -e DEBUG_MODE="True" \
-    interx:latest
+    interx:latest # -p 11000:11000/tcp \
 
 echo "INFO: Waiting for INTERX to start..."
 sleep 10
