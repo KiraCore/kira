@@ -94,10 +94,7 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 cd $KIRA_WORKSTATION
 
 docker network rm sentrynet || echo "Failed to remove setnry network"
-docker network create \
-    --driver=bridge \
-    --subnet=10.3.0.0/16 \
-    sentrynet
+docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -107,12 +104,9 @@ docker run -d \
     --restart=always \
     --name sentry \
     --net=sentrynet \
-    --ip 10.3.0.2 \
-    \
-    \
+    --ip $KIRA_SENTRY_IP \
     -e DEBUG_MODE="True" \
-    sentry:latest # -p 10.3.0.2:26657:26657 \
-# -p 10.3.0.2:9090:9090 \
+    sentry:latest
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
@@ -128,7 +122,7 @@ P2P_LOCAL_PORT="26656"
 P2P_PROXY_PORT="10000"
 RPC_PROXY_PORT="10001"
 
-SENTRY_SEED=$(echo "${SENTRY_ID}@10.3.0.2:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_ID}@${KIRA_SENTRY_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_PEER=$SENTRY_SEED
 echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
 
@@ -226,10 +220,7 @@ docker cp $KIRA_DOCKER/sentry/configs/config.toml sentry:/root/.sekaid/config/
 
 # ---------- INTERX BEGIN ----------
 docker network rm servicenet || echo "Failed to remove service network"
-docker network create \
-    --driver=bridge \
-    --subnet=10.4.0.0/16 \
-    servicenet
+docker network create --driver=bridge --subnet=10.4.0.0/16 servicenet
 
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
 jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
@@ -241,9 +232,9 @@ docker run -d \
     --name interx \
     --net=servicenet \
     --ip 10.4.0.2 \
-    \
     -e DEBUG_MODE="True" \
-    interx:latest # -p 11000:11000/tcp \
+    --env KIRA_SENTRY_IP=$KIRA_SENTRY_IP \
+    interx:latest
 
 docker network connect sentrynet interx
 

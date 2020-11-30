@@ -16,4 +16,4 @@ mkdir cache
 rm -f $SEKAI/INTERX/config.json
 mv /root/config.json $SEKAI/INTERX
 
-GRPC=dns:///10.3.0.2:9090 RPC=http://10.3.0.2:26657 make start
+GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
