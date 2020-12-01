@@ -93,8 +93,126 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 
 cd $KIRA_WORKSTATION
 
+P2P_LOCAL_PORT="26656"
+P2P_PROXY_PORT="10000"
+RPC_PROXY_PORT="10001"
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Constants. The following node-ids are generated from node_key.json files. In each docker context/configs folder, you can see node_key.json file.
+
+VALIDATOR_NODE_ID="a9f700cc10476b905cd4a4dbd4f959aee5924c31"
+SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
+
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@${KIRA_VALIDATOR_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@${KIRA_SENTRY_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+
+GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
+GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
+rm -rfv $DOCKER_COMMON
+mkdir -p $DOCKER_COMMON
+rm -f $GENESIS_DESTINATION
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Generate two mnemonic keys (for signing & faucet) using hd-wallet-derive.
+
+git clone https://github.com/dan-da/hd-wallet-derive.git
+cd hd-wallet-derive
+yes "yes" | composer install
+
+SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+
+# * Cut the first and the last quotes("")
+SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
+SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
+
+FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
+FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Config validator/configs/config.toml
+
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
+# CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `kiranet` bridge network
+
+docker network rm kiranet || echo "Failed to remove kira network"
+docker network create --driver=bridge --subnet=$KIRA_VALIDATOR_SUBNET kiranet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the validator
+
+echo "Kira Validator IP: ${KIRA_VALIDATOR_IP}"
+
+source $WORKSTATION_SCRIPTS/update-validator-image.sh
+
+docker run -d \
+    --restart=always \
+    --name validator \
+    --net=kiranet \
+    --ip $KIRA_VALIDATOR_IP \
+    -e DEBUG_MODE="True" \
+    --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
+    --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
+    validator:latest
+
+echo "INFO: Waiting for validator to start..."
+sleep 10
+# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Check if validator is running
+echo "INFO: Inspecting if validator is running..."
+SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
+if [ "$SEKAID_VERSION" == "error" ]; then
+    echo "ERROR: sekaid was NOT found"
+    exit 1
+else
+    echo "SUCCESS: sekaid $SEKAID_VERSION was found"
+fi
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Get the genesis file from the validator.
+echo "INFO: Saving genesis file..."
+docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
+
+if [ ! -f "$GENESIS_DESTINATION" ]; then
+    echo "ERROR: Failed to copy genesis file from validator"
+    exit 1
+fi
+
+# echo "INFO: Saving priv_validator_key.json file..."
+# PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
+# PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
+# rm -f $PRIV_VALIDATOR_KEY_DESTINATION
+# docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
+
+CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
+echo "INFO: Check Validator Node id..."
+echo "${VALIDATOR_NODE_ID} - ${CHECK_VALIDATOR_NODE_ID}"
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `sentrynet` bridge network
+
 docker network rm sentrynet || echo "Failed to remove setnry network"
 docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Configure config.toml file for sentry and provide genesis file.
+
+CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
+
+cp -i $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the sentry node
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
@@ -108,122 +226,38 @@ docker run -d \
     -e DEBUG_MODE="True" \
     sentry:latest
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * conect sentry to the kiranet
+
+docker network connect kiranet sentry
+
 echo "INFO: Waiting for sentry to start..."
 sleep 10
 
-SENTRY_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id || echo "error")
-echo $SENTRY_ID
-if [ "$SENTRY_ID" == "error" ]; then
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Check sentry's node id
+
+CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
+echo $CHECK_SENTRY_NODE_ID
+if [ "$CHECK_SENTRY_NODE_ID" == "error" ]; then
     echo "ERROR: sentry node error"
     exit 1
 fi
 
-P2P_LOCAL_PORT="26656"
-P2P_PROXY_PORT="10000"
-RPC_PROXY_PORT="10001"
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `servicenet` bridge network
 
-SENTRY_SEED=$(echo "${SENTRY_ID}@${KIRA_SENTRY_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_PEER=$SENTRY_SEED
-echo "SUCCESS: sentry is up and running, seed: $SENTRY_SEED"
-
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
-# CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
-
-docker network rm kiranet || echo "Failed to remove kira network"
-docker network create \
-    --driver=bridge \
-    --subnet=10.2.0.0/16 \
-    kiranet
-
-GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
-GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
-rm -rfv $DOCKER_COMMON
-mkdir -p $DOCKER_COMMON
-rm -f $GENESIS_DESTINATION
-
-SEEDS=""
-PEERS=""
-
-git clone https://github.com/dan-da/hd-wallet-derive.git
-cd hd-wallet-derive
-yes "yes" | composer install
-
-SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-
-SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
-SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
-
-FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
-FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
-
-echo "********************************************"
-echo $SIGNER_MNEMONIC
-echo $FAUCET_MNEMONIC
-
-echo "Kira Validator IP: ${KIRA_VALIDATOR_IP} Registry IP: ${KIRA_REGISTRY_IP} Sentry IP: ${KIRA_SENTRY_IP}"
-
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
-
-docker run -d \
-    --restart=always \
-    --name validator \
-    --net=kiranet \
-    --ip 10.2.0.2 \
-    -e DEBUG_MODE="True" \
-    --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
-    --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
-    validator:latest
-
-echo "INFO: Waiting for validator to start..."
-sleep 10
-# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
-
-echo "INFO: Inspecting if validator is running..."
-SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
-if [ "$SEKAID_VERSION" == "error" ]; then
-    echo "ERROR: sekaid was NOT found"
-    exit 1
-else
-    echo "SUCCESS: sekaid $SEKAID_VERSION was found"
-fi
-
-echo "INFO: Saving genesis file..."
-docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
-
-if [ ! -f "$GENESIS_DESTINATION" ]; then
-    echo "ERROR: Failed to copy genesis file from validator"
-    exit 1
-fi
-
-echo "INFO: Saving priv_validator_key.json file..."
-PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
-PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
-rm -f $PRIV_VALIDATOR_KEY_DESTINATION
-docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
-
-NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id || echo "error")
-# NOTE: New lines have to be removed
-SEEDS=$(echo "${NODE_ID}@10.2.0.2:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PEERS=$SEEDS
-echo "SUCCESS: validator is up and running, seed: $SEEDS"
-
-CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="persistent_peers = \"$PEERS\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="private_peer_ids = \"$NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
-
-docker cp $GENESIS_DESTINATION sentry:/root/.sekaid/config
-docker cp $KIRA_DOCKER/sentry/configs/config.toml sentry:/root/.sekaid/config/
-
-# ---------- INTERX BEGIN ----------
 docker network rm servicenet || echo "Failed to remove service network"
-docker network create --driver=bridge --subnet=10.4.0.0/16 servicenet
+docker network create --driver=bridge --subnet=$KIRA_SERVICE_SUBNET servicenet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Update interx's config for signer and fuacet mnemonic keys
 
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
 jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the interx
 
 source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
@@ -231,15 +265,19 @@ docker run -d \
     --restart=always \
     --name interx \
     --net=servicenet \
-    --ip 10.4.0.2 \
+    --ip $KIRA_INTERX_IP \
     -e DEBUG_MODE="True" \
     --env KIRA_SENTRY_IP=$KIRA_SENTRY_IP \
     interx:latest
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * conect interx to the sentrynet
 
 docker network connect sentrynet interx
 
 echo "INFO: Waiting for INTERX to start..."
 sleep 10
+
 # ---------- INTERX END ----------
 
 # ---------- FRONTEND BEGIN ----------
