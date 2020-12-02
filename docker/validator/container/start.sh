@@ -35,4 +35,4 @@ sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test -
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
-sekaid start --home=$SEKAID_HOME
+sekaid start --home=$SEKAID_HOME --grpc.enable=false
