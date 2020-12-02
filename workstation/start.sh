@@ -135,7 +135,7 @@ FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
-# CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://101.0.1.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://10.1.0.1:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kiranet` bridge network
@@ -185,11 +185,14 @@ if [ ! -f "$GENESIS_DESTINATION" ]; then
     exit 1
 fi
 
-# echo "INFO: Saving priv_validator_key.json file..."
-# PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
-# PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
-# rm -f $PRIV_VALIDATOR_KEY_DESTINATION
-# docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Get the genesis file from the validator.
+
+echo "INFO: Saving priv_validator_key.json file..."
+PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
+PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
+rm -f $PRIV_VALIDATOR_KEY_DESTINATION
+docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
 
 CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
 echo "INFO: Check Validator Node id..."
@@ -281,21 +284,26 @@ sleep 10
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kmsnet` bridge network
 
-# docker network rm kmsnet || echo "Failed to remove kms network"
-# docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the KMS node
 
-# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
+cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
 
-# source $WORKSTATION_SCRIPTS/update-kms-image.sh
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
-# KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
-# echo KMS_NODE_ID
+docker run -d \
+    --restart=always \
+    --name kms \
+    --net=kmsnet \
+    --ip $KIRA_KMS_IP \
+    -e DEBUG_MODE="True" \
+    kms:latest
 
-# echo "INFO: Waiting for kms to start..."
-# sleep 10
+echo "INFO: Waiting for kms to start..."
+sleep 10
 
 # ---------- KMS END ----------
 

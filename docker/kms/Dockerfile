@@ -12,8 +12,8 @@ RUN cd ${SELF_HOME}/kms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
 ADD ./container ${SELF_CONTAINER}
-ADD ./config/tmkms.toml ${SELF_KMS_RELEASE}
-ADD ./config/priv_validator_key.json ${SELF_KMS_RELEASE}
+ADD ./configs/tmkms.toml ${SELF_KMS_RELEASE}
+ADD ./configs/priv_validator_key.json ${SELF_KMS_RELEASE}
 
 RUN mkdir /root/.tmkms/
 
