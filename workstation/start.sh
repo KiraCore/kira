@@ -229,7 +229,7 @@ docker run -d \
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * conect sentry to the kiranet
 
-docker network connect kiranet sentry
+# docker network connect kiranet sentry
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
