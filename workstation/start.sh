@@ -229,7 +229,7 @@ docker run -d \
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * conect sentry to the kiranet
 
-# docker network connect kiranet sentry
+docker network connect kiranet sentry
 
 echo "INFO: Waiting for sentry to start..."
 sleep 10
@@ -278,6 +278,27 @@ docker network connect sentrynet interx
 echo "INFO: Waiting for INTERX to start..."
 sleep 10
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `kmsnet` bridge network
+
+# docker network rm kmsnet || echo "Failed to remove kms network"
+# docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the KMS node
+
+# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
+
+# source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+# KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
+# echo KMS_NODE_ID
+
+# echo "INFO: Waiting for kms to start..."
+# sleep 10
+
+# ---------- KMS END ----------
+
 # ---------- INTERX END ----------
 
 # ---------- FRONTEND BEGIN ----------
@@ -295,20 +316,3 @@ sleep 10
 # echo "INFO: Waiting for frontend to start..."
 # sleep 10
 # ---------- FRONTEND END ----------
-
-# ---------- KMS BEGIN ----------
-
-# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/config
-
-# docker network rm kmsnet || echo "Failed to remove kms network"
-# docker network create --subnet=101.0.0.0/8 kmsnet
-
-# source $WORKSTATION_SCRIPTS/update-kms-image.sh
-
-# KMS_NODE_ID=$(docker run -d --restart=always --name kms --network kmsnet --ip 101.0.1.1 -e DEBUG_MODE="True" kms:latest)
-# echo KMS_NODE_ID
-
-# echo "INFO: Waiting for kms to start..."
-# sleep 10
-
-# ---------- KMS END ----------
