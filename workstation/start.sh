@@ -111,7 +111,6 @@ docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
 source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 docker run -d \
-    --restart=always \
     --name kms \
     --net=kmsnet \
     --ip $KIRA_KMS_IP \
