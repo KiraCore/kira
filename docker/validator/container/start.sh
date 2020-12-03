@@ -7,7 +7,7 @@ set -x
 echo "Staring validator..."
 SEKAID_HOME=$HOME/.sekaid
 
-# rm -rf $SEKAID_HOME/config
+rm -rf $SEKAID_HOME
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 
