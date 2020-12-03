@@ -98,9 +98,33 @@ P2P_PROXY_PORT="10000"
 RPC_PROXY_PORT="10001"
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `kmsnet` bridge network
+
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the KMS node
+
+# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
+
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+docker run -d \
+    --restart=always \
+    --name kms \
+    --net=kmsnet \
+    --ip $KIRA_KMS_IP \
+    -e DEBUG_MODE="True" \
+    kms:latest
+
+echo "INFO: Waiting for kms to start..."
+sleep 10
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Constants. The following node-ids are generated from node_key.json files. In each docker context/configs folder, you can see node_key.json file.
 
-VALIDATOR_NODE_ID="a9f700cc10476b905cd4a4dbd4f959aee5924c31"
+VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
 SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@${KIRA_VALIDATOR_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -163,6 +187,8 @@ echo "INFO: Waiting for validator to start..."
 sleep 10
 # source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
 
+docker network connect kmsnet validator
+
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check if validator is running
 echo "INFO: Inspecting if validator is running..."
@@ -187,11 +213,11 @@ fi
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Get the genesis file from the validator.
 
-echo "INFO: Saving priv_validator_key.json file..."
-PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
-PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
-rm -f $PRIV_VALIDATOR_KEY_DESTINATION
-docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
+# echo "INFO: Saving priv_validator_key.json file..."
+# PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
+# PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
+# rm -f $PRIV_VALIDATOR_KEY_DESTINATION
+# docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
 
 CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
 echo "INFO: Check Validator Node id..."
@@ -279,32 +305,6 @@ docker network connect sentrynet interx
 
 echo "INFO: Waiting for INTERX to start..."
 sleep 10
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Create `kmsnet` bridge network
-
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Run the KMS node
-
-cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
-
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
-
-docker run -d \
-    --restart=always \
-    --name kms \
-    --net=kmsnet \
-    --ip $KIRA_KMS_IP \
-    -e DEBUG_MODE="True" \
-    kms:latest
-
-echo "INFO: Waiting for kms to start..."
-sleep 10
-
-# ---------- KMS END ----------
 
 # ---------- INTERX END ----------
 
