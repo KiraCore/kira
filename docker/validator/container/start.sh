@@ -17,7 +17,7 @@ ls
 
 cat config.toml
 
-cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
+# cp $SELF_CONFIGS/config.toml $SEKAID_HOME/config/config.toml
 # cp $SELF_CONFIGS/node_key.json $SEKAID_HOME/config/node_key.json
 
 sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
