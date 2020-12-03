@@ -98,29 +98,6 @@ P2P_PROXY_PORT="10000"
 RPC_PROXY_PORT="10001"
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Create `kmsnet` bridge network
-
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Run the KMS node
-
-# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
-
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
-
-docker run -d \
-    --name kms \
-    --net=kmsnet \
-    --ip $KIRA_KMS_IP \
-    -e DEBUG_MODE="True" \
-    kms:latest
-
-echo "INFO: Waiting for kms to start..."
-sleep 10
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Constants. The following node-ids are generated from node_key.json files. In each docker context/configs folder, you can see node_key.json file.
 
 VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
@@ -185,6 +162,29 @@ docker run -d \
 echo "INFO: Waiting for validator to start..."
 sleep 10
 # source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `kmsnet` bridge network
+
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the KMS node
+
+# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
+
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+docker run -d \
+    --name kms \
+    --net=kmsnet \
+    --ip $KIRA_KMS_IP \
+    -e DEBUG_MODE="True" \
+    kms:latest
+
+echo "INFO: Waiting for kms to start..."
+sleep 10
 
 docker network connect kmsnet validator
 
