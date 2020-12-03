@@ -173,6 +173,7 @@ docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
 # * Run the KMS node
 
 # cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
+docker network connect kmsnet validator
 
 source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
@@ -186,8 +187,6 @@ docker run -d \
 
 echo "INFO: Waiting for kms to start..."
 sleep 10
-
-docker network connect kmsnet validator
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check if validator is running
