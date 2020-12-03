@@ -6,7 +6,7 @@ set -x
 
 echo "Staring sentry..."
 SEKAID_HOME=$HOME/.sekaid
-rm -rf $SEKAID_HOME/config
+rm -rf $SEKAID_HOME
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 cp $SELF_CONFIGS/genesis.json $SEKAID_HOME/config/genesis.json
