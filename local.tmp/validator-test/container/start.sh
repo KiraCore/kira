@@ -16,6 +16,7 @@ SEKAID_HOME=$HOME/.sekaid
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 
 cp /root/config.toml $SEKAID_HOME/config/config.toml
+# cp /root/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
 sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
 sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
@@ -32,6 +33,7 @@ sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test -
 yes "equip exercise shoot mad inside floor wheel loan visual stereo build frozen potato always bulb naive subway foster marine erosion shuffle flee action there" | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
 sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME --pubkey kiravalconspub1zcjduepqrk5qt0u39hg95vhueuyn43gukmwmh5kw5jwn6r0x9gd8fprm6lmsfyvs5n
+sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
+# --pubkey kiravalconspub14r8u30037l6xpqgtndf6nf3hhdds6pf6uhqalu9wu4l89qlglj6szqlepn
 
-sekaid start --home=$SEKAID_HOME
+sekaid start --home=$SEKAID_HOME --trace
