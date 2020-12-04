@@ -36,4 +36,6 @@ sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test -
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 # --pubkey kiravalconspub14r8u30037l6xpqgtndf6nf3hhdds6pf6uhqalu9wu4l89qlglj6szqlepn
 
+ping 10.1.0.2
+
 sekaid start --home=$SEKAID_HOME --trace

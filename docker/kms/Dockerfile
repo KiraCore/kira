@@ -5,7 +5,7 @@ ENV SELF_KMS=${SELF_HOME}/tmkms
 ENV SELF_CONFIGS=${SELF_HOME}/configs
 ENV SELF_KMS_RELEASE=${SELF_KMS}/target/release
 
-RUN cd ${SELF_HOME} && git clone https://github.com/iqlusioninc/tmkms.git && cd tmkms && ls
+RUN cd ${SELF_HOME} && git clone https://github.com/tendermint/tmkms.git && cd tmkms && ls
 
 RUN cd ${SELF_HOME}/tmkms && cargo build --release --features=softsign
 RUN cd ${SELF_HOME}/tmkms && cargo test --all-features
