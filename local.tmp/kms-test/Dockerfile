@@ -6,6 +6,7 @@ RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
 
 RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages clang cmake gcc g++ pkg-config libusb-1.0-0-dev curl
 RUN apt-get install -y git libudev-dev libusb-1.0-0-dev
+RUN apt-get install -y iputils-ping
 
 RUN apt-get update
 

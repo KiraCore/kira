@@ -135,7 +135,7 @@ FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://0.0.0.0:26658\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://0.0.0.0:12345\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kiranet` bridge network
@@ -144,11 +144,20 @@ docker network rm kiranet || echo "Failed to remove kira network"
 docker network create --driver=bridge --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Create `kmsnet` bridge network
+
+docker network rm kmsnet || echo "Failed to remove kms network"
+docker network create --driver=bridge --subnet=$KIRA_KMS_SUBNET kmsnet
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build docker images
+source $WORKSTATION_SCRIPTS/update-validator-image.sh
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
 
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP}"
-
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
 
 docker run -d \
     --restart=always \
@@ -160,23 +169,10 @@ docker run -d \
     --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
     validator:latest
 
-echo "INFO: Waiting for validator to start..."
-sleep 10
-# source $WORKSTATION_SCRIPTS/await-container-init.sh "validator" "300" "10"
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Create `kmsnet` bridge network
-
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --subnet=$KIRA_KMS_SUBNET kmsnet
-
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the KMS node
 
 # cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
-docker network connect kmsnet validator
-
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 docker run -d \
     --restart=always \
@@ -186,7 +182,9 @@ docker run -d \
     -e DEBUG_MODE="True" \
     kms:latest
 
-echo "INFO: Waiting for kms to start..."
+docker network connect kiranet kms
+docker network connect kmsnet validator
+
 sleep 10
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------

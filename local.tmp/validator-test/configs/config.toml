@@ -58,14 +58,14 @@ log_format = "plain"
 genesis_file = "config/genesis.json"
 
 # Path to the JSON file containing the private key to use as a validator in the consensus protocol
-# priv_validator_key_file = "config/priv_validator_key.json"
+priv_validator_key_file = "config/priv_validator_key.json"
 
 # Path to the JSON file containing the last sign state of a validator
 priv_validator_state_file = "data/priv_validator_state.json"
 
 # TCP or UNIX socket address for Tendermint to listen on for
 # connections from an external PrivValidator process
-# priv_validator_laddr = "tcp://0.0.0.0:26658"
+priv_validator_laddr = "tcp://0.0.0.0:12345"
 
 # Path to the JSON file containing the private key to use for node authentication in the p2p protocol
 node_key_file = "config/node_key.json"
