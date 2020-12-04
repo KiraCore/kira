@@ -36,4 +36,4 @@ sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test -
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
-sekaid start --home=$SEKAID_HOME --priv_validator_laddr="tcp://0.0.0.0:26658"
+sekaid start --home=$SEKAID_HOME

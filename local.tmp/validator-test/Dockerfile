@@ -44,6 +44,7 @@ RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
 
 ADD ./container /root
+ADD ./configs /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 
