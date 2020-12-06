@@ -18,4 +18,5 @@ ADD ./configs/priv_validator_key.json ${SELF_KMS_RELEASE}
 RUN mkdir /root/.tmkms/
 
 ARG DEBIAN_FRONTEND=noninteractive
-RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
+
+CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]

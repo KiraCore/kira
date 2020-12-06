@@ -9,7 +9,7 @@ SEKAID_HOME=$HOME/.sekaid
 
 rm -rf $SEKAID_HOME
 
-sekaid init --chain-id=testing testing --home=$SEKAID_HOME
+sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
 
 cd $SEKAID_HOME/config
 

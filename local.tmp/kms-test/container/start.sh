@@ -11,4 +11,4 @@ tmkms softsign import ${SELF_KMS_RELEASE}/priv_validator_key.json /root/.tmkms/s
 
 # ping 10.2.0.2
 
-sleep 10 && tmkms start -c ${SELF_KMS_RELEASE}/tmkms.toml
+sleep 10 && tmkms start -v -c ${SELF_KMS_RELEASE}/tmkms.toml

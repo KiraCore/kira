@@ -175,12 +175,12 @@ docker run -d \
 # cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
 
 docker run -d \
-    --restart=always \
+    \
     --name kms \
     --net=kmsnet \
     --ip $KIRA_KMS_IP \
     -e DEBUG_MODE="True" \
-    kms:latest
+    kms:latest # --restart=always \
 
 docker network connect kiranet kms
 docker network connect kmsnet validator
