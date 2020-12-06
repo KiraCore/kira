@@ -174,6 +174,8 @@ docker run -d \
 
 # cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
 
+echo "Kira KMS IP: ${KIRA_KMS_IP}"
+
 docker run -d \
     \
     --name kms \
