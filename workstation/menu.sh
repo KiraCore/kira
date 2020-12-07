@@ -33,12 +33,15 @@ while :; do
     break
     ;;
 
+  x*)
+    exit 0
+    ;;
+
   2*)
     echo "INFO: Starting Full Node Deployment..."
     echo "Full Node Deployment mode is not yet ready. Please select other option."
     # chmod +x $KIRA_WORKSTATION/submenu.sh
     # source $KIRA_WORKSTATION/submenu.sh --full
-    break
     ;;
 
   3*)
@@ -46,11 +49,6 @@ while :; do
     echo "Validator Node Deployment mode is not yet ready. Please select other option."
     # chmod +x $KIRA_WORKSTATION/submenu.sh
     # source $KIRA_WORKSTATION/submenu.sh --validator
-    break
-    ;;
-
-  x*)
-    exit 0
     ;;
 
   *)
