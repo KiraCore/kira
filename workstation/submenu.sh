@@ -50,9 +50,7 @@ displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------"
 
 while :; do
-  echo -en "Input option: "
-
-  read -p KEY
+  read -p "Input option: " KEY
 
   echo ""
 
