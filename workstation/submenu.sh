@@ -80,6 +80,11 @@ while :; do
     echo "Please select each repo's branches. (Press Enter for default)"
     echo ""
 
+    SEKAI_BRANCH="v0.1.7.4"
+    FRONTEND_BRANCH="dev"
+    INTERX_BRANCH="KIP_31"
+    KMS_BRANCH="develop"
+
     read -p "Input Sekai Branch (Default: v0.1.7.4): " SEKAI_BRANCH
     read -p "Input Kira Frontend Branch (Default: dev): " FRONTEND_BRANCH
     read -p "Input INTERX Branch (Default: KIP_31): " INTERX_BRANCH
