@@ -80,15 +80,15 @@ while :; do
     echo "Please select each repo's branches. (Press Enter for default)"
     echo ""
 
-    SEKAI_BRANCH="v0.1.7.4"
-    FRONTEND_BRANCH="dev"
-    INTERX_BRANCH="KIP_31"
-    KMS_BRANCH="develop"
-
     read -p "Input Sekai Branch (Default: v0.1.7.4): " SEKAI_BRANCH
     read -p "Input Kira Frontend Branch (Default: dev): " FRONTEND_BRANCH
     read -p "Input INTERX Branch (Default: KIP_31): " INTERX_BRANCH
     read -p "Input KMS Branch (Default: develop): " KMS_BRANCH
+
+    [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="v0.1.7.4"
+    [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
+    [ -z "$KMS_BRANCH" ] && KMS_BRANCH="develop"
+    [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="KIP_31"
 
     CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
