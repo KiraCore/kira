@@ -57,14 +57,41 @@ while :; do
   case ${KEY,,} in
   1*)
     echo "INFO: Starting Quick Setup..."
+    echo "SEKAI_BRANCH = v0.1.7.4"
+    echo "FRONTEND_BRANCH = dev"
+    echo "INTERX_BRANCH = KIP_31"
+    echo "KMS_BRANCH = develop"
+
     SEKAI_BRANCH="v0.1.7.4"
-    # CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    FRONTEND_BRANCH="dev"
+    INTERX_BRANCH="KIP_31"
+    KMS_BRANCH="develop"
+
+    CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     # source $KIRA_WORKSTATION/start.sh "False"
     break
     ;;
 
   2*)
     echo "INFO: Starting Advanced Setup..."
+    echo "Please select each repo's branches. (Press Enter for default)"
+    echo ""
+
+    read -p "Input Sekai Branch (Default: v0.1.7.4): " SEKAI_BRANCH
+    read -p "Input Kira Frontend Branch (Default: dev): " FRONTEND_BRANCH
+    read -p "Input INTERX Branch (Default: KIP_31): " INTERX_BRANCH
+    read -p "Input KMS Branch (Default: develop): " KMS_BRANCH
+
+    CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    # source $KIRA_WORKSTATION/start.sh "False"
+
     break
     ;;
 

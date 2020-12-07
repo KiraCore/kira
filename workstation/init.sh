@@ -22,10 +22,18 @@ INTERACTIVE=$4
 
 INFRA_BRANCH="KIP_51"
 [ -z "$KIRA_STOP" ] && KIRA_STOP="False"
-[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
+
+[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="v0.1.7.4"
+[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
+[ -z "$KMS_BRANCH" ] && KMS_BRANCH="develop"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="KIP_31"
+
 [ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
+[ -z "$KMS_REPO" ] && KMS_REPO="https://github.com/iqlusioninc/tmkms"
+[ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
+
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
@@ -43,8 +51,13 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     # START Installing Essentials
     #########################################
     KIRA_REPOS=/kira/repos
+
     KIRA_INFRA="$KIRA_REPOS/kira"
     KIRA_SEKAI="$KIRA_REPOS/sekai"
+    KIRA_FRONTEND="$KIRA_REPOS/frontend"
+    KIRA_KMS="$KIRA_REPOS/kms"
+    KIRA_INTERX="$KIRA_REPOS/interx"
+
     KIRA_SETUP=/kira/setup
     KIRA_MANAGER="/kira/manager"
     KIRA_PROGRESS="/kira/progress"
@@ -54,6 +67,10 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
     mkdir -p $KIRA_INFRA
     mkdir -p $KIRA_SEKAI
+    mkdir -p $KIRA_FRONTEND
+    mkdir -p $KIRA_KMS
+    mkdir -p $KIRA_INTERX
+
     mkdir -p $KIRA_SETUP
     mkdir -p $KIRA_MANAGER
     mkdir -p $KIRA_PROGRESS
@@ -87,8 +104,13 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP=$KIRA_SETUP" --prefix="KIRA_SETUP=" --path=$ETC_PROFILE --append-if-found-not=True
+
         CDHelper text lineswap --insert="KIRA_INFRA=$KIRA_INFRA" --prefix="KIRA_INFRA=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEKAI=$KIRA_SEKAI" --prefix="KIRA_SEKAI=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_FRONTEND=$KIRA_FRONTEND" --prefix="KIRA_FRONTEND=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_KMS=$KIRA_KMS" --prefix="KIRA_KMS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_INTERX=$KIRA_INTERX" --prefix="KIRA_INTERX=" --path=$ETC_PROFILE --append-if-found-not=True
+
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
 
@@ -124,11 +146,19 @@ fi
 CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_PROGRESS=$KIRA_PROGRESS" --prefix="KIRA_PROGRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
+
 CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+
 CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KMS_REPO=$KMS_REPO" --prefix="KMS_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+
 CDHelper text lineswap --insert="KIRA_STOP=$KIRA_STOP" --prefix="KIRA_STOP=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
 

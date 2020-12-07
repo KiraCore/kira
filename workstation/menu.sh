@@ -14,8 +14,8 @@ displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
 displayAlign center $printWidth "Deployment Mode"
 displayAlign left $printWidth " [1] | Demo Mode (local testnet)"
-displayAlign left $printWidth " [2] | Full Node Mode"
-displayAlign left $printWidth " [3] | Validator Mode"
+displayAlign left $printWidth " [2] | Full Node Mode (Not ready yet)"
+displayAlign left $printWidth " [3] | Validator Mode (Not ready yet)"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------"
@@ -35,15 +35,17 @@ while :; do
 
   2*)
     echo "INFO: Starting Full Node Deployment..."
-    chmod +x $KIRA_WORKSTATION/submenu.sh
-    source $KIRA_WORKSTATION/submenu.sh --full
+    echo "Full Node Deployment mode is not yet ready. Please select other option."
+    # chmod +x $KIRA_WORKSTATION/submenu.sh
+    # source $KIRA_WORKSTATION/submenu.sh --full
     break
     ;;
 
   3*)
     echo "INFO: Starting Validator Node Deployment..."
-    chmod +x $KIRA_WORKSTATION/submenu.sh
-    source $KIRA_WORKSTATION/submenu.sh --validator
+    echo "Validator Node Deployment mode is not yet ready. Please select other option."
+    # chmod +x $KIRA_WORKSTATION/submenu.sh
+    # source $KIRA_WORKSTATION/submenu.sh --validator
     break
     ;;
 

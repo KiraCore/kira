@@ -13,8 +13,8 @@ RUN go get -u github.com/golang/protobuf/proto
 RUN go get google.golang.org/protobuf/cmd/protoc-gen-go
 
 RUN mkdir ${SEKAI} -p
-RUN cd ${GOPATH}/src/github.com/kiracore && git clone https://github.com/kiracore/sekai
-RUN cd ${SEKAI} && git checkout KIP_31
+RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
+RUN cd ${SEKAI} && git checkout ${BRANCH}
 
 ADD ./container /root
 ADD ./configs /root

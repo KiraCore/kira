@@ -6,13 +6,13 @@ set -x
 
 source "/etc/profile" &>/dev/null
 
-SEKAI_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_SEKAI)
-SEKAI_INTEGRITY="_${SEKAI_HASH}"
+FRONTEND_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_FRONTEND)
+FRONTEND_INTEGRITY="${FRONTEND_BRANCH}_${FRONTEND_HASH}"
 
-FRONTEND_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/frontend" "frontend" "latest" "$SEKAI_INTEGRITY" || echo "error")
+FRONTEND_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/frontend" "frontend" "latest" "$FRONTEND_INTEGRITY" || echo "error")
 if [ "$FRONTEND_IMAGE_EXISTS" == "False" ]; then
     echo "All imags were updated, starting frontend image..."
-    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/frontend" "frontend" "latest" "$SEKAI_INTEGRITY" "REPO=$FRONTEND_REPO" "BRANCH=dev" #4
+    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/frontend" "frontend" "latest" "$FRONTEND_INTEGRITY" "REPO=$FRONTEND_REPO" "BRANCH=$FRONTEND_BRANCH" #4
 elif [ "$FRONTEND_IMAGE_EXISTS" == "True" ]; then
     echo "INFO: frontend image is up to date"
 else

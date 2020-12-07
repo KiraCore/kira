@@ -22,9 +22,9 @@ RUN flutter config --no-analytics
 RUN flutter config --enable-web
 RUN flutter doctor
 
-RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
+RUN cd /root && git clone ${REPO}
 
-RUN cd /root/kira-frontend/src && git checkout dev
+RUN cd /root/kira-frontend/src && git checkout ${BRANCH}
 
 # ADD ./container /root
 ADD ./configs /root

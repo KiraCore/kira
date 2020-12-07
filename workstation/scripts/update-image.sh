@@ -9,7 +9,7 @@ set -x
 # Use Example:
 # $KIRA_WORKSTATION/update-image.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
-source "/etc/profile" &> /dev/null
+source "/etc/profile" &>/dev/null
 
 IMAGE_DIR=$1
 IMAGE_NAME=$2
@@ -23,12 +23,12 @@ BUILD_ARG3=$7
 [ -z "$BUILD_ARG1" ] && BUILD_ARG1="BUILD_ARG1=none"
 [ -z "$BUILD_ARG2" ] && BUILD_ARG2="BUILD_ARG2=none"
 [ -z "$BUILD_ARG3" ] && BUILD_ARG3="BUILD_ARG3=none"
-ARG1_KEY="$( cut -d '=' -f 1 <<< "$BUILD_ARG1" )"
-ARG1_VAL="$( cut -d '=' -f 2 <<< "$BUILD_ARG1" )"
-ARG2_KEY="$( cut -d '=' -f 1 <<< "$BUILD_ARG2" )"
-ARG2_VAL="$( cut -d '=' -f 2 <<< "$BUILD_ARG2" )"
-ARG3_KEY="$( cut -d '=' -f 1 <<< "$BUILD_ARG3" )"
-ARG3_VAL="$( cut -d '=' -f 2 <<< "$BUILD_ARG3" )"
+ARG1_KEY="$(cut -d '=' -f 1 <<<"$BUILD_ARG1")"
+ARG1_VAL="$(cut -d '=' -f 2 <<<"$BUILD_ARG1")"
+ARG2_KEY="$(cut -d '=' -f 1 <<<"$BUILD_ARG2")"
+ARG2_VAL="$(cut -d '=' -f 2 <<<"$BUILD_ARG2")"
+ARG3_KEY="$(cut -d '=' -f 1 <<<"$BUILD_ARG3")"
+ARG3_VAL="$(cut -d '=' -f 2 <<<"$BUILD_ARG3")"
 [ -z "$ARG1_VAL" ] && ARG1_VAL="none"
 [ -z "$ARG2_VAL" ] && ARG2_VAL="none"
 [ -z "$ARG3_VAL" ] && ARG3_VAL="none"
@@ -57,9 +57,9 @@ echo "|     BUILD ARG 2: $ARG2_KEY=$ARG2_VAL"
 echo "|     BUILD ARG 3: $ARG3_KEY=$ARG3_VAL"
 echo "------------------------------------------------"
 
-if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "True" ]] ; then
-    
-    if [ "$OLD_HASH" != "$NEW_HASH" ] ; then
+if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "True" ]]; then
+
+    if [ "$OLD_HASH" != "$NEW_HASH" ]; then
         echo "WARNING: Image '$IMAGE_DIR' hash changed from $OLD_HASH to $NEW_HASH"
     else
         echo "INFO: Image hash '$OLD_HASH' did NOT changed, but image was NOT found"
@@ -69,7 +69,7 @@ if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE
     $WORKSTATION_SCRIPTS/delete-image.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" #1
 
     echo "Creating new '$IMAGE_NAME' image..."
-    docker build --network=host --tag="$IMAGE_NAME" --build-arg BUILD_HASH="$NEW_HASH" --build-arg "$ARG1_KEY=$ARG1_VAL"  --build-arg "$ARG2_KEY=$ARG2_VAL" --build-arg "$ARG3_KEY=$ARG3_VAL" --file "$IMAGE_DIR/Dockerfile" .
+    docker build --network=host --tag="$IMAGE_NAME" --build-arg BUILD_HASH="$NEW_HASH" --build-arg "$ARG1_KEY=$ARG1_VAL" --build-arg "$ARG2_KEY=$ARG2_VAL" --build-arg "$ARG3_KEY=$ARG3_VAL" --file "$IMAGE_DIR/Dockerfile" .
 
     $KIRA_SCRIPTS/progress-touch.sh "+1" #2
 
@@ -77,7 +77,7 @@ if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE
 
     docker tag $IMAGE_NAME:$IMAGE_TAG $KIRA_REGISTRY/$IMAGE_NAME
     docker push $KIRA_REGISTRY/$IMAGE_NAME
-    echo $NEW_HASH > $KIRA_SETUP_FILE
+    echo $NEW_HASH >$KIRA_SETUP_FILE
     $KIRA_SCRIPTS/progress-touch.sh "+1" #3
 else
     echo "INFO: Image '$IMAGE_DIR' ($NEW_HASH) did NOT change"
