@@ -9,7 +9,7 @@ source $KIRA_WORKSTATION/utils.sh
 
 printWidth=47
 echo -e "-------------------------------------------------"
-displayAlign center $printWidth "KIRA MANAGEMENT TOOL v$(cat $KIRA_WORKSTATION/VERSION)"
+displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_WORKSTATION/VERSION)"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
 displayAlign center $printWidth "Deployment Mode"

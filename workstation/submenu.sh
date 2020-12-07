@@ -52,7 +52,7 @@ echo -e "-------------------------------------------------"
 while :; do
   echo -en "Input option: "
 
-  read -n 1 KEY
+  read -p KEY
 
   echo ""
 
@@ -60,8 +60,8 @@ while :; do
   1*)
     echo "INFO: Starting Quick Setup..."
     SEKAI_BRANCH="v0.1.7.4"
-    CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-    source $KIRA_WORKSTATION/start.sh "False"
+    # CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    # source $KIRA_WORKSTATION/start.sh "False"
     break
     ;;
 
