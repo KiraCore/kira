@@ -1,5 +1,9 @@
 FROM registry.local:5000/base-image:latest
 
+ARG BUILD_HASH
+ARG BRANCH
+ARG REPO
+
 ENV SELF_HOME=/self/home
 ENV SELF_KMS=${SELF_HOME}/tmkms
 ENV SELF_CONFIGS=${SELF_HOME}/configs
