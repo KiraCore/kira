@@ -4,6 +4,8 @@ ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
+RUN echo "Build hash: ${BUILD_HASH}, Branch: ${BRANCH}, Repo: ${REPO}"
+
 ENV SELF_HOME=/self/home
 ENV SELF_KMS=${SELF_HOME}/tmkms
 ENV SELF_CONFIGS=${SELF_HOME}/configs
