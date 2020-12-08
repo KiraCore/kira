@@ -71,7 +71,7 @@ while :; do
     CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-    # source $KIRA_WORKSTATION/start.sh "False"
+    source $KIRA_WORKSTATION/start.sh "False"
     break
     ;;
 
@@ -95,7 +95,7 @@ while :; do
     CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    # source $KIRA_WORKSTATION/start.sh "False"
+    source $KIRA_WORKSTATION/start.sh "False"
 
     break
     ;;
