@@ -26,8 +26,8 @@ RUN cd /root && git clone ${REPO}
 
 RUN cd /root/kira-frontend/src && git checkout ${BRANCH}
 
-# ADD ./container /root
 ADD ./configs /root
+ADD ./configs/.env /root/kira-frontend/src
 
 RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
