@@ -9,15 +9,17 @@ echo "------------------------------------------------"
 echo "| STARTED: INIT                                |"
 echo "|-----------------------------------------------"
 echo "| SKIP UPDATE: $SKIP_UPDATE"
-echo "|  START_TIME: $START_TIME_INIT seconds"
-echo "|   DEBUG MODE: $DEBUG_MODE"
-echo "|   INTERACTIVE: $DEBUG_MODE"
+echo "|  START_TIME: $START_TIME_INIT"
+echo "|  DEBUG MODE: $DEBUG_MODE"
+echo "| INTERACTIVE: $INTERACTIVE"
 echo "------------------------------------------------"
 
 ETC_PROFILE="/etc/profile"
 SETUP_VER="v0.0.10" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 SETUP_LOG="$HOME/setup.log"
+
+set +e # prevent potential infinite loop
 
 chmod 555 $ETC_PROFILE
 source $ETC_PROFILE &>/dev/null
@@ -190,6 +192,8 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE" "$INTERACTIVE"
     echo "INFO: Init script restart finished."
     exit 0
+else
+    echo "INFO: Skipping init update..."
 fi
 
 CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
