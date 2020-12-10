@@ -4,20 +4,22 @@ SKIP_UPDATE=$1
 START_TIME_INIT=$2
 DEBUG_MODE=$3
 INTERACTIVE=$4
-
-echo "------------------------------------------------"
-echo "| STARTED: INIT                                |"
-echo "|-----------------------------------------------"
-echo "| SKIP UPDATE: $SKIP_UPDATE"
-echo "|  START_TIME: $START_TIME_INIT"
-echo "|  DEBUG MODE: $DEBUG_MODE"
-echo "| INTERACTIVE: $INTERACTIVE"
-echo "------------------------------------------------"
-
+KIRA_DUMP="/home/$KIRA_USER/DUMP"
+SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
 SETUP_VER="v0.0.10" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
-SETUP_LOG="$HOME/setup.log"
+
+echo "------------------------------------------------"
+echo "| STARTED: INIT $SETUP_VER"
+echo "|-----------------------------------------------"
+echo "|  SKIP UPDATE: $SKIP_UPDATE"
+echo "|   START_TIME: $START_TIME_INIT"
+echo "|   DEBUG MODE: $DEBUG_MODE"
+echo "|  INTERACTIVE: $INTERACTIVE"
+echo "| INFRA BRANCH: $INTERACTIVE"
+echo "|    SETUP LOG: $INFRA_BRANCH"
+echo "------------------------------------------------"
 
 set +e # prevent potential infinite loop
 
@@ -109,7 +111,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     KIRA_SETUP=/kira/setup
     KIRA_MANAGER="/kira/manager"
     KIRA_PROGRESS="/kira/progress"
-    KIRA_DUMP="/home/$KIRA_USER/Desktop/DUMP"
+    
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
     KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
 

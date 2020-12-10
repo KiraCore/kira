@@ -1,15 +1,21 @@
 #!/bin/bash
 
-exec 2>&1
-
-
 SKIP_UPDATE=$1
-echo $SEKAI_BRANCH
 
 set +e # prevent potential infinite loop
 source "/etc/profile" &>/dev/null
 set -e
-set -x
+
+START_LOG="$KIRA_DUMP/start.log"
+exec &> >(tee "$START_LOG")
+
+echo "------------------------------------------------"
+echo "| STARTED: START                               |"
+echo "|-----------------------------------------------"
+echo "|  SKIP UPDATE: $SKIP_UPDATE"
+echo "| SEKAI BRANCH: $SEKAI_BRANCH"
+echo "|    START LOG: $START_LOG"
+echo "------------------------------------------------"
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 
@@ -23,6 +29,7 @@ fi
 set +e # prevent potential infinite loop
 source "/etc/profile" &>/dev/null
 set -e
+set -x
 
 if [ "$KIRA_STOP" == "True" ]; then
     echo "INFO: Stopping kira..."
