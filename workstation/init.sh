@@ -1,17 +1,49 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
 
 ETC_PROFILE="/etc/profile"
 source $ETC_PROFILE &>/dev/null
 
+set -e
+
+if [ -z "$SKIP_UPDATE" ]; then
+   echo "MMMMMMMMMMMMMWWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMM"
+   echo "MMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMM"
+   echo "MW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNM"
+   echo "MWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXM"
+   echo "MW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXM"
+   echo "MMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXM"
+   echo "MMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXM"
+   echo "MMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXM"
+   echo "MMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXM"
+   echo "MMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WM"
+   echo "MMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMM"
+   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMM"
+   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMM"
+   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMM"
+   echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
+   echo "M            KIRA NETWORK SETUP ...              M"
+   echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
+   sleep 3
+fi
+
 SKIP_UPDATE=$1
-START_TIME=$2
+START_TIME_INIT=$2
 DEBUG_MODE=$3
 INTERACTIVE=$4
 
-[ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
+[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 [ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
@@ -38,7 +70,7 @@ INFRA_BRANCH="KIP_51"
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
 if [ "$KIRA_USER" == "root" ]; then
-    echo "You must login as non root user to your machine"
+    echo "ERROR: You must login as non root user to your machine!"
     exit 1
 fi
 
@@ -139,7 +171,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     chmod -R 777 $KIRA_MANAGER
 
     cd /kira
-    source $KIRA_WORKSTATION/init.sh "True" "$START_TIME" "$DEBUG_MODE" "$INTERACTIVE"
+    source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE" "$INTERACTIVE"
     exit 0
 fi
 
@@ -166,3 +198,8 @@ chmod 777 $ETC_PROFILE
 
 cd /kira
 source $KIRA_WORKSTATION/menu.sh
+
+echo "------------------------------------------------"
+echo "| FINISHED: SETUP                              |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME_INIT)) seconds"
+echo "------------------------------------------------"
