@@ -185,6 +185,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     # update old processes
     rm -r -f $KIRA_MANAGER
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
+    chmod -R 555 $KIRA_WORKSTATION
     chmod -R 555 $KIRA_MANAGER
 
     cd /kira
