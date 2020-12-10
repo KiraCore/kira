@@ -79,7 +79,7 @@ fi
 [ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
-[ -z "$KMS_REPO" ] && KMS_REPO="https://github.com/iqlusioninc/tmkms"
+[ -z "$KMS_REPO" ] && KMS_REPO="https://github.com/KiraCore/tmkms"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER

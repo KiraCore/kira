@@ -51,6 +51,7 @@ while :; do
 
   *)
     echo "Try again."
+    sleep 1
     ;;
   esac
 done
