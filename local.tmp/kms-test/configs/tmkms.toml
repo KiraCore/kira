@@ -13,5 +13,5 @@ protocol_version = "v0.34"
 ## Signing provider configuration
 [[providers.softsign]]
 chain_ids = ["testing"]
-key_format = "base64"
+key_type = "consensus"
 path = "/root/.tmkms/signing.key"
