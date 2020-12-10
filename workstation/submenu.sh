@@ -38,6 +38,8 @@ while :; do
   esac
 done
 
+clear
+
 printWidth=47
 echo -e "-------------------------------------------------"
 displayAlign center $printWidth "$title"
