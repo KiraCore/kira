@@ -1,11 +1,11 @@
 
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 
-ETC_PROFILE="/etc/profile"
-source $ETC_PROFILE &> /dev/null
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
+
 
 KIRA_SETUP_HOSTS="$KIRA_SETUP/hosts-v0.0.4-$KIRA_REGISTRY_NAME" 
 if [ ! -f "$KIRA_SETUP_HOSTS" ] ; then

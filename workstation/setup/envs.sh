@@ -1,11 +1,12 @@
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
+
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
 BASHRC=~/.bashrc
 ETC_PROFILE="/etc/profile"
-source $ETC_PROFILE &>/dev/null
 
 CARGO_ENV="/home/$KIRA_USER/.cargo/env"
 

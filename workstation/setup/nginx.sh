@@ -1,10 +1,9 @@
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 
-ETC_PROFILE="/etc/profile"
-source $ETC_PROFILE &>/dev/null
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
 KIRA_SETUP_NGINX="$KIRA_SETUP/nginx-v0.0.1"
 if [ ! -f "$KIRA_SETUP_NGINX" ]; then

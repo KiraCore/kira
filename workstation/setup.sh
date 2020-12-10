@@ -1,14 +1,31 @@
 #!/bin/bash
 
-exec 2>&1
-set -e
-set -x
-
-source "/etc/profile" &>/dev/null
-
 SKIP_UPDATE=$1
 START_TIME=$2
 INIT_HASH=$3
+
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
+set -e
+
+SETUP_LOG="$KIRA_DUMP/setup.log"
+
+if [ "$SKIP_UPDATE" == "False" ]; then
+   exec &> >(tee "$SETUP_LOG")
+else
+   exec &> >(tee -a "$SETUP_LOG")
+fi
+
+set +x
+echo "------------------------------------------------"
+echo "| STARTED: SETUP                               |"
+echo "|-----------------------------------------------"
+echo "| SKIP UPDATE: $SKIP_UPDATE"
+echo "|  START TIME: $START_TIME"
+echo "|   INIT HASH: $INIT_HASH"
+echo "|   SETUP LOG: $SETUP_LOG"
+echo "------------------------------------------------"
+set -x
 
 [ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"

@@ -1,10 +1,10 @@
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 
-ETC_PROFILE="/etc/profile"
-source $ETC_PROFILE &>/dev/null
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
+
 
 CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"

@@ -1,11 +1,10 @@
 
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 
-ETC_PROFILE="/etc/profile"
-source $ETC_PROFILE &> /dev/null
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
 VERSION=$(docker -v || echo "Error")
 SETUP_CHECK="$KIRA_SETUP/docker-v0.0.2" 

@@ -1,10 +1,11 @@
 #!/bin/bash
-
-exec 2>&1
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
+
+exec &> >(tee -a "$KIRA_DUMP/setup.log")
 set -x
 
-source "/etc/profile" &>/dev/null
 
 SKIP_UPDATE=$1
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
