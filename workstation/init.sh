@@ -5,6 +5,15 @@ START_TIME_INIT=$2
 DEBUG_MODE=$3
 INTERACTIVE=$4
 
+echo "------------------------------------------------"
+echo "| STARTED: INIT                                |"
+echo "|-----------------------------------------------"
+echo "| SKIP UPDATE: $SKIP_UPDATE"
+echo "|  START_TIME: $START_TIME_INIT seconds"
+echo "|   DEBUG MODE: $DEBUG_MODE"
+echo "|   INTERACTIVE: $DEBUG_MODE"
+echo "------------------------------------------------"
+
 ETC_PROFILE="/etc/profile"
 SETUP_VER="v0.0.10" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
@@ -174,11 +183,12 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     # update old processes
     rm -r -f $KIRA_MANAGER
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
-    chmod -R 777 $KIRA_MANAGER
+    chmod -R 555 $KIRA_MANAGER
 
     cd /kira
-    echo "INFO: Starting setup menu..."
+    echo "INFO: ReStarting init script to launch setup menu..."
     source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE" "$INTERACTIVE"
+    echo "INFO: Init script restart finished."
     exit 0
 fi
 
@@ -202,9 +212,11 @@ CDHelper text lineswap --insert="KIRA_STOP=$KIRA_STOP" --prefix="KIRA_STOP=" --p
 CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 cd /kira
+echo "INFO: Launching setup menu..."
 source $KIRA_WORKSTATION/menu.sh
 
 echo "------------------------------------------------"
 echo "| FINISHED: SETUP                              |"
 echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME_INIT)) seconds"
 echo "------------------------------------------------"
+exit 0
