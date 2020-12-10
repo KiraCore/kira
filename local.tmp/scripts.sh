@@ -1,11 +1,11 @@
 docker build -t validator-test-0 ./validator-test
 docker build -t kms-test ./kms-test
 
-docker container stop validator-test-0
-docker container rm validator-test-0
+docker container stop validator-test
+docker container rm validator-test
 
-docker container stop kms-test
-docker container rm kms-test
+docker container stop kms
+docker container rm kms
 
 docker network rm kiranet || echo "Failed to remove kira network"
 docker network rm kmsnet || echo "Failed to remove kira network"
