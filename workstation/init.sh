@@ -1,6 +1,9 @@
 #!/bin/bash
 
-exec > >(tee "$HOME/setup.log") 2>&1
+SKIP_UPDATE=$1
+START_TIME_INIT=$2
+DEBUG_MODE=$3
+INTERACTIVE=$4
 
 ETC_PROFILE="/etc/profile"
 SETUP_VER="v0.0.10" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
@@ -12,6 +15,7 @@ source $ETC_PROFILE &>/dev/null
 set -e
 
 if [ -z "$SKIP_UPDATE" ]; then
+   exec $> >(tee "$HOME/setup.log")
    echo "MMMMMMMMMMMMMWWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
    echo "MMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
    echo "MMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMM"
@@ -42,12 +46,8 @@ if [ -z "$SKIP_UPDATE" ]; then
    sleep 3
 else
    echo "INFO: Initalizing setup script..."
+   exec $> >(tee -a "$HOME/setup.log")
 fi
-
-SKIP_UPDATE=$1
-START_TIME_INIT=$2
-DEBUG_MODE=$3
-INTERACTIVE=$4
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
