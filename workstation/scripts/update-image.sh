@@ -1,7 +1,6 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
 set -x
 
 # Local Update Shortcut:
@@ -9,7 +8,7 @@ set -x
 # Use Example:
 # $KIRA_WORKSTATION/update-image.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
-source "/etc/profile" &>/dev/null
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 IMAGE_DIR=$1
 IMAGE_NAME=$2

@@ -1,10 +1,9 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
 set -x
 
-source "/etc/profile" &>/dev/null
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 INTERX_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_INTERX)
 INTERX_INTEGRITY="${INTERX_BRANCH}_${INTERX_HASH}"

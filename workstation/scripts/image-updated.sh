@@ -1,13 +1,12 @@
 #!/bin/bash
 exec 2>&1
-set -e
 
 # Local Update Shortcut:
 # (rm -fv $KIRA_WORKSTATION/image-updated.sh) && nano $KIRA_WORKSTATION/image-updated.sh && chmod 777 $KIRA_WORKSTATION/image-updated.sh
 # Use Example:
 # $KIRA_WORKSTATION/image-updated.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
-source "/etc/profile" &> /dev/null
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 IMAGE_DIR=$1
 IMAGE_NAME=$2

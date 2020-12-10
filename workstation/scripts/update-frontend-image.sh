@@ -1,10 +1,9 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
 set -x
 
-source "/etc/profile" &>/dev/null
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 FRONTEND_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_FRONTEND)
 FRONTEND_INTEGRITY="${FRONTEND_BRANCH}_${FRONTEND_HASH}"

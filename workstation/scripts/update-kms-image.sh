@@ -1,10 +1,9 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
 set -x
 
-source "/etc/profile" &>/dev/null
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 KMS_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_KMS)
 KMS_INTEGRITY="${KMS_BRANCH}_${KMS_HASH}"

@@ -1,11 +1,11 @@
 #!/bin/bash
 
 exec 2>&1
-set -e
+
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 START_TIME_CONTAINER_AWAIT="$(date -u +%s)"
-source "/etc/profile" &> /dev/null
 
 NAME=$1
 TIMEOUT=$2
