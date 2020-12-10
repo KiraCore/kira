@@ -1,5 +1,5 @@
-docker build -t validator-test-0 /validator-test
-docker build -t kms-test /kms-test
+docker build -t validator-test-0 ./validator-test
+docker build -t kms-test ./kms-test
 
 docker container stop validator-test-0
 docker container rm validator-test-0
