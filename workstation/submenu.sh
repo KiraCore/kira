@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 
 while :; do

@@ -1,13 +1,16 @@
 #!/bin/bash
 
 exec 2>&1
+
+
+SKIP_UPDATE=$1
+echo $SEKAI_BRANCH
+
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
 set -e
 set -x
 
-echo $SEKAI_BRANCH
-source "/etc/profile" &>/dev/null
-
-SKIP_UPDATE=$1
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 
 echo "INFO: Updating kira repository and fetching changes..."
@@ -17,7 +20,9 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     exit 0
 fi
 
-source $ETC_PROFILE &>/dev/null
+set +e # prevent potential infinite loop
+source "/etc/profile" &>/dev/null
+set -e
 
 if [ "$KIRA_STOP" == "True" ]; then
     echo "INFO: Stopping kira..."
