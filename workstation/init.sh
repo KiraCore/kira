@@ -21,11 +21,12 @@ echo "| INFRA BRANCH: $INTERACTIVE"
 echo "|    SETUP LOG: $INFRA_BRANCH"
 echo "------------------------------------------------"
 
-set +e # prevent potential infinite loop
+rm -rfv $KIRA_DUMP
+mkdir -p "$KIRA_DUMP"
 
+set +e # prevent potential infinite loop
 chmod 555 $ETC_PROFILE
 source $ETC_PROFILE &>/dev/null
-
 set -e
 
 if [ -z "$SKIP_UPDATE" ]; then
