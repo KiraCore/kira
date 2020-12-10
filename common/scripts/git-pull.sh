@@ -87,7 +87,7 @@ elif [[ "${REPO,,}" == *"https://"*   ]] ; then
         echo "INFO: Fetching remote commit hash"
         REMOTE_HASH_NEW="$(git ls-remote $REPO $BRANCH | cut -c1-7)-${BRANCH}-${CHECKOUT}"
         
-        if [ "$REMOTE_HASH_NEW" == "$REMOTE_HASH_OLD" && "$LOCAL_HASH_NEW" == "$LOCAL_HASH_OLD" ] ; then
+        if [ "$REMOTE_HASH_NEW" == "$REMOTE_HASH_OLD" ] && [ "$LOCAL_HASH_NEW" == "$LOCAL_HASH_OLD" ] ; then
             echo "INFO: Repo $REPO will NOT be cloned, no changes were detected"
             exit 0
         fi
