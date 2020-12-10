@@ -4,6 +4,10 @@ SKIP_UPDATE=$1
 START_TIME_INIT=$2
 DEBUG_MODE=$3
 INTERACTIVE=$4
+
+[ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
+[ -z "$KIRA_USER" ] && KIRA_USER=$USER
+
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
@@ -14,10 +18,11 @@ echo "------------------------------------------------"
 echo "| STARTED: INIT $SETUP_VER"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
-echo "|   START_TIME: $START_TIME_INIT"
+echo "|   START TIME: $START_TIME_INIT"
 echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "|  INTERACTIVE: $INTERACTIVE"
 echo "| INFRA BRANCH: $INTERACTIVE"
+echo "|    KIRA USER: $SUDO_USER"
 echo "|    SETUP LOG: $INFRA_BRANCH"
 echo "------------------------------------------------"
 
@@ -85,8 +90,7 @@ fi
 [ -z "$KMS_REPO" ] && KMS_REPO="https://github.com/KiraCore/tmkms"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
 
-[ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
-[ -z "$KIRA_USER" ] && KIRA_USER=$USER
+
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
 if [ "$KIRA_USER" == "root" ]; then
     echo "ERROR: You must login as non root user to your machine!"
