@@ -11,11 +11,14 @@ echo "Staring validator..."
 
 # systemctl2 --version
 
-SEKAID_HOME=$HOME/.sekaid
+SEKAID_HOME=$HOME/.simapp
+
+rm -rf $SEKAID_HOME
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 
 cp /root/config.toml $SEKAID_HOME/config/config.toml
+cp /root/node_key.json $SEKAID_HOME/config/node_key.json
 cp /root/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
 sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
