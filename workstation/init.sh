@@ -3,6 +3,7 @@
 exec 2>&1
 
 ETC_PROFILE="/etc/profile"
+chmod 555 $ETC_PROFILE
 source $ETC_PROFILE &>/dev/null
 
 set -e
@@ -109,7 +110,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-v0.0.9"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$KIRA_SETUP_VER"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages and Variables..."
         apt-get update -y >/dev/null
@@ -145,6 +146,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SETUP_VER=$KIRA_SETUP_VER" --prefix="KIRA_SETUP_VER=v0.0.10" --path=$ETC_PROFILE --append-if-found-not=True
 
         touch $KIRA_SETUP_ESSSENTIALS
     else
@@ -171,6 +173,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     chmod -R 777 $KIRA_MANAGER
 
     cd /kira
+    echo "INFO: Starting setup menu..."
     source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE" "$INTERACTIVE"
     exit 0
 fi
@@ -193,8 +196,6 @@ CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO
 
 CDHelper text lineswap --insert="KIRA_STOP=$KIRA_STOP" --prefix="KIRA_STOP=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
-
-chmod 777 $ETC_PROFILE
 
 cd /kira
 source $KIRA_WORKSTATION/menu.sh
