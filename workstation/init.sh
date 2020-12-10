@@ -8,6 +8,7 @@ INTERACTIVE=$4
 ETC_PROFILE="/etc/profile"
 SETUP_VER="v0.0.10" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
+SETUP_LOG="$HOME/setup.log"
 
 chmod 555 $ETC_PROFILE
 source $ETC_PROFILE &>/dev/null
@@ -15,7 +16,7 @@ source $ETC_PROFILE &>/dev/null
 set -e
 
 if [ -z "$SKIP_UPDATE" ]; then
-   exec $> >(tee "$HOME/setup.log")
+   exec &> >(tee "$SETUP_LOG")
    echo "MMMMMMMMMMMMMWWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
    echo "MMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
    echo "MMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMM"
@@ -45,8 +46,8 @@ if [ -z "$SKIP_UPDATE" ]; then
    echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
    sleep 3
 else
+   exec &> >(tee -a "$SETUP_LOG")
    echo "INFO: Initalizing setup script..."
-   exec $> >(tee -a "$HOME/setup.log")
 fi
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
