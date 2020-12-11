@@ -11,7 +11,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 if [ "$DEBUG_MODE" == "True" ] ; then set -x ; else set +x ; fi
 
 NAME=$1
-CONTAINER_DUMP="$KIRA_DUMP/${NAME^^}"
+CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME^^}"
+mkdir -p $CONTAINER_DUMP
 
 echo "------------------------------------------------"
 echo "|          STARTED: DUMP LOGS v0.0.1           |"
@@ -34,10 +35,6 @@ docker logs --timestamps --details $(docker inspect --format="{{.Id}}" ${NAME} 2
 docker container logs --details --timestamps $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null) > $CONTAINER_DUMP/container-logs.txt || echo "WARNING: Failed to save container logs"
 systemctl status docker > $CONTAINER_DUMP/docker-status.txt || echo "WARNING: Failed to save docker status info"
 chmod -R 666 $CONTAINER_DUMP
-echo "INFO: Starting code editor..."
-USER_DATA_DIR="/usr/code$CONTAINER_DUMP"
-rm -rf $USER_DATA_DIR
-mkdir -p $USER_DATA_DIR
 
 echo "------------------------------------------------"
 echo "|        FINISHED: DUMP LOGS    v0.0.1         |"
