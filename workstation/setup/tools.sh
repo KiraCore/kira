@@ -5,8 +5,7 @@ set -e
 
 exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
-
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.4"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.5"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing

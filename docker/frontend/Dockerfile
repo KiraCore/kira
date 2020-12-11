@@ -27,11 +27,11 @@ RUN cd /root && git clone ${REPO}
 RUN cd /root/kira-frontend/src && git checkout ${BRANCH}
 
 ADD ./configs /root
-ADD ./configs/.env /root/kira-frontend/src
+ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
 RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
-RUN mv /root/kira-frontend/src/web /var/www/html && cd /var/www/html/web && ls
+RUN mv /root/kira-frontend/src/build/web /var/www/html && cd /var/www/html/web && ls
 
 RUN mv /root/default /etc/nginx/sites-available/
 
@@ -41,6 +41,6 @@ RUN nginx -t
 
 RUN service nginx reload
 
-RUN service nginx restart
+# RUN service nginx restart
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
