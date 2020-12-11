@@ -41,6 +41,6 @@ RUN nginx -t
 
 RUN service nginx reload
 
-RUN service nginx restart
+# RUN service nginx restart
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
