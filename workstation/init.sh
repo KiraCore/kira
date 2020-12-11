@@ -11,7 +11,7 @@ INTERACTIVE=$4
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
-SETUP_VER="v0.0.11" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.12" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 
 echo "------------------------------------------------"
@@ -137,7 +137,8 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Installing Essential Packages and Variables..."
         apt-get update -y >/dev/null
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip hashdeep >/dev/null
+            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip hashdeep build-essential \
+            nghttp2 libnghttp2-dev libssl-dev >/dev/null
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
 
