@@ -41,43 +41,27 @@ cd /home/$SUDO_USER && \
 
 ### 1. Demo Mode
 
-1. base image
+```
+KIRA_REGISTRY_SUBNET="100.0.0.0/8"
+KIRA_KMS_SUBNET="10.1.0.0/16"
+KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
+KIRA_SENTRY_SUBNET="10.3.0.0/16"
+KIRA_SERVICE_SUBNET="10.4.0.0/16"
+```
 
-- update base image
+```
+KIRA_REGISTRY_IP="100.0.1.1"
+KIRA_KMS_IP="10.1.0.2"
+KIRA_VALIDATOR_IP="10.2.0.2"
+KIRA_SENTRY_IP="10.3.0.2"
+KIRA_INTERX_IP="10.4.0.2"
+KIRA_FRONTEND_IP="10.4.0.3"
+```
 
-2. sentry
-
-- remove existing `sentrynet` subnet
-- create new `sentrynet` subnet (103.0.0.0/8)
-- build `sentry` image
-- run `sentry` container on `sentrynet` subnet with ip `103.0.1.1`. (9090 port redirect)
-- get `sentry`'s node id ($SENTRY_ID), seed ($SENTRY_SEED) & peer ($SENTRY_PEER)
-
-3. validator
-
-- update validator's config file (config.toml)
-
-  - pex = false
-  - persistent_peers = $SENTRY_SEED
-  - addr_book_strict = false
-  - priv_validator_laddr = "tcp://101.0.1.1:26658" (for KMS)
-
-- remove existing `kiranet` subnet
-
-- create new `kiranet` subnet (10.2.0.0/8)
-
-- mnemonic keys generation (signer & faucet)
-
-  - install hd-wallet-derive
-  - generate mnemonic key and remove quotes
-
-- run `validator` container on `kiranet` subnet with ip `10.2.0.1`. (send signer & faucet mnemonics as parameters)
-
-- copy genesis.json & priv_validator_key.json file from `validator` container
-
-- get `validator`'s node id ($NODE_ID), seed ($SEEDS), peer ($PEERS)
-
-- update sentry config.toml file and copy into `sentry` container.
+```
+VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
+SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
+```
 
 ### 2. Full Node Mode
 
