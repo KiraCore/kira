@@ -1,6 +1,7 @@
 #!/bin/bash
 
 SKIP_UPDATE=$1
+START_TIME_LAUNCH="$(date -u +%s)"
 
 set +e # prevent potential infinite loop
 source "/etc/profile" &>/dev/null
@@ -10,7 +11,7 @@ START_LOG="$KIRA_DUMP/start.log"
 exec &> >(tee "$START_LOG")
 
 echo "------------------------------------------------"
-echo "| STARTED: START                               |"
+echo "| STARTED: LAUNCH SCRIPT                       |"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "| SEKAI BRANCH: $SEKAI_BRANCH"
@@ -336,3 +337,9 @@ docker network connect sentrynet frontend
 echo "INFO: Waiting for frontend to start..."
 sleep 10
 # ---------- FRONTEND END ----------
+
+echo "------------------------------------------------"
+echo "| FINISHED: LAUNCH SCRIPT                      |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME_LAUNCH)) seconds"
+echo "------------------------------------------------"
+exit 0
