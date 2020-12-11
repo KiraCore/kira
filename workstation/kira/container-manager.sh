@@ -1,17 +1,14 @@
 #!/bin/bash
 
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 
 LOOP_FILE="/tmp/container_manager_loop"
 CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
-mkdir -p $(dirname "$KIRA_DUMP")
+mkdir -p $(dirname "$CONTAINER_DUPM")
 
 exec &> >(tee -a "$CONTAINER_DUPM")
-
-DEBUG_MODE=$2
-if [ "$DEBUG_MODE" == "True" ] ; then set -x ; else set +x ; fi
 
 while : ; do
     START_TIME="$(date -u +%s)"
@@ -19,7 +16,7 @@ while : ; do
 
     if [ "$EXISTS" != "True" ] ; then
         clear
-        echo "WARNING: Container $NAME no longer exists, press [X] to exit or restart your infra"
+        echo "WARNING: Container $NAME no longer exists ($EXISTS), press [X] to exit or restart your infra"
         read -n 1 -t 3 KEY || continue
          [ "${OPTION,,}" == "x" ] && exit 1
     fi
@@ -52,7 +49,7 @@ while : ; do
     [ "$EXISTS" == "True" ] && 
     echo "| [I] | Try INSPECT container                   |"
     [ "$EXISTS" == "True" ] && 
-    echo "| [L] | View container LOGS                     |"
+    echo "| [L] | Dump container LOGS                     |"
     [ "$EXISTS" == "True" ] && 
     echo "| [R] | RESTART container                       |"
     [ "$STATUS" == "exited" ] && 
@@ -67,7 +64,7 @@ while : ; do
     echo "| [U] | UNPAUSE container                       |"
     [ "$EXISTS" == "True" ] && 
     echo "|-----------------------------------------------|"
-    echo "| [X] | Exit | [W] | Refresh Window | [Y] Debug |"
+    echo "| [X] | Exit | [W] | Refresh Window             |"
     echo -e "-------------------------------------------------\e[0m"
     
     echo -en "Input option then press [ENTER] or [SPACE]: " && rm -f $LOOP_FILE && touch $LOOP_FILE && OPTION=""
@@ -80,45 +77,36 @@ while : ; do
     done
     OPTION=$(cat $LOOP_FILE || echo "") && [ -z "$OPTION" ] && continue
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-    [ "${ACCEPT,,}" == "n" ] && echo "\nWARINIG: Operation was cancelled\n" && continue
+    [ "${ACCEPT,,}" == "n" ] && echo "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+    echo ""
 
     if [ "${OPTION,,}" == "i" ] ; then
-        docker exec -it $ID /bin/bash || docker exec -it $ID /bin/sh #; read -d'' -s -n1 -p 'Press any key to exit...' && exit
-        sleep 2 && continue
+        echo "INFO: Entering container $NAME ($ID)..."
+        echo "INFO: To exit the container type 'exit'"
+        docker exec -it $ID bash || docker exec -it $ID sh 
+        read -d'' -s -n1 -p 'INFO: Exited container, press any key to continue...'
     elif [ "${OPTION,,}" == "l" ] ; then
-    echo "INFO: Dumping all loggs..."
+        echo "INFO: Dumping all loggs..."
         $WORKSTATION_SCRIPTS/dump-logs.sh $NAME
-        break
+        read -d'' -s -n1 -p 'INFO: Loggs dumped, press any key to continue...'
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
-        break
     elif [ "${OPTION,,}" == "a" ] ; then
         echo "INFO: Staring container..."
         $KIRA_SCRIPTS/container-start.sh $NAME
-        break
     elif [ "${OPTION,,}" == "s" ] ; then
         echo "INFO: Stopping container..."
         $KIRA_SCRIPTS/container-stop.sh $NAME
-        break
     elif [ "${OPTION,,}" == "p" ] ; then
         echo "INFO: Pausing container..."
         $KIRA_SCRIPTS/container-pause.sh $NAME
-        break
     elif [ "${OPTION,,}" == "u" ] ; then
         echo "INFO: UnPausing container..."
         $KIRA_SCRIPTS/container-unpause.sh $NAME
-        break
     elif [ "${OPTION,,}" == "w" ] ; then
-        echo "INFO: Please wait, refreshing user interface..." && break
-    elif [ "${OPTION,,}" == "y" ] ; then
-        echo "INFO: Enabling debug mode..."
-        DEBUG_MODE="True"
-        break
+        echo "INFO: Please wait, refreshing user interface..."
     elif [ "${OPTION,,}" == "x" ] ; then
         exit 0
     fi
 done
-
-touch $LOOP_FILE && [ ! -z "$(cat $LOOP_FILE || echo '')" ] && sleep 2
-source $KIRA_MANAGER/container-manager.sh "$NAME" "$DEBUG_MODE"
