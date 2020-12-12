@@ -27,12 +27,20 @@ while : ; do
     echo "|             $(date '+%d/%m/%Y %H:%M:%S')               |"
     echo "|-----------------------------------------------|"
     echo "|        Name: $NAME ($(echo $ID | head -c 8)...)"
-    echo "|  Ip Address: $IP"
+
+    if [ "${EXISTS,,}" == "true" ] ; then # container exists
+        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+            IP="IP_$net" && IP="${!IP}"
+            if [ ! -z "$IP" ] && [ "${IP,,}" != "null" ] ; then
+                echo "|  Ip Address: $IP ($net)"
+            fi
+        done
+    fi
+
     [ ! -z "$REPO" ] && \
     echo "| Source Code: $REPO ($BRANCH)"
     echo "|-----------------------------------------------|"
     echo "|     Status: $STATUS"
-    echo "|     Paused: $PAUSED"
     echo "|     Health: $HEALTH"
     echo "| Restarting: $RESTARTING"
     echo "| Started At: $(echo $STARTED_AT | head -c 19)"

@@ -6,6 +6,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 NAME=$1
 VARS_FILE=$2
 EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$NAME" || echo "Error")
+NETWORKS=$(docker network ls --format="{{.Name}}" || "")
 
 # define global variables
 if [ "${NAME,,}" == "interx" ] ; then
@@ -28,13 +29,22 @@ fi
 if [ "${EXISTS,,}" == "true" ] ; then # container exists
     # (docker ps --no-trunc -aqf name=$NAME) 
     ID=$(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null || echo "undefined")
-    STATUS=$(docker inspect $ID | jq -r '.[0].State.Status' || echo "Error")
-    PAUSED=$(docker inspect $ID | jq -r '.[0].State.Paused' || echo "Error")
-    HEALTH=$(docker inspect $ID | jq -r '.[0].State.Health.Status' || echo "Error")
-    RESTARTING=$(docker inspect $ID | jq -r '.[0].State.Restarting' || echo "Error")
-    STARTED_AT=$(docker inspect $ID | jq -r '.[0].State.StartedAt' || echo "Error")
-    IP=$(docker inspect $ID | jq -r '.[0].NetworkSettings.Networks.kiranet.IPAMConfig.IPv4Address' || echo "")
-    if [ -z "$IP" ] || [ "$IP" == "null" ] ; then IP=$(docker inspect $ID | jq -r '.[0].NetworkSettings.Networks.regnet.IPAMConfig.IPv4Address' || echo "") ; fi
+    DOCKER_INSPECT=$(docker inspect $ID || echo "")
+    STATUS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Status' || echo "Error")
+    PAUSED=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Paused' || echo "Error")
+    HEALTH=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Health.Status' || echo "Error")
+    RESTARTING=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Restarting' || echo "Error")
+    STARTED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.StartedAt' || echo "Error")
+    FINISHED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.FinishedAt' || echo "Error")
+
+    i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+        IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
+        if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ] ; then
+            eval "IP_$net=$IP_TMP"
+        else
+            eval "IP_$net=\"\""
+        fi
+    done 
 
     if [ "${NAME,,}" == "interx" ] ; then
         sleep 0 # custom handle interx
@@ -54,7 +64,8 @@ else # container does NOT exists
     HEALTH="undefined"
     RESTARTING="false"
     STARTED_AT="0"
-    IP="undefined"
+    FINISHED_AT="0"
+    NETWORK="undefined"
 fi
 
 if [ ! -z "$VARS_FILE" ] ; then # save status variables to file if output was specified
@@ -64,8 +75,22 @@ if [ ! -z "$VARS_FILE" ] ; then # save status variables to file if output was sp
     echo "HEALTH_$NAME=$HEALTH" >> $VARS_FILE
     echo "RESTARTING_$NAME=$RESTARTING" >> $VARS_FILE
     echo "STARTED_AT_$NAME=$STARTED_AT" >> $VARS_FILE
-    echo "IP_$NAME=$IP" >> $VARS_FILE
+    echo "FINISHED_AT_$NAME=$FINISHED_AT" >> $VARS_FILE
     echo "EXISTS_$NAME=$EXISTS" >> $VARS_FILE
+    echo "BRANCH_$NAME=$BRANCH" >> $VARS_FILE
+    echo "REPO_$NAME=$REPO" >> $VARS_FILE
+    echo "NETWORKS=$NETWORKS" >> $VARS_FILE
+
+    if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ] ; then # container exists
+        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+            IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
+            if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ] ; then
+                echo "IP_${NAME}_$net=$IP_TMP" >> $VARS_FILE
+            else
+                echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
+            fi
+        done
+    fi
 fi
 
 # Example of variable recovery:
