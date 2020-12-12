@@ -1,18 +1,17 @@
 #!/bin/bash
 
 set +e && source "/etc/profile" &>/dev/null && set -e
+# quick edit: FILE="$KIRA_WORKSTATION/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
 
-LOOP_FILE="/tmp/container_manager_loop"
 CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
 mkdir -p $(dirname "$CONTAINER_DUPM")
-
 exec &> >(tee -a "$CONTAINER_DUPM")
 
 while : ; do
     START_TIME="$(date -u +%s)"
-    EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$NAME" || echo "Error")
+    source $KIRA_WORKSTATION/kira/container-status.sh "$NAME"
 
     if [ "$EXISTS" != "True" ] ; then
         clear
@@ -21,24 +20,16 @@ while : ; do
          [ "${OPTION,,}" == "x" ] && exit 1
     fi
 
-    # (docker ps --no-trunc -aqf name=$NAME) 
-    ID=$(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null || echo "undefined")
-    STATUS=$(docker inspect $ID | jq -r '.[0].State.Status' || echo "Error")
-    PAUSED=$(docker inspect $ID | jq -r '.[0].State.Paused' || echo "Error")
-    HEALTH=$(docker inspect $ID | jq -r '.[0].State.Health.Status' || echo "Error")
-    RESTARTING=$(docker inspect $ID | jq -r '.[0].State.Restarting' || echo "Error")
-    STARTED_AT=$(docker inspect $ID | jq -r '.[0].State.StartedAt' || echo "Error")
-    IP=$(docker inspect $ID | jq -r '.[0].NetworkSettings.Networks.kiranet.IPAMConfig.IPv4Address' || echo "")
-    if [ -z "$IP" ] || [ "$IP" == "null" ] ; then IP=$(docker inspect $ID | jq -r '.[0].NetworkSettings.Networks.regnet.IPAMConfig.IPv4Address' || echo "") ; fi
-    
     clear
     
     echo -e "\e[36;1m-------------------------------------------------"
     echo "|        KIRA CONTAINER MANAGER v0.0.3          |"
     echo "|             $(date '+%d/%m/%Y %H:%M:%S')               |"
     echo "|-----------------------------------------------|"
-    echo "| Container Name: $NAME ($(echo $ID | head -c 8))"
-    echo "|     Ip Address: $IP"
+    echo "|        Name: $NAME ($(echo $ID | head -c 8)...)"
+    echo "|  Ip Address: $IP"
+    [ ! -z "$REPO" ] && \
+    echo "| Source Code: $REPO ($BRANCH)"
     echo "|-----------------------------------------------|"
     echo "|     Status: $STATUS"
     echo "|     Paused: $PAUSED"
@@ -66,18 +57,12 @@ while : ; do
     echo "|-----------------------------------------------|"
     echo "| [X] | Exit | [W] | Refresh Window             |"
     echo -e "-------------------------------------------------\e[0m"
-    
-    echo -en "Input option then press [ENTER] or [SPACE]: " && rm -f $LOOP_FILE && touch $LOOP_FILE && OPTION=""
-    while : ; do
-        [ -f $LOOP_FILE ] && OPTION=$(cat $LOOP_FILE || echo "")
-        [ -z "$OPTION" ] && [ $(($(date -u +%s)-$START_TIME)) -ge 6 ] && break
-        read -n 1 -t 3 KEY || continue
-        [ ! -z "$KEY" ] && echo "${OPTION}${KEY}" > $LOOP_FILE
-        [ -z "$KEY" ] && break
-    done
-    OPTION=$(cat $LOOP_FILE || echo "") && [ -z "$OPTION" ] && continue
+
+    read -s -n 1 -t 6 OPTION || continue
+    [ -z "$OPTION" ] && continue
+
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-    [ "${ACCEPT,,}" == "n" ] && echo "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+    [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
     echo ""
 
     if [ "${OPTION,,}" == "i" ] ; then
@@ -107,6 +92,10 @@ while : ; do
     elif [ "${OPTION,,}" == "w" ] ; then
         echo "INFO: Please wait, refreshing user interface..."
     elif [ "${OPTION,,}" == "x" ] ; then
-        exit 0
+        echo -e "INFO: Stopping Container Manager...\n"
+        sleep 1
+        break
     fi
 done
+
+echo "INFO: Contianer Manager Stopped"
