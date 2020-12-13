@@ -11,6 +11,10 @@ RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
 
 RUN cd /root/kira-frontend/src && git checkout dev
 
+RUN apt-get update -y --fix-missing
+RUN apt install google-chrome-stable -y
+RUN google-chrome --version
+
 # ADD ./container /root
 ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
