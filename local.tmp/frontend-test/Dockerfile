@@ -11,9 +11,8 @@ RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
 
 RUN cd /root/kira-frontend/src && git checkout dev
 
-RUN apt-get update -y --fix-missing
-RUN apt install google-chrome-stable -y
-RUN google-chrome --version
+RUN wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+RUN sudo apt install -y ./google-chrome-stable_current_amd64.deb
 
 # ADD ./container /root
 ADD ./configs /root
