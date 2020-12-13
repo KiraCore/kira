@@ -21,6 +21,7 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgra
   yarn \
   zip
 RUN apt-get install -y iputils-ping net-tools
+RUN apt-get install -y jq
 
 RUN wget https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz
 RUN tar -C /usr/local -xvf go1.14.2.linux-amd64.tar.gz
@@ -34,7 +35,6 @@ ENV SELF_LOGS=/self/logs
 ENV SELF_SCRIPTS=${SELF_HOME}/scripts
 ENV SELF_CONFIGS=${SELF_HOME}/configs
 ENV SELF_CONTAINER=${SELF_HOME}/container
-ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
 ENV GOPATH=/home/go
 ENV GOBIN=/usr/local/go/bin
 
@@ -57,6 +57,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD /root/healthcheck.sh $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
 CMD ["sh", "-c", "/bin/bash /root/start.sh"]

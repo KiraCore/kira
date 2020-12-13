@@ -45,6 +45,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     libusb-1.0-0-dev \
     curl \
     iputils-ping
+apt-get install -y jq
 
 GO_VERSION="1.14.2"
 echo "INFO: Installing latest go version $GO_VERSION https://golang.org/doc/install ..."
