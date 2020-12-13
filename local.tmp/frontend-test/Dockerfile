@@ -1,35 +1,10 @@
-FROM ubuntu:20.04
-
-ARG DEBIAN_FRONTEND=noninteractive
-
-RUN ln -fs /usr/share/zoneinfo/America/New_York /etc/localtime
+FROM cirrusci/flutter:stable
 
 RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-  clang \
-  cmake \
-  gcc \
-  g++ \
-  software-properties-common \
-  curl \
-  wget \
-  git \
-  build-essential \
-  make \
-  tar \
-  unzip \
-  zip \
   nginx
 
-RUN apt-get update
-
-RUN curl -L https://storage.googleapis.com/flutter_infra/releases/beta/linux/flutter_linux_1.22.0-12.1.pre-beta.tar.xz | tar -C /opt -xJ
-
-ENV PATH "$PATH:/opt/flutter/bin"
-
-# Enable web capabilities
+RUN flutter channel beta
 RUN flutter config --enable-web
-RUN flutter upgrade
-RUN flutter pub global activate webdev
 RUN flutter doctor
 
 RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
