@@ -134,13 +134,18 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
-        echo "INFO: Installing Essential Packages and Variables..."
-        apt-get update -y >/dev/null
+        echo "INFO: Installing Essential Packages & Env Variables..."
+        apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
             software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip hashdeep build-essential \
-            nghttp2 libnghttp2-dev libssl-dev >/dev/null
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
+        git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
+        git config --unset --global core.filemode || echo "WARNING: Failed to unset global filemode"
+        git config --add --global core.filemode false || echo "WARNING: Failed to set global filemode"
+        git config --add --global pager.branch false || echo "WARNING: Failed to disable branch pager"
+        git config --add --global http.sslVersion "tlsv1.2" || echo "WARNING: Failed to set ssl version"
 
         echo "INFO: Base Tools Setup..."
         cd /tmp
