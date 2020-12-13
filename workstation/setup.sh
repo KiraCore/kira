@@ -58,6 +58,10 @@ else
     exit 1
 fi
 
+ls -l /bin/kira || echo "WARNING: KIRA Manager symlink not found"
+rm /bin/kira || echo "WARNING: Failed to remove old KIRA Manager symlink"
+ln -s $KIRA_WORKSTATION/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
+
 $KIRA_SCRIPTS/cdhelper-update.sh "v0.6.13"
 
 NEW_INIT_HASH=$(CDHelper hash SHA256 -p="$KIRA_WORKSTATION/init.sh" --silent=true)

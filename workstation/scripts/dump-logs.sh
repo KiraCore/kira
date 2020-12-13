@@ -36,6 +36,8 @@ docker container logs --details --timestamps $(docker inspect --format="{{.Id}}"
 systemctl status docker > $CONTAINER_DUMP/docker-status.txt || echo "WARNING: Failed to save docker status info"
 chmod -R 666 $CONTAINER_DUMP
 
+echo "INFO: Container ${NAME} loggs were dumped to $CONTAINER_DUMP"
+
 echo "------------------------------------------------"
 echo "|        FINISHED: DUMP LOGS    v0.0.1         |"
 echo "------------------------------------------------"

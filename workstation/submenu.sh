@@ -1,44 +1,16 @@
 #!/bin/bash
+ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
-
-while :; do
-  case "$1" in
-  -d | --demo)
-    mode="demo"
+if [ "${INFRA_MODE,,}" == "local" ] ; then
     title="Demo Mode (local testnet)"
-    shift
-    ;;
-  -f | --full)
-    mode="full"
+elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     title="Full Node Mode"
-    shift
-    ;;
-  -v | --validator)
-    mode="validator"
+elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     title="Validator Mode"
-    shift
-    ;;
-  -h | --help)
-    display_help # Call your function
-    # no shifting needed here, we're done.
-    exit 0
-    ;;
-  --) # End of all options
-    shift
-    break
-    ;;
-  -*)
-    echo "Error: Unknown option: $1" >&2
-    exit 1
-    ;;
-  *) # No more options
-    break
-    ;;
-  esac
-done
+else
+   echo "ERROR: Unknown operation mode"
+   exit 1
+fi
 
 clear
 

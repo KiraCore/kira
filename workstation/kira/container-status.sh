@@ -69,23 +69,23 @@ else # container does NOT exists
 fi
 
 if [ ! -z "$VARS_FILE" ] ; then # save status variables to file if output was specified
-    echo "ID_$NAME=$ID" > $VARS_FILE
-    echo "STATUS_$NAME=$STATUS" >> $VARS_FILE
-    echo "PAUSED_$NAME=$PAUSED" >> $VARS_FILE
-    echo "HEALTH_$NAME=$HEALTH" >> $VARS_FILE
-    echo "RESTARTING_$NAME=$RESTARTING" >> $VARS_FILE
-    echo "STARTED_AT_$NAME=$STARTED_AT" >> $VARS_FILE
-    echo "FINISHED_AT_$NAME=$FINISHED_AT" >> $VARS_FILE
-    echo "EXISTS_$NAME=$EXISTS" >> $VARS_FILE
-    echo "BRANCH_$NAME=$BRANCH" >> $VARS_FILE
-    echo "REPO_$NAME=$REPO" >> $VARS_FILE
-    echo "NETWORKS=$NETWORKS" >> $VARS_FILE
+    echo "ID_$NAME=\"$ID\"" >> $VARS_FILE
+    echo "STATUS_$NAME=\"$STATUS\"" >> $VARS_FILE
+    echo "PAUSED_$NAME=\"$PAUSED\"" >> $VARS_FILE
+    echo "HEALTH_$NAME=\"$HEALTH\"" >> $VARS_FILE
+    echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE
+    echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE
+    echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE
+    echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
+    echo "BRANCH_$NAME=\"$BRANCH\"" >> $VARS_FILE
+    echo "REPO_$NAME=\"$REPO\"" >> $VARS_FILE
+    echo "NETWORKS_$NAME=\"$NETWORKS\"" >> $VARS_FILE
 
     if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ] ; then # container exists
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
             IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
             if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ] ; then
-                echo "IP_${NAME}_$net=$IP_TMP" >> $VARS_FILE
+                echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE
             else
                 echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
             fi

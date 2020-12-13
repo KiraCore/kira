@@ -5,9 +5,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 
-CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
-mkdir -p $(dirname "$CONTAINER_DUPM")
-exec &> >(tee -a "$CONTAINER_DUPM")
+# CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
+# mkdir -p $(dirname "$CONTAINER_DUPM")
+# exec &> >(tee -a "$CONTAINER_DUPM")
 
 while : ; do
     START_TIME="$(date -u +%s)"
@@ -73,36 +73,50 @@ while : ; do
     [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
     echo ""
 
+    EXECUTED="false"
     if [ "${OPTION,,}" == "i" ] ; then
         echo "INFO: Entering container $NAME ($ID)..."
         echo "INFO: To exit the container type 'exit'"
         docker exec -it $ID bash || docker exec -it $ID sh 
-        read -d'' -s -n1 -p 'INFO: Exited container, press any key to continue...'
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
         echo "INFO: Dumping all loggs..."
         $WORKSTATION_SCRIPTS/dump-logs.sh $NAME
-        read -d'' -s -n1 -p 'INFO: Loggs dumped, press any key to continue...'
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "a" ] ; then
         echo "INFO: Staring container..."
         $KIRA_SCRIPTS/container-start.sh $NAME
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] ; then
         echo "INFO: Stopping container..."
         $KIRA_SCRIPTS/container-stop.sh $NAME
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] ; then
         echo "INFO: Pausing container..."
         $KIRA_SCRIPTS/container-pause.sh $NAME
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "u" ] ; then
         echo "INFO: UnPausing container..."
         $KIRA_SCRIPTS/container-unpause.sh $NAME
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "w" ] ; then
         echo "INFO: Please wait, refreshing user interface..."
+        EXECUTED="true"
+        continue
     elif [ "${OPTION,,}" == "x" ] ; then
         echo -e "INFO: Stopping Container Manager...\n"
+        EXECUTED="true"
         sleep 1
         break
+    fi
+    
+    if [ "${EXECUTED,,}" == "true" ] ; then
+        echo "INFO: Option ($OPTION) was executed, press any key to continue..."
+        read -s -n 1 || continue
     fi
 done
 
