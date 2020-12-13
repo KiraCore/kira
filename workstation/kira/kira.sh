@@ -24,10 +24,13 @@ while : ; do
     IS_ANY_CONTAINER_PAUSED="false"
     ALL_CONTAINERS_PAUSED="true"
     ALL_CONTAINERS_STOPPED="true"
+    ALL_CONTAINERS_HEALTHY="true"
     i=-1 ; for name in $CONTAINERS ; do i=$((i+1))
         STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
         HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
         [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
+        [ "${name,,}" == "registry" ] && continue
+        [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
         [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
         [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
         [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
@@ -39,11 +42,20 @@ while : ; do
 
     clear
     
-    echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.0.6           |"
+    echo -e "\e[33;1m------------------------------------------------- [mode]"
+    echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
     echo "|             $(date '+%d/%m/%Y %H:%M:%S')               |"
-    [ "${SUCCESS,,}" == "true" ] && echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
-    [ "${SUCCESS,,}" != "true" ] && echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
+
+    if [ "${SUCCESS,,}" != "true" ] ; then
+        echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT LAUNCHED       \e[33;1m|"
+    elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ] ; then
+        echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
+    elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] ; then
+        echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
+    else
+        echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
+    fi
+
     echo "|-----------------------------------------------| [health]"
     i=-1 ; for name in $CONTAINERS ; do i=$((i+1))
         STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
@@ -59,7 +71,7 @@ while : ; do
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
         echo "| [P] | PAUSE All Containers                    |"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
-        echo "| [U] | Un-PAUSE All Containers                  |"
+        echo "| [U] | Un-PAUSE All Containers                 |"
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |"
