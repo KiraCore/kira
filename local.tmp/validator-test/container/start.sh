@@ -6,11 +6,6 @@ set -x
 
 echo "Staring validator..."
 
-# wget https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/master/files/docker/systemctl.py -O /usr/local/bin/systemctl2
-# chmod -v 777 /usr/local/bin/systemctl2
-
-# systemctl2 --version
-
 SEKAID_HOME=$HOME/.simapp
 
 rm -rf $SEKAID_HOME
@@ -37,9 +32,5 @@ yes "equip exercise shoot mad inside floor wheel loan visual stereo build frozen
 sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
-# --pubkey kiravalconspub14r8u30037l6xpqgtndf6nf3hhdds6pf6uhqalu9wu4l89qlglj6szqlepn
-
-# netstat -nl
-# ping 10.1.0.2
 
 sleep 10 && sekaid start --home=$SEKAID_HOME --trace

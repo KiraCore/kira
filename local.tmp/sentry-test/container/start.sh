@@ -5,7 +5,7 @@ set -e
 set -x
 
 echo "Staring sentry..."
-SEKAID_HOME=$HOME/.sekaid
+SEKAID_HOME=$HOME/.simapp
 rm -rf $SEKAID_HOME/config
 
 sekaid init --chain-id=testing testing --home=$SEKAID_HOME

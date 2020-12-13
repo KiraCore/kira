@@ -43,10 +43,12 @@ RUN cd /root/kira-frontend/src && git checkout dev
 
 # ADD ./container /root
 ADD ./configs /root
+ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
-RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
+RUN cd /root/kira-frontend/src && flutter pub get && flutter build web --release
 
-RUN mv /root/kira-frontend/src/web /var/www/html
+RUN rm -rf /var/www/html/web
+RUN mv /root/kira-frontend/src/build/web /var/www/html
 
 RUN mv /root/default /etc/nginx/sites-available/
 

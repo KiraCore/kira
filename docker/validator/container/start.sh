@@ -5,7 +5,7 @@ set -e
 set -x
 
 echo "Staring validator..."
-SEKAID_HOME=$HOME/.sekaid
+SEKAID_HOME=$HOME/.simapp
 
 rm -rf $SEKAID_HOME
 

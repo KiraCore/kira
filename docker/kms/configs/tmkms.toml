@@ -4,7 +4,7 @@ key_format = { type = "bech32", account_key_prefix = "kirapub", consensus_key_pr
 
 ## Validator configuration
 [[validator]]
-addr = "tcp://10.2.0.2:12345"
+addr = "tcp://validator:12345"
 chain_id = "testing"
 reconnect = true
 secret_key = "/root/.tmkms/secret_connection.key"
