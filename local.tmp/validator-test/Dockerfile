@@ -29,6 +29,12 @@ ENV PATH=$PATH:/usr/local/go/bin
 
 RUN cd /usr/local && ls
 
+ENV SELF_HOME=/self/home
+ENV SELF_LOGS=/self/logs
+ENV SELF_SCRIPTS=${SELF_HOME}/scripts
+ENV SELF_CONFIGS=${SELF_HOME}/configs
+ENV SELF_CONTAINER=${SELF_HOME}/container
+ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
 ENV GOPATH=/home/go
 ENV GOBIN=/usr/local/go/bin
 
@@ -36,7 +42,7 @@ ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
 ENV SEKAID_BIN="${GOBIN}/sekaid"
 ENV COMMON_DIR="/common"
 
-RUN mkdir ${SEKAI} -p
+RUN mkdir ${SEKAI} ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone https://github.com/kiracore/sekai
 RUN cd ${SEKAI} && git checkout v0.1.7.4
 RUN cd ${SEKAI} && go install ./cmd/sekaid

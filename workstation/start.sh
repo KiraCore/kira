@@ -119,7 +119,7 @@ SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@${KIRA_VALIDATOR_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@${KIRA_SENTRY_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-GENESIS_SOURCE="/root/.sekaid/config/genesis.json"
+GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
 rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
@@ -227,12 +227,12 @@ fi
 # * Get the genesis file from the validator.
 
 # echo "INFO: Saving priv_validator_key.json file..."
-# PRIV_VALIDATOR_KEY_SOURCE="/root/.sekaid/config/priv_validator_key.json"
+# PRIV_VALIDATOR_KEY_SOURCE="/root/.simapp/config/priv_validator_key.json"
 # PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
 # rm -f $PRIV_VALIDATOR_KEY_DESTINATION
 # docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
 
-CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
+CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
 echo "INFO: Check Validator Node id..."
 echo "${VALIDATOR_NODE_ID} - ${CHECK_VALIDATOR_NODE_ID}"
 
@@ -278,7 +278,7 @@ sleep 10
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check sentry's node id
 
-CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /root/.sekaid || echo "error")
+CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
 echo $CHECK_SENTRY_NODE_ID
 if [ "$CHECK_SENTRY_NODE_ID" == "error" ]; then
     echo "ERROR: sentry node error"
