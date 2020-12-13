@@ -8,7 +8,7 @@ exec 2>&1
 # $KIRA_WORKSTATION/delete-image.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
 set +e && source "/etc/profile" &>/dev/null && set -e
-if [ "$DEBUG_MODE" == "True" ] ; then set -x ; else set +x ; fi
+if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 
 NAME=$1
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME^^}"
@@ -25,18 +25,17 @@ rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
 docker cp $NAME:/var/log/journal $CONTAINER_DUMP/journal || echo "WARNING: Failed to dump journal logs"
 docker cp $NAME:/self/logs $CONTAINER_DUMP/logs || echo "WARNING: Failed to dump self logs"
-docker cp $NAME:/root/.sekaid $CONTAINER_DUMP/sekaid || echo "WARNING: Failed to dump .sekaid config"
+docker cp $NAME:/root/.simapp $CONTAINER_DUMP/sekaid || echo "WARNING: Failed to dump .simapp config"
 docker cp $NAME:/etc/systemd/system $CONTAINER_DUMP/systemd || echo "WARNING: Failed to dump systemd services"
 docker cp $NAME:/common $CONTAINER_DUMP/common || echo "WARNING: Failed to dump common directory"
-docker inspect $(docker ps --no-trunc -aqf name=$NAME) > $CONTAINER_DUMP/container-inspect.json || echo "WARNING: Failed to inspect container"
-docker inspect $(docker ps --no-trunc -aqf name=$NAME) > $CONTAINER_DUMP/printenv.txt || echo "WARNING: Failed to fetch printenv"
-docker exec -i $NAME printenv > $CONTAINER_DUMP/printenv.txt || echo "WARNING: Failed to fetch printenv"
-docker logs --timestamps --details $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null) > $CONTAINER_DUMP/docker-logs.txt || echo "WARNING: Failed to save docker logs"
-docker container logs --details --timestamps $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null) > $CONTAINER_DUMP/container-logs.txt || echo "WARNING: Failed to save container logs"
-systemctl status docker > $CONTAINER_DUMP/docker-status.txt || echo "WARNING: Failed to save docker status info"
+docker inspect $(docker ps --no-trunc -aqf name=$NAME) >$CONTAINER_DUMP/container-inspect.json || echo "WARNING: Failed to inspect container"
+docker inspect $(docker ps --no-trunc -aqf name=$NAME) >$CONTAINER_DUMP/printenv.txt || echo "WARNING: Failed to fetch printenv"
+docker exec -i $NAME printenv >$CONTAINER_DUMP/printenv.txt || echo "WARNING: Failed to fetch printenv"
+docker logs --timestamps --details $(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null) >$CONTAINER_DUMP/docker-logs.txt || echo "WARNING: Failed to save docker logs"
+docker container logs --details --timestamps $(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null) >$CONTAINER_DUMP/container-logs.txt || echo "WARNING: Failed to save container logs"
+systemctl status docker >$CONTAINER_DUMP/docker-status.txt || echo "WARNING: Failed to save docker status info"
 chmod -R 666 $CONTAINER_DUMP
 
 echo "------------------------------------------------"
 echo "|        FINISHED: DUMP LOGS    v0.0.1         |"
 echo "------------------------------------------------"
-

@@ -20,6 +20,7 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgra
   xz-utils \
   yarn \
   zip
+RUN apt-get install -y jq
 
 RUN wget https://dl.google.com/go/go1.14.2.linux-amd64.tar.gz
 RUN tar -C /usr/local -xvf go1.14.2.linux-amd64.tar.gz
