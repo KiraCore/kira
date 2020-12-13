@@ -43,6 +43,7 @@ RUN cd /root/kira-frontend/src && git checkout dev
 
 # ADD ./container /root
 ADD ./configs /root
+ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
 RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
