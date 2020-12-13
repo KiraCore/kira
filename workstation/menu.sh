@@ -1,8 +1,5 @@
 #!/bin/bash
-
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
+ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
 clear
 
@@ -29,7 +26,7 @@ while :; do
   case ${KEY,,} in
   1*)
     echo "INFO: Starting Demo Deployment..."
-    source $KIRA_WORKSTATION/submenu.sh --demo
+    CDHelper text lineswap --insert="INFRA_MODE=local" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
 
@@ -39,14 +36,14 @@ while :; do
 
   2*)
     echo "INFO: Starting Full Node Deployment..."
+    CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     echo "Full Node Deployment mode is not yet ready. Please select other option."
-    # source $KIRA_WORKSTATION/submenu.sh --full
     ;;
 
   3*)
     echo "INFO: Starting Validator Node Deployment..."
+    CDHelper text lineswap --insert="INFRA_MODE=validator" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     echo "Validator Node Deployment mode is not yet ready. Please select other option."
-    # source $KIRA_WORKSTATION/submenu.sh --validator
     ;;
 
   *)
@@ -55,3 +52,5 @@ while :; do
     ;;
   esac
 done
+
+source $KIRA_WORKSTATION/submenu.sh

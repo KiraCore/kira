@@ -343,4 +343,3 @@ echo "------------------------------------------------"
 echo "| FINISHED: LAUNCH SCRIPT                      |"
 echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
 echo "------------------------------------------------"
-exit 0
