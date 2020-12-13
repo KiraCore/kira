@@ -325,6 +325,7 @@ sleep 10
 source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 docker run -d \
+    -p 80:80 \
     --restart=always \
     --name frontend \
     --network servicenet \
