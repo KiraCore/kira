@@ -22,19 +22,14 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgra
 
 RUN apt-get update
 
-ENV FLUTTERROOT="/usr/lib/flutter"
+RUN curl -L https://storage.googleapis.com/flutter_infra/releases/beta/linux/flutter_linux_1.22.0-12.1.pre-beta.tar.xz | tar -C /opt -xJ
 
-RUN cd /usr/lib && git clone https://github.com/flutter/flutter
+ENV PATH "$PATH:/opt/flutter/bin"
 
-RUN cd $FLUTTERROOT && git checkout v1.16.3
-
-ENV PATH=${FLUTTERROOT}/bin:${PATH}
-
-RUN flutter channel beta || echo "Failed to checkout flutter beta"
-RUN flutter upgrade || echo "Failed to upgrade flutter"
-RUN flutter --version
-RUN flutter config --no-analytics
+# Enable web capabilities
 RUN flutter config --enable-web
+RUN flutter upgrade
+RUN flutter pub global activate webdev
 RUN flutter doctor
 
 RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
@@ -45,7 +40,8 @@ RUN cd /root/kira-frontend/src && git checkout dev
 ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
-RUN cd /root/kira-frontend/src && flutter pub get && flutter build web --release
+RUN cd /root/kira-frontend/src && flutter pub get
+RUN cd /root/kira-frontend/src && flutter build web --release
 
 RUN rm -rf /var/www/html/web
 RUN mv /root/kira-frontend/src/build/web /var/www/html
