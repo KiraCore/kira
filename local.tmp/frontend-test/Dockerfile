@@ -4,8 +4,6 @@ RUN apt-get update && apt-get install -y --allow-unauthenticated --allow-downgra
   nginx
 
 RUN flutter channel beta
-RUN flutter config --enable-web
-RUN flutter doctor
 
 RUN cd /root && git clone https://github.com/KiraCore/kira-frontend
 
@@ -18,6 +16,8 @@ RUN sudo apt install -y ./google-chrome-stable_current_amd64.deb
 ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
+RUN flutter config --enable-web
+RUN flutter doctor
 RUN cd /root/kira-frontend/src && flutter pub get
 RUN cd /root/kira-frontend/src && flutter build web --release
 
