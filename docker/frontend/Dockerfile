@@ -31,16 +31,13 @@ ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
 RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
 
-RUN mv /root/kira-frontend/src/build/web /var/www/html && cd /var/www/html/web && ls
+RUN rm -rf /var/www/html/web
+RUN mv /root/kira-frontend/src/build/web /var/www/html
 
 RUN mv /root/default /etc/nginx/sites-available/
 
+RUN service nginx restart
+
 EXPOSE 80
-
-RUN nginx -t
-
-RUN service nginx reload
-
-# RUN service nginx restart
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
