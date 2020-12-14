@@ -32,15 +32,9 @@ ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 RUN flutter pub get
 RUN flutter build web --release
 
-RUN rm -rf /var/www/html/web
-RUN mv /root/kira-frontend/src/build/web /var/www/html
-
-RUN mv /root/default /etc/nginx/sites-available/
-
-RUN service nginx restart
-
-EXPOSE 80
+# Stage 2 - Create the run-time image
+FROM nginx
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
-ENTRYPOINT [ "nginx", "-g", "daemon off;" ]
+COPY --from=build-env /root/kira-frontend/src/build/web /usr/share/nginx/html
