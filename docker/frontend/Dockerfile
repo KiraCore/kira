@@ -17,19 +17,20 @@ ENV PATH=${FLUTTERROOT}/bin:${PATH}
 
 RUN flutter channel beta || echo "Failed to checkout flutter beta"
 RUN flutter upgrade || echo "Failed to upgrade flutter"
-RUN flutter --version
-RUN flutter config --no-analytics
 RUN flutter config --enable-web
 RUN flutter doctor
 
 RUN cd /root && git clone ${REPO}
 
-RUN cd /root/kira-frontend/src && git checkout ${BRANCH}
+WORKDIR /root/kira-frontend/src
+
+RUN git checkout ${BRANCH}
 
 ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
-RUN cd /root/kira-frontend/src && flutter pub get && flutter build web
+RUN flutter pub get
+RUN flutter build web --release
 
 RUN rm -rf /var/www/html/web
 RUN mv /root/kira-frontend/src/build/web /var/www/html
@@ -39,5 +40,7 @@ RUN mv /root/default /etc/nginx/sites-available/
 RUN service nginx restart
 
 EXPOSE 80
+
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
 ENTRYPOINT [ "nginx", "-g", "daemon off;" ]

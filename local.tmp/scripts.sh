@@ -22,8 +22,8 @@ docker network connect kmsnet validator
 # Frontend installation
 
 docker build -t frontend-test ./frontend-test
-docker container stop frontend-test
-docker container rm frontend-test
+docker container stop frontend
+docker container rm frontend
 
 docker network rm servicenet || echo "Failed to remove servicenet network"
 docker network create --driver=bridge --subnet=10.4.0.0/16 servicenet
