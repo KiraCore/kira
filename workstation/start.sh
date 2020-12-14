@@ -41,14 +41,14 @@ i=-1
 for name in $CONTAINERS; do
     i=$((i + 1)) # dele all containers except registry
     [ "${name,,}" == "registry" ] && continue
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/containers-exist.sh "validator" || echo "error")
+    CONTAINER_EXISTS=$($KIRA_SCRIPTS/containers-exist.sh "$name" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" == "true" ]; then
-        $KIRA_SCRIPTS/container-delete.sh "validator"
+        $KIRA_SCRIPTS/container-delete.sh "$name"
 
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
+        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$name" || echo "error")
 
         if [ "${CONTAINER_EXISTS,,}" != "false" ]; then
-            echo "ERROR: Failed to delete validator container, status: ${VALIDATOR_EXISTS}"
+            echo "ERROR: Failed to delete $name container, status: ${VALIDATOR_EXISTS}"
             exit 1
         fi
     fi
