@@ -60,18 +60,14 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 
 cd $KIRA_WORKSTATION
 
-P2P_LOCAL_PORT="26656"
-P2P_PROXY_PORT="10000"
-RPC_PROXY_PORT="10001"
-
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Constants. The following node-ids are generated from node_key.json files. In each docker context/configs folder, you can see node_key.json file.
 
 VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
 SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
@@ -257,6 +253,7 @@ jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/i
 source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
 docker run -d \
+    -p 11000:11000 \
     --restart=always \
     --name interx \
     --net=servicenet \

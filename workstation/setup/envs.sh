@@ -30,6 +30,9 @@ KIRA_IMG="$KIRA_INFRA/common/img"
 KIRA_DOCKER="$KIRA_INFRA/docker"
 WORKSTATION_SCRIPTS="$KIRA_WORKSTATION/scripts"
 
+VALIDATOR_P2P_PORT="26656"
+RPC_PROXY_PORT="10001"
+
 HOSTS_PATH="/etc/hosts"
 GO_VERSION="1.14.2"
 NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
@@ -55,7 +58,7 @@ mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.51"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.52"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -102,6 +105,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="BREWBIN=$BREWBIN" --prefix="BREWBIN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="VALIDATOR_P2P_PORT=$VALIDATOR_P2P_PORT" --prefix="VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="RPC_PROXY_PORT=$RPC_PROXY_PORT" --prefix="RPC_PROXY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$GOPATH" --prefix="PATH=" --and-contains-not=":$GOPATH" --path=$ETC_PROFILE
