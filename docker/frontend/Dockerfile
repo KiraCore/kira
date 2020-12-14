@@ -37,4 +37,4 @@ FROM nginx
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
-COPY --from=build-env /root/kira-frontend/src/build/web /usr/share/nginx/html
+COPY /root/kira-frontend/src/build/web /usr/share/nginx/html
