@@ -1,5 +1,5 @@
 # (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.local:5000/base-image:latest
+FROM registry.local:5000/base-image:latest AS build-env
 
 ARG BUILD_HASH
 ARG BRANCH
@@ -24,4 +24,4 @@ FROM nginx
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
-COPY /root/kira-frontend/src/build/web /usr/share/nginx/html
+COPY --from=build-env /root/kira-frontend/src/build/web /usr/share/nginx/html
