@@ -19,6 +19,8 @@ RUN cd ${SEKAI} && git checkout ${BRANCH}
 ADD ./container /root
 ADD ./configs /root
 
+RUN chmod 777 -R ${SELF_HOME}
+
 ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
