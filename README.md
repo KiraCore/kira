@@ -1,5 +1,11 @@
 ## Kira Management Tool
 
+### Minimum Requirements
+
+```
+RAM: 3072MB
+```
+
 ### 1. Install & Update Ubuntu 20.04
 
 ```
