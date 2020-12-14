@@ -11,20 +11,21 @@ SUCCESS_DOWNLOAD="false"
 SUCCESS_HASH_CHECK="false"
 FILE_HASH=""
 INIT_SCRIPT=""
+INTEGRITY_HASH=""
 
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
-    echo -en "\e[33;1mDo you want to change the default initalization script?\e[0m\c" 
-    ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[33;1mPress [Y]es to confirm change URL or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+    echo -en "\e[33;1mDo you want to use default initalization script?\e[0m\c" && echo ""
+    ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[33;1mPress [Y]es to keep default or [C] to change URL: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
-    if [ "${ACCEPT,,}" == "y" ] ; then
+    if [ "${ACCEPT,,}" == "c" ] ; then
         read  -p "Input URL of the new initialization script: " INIT_SCRIPT
     else
         INIT_SCRIPT=$DEFAULT_INIT_SCRIPT
     fi
     
     echo "INFO: Downloading initialization script $INIT_SCRIPT"
-    rm -fv $INIT_SCRIPT_OUT || echo "INFO: Failed to remove existing script"
-    wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || echo "ERROR: Failed to download $INIT_SCRIPT"
+    rm -fv $INIT_SCRIPT_OUT
+    wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT )
     
     if [ ! -f "$INIT_SCRIPT_OUT" ] ; then
         ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "x" ] ; do echo -en "\e[33;1mPress [Y]es to try again or [X] to exit: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
@@ -42,21 +43,21 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
     echo "INFO: SHA256: $FILE_HASH"
     
     while [ "${SUCCESS_HASH_CHECK,,}" == "false" ] ; do 
-        echo -en "\e[33;1mDo you want to verify integrity hash of the downloaded script?\e[0m\c" 
-        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[33;1mPress [Y]es to confirm or [N]o to continue: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-        
-        INTEGRITY_HASH=""
+        echo -en "\e[33;1mDo you want to verify integrity hash of the downloaded script?\e[0m\c" && echo ""
+        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[33;1mPress [Y]es to confirm or [C] to continue: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+
         if [ "${ACCEPT,,}" == "y" ] ; then
-            read -p "Input sha256sum hash of the file: " -s INTEGRITY_HASH
+            read -p "Input sha256sum hash of the file: " INTEGRITY_HASH
         else
             echo "INFO: Hash verification was skipped"
-            echo "WARNING: You should always verify integrity of scripts you run otherwise you might be executing malicious code"
+            echo "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
             read -p "Press any key to continue or [Ctrl+C] to abort..." -n 1
             break
         fi
     
-        echo "$INTEGRITY_HASH $INIT_SCRIPT_OUT" | sha256sum --check && ( SUCCESS_HASH_CHECK="true" && break )
+        echo "$INTEGRITY_HASH $INIT_SCRIPT_OUT" | sha256sum --check && SUCCESS_HASH_CHECK="true"
         [ "${SUCCESS_HASH_CHECK,,}" == "false" ] && echo "WARNING: File has diffrent shecksum then expected!"
+        [ "${SUCCESS_HASH_CHECK,,}" == "true" ] && break
     done
 fi
 
