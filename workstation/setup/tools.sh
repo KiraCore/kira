@@ -5,7 +5,7 @@ set -e
 
 exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.5"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.6"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -28,6 +28,11 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   curl -sS https://getcomposer.org/installer -o composer-setup.php
   php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
+  git clone https://github.com/dan-da/hd-wallet-derive.git
+  cd hd-wallet-derive
+  yes "yes" | composer install
+
+  cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS
 
 else

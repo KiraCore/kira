@@ -78,10 +78,6 @@ rm -f $GENESIS_DESTINATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate two mnemonic keys (for signing & faucet) using hd-wallet-derive.
 
-git clone https://github.com/dan-da/hd-wallet-derive.git
-cd hd-wallet-derive
-yes "yes" | composer install
-
 SIGNER_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 FAUCET_MNEMONIC=$(./hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 
