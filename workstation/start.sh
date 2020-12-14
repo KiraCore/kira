@@ -103,8 +103,11 @@ fi
 # todo: delete existing containers
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build base image
+source $WORKSTATION_SCRIPTS/update-base-image.sh
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build docker images in parallel
-source $WORKSTATION_SCRIPTS/update-base-image.sh &
 source $WORKSTATION_SCRIPTS/update-validator-image.sh &
 source $WORKSTATION_SCRIPTS/update-kms-image.sh &
 source $WORKSTATION_SCRIPTS/update-sentry-image.sh &
