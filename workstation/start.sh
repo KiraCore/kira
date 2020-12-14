@@ -70,8 +70,8 @@ RPC_PROXY_PORT="10001"
 VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
 SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@${KIRA_VALIDATOR_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@${KIRA_SENTRY_IP}:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$P2P_LOCAL_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"

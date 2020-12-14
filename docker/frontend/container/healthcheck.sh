@@ -24,7 +24,7 @@ INDEX_HTML="$(curl http://127.0.0.1:80)"
 
 echo $INDEX_HTML
 
-INTERX_STATUS="$(curl http://10.4.0.2:11000/api/status)"
+INTERX_STATUS="$(curl http://interx:11000/api/status)"
 
 echo $INTERX_STATUS
 exit 0
