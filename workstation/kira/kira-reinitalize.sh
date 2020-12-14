@@ -52,6 +52,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
             echo "INFO: Hash verification was skipped"
             echo "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
             read -p "Press any key to continue or [Ctrl+C] to abort..." -n 1
+            SUCCESS_HASH_CHECK="true"
             break
         fi
     
