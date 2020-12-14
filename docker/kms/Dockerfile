@@ -15,12 +15,10 @@ RUN cd ${SELF_HOME}/tmkms && cargo build --release --features=softsign
 RUN cd ${SELF_HOME}/tmkms && cargo test --all-features
 RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 
-ADD ./container ${SELF_CONTAINER}
-ADD ./configs/tmkms.toml ${SELF_KMS_RELEASE}
-ADD ./configs/priv_validator_key.json ${SELF_KMS_RELEASE}
-
-RUN mkdir /root/.tmkms/
+ADD ./container /root
+ADD ./configs/tmkms.toml /root
+ADD ./configs/priv_validator_key.json /root
 
 ARG DEBIAN_FRONTEND=noninteractive
 
-CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]
+CMD ["sh", "-c", "/bin/bash /root/start.sh"]

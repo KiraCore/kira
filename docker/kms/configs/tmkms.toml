@@ -7,11 +7,11 @@ key_format = { type = "bech32", account_key_prefix = "kirapub", consensus_key_pr
 addr = "tcp://validator:12345"
 chain_id = "testing"
 reconnect = true
-secret_key = "/root/.tmkms/secret_connection.key"
+secret_key = "/root/.tmkms/secrets/kms-identity.key"
 protocol_version = "v0.34"
 
 ## Signing provider configuration
 [[providers.softsign]]
 chain_ids = ["testing"]
-key_format = "base64"
+key_type = "consensus"
 path = "/root/.tmkms/signing.key"
