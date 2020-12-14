@@ -102,7 +102,13 @@ fi
 
 # todo: delete existing containers
 
-source $WORKSTATION_SCRIPTS/update-base-image.sh
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build docker images in parallel
+source $WORKSTATION_SCRIPTS/update-base-image.sh &
+source $WORKSTATION_SCRIPTS/update-validator-image.sh &
+source $WORKSTATION_SCRIPTS/update-kms-image.sh &
+source $WORKSTATION_SCRIPTS/update-sentry-image.sh &
+source $WORKSTATION_SCRIPTS/update-interx-image.sh &
 
 cd $KIRA_WORKSTATION
 
@@ -161,11 +167,6 @@ docker network create --driver=bridge --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
 docker network rm kmsnet || echo "Failed to remove kms network"
 docker network create --driver=bridge --subnet=$KIRA_KMS_SUBNET kmsnet
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Build docker images
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
@@ -257,8 +258,6 @@ cp -i $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
-source $WORKSTATION_SCRIPTS/update-sentry-image.sh
-
 docker run -d \
     --restart=always \
     --name sentry \
@@ -299,8 +298,6 @@ jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/i
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
-
-source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
 docker run -d \
     --restart=always \
