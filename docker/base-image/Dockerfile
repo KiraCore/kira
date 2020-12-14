@@ -46,6 +46,9 @@ ENV GOBIN=/usr/local/go/bin
 ENV PATH=$PATH:$GOROOT:$GOPATH:$GOBIN
 RUN go version
 
+RUN go get -u github.com/golang/protobuf/proto
+RUN go get google.golang.org/protobuf/cmd/protoc-gen-go
+
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 ENV PATH="/root/.cargo/bin:${PATH}"
