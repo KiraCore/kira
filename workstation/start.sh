@@ -109,6 +109,7 @@ source $WORKSTATION_SCRIPTS/update-validator-image.sh &
 source $WORKSTATION_SCRIPTS/update-kms-image.sh &
 source $WORKSTATION_SCRIPTS/update-sentry-image.sh &
 source $WORKSTATION_SCRIPTS/update-interx-image.sh &
+source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 cd $KIRA_WORKSTATION
 
@@ -318,8 +319,6 @@ sleep 10
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the frontend
-
-source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 docker run -d \
     -p 80:80 \
