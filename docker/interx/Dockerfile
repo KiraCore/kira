@@ -16,7 +16,7 @@ RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
 RUN cd ${SEKAI} && git checkout ${BRANCH}
 
-ADD ./container /root
+ADD ./container ${SELF_CONTAINER}
 ADD ./configs /root
 
 RUN chmod 777 -R ${SELF_HOME}
