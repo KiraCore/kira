@@ -27,7 +27,7 @@ while :; do
   1*)
     echo "INFO: Starting Demo Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=local" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=6" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=6" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
 
