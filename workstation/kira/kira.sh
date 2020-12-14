@@ -8,13 +8,18 @@ while : ; do
     START_TIME="$(date -u +%s)"
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)  
     VARS_FILE="/tmp/kira_mgr_vars" # file contianing cached variables with details regarding individual containers
+    NETWORKS=$(docker network ls --format="{{.Name}}" || "")
 
     rm -f $VARS_FILE && touch $VARS_FILE && chmod 777 $VARS_FILE
     i=-1 ; for name in $CONTAINERS ; do i=$((i+1))
-        $KIRA_WORKSTATION/kira/container-status.sh $name $VARS_FILE &
+        $KIRA_WORKSTATION/kira/container-status.sh $name $VARS_FILE $NETWORKS &
     done
 
     CONTAINERS_COUNT=$((i+1))
+
+    INTERX_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "")
+    INTERX_NETWORK=$(echo $INTERX_STATUS | jq -r '.node_info.network' || echo "Error")
+    INTERX_BLOCK=$(echo $INTERX_STATUS | jq -r '.sync_info.latest_block_height' || echo "Error")
 
     wait # wait for all subprocesses to finish
     source $VARS_FILE
@@ -45,6 +50,9 @@ while : ; do
     echo -e "\e[33;1m------------------------------------------------- [mode]"
     echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
     echo "|             $(date '+%d/%m/%Y %H:%M:%S')               |"
+    INTERX_NETWORK="| NETWORK: $INTERX_NETWORK                                               "
+    INTERX_BLOCK="BLOCK HEIGHT: $INTERX_BLOCK                                                "
+    echo "${INTERX_NETWORK:0:25}${INTERX_BLOCK:0:23}|"
 
     if [ "${SUCCESS,,}" != "true" ] ; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT LAUNCHED       \e[33;1m|"

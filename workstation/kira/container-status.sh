@@ -5,8 +5,14 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 VARS_FILE=$2
-EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$NAME" || echo "Error")
-NETWORKS=$(docker network ls --format="{{.Name}}" || "")
+NETWORKS=$3
+
+ID=$(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null || echo "undefined")
+if [ $ID != "undefined" ] && [ ! -z $ID ]; then 
+    EXISTS="true" 
+else 
+    EXISTS="false" 
+fi
 
 # define global variables
 if [ "${NAME,,}" == "interx" ] ; then
@@ -28,7 +34,7 @@ fi
 
 if [ "${EXISTS,,}" == "true" ] ; then # container exists
     # (docker ps --no-trunc -aqf name=$NAME) 
-    ID=$(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null || echo "undefined")
+    [ -z "$NETWORKS" ] && NETWORKS=$(docker network ls --format="{{.Name}}" || "")
     DOCKER_INSPECT=$(docker inspect $ID || echo "")
     STATUS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Status' || echo "Error")
     PAUSED=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.Paused' || echo "Error")
@@ -79,9 +85,9 @@ if [ ! -z "$VARS_FILE" ] ; then # save status variables to file if output was sp
     echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
     echo "BRANCH_$NAME=\"$BRANCH\"" >> $VARS_FILE
     echo "REPO_$NAME=\"$REPO\"" >> $VARS_FILE
-    echo "NETWORKS_$NAME=\"$NETWORKS\"" >> $VARS_FILE
 
     if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ] ; then # container exists
+        echo "NETWORKS=\"$NETWORKS\"" >> $VARS_FILE
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
             IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
             if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ] ; then

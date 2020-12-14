@@ -13,11 +13,11 @@ while : ; do
     START_TIME="$(date -u +%s)"
     source $KIRA_WORKSTATION/kira/container-status.sh "$NAME"
 
-    if [ "$EXISTS" != "True" ] ; then
+    if [ "${EXISTS,,}" != "true" ] ; then
         clear
-        echo "WARNING: Container $NAME no longer exists ($EXISTS), press [X] to exit or restart your infra"
-        read -n 1 -t 3 KEY || continue
-         [ "${OPTION,,}" == "x" ] && exit 1
+        echo "WARNING: Container $NAME no longer exists, aborting container manager..."
+        sleep 2
+        break
     fi
 
     clear
@@ -45,11 +45,11 @@ while : ; do
     echo "| Restarting: $RESTARTING"
     echo "| Started At: $(echo $STARTED_AT | head -c 19)"
     echo "|-----------------------------------------------|"
-    [ "$EXISTS" == "True" ] && 
+    [ "${EXISTS,,}" == "true" ] && 
     echo "| [I] | Try INSPECT container                   |"
-    [ "$EXISTS" == "True" ] && 
+    [ "${EXISTS,,}" == "true" ] && 
     echo "| [L] | Dump container LOGS                     |"
-    [ "$EXISTS" == "True" ] && 
+    [ "${EXISTS,,}" == "true" ] && 
     echo "| [R] | RESTART container                       |"
     [ "$STATUS" == "exited" ] && 
     echo "| [A] | START container                         |"
@@ -61,7 +61,7 @@ while : ; do
     echo "| [P] | PAUSE container                         |"
     [ "$STATUS" == "paused" ] && 
     echo "| [U] | UNPAUSE container                       |"
-    [ "$EXISTS" == "True" ] && 
+    [ "${EXISTS,,}" == "true" ] && 
     echo "|-----------------------------------------------|"
     echo "| [X] | Exit | [W] | Refresh Window             |"
     echo -e "-------------------------------------------------\e[0m"
