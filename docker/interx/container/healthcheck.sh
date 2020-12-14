@@ -12,8 +12,7 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} +
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} +
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
-RPC_STATUS="$(curl 127.0.0.1:11000/api/cosmos/status 2>/dev/null)" || RPC_STATUS="{}"
-HEIGHT=$(sekaid status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
+HEIGHT=$(curl 127.0.0.1:11000/api/cosmos/status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 
 if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number

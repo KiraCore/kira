@@ -13,21 +13,20 @@ WORKDIR /root/kira-frontend/src
 
 RUN git checkout ${BRANCH}
 
-ADD ./container ${SELF_CONTAINER}
 ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
-
-RUN chmod 777 -R ${SELF_HOME}
 
 RUN flutter pub get
 RUN flutter build web --release
 
-# Stage 2 - Create the run-time image
 FROM nginx
 ENV SELF_HOME=/self/home
 ENV SELF_LOGS=/self/logs
 ENV SELF_CONTAINER=${SELF_HOME}/container
 ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
+
+ADD ./container ${SELF_CONTAINER}
+RUN chmod 777 -R ${SELF_HOME}
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
