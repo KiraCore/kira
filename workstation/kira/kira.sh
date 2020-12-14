@@ -75,6 +75,7 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |"
+    echo "| [I] | Re-INITALIZE Infrastructure             |"
     echo "|-----------------------------------------------|"
     echo "| [X] | Exit | [W] | Refresh Window             |"
     echo -e "-------------------------------------------------\e[0m"
@@ -126,6 +127,10 @@ while : ; do
 
     if [ "${OPTION,,}" == "w" ] ; then
         echo "INFO: Please wait, refreshing user interface..."
+    elif [ "${OPTION,,}" == "i" ] ; then
+        source $KIRA_WORKSTATION/kira/kira-reinitalize.sh
+        source $KIRA_WORKSTATION/kira/kira.sh
+        exit 0
     elif [ "${OPTION,,}" == "x" ] ; then
         clear
         exit 0

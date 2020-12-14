@@ -1,13 +1,10 @@
 #!/bin/bash
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
-
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
-
 START_LOG="$KIRA_DUMP/start.log"
+
 exec &> >(tee "$START_LOG")
 
 echo "------------------------------------------------"
@@ -27,9 +24,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     exit 0
 fi
 
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 if [ "$KIRA_STOP" == "True" ]; then
@@ -40,77 +35,35 @@ fi
 
 $KIRA_SCRIPTS/container-restart.sh "registry"
 
-VALIDATORS_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "validator" || echo "error")
-if [ "$VALIDATORS_EXIST" == "True" ]; then
-    $KIRA_SCRIPTS/container-delete.sh "validator"
+CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)  
 
-    VALIDATOR_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
-
-    if [ "$VALIDATOR_EXISTS" != "False" ]; then
-        echo "ERROR: Failed to delete validator container, status: ${VALIDATOR_EXISTS}"
-        exit 1
+i=-1 ; for name in $CONTAINERS ; do i=$((i+1)) # dele all containers except registry
+    [ "${name,,}" ==  "registry" ] && continue
+    CONTAINER_EXISTS=$($KIRA_SCRIPTS/containers-exist.sh "validator" || echo "error")
+    if [ "${CONTAINER_EXISTS,,}" == "true" ]; then
+        $KIRA_SCRIPTS/container-delete.sh "validator"
+    
+        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
+    
+        if [ "${CONTAINER_EXISTS,,}" != "false" ]; then
+            echo "ERROR: Failed to delete validator container, status: ${VALIDATOR_EXISTS}"
+            exit 1
+        fi
     fi
-fi
-
-SENTRY_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "sentry" || echo "error")
-if [ "$SENTRY_EXIST" == "True" ]; then
-    $KIRA_SCRIPTS/container-delete.sh "sentry"
-
-    SENTRY_EXIST=$($KIRA_SCRIPTS/container-exists.sh "sentry" || echo "error")
-
-    if [ "$SENTRY_EXIST" != "False" ]; then
-        echo "ERROR: Failed to delete sentry container, status: ${SENTRY_EXIST}"
-        exit 1
-    fi
-fi
-
-KMS_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "kms" || echo "error")
-if [ "$KMS_EXIST" == "True" ]; then
-    $KIRA_SCRIPTS/container-delete.sh "kms"
-
-    KMS_EXIST=$($KIRA_SCRIPTS/container-exists.sh "kms" || echo "error")
-
-    if [ "$KMS_EXIST" != "False" ]; then
-        echo "ERROR: Failed to delete kms container, status: ${KMS_EXIST}"
-        exit 1
-    fi
-fi
-
-INTERX_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "interx" || echo "error")
-if [ "$INTERX_EXIST" == "True" ]; then
-    $KIRA_SCRIPTS/container-delete.sh "interx"
-
-    INTERX_EXIST=$($KIRA_SCRIPTS/container-exists.sh "interx" || echo "error")
-
-    if [ "$INTERX_EXIST" != "False" ]; then
-        echo "ERROR: Failed to delete interx container, status: ${INTERX_EXIST}"
-        exit 1
-    fi
-fi
-
-FRONTEND_EXIST=$($KIRA_SCRIPTS/containers-exist.sh "frontend" || echo "error")
-if [ "$FRONTEND_EXIST" == "True" ]; then
-    $KIRA_SCRIPTS/container-delete.sh "frontend"
-
-    FRONTEND_EXIST=$($KIRA_SCRIPTS/container-exists.sh "frontend" || echo "error")
-
-    if [ "$FRONTEND_EXIST" != "False" ]; then
-        echo "ERROR: Failed to delete frontend container, status: ${FRONTEND_EXIST}"
-        exit 1
-    fi
-fi
-
-# todo: delete existing containers
+done
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+
+$WORKSTATION_SCRIPTS/update-base-image.sh # base image can't be built in parallel if other images depend on it
+
 # * Build docker images in parallel
-source $WORKSTATION_SCRIPTS/update-base-image.sh &
-source $WORKSTATION_SCRIPTS/update-validator-image.sh &
-source $WORKSTATION_SCRIPTS/update-kms-image.sh &
-source $WORKSTATION_SCRIPTS/update-sentry-image.sh &
-source $WORKSTATION_SCRIPTS/update-interx-image.sh &
-wait
-source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+$WORKSTATION_SCRIPTS/update-validator-image.sh &
+$WORKSTATION_SCRIPTS/update-kms-image.sh &
+$WORKSTATION_SCRIPTS/update-sentry-image.sh &
+$WORKSTATION_SCRIPTS/update-interx-image.sh &
+$WORKSTATION_SCRIPTS/update-frontend-image.sh &
+
+wait # wait for all parallel build image processes to finish
 
 cd $KIRA_WORKSTATION
 
