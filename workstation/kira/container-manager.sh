@@ -78,6 +78,7 @@ while : ; do
         echo "INFO: Entering container $NAME ($ID)..."
         echo "INFO: To exit the container type 'exit'"
         docker exec -it $ID bash || docker exec -it $ID sh 
+        OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
         echo "INFO: Dumping all loggs..."
@@ -114,7 +115,7 @@ while : ; do
         break
     fi
     
-    if [ "${EXECUTED,,}" == "true" ] ; then
+    if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
         echo "INFO: Option ($OPTION) was executed, press any key to continue..."
         read -s -n 1 || continue
     fi
