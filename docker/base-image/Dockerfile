@@ -50,3 +50,16 @@ RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 ENV PATH="/root/.cargo/bin:${PATH}"
 RUN cargo --version
+
+ENV FLUTTERROOT="/usr/lib/flutter"
+
+RUN cd /usr/lib && git clone https://github.com/flutter/flutter
+
+RUN cd $FLUTTERROOT && git checkout v1.16.3
+
+ENV PATH=${FLUTTERROOT}/bin:${PATH}
+
+RUN flutter channel beta || echo "Failed to checkout flutter beta"
+RUN flutter upgrade || echo "Failed to upgrade flutter"
+RUN flutter config --enable-web
+RUN flutter doctor

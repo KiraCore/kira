@@ -7,19 +7,6 @@ ARG REPO
 
 RUN echo "Build hash: ${BUILD_HASH}"
 
-ENV FLUTTERROOT="/usr/lib/flutter"
-
-RUN cd /usr/lib && git clone https://github.com/flutter/flutter
-
-RUN cd $FLUTTERROOT && git checkout v1.16.3
-
-ENV PATH=${FLUTTERROOT}/bin:${PATH}
-
-RUN flutter channel beta || echo "Failed to checkout flutter beta"
-RUN flutter upgrade || echo "Failed to upgrade flutter"
-RUN flutter config --enable-web
-RUN flutter doctor
-
 RUN cd /root && git clone ${REPO}
 
 WORKDIR /root/kira-frontend/src
