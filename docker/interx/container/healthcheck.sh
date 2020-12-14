@@ -36,4 +36,3 @@ else
 fi
 
 echo "INFO: Latest Block Height: $HEIGHT"
-exit 0
