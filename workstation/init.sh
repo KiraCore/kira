@@ -35,38 +35,38 @@ source $ETC_PROFILE &>/dev/null
 set -e
 
 if [ -z "$SKIP_UPDATE" ]; then
-   exec &> >(tee "$SETUP_LOG")
-   echo "MMMMMMMMMMMMMWWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMM"
-   echo "MMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMM"
-   echo "MW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNM"
-   echo "MWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXM"
-   echo "MW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXM"
-   echo "MMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXM"
-   echo "MMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXM"
-   echo "MMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXM"
-   echo "MMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXM"
-   echo "MMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WM"
-   echo "MMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMM"
-   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMM"
-   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMM"
-   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMM"
-   echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
-   echo "M          KIRA NETWORK SETUP $SETUP_VER"
-   echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
-   sleep 3
+    exec &> >(tee "$SETUP_LOG")
+    echo "MMMMMMMMMMMMMWWNNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMM"
+    echo "MMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMM"
+    echo "MW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNM"
+    echo "MWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXM"
+    echo "MW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXM"
+    echo "MMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXM"
+    echo "MMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXM"
+    echo "MMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXM"
+    echo "MMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXM"
+    echo "MMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WM"
+    echo "MMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMM"
+    echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMM"
+    echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMM"
+    echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "M          KIRA NETWORK SETUP $SETUP_VER"
+    echo "MMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMM"
+    sleep 3
 else
-   exec &> >(tee -a "$SETUP_LOG")
-   echo "INFO: Initalizing setup script..."
+    exec &> >(tee -a "$SETUP_LOG")
+    echo "INFO: Initalizing setup script..."
 fi
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
@@ -82,14 +82,13 @@ fi
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="v0.1.7.4"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
 [ -z "$KMS_BRANCH" ] && KMS_BRANCH="develop"
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="KIP_31"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="interx"
 
 [ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
 [ -z "$KMS_REPO" ] && KMS_REPO="https://github.com/KiraCore/tmkms"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
-
 
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
 if [ "$KIRA_USER" == "root" ]; then
@@ -116,7 +115,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     KIRA_SETUP=/kira/setup
     KIRA_MANAGER="/kira/manager"
     KIRA_PROGRESS="/kira/progress"
-    
+
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
     KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
 
@@ -235,6 +234,6 @@ source $KIRA_WORKSTATION/menu.sh
 
 echo "------------------------------------------------"
 echo "| FINISHED: SETUP                              |"
-echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME_INIT)) seconds"
+echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_INIT)) seconds"
 echo "------------------------------------------------"
 exit 0
