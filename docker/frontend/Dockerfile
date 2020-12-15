@@ -28,7 +28,7 @@ ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
 RUN mkdir ${SELF_HOME} ${SELF_LOGS} ${SELF_CONTAINER} -p
 ADD ./container ${SELF_CONTAINER}
 
-RUN apt-get install -y jq
+RUN apt install -y jq
 RUN chmod 777 -R ${SELF_HOME}
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
