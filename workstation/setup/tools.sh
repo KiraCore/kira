@@ -22,7 +22,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     php-cli \
     unzip \
     php7.4-gmp \
-    php-mbstring \ 
+    php-mbstring \
     md5deep
 
   pip3 install ECPy
@@ -42,11 +42,11 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true)
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
 
-  if [ "$FILE_HASH" != "$EXPECTED_HASH" ] ; then
-      echo "DANGER: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
-      echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-      read -p "Press any key to continue..." -n 1
-      exit 1
+  if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+    echo "DANGER: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
+    echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
+    read -p "Press any key to continue..." -n 1
+    exit 1
   fi
 
   cd $HD_WALLET_DIR
