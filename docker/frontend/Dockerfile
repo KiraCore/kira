@@ -28,6 +28,7 @@ ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
 RUN mkdir ${SELF_HOME} ${SELF_LOGS} ${SELF_CONTAINER} -p
 ADD ./container ${SELF_CONTAINER}
 
+RUN apt update
 RUN apt install -y jq
 RUN chmod 777 -R ${SELF_HOME}
 
