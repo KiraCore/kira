@@ -37,7 +37,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   git clone https://github.com/KiraCore/hd-wallet-derive.git
   rm -rfv $HD_WALLET_DIR/.git
   rm -rfv $HD_WALLET_DIR/.gitignore
-  rm -rfv $HD_WALLET_DIR/hd-wallet-derive/tests # there is some issue with reading one of the test files
+  rm -rfv $HD_WALLET_DIR/tests # there is some issue with reading one of the test files
 
   FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true)
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
