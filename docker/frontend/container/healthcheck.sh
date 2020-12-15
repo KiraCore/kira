@@ -8,7 +8,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 echo "INFO: Healthcheck => START"
 sleep 30 # rate limit
 
-find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} +
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} +
 
 STATUS_NGINX="$(service nginx status)"
