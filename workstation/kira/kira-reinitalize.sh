@@ -63,10 +63,10 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
 fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
-    echo "INFO: Re-initalization failed or was aborted"
+    echo -e "\nINFO: Re-initalization failed or was aborted\n"
     read -p "Press any key to continue..." -n 1
 else
-    echo "INFO: Hash verification was sucessfull, ready to re-initalize environment"
+    echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
     read -p "Press any key to continue..." -n 1
     source $INIT_SCRIPT_OUT
 fi

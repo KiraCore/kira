@@ -78,8 +78,8 @@ rm -f $GENESIS_DESTINATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate two mnemonic keys (for signing & faucet) using hd-wallet-derive.
 
-SIGNER_MNEMONIC=$(/home/$SUDO_USER/hd-wallet-derive/hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-FAUCET_MNEMONIC=$(/home/$SUDO_USER/hd-wallet-derive/hd-wallet-derive.php --coin=DOGE --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+SIGNER_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+FAUCET_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 
 # * Cut the first and the last quotes("")
 SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
