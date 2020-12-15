@@ -1,15 +1,15 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
-if [ "${INFRA_MODE,,}" == "local" ] ; then
-    title="Demo Mode (local testnet)"
-elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    title="Full Node Mode"
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    title="Validator Mode"
+if [ "${INFRA_MODE,,}" == "local" ]; then
+  title="Demo Mode (local testnet)"
+elif [ "${INFRA_MODE,,}" == "sentry" ]; then
+  title="Full Node Mode"
+elif [ "${INFRA_MODE,,}" == "validator" ]; then
+  title="Validator Mode"
 else
-   echo "ERROR: Unknown operation mode"
-   exit 1
+  echo "ERROR: Unknown operation mode"
+  exit 1
 fi
 
 clear
@@ -27,7 +27,7 @@ echo -e "-------------------------------------------------"
 
 SEKAI_BRANCH_DEFAULT="v0.1.7.4"
 FRONTEND_BRANCH_DEFAULT="dev"
-INTERX_BRANCH_DEFAULT="KIP_31"
+INTERX_BRANCH_DEFAULT="interx"
 KMS_BRANCH_DEFAULT="develop"
 
 while :; do
