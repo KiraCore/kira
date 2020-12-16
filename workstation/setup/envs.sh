@@ -1,7 +1,5 @@
 #!/bin/bash
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
@@ -34,7 +32,7 @@ VALIDATOR_P2P_PORT="26656"
 RPC_PROXY_PORT="10001"
 
 HOSTS_PATH="/etc/hosts"
-GO_VERSION="1.14.2"
+GO_VERSION="1.15.6"
 NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
 GOROOT="/usr/local/go"
@@ -58,7 +56,7 @@ mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.52"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.53"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV

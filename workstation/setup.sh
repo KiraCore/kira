@@ -78,6 +78,7 @@ fi
 $KIRA_WORKSTATION/setup/envs.sh
 $KIRA_WORKSTATION/setup/hosts.sh
 $KIRA_WORKSTATION/setup/system.sh
+$KIRA_WORKSTATION/setup/golang.sh
 $KIRA_WORKSTATION/setup/tools.sh
 $KIRA_WORKSTATION/setup/systemctl2.sh
 $KIRA_WORKSTATION/setup/docker.sh

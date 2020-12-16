@@ -1,11 +1,8 @@
 #!/bin/bash
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
-
+set +e && source "/etc/profile" &>/dev/null && set -e
 exec &> >(tee -a "$KIRA_DUMP/setup.log")
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.7"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.8"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -38,7 +35,6 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   rm -rfv $HD_WALLET_DIR/.git
   rm -rfv $HD_WALLET_DIR/.gitignore
   rm -rfv $HD_WALLET_DIR/tests # there is some issue with reading one of the test files
-
   FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true)
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
 
@@ -57,8 +53,27 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   ln -s $HD_WALLET_PATH /bin/hd-wallet-derive || echo "WARNING: KIRA Manager symlink already exists"
 
   cd /home/$SUDO_USER
-  touch $KIRA_SETUP_BASE_TOOLS
+  TOOLS_DIR="/home/$SUDO_USER/tools"
+  PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
+  git clone https://github.com/KiraCore/tools.git
+  rm -rfv $TOOLS_DIR/.git
+  rm -rfv $TOOLS_DIR/.gitignore
+  FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true)
+  EXPECTED_HASH="37fc48248aead8af6d6e03a1497657431bae310b5cd71d6e6f74f7d4e3cd3de7"
 
+  if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+    echo "DANGER: Failed to check integrity hash of the kira tools !!!"
+    echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
+    read -p "Press any key to continue..." -n 1
+    exit 1
+  fi
+
+  # TODO: intall tools
+  #cd $PRIV_KEYGEN_DIR
+  #make install
+
+  cd /home/$SUDO_USER
+  touch $KIRA_SETUP_BASE_TOOLS
 else
   echo "INFO: Base tools were already installed."
 fi
