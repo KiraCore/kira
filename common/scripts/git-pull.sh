@@ -1,7 +1,5 @@
 #!/bin/bash
-
-exec 2>&1
-set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 # Local Update Shortcut:
 # (rm -fv $KIRA_SCRIPTS/git-pull.sh) && nano $KIRA_SCRIPTS/git-pull.sh && chmod 777 $KIRA_SCRIPTS/git-pull.sh
@@ -47,8 +45,8 @@ fi
 
 mkdir -p $OUTPUT
 mkdir -p "${KIRA_SETUP}${OUTPUT}"
-REMOTE_HASH_FILE="$KIRA_SETUP$OUTPUT/remote_hash"
-LOCAL_HASH_FILE="$KIRA_SETUP$OUTPUT/local_hash"
+REMOTE_HASH_FILE="${KIRA_SETUP}$OUTPUT/remote_hash"
+LOCAL_HASH_FILE="${KIRA_SETUP}$OUTPUT/local_hash"
 
 touch $REMOTE_HASH_FILE
 touch $LOCAL_HASH_FILE
@@ -86,6 +84,10 @@ elif [[ "${REPO,,}" == *"https://"*   ]] ; then
     if [ ! -z "$BRANCH" ] ; then
         echo "INFO: Fetching remote commit hash"
         REMOTE_HASH_NEW="$(git ls-remote $REPO $BRANCH | cut -c1-7)-${BRANCH}-${CHECKOUT}"
+        echo "INFO: New remote hash: $REMOTE_HASH_NEW"
+        echo "INFO: Old remote hash: $REMOTE_HASH_OLD"
+        echo "INFO: New local hash: $LOCAL_HASH_NEW"
+        echo "INFO: Old local hash: $LOCAL_HASH_OLD"
         
         if [ "$REMOTE_HASH_NEW" == "$REMOTE_HASH_OLD" ] && [ "$LOCAL_HASH_NEW" == "$LOCAL_HASH_OLD" ] ; then
             echo "INFO: Repo $REPO will NOT be cloned, no changes were detected"

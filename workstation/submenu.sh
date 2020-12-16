@@ -72,7 +72,7 @@ while :; do
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     source $KIRA_WORKSTATION/start.sh "False"
-
+    source $KIRA_WORKSTATION/kira/kira.sh
     break
     ;;
 
