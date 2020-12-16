@@ -27,6 +27,13 @@ if [[ "$INDEX_HTML" != *"$SUB_STR"* ]]; then
   exit 1
 fi
 
+INDEX_STATUS_CODE="$(curl -s -o /dev/null -I -w '%{http_code}' 127.0.0.1:80)"
+
+if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
+  echo "Index page returns ${INDEX_STATUS_CODE}"
+  exit 1
+fi
+
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(curl http://interx:11000/api/cosmos/status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)

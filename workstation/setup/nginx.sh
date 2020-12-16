@@ -20,7 +20,7 @@ EOL
     mkdir -p -v $NGINX_SERVICED_PATH
     printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" >$NGINX_SERVICED_PATH/override.conf
 
-    systemctl2 enable nginx.service
+    # systemctl2 enable nginx.service
     touch $KIRA_SETUP_NGINX
 else
     echo "INFO: NGINX was already installed"
