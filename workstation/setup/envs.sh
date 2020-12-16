@@ -56,7 +56,7 @@ mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.53"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.54"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
