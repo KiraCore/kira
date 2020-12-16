@@ -19,6 +19,10 @@ ADD ./container /root
 ADD ./configs/tmkms.toml /root
 ADD ./configs/priv_validator_key.json /root
 
+RUN chmod 777 -R ${SELF_HOME}
+
 ARG DEBIAN_FRONTEND=noninteractive
+
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
 CMD ["sh", "-c", "/bin/bash /root/start.sh"]

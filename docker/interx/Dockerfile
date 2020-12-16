@@ -12,9 +12,9 @@ ENV COMMON_DIR="/common"
 RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
 RUN cd ${SEKAI} && git checkout ${BRANCH}
+RUN mkdir -p "${COMMON_DIR}"
 
 ADD ./container ${SELF_CONTAINER}
-ADD ./configs /root
 
 RUN chmod 777 -R ${SELF_HOME}
 
