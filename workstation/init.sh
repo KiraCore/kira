@@ -11,7 +11,8 @@ INTERACTIVE=$4
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
-SETUP_VER="v0.0.12" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+CDHELPER_VERSION="v0.6.14"
+SETUP_VER="v0.0.3" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 
 echo "------------------------------------------------"
@@ -131,7 +132,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
@@ -150,7 +151,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
         rm -f -v ./CDHelper-linux-x64.zip
-        wget https://github.com/asmodat/CDHelper/releases/download/v0.6.13/CDHelper-linux-x64.zip
+        wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
         rm -rfv $INSTALL_DIR
         unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
         chmod -R -v 777 $INSTALL_DIR
