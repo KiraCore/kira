@@ -106,11 +106,13 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build docker images
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
-source $WORKSTATION_SCRIPTS/update-sentry-image.sh
-source $WORKSTATION_SCRIPTS/update-interx-image.sh
-source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+$WORKSTATION_SCRIPTS/update-validator-image.sh &
+$WORKSTATION_SCRIPTS/update-kms-image.sh &
+$WORKSTATION_SCRIPTS/update-sentry-image.sh &
+$WORKSTATION_SCRIPTS/update-interx-image.sh &
+wait
+
+$WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kiranet` bridge network
