@@ -55,6 +55,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   cd /home/$SUDO_USER
   TOOLS_DIR="/home/$SUDO_USER/tools"
   PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
+  rm -fvr $TOOLS_DIR
   git clone https://github.com/KiraCore/tools.git
   rm -rfv $TOOLS_DIR/.git
   rm -rfv $TOOLS_DIR/.gitignore

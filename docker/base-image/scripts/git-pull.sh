@@ -126,19 +126,19 @@ git remote set-url origin $REPO || echo "WARNING: Failed to set origin of the re
 if [[ "${REPO,,}" == *"git@"* ]] ; then
     ssh-agent sh -c "ssh-add $SSHCRED ; git fetch --all"
     ssh-agent sh -c "ssh-add $SSHCRED ; git reset --hard '@{u}'" || \
-     ssh-agent sh -c "ssh-add $SSHCRED ; git reset --hard" || \
-     echo "Failed to reset banch"
+    ssh-agent sh -c "ssh-add $SSHCRED ; git reset --hard" || \
+    echo "Failed to reset banch"
 else
     git fetch --all
     git reset --hard '@{u}' || \
-     git reset --hard || \
-     echo "Failed to reset hard '@{u}' banch"
+    git reset --hard || \
+    echo "Failed to reset hard '@{u}' banch"
 fi
 
 REMOTE_HASH="$(git log -n1 --pretty='%h' || echo "undefined")-${BRANCH}-${CHECKOUT}"
 LOCAL_HASH="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')"
-$REMOTE_HASH > $REMOTE_HASH_FILE || rm -fv $REMOTE_HASH_FILE
-$LOCAL_HASH > $LOCAL_HASH_FILE || rm -fv $LOCAL_HASH_FILE
+echo "$REMOTE_HASH" > $REMOTE_HASH_FILE || rm -fv $REMOTE_HASH_FILE
+echo "$LOCAL_HASH" > $LOCAL_HASH_FILE || rm -fv $LOCAL_HASH_FILE
 
 ls -as
 [ ! -z "$RWXMOD" ] && [ ! -z "${RWXMOD##*[!0-9]*}" ] && chmod -R $RWXMOD $OUTPUT
