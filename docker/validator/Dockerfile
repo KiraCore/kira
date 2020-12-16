@@ -12,9 +12,8 @@ ENV GOBIN=/usr/local/go/bin
 
 RUN echo "Build hash: ${BUILD_HASH}, SIGNER_MNEMONIC: ${SIGNER_MNEMONIC}, FAUCET_MNEMONIC: ${FAUCET_MNEMONIC}"
 
-RUN ${SELF_SCRIPTS}/git-pull.sh "${REPO}" "${BRANCH}" "${SEKAI}"
+RUN git clone ${REPO} ${SEKAI} && cd ${SEKAI} && git checkout ${BRANCH}
 RUN cd ${SEKAI} && go install ./cmd/sekaid
-# RUN echo ${GOBIN} && cd ${GOBIN} && ls
 RUN sekaid version --long
 RUN mkdir -p "${COMMON_DIR}"
 

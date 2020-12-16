@@ -110,7 +110,7 @@ $WORKSTATION_SCRIPTS/update-validator-image.sh &
 $WORKSTATION_SCRIPTS/update-kms-image.sh &
 $WORKSTATION_SCRIPTS/update-sentry-image.sh &
 $WORKSTATION_SCRIPTS/update-interx-image.sh &
-wait
+wait %1 %2 %3 %4
 
 $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
