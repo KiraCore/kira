@@ -97,6 +97,22 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 # CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://0.0.0.0:12345\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Config sentry/configs/config.toml
+
+CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build docker images
+source $WORKSTATION_SCRIPTS/update-validator-image.sh
+source $WORKSTATION_SCRIPTS/update-kms-image.sh
+source $WORKSTATION_SCRIPTS/update-sentry-image.sh
+source $WORKSTATION_SCRIPTS/update-interx-image.sh
+source $WORKSTATION_SCRIPTS/update-frontend-image.sh
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kiranet` bridge network
 
 docker network rm kiranet || echo "Failed to remove kira network"
@@ -107,11 +123,6 @@ docker network create --driver=bridge --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
 docker network rm kmsnet || echo "Failed to remove kms network"
 docker network create --driver=bridge --subnet=$KIRA_KMS_SUBNET kmsnet
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Build docker images
-source $WORKSTATION_SCRIPTS/update-validator-image.sh
-source $WORKSTATION_SCRIPTS/update-kms-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
@@ -172,12 +183,6 @@ fi
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Get the genesis file from the validator.
 
-# echo "INFO: Saving priv_validator_key.json file..."
-# PRIV_VALIDATOR_KEY_SOURCE="/root/.simapp/config/priv_validator_key.json"
-# PRIV_VALIDATOR_KEY_DESTINATION="$DOCKER_COMMON/priv_validator_key.json"
-# rm -f $PRIV_VALIDATOR_KEY_DESTINATION
-# docker cp validator:$PRIV_VALIDATOR_KEY_SOURCE $PRIV_VALIDATOR_KEY_DESTINATION
-
 CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
 echo "INFO: Check Validator Node id..."
 echo "${VALIDATOR_NODE_ID} - ${CHECK_VALIDATOR_NODE_ID}"
@@ -189,21 +194,9 @@ docker network rm sentrynet || echo "Failed to remove setnry network"
 docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Configure config.toml file for sentry and provide genesis file.
-
-CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
-# CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
-
-cp -i $GENESIS_DESTINATION $KIRA_DOCKER/sentry/configs
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
 
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
-
-source $WORKSTATION_SCRIPTS/update-sentry-image.sh
 
 docker run -d \
     --restart=always \
@@ -211,6 +204,7 @@ docker run -d \
     --net=sentrynet \
     --ip $KIRA_SENTRY_IP \
     -e DEBUG_MODE="True" \
+    -v $DOCKER_COMMON:/common \
     sentry:latest
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -240,13 +234,18 @@ docker network create --driver=bridge --subnet=$KIRA_SERVICE_SUBNET servicenet
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Update interx's config for signer and fuacet mnemonic keys
 
-jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
-jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $KIRA_DOCKER/interx/configs/config.json
+DOCKER_COMMON_INTERX="$DOCKER_COMMON/interx"
+rm -rfv $DOCKER_COMMON_INTERX
+mkdir -p $DOCKER_COMMON_INTERX
+
+DOCKER_COMMON_INTERX_CONFIG="$DOCKER_COMMON_INTERX/config.json"
+rm -f $DOCKER_COMMON_INTERX_CONFIG
+
+jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $DOCKER_COMMON_INTERX_CONFIG
+jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $DOCKER_COMMON_INTERX_CONFIG
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
-
-source $WORKSTATION_SCRIPTS/update-interx-image.sh
 
 docker run -d \
     -p 11000:11000 \
@@ -255,6 +254,7 @@ docker run -d \
     --net=servicenet \
     --ip $KIRA_INTERX_IP \
     -e DEBUG_MODE="True" \
+    -v $DOCKER_COMMON:/common \
     --env KIRA_SENTRY_IP=$KIRA_SENTRY_IP \
     interx:latest
 
@@ -268,8 +268,6 @@ sleep 10
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the frontend
-
-source $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 docker run -d \
     -p 80:80 \
