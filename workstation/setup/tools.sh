@@ -30,12 +30,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   HD_WALLET_DIR="/home/$SUDO_USER/hd-wallet-derive"
   HD_WALLET_PATH="$HD_WALLET_DIR/hd-wallet-derive.php"
-  rm -fvr $HD_WALLET_DIR
-  git clone https://github.com/KiraCore/hd-wallet-derive.git
-  rm -rfv $HD_WALLET_DIR/.git
-  rm -rfv $HD_WALLET_DIR/.gitignore
-  rm -rfv $HD_WALLET_DIR/tests # there is some issue with reading one of the test files
-  FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true)
+  $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/hd-wallet-derive.git" "master" "$HD_WALLET_DIR" 555
+  FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true -i="$HD_WALLET_DIR/.git,$HD_WALLET_DIR/.gitignore,$HD_WALLET_DIR/tests")
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
@@ -55,11 +51,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   cd /home/$SUDO_USER
   TOOLS_DIR="/home/$SUDO_USER/tools"
   PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
-  rm -fvr $TOOLS_DIR
-  git clone https://github.com/KiraCore/tools.git
-  rm -rfv $TOOLS_DIR/.git
-  rm -rfv $TOOLS_DIR/.gitignore
-  FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true)
+  $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
+  FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
   EXPECTED_HASH="37fc48248aead8af6d6e03a1497657431bae310b5cd71d6e6f74f7d4e3cd3de7"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then

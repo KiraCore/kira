@@ -55,7 +55,8 @@ touch $LOCAL_HASH_FILE
 
 WKDIR=$PWD
 cd $OUTPUT
-LOCAL_HASH_NEW="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')"
+CDHelper hash MD5 -p="$OUTPUT" -x=true -r=true -i="$OUTPUT/.git,$OUTPUT/.gitignore"
+LOCAL_HASH_NEW=$(CDHelper hash MD5 -p="$OUTPUT" -x=true -r=true --silent=true -i="$OUTPUT/.git,$OUTPUT/.gitignore" 2> /dev/null || echo "")
 LOCAL_HASH_OLD="$(cat $LOCAL_HASH_FILE)"
 REMOTE_HASH_NEW=""
 REMOTE_HASH_OLD="$(cat $REMOTE_HASH_FILE)"
@@ -84,10 +85,14 @@ elif [[ "${REPO,,}" == *"https://"*   ]] ; then
     echo "INFO: Detected https repo address"
     
     if [ ! -z "$BRANCH" ] ; then
-        echo "INFO: Fetching remote commit hash"
+        echo "INFO: Fetching remote commit hash..."
         REMOTE_HASH_NEW="$(git ls-remote $REPO $BRANCH | cut -c1-7)-${BRANCH}-${CHECKOUT}"
+        echo "INFO: New remote hash: $REMOTE_HASH_NEW"
+        echo "INFO: Old remote hash: $REMOTE_HASH_OLD"
+        echo "INFO: New local hash: $LOCAL_HASH_NEW"
+        echo "INFO: Old local hash: $LOCAL_HASH_OLD"
         
-        if [ "$REMOTE_HASH_NEW" == "$REMOTE_HASH_OLD" && "$LOCAL_HASH_NEW" == "$LOCAL_HASH_OLD" ] ; then
+        if [ "$REMOTE_HASH_NEW" == "$REMOTE_HASH_OLD" ] && [ "$LOCAL_HASH_NEW" == "$LOCAL_HASH_OLD" ] ; then
             echo "INFO: Repo $REPO will NOT be cloned, no changes were detected"
             exit 0
         fi
@@ -135,16 +140,18 @@ else
     echo "Failed to reset hard '@{u}' banch"
 fi
 
-REMOTE_HASH="$(git log -n1 --pretty='%h' || echo "undefined")-${BRANCH}-${CHECKOUT}"
-LOCAL_HASH="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')"
-echo "$REMOTE_HASH" > $REMOTE_HASH_FILE || rm -fv $REMOTE_HASH_FILE
-echo "$LOCAL_HASH" > $LOCAL_HASH_FILE || rm -fv $LOCAL_HASH_FILE
-
 ls -as
 [ ! -z "$RWXMOD" ] && [ ! -z "${RWXMOD##*[!0-9]*}" ] && chmod -R $RWXMOD $OUTPUT
+
+CDHelper hash MD5 -p="$OUTPUT" -x=true -r=true -i="$OUTPUT/.git,$OUTPUT/.gitignore"
+REMOTE_HASH="$(git log -n1 --pretty='%h' || echo "undefined")-${BRANCH}-${CHECKOUT}"
+LOCAL_HASH=$(CDHelper hash MD5 -p="$OUTPUT" -x=true -r=true --silent=true -i="$OUTPUT/.git,$OUTPUT/.gitignore" 2> /dev/null || echo "")
+echo "$REMOTE_HASH" > $REMOTE_HASH_FILE || rm -fv $REMOTE_HASH_FILE
+echo "$LOCAL_HASH" > $LOCAL_HASH_FILE || rm -fv $LOCAL_HASH_FILE
 
 echo "------------------------------------------------"
 echo "|         FINISHED: GIT PULL v0.0.1            |"
 echo "|      COMMIT HASH: $REMOTE_HASH"
 echo "|   DIRECTORY HASH: $LOCAL_HASH"
 echo "------------------------------------------------"
+exit 0
