@@ -12,7 +12,7 @@ KIRA_DUMP="/home/$KIRA_USER/DUMP"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
 CDHELPER_VERSION="v0.6.14"
-SETUP_VER="v0.0.3-$CDHELPER_VERSION" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.3" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 
 echo "------------------------------------------------"
@@ -132,7 +132,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
