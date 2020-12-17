@@ -33,11 +33,10 @@ if [ "$KIRA_STOP" == "True" ]; then
     exit 0
 fi
 
-
 echo "INFO: Prunning unused cache..."
-docker builder prune -a -f
+docker builder prune -a -f || echo "WARNING: Cache prune failed"
 echo "INFO: Prunning unused images..."
-docker image prune -a -f
+docker image prune -a -f || echo "WARNING: Image prune failed"
 
 $KIRA_SCRIPTS/container-restart.sh "registry"
 
