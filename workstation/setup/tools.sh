@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.9"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.10"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -49,11 +49,10 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   cd /home/$SUDO_USER
   TOOLS_DIR="/home/$SUDO_USER/tools"
-  PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
   KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-  EXPECTED_HASH="44e8638081186eab4edafe6524c34bbe5b1900c5350096f0ec4810de43542841"
+  EXPECTED_HASH="3de9bb95cb065e9cec2e2b35ef68eff9e81a5718e60a16a0c9f31a4f0672dfa2"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo "DANGER: Failed to check integrity hash of the kira tools !!!"
@@ -62,21 +61,12 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     exit 1
   fi
 
-  # TODO: intall tools
-  cd $PRIV_KEYGEN_DIR
-  go build
-  make install
-
-  ls -l /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink not found"
-  rm /bin/priv-validator-key-gen || echo "Removing old priv-validator-key-gen symlink"
-  ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink already exists"
+  cd $KMS_KEYIMPORT_DIR
+  ls -l /bin/tmkms-key-import || echo "tmkms-key-import symlink not found"
+  rm /bin/tmkms-key-import || echo "faild removing old tmkms-key-import symlink"
+  ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echo "tmkms-key-import symlink already exists"
   # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-  # priv-validator-key-gen --mnemonic="$MNEMONIC" # will create priv_validator_key.json in the current directory
-
-  ls -l /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink not found"
-  rm /bin/priv-validator-key-gen || echo "Removing old priv-validator-key-gen symlink"
-  ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink already exists"
-  # priv-validator-key-gen ./create priv_validator_key.json # returns kms key
+  # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key"
 
   cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS
