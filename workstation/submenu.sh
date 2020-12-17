@@ -29,6 +29,7 @@ SEKAI_BRANCH_DEFAULT="v0.1.7.4"
 FRONTEND_BRANCH_DEFAULT="dev"
 INTERX_BRANCH_DEFAULT="interx"
 KMS_BRANCH_DEFAULT="develop"
+FAILED="false"
 
 while :; do
   read -p "Input option: " KEY
@@ -47,7 +48,11 @@ while :; do
     CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH_DEFAULT" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH_DEFAULT" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH_DEFAULT" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-    source $KIRA_WORKSTATION/start.sh "False"
+    
+    $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
+    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
+    read -p "Press any key to continue..." -n 1
+    source $KIRA_WORKSTATION/kira/kira.sh
     break
     ;;
 
@@ -71,7 +76,9 @@ while :; do
     CDHelper text lineswap --insert="KMS_BRANCH=$KMS_BRANCH" --prefix="KMS_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    source $KIRA_WORKSTATION/start.sh "False"
+    $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
+    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
+    read -p "Press any key to continue..." -n 1
     source $KIRA_WORKSTATION/kira/kira.sh
     break
     ;;
