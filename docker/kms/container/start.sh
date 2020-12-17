@@ -10,6 +10,6 @@ tmkms init /root/.tmkms
 mv /root/tmkms.toml /root/.tmkms/
 
 cd /root/.tmkms/ && ls
-tmkms softsign import /root/priv_validator_key.json /root/.tmkms/signing.key
+tmkms softsign import $COMMON_DIR/priv_validator_key.json /root/.tmkms/signing.key
 
 sleep 10 && tmkms start -v -c /root/.tmkms/tmkms.toml
