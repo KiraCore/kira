@@ -44,10 +44,11 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     libudev-dev \
     libusb-1.0-0-dev \
     curl \
-    iputils-ping
-apt-get install -y jq
+    iputils-ping \
+    nano \
+    jq
 
-GO_VERSION="1.14.2"
+GO_VERSION="1.15.6"
 echo "INFO: Installing latest go version $GO_VERSION https://golang.org/doc/install ..."
 wget https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz &>/dev/null
 tar -C /usr/local -xvf go$GO_VERSION.linux-amd64.tar.gz &>/dev/null
