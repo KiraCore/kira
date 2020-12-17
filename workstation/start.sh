@@ -5,7 +5,7 @@ SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
 START_LOG="$KIRA_DUMP/start.log"
 
-exec &> >(tee "$START_LOG")
+exec >> $START_LOG 2>&1 && tail $START_LOG
 
 echo "------------------------------------------------"
 echo "| STARTED: LAUNCH SCRIPT                       |"
@@ -32,6 +32,12 @@ if [ "$KIRA_STOP" == "True" ]; then
     source $KIRA_MANAGER/stop.sh
     exit 0
 fi
+
+
+echo "INFO: Prunning unused cache..."
+docker builder prune -a -f
+echo "INFO: Prunning unused images..."
+docker image prune -a -f
 
 $KIRA_SCRIPTS/container-restart.sh "registry"
 
@@ -110,7 +116,7 @@ $WORKSTATION_SCRIPTS/update-validator-image.sh &
 $WORKSTATION_SCRIPTS/update-kms-image.sh &
 $WORKSTATION_SCRIPTS/update-sentry-image.sh &
 $WORKSTATION_SCRIPTS/update-interx-image.sh &
-wait %1 %2 %3 %4
+wait
 
 $WORKSTATION_SCRIPTS/update-frontend-image.sh
 

@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-exec &> >(tee -a "$KIRA_DUMP/setup.log")
+exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.9"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
@@ -71,9 +71,13 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   ls -l /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink not found"
   rm /bin/priv-validator-key-gen || echo "Removing old priv-validator-key-gen symlink"
   ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink already exists"
-
   # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
   # priv-validator-key-gen --mnemonic="$MNEMONIC" # will create priv_validator_key.json in the current directory
+
+  ls -l /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink not found"
+  rm /bin/priv-validator-key-gen || echo "Removing old priv-validator-key-gen symlink"
+  ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-validator-key-gen || echo "priv-validator-key-gen symlink already exists"
+  # priv-validator-key-gen ./create priv_validator_key.json # returns kms key
 
   cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS

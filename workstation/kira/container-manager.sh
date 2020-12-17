@@ -5,9 +5,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 
-# CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
-# mkdir -p $(dirname "$CONTAINER_DUPM")
-# exec &> >(tee -a "$CONTAINER_DUPM")
+#CONTAINER_DUPM="$KIRA_DUMP/kira/${NAME^^}.log"
+#mkdir -p $(dirname "$CONTAINER_DUPM")
+#rm -fv $CONTAINER_DUPM
+#exec >> "$CONTAINER_DUPM" 2>&1 && tail "$CONTAINER_DUPM"
 
 while : ; do
     START_TIME="$(date -u +%s)"

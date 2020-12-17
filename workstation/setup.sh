@@ -10,11 +10,7 @@ set -e
 
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-if [ "$SKIP_UPDATE" == "False" ]; then
-   exec &> >(tee "$SETUP_LOG")
-else
-   exec &> >(tee -a "$SETUP_LOG")
-fi
+exec >> $SETUP_LOG 2>&1 && tail $SETUP_LOG
 
 set +x
 echo "------------------------------------------------"

@@ -1,9 +1,6 @@
 #!/bin/bash
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
-
-exec &> >(tee -a "$KIRA_DUMP/setup.log")
+set +e source "/etc/profile" &>/dev/null set -e
+exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 KIRA_SETUP_NGINX="$KIRA_SETUP/nginx-v0.0.1"
 if [ ! -f "$KIRA_SETUP_NGINX" ]; then

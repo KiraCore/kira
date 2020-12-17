@@ -1,7 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-
-exec &> >(tee -a "$KIRA_DUMP/setup.log")
+exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 BASHRC=~/.bashrc
 ETC_PROFILE="/etc/profile"
