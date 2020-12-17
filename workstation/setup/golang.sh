@@ -1,7 +1,7 @@
 
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 SETUP_CHECK="$KIRA_SETUP/go-v${GO_VERSION}-0" 
 if [ ! -f "$SETUP_CHECK" ] ; then

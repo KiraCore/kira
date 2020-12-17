@@ -3,16 +3,16 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
-START_LOG="$KIRA_DUMP/start.log"
+# START_LOG="$KIRA_DUMP/start.log"
 
-exec >> $START_LOG 2>&1 && tail $START_LOG
+# exec >> $START_LOG 2>&1 && tail $START_LOG
 
 echo "------------------------------------------------"
 echo "| STARTED: LAUNCH SCRIPT                       |"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "| SEKAI BRANCH: $SEKAI_BRANCH"
-echo "|    START LOG: $START_LOG"
+# echo "|    START LOG: $START_LOG"
 echo "------------------------------------------------"
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"

@@ -1,7 +1,7 @@
 
 #!/bin/bash
 set +e source "/etc/profile" &>/dev/null set -e
-exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 
 KIRA_SETUP_SYSCTL="$KIRA_SETUP/systemctl-v0.0.1" 

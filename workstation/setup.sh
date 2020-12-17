@@ -8,9 +8,8 @@ set +e # prevent potential infinite loop
 source "/etc/profile" &>/dev/null
 set -e
 
-SETUP_LOG="$KIRA_DUMP/setup.log"
-
-exec >> $SETUP_LOG 2>&1 && tail $SETUP_LOG
+# SETUP_LOG="$KIRA_DUMP/setup.log"
+# exec >> $SETUP_LOG 2>&1 && tail $SETUP_LOG
 
 set +x
 echo "------------------------------------------------"
@@ -19,7 +18,7 @@ echo "|-----------------------------------------------"
 echo "| SKIP UPDATE: $SKIP_UPDATE"
 echo "|  START TIME: $START_TIME"
 echo "|   INIT HASH: $INIT_HASH"
-echo "|   SETUP LOG: $SETUP_LOG"
+#echo "|   SETUP LOG: $SETUP_LOG"
 echo "------------------------------------------------"
 set -x
 

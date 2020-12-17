@@ -3,7 +3,7 @@ set +e # prevent potential infinite loop
 source "/etc/profile" &>/dev/null
 set -e
 
-exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 set -x
 
 SKIP_UPDATE=$1
