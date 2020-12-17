@@ -39,7 +39,7 @@ echo "INFO: Prunning unused images..."
 docker image prune -a -f || echo "WARNING: Image prune failed"
 
 echo "INFO: Restarting registry..."
-$KIRA_SCRIPTS/container-restart.sh "registry"
+$KIRA_SCRIPTS/container-restart.sh "registry" 
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
