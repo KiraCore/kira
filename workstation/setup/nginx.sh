@@ -1,5 +1,5 @@
 #!/bin/bash
-set +e source "/etc/profile" &>/dev/null set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 KIRA_SETUP_NGINX="$KIRA_SETUP/nginx-v0.0.1"
