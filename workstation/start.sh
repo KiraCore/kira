@@ -70,6 +70,7 @@ SIGNER_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty
 FAUCET_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
 VALIDATOR_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
 SENTRY_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+PRIV_VALIDATOR_KEY_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
 
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -84,10 +85,14 @@ VALIDATOR_NODE_ID=$(cat ./node_id.key)
 tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry_node_key.json ./node_id.key
 SENTRY_NODE_ID=$(cat ./node_id.key)
 
+tmkms-key-import "${PRIV_VALIDATOR_KEY_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key ./node_key.json ./node_id.key
+
 echo "Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "Sentry Node ID: ${SENTRY_NODE_ID}"
 
 rm ./signing.key
+rm ./node_key.json
+rm ./node_id.key
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Seeds
