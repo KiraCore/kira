@@ -78,7 +78,7 @@ while : ; do
     if [ "${OPTION,,}" == "i" ] ; then
         echo "INFO: Entering container $NAME ($ID)..."
         echo "INFO: To exit the container type 'exit'"
-        docker exec -it $ID bash || docker exec -it $ID sh 
+        docker exec -it $ID bash || docker exec -it $ID sh || echo "WARNING: Failed to inspect $NAME container, dump loggs to see potential issue"
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
