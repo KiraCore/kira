@@ -72,23 +72,17 @@ rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
 
 VALIDATOR_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/validator_node_key.json ./node_id.key
+VALIDATOR_NODE_ID=$(cat ./node_id.key)
+
 SENTRY_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" ./validator_node_key.json ./signing.key
-tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" ./sentry_node_key.json ./signing.key
-VALIDATOR_NODE_ID=$(cat ./validator_node_key.json | jq '.address' --raw-output)
-SENTRY_NODE_ID=$(cat ./sentry_node_key.json | jq '.address' --raw-output)
+tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry_node_key.json ./node_id.key
+SENTRY_NODE_ID=$(cat ./node_id.key)
 
 echo "Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "Sentry Node ID: ${SENTRY_NODE_ID}"
 
-jq 'del(.address, .pub_key)' ./validator_node_key.json >"tmp" && mv "tmp" $DOCKER_COMMON/validator_node_key.json
-jq 'del(.address, .pub_key)' ./sentry_node_key.json >"tmp" && mv "tmp" $DOCKER_COMMON/sentry_node_key.json
-
-rm ./validator_node_key.json
-rm ./sentry_node_key.json
-
-PRIVATE_KEY_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-tmkms-key-import "${PRIVATE_KEY_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json $DOCKER_COMMON/signing.key
+rm ./signing.key
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Seeds
