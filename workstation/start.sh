@@ -39,7 +39,7 @@ echo "INFO: Prunning unused images..."
 docker image prune -a -f || echo "WARNING: Image prune failed"
 
 echo "INFO: Restarting registry..."
-$KIRA_SCRIPTS/container-restart.sh "registry" 
+$KIRA_SCRIPTS/container-restart.sh "registry"
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
@@ -65,12 +65,30 @@ done
 source $WORKSTATION_SCRIPTS/update-base-image.sh
 
 cd $KIRA_WORKSTATION
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Generate node_key.json for validator & sentry.
+
+VALIDATOR_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+SENTRY_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" ./validator_node_key.json ./signing.key
+tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" ./sentry_node_key.json ./signing.key
+VALIDATOR_NODE_ID=$(cat ./validator_node_key.json | jq '.address' --raw-output)
+SENTRY_NODE_ID=$(cat ./sentry_node_key.json | jq '.address' --raw-output)
+
+echo "Validator Node ID: ${VALIDATOR_NODE_ID}"
+echo "Sentry Node ID: ${SENTRY_NODE_ID}"
+
+jq 'del(.address, .pub_key)' ./validator_node_key.json >"tmp" && mv "tmp" $DOCKER_COMMON/validator_node_key.json
+jq 'del(.address, .pub_key)' ./sentry_node_key.json >"tmp" && mv "tmp" $DOCKER_COMMON/sentry_node_key.json
+
+rm ./validator_node_key.json
+rm ./sentry_node_key.json
+
+PRIVATE_KEY_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+tmkms-key-import "${PRIVATE_KEY_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json $DOCKER_COMMON/signing.key
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Constants. The following node-ids are generated from node_key.json files. In each docker context/configs folder, you can see node_key.json file.
-
-VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
-SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
+# * Seeds
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -145,6 +163,7 @@ docker run -d \
     -e DEBUG_MODE="True" \
     --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
     --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
+    -v $DOCKER_COMMON:/common \
     validator:latest
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -160,6 +179,7 @@ docker run -d \
     --net=kmsnet \
     --ip $KIRA_KMS_IP \
     -e DEBUG_MODE="True" \
+    -v $DOCKER_COMMON:/common \
     kms:latest # --restart=always \
 
 docker network connect kiranet kms

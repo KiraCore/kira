@@ -20,7 +20,6 @@ RUN mkdir -p "${COMMON_DIR}"
 
 ADD ./container /root
 ADD ./configs/tmkms.toml /root
-ADD ./configs/priv_validator_key.json /root
 
 RUN chmod 777 -R ${SELF_HOME}
 
