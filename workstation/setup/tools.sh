@@ -52,7 +52,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-  EXPECTED_HASH="3de9bb95cb065e9cec2e2b35ef68eff9e81a5718e60a16a0c9f31a4f0672dfa2"
+  EXPECTED_HASH="ea6fd3fd7709a5b7303cfbab5f61a737647aea20cda5d38943a52a5805a5d9ac"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo "DANGER: Failed to check integrity hash of the kira tools !!!"
@@ -66,7 +66,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   rm /bin/tmkms-key-import || echo "faild removing old tmkms-key-import symlink"
   ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echo "tmkms-key-import symlink already exists"
   # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-  # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key"
+  # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
 
   cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS
