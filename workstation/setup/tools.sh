@@ -66,7 +66,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   ls -l /bin/tmkms-key-import || echo "tmkms-key-import symlink not found"
   rm /bin/tmkms-key-import || echo "faild removing old tmkms-key-import symlink"
   ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echo "tmkms-key-import symlink already exists"
-  # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
+  # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')
   # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
 
   cd /home/$SUDO_USER

@@ -23,7 +23,7 @@ displayAlign left $printWidth " [1] | Quick Setup"
 displayAlign left $printWidth " [2] | Advanced Setup"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
-echo -e "-------------------------------------------------\e[0m\c"
+echo -e "-------------------------------------------------\e[0m\c\n"
 
 SEKAI_BRANCH_DEFAULT="v0.1.7.4"
 FRONTEND_BRANCH_DEFAULT="dev"

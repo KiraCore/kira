@@ -16,7 +16,7 @@ displayAlign left $printWidth " [1] | Demo Mode (local testnet)"
 # displayAlign left $printWidth " [3] | Validator Mode (Not ready yet)"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
-echo -e "-------------------------------------------------\e[0m\c"
+echo -e "-------------------------------------------------\e[0m\c\n"
 
 while :; do
   read -n1 -p "Input option: " KEY
