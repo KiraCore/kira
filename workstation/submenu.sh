@@ -15,7 +15,7 @@ fi
 clear
 
 printWidth=47
-echo -e "-------------------------------------------------"
+echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "$title"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
@@ -23,7 +23,7 @@ displayAlign left $printWidth " [1] | Quick Setup"
 displayAlign left $printWidth " [2] | Advanced Setup"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
-echo -e "-------------------------------------------------"
+echo -e "-------------------------------------------------\e[0m\c"
 
 SEKAI_BRANCH_DEFAULT="v0.1.7.4"
 FRONTEND_BRANCH_DEFAULT="dev"
@@ -32,8 +32,7 @@ KMS_BRANCH_DEFAULT="develop"
 FAILED="false"
 
 while :; do
-  read -p "Input option: " KEY
-
+  read -n1 -p "Input option: " KEY
   echo ""
 
   case ${KEY,,} in

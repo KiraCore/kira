@@ -55,10 +55,11 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   EXPECTED_HASH="ea6fd3fd7709a5b7303cfbab5f61a737647aea20cda5d38943a52a5805a5d9ac"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-    echo "DANGER: Failed to check integrity hash of the kira tools !!!"
-    echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-    read -p "Press any key to continue..." -n 1
-    exit 1
+    echo -e "\nDANGER: Failed to check integrity hash of the kira tools !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
+    SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+    [ "${SELECT,,}" == "x" ] && exit
+    echo "DANGER: You decided to disregard a potential vulnerability !!!"
+    read -p "Press any key to continue or Ctrl+C to abort..." -n 1
   fi
 
   cd $KMS_KEYIMPORT_DIR
