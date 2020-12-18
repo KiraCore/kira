@@ -68,6 +68,9 @@ cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.
 
+rm -rfv $DOCKER_COMMON
+mkdir -p $DOCKER_COMMON
+
 VALIDATOR_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 SENTRY_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" ./validator_node_key.json ./signing.key
@@ -95,8 +98,6 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
-rm -rfv $DOCKER_COMMON
-mkdir -p $DOCKER_COMMON
 rm -f $GENESIS_DESTINATION
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
