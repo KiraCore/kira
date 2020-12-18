@@ -64,6 +64,13 @@ done
 
 source $WORKSTATION_SCRIPTS/update-base-image.sh
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# Generate or recover private keys using hd-wallet-derive & remove quotes usind tr -d '""'
+SIGNER_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+FAUCET_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+VALIDATOR_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+SENTRY_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.
@@ -71,11 +78,9 @@ cd $KIRA_WORKSTATION
 rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
 
-VALIDATOR_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/validator_node_key.json ./node_id.key
 VALIDATOR_NODE_ID=$(cat ./node_id.key)
 
-SENTRY_NODE_ID_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
 tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry_node_key.json ./node_id.key
 SENTRY_NODE_ID=$(cat ./node_id.key)
 
@@ -93,19 +98,6 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
 rm -f $GENESIS_DESTINATION
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Generate two mnemonic keys (for signing & faucet) using hd-wallet-derive.
-
-SIGNER_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-FAUCET_MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic')
-
-# * Cut the first and the last quotes("")
-SIGNER_MNEMONIC_LEN=$(expr ${#SIGNER_MNEMONIC} - 2)
-SIGNER_MNEMONIC=$(echo $SIGNER_MNEMONIC | tail -c +2 | head -c $SIGNER_MNEMONIC_LEN)
-
-FAUCET_MNEMONIC_LEN=$(expr ${#FAUCET_MNEMONIC} - 2)
-FAUCET_MNEMONIC=$(echo $FAUCET_MNEMONIC | tail -c +2 | head -c $FAUCET_MNEMONIC_LEN)
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Config validator/configs/config.toml
