@@ -70,24 +70,18 @@ if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE
     echo "Creating new '$IMAGE_NAME' image..."
     docker build --network=host --tag="$IMAGE_NAME" --build-arg BUILD_HASH="$NEW_HASH" --build-arg "$ARG1_KEY=$ARG1_VAL" --build-arg "$ARG2_KEY=$ARG2_VAL" --build-arg "$ARG3_KEY=$ARG3_VAL" --file "$IMAGE_DIR/Dockerfile" .
 
-    $KIRA_SCRIPTS/progress-touch.sh "+1" #2
-
     docker image ls # list docker images
 
     docker tag $IMAGE_NAME:$IMAGE_TAG $KIRA_REGISTRY/$IMAGE_NAME
     docker push $KIRA_REGISTRY/$IMAGE_NAME
     echo $NEW_HASH >$KIRA_SETUP_FILE
-    $KIRA_SCRIPTS/progress-touch.sh "+1" #3
 else
     echo "INFO: Image '$IMAGE_DIR' ($NEW_HASH) did NOT change"
-    $KIRA_SCRIPTS/progress-touch.sh "+3" #3
 fi
 
 #wget -qO - localhost:5000/v2/_catalog
 curl "$KIRA_REGISTRY/v2/_catalog"
 curl "$KIRA_REGISTRY/v2/$IMAGE_NAME/tags/list"
-
-$KIRA_SCRIPTS/progress-touch.sh "+1" #4
 
 echo "------------------------------------------------"
 echo "|        FINISHED: IMAGE UPDATE v0.0.1         |"

@@ -152,7 +152,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
         rm -rfv $INSTALL_DIR
         unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
-        chmod -R -v 777 $INSTALL_DIR
+        chmod -R -v 555 $INSTALL_DIR
 
         ls -l /bin/CDHelper || echo "Symlink not found"
         rm /bin/CDHelper || echo "Removing old symlink"

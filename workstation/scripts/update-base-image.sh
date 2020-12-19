@@ -15,7 +15,7 @@ if [ "$BASE_IMAGE_EXISTS" == "False" ]; then
     $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
     echo "INFO: Updating base image..."
-    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/base-image" "base-image"
+    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/base-image" "base-image" "latest" 
 elif [ "$BASE_IMAGE_EXISTS" == "True" ]; then
     echo "INFO: base-image is up to date"
 else

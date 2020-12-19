@@ -31,12 +31,9 @@ VALIDATOR_P2P_PORT="26656"
 RPC_PROXY_PORT="10001"
 
 HOSTS_PATH="/etc/hosts"
-GO_VERSION="1.15.6"
 NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
-GOROOT="/usr/local/go"
-GOPATH="/home/go"
-GOBIN="${GOROOT}/bin"
+
 RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 DOTNET_ROOT="/usr/bin/dotnet"
 SOURCES_LIST="/etc/apt/sources.list.d"
@@ -73,7 +70,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="WORKSTATION_SCRIPTS=$WORKSTATION_SCRIPTS" --prefix="WORKSTATION_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="SOURCES_LIST=$SOURCES_LIST" --prefix="SOURCES_LIST=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GO_VERSION=$GO_VERSION" --prefix="GO_VERSION=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_IMG=$KIRA_IMG" --prefix="KIRA_IMG=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_STATE=$KIRA_STATE" --prefix="KIRA_STATE=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -89,10 +85,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_DOCKER=$KIRA_DOCKER" --prefix="KIRA_DOCKER=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="NGINX_CONFIG=$NGINX_CONFIG" --prefix="NGINX_CONFIG=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="NGINX_SERVICED_PATH=$NGINX_SERVICED_PATH" --prefix="NGINX_SERVICED_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOROOT=$GOROOT" --prefix="GOROOT=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOPATH=$GOPATH" --prefix="GOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOBIN=$GOBIN" --prefix="GOBIN=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GO111MODULE=on" --prefix="GO111MODULE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="RUSTFLAGS=$RUSTFLAGS" --prefix="RUSTFLAGS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="DOTNET_ROOT=$DOTNET_ROOT" --prefix="DOTNET_ROOT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="PATH=$PATH" --prefix="PATH=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -105,12 +97,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="VALIDATOR_P2P_PORT=$VALIDATOR_P2P_PORT" --prefix="VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="RPC_PROXY_PORT=$RPC_PROXY_PORT" --prefix="RPC_PROXY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$GOPATH" --prefix="PATH=" --and-contains-not=":$GOPATH" --path=$ETC_PROFILE
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$GOROOT" --prefix="PATH=" --and-contains-not=":$GOROOT" --path=$ETC_PROFILE
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$GOBIN" --prefix="PATH=" --and-contains-not=":$GOBIN" --path=$ETC_PROFILE
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$DARTBIN" --prefix="PATH=" --and-contains-not=":$DARTBIN" --path=$ETC_PROFILE
     set +e && source "/etc/profile" &>/dev/null && set -e
