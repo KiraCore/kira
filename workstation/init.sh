@@ -9,10 +9,11 @@ INTERACTIVE=$4
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
+KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
 CDHELPER_VERSION="v0.6.14"
-SETUP_VER="v0.0.3" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.4" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 
 echo "------------------------------------------------"
@@ -113,7 +114,6 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
     KIRA_SETUP=/kira/setup
     KIRA_MANAGER="/kira/manager"
-    KIRA_PROGRESS="/kira/progress"
 
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
     KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
@@ -126,7 +126,6 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
     mkdir -p $KIRA_SETUP
     mkdir -p $KIRA_MANAGER
-    mkdir -p $KIRA_PROGRESS
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
@@ -135,7 +134,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip hashdeep build-essential \
+            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
             nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
@@ -159,6 +158,9 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         ln -s $INSTALL_DIR/CDHelper/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
 
         CDHelper version
+
+        CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -208,8 +210,6 @@ else
     echo "INFO: Skipping init update..."
 fi
 
-CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_PROGRESS=$KIRA_PROGRESS" --prefix="KIRA_PROGRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
 
 CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True

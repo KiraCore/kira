@@ -41,7 +41,7 @@ cd $IMAGE_DIR
 
 # adding integrity to the hash enables user to update based on internal image state
 OLD_HASH=$(cat $KIRA_SETUP_FILE)
-NEW_HASH="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')-$INTEGRITY"
+NEW_HASH="$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)-$INTEGRITY"
 
 echo "------------------------------------------------"
 echo "|         STARTED: IMAGE UPDATE v0.0.1         |"

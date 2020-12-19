@@ -23,7 +23,7 @@ touch $KIRA_SETUP_FILE
 cd $IMAGE_DIR
 
 OLD_HASH=$(cat $KIRA_SETUP_FILE)
-NEW_HASH="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')-$INTEGRITY"
+NEW_HASH="$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)-$INTEGRITY"
 
 CREATE_NEW_IMAGE="False"
 if [ -z $(docker images -q $IMAGE_NAME || "") ] || [ "$OLD_HASH" != "$NEW_HASH" ] ; then

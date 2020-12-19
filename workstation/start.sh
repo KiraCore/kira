@@ -65,12 +65,8 @@ done
 source $WORKSTATION_SCRIPTS/update-base-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# Generate or recover private keys using hd-wallet-derive & remove quotes usind tr -d '""'
-SIGNER_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-FAUCET_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-VALIDATOR_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-SENTRY_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-PRIV_VALIDATOR_KEY_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+# Load or generate secret mnemonics
+source $KIRA_SCRIPTS/load-secrets.sh
 
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
