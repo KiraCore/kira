@@ -32,11 +32,6 @@ if [ "$KIRA_STOP" == "True" ]; then
     exit 0
 fi
 
-echo "INFO: Prunning unused cache..."
-docker builder prune -a -f || echo "WARNING: Cache prune failed"
-echo "INFO: Prunning unused images..."
-docker image prune -a -f || echo "WARNING: Image prune failed"
-
 echo "INFO: Restarting registry..."
 $KIRA_SCRIPTS/container-restart.sh "registry"
 
@@ -297,6 +292,10 @@ docker network connect sentrynet frontend
 
 echo "INFO: Waiting for frontend to start..."
 sleep 10
+
+echo "INFO: Prunning unused images..."
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || echo "WARNING: Failed to prune dangling image"
+
 # ---------- FRONTEND END ----------
 
 echo "------------------------------------------------"

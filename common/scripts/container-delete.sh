@@ -19,8 +19,3 @@ else
     docker rm $id
     echo "SUCCESS: Container $name was killed and removed"
 fi
-
-echo "INFO: Container cleanup..."
-docker container prune -f
-echo "INFO: Images cleanup..."
-docker image prune -f
