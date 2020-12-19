@@ -2,14 +2,8 @@
 
 SKIP_UPDATE=$1
 START_TIME=$2
-INIT_HASH=$3
 
-set +e # prevent potential infinite loop
-source "/etc/profile" &>/dev/null
-set -e
-
-# SETUP_LOG="$KIRA_DUMP/setup.log"
-# exec >> $SETUP_LOG 2>&1 && tail $SETUP_LOG
+set +e && source "/etc/profile" &>/dev/null && set -e
 
 set +x
 echo "------------------------------------------------"
@@ -17,17 +11,11 @@ echo "| STARTED: SETUP                               |"
 echo "|-----------------------------------------------"
 echo "| SKIP UPDATE: $SKIP_UPDATE"
 echo "|  START TIME: $START_TIME"
-echo "|   INIT HASH: $INIT_HASH"
-#echo "|   SETUP LOG: $SETUP_LOG"
 echo "------------------------------------------------"
 set -x
 
 [ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$INIT_HASH" ] && INIT_HASH=$(CDHelper hash SHA256 -p="$KIRA_MANAGER/init.sh" --silent=true || echo "")
-
 cd /kira
 UPDATED="False"
 if [ "$SKIP_UPDATE" == "False" ]; then
@@ -44,7 +32,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
     chmod -R 777 $KIRA_MANAGER
 
-    source $KIRA_WORKSTATION/setup.sh "True" "$START_TIME" "$INIT_HASH"
+    source $KIRA_WORKSTATION/setup.sh "True" "$START_TIME"
     UPDATED="True"
 elif [ "$SKIP_UPDATE" == "True" ]; then
     echo "INFO: Skipping kira Update..."
@@ -56,20 +44,6 @@ fi
 ls -l /bin/kira || echo "WARNING: KIRA Manager symlink not found"
 rm /bin/kira || echo "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_WORKSTATION/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
-
-$KIRA_SCRIPTS/cdhelper-update.sh "v0.6.13"
-
-NEW_INIT_HASH=$(CDHelper hash SHA256 -p="$KIRA_WORKSTATION/init.sh" --silent=true)
-
-if [ "$UPDATED" == "True" ] && [ "$NEW_INIT_HASH" != "$INIT_HASH" ]; then
-    INTERACTIVE="False"
-    echo "WARNING: Hash of the init file changed, full reset is required, starting INIT process..."
-    set +x
-    source $KIRA_MANAGER/init.sh "False" "$START_TIME" "$DEBUG_MODE" "$INTERACTIVE"
-    echo "INFO: Non-interactive init was finalized"
-    sleep 3
-    exit 0
-fi
 
 $KIRA_WORKSTATION/setup/envs.sh
 $KIRA_WORKSTATION/setup/hosts.sh

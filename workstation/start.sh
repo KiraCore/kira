@@ -12,7 +12,6 @@ echo "| STARTED: LAUNCH SCRIPT                       |"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "| SEKAI BRANCH: $SEKAI_BRANCH"
-# echo "|    START LOG: $START_LOG"
 echo "------------------------------------------------"
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
