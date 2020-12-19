@@ -64,6 +64,7 @@ NEW_INIT_HASH=$(CDHelper hash SHA256 -p="$KIRA_WORKSTATION/init.sh" --silent=tru
 if [ "$UPDATED" == "True" ] && [ "$NEW_INIT_HASH" != "$INIT_HASH" ]; then
     INTERACTIVE="False"
     echo "WARNING: Hash of the init file changed, full reset is required, starting INIT process..."
+    set +x
     source $KIRA_MANAGER/init.sh "False" "$START_TIME" "$DEBUG_MODE" "$INTERACTIVE"
     echo "INFO: Non-interactive init was finalized"
     sleep 3
