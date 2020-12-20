@@ -8,6 +8,11 @@ echo "Staring INTERX..."
 cd $SEKAI/INTERX
 
 EXECUTED_CHECK="/root/executed"
+HALT_CHECK="${COMMON_DIR}/halt"
+
+while [ -f "$HALT_CHECK" ]; do
+  sleep 30
+done
 
 if [ -f "$EXECUTED_CHECK" ]; then
   GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
