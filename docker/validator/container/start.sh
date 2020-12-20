@@ -8,6 +8,11 @@ echo "Staring validator..."
 SEKAID_HOME=$HOME/.simapp
 
 EXECUTED_CHECK="/root/executed"
+HALT_CHECK="${COMMON_DIR}/halt"
+
+while [ -f "$HALT_CHECK" ]; do
+  sleep 30
+done
 
 if [ -f "$EXECUTED_CHECK" ]; then
   sleep 10 && sekaid start --home=$SEKAID_HOME
