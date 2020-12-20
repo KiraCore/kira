@@ -13,7 +13,6 @@ WORKDIR /root/kira-frontend/src
 
 RUN git checkout ${BRANCH}
 
-ADD ./configs /root
 ADD ./configs/config.json /root/kira-frontend/src/assets/config.json
 
 RUN flutter pub get
