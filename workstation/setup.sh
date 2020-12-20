@@ -19,10 +19,9 @@ set -x
 cd /kira
 UPDATED="False"
 if [ "$SKIP_UPDATE" == "False" ]; then
-    echo "INFO: Updating kira, Sekai, frontend, INTERX, kms"
+    echo "INFO: Updating kira, Sekai, frontend, INTERX"
     $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$KIRA_FRONTEND" &
     $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
-    $KIRA_SCRIPTS/git-pull.sh "$KMS_REPO" "$KMS_BRANCH" "$KIRA_KMS" &
     $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$KIRA_SEKAI" &
     $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 777 &
     wait < <(jobs -p)

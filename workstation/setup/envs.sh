@@ -10,8 +10,6 @@ CARGO_ENV="/home/$KIRA_USER/.cargo/env"
 KIRA_STATE=/kira/state
 KIRA_REGISTRY_PORT=5000
 KIRA_REGISTRY_SUBNET="100.0.0.0/8"
-KIRA_KMS_SUBNET="10.1.0.0/16"
-KIRA_KMS_IP="10.1.0.2"
 KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
 KIRA_VALIDATOR_IP="10.2.0.2"
 KIRA_SENTRY_SUBNET="10.3.0.0/16"
@@ -65,7 +63,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_VALIDATOR_SUBNET=$KIRA_VALIDATOR_SUBNET" --prefix="KIRA_VALIDATOR_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=$KIRA_SENTRY_SUBNET" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SERVICE_SUBNET=$KIRA_SERVICE_SUBNET" --prefix="KIRA_SERVICE_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_KMS_SUBNET=$KIRA_KMS_SUBNET" --prefix="KIRA_KMS_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="HOSTS_PATH=$HOSTS_PATH" --prefix="HOSTS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="WORKSTATION_SCRIPTS=$WORKSTATION_SCRIPTS" --prefix="WORKSTATION_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -78,7 +75,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_REGISTRY_IP=$KIRA_REGISTRY_IP" --prefix="KIRA_REGISTRY_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_VALIDATOR_IP=$KIRA_VALIDATOR_IP" --prefix="KIRA_VALIDATOR_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_IP=$KIRA_SENTRY_IP" --prefix="KIRA_SENTRY_IP=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_KMS_IP=$KIRA_KMS_IP" --prefix="KIRA_KMS_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_INTERX_IP=$KIRA_INTERX_IP" --prefix="KIRA_INTERX_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_FRONTEND_IP=$KIRA_FRONTEND_IP" --prefix="KIRA_FRONTEND_IP=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_REGISTRY=$KIRA_REGISTRY" --prefix="KIRA_REGISTRY=" --path=$ETC_PROFILE --append-if-found-not=True
