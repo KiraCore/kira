@@ -13,5 +13,5 @@ if [ -z "$id" ] ; then
     echo "INFO: Container $name does NOT exists"
 else
     echo "INFO: Container $name ($id) was found, restarting..."
-    docker container restart $id || echo "WARNING: Container $id could NOT be restarted"
+    docker container restart $id || echo "WARNING: Container $name ($id) could NOT be restarted"
 fi

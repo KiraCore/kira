@@ -128,7 +128,7 @@ while : ; do
                $KIRA_SCRIPTS/container-stop.sh $name
            else 
                echo "INFO: Staring $name container..."
-               $KIRA_SCRIPTS/container-restart.sh $NAME
+               $KIRA_SCRIPTS/container-restart.sh $name
            fi
            EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ] ; then
@@ -137,7 +137,7 @@ while : ; do
                $KIRA_SCRIPTS/container-pause.sh $name
            else 
                echo "INFO: Staring $name container..."
-               $KIRA_SCRIPTS/container-unpause.sh $NAME
+               $KIRA_SCRIPTS/container-unpause.sh $name
            fi
            EXECUTED="true"
         fi

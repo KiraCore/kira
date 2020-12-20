@@ -58,37 +58,25 @@ wait
 
 $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# Load or generate secret mnemonics
-source $WORKSTATION_SCRIPTS/load-secrets.sh
-
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.
 
 rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
-
 cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 
-tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" ./priv_validator_key.json ./signing.key $DOCKER_COMMON/validator/node_key.json ./node_id.key
-VALIDATOR_NODE_ID=$(cat ./node_id.key)
+# Load or generate secret mnemonics
+source $WORKSTATION_SCRIPTS/load-secrets.sh
 
-tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" ./priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry/node_key.json ./node_id.key
-SENTRY_NODE_ID=$(cat ./node_id.key)
+# copy secrets and rename
+cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
+cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/kms/priv_validator_key.json
+cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
+cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 
-tmkms-key-import "${PRIV_VALIDATOR_KEY_MNEMONIC}" ./priv_validator_key.json ./signing.key ./node_key.json ./node_id.key
-
-cp ./priv_validator_key.json $DOCKER_COMMON/validator/
-cp ./priv_validator_key.json $DOCKER_COMMON/kms/
-
-echo "Validator Node ID: ${VALIDATOR_NODE_ID}"
-echo "Sentry Node ID: ${SENTRY_NODE_ID}"
-
-rm ./priv_validator_key.json
-rm ./signing.key
-rm ./node_key.json
-rm ./node_id.key
+echo "INFO: Validator Node ID: ${VALIDATOR_NODE_ID}"
+echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Seeds
