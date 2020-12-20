@@ -33,7 +33,7 @@ if [ "$KIRA_STOP" == "True" ]; then
 fi
 
 echo "INFO: Restarting registry..."
-$KIRA_SCRIPTS/container-restart.sh "registry"
+$KIRA_SCRIPTS/container-restart.sh "registry" &
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
@@ -41,20 +41,8 @@ i=-1
 for name in $CONTAINERS; do
     i=$((i + 1)) # dele all containers except registry
     [ "${name,,}" == "registry" ] && continue
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/containers-exist.sh "$name" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" == "true" ]; then
-        $KIRA_SCRIPTS/container-delete.sh "$name"
-
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$name" || echo "error")
-
-        if [ "${CONTAINER_EXISTS,,}" != "false" ]; then
-            echo "ERROR: Failed to delete $name container, status: ${VALIDATOR_EXISTS}"
-            exit 1
-        fi
-    fi
+    $KIRA_SCRIPTS/container-delete.sh "$name"
 done
-
-# todo: delete existing containers
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build base image

@@ -19,7 +19,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     php7.4-gmp \
     php-mbstring \
     md5deep \
-    sysstat
+    sysstat \
+    htop
 
   pip3 install ECPy
 
