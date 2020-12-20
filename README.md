@@ -64,11 +64,6 @@ KIRA_INTERX_IP="10.4.0.2"
 KIRA_FRONTEND_IP="10.4.0.3"
 ```
 
-```
-VALIDATOR_NODE_ID="4fdfc055acc9b2b6683794069a08bb78aa7ab9ba"
-SENTRY_NODE_ID="d81a142b8d0d06f967abd407de138630d8831fff"
-```
-
 ### 2. Full Node Mode
 
 ### 3. Validator Mode
