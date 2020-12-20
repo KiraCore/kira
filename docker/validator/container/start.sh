@@ -23,6 +23,8 @@ else
 
   cd $SEKAID_HOME/config
 
+  rm -f $SEKAID_HOME/config/config.toml
+  rm -f $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/config.toml
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
   # cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
