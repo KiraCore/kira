@@ -5,12 +5,18 @@ set -e
 set -x
 
 echo "Staring INTERX..."
-
 cd $SEKAI/INTERX
 
-mkdir cache
+EXECUTED_CHECK="/root/executed"
 
-rm -f $SEKAI/INTERX/config.json
-mv $COMMON_DIR/config.json $SEKAI/INTERX
+if [ -f "$EXECUTED_CHECK" ]; then
+  GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
+else
+  mkdir -p cache
 
-GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
+  rm -f $SEKAI/INTERX/config.json
+  mv $COMMON_DIR/config.json $SEKAI/INTERX
+
+  touch $EXECUTED_CHECK
+  GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
+fi
