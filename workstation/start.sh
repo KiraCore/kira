@@ -69,7 +69,7 @@ cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 source $WORKSTATION_SCRIPTS/load-secrets.sh
 
 # copy secrets and rename
-cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
+# cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 
