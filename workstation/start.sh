@@ -83,17 +83,21 @@ mkdir -p $DOCKER_COMMON
 
 cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 
-tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/validator/node_key.json ./node_id.key
+tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" ./priv_validator_key.json ./signing.key $DOCKER_COMMON/validator/node_key.json ./node_id.key
 VALIDATOR_NODE_ID=$(cat ./node_id.key)
 
-tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry/node_key.json ./node_id.key
+tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" ./priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry/node_key.json ./node_id.key
 SENTRY_NODE_ID=$(cat ./node_id.key)
 
-tmkms-key-import "${PRIV_VALIDATOR_KEY_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key ./node_key.json ./node_id.key
+tmkms-key-import "${PRIV_VALIDATOR_KEY_MNEMONIC}" ./priv_validator_key.json ./signing.key ./node_key.json ./node_id.key
+
+cp ./priv_validator_key.json $DOCKER_COMMON/validator/
+cp ./priv_validator_key.json $DOCKER_COMMON/kms/
 
 echo "Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "Sentry Node ID: ${SENTRY_NODE_ID}"
 
+rm ./priv_validator_key.json
 rm ./signing.key
 rm ./node_key.json
 rm ./node_id.key
@@ -105,7 +109,7 @@ VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xar
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
-GENESIS_DESTINATION="$DOCKER_COMMON/genesis.json"
+GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
 rm -f $GENESIS_DESTINATION
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -149,7 +153,7 @@ docker run -d \
     -e DEBUG_MODE="True" \
     --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
     --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
-    -v $DOCKER_COMMON:/common \
+    -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -163,7 +167,7 @@ docker run -d \
     --net=kmsnet \
     --ip $KIRA_KMS_IP \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON:/common \
+    -v $DOCKER_COMMON/kms:/common \
     kms:latest # --restart=always \
 
 docker network connect kiranet kms
@@ -216,7 +220,7 @@ docker run -d \
     --net=sentrynet \
     --ip $KIRA_SENTRY_IP \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON:/common \
+    -v $DOCKER_COMMON/sentry:/common \
     sentry:latest
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -259,7 +263,7 @@ docker run -d \
     --net=servicenet \
     --ip $KIRA_INTERX_IP \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON:/common \
+    -v $DOCKER_COMMON/interx:/common \
     --env KIRA_SENTRY_IP=$KIRA_SENTRY_IP \
     interx:latest
 

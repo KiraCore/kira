@@ -15,8 +15,8 @@ cd $SEKAID_HOME/config
 
 ls
 
-cp $COMMON_DIR/validator/config.toml $SEKAID_HOME/config/config.toml
-cp $COMMON_DIR/validator/node_key.json $SEKAID_HOME/config/node_key.json
+cp $COMMON_DIR/config.toml $SEKAID_HOME/config/config.toml
+cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
 sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
