@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.11"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.12"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -18,7 +18,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
     unzip \
     php7.4-gmp \
     php-mbstring \
-    md5deep
+    md5deep \
+    sysstat
 
   pip3 install ECPy
 

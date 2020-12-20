@@ -30,6 +30,7 @@ echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_DUMP"
+mkdir -p "$KIRA_SECRETS"
 
 set +e # prevent potential infinite loop
 chmod 555 $ETC_PROFILE
