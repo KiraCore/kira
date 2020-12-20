@@ -15,7 +15,7 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 if [ -f "$EXECUTED_CHECK" ]; then
-  sleep 10 && sekaid start --home=$SEKAID_HOME
+  sekaid start --home=$SEKAID_HOME
 else
   rm -rf $SEKAID_HOME
 
@@ -45,5 +45,5 @@ else
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
-  sleep 10 && sekaid start --home=$SEKAID_HOME
+  sekaid start --home=$SEKAID_HOME
 fi

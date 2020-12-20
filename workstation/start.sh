@@ -130,6 +130,9 @@ docker run -d \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
+echo "INFO: Waiting for validator to start..."
+sleep 10
+
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check if validator is running
 echo "INFO: Inspecting if validator is running..."
@@ -144,7 +147,7 @@ fi
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Get the genesis file from the validator.
 echo "INFO: Saving genesis file..."
-docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
+docker cp -a validator:$GENESIS_SOURCE $GENESIS_DESTINATION
 
 if [ ! -f "$GENESIS_DESTINATION" ]; then
     echo "ERROR: Failed to copy genesis file from validator"
