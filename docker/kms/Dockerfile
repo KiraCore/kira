@@ -19,7 +19,6 @@ RUN ln ${SELF_KMS_RELEASE}/tmkms /usr/bin/tmkms
 RUN mkdir -p "${COMMON_DIR}"
 
 ADD ./container /root
-ADD ./configs/tmkms.toml /root
 
 RUN chmod 777 -R ${SELF_HOME}
 

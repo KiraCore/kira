@@ -7,7 +7,7 @@ set -x
 tmkms init /root/.tmkms
 
 # tmkms softsign keygen /root/.tmkms/secret_connection.key
-mv /root/tmkms.toml /root/.tmkms/
+mv $COMMON_DIR/kms/tmkms.toml /root/.tmkms/
 
 cd /root/.tmkms/ && ls
 tmkms softsign import $COMMON_DIR/priv_validator_key.json /root/.tmkms/signing.key

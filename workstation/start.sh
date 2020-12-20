@@ -56,7 +56,19 @@ done
 
 # todo: delete existing containers
 
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build base image
 source $WORKSTATION_SCRIPTS/update-base-image.sh
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Build other docker images in parallel
+$WORKSTATION_SCRIPTS/update-validator-image.sh &
+$WORKSTATION_SCRIPTS/update-kms-image.sh &
+$WORKSTATION_SCRIPTS/update-sentry-image.sh &
+$WORKSTATION_SCRIPTS/update-interx-image.sh &
+wait
+
+$WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Load or generate secret mnemonics
@@ -69,10 +81,12 @@ cd $KIRA_WORKSTATION
 rm -rfv $DOCKER_COMMON
 mkdir -p $DOCKER_COMMON
 
-tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/validator_node_key.json ./node_id.key
+cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
+
+tmkms-key-import "${VALIDATOR_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/validator/node_key.json ./node_id.key
 VALIDATOR_NODE_ID=$(cat ./node_id.key)
 
-tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry_node_key.json ./node_id.key
+tmkms-key-import "${SENTRY_NODE_ID_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key $DOCKER_COMMON/sentry/node_key.json ./node_id.key
 SENTRY_NODE_ID=$(cat ./node_id.key)
 
 tmkms-key-import "${PRIV_VALIDATOR_KEY_MNEMONIC}" $DOCKER_COMMON/priv_validator_key.json ./signing.key ./node_key.json ./node_id.key
@@ -97,28 +111,18 @@ rm -f $GENESIS_DESTINATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Config validator/configs/config.toml
 
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/validator/configs
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/validator/configs
-# CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://0.0.0.0:12345\"" --prefix="priv_validator_laddr =" --path=$KIRA_DOCKER/validator/configs
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$DOCKER_COMMON/validator
+CDHelper text lineswap --insert="persistent_peers = \"$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/validator
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/validator
+# CDHelper text lineswap --insert="priv_validator_laddr = \"tcp://0.0.0.0:12345\"" --prefix="priv_validator_laddr =" --path=$DOCKER_COMMON/validator
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Config sentry/configs/config.toml
 
-CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$KIRA_DOCKER/sentry/configs
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$KIRA_DOCKER/sentry/configs
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Build docker images
-$WORKSTATION_SCRIPTS/update-validator-image.sh &
-$WORKSTATION_SCRIPTS/update-kms-image.sh &
-$WORKSTATION_SCRIPTS/update-sentry-image.sh &
-$WORKSTATION_SCRIPTS/update-interx-image.sh &
-wait
-
-$WORKSTATION_SCRIPTS/update-frontend-image.sh
+CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/sentry
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `kiranet` bridge network
@@ -150,8 +154,6 @@ docker run -d \
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the KMS node
-
-# cp $PRIV_VALIDATOR_KEY_DESTINATION $KIRA_DOCKER/kms/configs
 
 echo "Kira KMS IP: ${KIRA_KMS_IP}"
 
@@ -244,15 +246,8 @@ docker network create --driver=bridge --subnet=$KIRA_SERVICE_SUBNET servicenet
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Update interx's config for signer and fuacet mnemonic keys
 
-DOCKER_COMMON_INTERX="$DOCKER_COMMON/interx"
-rm -rfv $DOCKER_COMMON_INTERX
-mkdir -p $DOCKER_COMMON_INTERX
-
-DOCKER_COMMON_INTERX_CONFIG="$DOCKER_COMMON_INTERX/config.json"
-rm -f $DOCKER_COMMON_INTERX_CONFIG
-
-jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $DOCKER_COMMON_INTERX_CONFIG
-jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $KIRA_DOCKER/interx/configs/config.json >"tmp" && mv "tmp" $DOCKER_COMMON_INTERX_CONFIG
+jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
+jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
