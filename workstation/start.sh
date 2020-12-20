@@ -72,7 +72,7 @@ $WORKSTATION_SCRIPTS/update-frontend-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # Load or generate secret mnemonics
-source $KIRA_SCRIPTS/load-secrets.sh
+source $WORKSTATION_SCRIPTS/load-secrets.sh
 
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
