@@ -130,6 +130,8 @@ docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP}"
 
+rm -f $DOCKER_COMMON/validator/started
+
 docker run -d \
     --restart=always \
     --name validator \
@@ -142,7 +144,7 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
-$WORKSTATION_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+$WORKSTATION_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
