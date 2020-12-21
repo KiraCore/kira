@@ -70,8 +70,8 @@ source $WORKSTATION_SCRIPTS/load-secrets.sh
 
 # copy secrets and rename
 # cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/
-cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/
-cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/
+cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
+cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 
 echo "INFO: Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
