@@ -39,6 +39,7 @@ while [ $i -le 18 ]; do
         continue
     else
         echo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
+        break
     fi
 done
 

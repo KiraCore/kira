@@ -29,7 +29,7 @@ while : ; do
 
     CONTAINERS_COUNT=$((i+1))
     RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
-    DISK_UTIL="$(df -hl | awk '/^\/dev\/sd[ab]/ { sum+=$5 } END { print sum }')%"
+    DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
 
     INTERX_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "Error")
     INTERX_NETWORK=$(echo $INTERX_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???")
