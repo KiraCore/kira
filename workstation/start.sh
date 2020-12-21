@@ -74,8 +74,15 @@ set -x
 
 # copy secrets and rename
 # cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/
+
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
+
+# cp -a ./tmp/validator_node_key.json $DOCKER_COMMON/validator/node_key.json
+# cp -a ./tmp/sentry_node_key.json $DOCKER_COMMON/sentry/node_key.json
+
+# VALIDATOR_NODE_ID="cf74dc682e07590962dce40db7404b07faa88afc"
+# SENTRY_NODE_ID="0af3fe063192904ee30e6c76490e8310e709bd6e"
 
 echo "INFO: Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
@@ -135,7 +142,7 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
-$WORKSTATION_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+$WORKSTATION_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
@@ -155,6 +162,11 @@ docker run -d \
 # * conect sentry to the kiranet
 
 docker network connect kiranet sentry
+
+# echo "INFO: Waiting for sentry to start..."
+# sleep 10
+echo "INFO: Waiting for sentry to start..."
+$WORKSTATION_SCRIPTS/await-sentry-init.sh "$DOCKER_COMMON" "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `servicenet` bridge network

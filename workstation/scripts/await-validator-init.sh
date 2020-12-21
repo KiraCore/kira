@@ -1,18 +1,21 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-GENESIS_SOURCE=$1
-GENESIS_DESTINATION=$2
-VALIDATOR_NODE_ID=$3
+DOCKER_COMMON=$1
+GENESIS_SOURCE=$2
+GENESIS_DESTINATION=$3
+VALIDATOR_NODE_ID=$4
 
 i=0
+IS_STARTED="false"
 SEKAID_VERSION="error"
+CHECK_VALIDATOR_NODE_ID=""
 while [ $i -le 18 ]; do
     i=$((i + 1))
 
     echo "INFO: Waiting for validator container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" != "true" ] ; then
+    if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
         sleep 3
         echo "WARNING: Validator container does not exists yet, waiting..."
         continue
@@ -20,14 +23,15 @@ while [ $i -le 18 ]; do
         echo "INFO: Success, validator container was found"
     fi
 
-    echo "INFO: Checking if sekai was installed..."
-    SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
-    if [ "${SEKAID_VERSION,,}" == "error" ] ; then
+    echo "INFO: Awaiting validator initalization..."
+    IS_STARTED=$(docker exec -i "validator" [ -f /root/executed ] && echo "true" || echo "false")
+    if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 3
-        echo "WARNING: sekaid was not installed yet, waiting..."
+        echo "WARNING: Validator is not initalized yet"
         continue
     else
-        echo "INFO: Success, sekaid $SEKAID_VERSIO is present"
+        echo "INFO: Success, validator was initalized"
+        break
     fi
 
     echo "INFO: Attempting to access genesis file..."
@@ -39,22 +43,37 @@ while [ $i -le 18 ]; do
         continue
     else
         echo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
+    fi
+
+    echo "INFO: Awaiting node status..."
+    CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
+    if [ -z "$CHECK_VALIDATOR_NODE_ID" ]; then
+        sleep 3
+        echo "WARNING: Status and Node ID is not available"
+        continue
+    else
+        echo "INFO: Success, validator node id found: $CHECK_VALIDATOR_NODE_ID"
         break
     fi
 done
 
-if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ] ; then
+if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ]; then
     echo "ERROR: Failed to copy copy genesis file from the validator node"
     exit 1
 fi
 
-CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
-
-if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ] ; then echo
+if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
     echo "ERROR: Check Validator Node id check failed!"
     echo "ERROR: Expected '$VALIDATOR_NODE_ID', but got '$CHECK_VALIDATOR_NODE_ID'"
     exit 1
 else
     echo "INFO: Validator node id check succeded '$CHECK_VALIDATOR_NODE_ID' is a match"
     exit 0
+fi
+
+if [ "${IS_STARTED,,}" != "true" ] ; then
+    echo "ERROR: Validator was not started sucessfully within defined time"
+    exit 1
+else
+    echo "INFO: Validator was started sucessfully"
 fi
