@@ -177,9 +177,11 @@ docker network create --driver=bridge --subnet=$KIRA_SERVICE_SUBNET servicenet
 # * Update interx's config for signer and fuacet mnemonic keys
 
 set +x
-jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
-jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
+jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
+jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
 set -x
+
+rm -f "./config.tmp"
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
