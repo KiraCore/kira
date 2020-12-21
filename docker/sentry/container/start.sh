@@ -34,5 +34,6 @@ else
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
 
   touch $EXECUTED_CHECK
+  touch $COMMON_DIR/started
   sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --trace
 fi
