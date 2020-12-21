@@ -1,21 +1,16 @@
 #!/bin/bash
-
-exec 2>&1
 set -x
-
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 GENESIS_SOURCE=$1
 GENESIS_DESTINATION=$2
 VALIDATOR_NODE_ID=$3
 
-
-
 i=0
 SEKAID_VERSION="error"
-while [ i -le 18 ]; do
+while [ $i -le 18 ]; do
     i=$((i + 1))
-    
+
     echo "INFO: Waiting for validator container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ] ; then
@@ -60,4 +55,5 @@ if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ] ; then echo
     exit 1
 else
     echo "INFO: Validator node id check succeded '$CHECK_VALIDATOR_NODE_ID' is a match"
+    exit 0
 fi
