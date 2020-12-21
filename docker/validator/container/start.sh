@@ -16,16 +16,14 @@ done
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
-
-  sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
-
+  mkdir -p $SEKAID_HOME/config
   cd $SEKAID_HOME/config
 
-  rm -f $SEKAID_HOME/config/config.toml
-  rm -f $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   # cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
+
+  sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
 
   sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
   sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME

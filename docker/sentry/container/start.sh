@@ -28,6 +28,8 @@ echo "INFO: Sucess, genesis file was found!"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
+  mkdir -p $SEKAID_HOME/config/
+  
   cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
