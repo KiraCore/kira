@@ -57,7 +57,7 @@ if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ]; then
     exit 1
 fi
 
-CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
+CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
 
 if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
     echo

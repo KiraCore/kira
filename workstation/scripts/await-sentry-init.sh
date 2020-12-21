@@ -40,7 +40,7 @@ while [ $i -le 18 ]; do
 
 done
 
-CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
+CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
 
 if [ "$CHECK_SENTRY_NODE_ID" != "$SENTRY_NODE_ID" ]; then
     echo
