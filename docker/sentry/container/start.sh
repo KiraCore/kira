@@ -13,26 +13,28 @@ while [ -f "$HALT_CHECK" ]; do
   sleep 30
 done
 
-if [ -f "$EXECUTED_CHECK" ]; then
-  sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657"
-else
+while ! ping -c1 validator &>/dev/null ; do
+    echo "INFO: Waiting for ping response form validator node... (`date`)"
+    sleep 5
+done
+echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
 
-  i=0
-  while [ ! -f "$COMMON_DIR/genesis.json" ] && [[ ("$i" < 6) ]]; do
-    sleep 10
-    i=$((i + 1))
-  done
+while [ ! -f "$COMMON_DIR/genesis.json" ] ; do
+  echo "INFO: Waiting for genesis file to be provisioned... (`date`)"
+  sleep 5
+done
 
-  rm -rf $SEKAID_HOME
+echo "INFO: Sucess, genesis file was found!"
 
-  sekaid init --chain-id=testing testing --home=$SEKAID_HOME
-  rm -f $SEKAID_HOME/config/genesis.json
-  rm -f $SEKAID_HOME/config/node_key.json
-  rm -f $SEKAID_HOME/config/config.toml
+if [ ! -f "$EXECUTED_CHECK" ]; then
+  rm -rfv $SEKAID_HOME
   cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
 
+  sekaid init --chain-id=testing testing --home=$SEKAID_HOME
+
   touch $EXECUTED_CHECK
-  sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --trace
 fi
+
+sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --trace

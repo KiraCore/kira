@@ -31,10 +31,9 @@ while : ; do
     RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
     DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
 
-    INTERX_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "Error")
-    INTERX_NETWORK=$(echo $INTERX_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???")
-    INTERX_BLOCK=$(echo $INTERX_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???")
-
+    STATUS_SOURCE="interx"
+    NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "Error")
+    
     wait # wait for all subprocesses to finish
     source $VARS_FILE
     CPU_UTIL=$(cat $PERF_CPU)
@@ -56,7 +55,22 @@ while : ; do
         [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
         [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
         # TODO: show failed status if any of the healthchecks fails
+
+        # if block height check fails via interx then try via validator
+        if [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ] ; then
+            STATUS_SOURCE="$name"
+            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null | xargs || echo "Error")
+        fi
+
+        # if block height check fails via validator then try via sentry
+        if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ] ; then
+            STATUS_SOURCE="$name"
+            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null | xargs || echo "Error")
+        fi
     done
+
+    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???")
+    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???")
 
     [ $CONTAINERS_COUNT -le 4 ] && SUCCESS="false" # TODO: check required container count based on mode
 
@@ -70,9 +84,9 @@ while : ; do
     DISK_UTIL="DISK: $DISK_UTIL                                                 "
     echo -e "|\e[34;1m ${CPU_UTIL:0:16}${RAM_UTIL:0:18}${DISK_UTIL:0:11} \e[33;1m|"
 
-    INTERX_NETWORK="NETWORK: $INTERX_NETWORK                                               "
-    INTERX_BLOCK="BLOCK HEIGHT: $INTERX_BLOCK                                              "
-    echo -e "|\e[35;1m ${INTERX_NETWORK:0:23}${INTERX_BLOCK:0:22} \e[33;1m|"
+    KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                               "
+    KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
+    echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
 
     if [ "${SUCCESS,,}" != "true" ] ; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT LAUNCHED       \e[33;1m|"

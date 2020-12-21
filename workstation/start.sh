@@ -203,8 +203,7 @@ docker run -d \
 
 docker network connect sentrynet interx
 
-echo "INFO: Waiting for INTERX to start..."
-sleep 10
+$WORKSTATION_SCRIPTS/await-interx-init.sh || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the frontend

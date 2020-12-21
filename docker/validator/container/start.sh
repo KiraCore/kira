@@ -16,7 +16,7 @@ done
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
-  
+
   sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
 
   cd $SEKAID_HOME/config
