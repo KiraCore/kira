@@ -15,7 +15,7 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 if [ -f "$EXECUTED_CHECK" ]; then
-  sleep 10 && sekaid start --home=$SEKAID_HOME
+  sekaid start --home=$SEKAID_HOME
 else
   rm -rf $SEKAID_HOME
 
@@ -23,9 +23,11 @@ else
 
   cd $SEKAID_HOME/config
 
+  rm -f $SEKAID_HOME/config/config.toml
+  rm -f $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/config.toml
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
-  cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+  # cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
   sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
   sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
@@ -45,5 +47,5 @@ else
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
-  sleep 10 && sekaid start --home=$SEKAID_HOME
+  sekaid start --home=$SEKAID_HOME
 fi

@@ -51,7 +51,6 @@ source $WORKSTATION_SCRIPTS/update-base-image.sh
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build other docker images in parallel
 $WORKSTATION_SCRIPTS/update-validator-image.sh &
-$WORKSTATION_SCRIPTS/update-kms-image.sh &
 $WORKSTATION_SCRIPTS/update-sentry-image.sh &
 $WORKSTATION_SCRIPTS/update-interx-image.sh &
 wait
@@ -70,8 +69,7 @@ cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 source $WORKSTATION_SCRIPTS/load-secrets.sh
 
 # copy secrets and rename
-cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
-cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/kms/priv_validator_key.json
+# cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 
@@ -111,10 +109,10 @@ docker network rm kiranet || echo "Failed to remove kira network"
 docker network create --driver=bridge --subnet=$KIRA_VALIDATOR_SUBNET kiranet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Create `kmsnet` bridge network
+# * Create `sentrynet` bridge network
 
-docker network rm kmsnet || echo "Failed to remove kms network"
-docker network create --driver=bridge --subnet=$KIRA_KMS_SUBNET kmsnet
+docker network rm sentrynet || echo "Failed to remove setnry network"
+docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
@@ -132,23 +130,7 @@ docker run -d \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Run the KMS node
-
-echo "Kira KMS IP: ${KIRA_KMS_IP}"
-
-docker run -d \
-    \
-    --name kms \
-    --net=kmsnet \
-    --ip $KIRA_KMS_IP \
-    -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON/kms:/common \
-    kms:latest # --restart=always \
-
-docker network connect kiranet kms
-docker network connect kmsnet validator
-
+echo "INFO: Waiting for validator to start..."
 sleep 10
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -165,7 +147,7 @@ fi
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Get the genesis file from the validator.
 echo "INFO: Saving genesis file..."
-docker cp validator:$GENESIS_SOURCE $GENESIS_DESTINATION
+docker cp -a validator:$GENESIS_SOURCE $GENESIS_DESTINATION
 
 if [ ! -f "$GENESIS_DESTINATION" ]; then
     echo "ERROR: Failed to copy genesis file from validator"
@@ -178,12 +160,6 @@ fi
 CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
 echo "INFO: Check Validator Node id..."
 echo "${VALIDATOR_NODE_ID} - ${CHECK_VALIDATOR_NODE_ID}"
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Create `sentrynet` bridge network
-
-docker network rm sentrynet || echo "Failed to remove setnry network"
-docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
