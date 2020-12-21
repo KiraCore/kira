@@ -8,9 +8,11 @@ VALIDATOR_NODE_ID=$4
 
 i=0
 IS_STARTED="false"
-SEKAID_VERSION="error"
 CHECK_VALIDATOR_NODE_ID=""
-while [ $i -le 18 ]; do
+
+rm -fv $GENESIS_DESTINATION
+
+while [ $i -le 40 ]; do
     i=$((i + 1))
 
     echo "INFO: Waiting for validator container to start..."
@@ -56,7 +58,7 @@ while [ $i -le 18 ]; do
     fi
 done
 
-if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ]; then
+if [ ! -f "$GENESIS_DESTINATION" ] ; then
     echo "ERROR: Failed to copy copy genesis file from the validator node"
     exit 1
 fi

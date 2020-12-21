@@ -7,7 +7,7 @@ SENTRY_NODE_ID=$2
 i=0
 CHECK_SENTRY_NODE_ID=""
 IS_STARTED="false"
-while [ $i -le 18 ]; do
+while [ $i -le 40 ]; do
     i=$((i + 1))
 
     echo "INFO: Waiting for sentry container to start..."
