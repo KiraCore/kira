@@ -156,19 +156,6 @@ docker run -d \
 
 docker network connect kiranet sentry
 
-echo "INFO: Waiting for sentry to start..."
-sleep 10
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Check sentry's node id
-
-CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
-echo $CHECK_SENTRY_NODE_ID
-if [ "$CHECK_SENTRY_NODE_ID" == "error" ]; then
-    echo "ERROR: sentry node error"
-    exit 1
-fi
-
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `servicenet` bridge network
 
@@ -184,6 +171,10 @@ jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON
 set -x
 
 rm -f "./config.tmp"
+
+echo "INFO: Waiting for sentry to start..."
+$WORKSTATION_SCRIPTS/await-sentry-init.sh || exit 1
+
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
