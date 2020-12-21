@@ -47,6 +47,7 @@ done
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build base image
 source $WORKSTATION_SCRIPTS/update-base-image.sh
+set -e
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build other docker images in parallel
@@ -68,6 +69,7 @@ cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 # Load or generate secret mnemonics
 set +x
 source $WORKSTATION_SCRIPTS/load-secrets.sh
+set -e
 set -x
 
 # copy secrets and rename
