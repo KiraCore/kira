@@ -1,5 +1,4 @@
 #!/bin/bash
-set -x
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 GENESIS_SOURCE=$1
@@ -14,8 +13,8 @@ while [ $i -le 18 ]; do
     echo "INFO: Waiting for validator container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ] ; then
-        echo "INFO: Validator container does not exists yet, waiting..."
         sleep 3
+        echo "WARNING: Validator container does not exists yet, waiting..."
         continue
     else
         echo "INFO: Success, validator container was found"
@@ -24,8 +23,8 @@ while [ $i -le 18 ]; do
     echo "INFO: Checking if sekai was installed..."
     SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
     if [ "${SEKAID_VERSION,,}" == "error" ] ; then
-        echo "INFO: sekaid was not installed yet, waiting..."
         sleep 3
+        echo "WARNING: sekaid was not installed yet, waiting..."
         continue
     else
         echo "INFO: Success, sekaid $SEKAID_VERSIO is present"
@@ -35,8 +34,9 @@ while [ $i -le 18 ]; do
     docker cp -a validator:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
 
     if [ ! -f "$GENESIS_DESTINATION" ]; then
-        echo "INFO: Failed to copy genesis file from validator"
         sleep 3
+        echo "WARNING: Failed to copy genesis file from validator"
+        continue
     else
         echo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
     fi

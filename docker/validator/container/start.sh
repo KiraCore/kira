@@ -10,12 +10,11 @@ EXECUTED_CHECK="/root/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 
 while [ -f "$HALT_CHECK" ]; do
+  echo "INFO: Container is prevented from further, executing start script, halt file is present..."
   sleep 30
 done
 
-if [ -f "$EXECUTED_CHECK" ]; then
-  sekaid start --home=$SEKAID_HOME
-else
+if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
 
   sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
@@ -46,5 +45,6 @@ else
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
-  sekaid start --home=$SEKAID_HOME --trace
 fi
+
+sekaid start --home=$SEKAID_HOME --trace
