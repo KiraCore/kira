@@ -130,36 +130,8 @@ docker run -d \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
-# echo "INFO: Waiting for validator to start..."
-# sleep 10
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Check if validator is running
-echo "INFO: Inspecting if validator is running..."
-SEKAID_VERSION=$(docker exec -i "validator" sekaid version || echo "error")
-if [ "$SEKAID_VERSION" == "error" ]; then
-    echo "ERROR: sekaid was NOT found"
-    exit 1
-else
-    echo "SUCCESS: sekaid $SEKAID_VERSION was found"
-fi
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Get the genesis file from the validator.
-echo "INFO: Saving genesis file..."
-docker cp -a validator:$GENESIS_SOURCE $GENESIS_DESTINATION
-
-if [ ! -f "$GENESIS_DESTINATION" ]; then
-    echo "ERROR: Failed to copy genesis file from validator"
-    exit 1
-fi
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Get the genesis file from the validator.
-
-CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
-echo "INFO: Check Validator Node id..."
-echo "${VALIDATOR_NODE_ID} - ${CHECK_VALIDATOR_NODE_ID}"
+echo "INFO: Waiting for validator to start and import or produce genesis..."
+$WORKSTATION_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID"
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
