@@ -129,21 +129,20 @@ while : ; do
         $KIRA_SCRIPTS/container-unpause.sh $NAME
         EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
-        LOG_LINES=0
+        LOG_LINES=5
         while : ; do
             echo "INFO: Attempting to display $NAME container log..."
-            LOG_LINES=$(($LOG_LINES + 5))
-            echo "LINES1: $LOG_LINES"
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
             docker container logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
             MAX=$(cat $TMP_DUMP | wc -l)
-            echo "LINES2: $LOG_LINES"
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             tac $TMP_DUMP | head -n $LOG_LINES
             echo -e "\e[36;1mINFO: Printed last $LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[36;1mTry to show [M]ore lines or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[36;1mTry to show [M]ore lines, [R]efresh or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
+            [ "${ACCEPT,,}" == "r" ] && continue
+            LOG_LINES=$(($LOG_LINES + 5))
         done
         OPTION=""
         EXECUTED="true"
