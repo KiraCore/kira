@@ -17,6 +17,13 @@ done
 if [ -f "$EXECUTED_CHECK" ]; then
   sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657"
 else
+
+  i=0
+  while [ ! -f "$COMMON_DIR/genesis.json" ] && [[ ("$i" < 6) ]]; do
+    sleep 10
+    i=$((i + 1))
+  done
+
   rm -rf $SEKAID_HOME
 
   sekaid init --chain-id=testing testing --home=$SEKAID_HOME

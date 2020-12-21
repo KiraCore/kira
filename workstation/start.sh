@@ -130,8 +130,8 @@ docker run -d \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
-echo "INFO: Waiting for validator to start..."
-sleep 10
+# echo "INFO: Waiting for validator to start..."
+# sleep 10
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check if validator is running
