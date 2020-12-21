@@ -166,7 +166,7 @@ docker network connect kiranet sentry
 # echo "INFO: Waiting for sentry to start..."
 # sleep 10
 echo "INFO: Waiting for sentry to start..."
-$WORKSTATION_SCRIPTS/await-sentry-init.sh "$DOCKER_COMMON" "$SENTRY_NODE_ID" || exit 1
+$WORKSTATION_SCRIPTS/await-sentry-init.sh "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `servicenet` bridge network

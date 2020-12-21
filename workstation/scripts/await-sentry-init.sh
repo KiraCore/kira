@@ -1,11 +1,10 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-DOCKER_COMMON=$1
-SENTRY_NODE_ID=$2
+SENTRY_NODE_ID=$1
 
 i=0
-CHECK_SENTRY_NODE_ID=""
+NODE_ID=""
 IS_STARTED="false"
 while [ $i -le 40 ]; do
     i=$((i + 1))
@@ -31,13 +30,13 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting node status..."
-    CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
-    if [ -z "$CHECK_SENTRY_NODE_ID" ]; then
+    NODE_ID=$(docker exec -i "sentry" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
+    if [ -z "$NODE_ID" ]; then
         sleep 3
         echo "WARNING: Status and Node ID is not available"
         continue
     else
-        echo "INFO: Success, sentry node id found: $CHECK_SENTRY_NODE_ID"
+        echo "INFO: Success, sentry node id found: $NODE_ID"
         break
     fi
 done
@@ -51,11 +50,11 @@ else
 fi
 
 
-if [ "$CHECK_SENTRY_NODE_ID" != "$SENTRY_NODE_ID" ] ; then
+if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
     echo "ERROR: Sentry Node id check failed!"
-    echo "ERROR: Expected '$SENTRY_NODE_ID', but got '$CHECK_SENTRY_NODE_ID'"
+    echo "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
     exit 1
 else
-    echo "INFO: Sentry node id check succeded '$CHECK_SENTRY_NODE_ID' is a match"
+    echo "INFO: Sentry node id check succeded '$NODE_ID' is a match"
 fi
 

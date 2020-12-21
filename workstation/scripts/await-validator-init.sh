@@ -8,7 +8,7 @@ VALIDATOR_NODE_ID=$4
 
 i=0
 IS_STARTED="false"
-CHECK_VALIDATOR_NODE_ID=""
+NODE_ID=""
 
 rm -fv $GENESIS_DESTINATION
 
@@ -47,13 +47,13 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting node status..."
-    CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
-    if [ -z "$CHECK_VALIDATOR_NODE_ID" ]; then
+    NODE_ID=$(docker exec -i "validator" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
+    if [ -z "$NODE_ID" ]; then
         sleep 3
         echo "WARNING: Status and Node ID is not available"
         continue
     else
-        echo "INFO: Success, validator node id found: $CHECK_VALIDATOR_NODE_ID"
+        echo "INFO: Success, validator node id found: $NODE_ID"
         break
     fi
 done
@@ -63,12 +63,12 @@ if [ ! -f "$GENESIS_DESTINATION" ] ; then
     exit 1
 fi
 
-if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
+if [ "$NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
     echo "ERROR: Check Validator Node id check failed!"
-    echo "ERROR: Expected '$VALIDATOR_NODE_ID', but got '$CHECK_VALIDATOR_NODE_ID'"
+    echo "ERROR: Expected '$VALIDATOR_NODE_ID', but got '$NODE_ID'"
     exit 1
 else
-    echo "INFO: Validator node id check succeded '$CHECK_VALIDATOR_NODE_ID' is a match"
+    echo "INFO: Validator node id check succeded '$NODE_ID' is a match"
     exit 0
 fi
 
