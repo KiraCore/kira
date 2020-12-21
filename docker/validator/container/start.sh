@@ -47,5 +47,5 @@ else
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
-  sekaid start --home=$SEKAID_HOME
+  sekaid start --home=$SEKAID_HOME --trace
 fi

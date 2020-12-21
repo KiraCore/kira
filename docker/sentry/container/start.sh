@@ -28,5 +28,5 @@ else
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/config.toml
 
   touch $EXECUTED_CHECK
-  sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657"
+  sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --trace
 fi
