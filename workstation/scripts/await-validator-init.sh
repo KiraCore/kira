@@ -31,7 +31,6 @@ while [ $i -le 18 ]; do
         continue
     else
         echo "INFO: Success, validator was initalized"
-        break
     fi
 
     echo "INFO: Attempting to access genesis file..."

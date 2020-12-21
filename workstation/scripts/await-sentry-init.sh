@@ -28,7 +28,6 @@ while [ $i -le 18 ]; do
         continue
     else
         echo "INFO: Success, sentry was initalized"
-        break
     fi
 
     echo "INFO: Awaiting node status..."
