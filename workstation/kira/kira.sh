@@ -8,6 +8,12 @@ PERF_CPU="$PERF_DIR/cpu"
 mkdir -p $PERF_DIR
 echo "0%" > $PERF_CPU
 
+echo "INFO: Wiping halt files of all containers..."
+rm -fv $DOCKER_COMMON/validator/halt
+rm -fv $DOCKER_COMMON/sentry/halt
+rm -fv $DOCKER_COMMON/interx/halt
+rm -fv $DOCKER_COMMON/frontend/halt
+
 while : ; do
     START_TIME="$(date -u +%s)"
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)  
@@ -58,7 +64,7 @@ while : ; do
     
     echo -e "\e[33;1m------------------------------------------------- [mode]"
     echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
-    echo "|-------------$(date '+%d/%m/%Y %H:%M:%S')---------------|"
+    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_UTIL="CPU: $CPU_UTIL                                                 "
     RAM_UTIL="RAM: $RAM_UTIL                                                 "
     DISK_UTIL="DISK: $DISK_UTIL                                                 "
@@ -100,9 +106,7 @@ while : ; do
     fi
     echo "| [D] | DUMP All Loggs                          |"
     echo "| [I] | Re-INITALIZE Infrastructure             |"
-    echo "|-----------------------------------------------|"
-    echo "| [X] | Exit                                    |"
-    echo -e "-------------------------------------------------\e[0m"
+    echo -e "| [X] | Exit __________________________________ |\e[0m"
     
     read -s -n 1 -t 6 OPTION || continue
     [ -z "$OPTION" ] && continue

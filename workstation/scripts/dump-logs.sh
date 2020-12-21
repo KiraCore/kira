@@ -11,7 +11,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 
 NAME=$1
-CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME^^}"
+CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 mkdir -p $CONTAINER_DUMP
 
 echo "------------------------------------------------"
