@@ -5,11 +5,6 @@ ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
-ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
-ENV SEKAID_BIN="${GOBIN}/sekaid"
-ENV COMMON_DIR="/common"
-ENV GOBIN=/usr/local/go/bin
-
 RUN echo "Build hash: ${BUILD_HASH}, SIGNER_MNEMONIC: ${SIGNER_MNEMONIC}, FAUCET_MNEMONIC: ${FAUCET_MNEMONIC}"
 
 RUN git clone ${REPO} ${SEKAI} && cd ${SEKAI} && git checkout ${BRANCH}

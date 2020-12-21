@@ -25,7 +25,7 @@ rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
 docker cp $NAME:/var/log/journal $CONTAINER_DUMP/journal || echo "WARNING: Failed to dump journal logs"
 docker cp $NAME:/self/logs $CONTAINER_DUMP/logs || echo "WARNING: Failed to dump self logs"
-docker cp $NAME:/root/.simapp $CONTAINER_DUMP/sekaid || echo "WARNING: Failed to dump .simapp config"
+docker cp $NAME:/common/.sekai $CONTAINER_DUMP/sekaid || echo "WARNING: Failed to dump .sekai config"
 docker cp $NAME:/etc/systemd/system $CONTAINER_DUMP/systemd || echo "WARNING: Failed to dump systemd services"
 docker cp $NAME:/common $CONTAINER_DUMP/common || echo "WARNING: Failed to dump common directory"
 docker inspect $(docker ps --no-trunc -aqf name=$NAME) >$CONTAINER_DUMP/container-inspect.json || echo "WARNING: Failed to inspect container"

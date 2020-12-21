@@ -6,6 +6,7 @@ FROM ubuntu:20.04
 ENV PROFILE_PATH="/etc/profile"
 ENV BASHRC_PATH="/root/.bashrc"
 ENV JOURNAL_LOGS="/var/log/journal"
+ENV COMMON_DIR="/common"
 
 # Env necessary for the individual child container setup
 ENV SELF_HOME=/self/home
@@ -28,9 +29,10 @@ ENV FAILURE_END_FILE=${SELF_HOME}/failure_end
 ENV SUCCESS_START_FILE=${SELF_HOME}/success_start
 ENV SUCCESS_END_FILE=${SELF_HOME}/success_end
 ENV MAINTENANCE_FILE=${SELF_HOME}/maintenence
-ENV SEKAID_HOME=$HOME/.simapp
+ENV SEKAID_HOME=${COMMON_DIR}/.sekai
 
-RUN mkdir -p ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin
+
+RUN mkdir -p ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin ${SEKAID_HOME} ${COMMON_DIR}
 
 ADD ./container ${SELF_CONTAINER}
 
@@ -47,6 +49,9 @@ RUN go version
 
 RUN go get -u github.com/golang/protobuf/proto
 RUN go get google.golang.org/protobuf/cmd/protoc-gen-go
+
+ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
+ENV SEKAID_BIN="${GOBIN}/sekaid"
 
 RUN curl https://sh.rustup.rs -sSf | bash -s -- -y
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"

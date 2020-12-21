@@ -5,9 +5,7 @@ ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
-ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
-ENV SEKAID_BIN="${GOBIN}/sekaid"
-ENV COMMON_DIR="/common"
+RUN echo "Build hash: ${BUILD_HASH}"
 
 RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}

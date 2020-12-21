@@ -55,7 +55,7 @@ $WORKSTATION_SCRIPTS/update-sentry-image.sh &
 $WORKSTATION_SCRIPTS/update-interx-image.sh &
 wait
 
-$WORKSTATION_SCRIPTS/update-frontend-image.sh
+$WORKSTATION_SCRIPTS/update-frontend-image.sh || exit 1
 
 cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
@@ -66,7 +66,9 @@ mkdir -p $DOCKER_COMMON
 cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 
 # Load or generate secret mnemonics
+set +x
 source $WORKSTATION_SCRIPTS/load-secrets.sh
+set -x
 
 # copy secrets and rename
 # cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/
@@ -82,7 +84,7 @@ echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-GENESIS_SOURCE="/root/.simapp/config/genesis.json"
+GENESIS_SOURCE="/common/.sekai/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
 rm -f $GENESIS_DESTINATION
 
@@ -131,7 +133,7 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
-$WORKSTATION_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID"
+$WORKSTATION_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
@@ -158,7 +160,7 @@ sleep 10
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check sentry's node id
 
-CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
+CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
 echo $CHECK_SENTRY_NODE_ID
 if [ "$CHECK_SENTRY_NODE_ID" == "error" ]; then
     echo "ERROR: sentry node error"
@@ -174,8 +176,10 @@ docker network create --driver=bridge --subnet=$KIRA_SERVICE_SUBNET servicenet
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Update interx's config for signer and fuacet mnemonic keys
 
+set +x
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
 jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"tmp" && mv "tmp" $DOCKER_COMMON/interx/config.json
+set -x
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx

@@ -47,7 +47,7 @@ if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ] ; the
     exit 1
 fi
 
-CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /root/.simapp || echo "error")
+CHECK_VALIDATOR_NODE_ID=$(docker exec -i "validator" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
 
 if [ "$CHECK_VALIDATOR_NODE_ID" != "$VALIDATOR_NODE_ID" ] ; then echo
     echo "ERROR: Check Validator Node id check failed!"
