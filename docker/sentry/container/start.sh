@@ -5,7 +5,6 @@ set -e
 set -x
 
 echo "Staring sentry..."
-SEKAID_HOME=$HOME/.simapp
 
 EXECUTED_CHECK="/root/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
