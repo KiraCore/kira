@@ -93,7 +93,7 @@ echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-GENESIS_SOURCE="/common/.sekai/config/genesis.json"
+GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
 rm -f $GENESIS_DESTINATION
 
