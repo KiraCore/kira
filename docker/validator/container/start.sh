@@ -16,8 +16,7 @@ done
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
-  rm -f $COMMON_DIR/started
-
+  
   sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
 
   cd $SEKAID_HOME/config
@@ -46,7 +45,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
-  touch $COMMON_DIR/started
 fi
 
 sekaid start --home=$SEKAID_HOME --trace

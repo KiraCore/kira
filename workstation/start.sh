@@ -130,8 +130,6 @@ docker network create --driver=bridge --subnet=$KIRA_SENTRY_SUBNET sentrynet
 
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP}"
 
-rm -f $DOCKER_COMMON/validator/started
-
 docker run -d \
     --restart=always \
     --name validator \
@@ -171,16 +169,6 @@ echo "INFO: Waiting for sentry to start..."
 $WORKSTATION_SCRIPTS/await-sentry-init.sh "$DOCKER_COMMON" "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Check sentry's node id
-
-CHECK_SENTRY_NODE_ID=$(docker exec -i "sentry" sekaid tendermint show-node-id --home /common/.sekai || echo "error")
-echo $CHECK_SENTRY_NODE_ID
-if [ "$CHECK_SENTRY_NODE_ID" == "error" ]; then
-    echo "ERROR: sentry node error"
-    exit 1
-fi
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create `servicenet` bridge network
 
 docker network rm servicenet || echo "Failed to remove service network"
@@ -195,6 +183,10 @@ jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON
 set -x
 
 rm -f "./config.tmp"
+
+echo "INFO: Waiting for sentry to start..."
+$WORKSTATION_SCRIPTS/await-sentry-init.sh || exit 1
+
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
