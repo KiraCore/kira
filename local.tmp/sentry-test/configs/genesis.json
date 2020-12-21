@@ -1,5 +1,5 @@
 {
-  "genesis_time": "2020-12-01T02:33:09.16100022Z",
+  "genesis_time": "2020-12-21T01:13:34.494788971Z",
   "chain_id": "testing",
   "initial_height": "1",
   "consensus_params": {
@@ -31,7 +31,35 @@
       "accounts": [
         {
           "@type": "/cosmos.auth.v1beta1.BaseAccount",
-          "address": "kira1cey3dzc5lqqn3ruxcl2vcfl5wftyqgyrg95se5",
+          "address": "kira17qsvj3dyp8ch3eg33qtqtfqsf3ge375ex4um55",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "kira12kkp49w4r8f0znw5u6t87mfudnc22ghvyvfq73",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "kira1sw8hjnrwaqudg469lgjvcsgm2xsl58tmxyt9v4",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "kira1d94qh7cn9vfpcp6jtnx2vu4edn2xl454nhrf96",
+          "pub_key": null,
+          "account_number": "0",
+          "sequence": "0"
+        },
+        {
+          "@type": "/cosmos.auth.v1beta1.BaseAccount",
+          "address": "kira18sjw3d7j88lq03pqvuzqt5gechv9dwc2zkat94",
           "pub_key": null,
           "account_number": "0",
           "sequence": "0"
@@ -45,7 +73,75 @@
       },
       "balances": [
         {
-          "address": "kira1cey3dzc5lqqn3ruxcl2vcfl5wftyqgyrg95se5",
+          "address": "kira18sjw3d7j88lq03pqvuzqt5gechv9dwc2zkat94",
+          "coins": [
+            {
+              "denom": "stake",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "ukex",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "validatortoken",
+              "amount": "1000000000"
+            }
+          ]
+        },
+        {
+          "address": "kira12kkp49w4r8f0znw5u6t87mfudnc22ghvyvfq73",
+          "coins": [
+            {
+              "denom": "stake",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "ukex",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "validatortoken",
+              "amount": "1000000000"
+            }
+          ]
+        },
+        {
+          "address": "kira1d94qh7cn9vfpcp6jtnx2vu4edn2xl454nhrf96",
+          "coins": [
+            {
+              "denom": "stake",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "ukex",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "validatortoken",
+              "amount": "1000000000"
+            }
+          ]
+        },
+        {
+          "address": "kira1sw8hjnrwaqudg469lgjvcsgm2xsl58tmxyt9v4",
+          "coins": [
+            {
+              "denom": "stake",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "ukex",
+              "amount": "1000000000"
+            },
+            {
+              "denom": "validatortoken",
+              "amount": "1000000000"
+            }
+          ]
+        },
+        {
+          "address": "kira17qsvj3dyp8ch3eg33qtqtfqsf3ge375ex4um55",
           "coins": [
             {
               "denom": "stake",
@@ -89,7 +185,7 @@
       },
       "network_actors": [
         {
-          "address": "kira1cey3dzc5lqqn3ruxcl2vcfl5wftyqgyrg95se5",
+          "address": "kira17qsvj3dyp8ch3eg33qtqtfqsf3ge375ex4um55",
           "roles": ["1"],
           "status": "ACTIVE",
           "votes": ["VOTE_OPTION_YES", "VOTE_OPTION_ABSTAIN", "VOTE_OPTION_NO", "VOTE_OPTION_NO_WITH_VETO"],
@@ -175,8 +271,8 @@
           "social": "social",
           "identity": "",
           "commission": "1.000000000000000000",
-          "val_key": "kiravaloper1cey3dzc5lqqn3ruxcl2vcfl5wftyqgyrmrgnpc",
-          "pub_key": "kiravalconspub1zcjduepq82gnfjkkf8pqw983waczemageyn5s6ed6r746mpsv4c7haa92chs3ed44w"
+          "val_key": "kiravaloper17qsvj3dyp8ch3eg33qtqtfqsf3ge375e4nqcvc",
+          "pub_key": "kiravalconspub1zcjduepq4r8u30037l6xpqgtndf6nf3hhdds6pf6uhqalu9wu4l89qlglj6sumntq4"
         }
       ]
     },

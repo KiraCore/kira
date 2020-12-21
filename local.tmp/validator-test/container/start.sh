@@ -33,4 +33,4 @@ sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test -
 
 sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
 
-sleep 10 && sekaid start --home=$SEKAID_HOME --trace
+sekaid start --home=$SEKAID_HOME --trace
