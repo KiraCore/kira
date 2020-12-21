@@ -165,8 +165,10 @@ docker run -d \
 
 docker network connect kiranet sentry
 
+# echo "INFO: Waiting for sentry to start..."
+# sleep 10
 echo "INFO: Waiting for sentry to start..."
-sleep 10
+$WORKSTATION_SCRIPTS/await-sentry-init.sh "$DOCKER_COMMON" "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Check sentry's node id
