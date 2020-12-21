@@ -23,9 +23,9 @@ else
   rm -f $SEKAID_HOME/config/genesis.json
   rm -f $SEKAID_HOME/config/node_key.json
   rm -f $SEKAID_HOME/config/config.toml
-  cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/genesis.json
-  cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
-  cp $COMMON_DIR/config.toml $SEKAID_HOME/config/config.toml
+  cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
+  cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
+  cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
 
   touch $EXECUTED_CHECK
   sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --trace
