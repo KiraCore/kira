@@ -184,10 +184,6 @@ set -x
 
 rm -f "./config.tmp"
 
-echo "INFO: Waiting for sentry to start..."
-$WORKSTATION_SCRIPTS/await-sentry-init.sh || exit 1
-
-
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the interx
 
