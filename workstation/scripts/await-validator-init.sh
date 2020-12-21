@@ -40,17 +40,16 @@ while [ $i -le 18 ]; do
         continue
     else
         echo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
-        break
+        if [ ! -f "$DOCKER_COMMON/validator/started" ]; then
+            sleep 3
+            echo "WARNING: Validator is not started yet"
+            continue
+        else
+            echo "INFO: Success, vaildator is started"
+            break
+        fi
     fi
 
-    if [ ! -f "$DOCKER_COMMON/validator/started" ]; then
-        sleep 3
-        echo "WARNING: Validator is not started yet"
-        continue
-    else
-        echo "INFO: Success, vaildator is started"
-        break
-    fi
 done
 
 if [ ! -f "$GENESIS_DESTINATION" ] || [ "${SEKAID_VERSION,,}" == "error" ]; then
