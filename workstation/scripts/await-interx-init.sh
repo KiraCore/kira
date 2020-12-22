@@ -30,7 +30,7 @@ while [ $i -le 60 ]; do
     INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/cosmos/status 2>/dev/null | xargs || echo "")
 
     if [[ "${INDEX_STATUS_CODE}" -ne "200" ]]; then
-        sleep 3
+        sleep 20
         echo "WARNING: INTERX is not built yet"
         continue
     else
