@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 i=0
 IS_STARTED="false"
-while [ $i -le 60 ]; do
+while [ $i -le 40 ]; do
     i=$((i + 1))
 
     echo "INFO: Waiting for interx container to start..."
@@ -30,7 +30,7 @@ while [ $i -le 60 ]; do
     INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/cosmos/status 2>/dev/null | xargs || echo "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
-        sleep 20
+        sleep 30
         echo "WARNING: INTERX is not built yet"
         continue
     else
