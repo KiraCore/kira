@@ -11,3 +11,5 @@ HALT_CHECK="${COMMON_DIR}/halt"
 while [ -f "$HALT_CHECK" ]; do
   sleep 30
 done
+
+nginx -g 'daemon off;'
