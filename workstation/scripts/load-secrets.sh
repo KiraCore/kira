@@ -55,19 +55,19 @@ SENT_NODE_ID_PATH="$KIRA_SECRETS/sent_node_id.key"
 if [ "${REGEN_PRIV_VALIDATOR_KEYS,,}" == "true" ] || [ ! -f "$PRIV_VAL_KEY_PATH" ] ; then
     echo "INFO: Regenerating private validator key used for signing blocks"
     rm -fv "$PRIV_VAL_KEY_PATH"
-    priv-key-gen --mnemonic="$PRIV_VALIDATOR_KEY_MNEMONIC" --valkey="$PRIV_VAL_KEY_PATH"
+    priv-key-gen --mnemonic="$PRIV_VALIDATOR_KEY_MNEMONIC" --valkey="$PRIV_VAL_KEY_PATH" --nodekey=/dev/null --keyid=/dev/null
 fi
 
 if [ "${REGEN_VALIDATOR_NODE_KEYS,,}" == "true" ] || [ ! -f "$VAL_NODE_KEY_PATH" ] || [ ! -f "$VAL_NODE_ID_PATH" ] ; then
     echo "INFO: Regenerating validator node key & id"
     rm -fv "$VAL_NODE_KEY_PATH" "$VAL_NODE_ID_PATH"
-    priv-key-gen --mnemonic="$VALIDATOR_NODE_ID_MNEMONIC" --nodekey="$VAL_NODE_KEY_PATH" --keyid="$VAL_NODE_ID_PATH"
+    priv-key-gen --mnemonic="$VALIDATOR_NODE_ID_MNEMONIC" --valkey=/dev/null --nodekey="$VAL_NODE_KEY_PATH" --keyid="$VAL_NODE_ID_PATH"
 fi
 
 if [ "${REGEN_SENTRY_NODE_KEYS,,}" == "true" ] || [ ! -f "$SENT_NODE_KEY_PATH" ] || [ ! -f "$SENT_NODE_ID_PATH" ] ; then
     echo "INFO: Regenerating sentry node key & id"
     rm -fv "$SENT_NODE_KEY_PATH" "$SENT_NODE_ID_PATH"
-    priv-key-gen --mnemonic="$SENTRY_NODE_ID_MNEMONIC" --nodekey="$SENT_NODE_KEY_PATH" --keyid="$SENT_NODE_ID_PATH"
+    priv-key-gen --mnemonic="$SENTRY_NODE_ID_MNEMONIC" --valkey=/dev/null --nodekey="$SENT_NODE_KEY_PATH" --keyid="$SENT_NODE_ID_PATH"
 fi
 
 rm -fv "$TMP_KEY"
