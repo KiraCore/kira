@@ -19,7 +19,7 @@ while [ $i -le 60 ]; do
     echo "INFO: Awaiting interx initalization..."
     IS_STARTED=$(docker exec -i "interx" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ]; then
-        sleep 3
+        sleep 10
         echo "WARNING: INTERX is not initalized yet"
         continue
     else
