@@ -25,7 +25,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -f $SEKAI/INTERX/config.json
   mv $COMMON_DIR/config.json $SEKAI/INTERX
 
+  touch $EXECUTED_CHECK
 fi
 
 GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
-touch $EXECUTED_CHECK
