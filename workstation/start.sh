@@ -26,12 +26,6 @@ fi
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
-if [ "$KIRA_STOP" == "True" ]; then
-    echo "INFO: Stopping kira..."
-    source $KIRA_MANAGER/stop.sh
-    exit 0
-fi
-
 echo "INFO: Restarting registry..."
 $KIRA_SCRIPTS/container-restart.sh "registry" &
 

@@ -3,8 +3,6 @@
 SKIP_UPDATE=$1
 START_TIME_INIT=$2
 DEBUG_MODE=$3
-INTERACTIVE=$4
-
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 
@@ -13,7 +11,7 @@ KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
 CDHELPER_VERSION="v0.6.14"
-SETUP_VER="v0.0.4" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_BRANCH="KIP_51"
 
 echo "------------------------------------------------"
@@ -22,10 +20,8 @@ echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
 echo "|   DEBUG MODE: $DEBUG_MODE"
-echo "|  INTERACTIVE: $INTERACTIVE"
-echo "| INFRA BRANCH: $INTERACTIVE"
+echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|    KIRA USER: $SUDO_USER"
-echo "|    SETUP LOG: $INFRA_BRANCH"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
@@ -68,16 +64,12 @@ else
 fi
 
 echo ""
+set -x
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 [ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
-[ -z "$INTERACTIVE" ] && INTERACTIVE="True"
-
-# in the non interactive mode always use explicit shell
-[ "$INTERACTIVE" != "True" ] && set -x
-[ -z "$KIRA_STOP" ] && KIRA_STOP="False"
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="v0.1.7.4"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
@@ -95,10 +87,6 @@ if [ "$KIRA_USER" == "root" ]; then
 fi
 
 if [ "$SKIP_UPDATE" == "False" ]; then
-
-    # in the non interactive mode always use explicit shell
-    [ "$INTERACTIVE" != "True" ] && set -x
-
     #########################################
     # START Installing Essentials
     #########################################
@@ -115,6 +103,8 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
     KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
 
+    SEKAID_HOME="/root/.simapp"
+
     mkdir -p $KIRA_INFRA
     mkdir -p $KIRA_SEKAI
     mkdir -p $KIRA_FRONTEND
@@ -125,7 +115,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
@@ -143,8 +133,26 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Base Tools Setup..."
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
-        rm -f -v ./CDHelper-linux-x64.zip
-        wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
+        EXPECTED_HASH="859b1162e326c9f7441512549e0b1acad07efc1ed1286eee5e08915459cafeb9"
+        FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
+    
+        if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+            rm -f -v ./CDHelper-linux-x64.zip
+            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
+
+            FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }')
+
+            if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+              echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
+              SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+              [ "${SELECT,,}" == "x" ] && exit
+              echo "DANGER: You decided to disregard a potential vulnerability !!!"
+              read -p "Press any key to continue or Ctrl+C to abort..." -n 1
+            fi
+        else
+            echo "INFO: CDHelper tool was laready downloaded"
+        fi
+
         rm -rfv $INSTALL_DIR
         unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
         chmod -R -v 555 $INSTALL_DIR
@@ -170,6 +178,9 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
 
         touch $KIRA_SETUP_ESSSENTIALS
     else
@@ -198,7 +209,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
     cd /kira
     echo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE" "$INTERACTIVE"
+    source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE"
     echo "INFO: Init script restart finished."
     exit 0
 else
@@ -217,8 +228,7 @@ CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" 
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
-CDHelper text lineswap --insert="KIRA_STOP=$KIRA_STOP" --prefix="KIRA_STOP=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
+
 
 cd /kira
 echo "INFO: Launching setup menu..."

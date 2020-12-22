@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.13"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.14"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -54,7 +54,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-  EXPECTED_HASH="eb10b2602b1d5d173c523417d8f16fcc5317b8e90cba34ccdceb0b876b658f9e"
+  EXPECTED_HASH="0a03a0d0b760c80c14bef5f0c1ac2c7290361370b394697f4c7ad711ca5c998c"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo -e "\nDANGER: Failed to check integrity hash of the kira tools !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
