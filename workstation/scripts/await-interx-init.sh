@@ -27,7 +27,7 @@ while [ $i -le 60 ]; do
     fi
 
     echo "INFO: Awaiting interx build..."
-    INTERX_STATUS_CODE="$(curl -s -o /dev/null -I -w '%{http_code}' http://10.4.0.2:11000/api/cosmos/status)"
+    INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/cosmos/status)
 
     if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
         sleep 3
@@ -38,7 +38,7 @@ while [ $i -le 60 ]; do
     fi
 done
 
-INTERX_STATUS_CODE="$(curl -s -o /dev/null -I -w '%{http_code}' http://10.4.0.2:11000/api/cosmos/status)"
+INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/cosmos/status)
 if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
     echo "ERROR: INTERX was not started sucessfully within defined time"
     exit 1
