@@ -30,11 +30,15 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
+  sekaid init --chain-id=testing testing --home=$SEKAID_HOME
+
+  rm -fv $SEKAID_HOME/config/genesis.json 
+  rm -fv $SEKAID_HOME/config/node_key.json
+  rm -fv $SEKAID_HOME/config/config.toml
+
   cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
-
-  # sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 
   touch $EXECUTED_CHECK
 fi
