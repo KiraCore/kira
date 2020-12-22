@@ -21,7 +21,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
-  # cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
+  cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
   sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
 
