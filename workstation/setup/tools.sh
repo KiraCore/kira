@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.12"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.13"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -51,6 +51,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   cd /home/$SUDO_USER
   TOOLS_DIR="/home/$SUDO_USER/tools"
   KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
+  PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
   EXPECTED_HASH="ea6fd3fd7709a5b7303cfbab5f61a737647aea20cda5d38943a52a5805a5d9ac"
@@ -67,8 +68,18 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   ls -l /bin/tmkms-key-import || echo "tmkms-key-import symlink not found"
   rm /bin/tmkms-key-import || echo "faild removing old tmkms-key-import symlink"
   ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echo "tmkms-key-import symlink already exists"
+
+  cd $PRIV_KEYGEN_DIR
+  go build
+  make install
+
+  ls -l /bin/priv-key-gen || echo "priv-validator-key-gen symlink not found"
+  rm /bin/priv-key-gen || echo "Removing old priv-validator-key-gen symlink"
+  ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-key-gen || echo "priv-validator-key-gen symlink already exists"
+
   # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')
   # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
+  # priv-key-gen --mnemonic="$MNEMONIC" ./create priv_validator_key.json # returns kms key
 
   cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS
