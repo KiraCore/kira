@@ -35,6 +35,7 @@ while [ $i -le 60 ]; do
         continue
     else
         echo "INFO: Success, interx was built"
+        break
     fi
 done
 
