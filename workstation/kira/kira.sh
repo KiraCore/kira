@@ -31,9 +31,9 @@ while : ; do
     RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
     DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
 
-    STATUS_SOURCE="interx"
-    NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "Error")
-    
+    STATUS_SOURCE="validator"
+    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
+
     wait # wait for all subprocesses to finish
     source $VARS_FILE
     CPU_UTIL=$(cat $PERF_CPU)
@@ -56,16 +56,16 @@ while : ; do
         [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
         # TODO: show failed status if any of the healthchecks fails
 
-        # if block height check fails via interx then try via validator
-        if [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ] ; then
+        # if block height check fails via validator then try via interx
+        if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ] ; then
             STATUS_SOURCE="$name"
-            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null | xargs || echo "Error")
+            NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/cosmos/status || echo "Error")
         fi
 
         # if block height check fails via validator then try via sentry
         if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ] ; then
             STATUS_SOURCE="$name"
-            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null | xargs || echo "Error")
+            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
         fi
     done
 
@@ -109,9 +109,9 @@ while : ; do
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ] ; then
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
-        echo "| [S] | STOP All Containers                     |"
+        echo "| [S] | STOP All Containers & Networks          |"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
-        echo "| [S] | Re-START All Containers                 |"
+        echo "| [S] | Re-START All Containers & Networks      |"
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
         echo "| [P] | PAUSE All Containers                    |"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
@@ -129,6 +129,11 @@ while : ; do
     [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
     echo ""
 
+    if [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] ; then
+        echo "INFO: Reconnecting all networks before container restart"
+        $WORKSTATION_SCRIPTS/restart-networks.sh
+    fi
+
     EXECUTED="false"
     i=-1 ; for name in $CONTAINERS ; do i=$((i+1))
         if [ "$OPTION" == "$i" ] ; then
@@ -145,7 +150,7 @@ while : ; do
                echo "INFO: Stopping $name container..."
                $KIRA_SCRIPTS/container-stop.sh $name
            else 
-               echo "INFO: Staring $name container..."
+               echo "INFO: Re-Staring $name container..."
                $KIRA_SCRIPTS/container-restart.sh $name
            fi
            EXECUTED="true"

@@ -2,6 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
+REG_NET_NAME="regnet"
 CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"
 
@@ -11,11 +12,10 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     echo "Container 'registry' does NOT exist or update is required, creating..."
 
     ${KIRA_SCRIPTS}/container-delete.sh "registry"
-    docker network rm regnet || echo "Failed to remove registry network"
-    docker network create --subnet=$KIRA_REGISTRY_SUBNET regnet
+    $WORKSTATION_SCRIPTS/restart-networks.sh "true" "$REG_NET_NAME"
 
     docker run -d \
-        --network regnet \
+        --network "$REG_NET_NAME" \
         --ip $KIRA_REGISTRY_IP \
         --hostname $KIRA_REGISTRY_NAME \
         --restart=always \

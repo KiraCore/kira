@@ -139,7 +139,7 @@ while : ; do
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             tac $TMP_DUMP | head -n $LOG_LINES
             echo -e "\e[36;1mINFO: Printed last $LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[36;1mTry to show [M]ore lines, [R]efresh or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mTry to show [M]ore lines, [R]efresh or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             LOG_LINES=$(($LOG_LINES + 5))

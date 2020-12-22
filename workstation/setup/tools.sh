@@ -54,7 +54,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-  EXPECTED_HASH="ea6fd3fd7709a5b7303cfbab5f61a737647aea20cda5d38943a52a5805a5d9ac"
+  EXPECTED_HASH="eb10b2602b1d5d173c523417d8f16fcc5317b8e90cba34ccdceb0b876b658f9e"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo -e "\nDANGER: Failed to check integrity hash of the kira tools !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
@@ -79,7 +79,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')
   # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
-  # priv-key-gen --mnemonic="$MNEMONIC" ./create priv_validator_key.json # returns kms key
+  # priv-key-gen --mnemonic="$MNEMONIC" --valkey=./priv_validator_key.json --nodekey=./node_key.json --keyid=./node_id.key
 
   cd /home/$SUDO_USER
   touch $KIRA_SETUP_BASE_TOOLS
