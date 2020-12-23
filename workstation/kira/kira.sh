@@ -78,7 +78,7 @@ while :; do
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???")
 
     NOT_ALL_CONTAINERS_LAUNCHED="false" # TODO: check required container count based on mode
-    [ $CONTAINERS_COUNT -le 5 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true"
+    [ $CONTAINERS_COUNT -le 4 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true"
 
     clear
 
