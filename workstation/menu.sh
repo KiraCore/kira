@@ -1,11 +1,10 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
-clear
-
 source $KIRA_WORKSTATION/utils.sh
-
 set +x
+
+clear
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_WORKSTATION/VERSION)"

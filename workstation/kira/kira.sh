@@ -78,7 +78,7 @@ while :; do
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???")
 
     NOT_ALL_CONTAINERS_LAUNCHED="false" # TODO: check required container count based on mode
-    [ $CONTAINERS_COUNT -le 5 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true"
+    [ $CONTAINERS_COUNT -lt 5 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true"
 
     clear
 
@@ -151,7 +151,7 @@ while :; do
             OPTION="" # reset option
             EXECUTED="true"
             break
-        elif [ "${OPTION,,}" == "l" ]; then
+        elif [ "${OPTION,,}" == "d" ]; then
             echo "INFO: Dumping all loggs from $name container..."
             $WORKSTATION_SCRIPTS/dump-logs.sh $name
             EXECUTED="true"

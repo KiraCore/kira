@@ -12,9 +12,9 @@ else
   exit 1
 fi
 
+set +x
 clear
 
-set +x
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "$title"

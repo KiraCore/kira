@@ -13,7 +13,7 @@ if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 NAME=$1
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 HALT_FILE="$DOCKER_COMMON/$NAME/halt"
-mkdir -p $CONTAINER_DUMP
+mkdir -p "$CONTAINER_DUMP" "$DOCKER_COMMON/$NAME"
 
 HALT_FILE_EXISTED="true" && [ ! -f "$HALT_FILE" ] && HALT_FILE_EXISTED="false" && touch $HALT_FILE
 

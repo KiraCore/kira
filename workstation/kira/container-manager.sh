@@ -136,6 +136,7 @@ while : ; do
     elif [ "${OPTION,,}" == "l" ] ; then
         LOG_LINES=5
         while : ; do
+            clear
             echo "INFO: Attempting to display $NAME container log..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
             docker container logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
