@@ -19,7 +19,7 @@ while [ $i -le 40 ]; do
 
     echo "INFO: Awaiting frontend initalization..."
     IS_STARTED=$(docker exec -i "frontend" [ -f /root/executed ] && echo "true" || echo "false")
-    if [ "${IS_STARTED,,}" != "true" ] ; then
+    if [ "${IS_STARTED,,}" != "true" ]; then
         sleep 3
         echo "WARNING: Frontend is not initalized yet"
         continue
@@ -28,9 +28,9 @@ while [ $i -le 40 ]; do
     fi
 done
 
-if [ "${IS_STARTED,,}" != "true" ] ; then
-    echo "ERROR: Validator was not started sucessfully within defined time"
+if [ "${IS_STARTED,,}" != "true" ]; then
+    echo "ERROR: Frontend was not started sucessfully within defined time"
     exit 1
 else
-    echo "INFO: Validator was started sucessfully"
+    echo "INFO: Frontend was started sucessfully"
 fi
