@@ -8,7 +8,7 @@ DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$INFR
 
 echo "INFO: Re-Initalizing Infrastructure..."
 echo "INFO: Default init script: $DEFAULT_INIT_SCRIPT"
-        
+
 INIT_SCRIPT_OUT="/tmp/init.sh"
 SUCCESS_DOWNLOAD="false"
 SUCCESS_HASH_CHECK="false"
@@ -24,7 +24,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
         read  -p "Input URL of the new initialization script: " INIT_SCRIPT
     else
         INIT_SCRIPT=$DEFAULT_INIT_SCRIPT
-    fi
+    fi 
 
     if [ "${INIT_SCRIPT}" == "$DEFAULT_INIT_SCRIPT" ] ; then
         echo "INFO: Default initalization script was selected"
