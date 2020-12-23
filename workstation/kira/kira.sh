@@ -2,6 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_WORKSTATION/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+set +x
 echo "INFO: Launching KIRA Network Manager..."
 PERF_DIR="/tmp/performance" # performance counters directory
 PERF_CPU="$PERF_DIR/cpu"
@@ -72,7 +73,8 @@ while : ; do
     KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???")
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???")
 
-    [ $CONTAINERS_COUNT -le 4 ] && SUCCESS="false" # TODO: check required container count based on mode
+    NOT_ALL_CONTAINERS_LAUNCHED="false" # TODO: check required container count based on mode
+    [ $CONTAINERS_COUNT -le 5 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true" 
 
     clear
     
@@ -88,8 +90,8 @@ while : ; do
     KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
     echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
 
-    if [ "${SUCCESS,,}" != "true" ] ; then
-        echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT LAUNCHED       \e[33;1m|"
+    if [ "${NOT_ALL_CONTAINERS_LAUNCHED,,}" == "true" ] ; then
+        echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ] ; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] ; then
@@ -165,6 +167,14 @@ while : ; do
            EXECUTED="true"
         fi
     done
+
+    if [ "${OPTION,,}" == "d" ] ; then
+        echo "INFO: Compresing all dumped files..."
+        ZIP_FILE="$KIRA_DUMP/kira.zip"
+        rm -fv $ZIP_FILE
+        zip -r -q $ZIP_FILE $KIRA_DUMP
+        echo "INFO: All dump files were exported into $ZIP_FILE"
+    fi
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
         echo "INFO: Option ($OPTION) was executed, press any key to continue..."

@@ -5,12 +5,17 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 HALT_FILE="$DOCKER_COMMON/$NAME/halt"
-WHITESPACE="                                                          "
+
+
+set +x
 echo "INFO: Launching KIRA Container Manager..."
 echo "INFO: Wiping halt files of $NAME container..."
+
 rm -fv $HALT_FILE
 
+WHITESPACE="                                                          "
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+
 mkdir -p $CONTAINER_DUMP
 
 while : ; do

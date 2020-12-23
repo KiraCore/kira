@@ -32,6 +32,7 @@ chmod 555 $ETC_PROFILE
 source $ETC_PROFILE &>/dev/null
 set -e
 
+set +x
 if [ -z "$SKIP_UPDATE" ]; then
     echo -e "\e[35;1mMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMM"
                echo "MMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMM"

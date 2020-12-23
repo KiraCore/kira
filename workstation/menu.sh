@@ -5,6 +5,7 @@ clear
 
 source $KIRA_WORKSTATION/utils.sh
 
+set +x
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_WORKSTATION/VERSION)"
@@ -53,5 +54,6 @@ while :; do
     ;;
   esac
 done
+set -x
 
 source $KIRA_WORKSTATION/submenu.sh

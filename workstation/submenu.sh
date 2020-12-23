@@ -14,6 +14,7 @@ fi
 
 clear
 
+set +x
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "$title"
@@ -49,6 +50,7 @@ while :; do
     $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
     read -p "Press any key to continue..." -n 1
+    set -x
     source $KIRA_WORKSTATION/kira/kira.sh
     break
     ;;
@@ -73,6 +75,7 @@ while :; do
     $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
     read -p "Press any key to continue..." -n 1
+    set -x
     source $KIRA_WORKSTATION/kira/kira.sh
     break
     ;;
@@ -87,3 +90,4 @@ while :; do
     ;;
   esac
 done
+set -x

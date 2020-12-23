@@ -144,7 +144,7 @@ echo "INFO: Waiting for sentry to start..."
 $WORKSTATION_SCRIPTS/await-sentry-init.sh "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Update interx's config for signer and fuacet mnemonic keys
+# * Run INTERX & update config for signer and fuacet mnemonic keys
 
 set +x
 jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
@@ -152,9 +152,6 @@ jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON
 set -x
 
 rm -f "./config.tmp"
-
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Run the interx
 
 docker run -d \
     -p 11000:11000 \
@@ -185,13 +182,13 @@ docker run -d \
 
 docker network connect sentrynet frontend
 
-echo "INFO: Waiting for frontend to start..."
-sleep 10
+$WORKSTATION_SCRIPTS/await-frontend-init.sh || exit 1
+
+# ------------------------------------------------------------------------------------------------------------------------------------------------
+# * Run the cleanup
 
 echo "INFO: Prunning unused images..."
 docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || echo "WARNING: Failed to prune dangling image"
-
-# ---------- FRONTEND END ----------
 
 echo "------------------------------------------------"
 echo "| FINISHED: LAUNCH SCRIPT                      |"

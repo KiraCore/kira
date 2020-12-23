@@ -12,10 +12,13 @@ if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 
 NAME=$1
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+HALT_FILE="$DOCKER_COMMON/$NAME/halt"
 mkdir -p $CONTAINER_DUMP
 
+HALT_FILE_EXISTED="true" && [ ! -f "$HALT_FILE" ] && HALT_FILE_EXISTED="false" && touch $HALT_FILE
+
 echo "------------------------------------------------"
-echo "|          STARTED: DUMP LOGS v0.0.1           |"
+echo "|          STARTED: DUMP LOGS v0.0.2           |"
 echo "------------------------------------------------"
 echo "| CONTAINER NAME: $NAME"
 echo "| CONTAINER DUMP: $CONTAINER_DUMP"
@@ -23,19 +26,44 @@ echo "------------------------------------------------"
 
 rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
+
+ID=$(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null || echo "undefined")
+if [ $ID != "undefined" ] && [ ! -z $ID ]; then
+    echo "WARNING: Can't dump files od the $NAME container because it does not exists"
+    exit 0
+fi
+
 docker exec -i $NAME printenv >$CONTAINER_DUMP/env.txt || echo "WARNING: Failed to fetch environment variables"
+echo $(docker inspect $ID || echo "") > $CONTAINER_DUMP/inspect.json || echo "WARNING: Failed to inspect container $NAME"
 
-docker cp $NAME:/root/.simapp $CONTAINER_DUMP/sekaid || echo "WARNING: Failed to dump .sekai config"
-docker cp $NAME:/etc/systemd/system $CONTAINER_DUMP/systemd || echo "WARNING: Failed to dump systemd services"
-docker cp $NAME:/common $CONTAINER_DUMP/common || echo "WARNING: Failed to dump common directory"
-docker inspect $(docker ps --no-trunc -aqf name=$NAME) >$CONTAINER_DUMP/container-inspect.json || echo "WARNING: Failed to inspect container"
-docker logs --timestamps --details $(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null) >$CONTAINER_DUMP/docker-logs.txt || echo "WARNING: Failed to save docker logs"
-docker container logs --details --timestamps $(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null) >$CONTAINER_DUMP/container-logs.txt || echo "WARNING: Failed to save container logs"
-systemctl status docker >$CONTAINER_DUMP/docker-status.txt || echo "WARNING: Failed to save docker status info"
-chmod -R 666 $CONTAINER_DUMP
+if [ "$NAME" == "validator" ] || [ "$NAME" == "sentry" ] ; then
+    DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"
+    DUMP_DATA="$CONTAINER_DUMP/.sekaid/data"
+    mkdir -p $DUMP_CONFIG
+    mkdir -p $DUMP_DATA
 
+    echo "INFO: Dumping config files..."
+    docker cp $NAME:$SEKAID_HOME/config/addrbook.json $DUMP_CONFIG/addrbook.json || echo "WARNING: Failed to dump address book file"
+    docker cp $NAME:$SEKAID_HOME/config/app.toml $DUMP_CONFIG/app.toml || echo "WARNING: Failed to dump app toml file"
+    docker cp $NAME:$SEKAID_HOME/config/config.toml $DUMP_CONFIG/config.toml || echo "WARNING: Failed to dump config toml file"
+    docker cp $NAME:$SEKAID_HOME/config/genesis.json $DUMP_CONFIG/genesis.json || echo "WARNING: Failed to dump genesis file"
+
+    echo "INFO: Dumping data files..."
+    docker cp $NAME:$SEKAID_HOME/data/priv_validator_state.json $DUMP_DATA/priv_validator_state.json || echo "WARNING: Failed to dump address book file"
+fi
+
+docker container logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echo "WARNING: Failed to dump $NAME container logs"
+
+[ "${HALT_FILE_EXISTED,,}" == "false" ] && rm -fv touch $HALT_FILE
+
+echo "INFO: Compressing dump files..."
+
+ZIP_FILE="$CONTAINER_DUMP/${NAME,,}.zip"
+zip -r -q $ZIP_FILE $CONTAINER_DUMP
+
+echo "INFO: Compressed all files into '$ZIP_FILE'"
 echo "INFO: Container ${NAME} loggs were dumped to $CONTAINER_DUMP"
 
 echo "------------------------------------------------"
-echo "|        FINISHED: DUMP LOGS    v0.0.1         |"
+echo "|        FINISHED: DUMP LOGS    v0.0.2         |"
 echo "------------------------------------------------"
