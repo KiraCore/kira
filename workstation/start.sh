@@ -3,9 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
-# START_LOG="$KIRA_DUMP/start.log"
 
-# exec >> $START_LOG 2>&1 && tail $START_LOG
+cd $HOME
 
 echo "------------------------------------------------"
 echo "| STARTED: LAUNCH SCRIPT                       |"
@@ -19,7 +18,7 @@ echo "------------------------------------------------"
 echo "INFO: Updating kira repository and fetching changes..."
 if [ "$SKIP_UPDATE" == "False" ]; then
     $KIRA_MANAGER/setup.sh "$SKIP_UPDATE"
-    source $KIRA_WORKSTATION/start.sh "True"
+    source $KIRA_MANAGER/start.sh "True"
     exit 0
 fi
 
@@ -40,19 +39,18 @@ done
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build base image
-source $WORKSTATION_SCRIPTS/update-base-image.sh
+source $KIRAMGR_SCRIPTS/update-base-image.sh
 set -e
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build other docker images in parallel
-$WORKSTATION_SCRIPTS/update-validator-image.sh &
-$WORKSTATION_SCRIPTS/update-sentry-image.sh &
-$WORKSTATION_SCRIPTS/update-interx-image.sh &
+$KIRAMGR_SCRIPTS/update-validator-image.sh &
+$KIRAMGR_SCRIPTS/update-sentry-image.sh &
+$KIRAMGR_SCRIPTS/update-interx-image.sh &
 wait
 
-$WORKSTATION_SCRIPTS/update-frontend-image.sh || exit 1
+$KIRAMGR_SCRIPTS/update-frontend-image.sh || exit 1
 
-cd $KIRA_WORKSTATION
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.
 
@@ -62,7 +60,7 @@ cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 
 # Load or generate secret mnemonics
 set +x
-source $WORKSTATION_SCRIPTS/load-secrets.sh
+source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
 
@@ -103,7 +101,7 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create all networks
 
-$WORKSTATION_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers 
+$KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers 
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
@@ -122,7 +120,7 @@ docker run -d \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
-$WORKSTATION_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the sentry node
@@ -141,7 +139,7 @@ docker run -d \
 docker network connect kiranet sentry
 
 echo "INFO: Waiting for sentry to start..."
-$WORKSTATION_SCRIPTS/await-sentry-init.sh "$SENTRY_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$SENTRY_NODE_ID" || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run INTERX & update config for signer and fuacet mnemonic keys
@@ -166,7 +164,7 @@ docker run -d \
 
 docker network connect sentrynet interx
 
-$WORKSTATION_SCRIPTS/await-interx-init.sh || exit 1
+$KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the frontend
@@ -182,7 +180,7 @@ docker run -d \
 
 docker network connect sentrynet frontend
 
-$WORKSTATION_SCRIPTS/await-frontend-init.sh || exit 1
+$KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the cleanup

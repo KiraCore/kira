@@ -1,11 +1,5 @@
 #!/bin/bash
-
 exec 2>&1
-
-# Local Update Shortcut:
-# (rm -fv $KIRA_WORKSTATION/delete-image.sh) && nano $KIRA_WORKSTATION/delete-image.sh && chmod 777 $KIRA_WORKSTATION/delete-image.sh
-# Use Example:
-# $KIRA_WORKSTATION/delete-image.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
 set +e && source "/etc/profile" &>/dev/null && set -e
 if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi

@@ -1,11 +1,5 @@
 #!/bin/bash
-
 exec 2>&1
-
-# Local Update Shortcut:
-# (rm -fv $KIRA_WORKSTATION/update-image.sh) && nano $KIRA_WORKSTATION/update-image.sh && chmod 777 $KIRA_WORKSTATION/update-image.sh
-# Use Example:
-# $KIRA_WORKSTATION/update-image.sh "$KIRA_INFRA/docker/base-image" "base-image" "latest"
 
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
@@ -56,7 +50,7 @@ echo "|     BUILD ARG 2: $ARG2_KEY=$ARG2_VAL"
 echo "|     BUILD ARG 3: $ARG3_KEY=$ARG3_VAL"
 echo "------------------------------------------------"
 
-if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "True" ]]; then
+if [[ $($KIRAMGR_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "True" ]]; then
 
     if [ "$OLD_HASH" != "$NEW_HASH" ]; then
         echo "WARNING: Image '$IMAGE_DIR' hash changed from $OLD_HASH to $NEW_HASH"
@@ -65,7 +59,7 @@ if [[ $($WORKSTATION_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE
     fi
 
     # NOTE: This script automaitcaly removes KIRA_SETUP_FILE file (rm -fv $KIRA_SETUP_FILE)
-    $WORKSTATION_SCRIPTS/delete-image.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" #1
+    $KIRAMGR_SCRIPTS/delete-image.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" #1
 
     echo "Creating new '$IMAGE_NAME' image..."
     docker build --network=host --tag="$IMAGE_NAME" --build-arg BUILD_HASH="$NEW_HASH" --build-arg "$ARG1_KEY=$ARG1_VAL" --build-arg "$ARG2_KEY=$ARG2_VAL" --build-arg "$ARG3_KEY=$ARG3_VAL" --file "$IMAGE_DIR/Dockerfile" .

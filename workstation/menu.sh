@@ -1,13 +1,13 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
-source $KIRA_WORKSTATION/utils.sh
+source $KIRA_MANAGER/utils.sh
 set +x
 
 clear
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
-displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_WORKSTATION/VERSION)"
+displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_MANAGER/VERSION)"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
 displayAlign center $printWidth "Select Deployment Mode"
@@ -27,7 +27,7 @@ while :; do
   1*)
     echo "INFO: Starting Demo Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=local" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=6" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
 
@@ -55,4 +55,4 @@ while :; do
 done
 set -x
 
-source $KIRA_WORKSTATION/submenu.sh
+source $KIRA_MANAGER/submenu.sh

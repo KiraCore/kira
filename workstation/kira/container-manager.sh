@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
 HALT_FILE="$DOCKER_COMMON/$NAME/halt"
@@ -20,7 +20,7 @@ mkdir -p $CONTAINER_DUMP
 
 while : ; do
     START_TIME="$(date -u +%s)"
-    source $KIRA_WORKSTATION/kira/container-status.sh "$NAME"
+    source $KIRA_MANAGER/kira/container-status.sh "$NAME"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         clear
@@ -111,7 +111,7 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "d" ] ; then
         echo "INFO: Dumping all loggs..."
-        $WORKSTATION_SCRIPTS/dump-logs.sh $NAME
+        $KIRAMGR_SCRIPTS/dump-logs.sh $NAME
         EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."

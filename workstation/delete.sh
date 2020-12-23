@@ -17,11 +17,11 @@ for CONTAINER in $CONTAINERS; do
     $KIRA_SCRIPTS/container-delete.sh $CONTAINER
 done
 
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/base-image" "base-image"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
-$WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
+$KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/base-image" "base-image"
+$KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
+$KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
+$KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
+$KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
 docker stop $(docker ps -qa) || echo "WARNING: Faile to docker stop all processess"
 docker rmi -f $(docker images -qa) || echo "WARNING: Faile to remove all docker images"

@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/scripts/restart-networks.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/scripts/restart-networks.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
 
 reconnect=$1
 target=$2

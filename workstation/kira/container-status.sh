@@ -1,7 +1,7 @@
 #!/bin/bash
 
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
 VARS_FILE=$2

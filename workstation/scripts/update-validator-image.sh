@@ -8,10 +8,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 SEKAI_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_SEKAI)
 SEKAI_INTEGRITY="${SEKAI_BRANCH}_${SEKAI_HASH}"
 
-VALIDATOR_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/validator" "validator" "latest" "$SEKAI_INTEGRITY" || echo "error")
+VALIDATOR_IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/validator" "validator" "latest" "$SEKAI_INTEGRITY" || echo "error")
 if [ "$VALIDATOR_IMAGE_EXISTS" == "False" ]; then
     echo "All imags were updated, starting validator image..."
-    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/validator" "validator" "latest" "$SEKAI_INTEGRITY" "REPO=$SEKAI_REPO" "BRANCH=$SEKAI_BRANCH" #4
+    $KIRAMGR_SCRIPTS/update-image.sh "$KIRA_DOCKER/validator" "validator" "latest" "$SEKAI_INTEGRITY" "REPO=$SEKAI_REPO" "BRANCH=$SEKAI_BRANCH" #4
 elif [ "$VALIDATOR_IMAGE_EXISTS" == "True" ]; then
     echo "INFO: validator-image is up to date"
 else

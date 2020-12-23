@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
@@ -27,7 +27,7 @@ while :; do
     i=-1
     for name in $CONTAINERS; do
         i=$((i + 1))
-        $KIRA_WORKSTATION/kira/container-status.sh $name $VARS_FILE $NETWORKS &
+        $KIRA_MANAGER/kira/container-status.sh $name $VARS_FILE $NETWORKS &
     done
 
     CONTAINERS_COUNT=$((i + 1))
@@ -74,11 +74,8 @@ while :; do
         fi
     done
 
-    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???")
-    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???")
-
-    NOT_ALL_CONTAINERS_LAUNCHED="false" # TODO: check required container count based on mode
-    [ $CONTAINERS_COUNT -lt 5 ] && SUCCESS="false" && NOT_ALL_CONTAINERS_LAUNCHED="true"
+    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
 
     clear
 
@@ -94,9 +91,10 @@ while :; do
     KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
     echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
 
-    if [ "${NOT_ALL_CONTAINERS_LAUNCHED,,}" == "true" ]; then
+    if [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ] ; then
+        SUCCESS="false"
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
-    elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
+    elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ] ; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
         echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
@@ -137,23 +135,18 @@ while :; do
     [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
     echo ""
 
-    if [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ]; then
-        echo "INFO: Reconnecting all networks before container restart"
-        $WORKSTATION_SCRIPTS/restart-networks.sh
-    fi
-
     EXECUTED="false"
     i=-1
     for name in $CONTAINERS; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
-            source $KIRA_WORKSTATION/kira/container-manager.sh $name
+            source $KIRA_MANAGER/kira/container-manager.sh $name
             OPTION="" # reset option
             EXECUTED="true"
             break
         elif [ "${OPTION,,}" == "d" ]; then
             echo "INFO: Dumping all loggs from $name container..."
-            $WORKSTATION_SCRIPTS/dump-logs.sh $name
+            $KIRAMGR_SCRIPTS/dump-logs.sh $name
             EXECUTED="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
@@ -182,6 +175,9 @@ while :; do
         rm -fv $ZIP_FILE
         zip -r -q $ZIP_FILE $KIRA_DUMP
         echo "INFO: All dump files were exported into $ZIP_FILE"
+    elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ]; then
+        echo "INFO: Reconnecting all networks..."
+        $KIRAMGR_SCRIPTS/restart-networks.sh
     fi
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
@@ -191,8 +187,8 @@ while :; do
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
-        source $KIRA_WORKSTATION/kira/kira-reinitalize.sh
-        source $KIRA_WORKSTATION/kira/kira.sh
+        source $KIRA_MANAGER/kira/kira-reinitalize.sh
+        source $KIRA_MANAGER/kira/kira.sh
         exit 0
     elif [ "${OPTION,,}" == "x" ]; then
         clear

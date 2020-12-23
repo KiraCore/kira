@@ -1,8 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/kira/kira-reinitalize.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/kira/kira-reinitalize.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/KiraCore/kira/KIP_51/workstation/init.sh"
+GIT_USER=$(echo $INFRA_REPO | cut -d';' -f4) 
+GIT_REPO=$(echo $INFRA_REPO | cut -d';' -f5) 
+DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$INFRA_BRANCH/workstation/init.sh"
+
 echo "INFO: Re-Initalizing Infrastructure..."
 echo "INFO: Default init script: $DEFAULT_INIT_SCRIPT"
         
@@ -21,6 +24,19 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
         read  -p "Input URL of the new initialization script: " INIT_SCRIPT
     else
         INIT_SCRIPT=$DEFAULT_INIT_SCRIPT
+    fi
+
+    if [ "${INIT_SCRIPT}" == "$DEFAULT_INIT_SCRIPT" ] ; then
+        echo "INFO: Default initalization script was selected"
+        echo "INFO: Do you want to keep the default '$INFRA_BRANCH' infrastructure branch ?"
+        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[33;1mPress [Y]es to keep default or [C] to change branch: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+        
+        if [ "${ACCEPT,,}" == "c" ] ; then
+            read  -p "Input desired banch name of the $GIT_USER/$GIT_REPO repository: " NEW_BRANCH
+            [ -z "$NEW_BRANCH" ] && NEW_BRANCH=$INFRA_BRANCH
+            echo "INFO: Changing infrastructure branch from $INFRA_BRANCH to $NEW_BRANCH"
+            INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$NEW_BRANCH/workstation/init.sh"
+        fi
     fi
     
     echo "INFO: Downloading initialization script $INIT_SCRIPT"
@@ -68,6 +84,6 @@ if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
     read -p "Press any key to continue..." -n 1
-    source $INIT_SCRIPT_OUT
+    source $INIT_SCRIPT_OUT "$INFRA_BRANCH"
 fi
 

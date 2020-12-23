@@ -27,9 +27,12 @@ displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
 echo ""
 
-SEKAI_BRANCH_DEFAULT="v0.1.7.4"
-FRONTEND_BRANCH_DEFAULT="dev"
-INTERX_BRANCH_DEFAULT="interx"
+SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
+FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
+INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
+[ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="v0.1.7.4"
+[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="dev"
+[ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="interx"
 FAILED="false"
 
 while :; do
@@ -47,11 +50,11 @@ while :; do
     CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH_DEFAULT" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH_DEFAULT" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
+    $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
     read -p "Press any key to continue..." -n 1
     set -x
-    source $KIRA_WORKSTATION/kira/kira.sh
+    source $KIRA_MANAGER/kira/kira.sh
     break
     ;;
 
@@ -61,7 +64,7 @@ while :; do
     echo ""
 
     read -p "Input Sekai Branch (Default: $SEKAI_BRANCH_DEFAULT): " SEKAI_BRANCH
-    read -p "Input Kira Frontend Branch (Default: $FRONTEND_BRANCH_DEFAULT): " FRONTEND_BRANCH
+    read -p "Input KIRA Frontend Branch (Default: $FRONTEND_BRANCH_DEFAULT): " FRONTEND_BRANCH
     read -p "Input INTERX Branch (Default: $INTERX_BRANCH_DEFAULT): " INTERX_BRANCH
 
     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH=$SEKAI_BRANCH_DEFAULT
@@ -72,11 +75,11 @@ while :; do
     CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    $KIRA_WORKSTATION/start.sh "False" || FAILED="true"
+    $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
     read -p "Press any key to continue..." -n 1
     set -x
-    source $KIRA_WORKSTATION/kira/kira.sh
+    source $KIRA_MANAGER/kira/kira.sh
     break
     ;;
 

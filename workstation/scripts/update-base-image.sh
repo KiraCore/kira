@@ -1,15 +1,15 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-BASE_IMAGE_EXISTS=$($WORKSTATION_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" "base-image" || echo "error")
+BASE_IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" "base-image" || echo "error")
 if [ "$BASE_IMAGE_EXISTS" == "False" ]; then
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
-    $WORKSTATION_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
+    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
+    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
+    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
+    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
 
     echo "INFO: Updating base image..."
-    $WORKSTATION_SCRIPTS/update-image.sh "$KIRA_DOCKER/base-image" "base-image" "latest"
+    $KIRAMGR_SCRIPTS/update-image.sh "$KIRA_DOCKER/base-image" "base-image" "latest"
 elif [ "$BASE_IMAGE_EXISTS" == "True" ]; then
     echo "INFO: base-image is up to date"
 else

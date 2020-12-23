@@ -1,10 +1,12 @@
 #!/bin/bash
 
-SKIP_UPDATE=$1
-START_TIME_INIT=$2
-DEBUG_MODE=$3
+INFRA_BRANCH=$1
+SKIP_UPDATE=$2
+START_TIME_INIT=$3
+DEBUG_MODE=$4
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
+[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
@@ -12,7 +14,7 @@ SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
 CDHELPER_VERSION="v0.6.14"
 SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
-INFRA_BRANCH="KIP_51"
+INFRA_REPO="https://github.com/KiraCore/kira"
 
 echo "------------------------------------------------"
 echo "| STARTED: INIT $SETUP_VER"
@@ -21,6 +23,7 @@ echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
 echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
+echo "|   INFRA REPO: $INFRA_REPO"
 echo "|    KIRA USER: $SUDO_USER"
 echo "------------------------------------------------"
 
@@ -76,7 +79,6 @@ set -x
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
 [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="interx"
 
-[ -z "$INFRA_REPO" ] && INFRA_REPO="https://github.com/KiraCore/kira"
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
@@ -116,7 +118,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_BRANCH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
@@ -200,17 +202,16 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     git clone --branch $INFRA_BRANCH $INFRA_REPO $KIRA_INFRA
     cd $KIRA_INFRA
     git describe --all --always
-    chmod -R 777 $KIRA_INFRA
+    chmod -R 555 $KIRA_INFRA
 
     # update old processes
     rm -r -f $KIRA_MANAGER
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
-    chmod -R 555 $KIRA_WORKSTATION
     chmod -R 555 $KIRA_MANAGER
 
     cd /kira
     echo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_WORKSTATION/init.sh "True" "$START_TIME_INIT" "$DEBUG_MODE"
+    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT" "$DEBUG_MODE"
     echo "INFO: Init script restart finished."
     exit 0
 else
@@ -233,7 +234,7 @@ CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO
 
 cd /kira
 echo "INFO: Launching setup menu..."
-source $KIRA_WORKSTATION/menu.sh
+source $KIRA_MANAGER/menu.sh
 
 echo "------------------------------------------------"
 echo "| FINISHED: SETUP                              |"

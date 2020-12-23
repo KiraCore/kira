@@ -11,8 +11,8 @@ SETUP_CHECK="$KIRA_SETUP/registry-v0.0.16-$KIRA_REGISTRY_IP-$KIRA_REGISTRY_NAME"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "$CONTAINER_REACHABLE" == "False" ]; then
     echo "Container 'registry' does NOT exist or update is required, creating..."
 
-    ${KIRA_SCRIPTS}/container-delete.sh "registry"
-    $WORKSTATION_SCRIPTS/restart-networks.sh "true" "$REG_NET_NAME"
+    $KIRA_SCRIPTS/container-delete.sh "registry"
+    $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$REG_NET_NAME"
 
     docker run -d \
         --network "$REG_NET_NAME" \
