@@ -92,10 +92,11 @@ while :; do
     KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
     echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
 
-    if [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ] ; then
+    echo "${CONTAINERS_COUNT} ${INFRA_CONTAINER_COUNT}"
+    if [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
         SUCCESS="false"
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
-    elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ] ; then
+    elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
         echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
@@ -115,13 +116,13 @@ while :; do
     done
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ]; then
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
             echo "| [S] | STOP All Containers & Networks          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
             echo "| [S] | Re-START All Containers & Networks      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
+        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
+        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] &&
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         echo "|-----------------------------------------------|"
     fi
