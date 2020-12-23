@@ -22,7 +22,7 @@ rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
 
 ID=$(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null || echo "")
-if [ ! -z $ID ] ; then
+if [ -z $ID ] ; then
     echo "WARNING: Can't dump files from $NAME container because it does not exists"
     exit 0
 fi
