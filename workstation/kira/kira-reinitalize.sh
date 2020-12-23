@@ -2,8 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-reinitalize.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-GIT_USER=$(echo $INFRA_REPO | cut -d';' -f4) 
-GIT_REPO=$(echo $INFRA_REPO | cut -d';' -f5) 
+GIT_USER=$(echo $INFRA_REPO | cut -d'/' -f4) 
+GIT_REPO=$(echo $INFRA_REPO | cut -d'/' -f5) 
 DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$INFRA_BRANCH/workstation/init.sh"
 
 echo "INFO: Re-Initalizing Infrastructure..."
