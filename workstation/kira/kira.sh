@@ -190,6 +190,7 @@ while :; do
     fi
 
     if [ "${OPTION,,}" == "i" ]; then
+        cd $HOME
         source $KIRA_WORKSTATION/kira/kira-reinitalize.sh
         source $KIRA_WORKSTATION/kira/kira.sh
         exit 0
