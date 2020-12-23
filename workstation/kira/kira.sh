@@ -79,6 +79,7 @@ while :; do
 
     clear
 
+    ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m------------------------------------------------- [mode]"
     echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
@@ -110,26 +111,27 @@ while :; do
         HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
         [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
         LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
-        echo "${LABEL:0:47} : $HEALTH_TMP"
+        echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
     done
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ]; then
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
-            echo "| [S] | STOP All Containers & Networks          |"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
-            echo "| [S] | Re-START All Containers & Networks      |"
-        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
-            echo "| [P] | PAUSE All Containers                    |"
-        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] &&
-            echo "| [P] | Un-PAUSE All Containers                 |"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
+            echo "| [S] | STOP All Containers & Networks          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
+            echo "| [S] | Re-START All Containers & Networks      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
+            echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
+            echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         echo "|-----------------------------------------------|"
     fi
-    echo "| [D] | DUMP All Loggs                          |"
-    echo "| [I] | Re-INITALIZE Infrastructure             |"
+    echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
     read -s -n 1 -t 6 OPTION || continue
     [ -z "$OPTION" ] && continue
+    [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
     [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue

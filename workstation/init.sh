@@ -118,7 +118,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_BRANCH"
+    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y

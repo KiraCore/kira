@@ -52,41 +52,34 @@ while : ; do
         echo "| Repo: ${REPO_TMP:0:39} : $BRANCH"
     fi
 
+    ALLOWED_OPTIONS="x"
     echo "|-----------------------------------------------|"
     echo "|     Status: $STATUS"
     echo "|     Health: $HEALTH"
     echo "| Restarting: $RESTARTING"
     echo "| Started At: $(echo $STARTED_AT | head -c 19)"
     echo "|-----------------------------------------------|"
-    [ "${EXISTS,,}" == "true" ] && 
-    echo "| [I] | Try INSPECT container                   |"
-    [ "${EXISTS,,}" == "true" ] && 
-    echo "| [L] | Show container LOGS                     |"
-    [ "${EXISTS,,}" == "true" ] && 
-    echo "| [D] | Dump all container LOGS                 |"
-    [ "${EXISTS,,}" == "true" ] && 
-    echo "| [R] | RESTART container                       |"
-    [ "$STATUS" == "exited" ] && 
-    echo "| [A] | START container                         |"
-    [ "$STATUS" == "running" ] && 
-    echo "| [S] | STOP container                          |"
-    [ "$STATUS" == "running" ] && 
-    echo "| [R] | RESTART container                       |"
-    [ "$STATUS" == "running" ] && 
-    echo "| [P] | PAUSE container                         |"
-    [ "$STATUS" == "paused" ] && 
-    echo "| [U] | UNPAUSE container                       |"
-    [ "${EXISTS,,}" == "true" ] && 
-    echo -e "| [X] | Exit __________________________________ |\e[0m"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [D] | Dump all container LOGS                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+    [ "$STATUS" == "exited" ]      && echo "| [A] | START container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
+    [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+    [ "$STATUS" == "running" ]     && echo "| [R] | RESTART container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+    [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    [ "$STATUS" == "paused" ]      && echo "| [U] | UNPAUSE container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u"
+    [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit __________________________________ |\e[0m"
 
     read -s -n 1 -t 6 OPTION || continue
     [ -z "$OPTION" ] && continue
+    [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
     [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
     echo ""
 
     EXECUTED="false"
+
     if [ "${OPTION,,}" == "i" ] ; then
         echo "INFO: Entering container $NAME ($ID)..."
         echo "INFO: To exit the container type 'exit'"
