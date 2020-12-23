@@ -4,6 +4,8 @@
   "cache_dir": "cache",
   "max_cache_size": "2 GB",
   "caching_duration": 10,
+  "download_file_size_limitation": "10 MB",
+  "file_hosting_server": "http://0.0.0.0:12000/",
   "faucet": {
     "mnemonic": "",
     "faucet_amounts": {
@@ -16,6 +18,11 @@
       "validatortoken": 100,
       "ukex": 100
     },
+    "fee_amounts": {
+      "stake": "1000ukex",
+      "validatortoken": "1000ukex",
+      "ukex": "1000ukex"
+    },
     "time_limit": 20
   },
   "rpc": {
@@ -23,12 +30,14 @@
       "GET": {
         "/api/cosmos/status": {
           "rate_limit": 0.1,
-          "auth_rate_limit": 1
+          "auth_rate_limit": 1,
+          "caching_duration": 30
         },
         "/api/cosmos/bank/supply": {
           "disable": true,
           "auth_rate_limit": 1,
-          "caching_disable": true
+          "caching_disable": true,
+          "caching_duration": 30
         }
       },
       "POST": {
