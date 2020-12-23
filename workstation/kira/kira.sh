@@ -92,7 +92,6 @@ while :; do
     KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
     echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
 
-    echo "${CONTAINERS_COUNT} ${INFRA_CONTAINER_COUNT}"
     if [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
         SUCCESS="false"
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
