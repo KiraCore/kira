@@ -115,14 +115,15 @@ while :; do
     done
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ]; then
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
-            echo "| [S] | STOP All Containers & Networks          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
-            echo "| [S] | Re-START All Containers & Networks      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] &&
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+        echo "| [R] | RESTART All Containers & Networks       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
+            echo "| [S] | STOP All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
+            echo "| [S] | START All Containers                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
@@ -150,13 +151,17 @@ while :; do
             echo "INFO: Dumping all loggs from $name container..."
             $KIRAMGR_SCRIPTS/dump-logs.sh $name
             EXECUTED="true"
+        elif [ "${OPTION,,}" == "r" ]; then
+            echo "INFO: Re-starting $name container..."
+            $KIRAMGR_SCRIPTS/container-restart.sh $name
+            EXECUTED="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echo "INFO: Stopping $name container..."
                 $KIRA_SCRIPTS/container-stop.sh $name
             else
-                echo "INFO: Re-Staring $name container..."
-                $KIRA_SCRIPTS/container-restart.sh $name
+                echo "INFO: Staring $name container..."
+                $KIRA_SCRIPTS/container-start.sh $name
             fi
             EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
@@ -177,7 +182,7 @@ while :; do
         rm -fv $ZIP_FILE
         zip -r -q $ZIP_FILE $KIRA_DUMP
         echo "INFO: All dump files were exported into $ZIP_FILE"
-    elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ]; then
+    elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh
     fi
