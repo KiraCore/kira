@@ -38,30 +38,30 @@ set -e
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
     echo -e "\e[35;1mMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-               echo "MMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMM"
-               echo "MMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMM"
-               echo "MNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NM"
-               echo "W0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xN"
-               echo "WOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oX"
-               echo "W0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oX"
-               echo "MWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oX"
-               echo "MMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oX"
-               echo "MMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oX"
-               echo "MMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oX"
-               echo "MMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0W"
-               echo "MMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMM"
-               echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMM"
-               echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMM"
-               echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMM"
-               echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMM"
-               echo "MMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMM"
-               echo "M         KIRA NETWORK SETUP $SETUP_VER"
-            echo -e "MMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
+    echo "MMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMM"
+    echo "MNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NM"
+    echo "W0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xN"
+    echo "WOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oX"
+    echo "W0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oX"
+    echo "MWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oX"
+    echo "MMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oX"
+    echo "MMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oX"
+    echo "MMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oX"
+    echo "MMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0W"
+    echo "MMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMM"
+    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMM"
+    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMM"
+    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMM"
+    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMM"
+    echo "MMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMM"
+    echo "M         KIRA NETWORK SETUP $SETUP_VER"
+    echo -e "MMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
     sleep 3
 else
     echo "INFO: Initalizing setup script..."
@@ -75,8 +75,8 @@ set -x
 [ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
-[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="v0.1.7.4"
-[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="dev"
+[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
+[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
 [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="interx"
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
@@ -139,7 +139,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         INSTALL_DIR="/usr/local/bin"
         EXPECTED_HASH="859b1162e326c9f7441512549e0b1acad07efc1ed1286eee5e08915459cafeb9"
         FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
-    
+
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
             rm -f -v ./CDHelper-linux-x64.zip
             wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
@@ -147,11 +147,11 @@ if [ "$SKIP_UPDATE" == "False" ]; then
             FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-              echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-              SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-              [ "${SELECT,,}" == "x" ] && exit
-              echo "DANGER: You decided to disregard a potential vulnerability !!!"
-              read -p "Press any key to continue or Ctrl+C to abort..." -n 1
+                echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
+                SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
+                [ "${SELECT,,}" == "x" ] && exit
+                echo "DANGER: You decided to disregard a potential vulnerability !!!"
+                read -p "Press any key to continue or Ctrl+C to abort..." -n 1
             fi
         else
             echo "INFO: CDHelper tool was laready downloaded"
@@ -230,8 +230,6 @@ CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" 
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-
-
 
 cd /kira
 echo "INFO: Launching setup menu..."
