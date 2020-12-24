@@ -119,11 +119,11 @@ while :; do
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] &&
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        echo "| [R] | RESTART All Containers & Networks       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+        echo "| [R] | RESTART All Containers              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
-            echo "| [S] | STOP All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+            echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
-            echo "| [S] | START All Containers                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+            echo "| [S] | START All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
