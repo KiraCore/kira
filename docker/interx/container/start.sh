@@ -28,4 +28,4 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-GRPC=dns:///$KIRA_SENTRY_IP:9090 RPC=http://$KIRA_SENTRY_IP:26657 make start
+GRPC=dns:///sentry:9090 RPC=http://sentry:26657 make start
