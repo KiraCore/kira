@@ -115,14 +115,14 @@ while :; do
     done
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ]; then
-        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
+        [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] &&
+        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        echo "| [R] | RESTART All Containers              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
+        echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
             echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] &&
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
             echo "| [S] | START All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
