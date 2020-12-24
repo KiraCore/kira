@@ -156,7 +156,7 @@ while :; do
             $KIRAMGR_SCRIPTS/container-restart.sh $name
             EXECUTED="true"
         elif [ "${OPTION,,}" == "s" ]; then
-            if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
+            if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] ; then
                 echo "INFO: Stopping $name container..."
                 $KIRA_SCRIPTS/container-stop.sh $name
             else
@@ -182,7 +182,7 @@ while :; do
         rm -fv $ZIP_FILE
         zip -r -q $ZIP_FILE $KIRA_DUMP
         echo "INFO: All dump files were exported into $ZIP_FILE"
-    elif [ "${OPTION,,}" == "r" ] ; then
+    elif [ "${OPTION,,}" == "r" ] || ([ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]) ; then
         echo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh
     fi
