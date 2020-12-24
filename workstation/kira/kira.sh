@@ -153,7 +153,7 @@ while :; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echo "INFO: Re-starting $name container..."
-            $KIRAMGR_SCRIPTS/container-restart.sh $name
+            $KIRA_SCRIPTS/container-restart.sh $name
             EXECUTED="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] ; then
