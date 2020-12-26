@@ -4,10 +4,34 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
-PERF_DIR="/tmp/performance" # performance counters directory
-PERF_CPU="$PERF_DIR/cpu"
-mkdir -p $PERF_DIR
-echo "0%" >$PERF_CPU
+TMP_DIR="/tmp/kira-stats" # performance counters directory
+PID_DIR="$TMP_DIR/pid"
+PERF_CPU="$TMP_DIR/cpu"
+OPTION_PATH="$TMP_DIR/option"
+IPADDR_PATH="$TMP_DIR/ipaddr"
+LIPADDR_PATH="$TMP_DIR/lipaddr"
+NETWORKS_PATH="$TMP_DIR/networks"
+VARSMGR_PATH="$TMP_DIR/varsmgr" # file contianing cached variables with details regarding individual containers
+
+rm -fvr $PID_DIR # wipe all process id's
+
+mkdir -p "$TMP_DIR" "$PID_DIR"
+
+CPU_UTIL="???"
+echo "$CPU_UTIL" > $PERF_CPU
+
+rm -fv $IPADDR_PATH
+rm -fv $LIPADDR_PATH
+rm -fv $NETWORKS_PATH
+rm -fv $VARSMGR_PATH
+rm -fv "${VARSMGR_PATH}.lock"
+
+
+touch $IPADDR_PATH
+touch $LIPADDR_PATH
+touch $NETWORKS_PATH
+touch $VARSMGR_PATH && chmod 777 $VARSMGR_PATH
+
 
 echo "INFO: Wiping halt files of all containers..."
 rm -fv $DOCKER_COMMON/validator/halt
@@ -15,67 +39,93 @@ rm -fv $DOCKER_COMMON/sentry/halt
 rm -fv $DOCKER_COMMON/interx/halt
 rm -fv $DOCKER_COMMON/frontend/halt
 
+LOADING="true"
 while :; do
     START_TIME="$(date -u +%s)"
-    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
-    VARS_FILE="/tmp/kira_mgr_vars" # file contianing cached variables with details regarding individual containers
-    NETWORKS=$(docker network ls --format="{{.Name}}" || "")
+    rm -f $OPTION_PATH && touch $OPTION_PATH
 
-    #free -m | grep "Mem:"
-    mpstat -o JSON -u 1 2 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}' >$PERF_CPU &
-    rm -f $VARS_FILE && touch $VARS_FILE && chmod 777 $VARS_FILE
+    touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
+        echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
+        echo "$!" > "${NETWORKS_PATH}.pid"
+    fi
+
+    touch "${IPADDR_PATH}.pid" && if ! kill -0 $(cat "${IPADDR_PATH}.pid") 2> /dev/null ; then
+        echo $(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2> /dev/null | awk -F'"' '{ print $2}') > "$IPADDR_PATH" &
+        echo "$!" > "${IPADDR_PATH}.pid"
+    fi
+
+    touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
+        echo $(hostname -I 2> /dev/null | cut -d' ' -f1 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
+        echo "$!" > "${LIPADDR_PATH}.pid"
+    fi
+
+    touch "${PERF_CPU}.pid" && if ! kill -0 $(cat "${PERF_CPU}.pid") 2> /dev/null ; then
+        echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > "$PERF_CPU" &
+        echo "$!" > "${PERF_CPU}.pid"
+    fi
+
+    NETWORKS=$(cat $NETWORKS_PATH)
+    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
+
     i=-1
     for name in $CONTAINERS; do
         i=$((i + 1))
-        $KIRA_MANAGER/kira/container-status.sh $name $VARS_FILE $NETWORKS &
+        touch "$PID_DIR/${name}.pid" && if ! kill -0 $(cat "$PID_DIR/${name}.pid") 2> /dev/null ; then
+            $KIRA_MANAGER/kira/container-status.sh $name $VARSMGR_PATH $NETWORKS & 
+            echo "$!" > "$PID_DIR/${name}.pid"
+        fi
     done
 
     CONTAINERS_COUNT=$((i + 1))
     RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
     DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
-
     STATUS_SOURCE="validator"
-    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
+    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "Error")
 
-    wait # wait for all subprocesses to finish
-    source $VARS_FILE
-    CPU_UTIL=$(cat $PERF_CPU)
+    source $VARSMGR_PATH
 
-    SUCCESS="true"
-    IS_ANY_CONTAINER_RUNNING="false"
-    IS_ANY_CONTAINER_PAUSED="false"
-    ALL_CONTAINERS_PAUSED="true"
-    ALL_CONTAINERS_STOPPED="true"
-    ALL_CONTAINERS_HEALTHY="true"
-    i=-1
-    for name in $CONTAINERS; do
-        i=$((i + 1))
-        STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
-        HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
-        [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
-        [ "${name,,}" == "registry" ] && continue
-        [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
-        [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
-        [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
-        [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
-        [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
-        # TODO: show failed status if any of the healthchecks fails
+    if [ "${LOADING,,}" == "false" ] ; then
+        CPU_UTIL=$(cat $PERF_CPU)
+        SUCCESS="true"
+        IS_ANY_CONTAINER_RUNNING="false"
+        IS_ANY_CONTAINER_PAUSED="false"
+        ALL_CONTAINERS_PAUSED="true"
+        ALL_CONTAINERS_STOPPED="true"
+        ALL_CONTAINERS_HEALTHY="true"
+        i=-1
+        for name in $CONTAINERS; do
+            i=$((i + 1))
+            STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
+            HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
+            [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
+            [ "${name,,}" == "registry" ] && continue
+            [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+            [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
+            [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
+            [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
+            [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
+            # TODO: show failed status if any of the healthchecks fails
+    
+            # if block height check fails via validator then try via interx
+            if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
+                STATUS_SOURCE="$name"
+                NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/status || echo "Error")
+            fi
+    
+            # if block height check fails via validator then try via sentry
+            if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
+                STATUS_SOURCE="$name"
+                NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
+            fi
+        done
+    fi
 
-        # if block height check fails via validator then try via interx
-        if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
-            STATUS_SOURCE="$name"
-            NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/status || echo "Error")
-        fi
-
-        # if block height check fails via validator then try via sentry
-        if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
-            STATUS_SOURCE="$name"
-            NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
-        fi
-    done
-
-    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "127.0.0.1")
+    PUBLIC_IP=$(cat $IPADDR_PATH 2> /dev/null || echo "")
+    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="127.0.0.1"
+    [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
 
     clear
 
@@ -88,12 +138,18 @@ while :; do
     DISK_UTIL="DISK: $DISK_UTIL                                                 "
     echo -e "|\e[34;1m ${CPU_UTIL:0:16}${RAM_UTIL:0:18}${DISK_UTIL:0:11} \e[33;1m|"
 
-    KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                               "
-    KIRA_BLOCK="BLOCK HEIGHT: $KIRA_BLOCK                                              "
-    echo -e "|\e[35;1m ${KIRA_NETWORK:0:23}${KIRA_BLOCK:0:22} \e[33;1m: $STATUS_SOURCE"
+    KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                              "
+    KIRA_BLOCK="BLOCKS: $KIRA_BLOCK                                                   "
+    echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m: $STATUS_SOURCE"
 
-    if [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
-        SUCCESS="false"
+    LOCAL_IP="L.IP: $LOCAL_IP                                               "
+    [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
+    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    |"
+    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m |"
+
+    if [ "${LOADING,,}" == "true" ] ; then
+        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRA STATUS ...         \e[33;1m|"
+    elif [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
@@ -103,18 +159,23 @@ while :; do
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
     fi
 
-    echo "|-----------------------------------------------| [health]"
-    i=-1
-    for name in $CONTAINERS; do
-        i=$((i + 1))
-        STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
-        HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
-        [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-        LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
-        echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
-    done
+    if [ "${LOADING,,}" == "false" ] ; then
+        echo "|-----------------------------------------------| [health]"
+        i=-1
+        for name in $CONTAINERS; do
+            i=$((i + 1))
+            STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
+            HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
+            [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
+            LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
+            echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
+        done
+    fi
+
+    [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
+   
     echo "|-----------------------------------------------|"
-    if [ "$CONTAINERS_COUNT" != "0" ]; then
+    if [ "$CONTAINERS_COUNT" != "0" ] && [ "${LOADING,,}" == "false" ] ; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
@@ -130,13 +191,15 @@ while :; do
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
-    read -s -n 1 -t 6 OPTION || continue
+    OPTION="" && read -s -n 1 -t 5 OPTION || OPTION=""
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
-    [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
-    echo ""
+    if [ "${OPTION,,}" != "x" ] ; then
+        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
+        [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+        echo ""
+    fi
 
     EXECUTED="false"
     i=-1
@@ -149,12 +212,13 @@ while :; do
             break
         elif [ "${OPTION,,}" == "d" ]; then
             echo "INFO: Dumping all loggs from $name container..."
-            $KIRAMGR_SCRIPTS/dump-logs.sh $name
+            $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echo "INFO: Re-starting $name container..."
             $KIRA_SCRIPTS/container-restart.sh $name
             EXECUTED="true"
+            LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] ; then
                 echo "INFO: Stopping $name container..."
@@ -163,6 +227,7 @@ while :; do
                 echo "INFO: Staring $name container..."
                 $KIRA_SCRIPTS/container-start.sh $name
             fi
+            LOADING="true"
             EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
@@ -172,6 +237,7 @@ while :; do
                 echo "INFO: Staring $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
+            LOADING="true"
             EXECUTED="true"
         fi
     done
@@ -185,6 +251,9 @@ while :; do
     elif [ "${OPTION,,}" == "r" ] || ([ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]) ; then
         echo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh
+    elif [ "${OPTION,,}" == "x" ]; then
+        clear
+        exit 0
     fi
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
@@ -196,9 +265,6 @@ while :; do
         cd $HOME
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
-        exit 0
-    elif [ "${OPTION,,}" == "x" ]; then
-        clear
         exit 0
     fi
 done

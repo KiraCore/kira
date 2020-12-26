@@ -21,7 +21,7 @@ fi
 [ -z "$SSHCRED" ] && SSHCRED="/home/root/.ssh/id_rsa"
 
 echo "------------------------------------------------"
-echo "|         STARTED: GIT PULL v0.0.1             |"
+echo "|         STARTED: GIT PULL v0.0.2             |"
 echo "------------------------------------------------"
 echo "|       REPO: $REPO"
 echo "|     BRANCH: $BRANCH"
@@ -67,9 +67,9 @@ if [[ "${REPO,,}" == *"git@"* ]] ; then
     echo "INFO: Detected https repo address"
 
     if [ ! -z "$BRANCH" ] ; then
-        ssh-agent sh -c "ssh-add $SSHCRED ; git clone --branch $BRANCH $REPO $TMP_OUTPUT"
+        ssh-agent sh -c "ssh-add $SSHCRED ; git clone --recursive --branch $BRANCH $REPO $TMP_OUTPUT"
     else
-        ssh-agent sh -c "ssh-add $SSHCRED ; git clone $REPO $TMP_OUTPUT"
+        ssh-agent sh -c "ssh-add $SSHCRED ; git clone --recursive $REPO $TMP_OUTPUT"
     fi
 
     cd $TMP_OUTPUT
@@ -94,9 +94,9 @@ elif [[ "${REPO,,}" == *"https://"*   ]] ; then
             exit 0
         fi
 
-        git clone --branch $BRANCH $REPO $TMP_OUTPUT
+        git clone --recursive --branch $BRANCH $REPO $TMP_OUTPUT
     else
-        git clone $REPO $TMP_OUTPUT
+        git clone --recursive $REPO $TMP_OUTPUT
     fi
 
     cd $TMP_OUTPUT
@@ -146,7 +146,7 @@ ls -as
 [ ! -z "$RWXMOD" ] && [ ! -z "${RWXMOD##*[!0-9]*}" ] && chmod -R $RWXMOD $OUTPUT
 
 echo "------------------------------------------------"
-echo "|         FINISHED: GIT PULL v0.0.1            |"
+echo "|         FINISHED: GIT PULL v0.0.2            |"
 echo "|      COMMIT HASH: $REMOTE_HASH"
 echo "|   DIRECTORY HASH: $LOCAL_HASH"
 echo "------------------------------------------------"

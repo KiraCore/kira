@@ -12,7 +12,7 @@ KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
-CDHELPER_VERSION="v0.6.14"
+CDHELPER_VERSION="v0.6.15"
 SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 
@@ -137,7 +137,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Base Tools Setup..."
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
-        EXPECTED_HASH="859b1162e326c9f7441512549e0b1acad07efc1ed1286eee5e08915459cafeb9"
+        EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
         FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then

@@ -72,30 +72,32 @@ else # container does NOT exists
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
-    echo "ID_$NAME=\"$ID\"" >>$VARS_FILE
-    echo "STATUS_$NAME=\"$STATUS\"" >>$VARS_FILE
-    echo "PAUSED_$NAME=\"$PAUSED\"" >>$VARS_FILE
-    echo "HEALTH_$NAME=\"$HEALTH\"" >>$VARS_FILE
-    echo "RESTARTING_$NAME=\"$RESTARTING\"" >>$VARS_FILE
-    echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >>$VARS_FILE
-    echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >>$VARS_FILE
-    echo "EXISTS_$NAME=\"$EXISTS\"" >>$VARS_FILE
-    echo "BRANCH_$NAME=\"$BRANCH\"" >>$VARS_FILE
-    echo "REPO_$NAME=\"$REPO\"" >>$VARS_FILE
+    while [ -f "${VARS_FILE}.lock" ] ; do sleep 0.5 ; done
+    touch "${VARS_FILE}.lock"
+    CDHelper text lineswap --insert="ID_$NAME=\"$ID\"" --prefix="ID_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="STATUS_$NAME=\"$STATUS\"" --prefix="STATUS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="PAUSED_$NAME=\"$PAUSED\"" --prefix="PAUSED_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="HEALTH_$NAME=\"$HEALTH\"" --prefix="HEALTH_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="RESTARTING_$NAME=\"$RESTARTING\"" --prefix="RESTARTING_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="STARTED_AT_$NAME=\"$STARTED_AT\"" --prefix="STARTED_AT_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="FINISHED_AT_$NAME=\"$FINISHED_AT\"" --prefix="FINISHED_AT_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="EXISTS_$NAME=\"$EXISTS\"" --prefix="EXISTS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="BRANCH_$NAME=\"$BRANCH\"" --prefix="BRANCH_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="REPO_$NAME=\"$REPO\"" --prefix="REPO_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
 
     if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ]; then # container exists
-        echo "NETWORKS=\"$NETWORKS\"" >>$VARS_FILE
         i=-1
         for net in $NETWORKS; do
             i=$((i + 1))
             IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
             if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
-                echo "IP_${NAME}_$net=\"$IP_TMP\"" >>$VARS_FILE
+                CDHelper text lineswap --insert="IP_${NAME}_$net=\"IP_TMP\"" --prefix="IP_${NAME}_$net=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
             else
-                echo "IP_${NAME}_$net=\"\"" >>$VARS_FILE
+                CDHelper text lineswap --insert="IP_${NAME}_$net=\"\"" --prefix="IP_${NAME}_$net=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
             fi
         done
     fi
+    rm -f "${VARS_FILE}.lock"
 fi
 
 # Example of variable recovery:

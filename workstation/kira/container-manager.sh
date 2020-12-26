@@ -6,9 +6,20 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 NAME=$1
 HALT_FILE="$DOCKER_COMMON/$NAME/halt"
 
-
 set +x
 echo "INFO: Launching KIRA Container Manager..."
+
+TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
+NETWORKS_PATH="$TMP_DIR/networks"
+STATUS_PATH="$TMP_DIR/status-$NAME"
+
+mkdir -p $TMP_DIR
+rm -fv $NETWORKS_PATH
+rm -fv $STATUS_PATH
+
+touch $NETWORKS_PATH
+touch $STATUS_PATH
+
 echo "INFO: Wiping halt files of $NAME container..."
 
 rm -fv $HALT_FILE
@@ -18,9 +29,37 @@ CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 
 mkdir -p $CONTAINER_DUMP
 
+LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    source $KIRA_MANAGER/kira/container-status.sh "$NAME"
+
+    touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
+        echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
+        PID1="$!" && echo "$PID1" > "${NETWORKS_PATH}.pid"
+    fi
+
+    touch "${STATUS_PATH}.pid" && if ! kill -0 $(cat "${STATUS_PATH}.pid") 2> /dev/null ; then
+        $KIRA_MANAGER/kira/container-status.sh "$NAME" "$STATUS_PATH" "$NETWORKS" &
+        PID2="$!" && echo "$PID2" > "${STATUS_PATH}.pid"
+    fi
+
+    clear
+    
+    echo -e "\e[36;1m-------------------------------------------------"
+    echo "|        KIRA CONTAINER MANAGER v0.0.4          |"
+    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
+    [ "${LOADING,,}" == "true" ] && echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
+    [ "${LOADING,,}" == "true" ] && wait $PID1 && wait $PID2 && LOADING="false" && continue
+
+    source "$STATUS_PATH"
+
+    ID="ID_$NAME" && ID="${!ID}"
+    EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
+    REPO="REPO_$NAME" && REPO="${!REPO}"
+    STATUS="STATUS_$NAME" && STATUS="${!STATUS}"
+    HEALTH="HEALTH_$NAME" && HEALTH="${!HEALTH}"
+    RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"
+    STARTED_AT="STARTED_AT_$NAME" && STARTED_AT="${!STARTED_AT}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         clear
@@ -29,17 +68,16 @@ while : ; do
         break
     fi
 
-    clear
-    
-    echo -e "\e[36;1m-------------------------------------------------"
-    echo "|        KIRA CONTAINER MANAGER v0.0.4          |"
-    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     NAME_TMP="$NAME                                                  "
     echo "|        Name: ${NAME_TMP:0:32} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
 
+
+    [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
+
+
     if [ "${EXISTS,,}" == "true" ] ; then # container exists
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-            IP="IP_$net" && IP="${!IP}"
+            IP="IP_$NAME_$net" && IP="${!IP}"
             if [ ! -z "$IP" ] && [ "${IP,,}" != "null" ] ; then
                 IP_TMP="${IP}${WHITESPACE}"
                 echo "|  Ip Address: ${IP_TMP:0:32} : $net"
@@ -104,7 +142,7 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "d" ] ; then
         echo "INFO: Dumping all loggs..."
-        $KIRAMGR_SCRIPTS/dump-logs.sh $NAME
+        $KIRAMGR_SCRIPTS/dump-logs.sh "$NAME" "true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
