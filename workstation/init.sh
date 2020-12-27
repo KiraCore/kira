@@ -151,7 +151,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
                 SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
                 [ "${SELECT,,}" == "x" ] && exit
                 echo "DANGER: You decided to disregard a potential vulnerability !!!"
-                read -p "Press any key to continue or Ctrl+C to abort..." -n 1
+                echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             fi
         else
             echo "INFO: CDHelper tool was laready downloaded"
@@ -231,7 +231,7 @@ CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEN
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
 echo "INFO: Your host environment was initalized"
-read -p "Press any key to continue..." -n 1
+echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
 source $KIRA_MANAGER/menu.sh
 

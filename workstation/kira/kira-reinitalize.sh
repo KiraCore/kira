@@ -67,7 +67,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         else
             echo "INFO: Hash verification was skipped"
             echo "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
-            read -p "Press any key to continue or [Ctrl+C] to abort..." -n 1
+            echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             SUCCESS_HASH_CHECK="true"
             break
         fi
@@ -80,10 +80,10 @@ fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
     echo -e "\nINFO: Re-initalization failed or was aborted\n"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     source $INIT_SCRIPT_OUT "$INFRA_BRANCH"
 fi
 
