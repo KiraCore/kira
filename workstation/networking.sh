@@ -21,6 +21,7 @@ TAG_END="#-DOCKER-BEHIND-UFW-V1-END"
 sed -i "/$TAG_START/,/$TAG_END/d" $UWF_RULES
 
 if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
+    echo "INFO: Tag '$TAG_START' is missing, overriding '$UWF_RULES' file"
     cat >> $UWF_RULES <<EOL
 #-DOCKER-BEHIND-UFW-V1-START
 *filter
@@ -34,6 +35,8 @@ if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
 COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
+else
+  echo "INFO: Tag '$TAG_START' was found within '$UWF_RULES' file no need to override"
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -43,12 +46,14 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw default allow outgoing
     ufw default deny incoming
     ufw allow 22/tcp
-    ufw enable
+    ufw enable || ( ufw status verbose && ufw enable )
     ufw status verbose
     systemctl daemon-reload
     systemctl restart ufw
     ufw status verbose
 
+    # WARNING, following command migt disable SSH access
+    # CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
     
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echo "INFO: Setting up sentry mode networking..."
