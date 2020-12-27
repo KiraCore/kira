@@ -33,6 +33,8 @@ LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
 
+    NETWORKS=$(cat $NETWORKS_PATH)
+
     touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
         echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
         PID1="$!" && echo "$PID1" > "${NETWORKS_PATH}.pid"
