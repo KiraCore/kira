@@ -54,8 +54,13 @@ while :; do
         echo "$!" > "${IPADDR_PATH}.pid"
     fi
 
+    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
+    NETWORKS=$(cat $NETWORKS_PATH)
+    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
+
     touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(hostname -I 2> /dev/null | cut -d' ' -f1 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
+        
+        echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
         echo "$!" > "${LIPADDR_PATH}.pid"
     fi
 
@@ -63,9 +68,6 @@ while :; do
         echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > "$PERF_CPU" &
         echo "$!" > "${PERF_CPU}.pid"
     fi
-
-    NETWORKS=$(cat $NETWORKS_PATH)
-    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
     i=-1
     for name in $CONTAINERS; do
@@ -125,6 +127,7 @@ while :; do
     LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "127.0.0.1")
     PUBLIC_IP=$(cat $IPADDR_PATH 2> /dev/null || echo "")
     [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="127.0.0.1"
+    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="127.0.0.1"
     [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
 
     clear
@@ -144,8 +147,8 @@ while :; do
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
-    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    |"
-    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m |"
+    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFace"
+    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFace"
 
     if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRA STATUS ...         \e[33;1m|"
