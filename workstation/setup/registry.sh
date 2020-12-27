@@ -28,7 +28,8 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "insecure-registries" : ["http://$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","http://$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT"]
+  "insecure-registries" : ["http://$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","http://$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT"],
+  "iptables": "false"
 }
 EOL
     systemctl restart docker

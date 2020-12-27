@@ -210,7 +210,6 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
-    cd /kira
     echo "INFO: ReStarting init script to launch setup menu..."
     source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT" "$DEBUG_MODE"
     echo "INFO: Init script restart finished."
@@ -231,7 +230,8 @@ CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" 
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
-cd /kira
+echo "INFO: Your host environment was initalized"
+read -p "Press any key to continue..." -n 1
 echo "INFO: Launching setup menu..."
 source $KIRA_MANAGER/menu.sh
 

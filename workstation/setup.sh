@@ -45,6 +45,7 @@ rm /bin/kira || echo "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
 $KIRA_MANAGER/setup/envs.sh
+$KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/hosts.sh
 $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/golang.sh

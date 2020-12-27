@@ -18,6 +18,7 @@ echo "------------------------------------------------"
 echo "INFO: Updating kira repository and fetching changes..."
 if [ "$SKIP_UPDATE" == "False" ]; then
     $KIRA_MANAGER/setup.sh "$SKIP_UPDATE"
+    $KIRA_MANAGER/networking.sh
     source $KIRA_MANAGER/start.sh "True"
     exit 0
 fi

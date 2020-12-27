@@ -8,13 +8,6 @@ SETUP_CHECK="$KIRA_SETUP/rdp-v1-$DUC_VERSION"
 SUCCESS="true"
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up remote desktop protocol..."
-    
-    echo "INFO: Installing DUC dependencies..."
-    apt-get update -y
-    apt-get install -y perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
-    echo "INFO: Installing XRDP dependencies..."
-    apt-get install -y autoconf libtool fuse libpam0g-dev libjpeg-dev libfuse-dev libx11-dev libxfixes-dev \
-        libxrandr-dev nasm gnome-tweak-tool net-tools
 
     # Info: https://github.com/ddclient/ddclient
     echo "INFO: Setting up DUC..."

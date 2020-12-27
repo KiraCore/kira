@@ -243,6 +243,8 @@ while :; do
     done
 
     if [ "${OPTION,,}" == "d" ]; then
+        echo "INFO: Dumping firewal info..."
+        ufw status verbose > "$KIRA_DUMP/ufw-status.txt" || echo "INFO: Failed to get firewal status"
         echo "INFO: Compresing all dumped files..."
         ZIP_FILE="$KIRA_DUMP/kira.zip"
         rm -fv $ZIP_FILE
