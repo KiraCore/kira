@@ -14,15 +14,16 @@ set -x
 
 echo "INFO: Ensuring UFW rules persistence"
 
-IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
-UWF_RULES="/etc/ufw/after.rules"
-TAG_START="#-DOCKER-BEHIND-UFW-V1-START"
-TAG_END="#-DOCKER-BEHIND-UFW-V1-END"
-sed -i "/$TAG_START/,/$TAG_END/d" $UWF_RULES
-
-if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
-    echo "INFO: Tag '$TAG_START' is missing, overriding '$UWF_RULES' file"
-    cat >> $UWF_RULES <<EOL
+setup-after-rules() {
+    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
+    UWF_RULES="/etc/ufw/after.rules"
+    TAG_START="#-DOCKER-BEHIND-UFW-V1-START"
+    TAG_END="#-DOCKER-BEHIND-UFW-V1-END"
+    sed -i "/$TAG_START/,/$TAG_END/d" $UWF_RULES
+    
+    if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
+        echo "INFO: Tag '$TAG_START' is missing, overriding '$UWF_RULES' file"
+        cat >> $UWF_RULES <<EOL
 #-DOCKER-BEHIND-UFW-V1-START
 *filter
 :DOCKER-USER - [0:0]
@@ -35,14 +36,16 @@ if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
 COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
-else
-  echo "INFO: Tag '$TAG_START' was found within '$UWF_RULES' file no need to override"
-fi
+    else
+      echo "INFO: Tag '$TAG_START' was found within '$UWF_RULES' file no need to override"
+    fi
+}
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echo "INFO: Setting up demo mode networking..."
     ufw disable
     ufw --force reset
+    setup-after-rules
     ufw default allow outgoing
     ufw default deny incoming
     ufw allow 22/tcp
