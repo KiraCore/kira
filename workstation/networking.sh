@@ -55,6 +55,10 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl restart ufw
     ufw status verbose
 
+    echo "INFO: Restarting docker..."
+    systemctl daemon-reload
+    systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
+
     # WARNING, following command migt disable SSH access
     # CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
     
