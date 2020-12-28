@@ -16,35 +16,54 @@ echo "INFO: Ensuring UFW rules persistence"
 
 setup-after-rules() {
     IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
-    UWF_RULES="/etc/ufw/after.rules"
-    TAG_START="#-DOCKER-BEHIND-UFW-V1-START"
-    TAG_END="#-DOCKER-BEHIND-UFW-V1-END"
-    sed -i "/$TAG_START/,/$TAG_END/d" $UWF_RULES
-    
-    if [ -z $(grep "$TAG_START" "$UWF_RULES") ] ; then
-        echo "INFO: Tag '$TAG_START' is missing, overriding '$UWF_RULES' file"
-        cat >> $UWF_RULES <<EOL
+    UWF_AFTER="/etc/ufw/after.rules"
+    UWF_BEFORE="/etc/ufw/before.init"
+
+    cat >> $UWF_AFTER <<EOL
 #-DOCKER-BEHIND-UFW-V1-START
 *filter
 :DOCKER-USER - [0:0]
 :ufw-user-input - [0:0]
-
--A DOCKER-USER -j RETURN -s 10.0.0.0/8
--A DOCKER-USER -j RETURN -s 172.17.0.0/12
--A DOCKER-USER -j RETURN -s 192.168.0.0/16
+:ufw-after-logging-forward - [0:0]
 
 -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-USER -m conntrack --ctstate INVALID -j DROP
--A DOCKER-USER -j ufw-user-input
+-A DOCKER-USER -i $IFace -j ufw-user-input
+-A DOCKER-USER -i $IFace -j ufw-after-logging-forward
+-A DOCKER-USER -i $IFace -j DROP
 
 COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
-    iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
-    iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
-    else
-      echo "INFO: Tag '$TAG_START' was found within '$UWF_RULES' file no need to override"
-    fi
+
+#cat > $UWF_BEFORE <<EOL
+##!/bin/sh
+#set -e
+#
+#box "\$1" in
+#start)
+#    # typically required
+#    ;;
+#stop)
+#    iptables -F DOCKER-USER || true
+#    iptables -A DOCKER-USER -j RETURN || true
+#    iptables -X ufw-user-input || true
+#    # typically required
+#    ;;
+#status)
+#    # optional
+#    ;;
+#flush-all)
+#    # optional
+#    ;;
+#*)
+#    echo "'\$1' not supported"
+#    echo "Usage: before.init {start|stop|flush-all|status}"
+#    ;;
+#EOL
+
+    # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
+    # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
 }
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -53,8 +72,9 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw --force reset
     setup-after-rules
     ufw default allow outgoing
-    ufw default deny incoming
-    ufw allow 22/tcp
+    ufw default allow incoming
+    # ufw default deny incoming
+    # ufw allow 22/tcp
     ufw enable || ( ufw status verbose && ufw enable )
     ufw status verbose
     systemctl daemon-reload
