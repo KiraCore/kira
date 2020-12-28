@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
+cd $HOME
 TMP_DIR="/tmp/kira-stats" # performance counters directory
 PID_DIR="$TMP_DIR/pid"
 PERF_CPU="$TMP_DIR/cpu"

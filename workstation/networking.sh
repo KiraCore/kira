@@ -33,6 +33,17 @@ setup-after-rules() {
 -A DOCKER-USER -i $IFace -j DROP
 
 COMMIT
+
+*nat
+:POSTROUTING ACCEPT [0:0]
+-A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE
+-A POSTROUTING ! -o docker0 -s $KIRA_REGISTRY_SUBNET -j MASQUERADE
+-A POSTROUTING ! -o docker0 -s $KIRA_VALIDATOR_SUBNET -j MASQUERADE
+-A POSTROUTING ! -o docker0 -s $KIRA_SENTRY_SUBNET -j MASQUERADE
+-A POSTROUTING ! -o docker0 -s $KIRA_SERVICE_SUBNET -j MASQUERADE
+
+COMMIT
+
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
 
@@ -66,8 +77,14 @@ EOL
 chmod +x $UWF_AFTER
 chmod +x $UWF_BEFORE
 
-    # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
-    # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
+#iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE
+#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_REGISTRY_SUBNET -j MASQUERADE
+#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_VALIDATOR_SUBNET -j MASQUERADE
+#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_SENTRY_SUBNET -j MASQUERADE
+#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_SERVICE_SUBNET -j MASQUERADE
+
+     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
+     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
 }
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -83,6 +100,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw status verbose
     ufw enable || ( ufw status verbose && ufw enable )
     ufw status verbose
+    ufw reload
     systemctl daemon-reload
     systemctl restart ufw
     ufw status verbose
