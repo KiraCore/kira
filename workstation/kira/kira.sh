@@ -112,7 +112,7 @@ while :; do
             # if block height check fails via validator then try via interx
             if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
                 STATUS_SOURCE="$name"
-                NETWORK_STATUS=$(curl -s -m 1 http://10.4.0.2:11000/api/status || echo "Error")
+                NETWORK_STATUS=$(curl -s -m 1 http://$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status || echo "Error")
             fi
     
             # if block height check fails via validator then try via sentry
@@ -199,7 +199,7 @@ while :; do
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "x" ] ; then
+    if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
