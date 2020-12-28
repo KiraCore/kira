@@ -58,7 +58,7 @@ while : ; do
     clear
     
     echo -e "\e[36;1m-------------------------------------------------"
-    echo "|        KIRA CONTAINER MANAGER v0.0.4          |"
+    echo "|        KIRA CONTAINER MANAGER v0.0.5          |"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     [ "${LOADING,,}" == "true" ] && echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
     [ "${LOADING,,}" == "true" ] && wait $PID1 && wait $PID2 && LOADING="false" && continue
@@ -68,6 +68,7 @@ while : ; do
     ID="ID_$NAME" && ID="${!ID}"
     EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
     REPO="REPO_$NAME" && REPO="${!REPO}"
+    BRANCH="BRANCH_$NAME" && BRANCH="${!BRANCH}"
     STATUS="STATUS_$NAME" && STATUS="${!STATUS}"
     HEALTH="HEALTH_$NAME" && HEALTH="${!HEALTH}"
     RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"
@@ -88,37 +89,38 @@ while : ; do
 
     [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
 
-    if [ "${EXISTS,,}" == "true" ] ; then # container exists
-        PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=sentry" 2> /dev/null || echo "")
-        if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
-            for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
-                echo "|    Port Map: ${port:0:32} |"
-            done
-        fi
-        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-            IP="IP_$NAME_$net" && IP="${!IP}"
-            if [ ! -z "$IP" ] && [ "${IP,,}" != "null" ] ; then
-                IP_TMP="${IP}${WHITESPACE}"
-                echo "|  Ip Address: ${IP_TMP:0:32} : $net"
-            fi
-        done
-    fi
-
     if [ ! -z "$REPO" ] ; then
         REPO_TMP="${REPO}${WHITESPACE}"
         echo "| Repo: ${REPO_TMP:0:39} : $BRANCH"
     fi
 
+    if [ "${EXISTS,,}" == "true" ] ; then # container exists
+        PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "")
+        if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
+            for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
+                port_tmp="${port}${WHITESPACE}"
+                echo "|    Port Map: ${port_tmp:0:32} |"
+            done
+        fi
+        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+            TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
+            if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
+                IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
+                echo "|  Ip Address: ${IP_TMP:0:32} |"
+            fi
+        done
+    fi
+
     ALLOWED_OPTIONS="x"
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
     echo "|-----------------------------------------------|"
-    [ ! -z "$HOSTNAME0" ] && \
-    echo "|   Hostname: ${HOSTNAME0:33} : $LIP"
+    [ ! -z "$HOSTNAME" ] && TMP_HOSTNAME="${HOSTNAME}${WHITESPACE}" && \
+    echo "|    Hostname: ${TMP_HOSTNAME:0:32} : $LIP"
     [ "$STATUS" != "exited" ] && \
-    echo "|     Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
+    echo "|      Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
     [ "$STATUS" == "exited" ] && \
-    echo "|     Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
-    echo "|     Health: $HEALTH"
+    echo "|      Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
+    echo "|      Health: $HEALTH"
     echo "|-----------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
