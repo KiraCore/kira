@@ -36,31 +36,35 @@ COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
 
-#cat > $UWF_BEFORE <<EOL
-##!/bin/sh
-#set -e
-#
-#box "\$1" in
-#start)
-#    # typically required
-#    ;;
-#stop)
-#    iptables -F DOCKER-USER || true
-#    iptables -A DOCKER-USER -j RETURN || true
-#    iptables -X ufw-user-input || true
-#    # typically required
-#    ;;
-#status)
-#    # optional
-#    ;;
-#flush-all)
-#    # optional
-#    ;;
-#*)
-#    echo "'\$1' not supported"
-#    echo "Usage: before.init {start|stop|flush-all|status}"
-#    ;;
-#EOL
+    cat > $UWF_BEFORE <<EOL
+#!/bin/sh
+set -e
+
+case "\$1" in
+start)
+    # typically required
+    ;;
+stop)
+    iptables -F DOCKER-USER || true
+    iptables -A DOCKER-USER -j RETURN || true
+    iptables -X ufw-user-input || true
+    # typically required
+    ;;
+status)
+    # optional
+    ;;
+flush-all)
+    # optional
+    ;;
+*)
+    echo "'\$1' not supported"
+    echo "Usage: before.init {start|stop|flush-all|status}"
+    ;;
+esac
+EOL
+
+chmod +x $UWF_AFTER
+chmod +x $UWF_BEFORE
 
     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
@@ -68,6 +72,7 @@ EOL
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echo "INFO: Setting up demo mode networking..."
+    # ufw logging on
     ufw disable
     ufw --force reset
     setup-after-rules
@@ -75,6 +80,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw default allow incoming
     # ufw default deny incoming
     # ufw allow 22/tcp
+    ufw status verbose
     ufw enable || ( ufw status verbose && ufw enable )
     ufw status verbose
     systemctl daemon-reload

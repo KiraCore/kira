@@ -14,8 +14,11 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Installing generic dependencies..."
     apt-get install -y ufw
 
+    # allow loggs to be dropped
+    touch /var/log/ufw.log && chown syslog:syslog /var/log/ufw.log
+
     DEFAULT_UFW="/etc/default/ufw"
-    #CDHelper text lineswap --insert="IPV6=no" --prefix="IPV6=" --path="$DEFAULT_UFW" --append-if-found-not=True
+    CDHelper text lineswap --insert="IPV6=no" --prefix="IPV6=" --path="$DEFAULT_UFW" --append-if-found-not=True
     #CDHelper text lineswap --insert="DEFAULT_FORWARD_POLICY=\"ACCEPT\"" --prefix="DEFAULT_FORWARD_POLICY=" --path="$DEFAULT_UFW" --append-if-found-not=True
     #CDHelper text lineswap --insert="MANAGE_BUILTINS=yes" --prefix="MANAGE_BUILTINS=" --path="$DEFAULT_UFW" --append-if-found-not=True
     ##CDHelper text lineswap --insert="DOCKER_OPTS=\"--iptables=false\"" --prefix="DOCKER_OPTS=" --path="$DEFAULT_UFW" --append-if-found-not=True
