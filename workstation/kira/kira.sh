@@ -73,7 +73,8 @@ while :; do
     for name in $CONTAINERS; do
         i=$((i + 1))
         touch "$PID_DIR/${name}.pid" && if ! kill -0 $(cat "$PID_DIR/${name}.pid") 2> /dev/null ; then
-            $KIRA_MANAGER/kira/container-status.sh $name $VARSMGR_PATH $NETWORKS & 
+            [ "${LOADING,,}" == "true" ] && rm -f "$VARSMGR_PATH-$name" && touch "$VARSMGR_PATH-$name"
+            $KIRA_MANAGER/kira/container-status.sh $name "$VARSMGR_PATH-$name" $NETWORKS & 
             echo "$!" > "$PID_DIR/${name}.pid"
         fi
     done
@@ -84,7 +85,11 @@ while :; do
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 
-    source $VARSMGR_PATH
+    for name in $CONTAINERS; do
+        if [ -f "$VARSMGR_PATH-$name" ] ; then
+            source "$VARSMGR_PATH-$name"
+        fi
+    done
 
     if [ "${LOADING,,}" == "false" ] ; then
         CPU_UTIL=$(cat $PERF_CPU)

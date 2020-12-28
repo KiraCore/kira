@@ -13,15 +13,21 @@ TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 NETWORKS_PATH="$TMP_DIR/networks"
 STATUS_PATH="$TMP_DIR/status-$NAME"
 LIP_PATH="$TMP_DIR/lip-$NAME"
+PORTS_PATH="$TMP_DIR/ports-$NAME"
+COPY_PATH="$STATUS_PATH-copy"
 
 mkdir -p $TMP_DIR
 rm -fv $NETWORKS_PATH
 rm -fv $STATUS_PATH
 rm -fv $LIP_PATH
+rm -fv $PORTS_PATH
+rm -fv $COPY_PATH
 
 touch $NETWORKS_PATH
 touch $STATUS_PATH
 touch $LIP_PATH
+touch $PORTS_PATH
+touch $COPY_PATH
 
 echo "INFO: Wiping halt files of $NAME container..."
 
@@ -39,6 +45,7 @@ while : ; do
 
     NETWORKS=$(cat $NETWORKS_PATH)
     LIP=$(cat $LIP_PATH)
+    PORTS=$(cat $PORTS_PATH)
 
     touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
         echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
@@ -46,13 +53,21 @@ while : ; do
     fi
 
     touch "${STATUS_PATH}.pid" && if ! kill -0 $(cat "${STATUS_PATH}.pid") 2> /dev/null ; then
-        $KIRA_MANAGER/kira/container-status.sh "$NAME" "$STATUS_PATH" "$NETWORKS" &
+        [ "${LOADING,,}" == "true" ] && rm -f "$STATUS_PATH-$NAME" && touch "$STATUS_PATH-$NAME"
+        $KIRA_MANAGER/kira/container-status.sh "$NAME" "$STATUS_PATH-$NAME" "$NETWORKS" &
         PID2="$!" && echo "$PID2" > "${STATUS_PATH}.pid"
     fi
 
-    touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null && [ ! -z "$HOSTNAME" ] ; then
-        echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
-        PID3="$!" && echo "$PID3" > "${LIP_PATH}.pid"
+    touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
+        if [ ! -z "$HOSTNAME" ] ; then
+            echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
+            PID3="$!" && echo "$PID3" > "${LIP_PATH}.pid"
+        fi
+    fi
+
+    touch "${PORTS_PATH}.pid" && if ! kill -0 $(cat "${PORTS_PATH}.pid") 2> /dev/null ; then
+        echo $(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "") > "$PORTS_PATH" &
+        PID4="$!" && echo "$PID4" > "${PORTS_PATH}.pid"
     fi
 
     clear
@@ -61,9 +76,9 @@ while : ; do
     echo "|        KIRA CONTAINER MANAGER v0.0.5          |"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     [ "${LOADING,,}" == "true" ] && echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
-    [ "${LOADING,,}" == "true" ] && wait $PID1 && wait $PID2 && LOADING="false" && continue
+    [ "${LOADING,,}" == "true" ] && wait $PID1 && wait $PID2 && wait $PID4 && LOADING="false" && continue
 
-    source "$STATUS_PATH"
+    source "$COPY_PATH"
 
     ID="ID_$NAME" && ID="${!ID}"
     EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
@@ -90,12 +105,12 @@ while : ; do
     [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
 
     if [ ! -z "$REPO" ] ; then
+        REPO_TMP=$(echo "$REPO" | tr -d 'https://')
         REPO_TMP="${REPO}${WHITESPACE}"
-        echo "| Repo: ${REPO_TMP:0:39} : $BRANCH"
+        echo "|        Repo: ${REPO_TMP:0:32} : $BRANCH"
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists
-        PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "")
         if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
             for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
                 port_tmp="${port}${WHITESPACE}"
@@ -115,7 +130,7 @@ while : ; do
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
     echo "|-----------------------------------------------|"
     [ ! -z "$HOSTNAME" ] && TMP_HOSTNAME="${HOSTNAME}${WHITESPACE}" && \
-    echo "|    Hostname: ${TMP_HOSTNAME:0:32} : $LIP"
+    echo "|   Host Name: ${TMP_HOSTNAME:0:32} : $LIP"
     [ "$STATUS" != "exited" ] && \
     echo "|      Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
     [ "$STATUS" == "exited" ] && \

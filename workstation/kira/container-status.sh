@@ -7,8 +7,8 @@ NAME=$1
 VARS_FILE=$2
 NETWORKS=$3
 
-ID=$(docker inspect --format="{{.Id}}" ${NAME} 2>/dev/null || echo "undefined")
-if [ $ID != "undefined" ] && [ ! -z $ID ]; then
+ID=$(echo $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null | xargs 2> /dev/null || echo "null"))
+if [ "${ID,,}" != "null" ] && [ ! -z $ID ] ; then
     EXISTS="true"
 else
     EXISTS="false"
@@ -76,8 +76,6 @@ else # container does NOT exists
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
-    while [ -f "${VARS_FILE}.lock" ] ; do sleep 0.1 ; done
-    touch "${VARS_FILE}.lock"
     CDHelper text lineswap --insert="ID_$NAME=\"$ID\"" --prefix="ID_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
     CDHelper text lineswap --insert="STATUS_$NAME=\"$STATUS\"" --prefix="STATUS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
     CDHelper text lineswap --insert="PAUSED_$NAME=\"$PAUSED\"" --prefix="PAUSED_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
@@ -102,9 +100,6 @@ if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was spe
             fi
         done
     fi
-    rm -f "${VARS_FILE}.lock"
-fi
 
-# Example of variable recovery:
-# source $VARS_FILE
-# ID="ID_$NAME" && ID="${!ID}"
+    CDHelper text lineswap --regex="^[^\"]*\"[^\"]*$" --insert="" --path=$VARS_FILE > /dev/null || :
+fi
