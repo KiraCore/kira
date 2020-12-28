@@ -12,13 +12,16 @@ echo "INFO: Launching KIRA Container Manager..."
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 NETWORKS_PATH="$TMP_DIR/networks"
 STATUS_PATH="$TMP_DIR/status-$NAME"
+LIP_PATH="$TMP_DIR/lip-$NAME"
 
 mkdir -p $TMP_DIR
 rm -fv $NETWORKS_PATH
 rm -fv $STATUS_PATH
+rm -fv $LIP_PATH
 
 touch $NETWORKS_PATH
 touch $STATUS_PATH
+touch $LIP_PATH
 
 echo "INFO: Wiping halt files of $NAME container..."
 
@@ -29,11 +32,13 @@ CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 
 mkdir -p $CONTAINER_DUMP
 
+HOSTNAME=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
 
     NETWORKS=$(cat $NETWORKS_PATH)
+    LIP=$(cat $LIP_PATH)
 
     touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
         echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
@@ -43,6 +48,11 @@ while : ; do
     touch "${STATUS_PATH}.pid" && if ! kill -0 $(cat "${STATUS_PATH}.pid") 2> /dev/null ; then
         $KIRA_MANAGER/kira/container-status.sh "$NAME" "$STATUS_PATH" "$NETWORKS" &
         PID2="$!" && echo "$PID2" > "${STATUS_PATH}.pid"
+    fi
+
+    touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null && [ ! -z "$HOSTNAME" ] ; then
+        echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
+        PID3="$!" && echo "$PID3" > "${LIP_PATH}.pid"
     fi
 
     clear
@@ -62,6 +72,9 @@ while : ; do
     HEALTH="HEALTH_$NAME" && HEALTH="${!HEALTH}"
     RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"
     STARTED_AT="STARTED_AT_$NAME" && STARTED_AT="${!STARTED_AT}"
+    FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
+    HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!LIP}"
+    EXPOSED_PORTS="EXPOSED_PORTS_$NAME" && EXPOSED_PORTS="${!EXPOSED_PORTS}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         clear
@@ -70,14 +83,18 @@ while : ; do
         break
     fi
 
-    NAME_TMP="$NAME                                                  "
+    NAME_TMP="${NAME}${WHITESPACE}"
     echo "|        Name: ${NAME_TMP:0:32} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
-
 
     [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
 
-
     if [ "${EXISTS,,}" == "true" ] ; then # container exists
+        PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=sentry" 2> /dev/null || echo "")
+        if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
+            for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
+                echo "|    Port Map: ${port:0:32} |"
+            done
+        fi
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
             IP="IP_$NAME_$net" && IP="${!IP}"
             if [ ! -z "$IP" ] && [ "${IP,,}" != "null" ] ; then
@@ -93,21 +110,25 @@ while : ; do
     fi
 
     ALLOWED_OPTIONS="x"
+    [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
     echo "|-----------------------------------------------|"
-    echo "|     Status: $STATUS"
+    [ ! -z "$HOSTNAME0" ] && \
+    echo "|   Hostname: ${HOSTNAME0:33} : $LIP"
+    [ "$STATUS" != "exited" ] && \
+    echo "|     Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
+    [ "$STATUS" == "exited" ] && \
+    echo "|     Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
     echo "|     Health: $HEALTH"
-    echo "| Restarting: $RESTARTING"
-    echo "| Started At: $(echo $STARTED_AT | head -c 19)"
     echo "|-----------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
     [ "${EXISTS,,}" == "true" ]    && echo "| [D] | Dump all container LOGS                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
-    [ "$STATUS" == "exited" ]      && echo "| [A] | START container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
+    [ "$STATUS" == "exited" ]      && echo "| [S] | START container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
     [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
     [ "$STATUS" == "running" ]     && echo "| [R] | RESTART container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-    [ "$STATUS" == "paused" ]      && echo "| [U] | UNPAUSE container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u"
+    [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit __________________________________ |\e[0m"
 
     read -s -n 1 -t 6 OPTION || continue
@@ -152,19 +173,19 @@ while : ; do
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
         EXECUTED="true"
-    elif [ "${OPTION,,}" == "a" ] ; then
-        echo "INFO: Staring container..."
-        $KIRA_SCRIPTS/container-start.sh $NAME
-        EXECUTED="true"
-    elif [ "${OPTION,,}" == "s" ] ; then
+    elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
         $KIRA_SCRIPTS/container-stop.sh $NAME
         EXECUTED="true"
-    elif [ "${OPTION,,}" == "p" ] ; then
+    elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" != "running" ] ; then
+        echo "INFO: Starting container..."
+        $KIRA_SCRIPTS/container-start.sh $NAME
+        EXECUTED="true"
+    elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
         $KIRA_SCRIPTS/container-pause.sh $NAME
         EXECUTED="true"
-    elif [ "${OPTION,,}" == "u" ] ; then
+    elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "paused" ] ; then
         echo "INFO: UnPausing container..."
         $KIRA_SCRIPTS/container-unpause.sh $NAME
         EXECUTED="true"
