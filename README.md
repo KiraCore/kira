@@ -39,7 +39,7 @@ cd /home/$SUDO_USER && INFRA_BRANCH="KIP_51" && \
  ./init.sh "$INFRA_BRANCH"
 ```
 
-### 4. Setup script will further download and install kira management tool
+### 4. Setup script will further download and install kira management tool 
 
 ### 5. By typing kira in the terminal user will have ability to deploy, scale and manage his infrastructure
 
