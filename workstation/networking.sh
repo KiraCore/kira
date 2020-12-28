@@ -76,15 +76,6 @@ EOL
 
 chmod +x $UWF_AFTER
 chmod +x $UWF_BEFORE
-
-#iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE
-#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_REGISTRY_SUBNET -j MASQUERADE
-#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_VALIDATOR_SUBNET -j MASQUERADE
-#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_SENTRY_SUBNET -j MASQUERADE
-#iptables -t nat -A POSTROUTING ! -o docker0 -s $KIRA_SERVICE_SUBNET -j MASQUERADE
-
-     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
-     # iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
 }
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -94,9 +85,13 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw logging on # required to setup logging rules
     setup-after-rules
     ufw default allow outgoing
-    ufw default allow incoming
-    # ufw default deny incoming
-    # ufw allow 22/tcp
+    ufw default deny incoming
+    ufw allow 22 # SSH
+    ufw allow $KIRA_FRONTEND_PORT 
+    ufw allow $KIRA_INTERX_PORT
+    ufw allow $KIRA_SENTRY_P2P_PORT
+    ufw allow $KIRA_SENTRY_RPC_PORT
+    ufw allow $KIRA_SENTRY_GRPC_PORT
     ufw status verbose
     ufw enable || ( ufw status verbose && ufw enable )
     ufw status verbose
@@ -105,11 +100,13 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl restart ufw
     ufw status verbose
 
+    # ufw disable && ufw allow 80 && ufw enable && ufw reload
+
     echo "INFO: Restarting docker..."
     systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
 
     # WARNING, following command migt disable SSH access
-    # CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
+    CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
     
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echo "INFO: Setting up sentry mode networking..."

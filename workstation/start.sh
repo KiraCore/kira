@@ -76,8 +76,8 @@ echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Seeds
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$VALIDATOR_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
@@ -110,6 +110,7 @@ $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-c
 echo "Kira Validator IP: ${KIRA_VALIDATOR_IP}"
 
 docker run -d \
+    --hostname $KIRA_VALIDATOR_DNS \
     --restart=always \
     --name validator \
     --net=kiranet \
@@ -129,6 +130,10 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GE
 echo "Kira Sentry IP: ${KIRA_SENTRY_IP}"
 
 docker run -d \
+    -p $DEFAULT_P2P_PORT:$KIRA_SENTRY_P2P_PORT \
+    -p $DEFAULT_RPC_PORT:$KIRA_SENTRY_RPC_PORT \
+    -p $DEFAULT_GRPC_PORT:$KIRA_SENTRY_GRPC_PORT \
+    --hostname $KIRA_SENTRY_DNS \
     --restart=always \
     --name sentry \
     --net=sentrynet \
@@ -153,7 +158,8 @@ set -x
 rm -f "./config.tmp"
 
 docker run -d \
-    -p 11000:11000 \
+    -p $DEFAULT_INTERX_PORT:$KIRA_INTERX_PORT \
+    --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name interx \
     --net=servicenet \
@@ -171,7 +177,8 @@ $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 # * Run the frontend
 
 docker run -d \
-    -p 80:80 \
+    -p 80:$KIRA_FRONTEND_PORT \
+    --hostname $KIRA_FRONTEND_DNS \
     --restart=always \
     --name frontend \
     --network servicenet \

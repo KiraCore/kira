@@ -7,7 +7,7 @@ CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.19-$KIRA_REGISTRY_IP-$KIRA_REGISTRY_NAME-$KIRA_REGISTRY_PORT"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.19-$KIRA_REGISTRY_IP-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "$CONTAINER_REACHABLE" == "False" ]; then
     echo "Container 'registry' does NOT exist or update is required, creating..."
 
@@ -17,7 +17,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     docker run -d \
         --network "$REG_NET_NAME" \
         --ip $KIRA_REGISTRY_IP \
-        --hostname $KIRA_REGISTRY_NAME \
+        --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name registry \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
@@ -28,7 +28,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "registry") != "True" ]] || [ ! -f "
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "insecure-registries" : ["http://$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_NAME:$KIRA_REGISTRY_PORT","http://$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT"],
+  "insecure-registries" : ["http://$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT","http://$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT","$KIRA_REGISTRY_IP:$KIRA_REGISTRY_PORT"],
   "iptables": false
 }
 EOL
