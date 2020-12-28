@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/network-v0.0.3" 
+SETUP_CHECK="$KIRA_SETUP/network-v0.0.4" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
@@ -16,9 +16,10 @@ if [ ! -f "$SETUP_CHECK" ] ; then
 
     DEFAULT_UFW="/etc/default/ufw"
     CDHelper text lineswap --insert="IPV6=no" --prefix="IPV6=" --path="$DEFAULT_UFW" --append-if-found-not=True
-    CDHelper text lineswap --insert="DEFAULT_FORWARD_POLICY=\"DROP\"" --prefix="DEFAULT_FORWARD_POLICY=" --path="$DEFAULT_UFW" --append-if-found-not=True
+    CDHelper text lineswap --insert="DEFAULT_FORWARD_POLICY=\"ACCEPT\"" --prefix="DEFAULT_FORWARD_POLICY=" --path="$DEFAULT_UFW" --append-if-found-not=True
     CDHelper text lineswap --insert="MANAGE_BUILTINS=yes" --prefix="MANAGE_BUILTINS=" --path="$DEFAULT_UFW" --append-if-found-not=True
-    
+    #CDHelper text lineswap --insert="DOCKER_OPTS=\"--iptables=false\"" --prefix="DOCKER_OPTS=" --path="$DEFAULT_UFW" --append-if-found-not=True
+
     touch $SETUP_CHECK
 else
     echo "INFO: Networking dependencies were setup"

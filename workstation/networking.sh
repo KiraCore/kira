@@ -29,13 +29,19 @@ setup-after-rules() {
 :DOCKER-USER - [0:0]
 :ufw-user-input - [0:0]
 
+-A DOCKER-USER -j RETURN -s 10.0.0.0/8
+-A DOCKER-USER -j RETURN -s 172.17.0.0/12
+-A DOCKER-USER -j RETURN -s 192.168.0.0/16
+
 -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-USER -m conntrack --ctstate INVALID -j DROP
--A DOCKER-USER -i $IFace -j ufw-user-input
--A DOCKER-USER -i $IFace -j DROP
+-A DOCKER-USER -j ufw-user-input
+
 COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
+    iptables -t nat -A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE # allow outbound connections to the internet from containers
+    iptables -t nat -A POSTROUTING ! -o docker0 -s 172.18.0.0/16 -j MASQUERADE
     else
       echo "INFO: Tag '$TAG_START' was found within '$UWF_RULES' file no need to override"
     fi
@@ -56,7 +62,6 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw status verbose
 
     echo "INFO: Restarting docker..."
-    systemctl daemon-reload
     systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
 
     # WARNING, following command migt disable SSH access
