@@ -84,7 +84,7 @@ while :; do
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 
-    source $VARSMGR_PATH
+    source $VARSMGR_PATH || echo ( "INFO: Failed to source $VARSMGR_PATH" && rm -fv $VARSMGR_PATH && touch $VARSMGR_PATH && LOADING="true" )
 
     if [ "${LOADING,,}" == "false" ] ; then
         CPU_UTIL=$(cat $PERF_CPU)

@@ -72,7 +72,7 @@ else # container does NOT exists
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
-    while [ -f "${VARS_FILE}.lock" ] ; do sleep 0.5 ; done
+    while [ -f "${VARS_FILE}.lock" ] ; do sleep 0.1 ; done
     touch "${VARS_FILE}.lock"
     CDHelper text lineswap --insert="ID_$NAME=\"$ID\"" --prefix="ID_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
     CDHelper text lineswap --insert="STATUS_$NAME=\"$STATUS\"" --prefix="STATUS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
