@@ -60,7 +60,6 @@ while :; do
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
     touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        
         echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
         echo "$!" > "${LIPADDR_PATH}.pid"
     fi
@@ -83,7 +82,7 @@ while :; do
     RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
     DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
     STATUS_SOURCE="validator"
-    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "Error")
+    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 
     source $VARSMGR_PATH
 
@@ -110,15 +109,15 @@ while :; do
             # TODO: show failed status if any of the healthchecks fails
     
             # if block height check fails via validator then try via interx
-            if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
+            if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
                 STATUS_SOURCE="$name"
-                NETWORK_STATUS=$(curl -s -m 1 http://$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status || echo "Error")
+                NETWORK_STATUS=$(curl -s -m 1 http://$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo "")
             fi
     
             # if block height check fails via validator then try via sentry
-            if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ "${NETWORK_STATUS,,}" == "error" ]; then
+            if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
                 STATUS_SOURCE="$name"
-                NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "Error")
+                NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
             fi
         done
     fi
