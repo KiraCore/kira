@@ -72,9 +72,9 @@ chmod +x $UWF_BEFORE
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echo "INFO: Setting up demo mode networking..."
-    # ufw logging on
     ufw disable
     ufw --force reset
+    ufw logging on # required to setup logging rules
     setup-after-rules
     ufw default allow outgoing
     ufw default allow incoming
