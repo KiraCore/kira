@@ -10,7 +10,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Waiting for frontend container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "frontend" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 3
+        sleep 6
         echo "WARNING: frontend container does not exists yet, waiting..."
         continue
     else
@@ -20,11 +20,12 @@ while [ $i -le 40 ]; do
     echo "INFO: Awaiting frontend initalization..."
     IS_STARTED=$(docker exec -i "frontend" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ]; then
-        sleep 3
+        sleep 6
         echo "WARNING: Frontend is not initalized yet"
         continue
     else
         echo "INFO: Success, frontend was initalized"
+        break
     fi
 done
 
