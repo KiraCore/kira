@@ -13,6 +13,7 @@ IPADDR_PATH="$TMP_DIR/ipaddr"
 LIPADDR_PATH="$TMP_DIR/lipaddr"
 NETWORKS_PATH="$TMP_DIR/networks"
 VARSMGR_PATH="$TMP_DIR/varsmgr" # file contianing cached variables with details regarding individual containers
+WHITESPACE="                                                          "
 
 rm -fvr $PID_DIR # wipe all process id's
 
@@ -141,9 +142,9 @@ while :; do
     echo -e "\e[33;1m------------------------------------------------- [mode]"
     echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
-    CPU_UTIL="CPU: $CPU_UTIL                                                 "
-    RAM_UTIL="RAM: $RAM_UTIL                                                 "
-    DISK_UTIL="DISK: $DISK_UTIL                                                 "
+    CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
+    RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
+    DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
     echo -e "|\e[34;1m ${CPU_UTIL:0:16}${RAM_UTIL:0:18}${DISK_UTIL:0:11} \e[33;1m|"
 
     KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                              "
@@ -268,8 +269,7 @@ while :; do
     fi
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
-        echo "INFO: Option ($OPTION) was executed, press any key to continue..."
-        read -s -n 1 || continue
+        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
     fi
 
     if [ "${OPTION,,}" == "i" ]; then
