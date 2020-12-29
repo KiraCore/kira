@@ -18,7 +18,6 @@ KIRA_SERVICE_SUBNET="10.4.0.0/16"
 KIRA_INTERX_IP="10.4.0.2"
 KIRA_FRONTEND_IP="10.4.0.3"
 KIRA_REGISTRY_IP="10.1.1.1"
-KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 
 [ -z "$KIRA_REGISTRY_DNS" ] && KIRA_REGISTRY_DNS="registry.local"
 [ -z "$KIRA_VALIDATOR_DNS" ] && KIRA_VALIDATOR_DNS="validator.local"
@@ -31,6 +30,8 @@ KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 [ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
 [ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
+
+KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 
 KIRA_IMG="$KIRA_INFRA/common/img"
 KIRA_DOCKER="$KIRA_INFRA/docker"
@@ -55,15 +56,15 @@ FLUTTERROOT="/usr/lib/flutter"
 FLUTTERBIN="$FLUTTERROOT/bin"
 
 BREWBIN="/home/$KIRA_USER/.linuxbrew/bin"
-MANPATH="/home/$KIRA_USER/.linuxbrew/share/man:$MANPATH"
-INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:$INFOPATH"
+MANPATH="/home/$KIRA_USER/.linuxbrew/share/man:\$MANPATH"
+INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
 mkdir -p $KIRA_STATE
 mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.60"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.61-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
