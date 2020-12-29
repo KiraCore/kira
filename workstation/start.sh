@@ -70,6 +70,9 @@ cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 
+echo "$SIGNER_MNEMONIC" >>$DOCKER_COMMON/validator/signer_mnemonic.key
+echo "$FAUCET_MNEMONIC" >>$DOCKER_COMMON/validator/faucet_mnemonic.key
+
 echo "INFO: Validator Node ID: ${VALIDATOR_NODE_ID}"
 echo "INFO: Sentry Node ID: ${SENTRY_NODE_ID}"
 
@@ -102,7 +105,7 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Create all networks
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers 
+$KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Run the validator
@@ -116,8 +119,6 @@ docker run -d \
     --net=kiranet \
     --ip $KIRA_VALIDATOR_IP \
     -e DEBUG_MODE="True" \
-    --env SIGNER_MNEMONIC="$SIGNER_MNEMONIC" \
-    --env FAUCET_MNEMONIC="$FAUCET_MNEMONIC" \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
