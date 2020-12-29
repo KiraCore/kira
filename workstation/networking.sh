@@ -93,7 +93,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     ufw allow $KIRA_SENTRY_RPC_PORT
     ufw allow $KIRA_SENTRY_GRPC_PORT
     ufw status verbose
-    ufw enable || ( ufw status verbose && ufw enable )
+    echo "y" | ufw enable || :
     ufw status verbose
     ufw reload
     systemctl daemon-reload

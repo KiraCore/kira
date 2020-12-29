@@ -145,7 +145,7 @@ while :; do
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
     DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
-    echo -e "|\e[34;1m ${CPU_UTIL:0:16}${RAM_UTIL:0:18}${DISK_UTIL:0:11} \e[33;1m|"
+    echo -e "|\e[34;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
 
     KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                              "
     KIRA_BLOCK="BLOCKS: $KIRA_BLOCK                                                   "
@@ -157,7 +157,7 @@ while :; do
     [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFace"
 
     if [ "${LOADING,,}" == "true" ] ; then
-        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRA STATUS ...         \e[33;1m|"
+        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
     elif [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
