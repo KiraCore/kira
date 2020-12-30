@@ -23,7 +23,7 @@ sudo -s
 ```
 cd /home/$SUDO_USER && INFRA_BRANCH="master" && rm -fv ./init.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
- chmod 555 -v ./init.sh && echo "f355cf95856150bbbc870a68481bb547e15a36239abf92e08360b3d552156e4a init.sh" | sha256sum --check && \
+ chmod 555 -v ./init.sh && echo "d80b88ddd830175f26e09ab7b21320fe1ebc5f32ecdd644c843d43f6539a1916 init.sh" | sha256sum --check && \
 ```
 
 Demo Mode Example:
