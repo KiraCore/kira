@@ -21,18 +21,16 @@ sudo -s
 ### 3. Executes following command that will setup the environment by downloading setup file from github or other source, check integrity of the file, start it and install all essential dependencies
 
 ```
-cd /home/$SUDO_USER && INFRA_BRANCH="KIP_51" && \
- rm -fv ./init.sh && \
- wget <URL_TO_THE_SCRIPT> -O ./init.sh && \
- chmod 555 -v ./init.sh && \
- echo "<SHA_256_CHECKSUM> init.sh" | sha256sum --check && \
+cd /home/$SUDO_USER && INFRA_BRANCH="master" && rm -fv ./init.sh && \
+ wget https://raw.githubusercontent.com/KiraCore/kira/INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
+ chmod 555 -v ./init.sh && echo "f355cf95856150bbbc870a68481bb547e15a36239abf92e08360b3d552156e4a init.sh" | sha256sum --check && \
  ./init.sh "$INFRA_BRANCH"
 ```
 
 Demo Mode Example:
 
 ```
-cd /home/$SUDO_USER && INFRA_BRANCH="KIP_51" && \
+cd /home/$SUDO_USER && INFRA_BRANCH="dev" && \
  rm -fv ./init.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
  chmod 555 -v ./init.sh && \
