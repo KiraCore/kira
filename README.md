@@ -30,8 +30,7 @@ cd /home/$SUDO_USER && INFRA_BRANCH="master" && rm -fv ./init.sh && \
 Demo Mode Example:
 
 ```
-cd /home/$SUDO_USER && INFRA_BRANCH="dev" && \
- rm -fv ./init.sh && \
+cd /home/$SUDO_USER && INFRA_BRANCH="dev" && rm -fv ./init.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
  chmod 555 -v ./init.sh && \
  ./init.sh "$INFRA_BRANCH"
