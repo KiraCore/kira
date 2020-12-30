@@ -238,8 +238,10 @@ echo "INFO: Launching setup menu..."
 set -x
 source $KIRA_MANAGER/menu.sh
 
+set +x
 echo "------------------------------------------------"
-echo "| FINISHED: SETUP                              |"
+echo "| FINISHED: INIT                               |"
 echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_INIT)) seconds"
 echo "------------------------------------------------"
+set -x
 exit 0

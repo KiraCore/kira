@@ -58,3 +58,10 @@ $KIRA_MANAGER/setup/registry.sh
 touch /tmp/rs_manager
 touch /tmp/rs_git_manager
 touch /tmp/rs_container_manager
+
+set +x
+echo "------------------------------------------------"
+echo "| FINISHED: SETUP SCRIPT                       |"
+echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
+echo "------------------------------------------------"
+set -x

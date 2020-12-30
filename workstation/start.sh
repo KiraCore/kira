@@ -6,12 +6,14 @@ START_TIME_LAUNCH="$(date -u +%s)"
 
 cd $HOME
 
+set +x
 echo "------------------------------------------------"
 echo "| STARTED: LAUNCH SCRIPT                       |"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "| SEKAI BRANCH: $SEKAI_BRANCH"
 echo "------------------------------------------------"
+set -x
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 
@@ -77,9 +79,11 @@ $KIRA_MANAGER/containers/start-frontend.sh
 # Cleanup
 
 echo "INFO: Prunning unused images..."
-docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || echo "WARNING: Failed to prune dangling image"
+docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || echo "INFO: No dangling images found"
 
+set +x
 echo "------------------------------------------------"
 echo "| FINISHED: LAUNCH SCRIPT                      |"
 echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
 echo "------------------------------------------------"
+set -x
