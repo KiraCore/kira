@@ -77,7 +77,7 @@ set -x
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="interx"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="master"
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
