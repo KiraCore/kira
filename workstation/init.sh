@@ -77,7 +77,7 @@ set -x
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="interx"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="master"
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
@@ -238,8 +238,10 @@ echo "INFO: Launching setup menu..."
 set -x
 source $KIRA_MANAGER/menu.sh
 
+set +x
 echo "------------------------------------------------"
-echo "| FINISHED: SETUP                              |"
+echo "| FINISHED: INIT                               |"
 echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_INIT)) seconds"
 echo "------------------------------------------------"
+set -x
 exit 0
