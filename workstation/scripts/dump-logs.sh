@@ -5,16 +5,19 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 
 NAME=$1
-CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
+CONTAINER_DUMP="$KIRA_DUMP/infra/${NAME,,}"
 HALT_FILE="$DOCKER_COMMON/$NAME/halt"
 mkdir -p "$CONTAINER_DUMP" "$DOCKER_COMMON/$NAME"
 
+[ -z "$DUMP_ZIP" ] && DUMP_ZIP="false"
 HALT_FILE_EXISTED="true" && [ ! -f "$HALT_FILE" ] && HALT_FILE_EXISTED="false" && touch $HALT_FILE
 
 echo "------------------------------------------------"
 echo "|          STARTED: DUMP LOGS v0.0.2           |"
 echo "------------------------------------------------"
 echo "| CONTAINER NAME: $NAME"
+echo "|    ZIP RESULTS: $DUMP_ZIP"
 echo "| CONTAINER DUMP: $CONTAINER_DUMP"
 echo "------------------------------------------------"
 
@@ -50,10 +53,14 @@ docker container logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || e
 
 [ "${HALT_FILE_EXISTED,,}" == "false" ] && rm -fv touch $HALT_FILE
 
-echo "INFO: Compressing dump files..."
-
-ZIP_FILE="$CONTAINER_DUMP/${NAME,,}.zip"
-zip -r -q $ZIP_FILE $CONTAINER_DUMP
+if [ "${DUMP_ZIP,,}" == "true" ] ; then
+    echo "INFO: Compressing dump files..."
+    
+    ZIP_FILE="$CONTAINER_DUMP/${NAME,,}.zip"
+    zip -r -q $ZIP_FILE $CONTAINER_DUMP
+else
+    echo "INFO: Container $NAME files will not be compressed in this run"
+fi
 
 echo "INFO: Compressed all files into '$ZIP_FILE'"
 echo "INFO: Container ${NAME} loggs were dumped to $CONTAINER_DUMP"

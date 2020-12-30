@@ -46,6 +46,7 @@ ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlin
 
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/hosts.sh
+$KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh

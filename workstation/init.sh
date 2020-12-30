@@ -12,7 +12,7 @@ KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 ETC_PROFILE="/etc/profile"
-CDHELPER_VERSION="v0.6.14"
+CDHELPER_VERSION="v0.6.15"
 SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 
@@ -137,7 +137,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Base Tools Setup..."
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
-        EXPECTED_HASH="859b1162e326c9f7441512549e0b1acad07efc1ed1286eee5e08915459cafeb9"
+        EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
         FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
@@ -151,7 +151,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
                 SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
                 [ "${SELECT,,}" == "x" ] && exit
                 echo "DANGER: You decided to disregard a potential vulnerability !!!"
-                read -p "Press any key to continue or Ctrl+C to abort..." -n 1
+                echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             fi
         else
             echo "INFO: CDHelper tool was laready downloaded"
@@ -210,7 +210,6 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     cp -r $KIRA_WORKSTATION $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
-    cd /kira
     echo "INFO: ReStarting init script to launch setup menu..."
     source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT" "$DEBUG_MODE"
     echo "INFO: Init script restart finished."
@@ -231,8 +230,12 @@ CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" 
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
-cd /kira
+set +x
+echo "INFO: Your host environment was initalized"
+echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are not running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions, and accept that you continue on your own risk.\e[0m"
+echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
+set -x
 source $KIRA_MANAGER/menu.sh
 
 echo "------------------------------------------------"

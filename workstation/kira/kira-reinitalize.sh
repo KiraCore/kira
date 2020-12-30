@@ -3,7 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-reinitalize.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 GIT_USER=$(echo $INFRA_REPO | cut -d'/' -f4) 
-GIT_REPO=$(echo $INFRA_REPO | cut -d'/' -f5) 
+GIT_REPO=$(echo $INFRA_REPO | cut -d'/' -f5)
+NEW_BRANCH=$INFRA_BRANCH
 DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$INFRA_BRANCH/workstation/init.sh"
 
 echo "INFO: Re-Initalizing Infrastructure..."
@@ -41,7 +42,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     
     echo "INFO: Downloading initialization script $INIT_SCRIPT"
     rm -fv $INIT_SCRIPT_OUT
-    wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT )
+    wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT && NEW_BRANCH=$INFRA_BRANCH )
     
     if [ ! -f "$INIT_SCRIPT_OUT" ] ; then
         ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "x" ] ; do echo -en "\e[33;1mPress [Y]es to try again or [X] to exit: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
@@ -67,7 +68,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         else
             echo "INFO: Hash verification was skipped"
             echo "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
-            read -p "Press any key to continue or [Ctrl+C] to abort..." -n 1
+            echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             SUCCESS_HASH_CHECK="true"
             break
         fi
@@ -80,10 +81,11 @@ fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
     echo -e "\nINFO: Re-initalization failed or was aborted\n"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     source $INIT_SCRIPT_OUT "$INFRA_BRANCH"
 fi
 

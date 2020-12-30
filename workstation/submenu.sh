@@ -52,7 +52,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     source $KIRA_MANAGER/kira/kira.sh
     break
@@ -77,7 +77,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
-    read -p "Press any key to continue..." -n 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     source $KIRA_MANAGER/kira/kira.sh
     break
