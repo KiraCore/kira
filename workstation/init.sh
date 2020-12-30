@@ -1,9 +1,14 @@
 #!/bin/bash
 
+ETC_PROFILE="/etc/profile"
+
+set +e && chmod 555 $ETC_PROFILE && source $ETC_PROFILE &>/dev/null && set -e
+
 INFRA_BRANCH=$1
 SKIP_UPDATE=$2
 START_TIME_INIT=$3
 DEBUG_MODE=$4
+
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
@@ -11,7 +16,7 @@ DEBUG_MODE=$4
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
-ETC_PROFILE="/etc/profile"
+
 CDHELPER_VERSION="v0.6.15"
 SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
@@ -29,11 +34,6 @@ echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_DUMP"
-
-set +e # prevent potential infinite loop
-chmod 555 $ETC_PROFILE
-source $ETC_PROFILE &>/dev/null
-set -e
 
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
