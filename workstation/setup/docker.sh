@@ -11,7 +11,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     echo "INFO: Attempting to remove old docker..."
     service docker stop || echo "WARNING: Failed to stop docker servce"
     apt remove --purge docker.io -y || echo "WARNING: Failed to remove docker"
-    apt remove -y docker-ce docker-ce-cli containerd.io || echo "WARNING: Failed to remove docker-ce"
+    apt remove -y docker-ce docker-ce-cli containerd.io
     rm -rfv /etc/docker
     rm -rfv /var/lib/docker
     echo "INFO: Installing Docker..."
