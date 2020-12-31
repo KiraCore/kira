@@ -32,19 +32,36 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   SIGNER_MNEMONIC=$(cat $COMMON_DIR/signer_mnemonic.key)
   FAUCET_MNEMONIC=$(cat $COMMON_DIR/faucet_mnemonic.key)
 
-  sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
+  KEYRING_PASSWORD="1234567890"
+
+  sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
   sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-  sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME
+  sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
   sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-  sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME
+  sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
   sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
   sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
-  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
   sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
 
   sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME

@@ -38,5 +38,10 @@ docker network connect sentrynet interx
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
-#FAUCET_ADDR=$(curl http://10.4.0.2:11000/api/faucet | jq -r '.address')
-#yes "y" | docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex
+KEYRING_PASSWORD="1234567890"
+
+FAUCET_ADDR=$(curl http://10.4.0.2:11000/api/faucet | jq -r '.address')
+docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex --yes <<EOF
+$KEYRING_PASSWORD
+$KEYRING_PASSWORD
+EOF
