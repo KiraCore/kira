@@ -18,9 +18,10 @@ case \"\$1\" in
 esac
 exit 0"
 
+    mkdir -p "/usr/lib/pm-utils/sleep.d"
     WAKEUP_SCRIPT="/usr/lib/pm-utils/sleep.d/99ZZZ_KiraWakeup.sh"
     cat > $WAKEUP_SCRIPT <<< $WAKEUP_ENTRY
-    chmod 777 $WAKEUP_SCRIPT
+    chmod 555 $WAKEUP_SCRIPT
     
     touch $KIRA_SETUP_FILE
 else
