@@ -64,13 +64,14 @@ mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.61-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.62-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
 
     # remove & disable system crash notifications
     rm -f /var/crash/*
+    touch /etc/default/apport
     CDHelper text lineswap --insert="enabled=0" --prefix="enabled=" --path=/etc/default/apport --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
