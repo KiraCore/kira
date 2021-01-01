@@ -145,7 +145,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
             EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
         else
             CDHELPER_ARCH="x64"
-            EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
+            EXPECTED_HASH="abf1e16447959025341a78a6b5dd180015d4bd191a87c614544c3b5e501ebf38"
         fi
 
         FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
