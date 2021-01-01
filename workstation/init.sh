@@ -139,19 +139,21 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         echo "INFO: Base Tools Setup..."
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
-        EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
-        FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
+        
+        if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
+            CDHELPER_ARCH="arm"
+            EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
+        else
+            CDHELPER_ARCH="x64"
+            EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
+        fi
+
+        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-            rm -f -v ./CDHelper-linux-x64.zip
-            
-            if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
-                wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-arm.zip"
-            else
-                wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
-            fi
-            
-            FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }')
+            rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
+            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
+            FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
                 echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
@@ -165,7 +167,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         fi
 
         rm -rfv $INSTALL_DIR
-        unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
+        unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
         chmod -R -v 555 $INSTALL_DIR
 
         ls -l /bin/CDHelper || echo "Symlink not found"
