@@ -13,6 +13,11 @@ DEBUG_MODE=$4
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
+[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
+[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
+[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
+
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
@@ -20,6 +25,7 @@ SETUP_LOG="$KIRA_DUMP/setup.log"
 CDHELPER_VERSION="v0.6.15"
 SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
+ARCHITECTURE=$(uname -m)
 
 echo "------------------------------------------------"
 echo "| STARTED: INIT $SETUP_VER"
@@ -30,6 +36,7 @@ echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
 echo "|    KIRA USER: $SUDO_USER"
+echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
@@ -69,11 +76,6 @@ fi
 
 echo ""
 set -x
-
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
@@ -118,7 +120,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -142,8 +144,13 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
             rm -f -v ./CDHelper-linux-x64.zip
-            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
-
+            
+            if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
+                wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-arm.zip"
+            else
+                wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
+            fi
+            
             FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
@@ -154,7 +161,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             fi
         else
-            echo "INFO: CDHelper tool was laready downloaded"
+            echo "INFO: CDHelper tool was already downloaded"
         fi
 
         rm -rfv $INSTALL_DIR
