@@ -24,7 +24,7 @@ echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
 
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$DOCKER_COMMON/sentry
-# CDHelper text lineswap --insert="persistent_peers = \"$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
+# CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
 CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$DOCKER_COMMON/sentry
 CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$DOCKER_COMMON/validator
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/sentry
