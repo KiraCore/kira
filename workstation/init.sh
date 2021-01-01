@@ -161,7 +161,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             fi
         else
-            echo "INFO: CDHelper tool was laready downloaded"
+            echo "INFO: CDHelper tool was already downloaded"
         fi
 
         rm -rfv $INSTALL_DIR
