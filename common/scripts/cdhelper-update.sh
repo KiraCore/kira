@@ -13,6 +13,7 @@ SERVICE_FILE=$4
 
 CDHelperVersion=$(CDHelper version --silent=true || echo "v0.0.0")
 VEREQ=$(CDHelper text vereq --old="$CDHelperVersion" --new="$VERSION" --silent=true || echo "-1")
+ARCHITECTURE=$(uname -m)
 
 [ -z "$SCHEDULER" ] && SCHEDULER="False"
 [ -z "$INSTALL_DIR" ] && INSTALL_DIR="/usr/local/bin"
@@ -28,6 +29,7 @@ echo "| VERSIONS EQUAL: $VEREQ"
 echo "|      SCHEDULER: $SCHEDULER"
 echo "|   SERVICE FILE: $SERVICE_FILE"
 echo "|    INSTALL DIR: $INSTALL_DIR"
+echo "|   ARCHITECTURE: $ARCHITECTURE"
 echo "|_______________________________________________"
 
 if [ "$VEREQ" == "1" ] || [ "$VEREQ" == "0" ] ; then
@@ -37,11 +39,18 @@ else
     echo "New version detected, installing..."
 fi
 
+if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
+    CDHELPER_ARCH="arm"
+else
+    CDHELPER_ARCH="x64"
+fi
+
 cd /tmp
-rm -f -v ./CDHelper-linux-x64.zip
-wget https://github.com/asmodat/CDHelper/releases/download/$VERSION/CDHelper-linux-x64.zip
+
+rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
+wget https://github.com/asmodat/CDHelper/releases/download/$VERSION/CDHelper-linux-$CDHELPER_ARCH.zip
 rm -rfv $INSTALL_DIR
-unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
+unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
 chmod -R -v 777 $INSTALL_DIR
 
 ls -l /bin/CDHelper || echo "Symlink not found"
