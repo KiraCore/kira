@@ -6,12 +6,11 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
-SETUP_CHECK="$KIRA_SETUP/docker-v0.0.2" 
+SETUP_CHECK="$KIRA_SETUP/docker-v0.0.3" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echo "INFO: Attempting to remove old docker..."
     service docker stop || echo "WARNING: Failed to stop docker servce"
-    apt remove --purge docker.io -y || echo "WARNING: Failed to remove docker"
-    apt remove -y docker-ce docker-ce-cli containerd.io || echo "WARNING: Failed to remove docker-ce"
+    apt remove --purge docker.io docker-ce docker-ce-cli containerd.io -y || echo "WARNING: Failed to remove docker"
     rm -rfv /etc/docker
     rm -rfv /var/lib/docker
     echo "INFO: Installing Docker..."
