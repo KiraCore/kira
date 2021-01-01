@@ -13,6 +13,11 @@ DEBUG_MODE=$4
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
+[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
+[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
+[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
+
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
@@ -69,11 +74,6 @@ fi
 
 echo ""
 set -x
-
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"

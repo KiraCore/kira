@@ -21,7 +21,7 @@ sudo -s
 ### 3. Executes following command that will setup the environment by downloading setup file from github or other source, check integrity of the file, start it and install all essential dependencies
 
 ```
-cd /home/$SUDO_USER && INFRA_BRANCH="master" && rm -fv ./init.sh && \
+cd /tmp && INFRA_BRANCH="master" && rm -fv ./init.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
  chmod 555 -v ./init.sh && echo "4aef734095cab8e91a6d2be25884e7be90583ebb546b5dd748e53a9147c264c8 init.sh" | sha256sum --check && \
  ./init.sh "$INFRA_BRANCH"
@@ -30,10 +30,10 @@ cd /home/$SUDO_USER && INFRA_BRANCH="master" && rm -fv ./init.sh && \
 Demo Mode Example:
 
 ```
-cd /home/$SUDO_USER && INFRA_BRANCH="dev" && rm -fv ./init.sh && \
- wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
- chmod 555 -v ./init.sh && \
- ./init.sh "$INFRA_BRANCH"
+cd /tmp && read -p "Input branch name: " BRANCH && \
+ wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
+ chmod 555 -v ./i.sh && H=$(sha256sum ./i.sh | awk '{ print $1 }') && read -p "Is '$H' a [V]alid SHA256 ?: "$'\n' -n 1 V && \
+ [ "${V,,}" == "v" ] && ./i.sh "$BRANCH" || echo "Hash was NOT accepted by the user"
 ```
 
 ### 4. Setup script will further download and install kira management tool 
