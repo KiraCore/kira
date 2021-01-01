@@ -23,7 +23,7 @@ KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.15"
-SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.6" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
