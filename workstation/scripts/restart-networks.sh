@@ -35,3 +35,11 @@ for (( i=0; i<${len}; i++ )) ; do
     echo "INFO: Containers will NOT be recconected to the '$network' network"
   fi
 done
+
+if [ "${reconnect,,}" != "true" ] ; then
+    echo "INFO: Pruning dangling networks..."
+    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
+    systemctl daemon-reload
+    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
+    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
+fi
