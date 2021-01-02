@@ -23,7 +23,7 @@ sudo -s
 ```
 cd /tmp && INFRA_BRANCH="master" && rm -fv ./init.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$INFRA_BRANCH/workstation/init.sh -O ./init.sh && \
- chmod 555 -v ./init.sh && echo "4eb70948d93e083cec5e9f5328a471d35ed985cbee2d6d1be78b345ad59c517c init.sh" | sha256sum --check && \
+ chmod 555 -v ./init.sh && echo "376117eb7b1858a2b54b1241ab162e8dc84e2e5760c0c562f8b3d32c6672b1d4 init.sh" | sha256sum --check && \
  ./init.sh "$INFRA_BRANCH"
 ```
 
