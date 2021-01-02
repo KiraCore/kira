@@ -8,7 +8,7 @@ CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.31-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.32-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "$CONTAINER_REACHABLE" == "False" ]; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
@@ -20,11 +20,13 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name $CONTAINER_NAME \
-        --ip="10.1.0.2" \
         -e REGISTRY_HTTP_ADDR=$KIRA_REGISTRY_PORT \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
         registry:$REGISTRY_VERSION
+
+    systemctl daemon-reload
+    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
 
     ID=$(docker inspect --format="{{.Id}}" $CONTAINER_NAME || echo "")
     IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" | xargs || echo "")
@@ -34,20 +36,16 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         exit 1
     fi
     
-    echo "INFO: IP Address found, binding host..."
+    echo "INFO: IP Address $IP found, binding host..."
     CDHelper text lineswap --insert="$IP $KIRA_REGISTRY_DNS" --regex="$KIRA_REGISTRY_DNS" --path=$HOSTS_PATH --prepend-if-found-not=True
 
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
     rm -f -v $DOCKER_DAEMON_JSON
     ADDR1="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
     ADDR2="$IP:$KIRA_REGISTRY_PORT"
-    ADDR3="0.0.0.0:$KIRA_REGISTRY_PORT"
-    ADDR4="127.0.0.1:$KIRA_REGISTRY_PORT"
-    ADDR5="192.168.0.1:$KIRA_REGISTRY_PORT"
-    ADDR6="172.17.0.1:$KIRA_REGISTRY_PORT"
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "insecure-registries" : ["http://$ADDR1","http://$ADDR2","http://$ADDR3","http://$ADDR4","http://$ADDR5","http://$ADDR6","$ADDR1","$ADDR2","$ADDR3","$ADDR4","$ADDR5","$ADDR6"],
+  "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"],
   "iptables": false
 }
 EOL
