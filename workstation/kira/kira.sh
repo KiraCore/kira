@@ -56,12 +56,12 @@ while :; do
         echo "$!" > "${IPADDR_PATH}.pid"
     fi
 
-    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
+    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     NETWORKS=$(cat $NETWORKS_PATH)
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
     touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
+        echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > "$LIPADDR_PATH" &
         echo "$!" > "${LIPADDR_PATH}.pid"
     fi
 
@@ -130,11 +130,11 @@ while :; do
 
     KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "127.0.0.1")
+    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IPADDR_PATH 2> /dev/null || echo "")
-    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="127.0.0.1"
-    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="127.0.0.1"
-    [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
+    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
+    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
+    [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
 
     clear
 

@@ -10,14 +10,14 @@ cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 set -e
 
-NETWORK="kiranet"
+CONTAINER_NAME="validator"
+DNS1=$KIRA_VALIDATOR_DNS
 echo "------------------------------------------------"
-echo "| STARTING VALIDATOR NODE"
+echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|        IP: $KIRA_VALIDATOR_IP"
-echo "|   NETWORK: $NETWORK"
+echo "|   NETWORK: $KIRA_VALIDATOR_NETWORK"
 echo "|   NODE ID: $VALIDATOR_NODE_ID"
-echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
+echo "|  HOSTNAME: $DNS1"
 echo "------------------------------------------------"
 set -x
 
@@ -38,14 +38,24 @@ rm -f $GENESIS_DESTINATION
 echo "INFO: Starting validator node..."
 
 docker run -d \
-    --hostname $KIRA_VALIDATOR_DNS \
+    --hostname $DNS1 \
     --restart=always \
-    --name validator \
-    --net=$NETWORK \
-    --ip $KIRA_VALIDATOR_IP \
+    --name $CONTAINER_NAME \
+    --net=$KIRA_VALIDATOR_NETWORK \
     -e DEBUG_MODE="True" \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+
+ID=$(docker inspect --format="{{.Id}}" $CONTAINER_NAME || echo "")
+IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_VALIDATOR_NETWORK.IPAddress" | xargs || echo "")
+
+if [ -z "$IP" ] || [ "${IP,,}" == "null" ] ; then
+    echo "ERROR: Failed to get IP address of the $CONTAINER_NAME container"
+    exit 1
+fi
+
+echo "INFO: IP Address found, binding host..."
+CDHelper text lineswap --insert="$IP $DNS1" --regex="$DNS1" --path=$HOSTS_PATH --prepend-if-found-not=True

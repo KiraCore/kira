@@ -1,5 +1,5 @@
 # (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.local:5000/base-image:latest
+FROM registry.regnet.local:5000/base-image:latest
 
 ARG BUILD_HASH
 ARG BRANCH
@@ -19,8 +19,8 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-EXPOSE 9090
-EXPOSE 26657
+# EXPOSE 9090
+# EXPOSE 26657
 
 HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 

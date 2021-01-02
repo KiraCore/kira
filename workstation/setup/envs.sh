@@ -11,19 +11,20 @@ KIRA_STATE=/kira/state
 KIRA_REGISTRY_PORT=5000
 KIRA_REGISTRY_SUBNET="10.1.0.0/16"
 KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
-KIRA_VALIDATOR_IP="10.2.0.2"
 KIRA_SENTRY_SUBNET="10.3.0.0/16"
-KIRA_SENTRY_IP="10.3.0.2"
 KIRA_SERVICE_SUBNET="10.4.0.0/16"
-KIRA_INTERX_IP="10.4.0.2"
-KIRA_FRONTEND_IP="10.4.0.3"
-KIRA_REGISTRY_IP="10.1.1.1"
 
-[ -z "$KIRA_REGISTRY_DNS" ] && KIRA_REGISTRY_DNS="registry.local"
-[ -z "$KIRA_VALIDATOR_DNS" ] && KIRA_VALIDATOR_DNS="validator.local"
-[ -z "$KIRA_SENTRY_DNS" ] && KIRA_SENTRY_DNS="sentry.local"
-[ -z "$KIRA_INTERX_DNS" ] && KIRA_INTERX_DNS="interx.local"
-[ -z "$KIRA_FRONTEND_DNS" ] && KIRA_FRONTEND_DNS="frontend.local"
+KIRA_REGISTRY_NETWORK="regnet"
+KIRA_VALIDATOR_NETWORK="kiranet"
+KIRA_SENTRY_NETWORK="sentrynet"
+KIRA_INTERX_NETWORK="servicenet"
+KIRA_FRONTEND_NETWORK="servicenet"
+
+KIRA_REGISTRY_DNS="registry.${KIRA_REGISTRY_NETWORK}.local"
+KIRA_VALIDATOR_DNS="validator.${KIRA_VALIDATOR_NETWORK}.local"
+KIRA_SENTRY_DNS="sentry.${KIRA_SENTRY_NETWORK}.local"
+KIRA_INTERX_DNS="interx.${KIRA_INTERX_NETWORK}.local"
+KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
 
 [ -z "$KIRA_FRONTEND_PORT" ] && KIRA_FRONTEND_PORT="80"
 [ -z "$KIRA_INTERX_PORT" ] && KIRA_INTERX_PORT="11000"
@@ -64,7 +65,7 @@ mkdir -p "/home/$KIRA_USER/.cargo"
 mkdir -p "/home/$KIRA_USER/Desktop"
 mkdir -p $SOURCES_LIST
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.62-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.63-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -104,12 +105,12 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_IMG=$KIRA_IMG" --prefix="KIRA_IMG=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_STATE=$KIRA_STATE" --prefix="KIRA_STATE=" --path=$ETC_PROFILE --append-if-found-not=True
-    
-    CDHelper text lineswap --insert="KIRA_REGISTRY_IP=$KIRA_REGISTRY_IP" --prefix="KIRA_REGISTRY_IP=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_IP=$KIRA_VALIDATOR_IP" --prefix="KIRA_VALIDATOR_IP=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_IP=$KIRA_SENTRY_IP" --prefix="KIRA_SENTRY_IP=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_INTERX_IP=$KIRA_INTERX_IP" --prefix="KIRA_INTERX_IP=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_IP=$KIRA_FRONTEND_IP" --prefix="KIRA_FRONTEND_IP=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    CDHelper text lineswap --insert="KIRA_REGISTRY_NETWORK=$KIRA_REGISTRY_NETWORK" --prefix="KIRA_REGISTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_VALIDATOR_NETWORK=$KIRA_VALIDATOR_NETWORK" --prefix="KIRA_VALIDATOR_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SENTRY_NETWORK=$KIRA_SENTRY_NETWORK" --prefix="KIRA_SENTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_INTERX_NETWORK=$KIRA_INTERX_NETWORK" --prefix="KIRA_INTERX_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_FRONTEND_NETWORK=$KIRA_FRONTEND_NETWORK" --prefix="KIRA_FRONTEND_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_REGISTRY=$KIRA_REGISTRY" --prefix="KIRA_REGISTRY=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_DOCKER=$KIRA_DOCKER" --prefix="KIRA_DOCKER=" --path=$ETC_PROFILE --append-if-found-not=True

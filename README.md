@@ -52,11 +52,11 @@ KIRA_SERVICE_SUBNET="10.4.0.0/16"
 ```
 
 ```
-KIRA_REGISTRY_IP="10.1.1.1"
-KIRA_VALIDATOR_IP="10.2.0.2"
-KIRA_SENTRY_IP="10.3.0.2"
-KIRA_INTERX_IP="10.4.0.2"
-KIRA_FRONTEND_IP="10.4.0.3"
+KIRA_REGISTRY_DNS="registry.regnet.local"
+KIRA_VALIDATOR_DNS="validator.kiranet.local"
+KIRA_SENTRY_DNS="sentry.sentrynet.local"
+KIRA_INTERX_DNS="interx.servicenet.local"
+KIRA_FRONTEND_DNS="fontend.servicenet.local"
 ```
 
 ### 2. Full Node Mode

@@ -15,7 +15,7 @@ set -x
 echo "INFO: Ensuring UFW rules persistence"
 
 setup-after-rules() {
-    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
+    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     UWF_AFTER="/etc/ufw/after.rules"
     UWF_BEFORE="/etc/ufw/before.init"
 
@@ -100,7 +100,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl restart ufw
     ufw status verbose
 
-    # ufw disable && ufw allow 80 && ufw enable && ufw reload
+    # firewall-cmd --zone=public --add-masquerade --permanent
+    # firewall-cmd --reload
 
     echo "INFO: Restarting docker..."
     systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )

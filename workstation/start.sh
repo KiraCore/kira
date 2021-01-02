@@ -40,6 +40,8 @@ for name in $CONTAINERS; do
     $KIRA_SCRIPTS/container-delete.sh "$name"
 done
 
+wait
+
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Build base image
 source $KIRAMGR_SCRIPTS/update-base-image.sh

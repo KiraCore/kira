@@ -7,7 +7,9 @@ GO_VERSION="1.15.6"
 GOROOT="/usr/local/go"
 GOPATH="/home/go"
 GOBIN="${GOROOT}/bin"
-SETUP_CHECK="$KIRA_SETUP/go-v${GO_VERSION}-0"
+ARCHITECTURE=$(uname -m)
+
+SETUP_CHECK="$KIRA_SETUP/go-v${GO_VERSION}-0-$ARCHITECTURE"
 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Ensuring golang is removed ..."
@@ -26,9 +28,16 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$GOBIN" --prefix="PATH=" --and-contains-not=":$GOBIN" --path=$ETC_PROFILE
     set +e && source "/etc/profile" &>/dev/null && set -e
+
+    if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
+        GOLANG_ARCH="arm64"
+    else
+        GOLANG_ARCH="amd64"
+    fi
+
     echo "INFO: Installing latest go version $GO_VERSION https://golang.org/doc/install ..."
-    wget https://dl.google.com/go/go$GO_VERSION.linux-amd64.tar.gz
-    tar -C /usr/local -xvf go$GO_VERSION.linux-amd64.tar.gz
+    wget https://dl.google.com/go/go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
+    tar -C /usr/local -xvf go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
     go version
     go env
     touch $SETUP_CHECK
