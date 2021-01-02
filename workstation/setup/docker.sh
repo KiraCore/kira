@@ -6,7 +6,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
-SETUP_CHECK="$KIRA_SETUP/docker-v0.0.6" 
+SETUP_CHECK="$KIRA_SETUP/docker-v0.0.7" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echo "INFO: Attempting to remove old docker..."
     service docker stop || echo "WARNING: Failed to stop docker servce"
@@ -25,9 +25,10 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
 
     echo "INFO: Installing Docker..."
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    #add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     apt-get update
-    apt install docker-ce docker-ce-cli containerd.io -y
+    #apt install docker-ce docker-ce-cli containerd.io -y
+    apt install containerd docker.io -y
     systemctl enable --now docker
     docker -v
     touch $SETUP_CHECK
