@@ -141,7 +141,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm64"
-            EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
+            EXPECTED_HASH="37a87255a40565c4edcc52725260380966fed3d403dfa86f95f1259af413205d"
         else
             CDHELPER_ARCH="x64"
             EXPECTED_HASH="abf1e16447959025341a78a6b5dd180015d4bd191a87c614544c3b5e501ebf38"
