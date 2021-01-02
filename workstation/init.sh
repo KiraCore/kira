@@ -140,7 +140,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         cd /tmp
         INSTALL_DIR="/usr/local/bin"
         
-        if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
+        if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm"
             EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
         else
