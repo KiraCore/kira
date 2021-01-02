@@ -17,19 +17,17 @@ echo "INFO: Ensuring UFW rules persistence"
 setup-after-rules() {
     IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     UWF_AFTER="/etc/ufw/after.rules"
-    UWF_BEFORE="/etc/ufw/before.init"
+    #UWF_BEFORE="/etc/ufw/before.init"
 
     cat >> $UWF_AFTER <<EOL
 #-DOCKER-BEHIND-UFW-V1-START
 *filter
 :DOCKER-USER - [0:0]
 :ufw-user-input - [0:0]
-:ufw-after-logging-forward - [0:0]
 
 -A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
 -A DOCKER-USER -m conntrack --ctstate INVALID -j DROP
 -A DOCKER-USER -i $IFace -j ufw-user-input
--A DOCKER-USER -i $IFace -j ufw-after-logging-forward
 -A DOCKER-USER -i $IFace -j DROP
 
 COMMIT
@@ -47,35 +45,35 @@ COMMIT
 #-DOCKER-BEHIND-UFW-V1-END
 EOL
 
-    cat > $UWF_BEFORE <<EOL
-#!/bin/sh
-set -e
-
-case "\$1" in
-start)
-    # typically required
-    ;;
-stop)
-    iptables -F DOCKER-USER || true
-    iptables -A DOCKER-USER -j RETURN || true
-    iptables -X ufw-user-input || true
-    # typically required
-    ;;
-status)
-    # optional
-    ;;
-flush-all)
-    # optional
-    ;;
-*)
-    echo "'\$1' not supported"
-    echo "Usage: before.init {start|stop|flush-all|status}"
-    ;;
-esac
-EOL
+#    cat > $UWF_BEFORE <<EOL
+##!/bin/sh
+#set -e
+#
+#case "\$1" in
+#start)
+#    # typically required
+#    ;;
+#stop)
+#    iptables -F DOCKER-USER || true
+#    iptables -A DOCKER-USER -j RETURN || true
+#    iptables -X ufw-user-input || true
+#    # typically required
+#    ;;
+#status)
+#    # optional
+#    ;;
+#flush-all)
+#    # optional
+#    ;;
+#*)
+#    echo "'\$1' not supported"
+#    echo "Usage: before.init {start|stop|flush-all|status}"
+#    ;;
+#esac
+#EOL
 
 chmod +x $UWF_AFTER
-chmod +x $UWF_BEFORE
+#chmod +x $UWF_BEFORE
 }
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
