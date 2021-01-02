@@ -7,14 +7,6 @@ target=$2
 
 [ -z "$reconnect" ] && reconnect="true"
 
-if [ "${reconnect,,}" != "true" ] ; then
-    echo "INFO: Pruning dangling networks..."
-    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
-    systemctl daemon-reload
-    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
-    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
-fi
-
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
@@ -55,4 +47,13 @@ for (( i=0; i<${len}; i++ )) ; do
     echo "INFO: Containers will NOT be recconected to the '$network' network"
   fi
 done
+
+if [ "${reconnect,,}" != "true" ] ; then
+    echo "INFO: Pruning dangling networks..."
+    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
+fi
+
+systemctl daemon-reload
+systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
+systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
 

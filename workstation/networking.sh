@@ -105,6 +105,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 
     echo "INFO: Restarting docker..."
     systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
+    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
 
     # WARNING, following command migt disable SSH access
     CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
