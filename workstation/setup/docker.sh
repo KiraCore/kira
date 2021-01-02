@@ -6,7 +6,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
-SETUP_CHECK="$KIRA_SETUP/docker-v0.0.5" 
+SETUP_CHECK="$KIRA_SETUP/docker-v0.0.6" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echo "INFO: Attempting to remove old docker..."
     service docker stop || echo "WARNING: Failed to stop docker servce"
@@ -19,12 +19,13 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     apt remove --purge docker-ce -y || echo "WARNING: Failed to remove docker-ce"
     apt remove --purge docker-ce-cli -y || echo "WARNING: Failed to remove docker-ce-cli"
     apt remove --purge containerd.io -y || echo "WARNING: Failed to remove containerd.io"
+    apt autoremove -y || echo "WARNING: Failed autoremove"
     rm -rfv /etc/docker
     rm -rfv /var/lib/docker
 
     echo "INFO: Installing Docker..."
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
-    add-apt-repository "deb https://download.docker.com/linux/ubuntu/ $(lsb_release -cs) stable"
+    add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
     apt-get update
     apt install docker-ce docker-ce-cli containerd.io -y
     systemctl enable --now docker
