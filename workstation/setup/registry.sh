@@ -20,6 +20,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name $CONTAINER_NAME \
+        --ip="10.1.0.2" \
         -e REGISTRY_HTTP_ADDR=$KIRA_REGISTRY_PORT \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
@@ -42,10 +43,12 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
     ADDR2="$IP:$KIRA_REGISTRY_PORT"
     ADDR3="0.0.0.0:$KIRA_REGISTRY_PORT"
     ADDR4="127.0.0.1:$KIRA_REGISTRY_PORT"
-    ADDR5="172.17.0.1:$KIRA_REGISTRY_PORT"
-    ADDR6="172.18.0.1:$KIRA_REGISTRY_PORT"
+    ADDR5="192.168.0.1:$KIRA_REGISTRY_PORT"
+    ADDR6="172.17.0.1:$KIRA_REGISTRY_PORT"
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
+  "bip": "172.17.0.1/16",
+  "fixed-cidr": "172.17.0.0/16",
   "insecure-registries" : ["http://$ADDR1","http://$ADDR2","http://$ADDR3","http://$ADDR4","http://$ADDR5","http://$ADDR6","$ADDR1","$ADDR2","$ADDR3","$ADDR4","$ADDR5","$ADDR6"],
   "iptables": false
 }
