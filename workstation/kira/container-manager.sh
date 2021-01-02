@@ -4,7 +4,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
-HALT_FILE="$DOCKER_COMMON/$NAME/halt"
+HALT_DIR="$DOCKER_COMMON/$NAME"
+HALT_FILE="$HALT_DIR/halt"
 
 set +x
 echo "INFO: Launching KIRA Container Manager..."
@@ -29,6 +30,7 @@ touch $PORTS_PATH
 echo "INFO: Wiping halt files of $NAME container..."
 
 rm -fv $HALT_FILE
+mkdir -p $HALT_DIR
 
 WHITESPACE="                                                          "
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"

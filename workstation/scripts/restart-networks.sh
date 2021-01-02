@@ -7,26 +7,40 @@ target=$2
 
 [ -z "$reconnect" ] && reconnect="true"
 
+if [ "${reconnect,,}" != "true" ] ; then
+    echo "INFO: Pruning dangling networks..."
+    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
+    systemctl daemon-reload
+    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
+    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
+fi
+
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
+declare -a drivers=("bridge" "bridge" "bridge" "host")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
 for (( i=0; i<${len}; i++ )) ; do
   network=${networks[$i]}
   subnet=${subnets[$i]}
+  driver=${drivers[$1]}
   [ ! -z "$target" ] && [ "$network" != "$target" ] && continue
   echo "INFO: Restarting $network ($subnet)"
-  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network || echo "")
+  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo "")
 
-  for container in $containers ; do
-     echo "INFO: Disconnecting container $container"
-     docker network disconnect -f $network $container || echo "INFO: Failed to disconnect container $conatainer from network $network"
-  done
+  if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
+      for container in $containers ; do
+         echo "INFO: Disconnecting container $container"
+         docker network disconnect -f $network $container || echo "INFO: Failed to disconnect container $conatainer from network $network"
+      done
+  else
+    echo "INFO: No containers were found to be attached to $network network"
+  fi
 
   docker network rm $network || echo "INFO: Failed to remove $network network"
-  docker network create --driver=bridge --subnet=$subnet $network
+  docker network create --driver=$driver --subnet=$subnet $network
 
-  if [ "${reconnect,,}" == "true" ] ; then
+  if [ "${reconnect,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"
       docker network connect $network $container
@@ -35,7 +49,7 @@ for (( i=0; i<${len}; i++ )) ; do
           echo "WARNING: Failed to get container IP address within new network"
       else
           dns="${container,,}.${network,,}.local"
-          echo "INFO: IP Address found, binding host..."
+          echo "INFO: IP Address '$ip' found, binding host..."
           CDHelper text lineswap --insert="$ip $dns" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
       fi
     done
@@ -44,10 +58,3 @@ for (( i=0; i<${len}; i++ )) ; do
   fi
 done
 
-if [ "${reconnect,,}" != "true" ] ; then
-    echo "INFO: Pruning dangling networks..."
-    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
-    systemctl daemon-reload
-    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
-    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
-fi

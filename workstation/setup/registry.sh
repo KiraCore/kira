@@ -5,11 +5,11 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 REGISTRY_VERSION="2.7.1"
 CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="True"
-curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="False"
+curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.32-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
-if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "$CONTAINER_REACHABLE" == "False" ]; then
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.33-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ]; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -27,6 +27,8 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
 
     systemctl daemon-reload
     systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
+
+    sleep 1
 
     ID=$(docker inspect --format="{{.Id}}" $CONTAINER_NAME || echo "")
     IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" | xargs || echo "")
