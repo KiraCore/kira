@@ -78,25 +78,55 @@ chmod +x $UWF_AFTER
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echo "INFO: Setting up demo mode networking..."
-    ufw disable
-    ufw --force reset
-    ufw logging on # required to setup logging rules
-    setup-after-rules
-    ufw default allow outgoing
-    ufw default deny incoming
-    ufw allow 22 # SSH
-    ufw allow $KIRA_FRONTEND_PORT 
-    ufw allow $KIRA_INTERX_PORT
-    ufw allow $KIRA_SENTRY_P2P_PORT
-    ufw allow $KIRA_SENTRY_RPC_PORT
-    ufw allow $KIRA_SENTRY_GRPC_PORT
-    ufw status verbose
-    echo "y" | ufw enable || :
-    ufw status verbose
-    ufw reload
-    systemctl daemon-reload
-    systemctl restart ufw
-    ufw status verbose
+    # Removing DOCKER-USER CHAIN (it won't exist at first)
+firewall-cmd --permanent --direct --remove-chain ipv4 filter DOCKER-USER
+
+# Flush rules from DOCKER-USER chain (again, these won't exist at first; firewalld seems to remember these even if the chain is gone)
+firewall-cmd --permanent --direct --remove-rules ipv4 filter DOCKER-USER
+
+# Add the DOCKER-USER chain to firewalld
+firewall-cmd --permanent --direct --add-chain ipv4 filter DOCKER-USER
+
+# Add rules (see comments for details)
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "This allows docker containers to connect to the outside world"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s 172.18.0.0/16 -m comment --comment "allow internal docker communication"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s 172.17.0.0/16 -m comment --comment "allow internal docker communication"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_REGISTRY_SUBNET -m comment --comment "allow internal docker communication"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_VALIDATOR_SUBNET -m comment --comment "allow internal docker communication"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_SENTRY_SUBNET -m comment --comment "allow internal docker communication"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_SERVICE_SUBNET -m comment --comment "allow internal docker communication"
+#firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -p tcp -m multiport --dports https -s 123.456.7.89/32 -j ACCEPT -m comment --comment "my allowed ip address to http and https ports"
+
+#firewall-cmd --permanent --add-port=22/TCP
+
+#Add as many ip or other rules and then run this command to block all other traffic
+#firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j REJECT -m comment --comment "reject all other traffic"
+
+# restart the services 
+systemctl stop docker
+systemctl stop firewalld
+systemctl start firewalld
+systemctl start docker
+
+    #ufw disable
+    #ufw --force reset
+    #ufw logging on # required to setup logging rules
+    #setup-after-rules
+    #ufw default allow outgoing
+    #ufw default deny incoming
+    #ufw allow 22 # SSH
+    #ufw allow $KIRA_FRONTEND_PORT 
+    #ufw allow $KIRA_INTERX_PORT
+    #ufw allow $KIRA_SENTRY_P2P_PORT
+    #ufw allow $KIRA_SENTRY_RPC_PORT
+    #ufw allow $KIRA_SENTRY_GRPC_PORT
+    #ufw status verbose
+    #echo "y" | ufw enable || :
+    #ufw status verbose
+    #ufw reload
+    #systemctl daemon-reload
+    #systemctl restart ufw
+    #ufw status verbose
 
     # firewall-cmd --zone=public --add-masquerade --permanent
     # firewall-cmd --reload
@@ -106,7 +136,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
 
     # WARNING, following command migt disable SSH access
-    CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
+    # CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
     
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echo "INFO: Setting up sentry mode networking..."
