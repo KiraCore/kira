@@ -197,7 +197,7 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP all logs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
-    echo "| [I] | Re-INITIALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
+    echo "| [I] | Re-INITIALIZE infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
     OPTION="" && read -s -n 1 -t 5 OPTION || OPTION=""
