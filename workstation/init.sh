@@ -23,7 +23,7 @@ KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.15"
-SETUP_VER="v0.0.6" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.7" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -138,8 +138,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         echo "INFO: Base Tools Setup..."
         cd /tmp
-        INSTALL_DIR="/usr/local/bin"
-        
+
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm"
             EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
@@ -166,13 +165,15 @@ if [ "$SKIP_UPDATE" == "False" ]; then
             echo "INFO: CDHelper tool was already downloaded"
         fi
 
+        INSTALL_DIR="/usr/local/bin/CDHelper"
         rm -rfv $INSTALL_DIR
+        mkdir -pv $INSTALL_DIR
         unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
         chmod -R -v 555 $INSTALL_DIR
 
         ls -l /bin/CDHelper || echo "Symlink not found"
         rm /bin/CDHelper || echo "Removing old symlink"
-        ln -s $INSTALL_DIR/CDHelper/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
+        ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
 
         CDHelper version
 
