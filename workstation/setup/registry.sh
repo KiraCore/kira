@@ -46,7 +46,14 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
   "insecure-registries" : ["http://$ADDR1","http://$ADDR2","http://$ADDR3","http://$ADDR4","http://$ADDR5","$ADDR1","$ADDR2","$ADDR3","$ADDR4","$ADDR5"],
-  "iptables": false
+  "iptables": false,
+  "debug" : true,
+  "default-address-pools" : [
+    {
+      "base" : "172.31.0.0/16",
+      "size" : 24
+    }
+  ]
 }
 EOL
     systemctl daemon-reload
