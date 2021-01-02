@@ -140,7 +140,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         cd /tmp
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
-            CDHELPER_ARCH="arm"
+            CDHELPER_ARCH="arm64"
             EXPECTED_HASH="a453fed406e0430614ac61b52e2133294a5737c7ba87dd29c71c5bd100f93898"
         else
             CDHELPER_ARCH="x64"
