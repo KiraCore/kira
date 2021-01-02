@@ -176,7 +176,7 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-            LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
+            LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     fi
@@ -186,17 +186,17 @@ while :; do
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ] && [ "${LOADING,,}" == "false" ] ; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
-            echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+            echo "| [P] | PAUSE all containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
-            echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+            echo "| [P] | Un-PAUSE all containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+        echo "| [R] | RESTART all containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
-            echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+            echo "| [S] | STOP all containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
-            echo "| [S] | START All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+            echo "| [S] | START all containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
-    echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    echo "| [D] | DUMP all logs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
