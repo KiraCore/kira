@@ -47,7 +47,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
     ADDR2="$IP:$KIRA_REGISTRY_PORT"
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"],
+  "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"]
 }
 EOL
     systemctl daemon-reload
