@@ -15,7 +15,7 @@ set -x
 echo "INFO: Ensuring UFW rules persistence"
 
 setup-after-rules() {
-    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
+    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     UWF_AFTER="/etc/ufw/after.rules"
     UWF_BEFORE="/etc/ufw/before.init"
 
