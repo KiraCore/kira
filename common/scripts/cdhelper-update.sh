@@ -39,7 +39,7 @@ else
     echo "New version detected, installing..."
 fi
 
-if [ "${ARCHITECTURE,,}" == *"arm"* ] || [ "${ARCHITECTURE,,}" == *"aarch"* ] ; then
+if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     CDHELPER_ARCH="arm"
 else
     CDHELPER_ARCH="x64"
