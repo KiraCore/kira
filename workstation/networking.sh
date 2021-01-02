@@ -100,7 +100,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl restart ufw
     ufw status verbose
 
-    # ufw disable && ufw allow 80 && ufw enable && ufw reload
+    # firewall-cmd --zone=public --add-masquerade --permanent
+    # firewall-cmd --reload
 
     echo "INFO: Restarting docker..."
     systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )

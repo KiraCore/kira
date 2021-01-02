@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/network-v0.0.4" 
+SETUP_CHECK="$KIRA_SETUP/network-v0.0.5" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
@@ -12,7 +12,7 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     apt-get install -y autoconf libtool fuse libpam0g-dev libjpeg-dev libfuse-dev libx11-dev libxfixes-dev \
         libxrandr-dev nasm gnome-tweak-tool net-tools
     echo "INFO: Installing generic dependencies..."
-    apt-get install -y ufw
+    apt-get install -y ufw firewalld
 
     # allow loggs to be dropped
     touch /var/log/ufw.log && chown syslog:syslog /var/log/ufw.log
