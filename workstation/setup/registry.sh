@@ -8,7 +8,7 @@ CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.34-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.35-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ]; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
@@ -20,7 +20,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name $CONTAINER_NAME \
-        -e REGISTRY_HTTP_ADDR=$KIRA_REGISTRY_PORT \
+        -e REGISTRY_HTTP_ADDR="0.0.0.0:$KIRA_REGISTRY_PORT" \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
         registry:$REGISTRY_VERSION
