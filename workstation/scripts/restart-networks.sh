@@ -16,14 +16,12 @@ if [ "${reconnect,,}" != "true" ] ; then
 fi
 
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
-declare -a drivers=("bridge" "bridge" "bridge" "host")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
 for (( i=0; i<${len}; i++ )) ; do
   network=${networks[$i]}
   subnet=${subnets[$i]}
-  driver=${drivers[$1]}
   [ ! -z "$target" ] && [ "$network" != "$target" ] && continue
   echo "INFO: Restarting $network ($subnet)"
   containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo "")
@@ -38,7 +36,7 @@ for (( i=0; i<${len}; i++ )) ; do
   fi
 
   docker network rm $network || echo "INFO: Failed to remove $network network"
-  docker network create --driver=$driver --subnet=$subnet $network
+  docker network create --subnet=$subnet $network
 
   if [ "${reconnect,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
