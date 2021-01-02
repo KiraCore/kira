@@ -30,6 +30,14 @@ for (( i=0; i<${len}; i++ )) ; do
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"
       docker network connect $network $container
+      ip=$(docker inspect $(docker inspect --format="{{.Id}}" $container) | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" | xargs || echo "")
+      if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
+          echo "WARNING: Failed to get container IP address within new network"
+      else
+          dns="${container,,}.${network,,}.local"
+          echo "INFO: IP Address found, binding host..."
+          CDHelper text lineswap --insert="$ip $dns" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
+      fi
     done
   else
     echo "INFO: Containers will NOT be recconected to the '$network' network"
