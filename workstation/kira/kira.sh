@@ -212,7 +212,7 @@ while :; do
 
     if [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh
+        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
     fi
 
     EXECUTED="false"
@@ -267,7 +267,7 @@ while :; do
         echo "INFO: All dump files were exported into $ZIP_FILE"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ] ; then
         echo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh
+        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
     elif [ "${OPTION,,}" == "x" ]; then
         clear
         exit 0

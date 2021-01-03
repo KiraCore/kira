@@ -8,12 +8,12 @@ CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.36-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.37-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
 if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ]; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
+    $KIRAMGR_SCRIPTS/restart-networks.sh "false" "$KIRA_REGISTRY_NETWORK"
 
     docker run -d \
         --network "$KIRA_REGISTRY_NETWORK" \
@@ -50,9 +50,8 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
   "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"]
 }
 EOL
-    systemctl daemon-reload
-    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
-    
+
+    $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
     touch $SETUP_CHECK
 else
     echo "Container 'registry' already exists."

@@ -7,6 +7,11 @@ target=$2
 
 [ -z "$reconnect" ] && reconnect="true"
 
+if [ -z "$target" ] && [ "${reconnect,,}" != "true" ] ; then
+    echo "INFO: Pruning dangling networks..."
+    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
+fi
+
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
@@ -36,7 +41,8 @@ for (( i=0; i<${len}; i++ )) ; do
       docker network connect $network $container
       ip=$(docker inspect $(docker inspect --format="{{.Id}}" $container) | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" | xargs || echo "")
       if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
-          echo "WARNING: Failed to get container IP address within new network"
+          echo "WARNING: Failed to get '$container' container IP address relative to the new '$network' network"
+          exit 1
       else
           dns="${container,,}.${network,,}.local"
           echo "INFO: IP Address '$ip' found, binding host..."
@@ -47,11 +53,6 @@ for (( i=0; i<${len}; i++ )) ; do
     echo "INFO: Containers will NOT be recconected to the '$network' network"
   fi
 done
-
-if [ "${reconnect,,}" != "true" ] ; then
-    echo "INFO: Pruning dangling networks..."
-    docker network prune --force || echo "WARNING: Failed to prune dangling networks"
-fi
 
 systemctl daemon-reload
 systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
