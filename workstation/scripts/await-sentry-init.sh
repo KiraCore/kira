@@ -12,7 +12,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Waiting for sentry container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "sentry" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 3
+        sleep 12
         echo "WARNING: Sentry container does not exists yet, waiting..."
         continue
     else
@@ -22,7 +22,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Awaiting sentry initalization..."
     IS_STARTED=$(docker exec -i "sentry" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
-        sleep 3
+        sleep 12
         echo "WARNING: Sentry is not initalized yet"
         continue
     else
@@ -32,7 +32,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Awaiting node status..."
     NODE_ID=$(docker exec -i "sentry" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ]; then
-        sleep 3
+        sleep 12
         echo "WARNING: Status and Node ID is not available"
         continue
     else
