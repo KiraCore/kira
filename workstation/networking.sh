@@ -97,10 +97,35 @@ firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN
 firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_SERVICE_SUBNET -m comment --comment "allow internal docker communication"
 #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -p tcp -m multiport --dports https -s 123.456.7.89/32 -j ACCEPT -m comment --comment "my allowed ip address to http and https ports"
 
-#firewall-cmd --permanent --add-port=22/TCP
-
 #Add as many ip or other rules and then run this command to block all other traffic
-#firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j REJECT -m comment --comment "reject all other traffic"
+firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j REJECT -m comment --comment "reject all other traffic"
+
+echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
+
+IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
+firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone local-mode already exists"
+firewall-cmd --permanent --zone=demo --change-interface=$IFace
+#firewall-cmd --permanent --zone=demo --remove-port=$KIRA_FRONTEND_PORT/tcp
+firewall-cmd --permanent --zone=demo --add-port=$KIRA_INTERX_PORT/tcp
+firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_P2P_PORT/tcp
+firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+firewall-cmd --permanent --zone=demo --add-port=22/tcp
+firewall-cmd --permanent --zone=demo --set-target=DROP
+firewall-cmd --runtime-to-permanent
+
+# firewall-cmd --zone=demo --permanent --add-rich-rule='rule family="ipv4" source address="0.0.0.0/0" port port="22" protocol="tcp" accept'
+# firewall-cmd --zone=demo --permanent --add-rich-rule='rule family="ipv4" source address="0.0.0.0/0" reject'
+
+firewall-cmd --reload
+firewall-cmd --get-zones
+firewall-cmd --zone=demo --list-all 
+firewall-cmd --set-default-zone=demo
+
+# firewall-cmd --complete-reload # hard reset
+
+
+echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 
 # restart the services
 systemctl daemon-reload
