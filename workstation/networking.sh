@@ -33,7 +33,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     # Add the DOCKER-USER chain to firewalld
     firewall-cmd --permanent --direct --add-chain ipv4 filter DOCKER-USER
 
-    firewall-cmd --direct --add-rule ipv4 filter DOCKER-USER 0 -j LOG --log-prefix ' DOCKER: '
+    # add loggs
+    firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j LOG --log-prefix ' DOCKER: '
     
     # Add rules (see comments for details)
     firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "This allows docker containers to connect to the outside world"
