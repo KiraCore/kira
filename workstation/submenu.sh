@@ -75,10 +75,11 @@ while :; do
 
     echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
-    ifaces=($(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF))
+    ifaces_iterate=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
+    ifaces=( $ifaces_iterate )
 
     i=-1
-    for f in $ifaces ; do
+    for f in $ifaces_iterate ; do
         i=$((i + 1))
         echo "[$i] $f"
     done
