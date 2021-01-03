@@ -15,7 +15,8 @@ set -x
 echo "INFO: Ensuring UFW rules persistence"
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
-    echo "INFO: Setting up demo mode networking & stopping docker before changes are applied..."
+    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
+    echo "INFO: Setting up demo mode networking for $IFace interface & stopping docker before changes are applied..."
     systemctl daemon-reload
     systemctl stop docker
     systemctl restart firewalld
@@ -49,14 +50,21 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 10 -j REJECT -m comment --comment "reject all other traffic"
 
     #  unless there's an interface using the trusted zone that's directly recognized by firewalld (i.e. eth0) the trusted zone isn't marked as active
-    #firewall-cmd --permanent --zone=trusted --add-interface=docker0
+   
+    firewall-cmd --permanent --new-zone=trusted || echo "INFO: Zone trusted already exists"
+    firewall-cmd --zone=trusted --add-interface=docker0 # apply imediately
+    firewall-cmd --zone=trusted --add-interface=docker_gwbridge
+    firewall-cmd --permanent --zone=trusted --add-interface=docker0 # apply permanently
+    firewall-cmd --permanent --zone=trusted --add-interface=docker_gwbridge
+    # firewall-cmd --permanent --zone=trusted --add-masquerade 
     #firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 3 -i docker0 -j ACCEPT
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 3 -i docker0 -j ACCEPT
+    # firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -i docker0 -j ACCEPT
     
     echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
     
-    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
-    firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone local-mode already exists"
+    
+    firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone demo already exists"
+    firewall-cmd --permanent --change-interface=$IFace
     firewall-cmd --permanent --zone=demo --change-interface=$IFace
     #firewall-cmd --permanent --zone=demo --remove-port=$KIRA_FRONTEND_PORT/tcp
     firewall-cmd --permanent --zone=demo --add-port=$KIRA_INTERX_PORT/tcp
@@ -65,11 +73,12 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
     firewall-cmd --permanent --zone=demo --add-port=22/tcp
     firewall-cmd --permanent --zone=demo --set-target=REJECT
-    firewall-cmd --runtime-to-permanent
+    #firewall-cmd --runtime-to-permanent
     
     firewall-cmd --reload
     firewall-cmd --get-zones
-    firewall-cmd --zone=demo --list-all 
+    firewall-cmd --zone=demo --list-all
+    firewall-cmd --zone=trusted --list-all 
     firewall-cmd --set-default-zone=demo
     firewall-cmd --complete-reload
     firewall-cmd --check-config || echo "INFO: Failed to check firewall config"

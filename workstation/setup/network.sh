@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/network-v0.0.8" 
+SETUP_CHECK="$KIRA_SETUP/network-v0.0.9" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
@@ -24,6 +24,10 @@ if [ ! -f "$SETUP_CHECK" ] ; then
 
     systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
     systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
+
+    # ensure docker containers will have internet access
+    sysctl -w net.ipv4.ip_forward=1
+    CDHelper text lineswap --insert="net.ipv4.ip_forward=1" --prefix="net.ipv4.ip_forward=" --path=/etc/sysctl.conf --append-if-found-not=True
 
     touch $SETUP_CHECK
 else
