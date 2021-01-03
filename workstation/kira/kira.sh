@@ -56,12 +56,11 @@ while :; do
         echo "$!" > "${IPADDR_PATH}.pid"
     fi
 
-    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     NETWORKS=$(cat $NETWORKS_PATH)
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
     touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > "$LIPADDR_PATH" &
+        echo $(/sbin/ifconfig $IFACE 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > "$LIPADDR_PATH" &
         echo "$!" > "${LIPADDR_PATH}.pid"
     fi
 
@@ -153,8 +152,8 @@ while :; do
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
-    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFace"
-    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFace"
+    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
+    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
     if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
