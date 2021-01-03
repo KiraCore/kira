@@ -76,6 +76,7 @@ while :; do
     echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
     ifaces=( $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF) )
+    ifcount=${#ifaces[@]}
 
     i=-1
     for f in $ifaces ; do
@@ -84,7 +85,7 @@ while :; do
     done
    
     OPTION="null"
-    while [ ! -z "$OPTION" ] || [[ $OPTION != ?(-)+([0-9]) ]] || [ $OPTION -lt 0 ] || [ $OPTION -gt $i ] ; do
+    while [ ! -z "$OPTION" ] || [[ $OPTION != ?(-)+([0-9]) ]] || [ $OPTION -lt 0 ] || [ $OPTION -ge $ifcount ] ; do
         read -p "Input interface number 0-$i (Default: $IFACE): " OPTION
         [ -z "$OPTION" ] && continue
     done
