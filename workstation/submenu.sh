@@ -12,6 +12,15 @@ else
   exit 1
 fi
 
+SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
+FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
+INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
+
+[ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="master"
+[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
+[ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
+[ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
+
 set +x
 clear
 
@@ -28,15 +37,6 @@ echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
 echo ""
-
-SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
-FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
-INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
-
-[ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="master"
-[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
-[ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
-[ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 
 FAILED="false"
 
@@ -75,7 +75,7 @@ while :; do
 
     echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
-    ifaces=( $(ip addr list | awk -F': ' '/^[0-9]/ {print $2}') )
+    ifaces=( $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF) )
 
     i=-1
     for f in $ifaces ; do
