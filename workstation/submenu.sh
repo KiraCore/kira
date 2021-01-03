@@ -75,8 +75,8 @@ while :; do
 
     echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
-    ifaces=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
-    
+    ifaces=($(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF))
+
     i=-1
     for f in $ifaces ; do
         i=$((i + 1))
@@ -94,15 +94,14 @@ while :; do
         IFACE=${ifaces[$OPTION]}
     fi
 
-    [ -z $IFACE ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH=$SEKAI_BRANCH_DEFAULT
     [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH=$FRONTEND_BRANCH_DEFAULT
     [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH=$INTERX_BRANCH_DEFAULT
 
-    echo -en "\e[31;1mINFO: SEKAI branch '$SEKAI_BRANCH' was selected\e[0m" && echo ""
-    echo -en "\e[31;1mINFO: FRONTEND branch '$FRONTEND_BRANCH' was selected\e[0m" && echo ""
-    echo -en "\e[31;1mINFO: INTERX branch '$INTERX_BRANCH' was selected\e[0m" && echo ""
-    echo -en "\e[31;1mINFO: NETWORK interface '$IFACE' was selected\e[0m" && echo ""
+    echo -en "\e[33;1mINFO: SEKAI branch '$SEKAI_BRANCH' was selected\e[0m" && echo ""
+    echo -en "\e[33;1mINFO: FRONTEND branch '$FRONTEND_BRANCH' was selected\e[0m" && echo ""
+    echo -en "\e[33;1mINFO: INTERX branch '$INTERX_BRANCH' was selected\e[0m" && echo ""
+    echo -en "\e[33;1mINFO: NETWORK interface '$IFACE' was selected\e[0m" && echo ""
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 
     CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
