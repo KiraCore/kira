@@ -20,65 +20,33 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     systemctl daemon-reload
     systemctl stop docker
     systemctl restart firewalld
- 
-    # NOTE:
-    # All rules should be persisted in /etc/firewalld/direct.xml
-    #-------------------------------------------------------------------------------------------
 
-    ## Removing DOCKER-USER CHAIN (it won't exist at first)
-    #firewall-cmd --permanent --direct --remove-chain ipv4 filter DOCKER-USER
-    #
-    ## Flush rules from DOCKER-USER chain (again, these won't exist at first; firewalld seems to remember these even if the chain is gone)
-    #firewall-cmd --permanent --direct --remove-rules ipv4 filter DOCKER-USER
-    #
-    ## Add the DOCKER-USER chain to firewalld
-    #firewall-cmd --permanent --direct --add-chain ipv4 filter DOCKER-USER
+    #firewall-cmd --permanent --new-zone=trusted || echo "INFO: Zone trusted already exists"
+    #firewall-cmd --zone=trusted --add-interface=docker0 # apply imediately
+    #firewall-cmd --zone=trusted --add-interface=docker_gwbridge
+    #firewall-cmd --permanent --zone=trusted --add-interface=docker0 # apply permanently
+    #firewall-cmd --permanent --zone=trusted --add-interface=docker_gwbridge
 #
-    ## add loggs
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j LOG --log-prefix ' DOCKER: '
-    #
-    ## Add rules (see comments for details)
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT -m comment --comment "This allows docker containers to connect to the outside world"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s 172.18.0.0/16 -m comment --comment "allow internal docker communication"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s 172.17.0.0/16 -m comment --comment "allow internal docker communication"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_REGISTRY_SUBNET -m comment --comment "allow internal docker communication with registry"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_VALIDATOR_SUBNET -m comment --comment "allow internal docker communication with validator"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_SENTRY_SUBNET -m comment --comment "allow internal docker communication with entry"
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN -s $KIRA_SERVICE_SUBNET -m comment --comment "allow internal docker communication with frontend/interx"
-    #
-    ##  Block all other IPs. This rule has lowest precedence, so you can add allowed IP rules later.
-    #firewall-cmd --direct --add-rule ipv4 filter DOCKER-USER 10 -j ACCEPT
-    #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 10 -j ACCEPT
-
-    #  unless there's an interface using the trusted zone that's directly recognized by firewalld (i.e. eth0) the trusted zone isn't marked as active
-   
-    firewall-cmd --permanent --new-zone=trusted || echo "INFO: Zone trusted already exists"
-    firewall-cmd --zone=trusted --add-interface=docker0 # apply imediately
-    firewall-cmd --zone=trusted --add-interface=docker_gwbridge
-    firewall-cmd --permanent --zone=trusted --add-interface=docker0 # apply permanently
-    firewall-cmd --permanent --zone=trusted --add-interface=docker_gwbridge
-
-    firewall-cmd --zone=trusted --add-masquerade 
-    firewall-cmd --permanent --zone=trusted --add-masquerade 
-
-    echo "INFO: Adding brige interfaces to trusted zones"
-    for f in $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF) ; do
-        [[ $f != *"br-"* ]] && continue
-        echo "INFO: Adding $f interface to trusted zone"
-        firewall-cmd --zone=trusted --add-interface=$f
-        firewall-cmd --permanent --zone=trusted --add-interface=$f
-    done
-
-    firewall-cmd --permanent --new-zone=public || echo "INFO: Zone public already exists"
-    firewall-cmd --zone=public --add-masquerade 
-    firewall-cmd --permanent --zone=public --add-masquerade 
+    #firewall-cmd --zone=trusted --add-masquerade 
+    #firewall-cmd --permanent --zone=trusted --add-masquerade 
+#
+    #echo "INFO: Adding brige interfaces to trusted zones"
+    #for f in $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF) ; do
+    #    [[ $f != *"br-"* ]] && continue
+    #    echo "INFO: Adding $f interface to trusted zone"
+    #    firewall-cmd --zone=trusted --add-interface=$f
+    #    firewall-cmd --permanent --zone=trusted --add-interface=$f
+    #done
+#
+    #firewall-cmd --permanent --new-zone=public || echo "INFO: Zone public already exists"
+    #firewall-cmd --zone=public --add-masquerade 
+    #firewall-cmd --permanent --zone=public --add-masquerade 
     
     #firewall-cmd --permanent --direct --add-rule ipv4 filter INPUT 3 -i docker0 -j ACCEPT
     # firewall-cmd --permanent --direct --add-rule ipv4 filter OUTPUT 0 -i docker0 -j ACCEPT
     
     echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
-    
-    
+
     firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone demo already exists"
     firewall-cmd --permanent --change-interface=$IFace
     firewall-cmd --permanent --zone=demo --change-interface=$IFace
@@ -89,8 +57,15 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
     firewall-cmd --permanent --zone=demo --add-port=22/tcp
     firewall-cmd --permanent --zone=demo --set-target=REJECT
-    #firewall-cmd --runtime-to-permanent
-    
+
+
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.17.0.0/16 masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.18.0.0/16 masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_REGISTRY_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_VALIDATOR_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SENTRY_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SERVICE_SUBNET masquerade"
+
     firewall-cmd --reload
     firewall-cmd --get-zones
     firewall-cmd --zone=demo --list-all
