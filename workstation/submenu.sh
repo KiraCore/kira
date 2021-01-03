@@ -84,10 +84,11 @@ while :; do
         echo "[$i] $f"
     done
    
-    OPTION="null"
-    while [[ $OPTION != ?(-)+([0-9]) ]] || [ $OPTION -lt 0 ] || [ $OPTION -ge $ifcount ] ; do
+    OPTION=""
+    while : ; do
         read -p "Input interface number 0-$i (Default: $IFACE): " OPTION
-        [ -z "$OPTION" ] && continue
+        [ -z "$OPTION" ] && break
+        [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -lt $ifcount ] && break
     done
 
     if [ ! -z "$OPTION" ] ; then
