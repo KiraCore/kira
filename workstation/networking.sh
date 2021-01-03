@@ -106,7 +106,6 @@ firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN
 systemctl daemon-reload
 systemctl stop docker
 systemctl stop firewalld
-sleep 3
 systemctl start firewalld
 systemctl start docker
 
@@ -134,7 +133,7 @@ systemctl start docker
     # firewall-cmd --reload
 
     echo "INFO: Restarting docker..."
-    systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
+    #systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
     systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
 
     # WARNING, following command migt disable SSH access
