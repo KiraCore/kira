@@ -25,7 +25,6 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
     systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
 
-
     touch $SETUP_CHECK
 else
     echo "INFO: Networking dependencies were setup"
