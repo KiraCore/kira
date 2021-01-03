@@ -268,6 +268,8 @@ while :; do
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ] ; then
         echo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        echo "INFO: Reinitalizing firewall..."
+        $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "x" ]; then
         clear
         exit 0
