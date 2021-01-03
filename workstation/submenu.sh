@@ -75,7 +75,7 @@ while :; do
 
     echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
-    ifaces=( $(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF) )
+    ifaces=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
     ifcount=${#ifaces[@]}
 
     i=-1
