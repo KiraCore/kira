@@ -25,11 +25,10 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone demo already exists"
     firewall-cmd --permanent --change-interface=$IFACE
     firewall-cmd --permanent --zone=demo --change-interface=$IFACE
+    firewall-cmd --permanent --zone=demo --set-target=default
 
-    firewall-cmd --zone=demo --remove-interface=docker0
+    firewall-cmd --zone=demo --add-interface=docker0
     firewall-cmd --permanent --zone=demo --add-interface=docker0
-
-    firewall-cmd --permanent --zone=demo --remove-target=default
 
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.17.0.0/16 masquerade"
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.18.0.0/16 masquerade"
