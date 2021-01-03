@@ -102,9 +102,11 @@ firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j RETURN
 #Add as many ip or other rules and then run this command to block all other traffic
 #firewall-cmd --permanent --direct --add-rule ipv4 filter DOCKER-USER 0 -j REJECT -m comment --comment "reject all other traffic"
 
-# restart the services 
+# restart the services
+systemctl daemon-reload
 systemctl stop docker
 systemctl stop firewalld
+sleep 3
 systemctl start firewalld
 systemctl start docker
 
