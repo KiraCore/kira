@@ -47,7 +47,7 @@ while [ $i -le 20 ]; do
 
     FAUCET_ADDR=$(docker exec -i "interx" curl http://127.0.0.1:11000/api/faucet 2>/dev/null | jq -r '.address' || echo "")
 
-    if [[ "${FAUCET_ADDR}" -eq "" ]]; then
+    if [ "${FAUCET_ADDR}" = "" ]; then
         sleep 30
         echo "WARNING: FAUCET_ADDR is not retrieved yet"
         continue
