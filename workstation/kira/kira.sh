@@ -56,12 +56,11 @@ while :; do
         echo "$!" > "${IPADDR_PATH}.pid"
     fi
 
-    IFace=$(route | grep '^default' | grep -o '[^ ]*$' | xargs)
     NETWORKS=$(cat $NETWORKS_PATH)
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
     touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(/sbin/ifconfig $IFace 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "127.0.0.1") > "$LIPADDR_PATH" &
+        echo $(/sbin/ifconfig $IFACE 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > "$LIPADDR_PATH" &
         echo "$!" > "${LIPADDR_PATH}.pid"
     fi
 
@@ -130,11 +129,11 @@ while :; do
 
     KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "127.0.0.1")
+    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IPADDR_PATH 2> /dev/null || echo "")
-    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="127.0.0.1"
-    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="127.0.0.1"
-    [ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
+    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
+    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
+    [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
 
     clear
 
@@ -153,8 +152,8 @@ while :; do
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
-    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFace"
-    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFace"
+    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
+    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
     if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
@@ -210,6 +209,11 @@ while :; do
         echo ""
     fi
 
+    if [ "${OPTION,,}" == "r" ] ; then
+        echo "INFO: Reconnecting all networks..."
+        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+    fi
+
     EXECUTED="false"
     i=-1
     for name in $CONTAINERS; do
@@ -260,9 +264,11 @@ while :; do
         rm -fv $ZIP_FILE
         zip -r -q $ZIP_FILE $KIRA_DUMP
         echo "INFO: All dump files were exported into $ZIP_FILE"
-    elif [ "${OPTION,,}" == "r" ] || ([ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]) ; then
+    elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ] ; then
         echo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh
+        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        echo "INFO: Reinitalizing firewall..."
+        $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "x" ]; then
         clear
         exit 0

@@ -18,7 +18,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Waiting for validator container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "validator" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 3
+        sleep 12
         echo "WARNING: Validator container does not exists yet, waiting..."
         continue
     else
@@ -28,7 +28,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Awaiting validator initalization..."
     IS_STARTED=$(docker exec -i "validator" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
-        sleep 3
+        sleep 12
         echo "WARNING: Validator is not initalized yet"
         continue
     else
@@ -39,7 +39,7 @@ while [ $i -le 40 ]; do
     docker cp -a validator:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
 
     if [ ! -f "$GENESIS_DESTINATION" ]; then
-        sleep 3
+        sleep 12
         echo "WARNING: Failed to copy genesis file from validator"
         continue
     else
@@ -49,7 +49,7 @@ while [ $i -le 40 ]; do
     echo "INFO: Awaiting node status..."
     NODE_ID=$(docker exec -i "validator" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ]; then
-        sleep 3
+        sleep 12
         echo "WARNING: Status and Node ID is not available"
         continue
     else

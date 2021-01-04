@@ -13,13 +13,19 @@ DEBUG_MODE=$4
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
+[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
+[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
+[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
+
 KIRA_DUMP="/home/$KIRA_USER/DUMP"
 KIRA_SECRETS="/home/$KIRA_USER/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.15"
-SETUP_VER="v0.0.5" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
+ARCHITECTURE=$(uname -m)
 
 echo "------------------------------------------------"
 echo "| STARTED: INIT $SETUP_VER"
@@ -30,6 +36,7 @@ echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
 echo "|    KIRA USER: $SUDO_USER"
+echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
@@ -69,11 +76,6 @@ fi
 
 echo ""
 set -x
-
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
@@ -118,14 +120,14 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
             software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools 
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
@@ -135,16 +137,23 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         git config --add --global http.sslVersion "tlsv1.2" || echo "WARNING: Failed to set ssl version"
 
         echo "INFO: Base Tools Setup..."
+        export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
         cd /tmp
-        INSTALL_DIR="/usr/local/bin"
-        EXPECTED_HASH="8a8dfe32717bc3fc54d4ae9ebb32cee5608452c1e2cd61d668a7a0193b4720e9"
-        FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }' || echo "")
+
+        if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
+            CDHELPER_ARCH="arm64"
+            EXPECTED_HASH="37a87255a40565c4edcc52725260380966fed3d403dfa86f95f1259af413205d"
+        else
+            CDHELPER_ARCH="x64"
+            EXPECTED_HASH="abf1e16447959025341a78a6b5dd180015d4bd191a87c614544c3b5e501ebf38"
+        fi
+
+        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-            rm -f -v ./CDHelper-linux-x64.zip
-            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-x64.zip"
-
-            FILE_HASH=$(sha256sum ./CDHelper-linux-x64.zip | awk '{ print $1 }')
+            rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
+            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
+            FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
                 echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
@@ -154,19 +163,22 @@ if [ "$SKIP_UPDATE" == "False" ]; then
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
             fi
         else
-            echo "INFO: CDHelper tool was laready downloaded"
+            echo "INFO: CDHelper tool was already downloaded"
         fi
 
+        INSTALL_DIR="/usr/local/bin/CDHelper"
         rm -rfv $INSTALL_DIR
-        unzip CDHelper-linux-x64.zip -d $INSTALL_DIR
+        mkdir -pv $INSTALL_DIR
+        unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
         chmod -R -v 555 $INSTALL_DIR
 
         ls -l /bin/CDHelper || echo "Symlink not found"
         rm /bin/CDHelper || echo "Removing old symlink"
-        ln -s $INSTALL_DIR/CDHelper/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
+        ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
 
         CDHelper version
 
+        CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
 

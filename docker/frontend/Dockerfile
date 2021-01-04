@@ -1,5 +1,5 @@
 # (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.local:5000/base-image:latest AS build-env
+FROM registry.regnet.local:5000/base-image:latest AS build-env
 
 ARG BUILD_HASH
 ARG BRANCH
