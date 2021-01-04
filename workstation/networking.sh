@@ -36,11 +36,11 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_VALIDATOR_SUBNET masquerade"
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SENTRY_SUBNET masquerade"
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SERVICE_SUBNET masquerade"
-    firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"22\" protocol=\"tcp\" accept"
-    firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_INTERX_PORT\" protocol=\"tcp\" accept"
-    firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_P2P_PORT\" protocol=\"tcp\" accept"
-    firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_RPC_PORT\" protocol=\"tcp\" accept"
-    firewall-cmd --permanent --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_GRPC_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"22\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_INTERX_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_P2P_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_RPC_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_GRPC_PORT\" protocol=\"tcp\" accept"
 
     firewall-cmd --reload
     firewall-cmd --get-zones
