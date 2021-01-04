@@ -26,8 +26,6 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --permanent --change-interface=$IFACE
     firewall-cmd --permanent --zone=demo --change-interface=$IFACE
     firewall-cmd --permanent --zone=demo --set-target=default
-
-    firewall-cmd --zone=demo --add-interface=docker0
     firewall-cmd --permanent --zone=demo --add-interface=docker0
 
     firewall-cmd --permanent --zone=demo --add-port=$KIRA_INTERX_PORT/tcp
