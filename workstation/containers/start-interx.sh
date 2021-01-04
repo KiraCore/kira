@@ -40,7 +40,7 @@ $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"
 
 KEYRING_PASSWORD="1234567890"
 
-FAUCET_ADDR=$(curl http://${KIRA_INTERX_DNS}:11000/api/faucet | jq -r '.address')
+FAUCET_ADDR=$(curl http://10.4.0.2:11000/api/faucet | jq -r '.address')
 docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex --yes <<EOF
 $KEYRING_PASSWORD
 $KEYRING_PASSWORD
