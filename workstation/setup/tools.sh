@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.14"
+KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.15"
 if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -24,11 +24,11 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   pip3 install ECPy
 
-  cd /home/$SUDO_USER
+  cd $KIRA_HOME
   curl -sS https://getcomposer.org/installer -o composer-setup.php
   php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
-  HD_WALLET_DIR="/home/$SUDO_USER/hd-wallet-derive"
+  HD_WALLET_DIR="$KIRA_HOME/hd-wallet-derive"
   HD_WALLET_PATH="$HD_WALLET_DIR/hd-wallet-derive.php"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/hd-wallet-derive.git" "master" "$HD_WALLET_DIR" 555
   FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true -i="$HD_WALLET_DIR/.git,$HD_WALLET_DIR/.gitignore,$HD_WALLET_DIR/tests")
@@ -48,8 +48,8 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   rm /bin/hd-wallet-derive || echo "WARNING: Failed to remove old Wallet Derive symlink"
   ln -s $HD_WALLET_PATH /bin/hd-wallet-derive || echo "WARNING: KIRA Manager symlink already exists"
 
-  cd /home/$SUDO_USER
-  TOOLS_DIR="/home/$SUDO_USER/tools"
+  cd $KIRA_HOME
+  TOOLS_DIR="$KIRA_HOME/tools"
   KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
   PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
@@ -81,7 +81,27 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
   # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
   # priv-key-gen --mnemonic="$MNEMONIC" --valkey=./priv_validator_key.json --nodekey=./node_key.json --keyid=./node_id.key
 
-  cd /home/$SUDO_USER
+  cat > /etc/systemd/system/kirascan.service << EOL
+[Unit]
+Description=Kira Console UI Monitoring Service
+After=network.target
+[Service]
+Type=simple
+WorkingDirectory=$KIRA_HOME
+EnvironmentFile=/etc/environment
+ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
+  systemctl daemon-reload
+  systemctl enable kirascan
+  systemctl restart kirascan
+
+  cd $KIRA_HOME
   touch $KIRA_SETUP_BASE_TOOLS
 else
   echo "INFO: Base tools were already installed."

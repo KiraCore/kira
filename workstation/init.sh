@@ -18,8 +18,9 @@ DEBUG_MODE=$4
 [ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
-KIRA_DUMP="/home/$KIRA_USER/DUMP"
-KIRA_SECRETS="/home/$KIRA_USER/.secrets"
+KIRA_HOME="/home/$KIRA_USER"
+KIRA_DUMP="$KIRA_HOME/DUMP"
+KIRA_SECRETS="$KIRA_HOME/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.15"
@@ -35,7 +36,7 @@ echo "|   START TIME: $START_TIME_INIT"
 echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
-echo "|    KIRA USER: $SUDO_USER"
+echo "|    KIRA USER: $KIRA_USER"
 echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
@@ -120,7 +121,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -179,6 +180,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper version
 
         CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
 
