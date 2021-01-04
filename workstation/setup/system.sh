@@ -4,7 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 
-KIRA_SETUP_FILE="$KIRA_SETUP/system-v0.0.3" 
+KIRA_SETUP_FILE="$KIRA_SETUP/system-v0.0.5" 
 if [ ! -f "$KIRA_SETUP_FILE" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -18,7 +18,14 @@ if [ ! -f "$KIRA_SETUP_FILE" ] ; then
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
-        echo \"INFO: Restartin docker network manager...\"
+        echo \"INFO: Reloading daemon...\"
+        systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
+        echo \"INFO: Restarting firewall...\"
+        systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
+        firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
+        echo \"INFO: Restarting docker...\"
+        systemctl restart docker || echo \"ERROR: Failed to restart docker\"
+        echo \"INFO: Restarting docker network manager...\"
         systemctl restart NetworkManager docker || echo \"ERROR: Failed to restart docker network manager\"
 esac
 exit 0"

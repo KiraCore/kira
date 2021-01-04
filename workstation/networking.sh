@@ -14,101 +14,59 @@ set -x
 
 echo "INFO: Ensuring UFW rules persistence"
 
-setup-after-rules() {
-    IFace=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
-    UWF_AFTER="/etc/ufw/after.rules"
-    UWF_BEFORE="/etc/ufw/before.init"
-
-    cat >> $UWF_AFTER <<EOL
-#-DOCKER-BEHIND-UFW-V1-START
-*filter
-:DOCKER-USER - [0:0]
-:ufw-user-input - [0:0]
-:ufw-after-logging-forward - [0:0]
-
--A DOCKER-USER -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT
--A DOCKER-USER -m conntrack --ctstate INVALID -j DROP
--A DOCKER-USER -i $IFace -j ufw-user-input
--A DOCKER-USER -i $IFace -j ufw-after-logging-forward
--A DOCKER-USER -i $IFace -j DROP
-
-COMMIT
-
-*nat
-:POSTROUTING ACCEPT [0:0]
--A POSTROUTING ! -o docker0 -s 172.17.0.0/16 -j MASQUERADE
--A POSTROUTING ! -o docker0 -s $KIRA_REGISTRY_SUBNET -j MASQUERADE
--A POSTROUTING ! -o docker0 -s $KIRA_VALIDATOR_SUBNET -j MASQUERADE
--A POSTROUTING ! -o docker0 -s $KIRA_SENTRY_SUBNET -j MASQUERADE
--A POSTROUTING ! -o docker0 -s $KIRA_SERVICE_SUBNET -j MASQUERADE
-
-COMMIT
-
-#-DOCKER-BEHIND-UFW-V1-END
-EOL
-
-    cat > $UWF_BEFORE <<EOL
-#!/bin/sh
-set -e
-
-case "\$1" in
-start)
-    # typically required
-    ;;
-stop)
-    iptables -F DOCKER-USER || true
-    iptables -A DOCKER-USER -j RETURN || true
-    iptables -X ufw-user-input || true
-    # typically required
-    ;;
-status)
-    # optional
-    ;;
-flush-all)
-    # optional
-    ;;
-*)
-    echo "'\$1' not supported"
-    echo "Usage: before.init {start|stop|flush-all|status}"
-    ;;
-esac
-EOL
-
-chmod +x $UWF_AFTER
-chmod +x $UWF_BEFORE
-}
-
 if [ "${INFRA_MODE,,}" == "local" ] ; then
-    echo "INFO: Setting up demo mode networking..."
-    ufw disable
-    ufw --force reset
-    ufw logging on # required to setup logging rules
-    setup-after-rules
-    ufw default allow outgoing
-    ufw default deny incoming
-    ufw allow 22 # SSH
-    ufw allow $KIRA_FRONTEND_PORT 
-    ufw allow $KIRA_INTERX_PORT
-    ufw allow $KIRA_SENTRY_P2P_PORT
-    ufw allow $KIRA_SENTRY_RPC_PORT
-    ufw allow $KIRA_SENTRY_GRPC_PORT
-    ufw status verbose
-    echo "y" | ufw enable || :
-    ufw status verbose
-    ufw reload
+    echo "INFO: Setting up demo mode networking for $IFACE interface & stopping docker before changes are applied..."
     systemctl daemon-reload
-    systemctl restart ufw
-    ufw status verbose
+    systemctl stop docker
+    systemctl restart firewalld
 
-    # firewall-cmd --zone=public --add-masquerade --permanent
-    # firewall-cmd --reload
+    echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
+
+    firewall-cmd --permanent --new-zone=demo || echo "INFO: Zone demo already exists"
+    firewall-cmd --permanent --change-interface=$IFACE
+    firewall-cmd --permanent --zone=demo --change-interface=$IFACE
+    firewall-cmd --permanent --zone=demo --set-target=default
+
+    firewall-cmd --zone=demo --add-interface=docker0
+    firewall-cmd --permanent --zone=demo --add-interface=docker0
+
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_INTERX_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_FRONTEND_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=22/tcp
+
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.17.0.0/16 masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.18.0.0/16 masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_REGISTRY_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_VALIDATOR_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SENTRY_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SERVICE_SUBNET masquerade"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"22\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_INTERX_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_P2P_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_RPC_PORT\" protocol=\"tcp\" accept"
+    firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$KIRA_SENTRY_GRPC_PORT\" protocol=\"tcp\" accept"
+
+    firewall-cmd --reload
+    firewall-cmd --get-zones
+    firewall-cmd --zone=demo --list-all
+    firewall-cmd --zone=trusted --list-all 
+    firewall-cmd --zone=public --list-all 
+    firewall-cmd --set-default-zone=demo
+    firewall-cmd --complete-reload
+    firewall-cmd --check-config || echo "INFO: Failed to check firewall config"
+
+    echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
+
+    # restart the services
+    systemctl restart firewalld
+    systemctl restart docker
 
     echo "INFO: Restarting docker..."
-    systemctl restart docker || ( journalctl -u docker | tail -n 20 && systemctl restart docker )
+    systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
 
-    # WARNING, following command migt disable SSH access
-    CDHelper text lineswap --insert="ENABLED=yes" --prefix="ENABLED=" --path=/etc/ufw/ufw.conf --append-if-found-not=True
-    
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echo "INFO: Setting up sentry mode networking..."
 

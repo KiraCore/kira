@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/network-v0.0.6" 
+SETUP_CHECK="$KIRA_SETUP/network-v0.0.9" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
@@ -14,18 +14,20 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Installing generic dependencies..."
     apt-get install -y ufw firewalld
 
-    # We ar eusing ufw so if someone enabled firewalld - disable it
-    systemctl disable firewalld || echo "INFO: Failed to disable firewalld"
-    systemctl stop firewalld || echo "INFO: Failed to stop firewalld"
+    # resolve firewalld service restart conflicts
+    systemctl disable ebtables || echo "INFO: Failed to disable ebtables"
+    systemctl mask ebtables
+    ln -s /sbin/iptables /usr/sbin/ || echo "INFO: Failed symlink creation"
+    ln -s /sbin/iptables-restore /usr/sbin/ || echo "INFO: Failed symlink creation"
+    ln -s /sbin/ip6tables /usr/sbin/ || echo "INFO: Failed symlink creation"
+    ln -s /sbin/ip6tables-restore /usr/sbin/ || echo "INFO: Failed symlink creation"
 
-    # allow loggs to be dropped
-    touch /var/log/ufw.log && chown syslog:syslog /var/log/ufw.log
+    systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
+    systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
 
-    DEFAULT_UFW="/etc/default/ufw"
-    CDHelper text lineswap --insert="IPV6=no" --prefix="IPV6=" --path="$DEFAULT_UFW" --append-if-found-not=True
-    CDHelper text lineswap --insert="DEFAULT_FORWARD_POLICY=\"ACCEPT\"" --prefix="DEFAULT_FORWARD_POLICY=" --path="$DEFAULT_UFW" --append-if-found-not=True
-    #CDHelper text lineswap --insert="MANAGE_BUILTINS=yes" --prefix="MANAGE_BUILTINS=" --path="$DEFAULT_UFW" --append-if-found-not=True
-    ##CDHelper text lineswap --insert="DOCKER_OPTS=\"--iptables=false\"" --prefix="DOCKER_OPTS=" --path="$DEFAULT_UFW" --append-if-found-not=True
+    # ensure docker containers will have internet access
+    sysctl -w net.ipv4.ip_forward=1
+    CDHelper text lineswap --insert="net.ipv4.ip_forward=1" --prefix="net.ipv4.ip_forward=" --path=/etc/sysctl.conf --append-if-found-not=True
 
     touch $SETUP_CHECK
 else
