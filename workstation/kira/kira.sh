@@ -175,7 +175,7 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-            LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
+            LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     fi
