@@ -30,6 +30,13 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     firewall-cmd --zone=demo --add-interface=docker0
     firewall-cmd --permanent --zone=demo --add-interface=docker0
 
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_INTERX_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=$KIRA_FRONTEND_PORT/tcp
+    firewall-cmd --permanent --zone=demo --add-port=22/tcp
+
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.17.0.0/16 masquerade"
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=172.18.0.0/16 masquerade"
     firewall-cmd --permanent --zone=demo --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_REGISTRY_SUBNET masquerade"
