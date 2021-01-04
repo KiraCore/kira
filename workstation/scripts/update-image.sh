@@ -33,6 +33,14 @@ touch $KIRA_SETUP_FILE
 
 cd $IMAGE_DIR
 
+# INTEGRITY_HASH="$(echo "
+# $(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)
+# $IMAGE_DIR-$IMAGE_NAME-$IMAGE_TAG
+# $ARG1_KEY-$ARG1_VAL
+# $ARG2_KEY-$ARG2_VAL
+# $ARG3_KEY-$ARG3_VAL
+# " | md5sum | awk '{print $1}')"
+
 # adding integrity to the hash enables user to update based on internal image state
 OLD_HASH=$(cat $KIRA_SETUP_FILE)
 NEW_HASH="$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)-$INTEGRITY"

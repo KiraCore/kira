@@ -10,12 +10,11 @@ cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
 cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
 set -e
 
-NETWORK="kiranet"
+CONTAINER_NAME="validator"
 echo "------------------------------------------------"
-echo "| STARTING VALIDATOR NODE"
+echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|        IP: $KIRA_VALIDATOR_IP"
-echo "|   NETWORK: $NETWORK"
+echo "|   NETWORK: $KIRA_VALIDATOR_NETWORK"
 echo "|   NODE ID: $VALIDATOR_NODE_ID"
 echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
 echo "------------------------------------------------"
@@ -40,12 +39,13 @@ echo "INFO: Starting validator node..."
 docker run -d \
     --hostname $KIRA_VALIDATOR_DNS \
     --restart=always \
-    --name validator \
-    --net=$NETWORK \
-    --ip $KIRA_VALIDATOR_IP \
+    --name $CONTAINER_NAME \
+    --net=$KIRA_VALIDATOR_NETWORK \
     -e DEBUG_MODE="True" \
     -v $DOCKER_COMMON/validator:/common \
     validator:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"

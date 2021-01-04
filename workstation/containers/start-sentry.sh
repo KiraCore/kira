@@ -7,13 +7,12 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 set -e
 
-NETWORK="sentrynet"
+CONTAINER_NAME="sentry"
 echo "------------------------------------------------"
-echo "| STARTING SENTRY NODE"
+echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|        IP: $KIRA_SENTRY_IP"
 echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|   NETWORK: $NETWORK"
+echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
 echo "------------------------------------------------"
 set -x
@@ -40,14 +39,16 @@ docker run -d \
     -p $DEFAULT_GRPC_PORT:$KIRA_SENTRY_GRPC_PORT \
     --hostname $KIRA_SENTRY_DNS \
     --restart=always \
-    --name sentry \
-    --net=$NETWORK \
-    --ip $KIRA_SENTRY_IP \
+    --name $CONTAINER_NAME \
+    --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
     -v $DOCKER_COMMON/sentry:/common \
     sentry:latest
 
-docker network connect kiranet sentry
+docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 
 echo "INFO: Waiting for sentry to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$SENTRY_NODE_ID" || exit 1
+
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
