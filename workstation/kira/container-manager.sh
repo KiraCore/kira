@@ -99,28 +99,29 @@ while : ; do
     fi
 
     NAME_TMP="${NAME}${WHITESPACE}"
-    echo "|      Name: ${NAME_TMP:0:34} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+    echo "|     Name: ${NAME_TMP:0:35} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
 
     [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
 
     if [ ! -z "$REPO" ] ; then
-        REPO_TMP=$(echo "$REPO" | tr -d 'https://')
+        REPO_TMP=$(echo "$REPO" | grep -oP "^https://\K.*")
         REPO_TMP="${REPO}${WHITESPACE}"
-        echo "|      Repo: ${REPO_TMP:0:34} : $BRANCH"
+        echo "|     Repo: ${REPO_TMP:0:35} : $BRANCH"
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists
         if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
             for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
                 port_tmp="${port}${WHITESPACE}"
-                echo "|  Port Map: ${port_tmp:0:34} |"
+                port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*")
+                echo "| Port Map: ${port_tmp:0:35} |"
             done
         fi
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
             TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
             if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
                 IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
-                echo "|  Local IP: ${IP_TMP:0:34} |"
+                echo "| Local IP: ${IP_TMP:0:35} |"
             fi
         done
     fi
@@ -130,7 +131,7 @@ while : ; do
     echo "|-----------------------------------------------|"
     if [ ! -z "$HOSTNAME" ] ; then
         [ ! -z "$LIP" ] && TMP_HOSTNAME="${HOSTNAME} ($LIP) ${WHITESPACE}" || TMP_HOSTNAME="${HOSTNAME}${WHITESPACE}"
-        echo "|   Name: ${TMP_HOSTNAME:0:37} |"
+        echo "|   Host: ${TMP_HOSTNAME:0:37} |"
     fi
     [ "$STATUS" != "exited" ] && \
     echo "| Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
