@@ -142,11 +142,6 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         cd /tmp
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
-            dpkg --add-architecture armhf
-            apt-get update -y
-            apt-get -y install crossbuild-essential-armhf
-            apt-get -y install libc6:armhf libstdc++6:armhf || echo "INFO: Failed to directly install cross architecture support libs"
-
             CDHELPER_ARCH="arm64"
             EXPECTED_HASH="37a87255a40565c4edcc52725260380966fed3d403dfa86f95f1259af413205d"
         else
