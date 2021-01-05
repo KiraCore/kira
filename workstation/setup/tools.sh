@@ -30,7 +30,7 @@ if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
 
   HD_WALLET_DIR="$KIRA_HOME/hd-wallet-derive"
   HD_WALLET_PATH="$HD_WALLET_DIR/hd-wallet-derive.php"
-  $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/hd-wallet-derive.git" "master" "$HD_WALLET_DIR" 555
+  $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/hd-wallet-derive.git" "master" "$HD_WALLET_DIR" 555 "" "$HD_WALLET_DIR/tests"
   FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true -i="$HD_WALLET_DIR/.git,$HD_WALLET_DIR/.gitignore,$HD_WALLET_DIR/tests")
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
 
@@ -91,7 +91,7 @@ WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/environment
 ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
 Restart=always
-RestartSec=5
+RestartSec=2
 LimitNOFILE=4096
 [Install]
 WantedBy=default.target

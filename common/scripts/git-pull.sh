@@ -9,6 +9,7 @@ BRANCH=$2
 OUTPUT=$3
 RWXMOD=$4
 SSHCRED=$5
+HASH_SKIP=$6
 
 if [[ $BRANCH =~ ^[0-9A-Fa-f]{1,}$ ]] ; then
     CHECKOUT=$BRANCH
@@ -20,15 +21,22 @@ fi
 [ -z "$RWXMOD" ] && RWXMOD="default"
 [ -z "$SSHCRED" ] && SSHCRED="/home/root/.ssh/id_rsa"
 
+if [ ! -z "$HASH_SKIP" ] ; then
+    HASH_SKIP="$OUTPUT/.git,$OUTPUT/.gitignore,$HASH_SKIP"
+else
+    HASH_SKIP="$OUTPUT/.git,$OUTPUT/.gitignore"
+fi
+
 echo "------------------------------------------------"
 echo "|         STARTED: GIT PULL v0.0.2             |"
 echo "------------------------------------------------"
-echo "|       REPO: $REPO"
-echo "|     BRANCH: $BRANCH"
-echo "|   CHECKOUT: $CHECKOUT"
-echo "|     OUTPUT: $OUTPUT"
-echo "|  R/W/X MOD: $RWXMOD"
-echo "|   SSH CRED: $SSHCRED"
+echo "|      REPO: $REPO"
+echo "|    BRANCH: $BRANCH"
+echo "|  CHECKOUT: $CHECKOUT"
+echo "|    OUTPUT: $OUTPUT"
+echo "| R/W/X MOD: $RWXMOD"
+echo "|  SSH CRED: $SSHCRED"
+echo "| HASH SKIP: $HASH_SKIP"
 echo "------------------------------------------------"
 
 TMP_OUTPUT="/tmp$OUTPUT"
@@ -53,7 +61,7 @@ touch $LOCAL_HASH_FILE
 
 WKDIR=$PWD
 cd $OUTPUT
-LOCAL_HASH_NEW="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')"
+LOCAL_HASH_NEW=$(CDHelper hash SHA256 -p="$OUTPUT" -x=true -r=true --silent=true -i="$HASH_SKIP")
 LOCAL_HASH_OLD="$(cat $LOCAL_HASH_FILE)"
 REMOTE_HASH_NEW=""
 REMOTE_HASH_OLD="$(cat $REMOTE_HASH_FILE)"
@@ -138,7 +146,7 @@ else
 fi
 
 REMOTE_HASH="$(git log -n1 --pretty='%h' || echo "undefined")-${BRANCH}-${CHECKOUT}"
-LOCAL_HASH="$(hashdeep -r -l . | sort | md5sum | awk '{print $1}')"
+LOCAL_HASH=$(CDHelper hash SHA256 -p="$OUTPUT" -x=true -r=true --silent=true -i="$HASH_SKIP")
 echo "$REMOTE_HASH" > $REMOTE_HASH_FILE || rm -fv $REMOTE_HASH_FILE
 echo "$LOCAL_HASH" > $LOCAL_HASH_FILE || rm -fv $LOCAL_HASH_FILE
 
