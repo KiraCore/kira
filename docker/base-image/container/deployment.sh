@@ -59,6 +59,7 @@ FLUTTER_VERSION="1.25.0-8.2.pre-beta"
 FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
 
 wget https://storage.googleapis.com/flutter_infra/releases/beta/linux/$FLUTTER_TAR
+mkdir -p $FLUTTERROOT # make sure flutter root directory exists
 tar -C $FLUTTERROOT -xvf ./$FLUTTER_TAR
 
 echo "Setting up essential dart dependencies..."
@@ -69,6 +70,7 @@ FLUTTER_CACHE=$FLUTTERROOT/bin/cache
 rm -rfv $FLUTTER_CACHE/dart-sdk
 
 wget https://storage.googleapis.com/dart-archive/channels/beta/release/$DART_VERSION/sdk/$DART_ZIP
+mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists
 unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
