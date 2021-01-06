@@ -17,14 +17,14 @@ while [ $i -le 40 ]; do
         echo "INFO: Success, frontend container was found"
     fi
 
-    echo "INFO: Awaiting frontend initalization..."
+    echo "INFO: Awaiting frontend initialization..."
     IS_STARTED=$(docker exec -i "frontend" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: Frontend is not initalized yet"
+        echo "WARNING: Frontend is not initialized yet"
         continue
     else
-        echo "INFO: Success, frontend was initalized"
+        echo "INFO: Success, frontend was initialized"
         break
     fi
 done
