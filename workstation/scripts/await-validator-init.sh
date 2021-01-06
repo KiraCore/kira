@@ -25,14 +25,14 @@ while [ $i -le 40 ]; do
         echo "INFO: Success, validator container was found"
     fi
 
-    echo "INFO: Awaiting validator initalization..."
+    echo "INFO: Awaiting validator initialization..."
     IS_STARTED=$(docker exec -i "validator" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 12
-        echo "WARNING: Validator is not initalized yet"
+        echo "WARNING: Validator is not initialized yet"
         continue
     else
-        echo "INFO: Success, validator was initalized"
+        echo "INFO: Success, validator was initialized"
     fi
 
     echo "INFO: Attempting to access genesis file..."
