@@ -4,8 +4,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 
-KIRA_SETUP_FILE="$KIRA_SETUP/system-v0.0.5" 
-if [ ! -f "$KIRA_SETUP_FILE" ] ; then
+SETUP_CHECK="$KIRA_SETUP/system-v0.0.5-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo "")" 
+if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
     apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
@@ -27,6 +27,7 @@ case \"\$1\" in
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
         echo \"INFO: Restarting docker network manager...\"
         systemctl restart NetworkManager docker || echo \"ERROR: Failed to restart docker network manager\"
+        $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"
 
@@ -35,7 +36,7 @@ exit 0"
     cat > $WAKEUP_SCRIPT <<< $WAKEUP_ENTRY
     chmod 555 $WAKEUP_SCRIPT
     
-    touch $KIRA_SETUP_FILE
+    touch $SETUP_CHECK
 else
     echo "INFO: Your system has all pre-requisites set"
 fi
