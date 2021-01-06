@@ -37,14 +37,12 @@ mkdir -p $HALT_DIR
 
 WHITESPACE="                                                          "
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
-
 mkdir -p $CONTAINER_DUMP
 
 HOSTNAME=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
     PORTS=$(cat $PORTS_PATH)

@@ -37,8 +37,6 @@ rm -fv $DOCKER_COMMON/frontend/halt
 LOADING="true"
 while :; do
     START_TIME="$(date -u +%s)"
-    rm -f $OPTION_PATH && touch $OPTION_PATH
-
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 
