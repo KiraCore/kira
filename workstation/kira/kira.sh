@@ -68,8 +68,6 @@ while :; do
 
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
-        IS_ANY_CONTAINER_RUNNING="false"
-        IS_ANY_CONTAINER_PAUSED="false"
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
@@ -79,14 +77,11 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
-            [ "${name,,}" == "registry" ] && continue
-            [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
-            [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
-            [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
-            # TODO: show failed status if any of the healthchecks fails
-    
+            [ "${name,,}" == "registry" ] && continue
+            [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+
             # if block height check fails via validator then try via interx
             if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
                 STATUS_SOURCE="$name"
