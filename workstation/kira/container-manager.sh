@@ -10,6 +10,9 @@ HALT_FILE="$HALT_DIR/halt"
 set +x
 echo "INFO: Launching KIRA Container Manager..."
 
+SCAN_DIR="$KIRA_HOME/kirascan"
+NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 NETWORKS_PATH="$TMP_DIR/networks"
 STATUS_PATH="$TMP_DIR/status-$NAME"
@@ -34,22 +37,15 @@ mkdir -p $HALT_DIR
 
 WHITESPACE="                                                          "
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
-
 mkdir -p $CONTAINER_DUMP
 
 HOSTNAME=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-
-    NETWORKS=$(cat $NETWORKS_PATH)
+    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
     PORTS=$(cat $PORTS_PATH)
-
-    touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
-        echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
-        PID1="$!" && echo "$PID1" > "${NETWORKS_PATH}.pid"
-    fi
 
     touch "${STATUS_PATH}.pid" && if ! kill -0 $(cat "${STATUS_PATH}.pid") 2> /dev/null ; then
         [ "${LOADING,,}" == "true" ] && rm -f "$STATUS_PATH-$NAME" && touch "$STATUS_PATH-$NAME"
@@ -75,7 +71,7 @@ while : ; do
     echo "|        KIRA CONTAINER MANAGER v0.0.6          |"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     [ "${LOADING,,}" == "true" ] && echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
-    [ "${LOADING,,}" == "true" ] && wait $PID1 && wait $PID2 && wait $PID4 && LOADING="false" && continue
+    [ "${LOADING,,}" == "true" ] && wait $PID2 && wait $PID4 && LOADING="false" && continue
 
     source "$STATUS_PATH-$NAME"
 

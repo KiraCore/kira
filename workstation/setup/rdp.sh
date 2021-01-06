@@ -12,7 +12,7 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     # Info: https://github.com/ddclient/ddclient
     echo "INFO: Setting up DUC..."
     
-    DDC_DIR="/home/$SUDO_USER/ddc"
+    DDC_DIR="$KIRA_HOME/ddc"
     $KIRA_SCRIPTS/git-pull.sh "https://github.com/ddclient/ddclient.git" "$DUC_VERSION" "$DDC_DIR" || SUCCESS="false"
     FILE_HASH=$(CDHelper hash SHA256 -p="$DDC_DIR" -x=true -r=true --silent=true -i="$DDC_DIR/.git,$DDC_DIR/.gitignore")
     EXPECTED_HASH="90cd72158c37309d2f265117f2bd418464c488ee95f7874b0bd5bdfebce2cb70"
@@ -31,7 +31,7 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     systemctl restart ddclient || echo "WARNING: Failed to restart DDClient"
     systemctl status ddclient || echo "WARNING: Failed to show DDClient status"
 
-    XRDP_DIR="/home/$SUDO_USER/xrdp"
+    XRDP_DIR="$KIRA_HOME/xrdp"
     $KIRA_SCRIPTS/git-pull.sh "https://github.com/neutrinolabs/xrdp.git" "$XRDP_VERSION" "$XRDP_DIR" || SUCCESS="false"
     FILE_HASH=$(CDHelper hash SHA256 -p="$XRDP_DIR" -x=true -r=true --silent=true -i="*.git,*.gitignore")
     EXPECTED_HASH="06d87e9938181245d27ceb88073decd08ed1b0e1781b65979e7e07c04eea3dac"
