@@ -50,7 +50,7 @@ for (( i=0; i<${len}; i++ )) ; do
       fi
     done
   else
-    echo "INFO: Containers will NOT be recconected to the '$network' network"
+    echo "INFO: Containers will NOT be reconnected to the '$network' network"
   fi
 done
 
