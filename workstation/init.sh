@@ -23,7 +23,7 @@ KIRA_DUMP="$KIRA_HOME/DUMP"
 KIRA_SECRETS="$KIRA_HOME/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.15"
+CDHELPER_VERSION="v0.6.50"
 SETUP_VER="v0.0.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -143,10 +143,10 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm64"
-            EXPECTED_HASH="37a87255a40565c4edcc52725260380966fed3d403dfa86f95f1259af413205d"
+            EXPECTED_HASH="6cfd73a429463aa9f2e5f9e8462f5ada50ecaa1b4e21ad6d05caef4f21943273"
         else
             CDHELPER_ARCH="x64"
-            EXPECTED_HASH="abf1e16447959025341a78a6b5dd180015d4bd191a87c614544c3b5e501ebf38"
+            EXPECTED_HASH="6345e3c37cb5eddee659d1a6c7068ff6cf0a1e6a74d1f6f5fec747338f9ebdaf"
         fi
 
         FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
