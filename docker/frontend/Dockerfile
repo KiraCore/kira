@@ -7,7 +7,6 @@ ARG REPO
 
 RUN echo "START: Build hash: ${BUILD_HASH}, Branch: ${BRANCH}, Repo: ${REPO}"
 ENV WORKDIR="/root/kira-frontend/src"
-WORKDIR "${WORKDIR}"
 ADD ./container ${SELF_CONTAINER}
 RUN "${SELF_CONTAINER}/setup.sh"
 
