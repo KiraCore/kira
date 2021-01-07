@@ -31,15 +31,15 @@ ENV SUCCESS_END_FILE=${SELF_HOME}/success_end
 ENV MAINTENANCE_FILE=${SELF_HOME}/maintenence
 ENV SEKAID_HOME=/root/.simapp
 ENV FLUTTERROOT="/usr/lib/flutter"
-ENV PATH=${FLUTTERROOT}/bin:${FLUTTERROOT}/bin/cache/dart-sdk/bin:${PATH}
 ENV GOROOT=/usr/local/go
 ENV GOPATH=/home/go
 ENV GOBIN=/usr/local/go/bin
-ENV PATH=$PATH:$GOROOT:$GOPATH:$GOBIN
 ENV SEKAI="${GOPATH}/src/github.com/kiracore/sekai"
 ENV SEKAID_BIN="${GOBIN}/sekaid"
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
-ENV PATH="/root/.cargo/bin:${PATH}"
+ENV PATH="${PATH}:${FLUTTERROOT}/bin:${FLUTTERROOT}/bin/cache/dart-sdk/bin:${GOROOT}:${GOPATH}:${GOBIN}:/root/.cargo/bin"
+
+RUN echo ${PATH} >> /etc/profile
 
 RUN mkdir -p ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin ${SEKAID_HOME} ${COMMON_DIR}
 

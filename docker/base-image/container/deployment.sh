@@ -4,6 +4,8 @@ exec 2>&1
 set -e
 set -x
 
+source /etc/profile
+
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common curl wget git nginx
