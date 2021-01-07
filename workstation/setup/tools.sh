@@ -2,8 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-KIRA_SETUP_BASE_TOOLS="$KIRA_SETUP/base-tools-v0.1.15"
-if [ ! -f "$KIRA_SETUP_BASE_TOOLS" ]; then
+SETUP_CHECK="$KIRA_SETUP/base-tools-v0.1.15"
+if [ ! -f "$SETUP_CHECK" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
   apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
@@ -102,7 +102,7 @@ EOL
   systemctl restart kirascan
 
   cd $KIRA_HOME
-  touch $KIRA_SETUP_BASE_TOOLS
+  touch $SETUP_CHECK
 else
   echo "INFO: Base tools were already installed."
 fi
