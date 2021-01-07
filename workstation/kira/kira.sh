@@ -4,8 +4,15 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
+
+if [ "${USER,,}" != root ] ; then
+    echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
+    exit 1
+fi
+
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
+SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 DISK_SCAN_PATH="$SCAN_DIR/disk"
@@ -13,20 +20,8 @@ CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
-
-TMP_DIR="/tmp/kira-stats" # performance counters directory
-PID_DIR="$TMP_DIR/pid"
-VARSMGR_PATH="$TMP_DIR/varsmgr" # file contianing cached variables with details regarding individual containers
+STATUS_SCAN_PATH="$SCAN_DIR/status"
 WHITESPACE="                                                          "
-
-rm -fvr $PID_DIR # wipe all process id's
-
-mkdir -p "$TMP_DIR" "$PID_DIR"
-
-rm -fv $VARSMGR_PATH
-rm -fv "${VARSMGR_PATH}.lock"
-
-touch $VARSMGR_PATH && chmod 777 $VARSMGR_PATH
 
 echo "INFO: Wiping halt files of all containers..."
 rm -fv $DOCKER_COMMON/validator/halt
@@ -38,34 +33,16 @@ LOADING="true"
 while :; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
-
-    i=-1
-    for name in $CONTAINERS; do
-        i=$((i + 1))
-        touch "$PID_DIR/${name}.pid" && if ! kill -0 $(cat "$PID_DIR/${name}.pid") 2> /dev/null ; then
-            [ "${LOADING,,}" == "true" ] && rm -f "$VARSMGR_PATH-$name" && touch "$VARSMGR_PATH-$name"
-            $KIRA_MANAGER/kira/container-status.sh $name "$VARSMGR_PATH-$name" $NETWORKS & 
-            echo "$!" > "$PID_DIR/${name}.pid"
-        fi
-    done
-
+    CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
     CPU_UTIL=$(cat $CPU_SCAN_PATH 2> /dev/null || echo "")
     RAM_UTIL=$(cat $RAM_SCAN_PATH 2> /dev/null || echo "")
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
-
-    CONTAINERS_COUNT=$((i + 1))
+    
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-
-    for name in $CONTAINERS; do
-        if [ -f "$VARSMGR_PATH-$name" ] ; then
-            source "$VARSMGR_PATH-$name"
-        fi
-    done
-
+    
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
         ALL_CONTAINERS_PAUSED="true"
@@ -73,6 +50,12 @@ while :; do
         ALL_CONTAINERS_HEALTHY="true"
         i=-1
         for name in $CONTAINERS; do
+            if [ -f "$STATUS_SCAN_PATH/$name" ] ; then
+                source "$STATUS_SCAN_PATH/$name"
+            else
+                continue
+            fi
+
             i=$((i + 1))
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
@@ -94,6 +77,7 @@ while :; do
                 NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
             fi
         done
+        CONTAINERS_COUNT=$((i + 1))
     fi
 
     KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
@@ -145,10 +129,14 @@ while :; do
             LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
+    else
+        while [ ! -f $SCAN_DONE ] ; do
+            sleep 1
+        done 
+        LOADING="false"
+        continue
     fi
-
-    [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
-   
+    
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ] && [ "${LOADING,,}" == "false" ] ; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
@@ -187,7 +175,7 @@ while :; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
-            rm -fv $VARSMGR_PATH && touch $VARSMGR_PATH && LOADING="true" # reload
+            LOADING="true" # reload
             OPTION="" # reset option
             EXECUTED="true"
             break
@@ -222,6 +210,8 @@ while :; do
             EXECUTED="true"
         fi
     done
+
+    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
 
     if [ "${OPTION,,}" == "d" ]; then
         echo "INFO: Dumping firewal info..."

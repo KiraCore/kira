@@ -4,7 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 
-SETUP_CHECK="$KIRA_SETUP/system-v0.0.5-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo "")" 
+SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo "")" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -14,10 +14,17 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up system pre-requisites..."
     CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True --silent=$SILENT_MODE
     CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True --silent=$SILENT_MODE
+
+
+    SCAN_DIR="$KIRA_HOME/kirascan"
+    SCAN_DONE="$SCAN_DIR/done"
+    STATUS_SCAN_PATH="$SCAN_DIR/status"
     
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
+        rm -fv $SCAN_DONE || echo \"ERROR: Failed to remove scaner finalization flaf\"
+        rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
         echo \"INFO: Reloading daemon...\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         echo \"INFO: Restarting firewall...\"

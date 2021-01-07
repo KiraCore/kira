@@ -10,8 +10,12 @@ HALT_FILE="$HALT_DIR/halt"
 set +x
 echo "INFO: Launching KIRA Container Manager..."
 
+cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
+SCAN_DONE="$SCAN_DIR/done"
+CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+STATUS_SCAN_PATH="$SCAN_DIR/status"
 
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 NETWORKS_PATH="$TMP_DIR/networks"
@@ -47,22 +51,11 @@ while : ; do
     LIP=$(cat $LIP_PATH)
     PORTS=$(cat $PORTS_PATH)
 
-    touch "${STATUS_PATH}.pid" && if ! kill -0 $(cat "${STATUS_PATH}.pid") 2> /dev/null ; then
-        [ "${LOADING,,}" == "true" ] && rm -f "$STATUS_PATH-$NAME" && touch "$STATUS_PATH-$NAME"
-        $KIRA_MANAGER/kira/container-status.sh "$NAME" "$STATUS_PATH-$NAME" "$NETWORKS" &
-        PID2="$!" && echo "$PID2" > "${STATUS_PATH}.pid"
-    fi
-
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
         if [ ! -z "$HOSTNAME" ] ; then
             echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
-            PID3="$!" && echo "$PID3" > "${LIP_PATH}.pid"
+            PID1="$!" && echo "$PID1" > "${LIP_PATH}.pid"
         fi
-    fi
-
-    touch "${PORTS_PATH}.pid" && if ! kill -0 $(cat "${PORTS_PATH}.pid") 2> /dev/null ; then
-        echo $(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "") > "$PORTS_PATH" &
-        PID4="$!" && echo "$PID4" > "${PORTS_PATH}.pid"
     fi
 
     clear
@@ -71,9 +64,18 @@ while : ; do
     echo "|        KIRA CONTAINER MANAGER v0.0.6          |"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     [ "${LOADING,,}" == "true" ] && echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
-    [ "${LOADING,,}" == "true" ] && wait $PID2 && wait $PID4 && LOADING="false" && continue
+    [ "${LOADING,,}" == "true" ] && wait $PID1 && LOADING="false" && continue
 
-    source "$STATUS_PATH-$NAME"
+    if [ "${LOADING,,}" == "true" ] ; then
+        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
+        while [ ! -f $SCAN_DONE ] ; do
+            sleep 1
+        done 
+        LOADING="false"
+        continue
+    fi
+
+    source "$STATUS_SCAN_PATH/$name"
 
     ID="ID_$NAME" && ID="${!ID}"
     EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
@@ -85,6 +87,7 @@ while : ; do
     STARTED_AT="STARTED_AT_$NAME" && STARTED_AT="${!STARTED_AT}"
     FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
     HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!HOSTNAME}"
+    PORTS="PORTS_$NAME" && PORTS="${!PORTS}"
     EXPOSED_PORTS="EXPOSED_PORTS_$NAME" && EXPOSED_PORTS="${!EXPOSED_PORTS}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
@@ -236,6 +239,8 @@ while : ; do
         sleep 1
         break
     fi
+
+    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
     
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
         echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
