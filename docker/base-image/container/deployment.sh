@@ -4,17 +4,9 @@ exec 2>&1
 set -e
 set -x
 
-# Local Update
-# (rm -fv $KIRA_INFRA/docker/base-image/container/deployment.sh) && nano $KIRA_INFRA/docker/base-image/container/deployment.sh
-
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common curl wget git nginx
-
-# apt-get update -y --fix-missing
-# curl https://packages.cloud.google.com/apt/doc/apt-key.gpg | apt-key add -
-# curl https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-# curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add -
+    software-properties-common curl wget git nginx apt-transport-https
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
@@ -48,14 +40,42 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
+FLUTTER_VERSION="1.25.0-8.2.pre-beta"
+DART_VERSION="2.12.0-133.2.beta"
+
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"
+    DART_ARCH="arm64"
 else
     GOLANG_ARCH="amd64"
+    DART_ARCH="x64"
 fi
 
-echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
+GO_TAR=go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
+FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
+DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
 
-wget https://dl.google.com/go/go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
-tar -C /usr/local -xvf go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
+echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
+cd /tmp
+
+wget https://dl.google.com/go/$GO_TAR &>/dev/null
+tar -C /usr/local -xvf $GO_TAR &>/dev/null
+
+echo "Setting up essential flutter dependencies..."
+wget https://storage.googleapis.com/flutter_infra/releases/beta/linux/$FLUTTER_TAR
+mkdir -p /usr/lib # make sure flutter root directory exists
+tar -C /usr/lib -xvf ./$FLUTTER_TAR
+
+echo "Setting up essential dart dependencies..."
+FLUTTER_CACHE=$FLUTTERROOT/bin/cache
+rm -rfv $FLUTTER_CACHE/dart-sdk
+mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
+touch $FLUTTER_CACHE/.dartignore
+touch $FLUTTER_CACHE/engine-dart-sdk.stamp
+
+wget https://storage.googleapis.com/dart-archive/channels/beta/release/$DART_VERSION/sdk/$DART_ZIP
+unzip ./$DART_ZIP -d $FLUTTER_CACHE
+
+flutter config --enable-web
+flutter doctor
