@@ -17,6 +17,12 @@ FILE_HASH=""
 INIT_SCRIPT=""
 INTEGRITY_HASH=""
 
+SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1mDo you want to [R]einstall all dependencies or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+if [ "${SELECT,,}" == "r" ] ; then # wipe setup lock files
+    rm -fvr $KIRA_SETUP
+    mkdir -p $KIRA_SETUP
+fi
+
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
     echo -en "\e[33;1mDo you want to use default initalization script?\e[0m\c" && echo ""
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[33;1mPress [Y]es to keep default or [C] to change URL: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done

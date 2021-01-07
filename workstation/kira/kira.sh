@@ -243,11 +243,6 @@ while :; do
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
-        SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1m[R]einstall all dependencies or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-        if [ "${SELECT,,}" == "r" ] ; then # wipe setup lock files
-            rm -fvr $KIRA_SETUP
-            mkdir -p $KIRA_SETUP
-        fi
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
         exit 0
