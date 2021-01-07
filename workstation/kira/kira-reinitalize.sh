@@ -17,12 +17,6 @@ FILE_HASH=""
 INIT_SCRIPT=""
 INTEGRITY_HASH=""
 
-SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1mDo you want to [R]einstall all dependencies or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-if [ "${SELECT,,}" == "r" ] ; then # wipe setup lock files
-    rm -fvr $KIRA_SETUP
-    mkdir -p $KIRA_SETUP
-fi
-
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
     echo -en "\e[33;1mDo you want to use default initalization script?\e[0m\c" && echo ""
     ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "c" ] ; do echo -en "\e[33;1mPress [Y]es to keep default or [C] to change URL: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
@@ -90,7 +84,13 @@ if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+
+    SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1mDo you want to [R]einstall all dependencies or [C]ontinue partial reinitalization: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    if [ "${SELECT,,}" == "r" ] ; then # wipe setup lock files
+        rm -fvr $KIRA_SETUP
+        mkdir -p $KIRA_SETUP
+    fi
+
     [ "$INFRA_BRANCH" != "$NEW_BRANCH" ] && CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     source $INIT_SCRIPT_OUT "$NEW_BRANCH"
 fi
