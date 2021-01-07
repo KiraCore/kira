@@ -50,6 +50,7 @@ else
 fi
 
 echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
+cd /tmp
 
 wget https://dl.google.com/go/go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
 tar -C /usr/local -xvf go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
@@ -68,9 +69,11 @@ DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
 
 FLUTTER_CACHE=$FLUTTERROOT/bin/cache
 rm -rfv $FLUTTER_CACHE/dart-sdk
+mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
+touch $FLUTTER_CACHE/.dartignore
+touch $FLUTTER_CACHE/engine-dart-sdk.stamp
 
 wget https://storage.googleapis.com/dart-archive/channels/beta/release/$DART_VERSION/sdk/$DART_ZIP
-mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists
 unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
