@@ -4,8 +4,6 @@ exec 2>&1
 set -e
 set -x
 
-source /etc/profile
-
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common curl wget git nginx
@@ -61,8 +59,8 @@ FLUTTER_VERSION="1.25.0-8.2.pre-beta"
 FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
 
 wget https://storage.googleapis.com/flutter_infra/releases/beta/linux/$FLUTTER_TAR
-mkdir -p $FLUTTERROOT # make sure flutter root directory exists
-tar -C $FLUTTERROOT -xvf ./$FLUTTER_TAR
+mkdir -p /usr/lib # make sure flutter root directory exists
+tar -C /usr/lib -xvf ./$FLUTTER_TAR
 
 echo "Setting up essential dart dependencies..."
 DART_VERSION="2.12.0-133.2.beta"
