@@ -27,7 +27,14 @@ if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]
     mkdir -p ${FRONTEND_SRC}/build/web
 
 cat > ${FRONTEND_SRC}/build/web/index.html << EOL
+<!DOCTYPE html>
+<html>
+<head>
+</head>
+<body>
 <h1>FRONTEND BUILD WITH ARM64 IS NOT SUPPORTED YET, USE X64 ARCHITECTURE</h1>
+</body>
+</html>
 EOL
 
 else
