@@ -19,7 +19,7 @@ cat > $WORKDIR/assets/config.json << EOL
 }
 EOL
 
-
+ARCHITECTURE=$(uname -m)
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     echo "WARNING: Building frontend is not currently supported on ARM architecture"

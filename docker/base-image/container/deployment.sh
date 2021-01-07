@@ -6,7 +6,7 @@ set -x
 
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common curl wget git nginx
+    software-properties-common curl wget git nginx apt-transport-https
 
 echo "APT Update, Upfrade and Intall..."
 apt-get update -y --fix-missing
@@ -40,6 +40,9 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
+FLUTTER_VERSION="1.25.0-8.2.pre-beta"
+DART_VERSION="2.12.0-133.2.beta"
+
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"
@@ -49,24 +52,22 @@ else
     DART_ARCH="x64"
 fi
 
+GO_TAR=go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
+FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
+DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
+
 echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
 cd /tmp
 
-wget https://dl.google.com/go/go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
-tar -C /usr/local -xvf go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz &>/dev/null
+wget https://dl.google.com/go/$GO_TAR &>/dev/null
+tar -C /usr/local -xvf $GO_TAR &>/dev/null
 
 echo "Setting up essential flutter dependencies..."
-FLUTTER_VERSION="1.25.0-8.2.pre-beta"
-FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
-
 wget https://storage.googleapis.com/flutter_infra/releases/beta/linux/$FLUTTER_TAR
 mkdir -p /usr/lib # make sure flutter root directory exists
 tar -C /usr/lib -xvf ./$FLUTTER_TAR
 
 echo "Setting up essential dart dependencies..."
-DART_VERSION="2.12.0-133.2.beta"
-DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
-
 FLUTTER_CACHE=$FLUTTERROOT/bin/cache
 rm -rfv $FLUTTER_CACHE/dart-sdk
 mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
