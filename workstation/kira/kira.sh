@@ -243,6 +243,7 @@ while :; do
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
+        systemctl stop kirascan
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
         exit 0
