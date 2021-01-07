@@ -5,15 +5,16 @@ set -e
 set -x
 
 echo "Building fronted..."
-echo "INFO: WORKDIR: $WORKDIR"
+FRONTEND_SRC="/root/kira-frontend/src"
+echo "INFO: WORKDIR: $FRONTEND_SRC"
 
 cd /root && git clone ${REPO}
 
-cd $WORKDIR
+cd $FRONTEND_SRC
 
 git checkout ${BRANCH}
 
-cat > $WORKDIR/assets/config.json << EOL
+cat > $FRONTEND_SRC/assets/config.json << EOL
 {
   "api_url": "http://interx.servicenet.local:11000/api"
 }
@@ -23,9 +24,9 @@ ARCHITECTURE=$(uname -m)
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     echo "WARNING: Building frontend is not currently supported on ARM architecture"
-    mkdir -p ${WORKDIR}/build/web
+    mkdir -p ${FRONTEND_SRC}/build/web
 
-cat > ${WORKDIR}/build/web/index.html << EOL
+cat > ${FRONTEND_SRC}/build/web/index.html << EOL
 <h1>FRONTEND BUILD WITH ARM64 IS NOT SUPPORTED YET, USE X64 ARCHITECTURE</h1>
 EOL
 
