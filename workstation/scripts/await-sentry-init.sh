@@ -19,14 +19,14 @@ while [ $i -le 40 ]; do
         echo "INFO: Success, sentry container was found"
     fi
 
-    echo "INFO: Awaiting sentry initalization..."
+    echo "INFO: Awaiting sentry initialization..."
     IS_STARTED=$(docker exec -i "sentry" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 12
-        echo "WARNING: Sentry is not initalized yet"
+        echo "WARNING: Sentry is not initialized yet"
         continue
     else
-        echo "INFO: Success, sentry was initalized"
+        echo "INFO: Success, sentry was initialized"
     fi
 
     echo "INFO: Awaiting node status..."

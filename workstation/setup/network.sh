@@ -22,15 +22,15 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     ln -s /sbin/ip6tables /usr/sbin/ || echo "INFO: Failed symlink creation"
     ln -s /sbin/ip6tables-restore /usr/sbin/ || echo "INFO: Failed symlink creation"
 
-    systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
-    systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
-
     # ensure docker containers will have internet access & that firewall reload does not cause issues on ARM64
     FIREWALLD_CONF="/etc/firewalld/firewalld.conf"
     sysctl -w net.ipv4.ip_forward=1
     CDHelper text lineswap --insert="net.ipv4.ip_forward=1" --prefix="net.ipv4.ip_forward=" --path=/etc/sysctl.conf --append-if-found-not=True
     CDHelper text lineswap --insert="IndividualCalls=yes" --prefix="IndividualCalls=" --path=$FIREWALLD_CONF  --append-if-found-not=True
     CDHelper text lineswap --insert="FirewallBackend=iptables" --prefix="FirewallBackend=" --path=$FIREWALLD_CONF  --append-if-found-not=True
+
+    systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
+    systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
     
     touch $SETUP_CHECK
 else
