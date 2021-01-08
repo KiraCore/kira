@@ -179,7 +179,6 @@ while :; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
-            LOADING="true" # reload
             OPTION="" # reset option
             EXECUTED="true"
             break
