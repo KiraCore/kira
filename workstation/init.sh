@@ -245,7 +245,7 @@ CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEN
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +x
-echo "INFO: Your host environment was initalized"
+echo "INFO: Your host environment was initialized"
 echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are not running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions, and accept that you continue on your own risk.\e[0m"
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
