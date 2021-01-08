@@ -1,7 +1,8 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-SENTRY_NODE_ID=$1
+CONTAINER_NAME=$1
+SENTRY_NODE_ID=$2
 
 i=0
 NODE_ID=""
@@ -9,21 +10,21 @@ IS_STARTED="false"
 while [ $i -le 40 ]; do
     i=$((i + 1))
 
-    echo "INFO: Waiting for sentry container to start..."
+    echo "INFO: Waiting for sentry $CONTAINER_NAME to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "sentry" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: Sentry container does not exists yet, waiting..."
+        echo "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
         continue
     else
-        echo "INFO: Success, sentry container was found"
+        echo "INFO: Success, sentry $CONTAINER_NAME was found"
     fi
 
     echo "INFO: Awaiting sentry initialization..."
     IS_STARTED=$(docker exec -i "sentry" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 12
-        echo "WARNING: Sentry is not initialized yet"
+        echo "WARNING: $CONTAINER_NAME is not initialized yet"
         continue
     else
         echo "INFO: Success, sentry was initialized"
@@ -43,18 +44,18 @@ done
 
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
-    echo "ERROR: Sentry was not started sucessfully within defined time"
+    echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
     exit 1
 else
-    echo "INFO: Sentry was started sucessfully"
+    echo "INFO: $CONTAINER_NAME was started sucessfully"
 fi
 
 
 if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
-    echo "ERROR: Sentry Node id check failed!"
+    echo "ERROR: $CONTAINER_NAME Node id check failed!"
     echo "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
     exit 1
 else
-    echo "INFO: Sentry node id check succeded '$NODE_ID' is a match"
+    echo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
 fi
 

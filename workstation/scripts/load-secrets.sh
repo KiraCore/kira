@@ -71,7 +71,17 @@ if [ "${REGEN_SENTRY_NODE_KEYS,,}" == "true" ] || [ ! -f "$SENT_NODE_KEY_PATH" ]
 fi
 
 rm -fv "$TMP_KEY"
-VALIDATOR_NODE_ID=$(cat $VAL_NODE_ID_PATH)
-SENTRY_NODE_ID=$(cat $SENT_NODE_ID_PATH)
+TMP_VALIDATOR_NODE_ID=$(cat $VAL_NODE_ID_PATH)
+TMP_SENTRY_NODE_ID=$(cat $SENT_NODE_ID_PATH)
+
+if [ -z "$VALIDATOR_NODE_ID" || "$VALIDATOR_NODE_ID" != "$TMP_VALIDATOR_NODE_ID" ] ; then # update env only if validator id changed
+    VALIDATOR_NODE_ID=TMP_VALIDATOR_NODE_ID
+    CDHelper text lineswap --insert="VALIDATOR_NODE_ID=$VALIDATOR_NODE_ID" --prefix="VALIDATOR_NODE_ID=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
+
+if [ -z "$SENTRY_NODE_ID" || "$SENTRY_NODE_ID" != "$TMP_SENTRY_NODE_ID" ] ; then # update env only if sentry id changed
+    SENTRY_NODE_ID=TMP_SENTRY_NODE_ID
+    CDHelper text lineswap --insert="SENTRY_NODE_ID=$SENTRY_NODE_ID" --prefix="SENTRY_NODE_ID=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
 
 echo "INFO: Secrets loaded..."
