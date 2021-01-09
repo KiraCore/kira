@@ -18,14 +18,15 @@ echo "------------------------------------------------"
 set -x
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
 
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="private_peer_ids =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$DOCKER_COMMON/sentry
+CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$DOCKER_COMMON/sentry
 # Set true for strict address routability rules & Set false for private or local networks
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/sentry
 CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$DOCKER_COMMON/sentry # fastsync
