@@ -155,6 +155,8 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] && \
+    echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
@@ -229,6 +231,10 @@ while :; do
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"
         echo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
+    elif [ "${OPTION,,}" == "b" ] ; then
+        echo "INFO: Backing up blockchain state..."
+        $KIRA_MANAGER/containers/start-snapshoot.sh || echo "ERROR: Snapshoot failed"
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         clear
         echo "INFO: Stopping kira network scanner..."

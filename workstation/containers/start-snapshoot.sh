@@ -1,6 +1,44 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+
+MAX_HEIGHT=$1
+
 START_TIME="$(date -u +%s)"
+SCAN_DIR="$KIRA_HOME/kirascan"
+SNAP_STATUS="$SCAN_DIR/snap/"
+SNAP_DONE="$SNAP_STATUS/done"
+SNAP_SUCCESS="$SNAP_STATUS/success"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
+
+SNAP_FILENAME="${SENTRY_NETWORK}-$(date -u +%s).zip"
+
+SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
+
+SOURCE_DIR="/root/.simapp/data"
+SOURCE_FILE="/snap/$SNAP_FILENAME"
+
+rm -fvr "$SNAP_STATUS" "$SNAP_FILE" "$SOURCE_FILE"
+mkdir -p "$SNAP_STATUS" "$KIRA_SNAP"
+echo "false" > $SNAP_DONE
+echo "false" > $SNAP_SUCCESS
+echo "0" > $SNAP_PROGRESS
+
+CONTAINER_NAME="snapshoot"
+[ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
+
+SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "")
+
+if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] ; then
+    echo "INFO: Failed to snapshoot state, public sentry is still catching up..."
+    exit 1
+fi
+
+if [ $MAX_HEIGHT -le 0 ] ; then
+    SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SENTRY_BLOCK" ] && SENTRY_BLOCK="0"
+    MAX_HEIGHT=$SENTRY_BLOCK
+fi
 
 echo "INFO: Loading secrets..."
 set +x
@@ -8,14 +46,19 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 cp -a $SNAP_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
 set -e
 
-CONTAINER_NAME="snapshoot"
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
-echo "|  HOSTNAME: $KIRA_SNAPSHOOT_DNS"
+echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
+echo "|    HOSTNAME: $KIRA_SNAPSHOOT_DNS"
+echo "| SYNC HEIGHT: $MAX_HEIGHT" 
+echo "|   SNAP FILE: $SNAP_FILE"
+echo "|  SOURCE DIR: $SOURCE_DIR"
 echo "------------------------------------------------"
 set -x
+
+echo "INFO: Cleaning up snapshoot container..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
@@ -35,29 +78,66 @@ CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cor
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
-    -p $DEFAULT_P2P_PORT:$KIRA_SENTRY_P2P_PORT \
-    -p $DEFAULT_RPC_PORT:$KIRA_SENTRY_RPC_PORT \
-    -p $DEFAULT_GRPC_PORT:$KIRA_SENTRY_GRPC_PORT \
     --hostname $KIRA_SNAPSHOOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
+    -e HALT_HEIGHT="$MAX_HEIGHT" \
     -v $DOCKER_COMMON/sentry:/common \
+    -v $KIRA_SNAP:/snap \
     sentry:latest
 
-docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
 
-# TODO: remove conatainer if creation failed
+SUCCESS=false
+if [ "${CONTAINER_CREATED,,}" == "true" ] ; 
+    SUCCESS=true
+    echo "INFO: Success container is up and running, waiting for node to sync..."
+    while : ; do
+        SNAP_STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+        SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+        if [ $SNAP_BLOCK -lt $SENTRY_BLOCK ] ; then
+            echo "INFO: Waiting for snapshoot node to sync  $SNAP_BLOCK/$SENTRY_BLOCK..."
+            echo "scale=2; $SNAP_BLOCK / $SENTRY_BLOCK" | bc > $SNAP_PROGRESS
+        if [ $SNAP_BLOCK -eg $SENTRY_BLOCK ] ; then
+            echo "INFO: Success, target height reached, the node was synced!"
+            break
+        fi
+    done
+fi
 
-echo "INFO: Success, snapshoot was created, elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+if [ "${SUCCESS,,}" != "true" ] ; then
+    echo "INFO: Please wait, compressing data files..."
+    docker exec -i "sentry" zip -r "$SOURCE_FILE" "$SOURCE_DIR"
+    CHECKSUM_SOURCE=$(echo $(docker exec -i "sentry" sha256sum "$SOURCE_DIR.zip") | awk '{ print $1 }')
+    CHECKSUM_DESTINATION=$(sha256sum $SNAP_FILE | awk '{ print $1 }')
 
+    if [ "$CHECKSUM_SOURCE" == "$CHECKSUM_DESTINATION" ] ; then 
+        echo "INFO: Success, snapshoot file was created & checksum match!"
+    else
+        echo "ERROR: Failed to snapshoot data, expected checksum '$CHECKSUM_SOURCE', but got '$CHECKSUM_DESTINATION'"
+        rm -fv "$SNAP_FILE"
+        SUCCESS="false"
+    fi
+fi
 
+echo "$SUCCESS" > $SNAP_SUCCESS
+echo "true" > $SNAP_DONE
+
+echo "INFO: Cleaning up snapshoot container..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+if [ "${SUCCESS,,}" != "true" ] ; then
+    echo "INFO: Failure, snapshoot was not created elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+else
+    echo "INFO: Snapshoot file name: $SNAP_FILE"
+    echo "INFO: Snapshoot checksum: $CHECKSUM"
+    echo "INFO: Success, snapshoot was created, elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+fi
 

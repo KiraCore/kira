@@ -19,7 +19,8 @@ DEBUG_MODE=$4
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
 KIRA_HOME="/home/$KIRA_USER"
-KIRA_DUMP="$KIRA_HOME/DUMP"
+KIRA_DUMP="$KIRA_HOME/dump"
+KIRA_SNAP="$KIRA_HOME/snap"
 KIRA_SECRETS="$KIRA_HOME/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
@@ -41,7 +42,7 @@ echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP"
+mkdir -p "$KIRA_DUMP" "$KIRA_SNAP"
 
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
@@ -182,6 +183,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SNAP=$KIRA_SNAP" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True

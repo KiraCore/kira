@@ -41,4 +41,29 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --trace
+HEIGHT=$(sekaid status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
+
+if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
+  HEIGHT=0
+fi
+
+if [ "$HALT_HEIGHT" != "$HEIGHT" ] ; then
+    echo "INFO: Target height was not reached yet $HEIGHT / $HALT_HEIGHT"
+    sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --halt-height="$HALT_HEIGHT" --trace
+fi
+
+HEIGHT=$(sekaid status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
+
+if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
+  HEIGHT=0
+fi
+
+if [ "$HALT_HEIGHT" != "$HEIGHT" ] ; then
+    echo "ERROR: Target height $HALT_HEIGHT was not reached ($HEIGHT) but node stopped"
+    exit 1
+fi
+
+while ; ; do
+  echo "INFO: Node was stopped gracefully and is ready for the snapshoot... ($(date))"
+  sleep 60
+done
