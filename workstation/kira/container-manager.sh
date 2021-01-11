@@ -98,7 +98,7 @@ while : ; do
         if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
             for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
                 port_tmp="${port}${WHITESPACE}"
-                port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*")
+                port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
                 echo "| Port Map: ${port_tmp:0:35} |"
             done
         fi
