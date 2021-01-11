@@ -31,8 +31,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
   HD_WALLET_DIR="$KIRA_HOME/hd-wallet-derive"
   HD_WALLET_PATH="$HD_WALLET_DIR/hd-wallet-derive.php"
   $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/hd-wallet-derive.git" "master" "$HD_WALLET_DIR" 555 "" "$HD_WALLET_DIR/tests"
-  FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true -i="$HD_WALLET_DIR/.git,$HD_WALLET_DIR/.gitignore,$HD_WALLET_DIR/tests")
-  EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
+  FILE_HASH=$(CDHelper hash SHA256 -p="$HD_WALLET_DIR" -x=true -r=true --silent=true -i="$HD_WALLET_DIR/.git,$HD_WALLET_DIR/.gitignore,$HD_WALLET_DIR/tests,$HD_WALLET_DIR/vendor")
+  EXPECTED_HASH="776a6392a1f090dce8a0f2b59fddca14525e7d598682a17102e1800d02602694"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo "DANGER: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
