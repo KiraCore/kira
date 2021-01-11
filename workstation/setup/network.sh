@@ -11,6 +11,9 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Installing XRDP dependencies..."
     apt-get install -y autoconf libtool fuse libpam0g-dev libjpeg-dev libfuse-dev libx11-dev libxfixes-dev \
         libxrandr-dev nasm gnome-tweak-tool net-tools
+
+    echo "INFO: Cleaning up generic network dependencies..."
+    apt-get remove -y ufw firewalld
     echo "INFO: Installing generic dependencies..."
     apt-get install -y ufw firewalld
 
