@@ -58,7 +58,7 @@ while :; do
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
-    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
+    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
@@ -111,7 +111,7 @@ while :; do
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
-    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure"
+    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
