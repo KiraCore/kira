@@ -8,7 +8,7 @@ apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common curl wget git nginx apt-transport-https
 
-echo "APT Update, Upfrade and Intall..."
+echo "APT Update, Update and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     file \
@@ -38,11 +38,13 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     nano \
     jq
 
+apt update -y
+apt install -y bc
+
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
-FLUTTER_VERSION="1.25.0-8.2.pre-beta"
-DART_VERSION="2.12.0-133.2.beta"
-
+FLUTTER_VERSION="1.26.0-1.0.pre-dev"
+DART_VERSION="2.12.0-205.0.dev"
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"
