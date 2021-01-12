@@ -13,11 +13,11 @@ while [ -f "$HALT_CHECK" ]; do
   sleep 30
 done
 
-while ! ping -c1 validator &>/dev/null; do
-  echo "INFO: Waiting for ping response form validator node... ($(date))"
+while ! ping -c1 sentry &>/dev/null; do
+  echo "INFO: Waiting for ping response form sentry node... ($(date))"
   sleep 5
 done
-echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
+echo "INFO: Validator IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
 while [ ! -f "$COMMON_DIR/genesis.json" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"

@@ -1,5 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+# quick edit: FILE="$KIRA_MANAGER/containers/start-snapshoot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+
 set -x
 
 MAX_HEIGHT=$1
@@ -89,8 +91,6 @@ docker run -d \
     -v $KIRA_SNAP:/snap \
     sentry:latest
 
-docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
-
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
@@ -99,6 +99,7 @@ SUCCESS=false
 if [ "${CONTAINER_CREATED,,}" == "true" ] ; 
     SUCCESS=true
     echo "INFO: Success container is up and running, waiting for node to sync..."
+    set +x
     while : ; do
         SNAP_STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
         SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
@@ -110,6 +111,7 @@ if [ "${CONTAINER_CREATED,,}" == "true" ] ;
             echo "INFO: Success, target height reached, the node was synced!"
             break
         fi
+        sleep 30
     done
 fi
 
