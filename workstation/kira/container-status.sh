@@ -7,26 +7,26 @@ NAME=$1
 VARS_FILE=$2
 NETWORKS=$3
 
-ID=$(echo $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null | xargs 2> /dev/null || echo "null"))
-if [ "${ID,,}" != "null" ] && [ ! -z $ID ] ; then
-    EXISTS="true"
-else
+ID=$($KIRA_SCRIPTS/container-id.sh "$NAME")
+if [ -z "$ID" ] ; then
     EXISTS="false"
+else
+    EXISTS="true"
 fi
 
 # define global variables
 if [ "${NAME,,}" == "interx" ]; then
     BRANCH="$INTERX_BRANCH"
     REPO="$INTERX_REPO"
-elif [ "${NAME,,}" == "sentry" ]; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "registry" ]; then
-    BRANCH=""
-    REPO=""
+    BRANCH="https://github.com/docker/distribution"
+    REPO="master"
 fi
 
 if [ "${EXISTS,,}" == "true" ]; then # container exists

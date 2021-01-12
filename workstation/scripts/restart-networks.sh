@@ -39,7 +39,7 @@ for (( i=0; i<${len}; i++ )) ; do
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"
       docker network connect $network $container
-      ip=$(docker inspect $(docker inspect --format="{{.Id}}" $container) | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" | xargs || echo "")
+      ip=$(docker inspect $($KIRA_SCRIPTS/container-id.sh "$container") | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" | xargs || echo "")
       if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
           echo "WARNING: Failed to get '$container' container IP address relative to the new '$network' network"
           exit 1
