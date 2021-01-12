@@ -56,7 +56,7 @@ while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
-  echo echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc > $SNAP_PROGRESS
+  echo $(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc) > $SNAP_PROGRESS
 
   if [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
       echo "INFO: Waiting for snapshoot node to sync $SNAP_BLOCK/$SENTRY_BLOCK..."
