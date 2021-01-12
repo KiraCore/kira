@@ -56,9 +56,9 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-echo "INFO: Setting up $CONTAINER_NAME config files..."
-# * Config sentry/configs/config.toml
+echo "INFO: Setting up $CONTAINER_NAME config files..." # * Config ~/configs/config.toml
 
+GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
@@ -70,6 +70,9 @@ CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_s
 CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
 CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" --path=$COMMON_PATH # pex must be true
 CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
+
+echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
+docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -84,6 +87,8 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     $CONTAINER_NAME:latest # use sentry image as base
+
+
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
