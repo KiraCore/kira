@@ -51,7 +51,7 @@ set -e
 # * Build other docker images in parallel
 $KIRAMGR_SCRIPTS/update-validator-image.sh &
 $KIRAMGR_SCRIPTS/update-sentry-image.sh &
-$KIRAMGR_SCRIPTS/update-sn-image.sh &
+$KIRAMGR_SCRIPTS/update-snapshoot-image.sh &
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
 wait
 
@@ -78,11 +78,6 @@ $KIRA_MANAGER/containers/start-validator.sh
 $KIRA_MANAGER/containers/start-sentry.sh 
 $KIRA_MANAGER/containers/start-interx.sh 
 $KIRA_MANAGER/containers/start-frontend.sh 
-
-# Cleanup
-
-echo "INFO: Prunning unused images..."
-docker rmi $(docker images --filter "dangling=true" -q --no-trunc) || echo "INFO: No dangling images found"
 
 set +x
 echo "------------------------------------------------"
