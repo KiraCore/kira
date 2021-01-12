@@ -52,7 +52,7 @@ sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.addres
 PID1="$!"
 
 PID_FINISHED="false"
-while ; ; do
+while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
@@ -81,6 +81,7 @@ echo "INFO: Waiting for node to halt gracefully"
 wait $PID1 
 
 echo "INFO: Creating backup package..."
+cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data
 zip -r "$DESTINATION_FILE" "$SEKAID_HOME/data"
 
 [ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshoot, file $DESTINATION_FILE was not found" && exit 1
