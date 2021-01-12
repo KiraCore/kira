@@ -1,11 +1,12 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 MAX_HEIGHT=$1
 
 START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
-SNAP_STATUS="$SCAN_DIR/snap/"
+SNAP_STATUS="$SCAN_DIR/snap"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_SUCCESS="$SNAP_STATUS/success"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -132,6 +133,8 @@ echo "true" > $SNAP_DONE
 
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+set +x
 
 if [ "${SUCCESS,,}" != "true" ] ; then
     echo "INFO: Failure, snapshoot was not created elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
