@@ -65,7 +65,7 @@ wget https://dl.google.com/go/$GO_TAR &>/dev/null
 tar -C /usr/local -xvf $GO_TAR &>/dev/null
 
 echo "Setting up essential flutter dependencies..."
-wget https://storage.googleapis.com/flutter_infra/releases/beta/linux/$FLUTTER_TAR
+wget https://storage.googleapis.com/flutter_infra/releases/dev/linux/$FLUTTER_TAR
 mkdir -p /usr/lib # make sure flutter root directory exists
 tar -C /usr/lib -xvf ./$FLUTTER_TAR
 
@@ -76,7 +76,7 @@ mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential f
 touch $FLUTTER_CACHE/.dartignore
 touch $FLUTTER_CACHE/engine-dart-sdk.stamp
 
-wget https://storage.googleapis.com/dart-archive/channels/beta/release/$DART_VERSION/sdk/$DART_ZIP
+wget https://storage.googleapis.com/dart-archive/channels/dev/release/$DART_VERSION/sdk/$DART_ZIP
 unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
