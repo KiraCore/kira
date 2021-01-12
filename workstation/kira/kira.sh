@@ -21,6 +21,8 @@ RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
+SNAP_STATUS="$KIRA_SNAP/status"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
 WHITESPACE="                                                          "
 
 echo "INFO: Wiping halt files of all containers..."
@@ -43,6 +45,7 @@ while :; do
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
+    PROGRESS_SNAP=$(cat $SNAP_PROGRESS 2> /dev/null || echo "0")
     
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
@@ -131,6 +134,7 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
+            [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP %"
             LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done

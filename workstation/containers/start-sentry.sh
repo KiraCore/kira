@@ -23,15 +23,17 @@ SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs
 echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
 
-CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$DOCKER_COMMON/sentry
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
+CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
 # Set true for strict address routability rules & Set false for private or local networks
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$DOCKER_COMMON/sentry # fastsync
-CDHelper text lineswap --insert="seed_mode = \"true\"" --prefix="seed_mode =" --path=$DOCKER_COMMON/sentry # pex must be true
-CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$DOCKER_COMMON/sentry 
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
+CDHelper text lineswap --insert="seed_mode = \"true\"" --prefix="seed_mode =" --path=$COMMON_PATH # pex must be true
+CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
 
 echo "INFO: Starting sentry node..."
 
@@ -44,8 +46,8 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON/sentry:/common \
-    sentry:latest
+    -v $COMMON_PATH:/common \
+    $CONTAINER_NAME:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 

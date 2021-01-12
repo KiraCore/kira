@@ -20,6 +20,8 @@ echo "|  HOSTNAME: $KIRA_INTERX_DNS"
 echo "------------------------------------------------"
 set -x
 
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
 docker run -d \
     -p $DEFAULT_INTERX_PORT:$KIRA_INTERX_PORT \
     --hostname $KIRA_INTERX_DNS \
@@ -27,8 +29,8 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON/interx:/common \
-    interx:latest
+    -v $COMMON_PATH:/common \
+    $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 

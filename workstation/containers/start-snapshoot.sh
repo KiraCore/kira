@@ -6,24 +6,13 @@ set -x
 
 MAX_HEIGHT=$1
 
-START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-SNAP_STATUS="$SCAN_DIR/snap"
+SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
-SNAP_SUCCESS="$SNAP_STATUS/success"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 
-SNAP_FILENAME="${SENTRY_NETWORK}-$(date -u +%s).zip"
+rm -fvr "$SNAP_STATUS"
+mkdir -p "$SNAP_STATUS"
 
-SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
-
-SOURCE_DIR="/root/.simapp/data"
-SOURCE_FILE="/snap/$SNAP_FILENAME"
-
-rm -fvr "$SNAP_STATUS" "$SNAP_FILE" "$SOURCE_FILE"
-mkdir -p "$SNAP_STATUS" "$KIRA_SNAP"
-echo "false" > $SNAP_DONE
-echo "false" > $SNAP_SUCCESS
 echo "0" > $SNAP_PROGRESS
 
 CONTAINER_NAME="snapshoot"
@@ -43,6 +32,9 @@ if [ $MAX_HEIGHT -le 0 ] ; then
     MAX_HEIGHT=$SENTRY_BLOCK
 fi
 
+SNAP_FILENAME="${SENTRY_NETWORK}-$MAX_HEIGHT-$(date -u +%s).zip"
+SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
+
 echo "INFO: Loading secrets..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
@@ -56,7 +48,6 @@ echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|    HOSTNAME: $KIRA_SNAPSHOOT_DNS"
 echo "| SYNC HEIGHT: $MAX_HEIGHT" 
 echo "|   SNAP FILE: $SNAP_FILE"
-echo "|  SOURCE DIR: $SOURCE_DIR"
 echo "------------------------------------------------"
 set -x
 
@@ -68,15 +59,17 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 echo "INFO: Setting up $CONTAINER_NAME config files..."
 # * Config sentry/configs/config.toml
 
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="seed = \"$SENTRY_SEED\"" --prefix="seed =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$SENTRY_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$DOCKER_COMMON/sentry
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="seed = \"$SENTRY_SEED\"" --prefix="seed =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="unconditional_peer_ids = \"$SENTRY_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
 # Set true for strict address routability rules & Set false for private or local networks
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/sentry
-CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$DOCKER_COMMON/sentry # fastsync
-CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" --path=$DOCKER_COMMON/sentry # pex must be true
-CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$DOCKER_COMMON/sentry 
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
+CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" --path=$COMMON_PATH # pex must be true
+CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -87,62 +80,18 @@ docker run -d \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
-    -v $DOCKER_COMMON/sentry:/common \
+    -e SNAP_FILENAME="$SNAP_FILENAME"
+    -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
-    sentry:latest
+    $CONTAINER_NAME:latest
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
-
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
 
-SUCCESS=false
-if [ "${CONTAINER_CREATED,,}" == "true" ] ; 
-    SUCCESS=true
-    echo "INFO: Success container is up and running, waiting for node to sync..."
-    set +x
-    while : ; do
-        SNAP_STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-        SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
-
-        if [ $SNAP_BLOCK -lt $SENTRY_BLOCK ] ; then
-            echo "INFO: Waiting for snapshoot node to sync  $SNAP_BLOCK/$SENTRY_BLOCK..."
-            echo "scale=2; $SNAP_BLOCK / $SENTRY_BLOCK" | bc > $SNAP_PROGRESS
-        if [ $SNAP_BLOCK -eg $SENTRY_BLOCK ] ; then
-            echo "INFO: Success, target height reached, the node was synced!"
-            break
-        fi
-        sleep 30
-    done
-fi
-
-if [ "${SUCCESS,,}" != "true" ] ; then
-    echo "INFO: Please wait, compressing data files..."
-    docker exec -i "sentry" zip -r "$SOURCE_FILE" "$SOURCE_DIR"
-    CHECKSUM_SOURCE=$(echo $(docker exec -i "sentry" sha256sum "$SOURCE_DIR.zip") | awk '{ print $1 }')
-    CHECKSUM_DESTINATION=$(sha256sum $SNAP_FILE | awk '{ print $1 }')
-
-    if [ "$CHECKSUM_SOURCE" == "$CHECKSUM_DESTINATION" ] ; then 
-        echo "INFO: Success, snapshoot file was created & checksum match!"
-    else
-        echo "ERROR: Failed to snapshoot data, expected checksum '$CHECKSUM_SOURCE', but got '$CHECKSUM_DESTINATION'"
-        rm -fv "$SNAP_FILE"
-        SUCCESS="false"
-    fi
-fi
-
-echo "$SUCCESS" > $SNAP_SUCCESS
-echo "true" > $SNAP_DONE
-
-echo "INFO: Cleaning up snapshoot container..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-
-set +x
-
-if [ "${SUCCESS,,}" != "true" ] ; then
-    echo "INFO: Failure, snapshoot was not created elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
+    echo "INFO: Snapshoot failed, '$CONTAINER_NAME' container did not start"
 else
-    echo "INFO: Snapshoot file name: $SNAP_FILE"
-    echo "INFO: Snapshoot checksum: $CHECKSUM"
-    echo "INFO: Success, snapshoot was created, elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+    echo "INFO: Success '$CONTAINER_NAME' container was started"
+    echo "INFO: Snapshoot destination: $SNAP_FILE"
+    echo "INFO: Please await snapshoot container to reach 100% sync status"
 fi
-
