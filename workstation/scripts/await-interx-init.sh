@@ -16,14 +16,14 @@ while [ $i -le 20 ]; do
         echo "INFO: Success, INTERX container was found"
     fi
 
-    echo "INFO: Awaiting interx initalization..."
+    echo "INFO: Awaiting interx initialization..."
     IS_STARTED=$(docker exec -i "interx" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: INTERX is not initalized yet"
+        echo "WARNING: INTERX is not initialized yet"
         continue
     else
-        echo "INFO: Success, interx was initalized"
+        echo "INFO: Success, interx was initialized"
     fi
 
     echo "INFO: Awaiting interx build to finalize..."

@@ -18,12 +18,14 @@ DEBUG_MODE=$4
 [ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
 [ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
-KIRA_DUMP="/home/$KIRA_USER/DUMP"
-KIRA_SECRETS="/home/$KIRA_USER/.secrets"
+KIRA_HOME="/home/$KIRA_USER"
+KIRA_DUMP="$KIRA_HOME/dump"
+KIRA_SNAP="$KIRA_HOME/snap"
+KIRA_SECRETS="$KIRA_HOME/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.15"
-SETUP_VER="v0.0.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+CDHELPER_VERSION="v0.6.50"
+SETUP_VER="v0.0.9" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -35,12 +37,12 @@ echo "|   START TIME: $START_TIME_INIT"
 echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
-echo "|    KIRA USER: $SUDO_USER"
+echo "|    KIRA USER: $KIRA_USER"
 echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP"
+mkdir -p "$KIRA_DUMP" "$KIRA_SNAP"
 
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
@@ -91,7 +93,7 @@ if [ "$KIRA_USER" == "root" ]; then
     exit 1
 fi
 
-if [ "$SKIP_UPDATE" == "False" ]; then
+if [ "${SKIP_UPDATE,,}" != "true" ]; then
     #########################################
     # START Installing Essentials
     #########################################
@@ -120,14 +122,14 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_USER-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-1" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
             software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools 
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
@@ -142,10 +144,10 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm64"
-            EXPECTED_HASH="37a87255a40565c4edcc52725260380966fed3d403dfa86f95f1259af413205d"
+            EXPECTED_HASH="6cfd73a429463aa9f2e5f9e8462f5ada50ecaa1b4e21ad6d05caef4f21943273"
         else
             CDHELPER_ARCH="x64"
-            EXPECTED_HASH="abf1e16447959025341a78a6b5dd180015d4bd191a87c614544c3b5e501ebf38"
+            EXPECTED_HASH="6345e3c37cb5eddee659d1a6c7068ff6cf0a1e6a74d1f6f5fec747338f9ebdaf"
         fi
 
         FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
@@ -179,7 +181,9 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper version
 
         CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SNAP=$KIRA_SNAP" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -243,7 +247,7 @@ CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEN
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +x
-echo "INFO: Your host environment was initalized"
+echo "INFO: Your host environment was initialized"
 echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are not running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions, and accept that you continue on your own risk.\e[0m"
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."

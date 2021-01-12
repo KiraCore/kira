@@ -17,7 +17,7 @@ docker run -d \
     --name $CONTAINER_NAME \
     --network $KIRA_FRONTEND_NETWORK \
     -e DEBUG_MODE="True" \
-    frontend:latest
+    $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 

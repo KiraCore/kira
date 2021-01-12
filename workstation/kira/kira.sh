@@ -4,36 +4,26 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
-cd $HOME
-TMP_DIR="/tmp/kira-stats" # performance counters directory
-PID_DIR="$TMP_DIR/pid"
-PERF_CPU="$TMP_DIR/cpu"
-OPTION_PATH="$TMP_DIR/option"
-IPADDR_PATH="$TMP_DIR/ipaddr"
-LIPADDR_PATH="$TMP_DIR/lipaddr"
-NETWORKS_PATH="$TMP_DIR/networks"
-VARSMGR_PATH="$TMP_DIR/varsmgr" # file contianing cached variables with details regarding individual containers
+
+if [ "${USER,,}" != root ] ; then
+    echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
+    exit 1
+fi
+
+cd $KIRA_HOME
+SCAN_DIR="$KIRA_HOME/kirascan"
+SCAN_DONE="$SCAN_DIR/done"
+CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
+NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+DISK_SCAN_PATH="$SCAN_DIR/disk"
+CPU_SCAN_PATH="$SCAN_DIR/cpu"
+RAM_SCAN_PATH="$SCAN_DIR/ram"
+LIP_SCAN_PATH="$SCAN_DIR/lip"
+IP_SCAN_PATH="$SCAN_DIR/ip"
+STATUS_SCAN_PATH="$SCAN_DIR/status"
+SNAP_STATUS="$KIRA_SNAP/status"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
 WHITESPACE="                                                          "
-
-rm -fvr $PID_DIR # wipe all process id's
-
-mkdir -p "$TMP_DIR" "$PID_DIR"
-
-CPU_UTIL="???"
-echo "$CPU_UTIL" > $PERF_CPU
-
-rm -fv $IPADDR_PATH
-rm -fv $LIPADDR_PATH
-rm -fv $NETWORKS_PATH
-rm -fv $VARSMGR_PATH
-rm -fv "${VARSMGR_PATH}.lock"
-
-
-touch $IPADDR_PATH
-touch $LIPADDR_PATH
-touch $NETWORKS_PATH
-touch $VARSMGR_PATH && chmod 777 $VARSMGR_PATH
-
 
 echo "INFO: Wiping halt files of all containers..."
 rm -fv $DOCKER_COMMON/validator/halt
@@ -41,78 +31,48 @@ rm -fv $DOCKER_COMMON/sentry/halt
 rm -fv $DOCKER_COMMON/interx/halt
 rm -fv $DOCKER_COMMON/frontend/halt
 
+echo "INFO: Restarting network scanner..."
+systemctl daemon-reload
+systemctl restart kirascan
+
 LOADING="true"
 while :; do
     START_TIME="$(date -u +%s)"
-    rm -f $OPTION_PATH && touch $OPTION_PATH
-
-    touch "${NETWORKS_PATH}.pid" && if ! kill -0 $(cat "${NETWORKS_PATH}.pid") 2> /dev/null ; then
-        echo $(docker network ls --format="{{.Name}}" 2> /dev/null || "") > "$NETWORKS_PATH" &
-        echo "$!" > "${NETWORKS_PATH}.pid"
-    fi
-
-    touch "${IPADDR_PATH}.pid" && if ! kill -0 $(cat "${IPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2> /dev/null | awk -F'"' '{ print $2}') > "$IPADDR_PATH" &
-        echo "$!" > "${IPADDR_PATH}.pid"
-    fi
-
-    NETWORKS=$(cat $NETWORKS_PATH)
-    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
-
-    touch "${LIPADDR_PATH}.pid" && if ! kill -0 $(cat "${LIPADDR_PATH}.pid") 2> /dev/null ; then
-        echo $(/sbin/ifconfig $IFACE 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > "$LIPADDR_PATH" &
-        echo "$!" > "${LIPADDR_PATH}.pid"
-    fi
-
-    touch "${PERF_CPU}.pid" && if ! kill -0 $(cat "${PERF_CPU}.pid") 2> /dev/null ; then
-        echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > "$PERF_CPU" &
-        echo "$!" > "${PERF_CPU}.pid"
-    fi
-
-    i=-1
-    for name in $CONTAINERS; do
-        i=$((i + 1))
-        touch "$PID_DIR/${name}.pid" && if ! kill -0 $(cat "$PID_DIR/${name}.pid") 2> /dev/null ; then
-            [ "${LOADING,,}" == "true" ] && rm -f "$VARSMGR_PATH-$name" && touch "$VARSMGR_PATH-$name"
-            $KIRA_MANAGER/kira/container-status.sh $name "$VARSMGR_PATH-$name" $NETWORKS & 
-            echo "$!" > "$PID_DIR/${name}.pid"
-        fi
-    done
-
-    CONTAINERS_COUNT=$((i + 1))
-    RAM_UTIL="$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%"
-    DISK_UTIL="$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%"
+    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
+    CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
+    CPU_UTIL=$(cat $CPU_SCAN_PATH 2> /dev/null || echo "")
+    RAM_UTIL=$(cat $RAM_SCAN_PATH 2> /dev/null || echo "")
+    DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
+    LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
+    PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
+    PROGRESS_SNAP=$(cat $SNAP_PROGRESS 2> /dev/null || echo "0")
+    
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-
-    for name in $CONTAINERS; do
-        if [ -f "$VARSMGR_PATH-$name" ] ; then
-            source "$VARSMGR_PATH-$name"
-        fi
-    done
-
+    
     if [ "${LOADING,,}" == "false" ] ; then
-        CPU_UTIL=$(cat $PERF_CPU)
         SUCCESS="true"
-        IS_ANY_CONTAINER_RUNNING="false"
-        IS_ANY_CONTAINER_PAUSED="false"
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
         i=-1
         for name in $CONTAINERS; do
+            if [ -f "$STATUS_SCAN_PATH/$name" ] ; then
+                source "$STATUS_SCAN_PATH/$name"
+            else
+                continue
+            fi
+
             i=$((i + 1))
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
-            [ "${name,,}" == "registry" ] && continue
-            [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
-            [ "${STATUS_TMP,,}" == "running" ] && IS_ANY_CONTAINER_RUNNING="true"
-            [ "${STATUS_TMP,,}" == "paused" ] && IS_ANY_CONTAINER_PAUSED="true"
-            # TODO: show failed status if any of the healthchecks fails
-    
+            [ "${name,,}" == "registry" ] && continue
+            [ "${name,,}" == "snapshoot" ] && continue
+            [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+
             # if block height check fails via validator then try via interx
             if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
                 STATUS_SOURCE="$name"
@@ -125,12 +85,11 @@ while :; do
                 NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
             fi
         done
+        CONTAINERS_COUNT=$((i + 1))
     fi
 
     KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
     KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-    LOCAL_IP=$(cat $LIPADDR_PATH 2> /dev/null || echo "0.0.0.0")
-    PUBLIC_IP=$(cat $IPADDR_PATH 2> /dev/null || echo "")
     [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
     [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
     [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
@@ -146,8 +105,8 @@ while :; do
     DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
     echo -e "|\e[34;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
 
-    KIRA_NETWORK="NETWORK: $KIRA_NETWORK                                              "
-    KIRA_BLOCK="BLOCKS: $KIRA_BLOCK                                                   "
+    KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
+    KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
     echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m: $STATUS_SOURCE"
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
@@ -175,18 +134,23 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-            LABEL="| [$i] | Mange $name ($STATUS_TMP)                           "
+            [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP %"
+            LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
+    else
+        while [ ! -f $SCAN_DONE ] ; do
+            sleep 1
+        done 
+        LOADING="false"
+        continue
     fi
-
-    [ "${LOADING,,}" == "true" ] && wait && LOADING="false" && continue
-   
+    
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ] && [ "${LOADING,,}" == "false" ] ; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${IS_ANY_CONTAINER_PAUSED,,}" == "true" ] && \
+        [ "${ALL_CONTAINERS_PAUSED,,}" == "true" ] && \
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
@@ -196,6 +160,8 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] && \
+    echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
@@ -220,7 +186,6 @@ while :; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
-            rm -fv $VARSMGR_PATH && touch $VARSMGR_PATH && LOADING="true" # reload
             OPTION="" # reset option
             EXECUTED="true"
             break
@@ -256,6 +221,8 @@ while :; do
         fi
     done
 
+    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
+
     if [ "${OPTION,,}" == "d" ]; then
         echo "INFO: Dumping firewal info..."
         ufw status verbose > "$KIRA_DUMP/ufw-status.txt" || echo "INFO: Failed to get firewal status"
@@ -269,8 +236,14 @@ while :; do
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"
         echo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
+    elif [ "${OPTION,,}" == "b" ] ; then
+        echo "INFO: Backing up blockchain state..."
+        $KIRA_MANAGER/containers/start-snapshoot.sh || echo "ERROR: Snapshoot failed"
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         clear
+        echo "INFO: Stopping kira network scanner..."
+        systemctl stop kirascan
         exit 0
     fi
 
@@ -280,6 +253,7 @@ while :; do
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
+        systemctl stop kirascan
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
         exit 0

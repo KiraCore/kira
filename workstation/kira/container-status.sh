@@ -41,6 +41,7 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     FINISHED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.FinishedAt'  2> /dev/null || echo "")
     HOSTNAME=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.Hostname'  2> /dev/null || echo "")
     EXPOSED_PORTS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -c '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
+    PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do
@@ -73,6 +74,7 @@ else # container does NOT exists
     NETWORK="undefined"
     HOSTNAME="undefined"
     LIP="undefined"
+    PORTS=""
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
@@ -87,6 +89,7 @@ if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was spe
     CDHelper text lineswap --insert="BRANCH_$NAME=\"$BRANCH\"" --prefix="BRANCH_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
     CDHelper text lineswap --insert="REPO_$NAME=\"$REPO\"" --prefix="REPO_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
     CDHelper text lineswap --insert="HOSTNAME_$NAME=\"$HOSTNAME\"" --prefix="HOSTNAME_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    CDHelper text lineswap --insert="PORTS_$NAME=\"$PORTS\"" --prefix="PORTS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
 
     if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ]; then # container exists
         i=-1

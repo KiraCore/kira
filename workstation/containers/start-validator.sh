@@ -25,10 +25,12 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 echo "INFO: Setting up validator config files..."
 # * Config validator/configs/config.toml
 
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$DOCKER_COMMON/validator
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$DOCKER_COMMON/validator
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$DOCKER_COMMON/validator
-CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$DOCKER_COMMON/validator # fastsync
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
+CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
@@ -42,8 +44,8 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_VALIDATOR_NETWORK \
     -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON/validator:/common \
-    validator:latest
+    -v $COMMON_PATH:/common \
+    $CONTAINER_NAME:latest
 
 echo "INFO: Waiting for validator to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
