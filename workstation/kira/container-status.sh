@@ -7,7 +7,7 @@ NAME=$1
 VARS_FILE=$2
 NETWORKS=$3
 
-ID=$(echo $(docker inspect --format="{{.Id}}" ${NAME} 2> /dev/null | xargs 2> /dev/null || echo "null"))
+ID=$($KIRA_SCRIPTS/container-id.sh "$NAME")
 if [ "${ID,,}" != "null" ] && [ ! -z $ID ] ; then
     EXISTS="true"
 else

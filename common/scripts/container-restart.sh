@@ -7,7 +7,7 @@ set -e
 # (rm -fv $KIRA_SCRIPTS/container-restart.sh) && nano $KIRA_SCRIPTS/container-restart.sh && chmod 777 $KIRA_SCRIPTS/container-restart.sh
 
 name=$1
-id=$(docker inspect --format="{{.Id}}" "${name}" 2> /dev/null || echo "")
+id=$($KIRA_SCRIPTS/container-id.sh "$name")
 
 if [ -z "$id" ] ; then
     echo "INFO: Container $name does NOT exists"
