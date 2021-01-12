@@ -51,6 +51,7 @@ set -e
 # * Build other docker images in parallel
 $KIRAMGR_SCRIPTS/update-validator-image.sh &
 $KIRAMGR_SCRIPTS/update-sentry-image.sh &
+$KIRAMGR_SCRIPTS/update-sn-image.sh &
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
 wait
 

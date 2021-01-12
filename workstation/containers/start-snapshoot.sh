@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_WORKSTATION/containers/start-snapshoot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/containers/start-snapshoot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set -x
 
@@ -80,10 +80,10 @@ docker run -d \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
-    -e SNAP_FILENAME="$SNAP_FILENAME"
+    -e SNAP_FILENAME="$SNAP_FILENAME" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
-    sentry:latest # use sentry image as base
+    $CONTAINER_NAME:latest # use sentry image as base
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
