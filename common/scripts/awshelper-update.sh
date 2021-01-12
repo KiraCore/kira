@@ -1,6 +1,7 @@
 #!/bin/bash
 
 exec 2>&1
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -e
 
 # Local Update Shortcut:

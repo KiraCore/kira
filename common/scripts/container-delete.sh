@@ -1,7 +1,6 @@
 #!/bin/bash
-
+set +e && source "/etc/profile" &>/dev/null && set -e
 exec 2>&1
-set -e
 
 # Local Update Shortcut:
 # (rm -fv $KIRA_SCRIPTS/container-delete.sh) && nano $KIRA_SCRIPTS/container-delete.sh && chmod 777 $KIRA_SCRIPTS/container-delete.sh
