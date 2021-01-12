@@ -25,7 +25,7 @@ KIRA_SECRETS="$KIRA_HOME/.secrets"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.50"
-SETUP_VER="v0.0.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.9" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -93,7 +93,7 @@ if [ "$KIRA_USER" == "root" ]; then
     exit 1
 fi
 
-if [ "$SKIP_UPDATE" == "False" ]; then
+if [ "${SKIP_UPDATE,,}" != "true" ]; then
     #########################################
     # START Installing Essentials
     #########################################
