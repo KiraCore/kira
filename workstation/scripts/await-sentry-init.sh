@@ -10,34 +10,34 @@ IS_STARTED="false"
 while [ $i -le 40 ]; do
     i=$((i + 1))
 
-    echo "INFO: Waiting for sentry $CONTAINER_NAME to start..."
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "sentry" || echo "error")
+    echo "INFO: Waiting for container $CONTAINER_NAME to start..."
+    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
         sleep 12
         echo "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
         continue
     else
-        echo "INFO: Success, sentry $CONTAINER_NAME was found"
+        echo "INFO: Success, container $CONTAINER_NAME was found"
     fi
 
-    echo "INFO: Awaiting sentry initialization..."
-    IS_STARTED=$(docker exec -i "sentry" [ -f /root/executed ] && echo "true" || echo "false")
+    echo "INFO: Awaiting $CONTAINER_NAME initialization..."
+    IS_STARTED=$(docker exec -i "$CONTAINER_NAME" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 12
         echo "WARNING: $CONTAINER_NAME is not initialized yet"
         continue
     else
-        echo "INFO: Success, sentry was initialized"
+        echo "INFO: Success, container was initialized"
     fi
 
     echo "INFO: Awaiting node status..."
-    NODE_ID=$(docker exec -i "sentry" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
+    NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ]; then
         sleep 12
         echo "WARNING: Status and Node ID is not available"
         continue
     else
-        echo "INFO: Success, sentry node id found: $NODE_ID"
+        echo "INFO: Success, $CONTAINER_NAME container id found: $NODE_ID"
         break
     fi
 done
