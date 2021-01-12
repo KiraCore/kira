@@ -7,7 +7,7 @@ set -e
 # (rm -fv $KIRA_SCRIPTS/container-exists.sh) && nano $KIRA_SCRIPTS/container-exists.sh && chmod 777 $KIRA_SCRIPTS/container-exists.sh
 
 name=$1
-id=$(docker inspect --format="{{.Id}}" "${name}" 2> /dev/null || echo "")
+id=$(docker ps --no-trunc -aqf name="$name" 2> /dev/null || echo "")
 
 # e.g. registry:2
 if [ -z "$id" ] ; then

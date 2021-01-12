@@ -7,7 +7,7 @@ set -e
 # (rm -fv $KIRA_SCRIPTS/container-delete.sh) && nano $KIRA_SCRIPTS/container-delete.sh && chmod 777 $KIRA_SCRIPTS/container-delete.sh
 
 name=$1
-id=$(docker inspect --format="{{.Id}}" "${name}" 2> /dev/null || echo "")
+id=$(docker ps --no-trunc -aqf name="$name" 2> /dev/null || echo "")
 
 # e.g. registry:2
 if [ -z "$id" ] ; then
@@ -18,7 +18,7 @@ else
     docker container kill $id || echo "WARNING: Container $id is not running"
     docker rm $id
     sleep 1
-    id=$(docker inspect --format="{{.Id}}" "${name}" 2> /dev/null || echo "")
+    id=$(docker ps --no-trunc -aqf name="$name" 2> /dev/null || echo "")
 
     if [ -z "$id" ] ; then
         echo "SUCCESS: Container $name was killed and removed"

@@ -30,7 +30,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
 
     sleep 1
 
-    ID=$(docker inspect --format="{{.Id}}" $CONTAINER_NAME || echo "")
+    ID=$(docker ps --no-trunc -aqf name="$CONTAINER_NAME" || echo "")
     IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" | xargs || echo "")
     
     if [ -z "$IP" ] || [ "${IP,,}" == "null" ] ; then
