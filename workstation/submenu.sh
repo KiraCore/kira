@@ -47,14 +47,10 @@ while :; do
   case ${KEY,,} in
   1*)
     echo "INFO: Starting Quick Setup..."
-    echo "SEKAI branch: $SEKAI_BRANCH_DEFAULT"
-    echo "FRONTEND branch: $FRONTEND_BRANCH_DEFAULT"
-    echo "INTERX branch: $INTERX_BRANCH_DEFAULT"
     echo "NETWORK interface: $IFACE"
 
-    CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH_DEFAULT" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH_DEFAULT" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH_DEFAULT" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    $KIRA_MANAGER/menu/branch-select.sh "true"
+
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
@@ -69,7 +65,7 @@ while :; do
   2*)
     echo "INFO: Starting Advanced Setup..."
 
-    $KIRA_MANAGER/menu/branch-select.sh
+    $KIRA_MANAGER/menu/branch-select.sh "false"
     $KIRA_MANAGER/menu/interface-select.sh
     $KIRA_MANAGER/menu/snapshoot-select.sh
 
