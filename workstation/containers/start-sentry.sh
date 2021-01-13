@@ -1,13 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-echo "INFO: Loading secrets..."
-set +x
-source $KIRAMGR_SCRIPTS/load-secrets.sh
-cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
-set -e
-
 CONTAINER_NAME="sentry"
+
+
+
+set +x
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -15,7 +13,15 @@ echo "|   NODE ID: $SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
 echo "------------------------------------------------"
+
+echo "INFO: Loading secrets..."
+source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
+set -e
+
+cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
+
+
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')

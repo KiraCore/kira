@@ -35,12 +35,7 @@ fi
 SNAP_FILENAME="${SENTRY_NETWORK}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
 
-echo "INFO: Loading secrets..."
 set +x
-source $KIRAMGR_SCRIPTS/load-secrets.sh
-cp -a $SNAP_NODE_KEY_PATH $DOCKER_COMMON/sentry/node_key.json
-set -e
-
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -49,7 +44,13 @@ echo "|    HOSTNAME: $KIRA_SNAPSHOOT_DNS"
 echo "| SYNC HEIGHT: $MAX_HEIGHT" 
 echo "|   SNAP FILE: $SNAP_FILE"
 echo "------------------------------------------------"
+
+echo "INFO: Loading secrets..."
+source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
+set -e
+
+cp -a $SNAP_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
 
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
