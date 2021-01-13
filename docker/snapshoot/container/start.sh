@@ -50,7 +50,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --halt-height="$HALT_HEIGHT" --trace &
+sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
 PID1="$!"
 
 PID_FINISHED="false"
@@ -62,25 +62,34 @@ while : ; do
 
   if [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
       echo "INFO: Waiting for snapshoot node to sync $SNAP_BLOCK/$SENTRY_BLOCK..."
-  elif [ $SNAP_BLOCK -eg $HALT_HEIGHT ] ; then
+
+      if [ "${PID_FINISHED,,}" == "true" ] ; then
+        echo "ERROR: Node finished running but target height was not reached"
+
+        echo "INFO: Output log"
+        cat ./output.log | tail -n 100 || echo "WARNINIG: No output log was found!"
+
+        exit 1
+      fi
+  elif [ $SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
       echo "INFO: Success, target height reached, the node was synced!"
+      wait $PID1 || echo "WARNING: Failed to gracefully await shutdown"
       break
-  elif [ "${PID_FINISHED,,}" == "true" ] ; then
-      echo "ERROR: Node finished running but target height was not reached"
-      exit 1
   fi
 
   if ps -p $PID1 > /dev/null ; then
      echo "INFO: Waiting for node to sync..."
      sleep 10
   else
-     echo "WARNING: Node finished running, checking final height..."
+     echo "WARNING: Node finished running, starting tracking and checking final height..."
+     rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
+     sekaid start --home=$SEKAID_HOME &> ./output2.log & # launch sekai in state observer mode
+     PID1="$?"
      PID_FINISHED="true"
   fi
 done
 
-echo "INFO: Waiting for node to halt gracefully"
-wait $PID1 
+kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
 
 echo "INFO: Creating backup package..."
 cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data

@@ -23,7 +23,7 @@ if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
   HEIGHT=0
 fi
 
-if [ ! -z "$HALT_HEIGHT" ] && [ $HALT_HEIGHT -eq $HEIGHT ] ; then
+if [ ! -z "$HALT_HEIGHT" ] && [ $HALT_HEIGHT -le $HEIGHT ] ; then
     echo "INFO: Success, target height reached!"
     exit 0
 fi
