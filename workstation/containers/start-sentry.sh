@@ -20,9 +20,6 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-rm -fvr $COMMON_PATH
-mkdir -p $COMMON_PATH
-
 cp -a -v $SENT_NODE_KEY_PATH $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
@@ -36,8 +33,6 @@ SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs
 
 echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
-
-
 
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH

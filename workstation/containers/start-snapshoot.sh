@@ -12,8 +12,8 @@ SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 
-rm -fvr "$SNAP_STATUS" "$COMMON_PATH"
-mkdir -p "$SNAP_STATUS" "$COMMON_PATH"
+rm -fvr "$SNAP_STATUS"
+mkdir -p "$SNAP_STATUS"
 
 SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
