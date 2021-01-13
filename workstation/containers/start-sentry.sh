@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="sentry"
 SNAP_DESTINATION="$DOCKER_COMMON/$CONTAINER_NAME/snap.zip"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 set +x
 echo "------------------------------------------------"
@@ -19,7 +20,10 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -a -v $SENT_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
+rm -fvr $COMMON_PATH
+mkdir -p $COMMON_PATH
+
+cp -a -v $SENT_NODE_KEY_PATH $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
@@ -33,7 +37,7 @@ SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs
 echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
 
-COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
 
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH

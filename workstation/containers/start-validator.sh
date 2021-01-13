@@ -9,6 +9,9 @@ CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
+rm -fvr $COMMON_PATH
+mkdir -p $COMMON_PATH
+
 echo "$SIGNER_MNEMONIC" > $COMMON_PATH/signer_mnemonic.key
 echo "$FAUCET_MNEMONIC" > $COMMON_PATH/faucet_mnemonic.key
 echo "$VALIDATOR_MNEMONIC" > $COMMON_PATH/validator_mnemonic.key

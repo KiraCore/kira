@@ -4,7 +4,7 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring validator..."
+echo "Staring validator setup v0.0.2 ..."
 
 EXECUTED_CHECK="/root/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -31,18 +31,20 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   SNAP_FILE="$COMMON_DIR/snap.zip"
   DATA_DIR="$SEKAID_HOME/data"
-  GENESIS_FILE="$SEKAID_HOME/config/genesis.json"
+  LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+  DATA_GENESIS="$DATA_DIR/genesis.json"
+  COMMON_GENESIS="$COMMON_DIR/genesis.json"
 
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
     unzip ./$SNAP_FILE -d $DATA_DIR
-    DATA_GENESIS="$DATA_DIR/genesis.json"
 
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
-      rm -fv $COMMON_DIR/genesis.json
-      cp -v -a $DATA_DIR/genesis.json $GENESIS_FILE
+      rm -fv $COMMON_GENESIS
+      cp -v -a $DATA_GENESIS $COMMON_GENESIS
+      cp -v -a $DATA_GENESIS $LOCAL_GENESIS
     fi
 
     rm -fv "$SNAP_FILE"
@@ -65,7 +67,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   echo "INFO: All accounts were recovered"
   set +x
 
-  if [ ! -f "$GENESIS_FILE" ] ; then
+  sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
+
+  if [ ! -f "$COMMON_GENESIS" ] ; then
     echo "INFO: Genesis file was NOT found, attempting to create new one"
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
@@ -73,7 +77,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
+  else
+      echo "INFO: Common genesis file was found, attempting recovery..."
+      cp -v -a $COMMON_GENESIS $LOCAL_GENESIS
   fi
+
+  cp -v -a $LOCAL_GENESIS $COMMON_GENESIS
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
   touch $EXECUTED_CHECK

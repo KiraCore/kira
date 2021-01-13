@@ -5,14 +5,15 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 MAX_HEIGHT=$1
-
-# ensure to create parent directory for shared status info
-SNAP_STATUS="$KIRA_SNAP/status"
-rm -fvr "$SNAP_STATUS"
-mkdir -p "$SNAP_STATUS"
-
-CONTAINER_NAME="snapshoot"
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
+# ensure to create parent directory for shared status info
+CONTAINER_NAME="snapshoot"
+SNAP_STATUS="$KIRA_SNAP/status"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+GENESIS_SOURCE="/root/.simapp/config/genesis.json"
+
+rm -fvr "$SNAP_STATUS" "$COMMON_PATH"
+mkdir -p "$SNAP_STATUS" "$COMMON_PATH"
 
 SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
@@ -46,7 +47,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -a -v $SNAP_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
+cp -a -v $SNAP_NODE_KEY_PATH $COMMON_PATH/node_key.json
 
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -54,10 +55,6 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 echo "INFO: Setting up $CONTAINER_NAME config files..." # * Config ~/configs/config.toml
-
-GENESIS_SOURCE="/root/.simapp/config/genesis.json"
-COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
-
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="seed = \"$SENTRY_SEED\"" --prefix="seed =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
