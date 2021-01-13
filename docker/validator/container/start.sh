@@ -51,26 +51,32 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -fv "$SNAP_FILE"
   fi
 
-  SIGNER_MNEMONIC=$(cat $COMMON_DIR/signer_mnemonic.key)
-  FAUCET_MNEMONIC=$(cat $COMMON_DIR/faucet_mnemonic.key)
-  VALIDATOR_MNEMONIC=$(cat $COMMON_DIR/validator_mnemonic.key)
-  FRONTEND_MNEMONIC=$(cat $COMMON_DIR/frontend_mnemonic.key)
-  TEST_MNEMONIC=$(cat $COMMON_DIR/test_mnemonic.key)
+  set +x
+  echo "INFO: Attempting accounts recovery"
+  SIGNER_KEY=$COMMON_DIR/signer_mnemonic.key && SIGNER_MNEMONIC=$(cat $SIGNER_KEY)
+  FAUCET_KEY=$COMMON_DIR/faucet_mnemonic.key && FAUCET_MNEMONIC=$(cat $FAUCET_KEY)
+  VALIDATOR_KEY=$COMMON_DIR/validator_mnemonic.key && VALIDATOR_MNEMONIC=$(cat $VALIDATOR_KEY)
+  FRONTEND_KEY=$COMMON_DIR/frontend_mnemonic.key && FRONTEND_MNEMONIC=$(cat $FRONTEND_KEY)
+  TEST_KEY=$COMMON_DIR/test_mnemonic.key && TEST_MNEMONIC=$(cat $TEST_KEY)
 
-  yes $VALIDATOR_MNEMONIC | sekaid keys add validator --keyring-backend=default --home=$SEKAID_HOME --recover
-  yes $TEST_MNEMONIC | sekaid keys add test --keyring-backend=default --home=$SEKAID_HOME --recover
-  yes $FRONTEND_MNEMONIC | sekaid keys add frontend --keyring-backend=default --home=$SEKAID_HOME --recover
-  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=default --home=$SEKAID_HOME --recover
-  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=default --home=$SEKAID_HOME --recover
+  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $VALIDATOR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $TEST_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $FRONTEND_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
+  
+  rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
+  echo "INFO: All accounts recovered accounts recovery"
+  set +x
 
   if [ ! -f "$GENESIS_FILE" ] ; then
     echo "INFO: Genesis file was not found, attempting to create new one"
-    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid gentx-claim validator --keyring-backend=default --moniker="Hello World" --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
   fi
 
   touch $EXECUTED_CHECK

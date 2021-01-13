@@ -59,7 +59,7 @@ while [ $i -le 40 ]; do
 done
 
 if [ ! -f "$GENESIS_DESTINATION" ] ; then
-    echo "ERROR: Failed to copy copy genesis file from the validator node"
+    echo "ERROR: Failed to copy genesis file from the validator node"
     exit 1
 fi
 
