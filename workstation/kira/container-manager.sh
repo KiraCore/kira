@@ -17,6 +17,11 @@ CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 
+SNAP_STATUS="$KIRA_SNAP/status"
+SNAP_DONE="$SNAP_STATUS/done"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
+SNAP_LATEST="$SNAP_STATUS/latest"
+
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
 
@@ -86,12 +91,19 @@ while : ; do
     fi
 
     NAME_TMP="${NAME}${WHITESPACE}"
-    echo "|     Name: ${NAME_TMP:0:35} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+    echo "|      Name: ${NAME_TMP:0:34} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
 
     if [ ! -z "$REPO" ] ; then
         REPO_TMP=$(echo "$REPO" | grep -oP "^https://\K.*")
         REPO_TMP="${REPO}${WHITESPACE}"
-        echo "|     Repo: ${REPO_TMP:0:35} : $BRANCH"
+        echo "|      Repo: ${REPO_TMP:0:34} : $BRANCH"
+    fi
+
+    if [ "${NAME,,}" == "snapshoot" ] && [ -f "$SNAP_LATEST" ] ; then
+        LAST_SNAP_FILE=$(cat $SNAP_LATEST)
+        LAST_SNAP_PROGRESS=$(cat $SNAP_PROGRESS)
+        [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
+        echo "| Last Snap: ${LAST_SNAP_FILE:0:34} : $LAST_SNAP_PROGRESS"
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists

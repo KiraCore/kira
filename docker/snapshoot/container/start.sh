@@ -12,8 +12,11 @@ HALT_CHECK="${COMMON_DIR}/halt"
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
+SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
+
+echo "$DESTINATION_FILE" > $SNAP_LATEST
 
 while [ -f "$HALT_CHECK" ] || [ -f "$SNAP_DONE" ] ; do
   echo "INFO: Halt file is present or snapshoot was already finalized"
@@ -47,6 +50,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
+  echo "0" > $SNAP_PROGRESS
   touch $EXECUTED_CHECK
 fi
 
@@ -58,7 +62,9 @@ while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
-  echo $(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc) > $SNAP_PROGRESS
+
+  # sve progress only if status is available or block is diffrent then 0
+  [ "$SNAP_BLOCK" != "0" ] && echo $(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc) > $SNAP_PROGRESS
 
   if [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
       echo "INFO: Waiting for snapshoot node to sync $SNAP_BLOCK/$SENTRY_BLOCK..."
@@ -68,12 +74,11 @@ while : ; do
 
         echo "INFO: Output log"
         cat ./output.log | tail -n 100 || echo "WARNINIG: No output log was found!"
-
+        kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
         exit 1
       fi
   elif [ $SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
       echo "INFO: Success, target height reached, the node was synced!"
-      wait $PID1 || echo "WARNING: Failed to gracefully await shutdown"
       break
   fi
 
@@ -96,5 +101,7 @@ cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data
 zip -r "$DESTINATION_FILE" "$SEKAID_HOME/data"
 
 [ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshoot, file $DESTINATION_FILE was not found" && exit 1
+
+
 
 touch $SNAP_DONE

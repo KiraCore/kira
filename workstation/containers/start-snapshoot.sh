@@ -6,14 +6,10 @@ set -x
 
 MAX_HEIGHT=$1
 
+# ensure to create parent directory for shared status info
 SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
-
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS"
-
-echo "0" > $SNAP_PROGRESS
 
 CONTAINER_NAME="snapshoot"
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
@@ -94,10 +90,12 @@ docker run -d \
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
 
+set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
     echo "INFO: Snapshoot failed, '$CONTAINER_NAME' container did not start"
 else
-    echo "INFO: Success '$CONTAINER_NAME' container was started"
-    echo "INFO: Snapshoot destination: $SNAP_FILE"
-    echo "INFO: Please await snapshoot container to reach 100% sync status"
+    echo "INFO: Success '$CONTAINER_NAME' container was started" && echo ""
+    echo -en "\e[31;1mINFO: Snapshoot destination: $SNAP_FILE\e[0m"  && echo ""
+    echo "INFO: Work in progress, await snapshoot container to reach 100% sync status"
 fi
+set -x

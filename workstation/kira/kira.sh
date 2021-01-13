@@ -23,6 +23,7 @@ IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
+SNAP_DONE="$SNAP_STATUS/done"
 WHITESPACE="                                                          "
 
 echo "INFO: Wiping halt files of all containers..."
@@ -46,6 +47,8 @@ while :; do
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
     PROGRESS_SNAP=$(cat $SNAP_PROGRESS 2> /dev/null || echo "0")
+
+    [ -f "$SNAP_DONE" ] && PROGRESS_SNAP="done"
     
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
@@ -238,7 +241,16 @@ while :; do
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/containers/start-snapshoot.sh || echo "ERROR: Snapshoot failed"
+        echo -en "\e[31;1mInput halt height or press [ENTER] to snapshoot latest state:\e[0m"
+        read HALT_HEIGHT
+        DEFAULT_SNAP_DIR=$KIRA_SNAP
+        echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
+        SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR"
+        [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
+        echo -en "\e[31;1mINFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR', press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
+        CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+        $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" || echo "ERROR: Snapshoot failed"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         clear
