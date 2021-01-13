@@ -46,7 +46,7 @@ while :; do
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
-    PROGRESS_SNAP=$(cat $SNAP_PROGRESS 2> /dev/null || echo "0")
+    PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2> /dev/null || echo "0") %"
 
     [ -f "$SNAP_DONE" ] && PROGRESS_SNAP="done"
     
@@ -117,6 +117,12 @@ while :; do
     [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
     [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
+    if [ -f "$SNAPSHOOT" ] ; then # snapshoot is present
+        SNAP_FILENAME="SNAPSHOOT: $(basename -- "$SNAPSHOOT")${WHITESPACE}"
+        SNAP_SHA256=$(sha256sum $SNAPSHOOT | awk '{ print $1 }')
+        echo -e "|\e[35;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
+    fi
+
     if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
     elif [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
@@ -137,7 +143,7 @@ while :; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-            [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP %"
+            [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
             LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
@@ -248,7 +254,8 @@ while :; do
         SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR"
         [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
-        echo -en "\e[31;1mINFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR', press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
+        echo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
+        echo -en "\e[31;1mINFO: Press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
         CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
         $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" || echo "ERROR: Snapshoot failed"
         EXECUTED="true"

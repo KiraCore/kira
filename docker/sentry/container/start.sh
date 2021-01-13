@@ -32,13 +32,32 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid init --chain-id=testing testing --home=$SEKAID_HOME
 
-  rm -fv $SEKAID_HOME/config/genesis.json
   rm -fv $SEKAID_HOME/config/node_key.json
   rm -fv $SEKAID_HOME/config/config.toml
 
-  cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
+
+  SNAP_FILE="$COMMON_DIR/snap.zip"
+  DATA_DIR="$SEKAID_HOME/data"
+
+  if [ -f "$SNAP_FILE" ] ; then
+    echo "INFO: Snap file was found, attepting data recovery..."
+    
+    unzip ./$SNAP_FILE -d $DATA_DIR
+    DATA_GENESIS="$DATA_DIR/genesis.json"
+
+    if [ -f "$DATA_GENESIS" ] ; then
+      echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
+      rm -fv $COMMON_DIR/genesis.json
+      cp -v -a $DATA_DIR/genesis.json $COMMON_DIR/genesis.json
+    fi
+
+    rm -fv "$SNAP_FILE"
+  fi
+
+  rm -fv $SEKAID_HOME/config/genesis.json
+  cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
 
   touch $EXECUTED_CHECK
 fi

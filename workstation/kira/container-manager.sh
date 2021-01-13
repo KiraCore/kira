@@ -100,10 +100,11 @@ while : ; do
     fi
 
     if [ "${NAME,,}" == "snapshoot" ] && [ -f "$SNAP_LATEST" ] ; then
-        LAST_SNAP_FILE=$(cat $SNAP_LATEST)
+        LAST_SNAP_FILE="$(cat $SNAP_LATEST)${WHITESPACE}"
         LAST_SNAP_PROGRESS=$(cat $SNAP_PROGRESS)
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
         echo "| Last Snap: ${LAST_SNAP_FILE:0:34} : $LAST_SNAP_PROGRESS"
+        echo "|  Snap Dir: ${KIRA_SNAP}"
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists

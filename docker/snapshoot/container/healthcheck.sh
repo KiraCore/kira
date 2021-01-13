@@ -4,9 +4,12 @@ exec 2>&1
 set -x
 
 set +e && source "/etc/profile" &>/dev/null && set -e
-HALT_CHECK="${COMMON_DIR}/halt"
 
-if [ -f "$HALT_CHECK" ]; then
+HALT_CHECK="${COMMON_DIR}/halt"
+SNAP_STATUS="$SNAP_DIR/status"
+SNAP_DONE="$SNAP_STATUS/done"
+
+if [ -f "$HALT_CHECK" ] || [ -f "$SNAP_DONE" ] ; then
   exit 0
 fi
 

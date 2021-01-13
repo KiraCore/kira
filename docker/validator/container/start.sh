@@ -25,29 +25,53 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   rm -fv $SEKAID_HOME/config/priv_validator_key.json
 
-  cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
-  cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
-  cp $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
+  cp -v $COMMON_DIR/config.toml $SEKAID_HOME/config/
+  cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
+  cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
+
+  SNAP_FILE="$COMMON_DIR/snap.zip"
+  DATA_DIR="$SEKAID_HOME/data"
+  GENESIS_FILE="$SEKAID_HOME/config/genesis.json"
+
+  if [ -f "$SNAP_FILE" ] ; then
+    echo "INFO: Snap file was found, attepting data recovery..."
+    
+    unzip ./$SNAP_FILE -d $DATA_DIR
+    DATA_GENESIS="$DATA_DIR/genesis.json"
+
+    if [ -f "$DATA_GENESIS" ] ; then
+      echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
+      rm -fv $COMMON_DIR/genesis.json
+      cp -v -a $DATA_DIR/genesis.json $COMMON_DIR/genesis.json
+
+      rm -fv $SEKAID_HOME/config/genesis.json
+      cp -v $COMMON_DIR/genesis.json $SEKAID_HOME/config/
+    fi
+
+    rm -fv "$SNAP_FILE"
+  fi
 
   SIGNER_MNEMONIC=$(cat $COMMON_DIR/signer_mnemonic.key)
   FAUCET_MNEMONIC=$(cat $COMMON_DIR/faucet_mnemonic.key)
+  VALIDATOR_MNEMONIC=$(cat $COMMON_DIR/validator_mnemonic.key)
+  FRONTEND_MNEMONIC=$(cat $COMMON_DIR/frontend_mnemonic.key)
+  TEST_MNEMONIC=$(cat $COMMON_DIR/test_mnemonic.key)
 
-  sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME
-  sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+  yes $VALIDATOR_MNEMONIC | sekaid keys add validator --keyring-backend=default --home=$SEKAID_HOME --recover
+  yes $TEST_MNEMONIC | sekaid keys add test --keyring-backend=default --home=$SEKAID_HOME --recover
+  yes $FRONTEND_MNEMONIC | sekaid keys add frontend --keyring-backend=default --home=$SEKAID_HOME --recover
+  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=default --home=$SEKAID_HOME --recover
+  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=default --home=$SEKAID_HOME --recover
 
-  sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME
-  sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-
-  sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME
-  sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-
-  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
-  sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-
-  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
-  sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-
-  sekaid gentx-claim validator --keyring-backend=test --moniker="hello" --home=$SEKAID_HOME
+  if [ ! -f "$GENESIS_FILE" ] ; then
+    echo "INFO: Genesis file was not found, attempting to create new one"
+    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=default --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    sekaid gentx-claim validator --keyring-backend=default --moniker="Hello World" --home=$SEKAID_HOME
+  fi
 
   touch $EXECUTED_CHECK
 fi

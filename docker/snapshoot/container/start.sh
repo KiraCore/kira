@@ -16,7 +16,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
-echo "$DESTINATION_FILE" > $SNAP_LATEST
+echo "$SNAP_FILENAME" > $SNAP_LATEST
 
 while [ -f "$HALT_CHECK" ] || [ -f "$SNAP_DONE" ] ; do
   echo "INFO: Halt file is present or snapshoot was already finalized"
@@ -98,10 +98,10 @@ kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
 
 echo "INFO: Creating backup package..."
 cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data
-zip -r "$DESTINATION_FILE" "$SEKAID_HOME/data"
+
+# to prevent appending root path we must zip all from within the target data folder
+cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshoot, file $DESTINATION_FILE was not found" && exit 1
-
-
 
 touch $SNAP_DONE

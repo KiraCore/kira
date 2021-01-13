@@ -4,13 +4,20 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 echo "INFO: Loading secrets..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
-echo "$SIGNER_MNEMONIC" >>$DOCKER_COMMON/validator/signer_mnemonic.key
-echo "$FAUCET_MNEMONIC" >>$DOCKER_COMMON/validator/faucet_mnemonic.key
-cp -a $PRIV_VAL_KEY_PATH $DOCKER_COMMON/validator/priv_validator_key.json
-cp -a $VAL_NODE_KEY_PATH $DOCKER_COMMON/validator/node_key.json
-set -e
 
 CONTAINER_NAME="validator"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+SNAP_DESTINATION="$COMMON_PATH/snap.zip"
+
+echo "$SIGNER_MNEMONIC" > $COMMON_PATH/signer_mnemonic.key
+echo "$FAUCET_MNEMONIC" > $COMMON_PATH/faucet_mnemonic.key
+echo "$VALIDATOR_MNEMONIC" > $COMMON_PATH/validator_mnemonic.key
+echo "$FRONTEND_MNEMONIC" > $COMMON_PATH/frontend_mnemonic.key
+echo "$TEST_MNEMONIC" > $COMMON_PATH/test_mnemonic.key
+cp -a $PRIV_VAL_KEY_PATH $COMMON_PATH/priv_validator_key.json
+cp -a $VAL_NODE_KEY_PATH $COMMON_PATH/node_key.json
+set -e
+
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -20,12 +27,16 @@ echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
 echo "------------------------------------------------"
 set -x
 
+rm -fv $SNAP_DESTINATION
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echo "INFO: State snapshoot was found, cloning..."
+    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+fi
+
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 echo "INFO: Setting up validator config files..."
 # * Config validator/configs/config.toml
-
-COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH

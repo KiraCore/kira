@@ -2,8 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="sentry"
-
-
+SNAP_DESTINATION="$DOCKER_COMMON/$CONTAINER_NAME/snap.zip"
 
 set +x
 echo "------------------------------------------------"
@@ -12,6 +11,7 @@ echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
+echo "| SNAPSHOOT: $KIRA_SNAP_PATH"
 echo "------------------------------------------------"
 
 echo "INFO: Loading secrets..."
@@ -19,9 +19,13 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -a $SENT_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
+cp -a -v $SENT_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
 
-
+rm -fv $SNAP_DESTINATION
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echo "INFO: State snapshoot was found, cloning..."
+    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+fi
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')

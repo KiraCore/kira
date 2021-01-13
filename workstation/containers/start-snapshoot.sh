@@ -46,7 +46,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -a $SNAP_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
+cp -a -v $SNAP_NODE_KEY_PATH $DOCKER_COMMON/$CONTAINER_NAME/node_key.json
 
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -84,8 +84,6 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     $CONTAINER_NAME:latest # use sentry image as base
-
-
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"

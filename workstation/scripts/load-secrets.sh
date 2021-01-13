@@ -25,6 +25,21 @@ if [ -z "$FAUCET_MNEMONIC" ] ; then
     CDHelper text lineswap --insert="FAUCET_MNEMONIC=\"$FAUCET_MNEMONIC\"" --prefix="FAUCET_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
 fi
 
+if [ -z "$VALIDATOR_MNEMONIC" ] ; then
+    VALIDATOR_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+    CDHelper text lineswap --insert="VALIDATOR_MNEMONIC=\"$VALIDATOR_MNEMONIC\"" --prefix="VALIDATOR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+fi
+
+if [ -z "$FRONTEND_MNEMONIC" ] ; then
+    FRONTEND_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+    CDHelper text lineswap --insert="FRONTEND_MNEMONIC=\"$FRONTEND_MNEMONIC\"" --prefix="FRONTEND_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+fi
+
+if [ -z "$TEST_MNEMONIC" ] ; then
+    TEST_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+    CDHelper text lineswap --insert="TEST_MNEMONIC=\"$TEST_MNEMONIC\"" --prefix="TEST_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+fi
+
 if [ -z "$VALIDATOR_NODE_ID_MNEMONIC" ] ; then
     REGEN_VALIDATOR_NODE_KEYS="true"
     VALIDATOR_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
