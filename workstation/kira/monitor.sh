@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 START_TIME="$(date -u +%s)"
 
 SCAN_DIR="$KIRA_HOME/kirascan"
+SCAN_LOGS="$SCAN_DIR/logs"
 SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
@@ -39,7 +40,7 @@ CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 
 for name in $CONTAINERS; do
     touch "$STATUS_SCAN_PATH/$name"
-    $KIRA_MANAGER/kira/container-status.sh $name "$STATUS_SCAN_PATH/$name" $NETWORKS & 
+    $KIRA_MANAGER/kira/container-status.sh $name "$STATUS_SCAN_PATH/$name" $NETWORKS 2> "$SCAN_LOGS/$name-status.error.log" & 
 done
 
 wait
