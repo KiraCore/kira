@@ -230,8 +230,6 @@ while :; do
         fi
     done
 
-    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
-
     if [ "${OPTION,,}" == "d" ]; then
         echo "INFO: Dumping firewal info..."
         ufw status verbose > "$KIRA_DUMP/ufw-status.txt" || echo "INFO: Failed to get firewal status"
@@ -258,6 +256,7 @@ while :; do
         echo -en "\e[31;1mINFO: Press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
         CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
         $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" || echo "ERROR: Snapshoot failed"
+        LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         clear
@@ -265,6 +264,8 @@ while :; do
         systemctl stop kirascan
         exit 0
     fi
+
+    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
         echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
