@@ -27,6 +27,11 @@ done
 echo "INFO: Sucess, genesis file was found!"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
+  SNAP_FILE="$COMMON_DIR/snap.zip"
+  DATA_DIR="$SEKAID_HOME/data"
+  LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+  COMMON_GENESIS="$COMMON_DIR/genesis.json"
+
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
@@ -37,10 +42,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
-
-  SNAP_FILE="$COMMON_DIR/snap.zip"
-  DATA_DIR="$SEKAID_HOME/data"
-
+  
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
@@ -49,15 +51,15 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
-      rm -fv $COMMON_DIR/genesis.json
-      cp -v -a $DATA_DIR/genesis.json $COMMON_DIR/genesis.json
+      rm -fv $COMMON_GENESIS
+      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshoot genesis into common folder
     fi
 
     rm -fv "$SNAP_FILE"
   fi
 
-  rm -fv $SEKAID_HOME/config/genesis.json
-  cp $COMMON_DIR/genesis.json $SEKAID_HOME/config/
+  rm -fv $LOCAL_GENESIS
+  cp -a -v $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 
   touch $EXECUTED_CHECK
 fi

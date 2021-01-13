@@ -33,8 +33,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   DATA_DIR="$SEKAID_HOME/data"
   GENESIS_FILE="$SEKAID_HOME/config/genesis.json"
 
-  rm -fv $GENESIS_FILE
-
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
@@ -44,7 +42,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
       rm -fv $COMMON_DIR/genesis.json
-      cp -v -z $DATA_DIR/genesis.json $GENESIS_FILE
+      cp -v -a $DATA_DIR/genesis.json $GENESIS_FILE
     fi
 
     rm -fv "$SNAP_FILE"
@@ -63,13 +61,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   yes $VALIDATOR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
   yes $TEST_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover
   yes $FRONTEND_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
-  
-  rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
-  echo "INFO: All accounts recovered accounts recovery"
+
+  echo "INFO: All accounts were recovered"
   set +x
 
   if [ ! -f "$GENESIS_FILE" ] ; then
-    echo "INFO: Genesis file was not found, attempting to create new one"
+    echo "INFO: Genesis file was NOT found, attempting to create new one"
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
@@ -78,6 +75,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
   fi
 
+  rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
   touch $EXECUTED_CHECK
 fi
 
