@@ -33,6 +33,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   DATA_DIR="$SEKAID_HOME/data"
   GENESIS_FILE="$SEKAID_HOME/config/genesis.json"
 
+  rm -fv $GENESIS_FILE
+
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
@@ -42,10 +44,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
       rm -fv $COMMON_DIR/genesis.json
-      cp -v -a $DATA_DIR/genesis.json $COMMON_DIR/genesis.json
-
-      rm -fv $SEKAID_HOME/config/genesis.json
-      cp -v $COMMON_DIR/genesis.json $SEKAID_HOME/config/
+      cp -v -z $DATA_DIR/genesis.json $GENESIS_FILE
     fi
 
     rm -fv "$SNAP_FILE"
