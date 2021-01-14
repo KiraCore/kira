@@ -22,7 +22,6 @@ if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
 fi
 
 SNAPSHOOTS=`ls $KIRA_SNAP/*.zip` # get all zip files in the snap directory
-SNAPSHOOTS=( $SNAPSHOOTS )
 SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
 
 if [ $SNAPSHOOTS_COUNT -le 0 ] ; then
@@ -60,6 +59,7 @@ done
 
 if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
     OPTION="latest"
+    SNAPSHOOTS=( $SNAPSHOOTS )
     SNAPSHOOT=${SNAPSHOOTS[$OPTION]}
 else
     SNAPSHOOT=$SNAP_LATEST_PATH
