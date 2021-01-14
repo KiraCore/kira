@@ -22,6 +22,7 @@ if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
 fi
 
 SNAPSHOOTS=`ls $KIRA_SNAP/*.zip` # get all zip files in the snap directory
+SNAPSHOOTS=( $SNAPSHOOTS )
 SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
 
 if [ $SNAPSHOOTS_COUNT -le 0 ] ; then
@@ -58,12 +59,13 @@ while : ; do
 done
 
 if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
+    OPTION="latest"
     SNAPSHOOT=${SNAPSHOOTS[$OPTION]}
 else
     SNAPSHOOT=$SNAP_LATEST_PATH
 fi
 
-echo -en "\e[33;1mINFO: Snapshoot '$SNAPSHOOT' was selected\e[0m" && echo ""
+echo -en "\e[33;1mINFO: Snapshoot '$SNAPSHOOT' ($OPTION) was selected\e[0m" && echo ""
 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 set -x
 
