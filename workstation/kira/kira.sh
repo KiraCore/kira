@@ -24,6 +24,8 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_DONE="$SNAP_STATUS/done"
+SNAP_LATEST="$SNAP_STATUS/latest"
+
 WHITESPACE="                                                          "
 
 echo "INFO: Wiping halt files of all containers..."
@@ -47,8 +49,12 @@ while :; do
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2> /dev/null || echo "0") %"
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2> /dev/null || echo "")" 
 
-    [ -f "$SNAP_DONE" ] && PROGRESS_SNAP="done"
+    if [ -f "$SNAP_DONE" ] ; then
+        PROGRESS_SNAP="done" # show done progress
+        [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
+    fi
     
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
@@ -150,7 +156,8 @@ while :; do
     else
         while [ ! -f $SCAN_DONE ] ; do
             sleep 1
-        done 
+        done
+        set +e && source "/etc/profile" &>/dev/null && set -e # read envs on reload
         LOADING="false"
         continue
     fi

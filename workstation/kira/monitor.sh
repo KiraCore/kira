@@ -14,6 +14,11 @@ LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 
+SNAP_STATUS="$KIRA_SNAP/status"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
+SNAP_DONE="$SNAP_STATUS/done"
+SNAP_LATEST="$SNAP_STATUS/latest"
+
 SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
 
 mkdir -p $SCAN_DIR $STATUS_SCAN_PATH $SCAN_LOGS
@@ -46,5 +51,12 @@ done
 wait
 
 [ "${SCAN_DONE_MISSING,,}" == true ] && touch $SCAN_DONE
+
+if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; then
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)" 
+    if [ -f "$SNAP_LATEST_FILE" ] && [ "$SNAP_LATEST_FILE" != "$KIRA_SNAP_PATH" ] ; then
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAP_LATEST_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
+fi
 
 echo "INFO: Success, network scan was finalized, elapsed $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
