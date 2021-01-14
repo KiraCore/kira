@@ -23,6 +23,7 @@ fi
 
 SNAPSHOOTS=`ls $KIRA_SNAP/*.zip` # get all zip files in the snap directory
 SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
+SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
 
 if [ $SNAPSHOOTS_COUNT -le 0 ] ; then
   echo "INFO: No snapshoots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
@@ -30,12 +31,6 @@ if [ $SNAPSHOOTS_COUNT -le 0 ] ; then
   exit 0
 fi
 
-SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
-SNAP_LATEST="$SNAP_STATUS/latest"
-SNAP_LATEST_NAME=$(cat $SNAP_LATEST || echo "")
-SNAP_LATEST_PATH="$SNAP_STATUS/$SNAP_LATEST_NAME"
 echo -en "\e[31;1mPlease select snapshoot to recover from:\e[0m" && echo ""
 
 i=-1

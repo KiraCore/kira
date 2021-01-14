@@ -117,9 +117,9 @@ while :; do
     [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
     [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
-    if [ -f "$SNAPSHOOT" ] ; then # snapshoot is present
-        SNAP_FILENAME="SNAPSHOOT: $(basename -- "$SNAPSHOOT")${WHITESPACE}"
-        SNAP_SHA256=$(sha256sum $SNAPSHOOT | awk '{ print $1 }')
+    if [ -f "$KIRA_SNAP_PATH" ] ; then # snapshoot is present 
+        SNAP_FILENAME="SNAPSHOOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
+        SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
         echo -e "|\e[35;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
     fi
 
@@ -249,13 +249,20 @@ while :; do
         read HALT_HEIGHT
         DEFAULT_SNAP_DIR=$KIRA_SNAP
         echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
-        SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR"
         [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
         echo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
+
+        SYNC="false"
+        if [ -f "$KIRA_SNAP_PATH" ] ; then
+            SELECT="" && while [ "${SELECT,,}" != "s" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[S]ync from current snapshoot or [C]ontinue from scratch: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+            [ "${SELECT,,}" == "s" ] && SYNC="true"
+        fi
+
         echo -en "\e[31;1mINFO: Press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
         CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
-        $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" || echo "ERROR: Snapshoot failed"
+        $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" "$SYNC" || echo "ERROR: Snapshoot failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then

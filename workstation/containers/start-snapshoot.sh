@@ -5,12 +5,15 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 MAX_HEIGHT=$1
+SYNC_FROM_SNAP=$2
+
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
 # ensure to create parent directory for shared status info
 CONTAINER_NAME="snapshoot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
+SNAP_DESTINATION="$COMMON_PATHE/snap.zip"
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS"
@@ -47,7 +50,13 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -a -v $SNAP_NODE_KEY_PATH $COMMON_PATH/node_key.json
+cp -f -a -v $SNAP_NODE_KEY_PATH $COMMON_PATH/node_key.json
+
+rm -fv $SNAP_DESTINATION
+if [ -f "$KIRA_SNAP_PATH" ] && [ "${SYNC_FROM_SNAP,,}" == "true" ]; then
+    echo "INFO: State snapshoot was found, cloning..."
+    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+fi
 
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -66,7 +75,7 @@ CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" -
 CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
-docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
+docker cp -f -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
