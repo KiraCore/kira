@@ -24,10 +24,11 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
+KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address 
 
 mkdir -p $TMP_DIR
-rm -fv $LIP_PATH
-touch $LIP_PATH
+rm -fv $LIP_PATH $KADDR_PATH
+touch $LIP_PATH $KADDR_PATH
 
 echo "INFO: Wiping halt files of $NAME container..."
 
@@ -44,11 +45,19 @@ while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
+    KADDR=$(cat $KADDR_PATH)
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
         if [ ! -z "$HOSTNAME" ] ; then
             echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
             PID1="$!" && echo "$PID1" > "${LIP_PATH}.pid"
+        fi
+    fi
+
+    touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
+        if [ "${NAME,,}" == "interx" ] ; then
+            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jq -r '.address' 2> /dev/null || echo "") > "$KADDR_PATH" &
+            PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi
 
@@ -105,6 +114,11 @@ while : ; do
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
         echo "| Last Snap: ${LAST_SNAP_FILE:0:34} : $LAST_SNAP_PROGRESS"
         echo "|  Snap Dir: ${KIRA_SNAP}"
+    fi
+
+    if [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
+        KADDR_TMP="${KADDR}${WHITESPACE}"
+        echo "|    Faucet: ${KADDR_TMP:0:34} "
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists

@@ -37,9 +37,11 @@ docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
+FAUCET_ADDR=$(docker exec -i "interx" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -r '.address' || echo "")
+
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"
 
+docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex --yes
 
-#FAUCET_ADDR=$(curl http://interx.servicenet.local:11000/api/faucet | jq -r '.address')
-#yes "y" | docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex
+

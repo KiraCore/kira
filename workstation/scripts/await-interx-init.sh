@@ -3,6 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 i=0
 IS_STARTED="false"
+FAUCET_ADDR=""
+INTERX_STATUS_CODE=""
 while [ $i -le 20 ]; do
     i=$((i + 1))
 
@@ -26,21 +28,29 @@ while [ $i -le 20 ]; do
         echo "INFO: Success, interx was initialized"
     fi
 
-    echo "INFO: Awaiting interx build to finalize..."
-    INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/status 2>/dev/null | xargs || echo "")
+    echo "INFO: Awaiting interx service to start..."
+    INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
-        echo "WARNING: INTERX is not built yet"
+        echo "WARNING: INTERX is not started yet"
+        continue
+    fi
+
+    echo "INFO: Awaiting interx faucet to initalize..."
+    FAUCET_ADDR=$(docker exec -i "interx" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -r '.address' || echo "")
+
+    if [ -z "${FAUCET_ADDR}" ] ; then
+        sleep 30
+        echo "WARNING: INTERX faucet is initalized yet"
         continue
     else
-        echo "INFO: Success, interx was built"
+        echo "INFO: Success, faucet was found"
         break
     fi
 done
 
-INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/status 2>/dev/null | xargs || echo "")
-if [[ "$INTERX_STATUS_CODE" -ne "200" ]]; then
+if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
     echo "ERROR: INTERX was not started sucessfully within defined time"
     exit 1
 else
