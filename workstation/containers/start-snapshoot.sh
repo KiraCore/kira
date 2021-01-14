@@ -75,7 +75,7 @@ CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" -
 CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
-docker cp -f -a sentry:$GENESIS_SOURCE $COMMON_PATH
+docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

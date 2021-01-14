@@ -245,24 +245,7 @@ while :; do
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Backing up blockchain state..."
-        echo -en "\e[31;1mInput halt height or press [ENTER] to snapshoot latest state:\e[0m"
-        read HALT_HEIGHT
-        DEFAULT_SNAP_DIR=$KIRA_SNAP
-        echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
-        SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-        [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR"
-        [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
-        echo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
-
-        SYNC="false"
-        if [ -f "$KIRA_SNAP_PATH" ] ; then
-            SELECT="" && while [ "${SELECT,,}" != "s" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[S]ync from current snapshoot or [C]ontinue from scratch: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-            [ "${SELECT,,}" == "s" ] && SYNC="true"
-        fi
-
-        echo -en "\e[31;1mINFO: Press any key to continue or Ctrl+c to abort...\e[0m" && read -n 1 -s && echo ""
-        CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
-        $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" "$SYNC" || echo "ERROR: Snapshoot failed"
+        $KIRA_MANAGER/kira/kira-backup.sh || echo "ERROR: Snapshoot failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
