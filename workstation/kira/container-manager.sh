@@ -15,7 +15,7 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-STATUS_SCAN_PATH="$SCAN_DIR/status"
+CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
@@ -68,7 +68,7 @@ while : ; do
         continue
     fi
 
-    source "$STATUS_SCAN_PATH/$name"
+    source "$CONTAINER_STATUS"
 
     ID="ID_$NAME" && ID="${!ID}"
     EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
@@ -218,7 +218,7 @@ while : ; do
             clear
             echo "INFO: Attempting to display $NAME container log..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
-            docker container logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
+            docker logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"

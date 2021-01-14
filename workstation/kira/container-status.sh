@@ -3,6 +3,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+set -x
+
 NAME=$1
 VARS_FILE=$2
 NETWORKS=$3
@@ -78,18 +80,21 @@ else # container does NOT exists
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
-    CDHelper text lineswap --insert="ID_$NAME=\"$ID\"" --prefix="ID_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="STATUS_$NAME=\"$STATUS\"" --prefix="STATUS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="PAUSED_$NAME=\"$PAUSED\"" --prefix="PAUSED_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="HEALTH_$NAME=\"$HEALTH\"" --prefix="HEALTH_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="RESTARTING_$NAME=\"$RESTARTING\"" --prefix="RESTARTING_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="STARTED_AT_$NAME=\"$STARTED_AT\"" --prefix="STARTED_AT_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="FINISHED_AT_$NAME=\"$FINISHED_AT\"" --prefix="FINISHED_AT_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="EXISTS_$NAME=\"$EXISTS\"" --prefix="EXISTS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="BRANCH_$NAME=\"$BRANCH\"" --prefix="BRANCH_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="REPO_$NAME=\"$REPO\"" --prefix="REPO_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="HOSTNAME_$NAME=\"$HOSTNAME\"" --prefix="HOSTNAME_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
-    CDHelper text lineswap --insert="PORTS_$NAME=\"$PORTS\"" --prefix="PORTS_$NAME=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+    VARS_FILE_TMP="${VARS_FILE}.tmp"
+    rm -fv $VARS_FILE_TMP && touch $VARS_FILE_TMP
+
+    echo "ID_$NAME=\"$ID\"" > $VARS_FILE_TMP
+    echo "STATUS_$NAME=\"$STATUS\"" >> $VARS_FILE_TMP
+    echo "PAUSED_$NAME=\"$PAUSED\"" >> $VARS_FILE_TMP
+    echo "HEALTH_$NAME=\"$HEALTH\"" >> $VARS_FILE_TMP
+    echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE_TMP
+    echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE_TMP
+    echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE_TMP
+    echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE_TMP
+    echo "BRANCH_$NAME=\"$BRANCH\"" >> $VARS_FILE_TMP
+    echo "REPO_$NAME=\"$REPO\"">> $VARS_FILE_TMP
+    echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE_TMP
+    echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE_TMP
 
     if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ]; then # container exists
         i=-1
@@ -97,12 +102,12 @@ if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was spe
             i=$((i + 1))
             IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
             if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
-                CDHelper text lineswap --insert="IP_${NAME}_$net=\"$IP_TMP\"" --prefix="IP_${NAME}_$net=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+                echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE_TMP
             else
-                CDHelper text lineswap --insert="IP_${NAME}_$net=\"\"" --prefix="IP_${NAME}_$net=" --path=$VARS_FILE --append-if-found-not=True > /dev/null
+                echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE_TMP
             fi
         done
     fi
 
-    CDHelper text lineswap --regex="^[^\"]*\"[^\"]*$" --insert="" --path=$VARS_FILE > /dev/null || :
+    cp -f -a -v $VARS_FILE_TMP $VARS_FILE
 fi
