@@ -53,9 +53,9 @@ set -e
 cp -f -a -v $SNAP_NODE_KEY_PATH $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
-if [ -f "$KIRA_SNAP_PATH" ] && [ "${SYNC_FROM_SNAP,,}" == "true" ]; then
+if [ -f "$SYNC_FROM_SNAP" ] ; then
     echo "INFO: State snapshoot was found, cloning..."
-    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+    cp -a -v $SYNC_FROM_SNAP $SNAP_DESTINATION
 fi
 
 echo "INFO: Cleaning up snapshoot container..."
