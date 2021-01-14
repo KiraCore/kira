@@ -3,13 +3,13 @@ set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 
-SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1mChoose to [R]ecover from existing snapshoot or [S]ync new blockchain state: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[R]ecover from existing snapshoot or [S]ync new blockchain state: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 
 [ "${SELECT,,}" == "s" ] && echo "INFO: Blockchain state will NOT be recovered from the snapshoot" && exit 0 
 
 DEFAULT_SNAP_DIR=$KIRA_SNAP
 echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
-SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[33;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="" && while [ "${SELECT,,}" != "k" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[K]eep default snapshoot directory or [C]hange: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 
 [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
 [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
@@ -58,10 +58,10 @@ while : ; do
 done
 
 if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
-    OPTION="latest"
     SNAPSHOOTS=( $SNAPSHOOTS )
     SNAPSHOOT=${SNAPSHOOTS[$OPTION]}
 else
+    OPTION="latest"
     SNAPSHOOT=$SNAP_LATEST_PATH
 fi
 
