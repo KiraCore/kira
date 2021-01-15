@@ -4,7 +4,7 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring sentry..."
+echo "Staring snapshoot v0.0.2"
 
 EXECUTED_CHECK="/root/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -27,9 +27,9 @@ while ! ping -c1 sentry &>/dev/null; do
   echo "INFO: Waiting for ping response form sentry node... ($(date))"
   sleep 5
 done
-echo "INFO: Validator IP Found: $(getent hosts sentry | awk '{ print $1 }')"
+echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$COMMON_DIR/genesis.json" ]; do
+while [ ! -f "$SNAP_FILE" ] || [ ! -f "$COMMON_DIR/genesis.json" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done

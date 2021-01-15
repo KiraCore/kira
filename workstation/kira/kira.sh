@@ -21,10 +21,7 @@ RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
-SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_LATEST="$SNAP_STATUS/latest"
+
 
 WHITESPACE="                                                          "
 
@@ -40,6 +37,12 @@ systemctl restart kirascan
 
 LOADING="true"
 while :; do
+    set +e && source "/etc/profile" &>/dev/null && set -e
+    SNAP_STATUS="$KIRA_SNAP/status"
+    SNAP_PROGRESS="$SNAP_STATUS/progress"
+    SNAP_DONE="$SNAP_STATUS/done"
+    SNAP_LATEST="$SNAP_STATUS/latest"
+
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
@@ -157,7 +160,6 @@ while :; do
         while [ ! -f $SCAN_DONE ] ; do
             sleep 1
         done
-        set +e && source "/etc/profile" &>/dev/null && set -e # read envs on reload
         LOADING="false"
         continue
     fi

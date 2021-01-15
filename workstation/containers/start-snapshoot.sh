@@ -13,7 +13,7 @@ CONTAINER_NAME="snapshoot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
-SNAP_DESTINATION="$COMMON_PATHE/snap.zip"
+SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS"
