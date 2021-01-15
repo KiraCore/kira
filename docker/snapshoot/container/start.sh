@@ -29,7 +29,7 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] || [ ! -f "$COMMON_DIR/genesis.json" ]; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_DIR/genesis.json" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
