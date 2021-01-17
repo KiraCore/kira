@@ -55,7 +55,7 @@ function MnemonicGenerator() {
         if [ -z "$nodeId" ] || [ "$nodeId" != "$newNodeId" ] ; then
             CDHelper text lineswap --insert="$nodeIdVariableName=\"$newNodeId\"" --prefix="$nodeIdVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
         fi
-    if [ "${2,,}" == "addr" ] ; then
+    elif [ "${2,,}" == "addr" ] ; then
         echo "INFO: Address key does not require any kestore files"
     else
         echo "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"

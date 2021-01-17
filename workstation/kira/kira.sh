@@ -110,7 +110,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m------------------------------------------------- [mode]"
-    echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE"
+    echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
