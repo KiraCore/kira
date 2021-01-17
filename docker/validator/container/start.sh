@@ -52,17 +52,17 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   set +x
   echo "INFO: Attempting accounts recovery"
-  SIGNER_KEY=$COMMON_DIR/signer_mnemonic.key && SIGNER_MNEMONIC=$(cat $SIGNER_KEY)
-  FAUCET_KEY=$COMMON_DIR/faucet_mnemonic.key && FAUCET_MNEMONIC=$(cat $FAUCET_KEY)
-  VALIDATOR_KEY=$COMMON_DIR/validator_mnemonic.key && VALIDATOR_MNEMONIC=$(cat $VALIDATOR_KEY)
-  FRONTEND_KEY=$COMMON_DIR/frontend_mnemonic.key && FRONTEND_MNEMONIC=$(cat $FRONTEND_KEY)
-  TEST_KEY=$COMMON_DIR/test_mnemonic.key && TEST_MNEMONIC=$(cat $TEST_KEY)
+  SIGNER_KEY=$COMMON_DIR/signer_addr_mnemonic.key && SIGNER_ADDR_MNEMONIC=$(cat $SIGNER_KEY)
+  FAUCET_KEY=$COMMON_DIR/faucet_addr_mnemonic.key && FAUCET_ADDR_MNEMONIC=$(cat $FAUCET_KEY)
+  VALIDATOR_KEY=$COMMON_DIR/validator_addr_mnemonic.key && VALIDATOR_ADDR_MNEMONIC=$(cat $VALIDATOR_KEY)
+  FRONTEND_KEY=$COMMON_DIR/frontend_addr_mnemonic.key && FRONTEND_ADDR_MNEMONIC=$(cat $FRONTEND_KEY)
+  TEST_KEY=$COMMON_DIR/test_addr_mnemonic.key && TEST_ADDR_MNEMONIC=$(cat $TEST_KEY)
 
-  yes $SIGNER_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
-  yes $FAUCET_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
-  yes $VALIDATOR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
-  yes $TEST_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover
-  yes $FRONTEND_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $SIGNER_ADDR_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $FAUCET_ADDR_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $VALIDATOR_ADDR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $TEST_ADDR_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover
+  yes $FRONTEND_ADDR_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
 
   echo "INFO: All accounts were recovered"
   set +x

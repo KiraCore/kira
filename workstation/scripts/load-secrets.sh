@@ -15,109 +15,70 @@ REGEN_VALIDATOR_NODE_KEYS="false"
 REGEN_SENTRY_NODE_KEYS="false"
 REGEN_SNAPSHOOT_NODE_KEYS="false"
 
-if [ -z "$SIGNER_MNEMONIC" ] ; then
-    SIGNER_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="SIGNER_MNEMONIC=\"$SIGNER_MNEMONIC\"" --prefix="SIGNER_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+function MnemonicGenerator() {
+    set +e && source "/etc/profile" &>/dev/null && set -e
+    MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+    source $MNEMONICS
 
-if [ -z "$FAUCET_MNEMONIC" ] ; then
-    FAUCET_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="FAUCET_MNEMONIC=\"$FAUCET_MNEMONIC\"" --prefix="FAUCET_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+    mnemonicVariableName="${1^^}_${2^^}_MNEMONIC"
 
-if [ -z "$VALIDATOR_MNEMONIC" ] ; then
-    VALIDATOR_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="VALIDATOR_MNEMONIC=\"$VALIDATOR_MNEMONIC\"" --prefix="VALIDATOR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+    valkeyPath="$KIRA_SECRETS/priv_${1,,}_key.json"
+    nodekeyPath="$KIRA_SECRETS/${1,,}_node_key.json"
+    keyidPath="$KIRA_SECRETS/${1,,}_node_id.key"
 
-if [ -z "$FRONTEND_MNEMONIC" ] ; then
-    FRONTEND_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="FRONTEND_MNEMONIC=\"$FRONTEND_MNEMONIC\"" --prefix="FRONTEND_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+    mnemonic="${!mnemonicVariableName}"
 
-if [ -z "$TEST_MNEMONIC" ] ; then
-    TEST_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="TEST_MNEMONIC=\"$TEST_MNEMONIC\"" --prefix="TEST_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+    if [ -z "$mnemonic" ] ; then # if mnemonic is not present then generate new one
+        echo "INFO: $mnemonicVariableName was not found, regenerating..."
+        mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+        CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+    fi
 
-if [ -z "$VALIDATOR_NODE_ID_MNEMONIC" ] ; then
-    REGEN_VALIDATOR_NODE_KEYS="true"
-    VALIDATOR_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="VALIDATOR_NODE_ID_MNEMONIC=\"$VALIDATOR_NODE_ID_MNEMONIC\"" --prefix="VALIDATOR_NODE_ID_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+    if [ "${2,,}" == "val" ] ; then
+        echo "INFO: Ensuring validator private key is generated"
+        if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
+            rm -fv "$valkeyPath"
+            priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=/dev/null --keyid=/dev/null
+        fi
+    elif [ "${2,,}" == "node" ] ; then
+        echo "INFO: Ensuring nodekey files are generated"
 
-if [ -z "$SENTRY_NODE_ID_MNEMONIC" ] ; then
-    REGEN_SENTRY_NODE_KEYS="true"
-    SENTRY_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="SENTRY_NODE_ID_MNEMONIC=\"$SENTRY_NODE_ID_MNEMONIC\"" --prefix="SENTRY_NODE_ID_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+        nodeIdVariableName="${1^^}_NODE_ID"
+        nodeId="${!nodeIdVariableName}"
+        
+        if [ ! -f "$keyidPath" ] || [ ! -f "$nodekeyPath" ] ; then # node keys are only re-generated if any of keystore files is not present
+            rm -fv "$keyidPath" "$nodekeyPath"
+            priv-key-gen --mnemonic="$mnemonic" --valkey=/dev/null --nodekey="$nodekeyPath" --keyid="$keyidPath"
+        fi
+    
+        newNodeId=$(cat $keyidPath)
+        if [ -z "$nodeId" ] || [ "$nodeId" != "$newNodeId" ] ; then
+            CDHelper text lineswap --insert="$nodeIdVariableName=\"$newNodeId\"" --prefix="$nodeIdVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        fi
+    if [ "${2,,}" == "addr" ] ; then
+        echo "INFO: Address key does not require any kestore files"
+    else
+        echo "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
+        exit 1
+    fi
+}
 
-if [ -z "$SNAPSHOOT_NODE_ID_MNEMONIC" ] ; then
-    REGEN_SNAPSHOOT_NODE_KEYS="true"
-    SNAPSHOOT_NODE_ID_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="SNAPSHOOT_NODE_ID_MNEMONIC=\"$SNAPSHOOT_NODE_ID_MNEMONIC\"" --prefix="SNAPSHOOT_NODE_ID_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+# XXX_ADDR_MNEMONIC
+# XXX_NODE_MNEMONIC
+# XXX_VAL_MNEMONIC
 
-if [ -z "$PRIV_VALIDATOR_KEY_MNEMONIC" ] ; then
-    REGEN_PRIV_VALIDATOR_KEYS="true"
-    PRIV_VALIDATOR_KEY_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
-    CDHelper text lineswap --insert="PRIV_VALIDATOR_KEY_MNEMONIC=\"$PRIV_VALIDATOR_KEY_MNEMONIC\"" --prefix="PRIV_VALIDATOR_KEY_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-fi
+MnemonicGenerator "signer" "addr" # INTERX message signing key
+MnemonicGenerator "faucet" "addr" # INTERX faucet key
+MnemonicGenerator "frontend" "addr" # frontend key
+MnemonicGenerator "validator" "addr" # validator controller key
+MnemonicGenerator "test" "addr" # generic test key
+MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
+MnemonicGenerator "priv_sentry" "node" # private sentry node key
+MnemonicGenerator "snapshoot" "node" # snapshoot sentry node key (snapshoot_node_key.json, snapshoot_node_id.key -> SNAPSHOOT_NODE_ID)
+MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
+# NOTE: private validator key is generated from the separate mnemonic then node key or address !!!
+MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)
 
-# NOTE: private validator key must be generated from the separate mnemonic then node key !!!
-PRIV_VAL_KEY_PATH="$KIRA_SECRETS/priv_validator_key.json" 
-
-VAL_NODE_KEY_PATH="$KIRA_SECRETS/val_node_key.json"
-SENT_NODE_KEY_PATH="$KIRA_SECRETS/sent_node_key.json"
-SNAP_NODE_KEY_PATH="$KIRA_SECRETS/snap_node_key.json"
-
-VAL_NODE_ID_PATH="$KIRA_SECRETS/val_node_id.key"
-SENT_NODE_ID_PATH="$KIRA_SECRETS/sent_node_id.key"
-SNAP_NODE_ID_PATH="$KIRA_SECRETS/snap_node_id.key"
-
-# re-generate keys
-if [ "${REGEN_PRIV_VALIDATOR_KEYS,,}" == "true" ] || [ ! -f "$PRIV_VAL_KEY_PATH" ] ; then
-    echo "INFO: Regenerating private validator key used for signing blocks"
-    rm -fv "$PRIV_VAL_KEY_PATH"
-    priv-key-gen --mnemonic="$PRIV_VALIDATOR_KEY_MNEMONIC" --valkey="$PRIV_VAL_KEY_PATH" --nodekey=/dev/null --keyid=/dev/null
-fi
-
-if [ "${REGEN_VALIDATOR_NODE_KEYS,,}" == "true" ] || [ ! -f "$VAL_NODE_KEY_PATH" ] || [ ! -f "$VAL_NODE_ID_PATH" ] ; then
-    echo "INFO: Regenerating validator node key & id"
-    rm -fv "$VAL_NODE_KEY_PATH" "$VAL_NODE_ID_PATH"
-    priv-key-gen --mnemonic="$VALIDATOR_NODE_ID_MNEMONIC" --valkey=/dev/null --nodekey="$VAL_NODE_KEY_PATH" --keyid="$VAL_NODE_ID_PATH"
-fi
-
-if [ "${REGEN_SENTRY_NODE_KEYS,,}" == "true" ] || [ ! -f "$SENT_NODE_KEY_PATH" ] || [ ! -f "$SENT_NODE_ID_PATH" ] ; then
-    echo "INFO: Regenerating sentry node key & id"
-    rm -fv "$SENT_NODE_KEY_PATH" "$SENT_NODE_ID_PATH"
-    priv-key-gen --mnemonic="$SENTRY_NODE_ID_MNEMONIC" --valkey=/dev/null --nodekey="$SENT_NODE_KEY_PATH" --keyid="$SENT_NODE_ID_PATH"
-fi
-
-if [ "${REGEN_SNAPSHOOT_NODE_KEYS,,}" == "true" ] || [ ! -f "$SNAP_NODE_KEY_PATH" ] || [ ! -f "$SNAP_NODE_ID_PATH" ] ; then
-    echo "INFO: Regenerating snapshoot node key & id"
-    rm -fv "$SNAP_NODE_KEY_PATH" "$SNAP_NODE_ID_PATH"
-    priv-key-gen --mnemonic="$SNAPSHOOT_NODE_ID_MNEMONIC" --valkey=/dev/null --nodekey="$SNAP_NODE_KEY_PATH" --keyid="$SNAP_NODE_ID_PATH"
-fi
-
-rm -fv "$TMP_KEY"
-TMP_VALIDATOR_NODE_ID=$(cat $VAL_NODE_ID_PATH)
-TMP_SENTRY_NODE_ID=$(cat $SENT_NODE_ID_PATH)
-TMP_SNAPSHOOT_NODE_ID=$(cat $SNAP_NODE_ID_PATH)
-
-if [ -z "$VALIDATOR_NODE_ID" ] || [ "$VALIDATOR_NODE_ID" != "$TMP_VALIDATOR_NODE_ID" ] ; then # update env only if validator id changed
-    VALIDATOR_NODE_ID=$TMP_VALIDATOR_NODE_ID
-    CDHelper text lineswap --insert="VALIDATOR_NODE_ID=$VALIDATOR_NODE_ID" --prefix="VALIDATOR_NODE_ID=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
-if [ -z "$SENTRY_NODE_ID" ] || [ "$SENTRY_NODE_ID" != "$TMP_SENTRY_NODE_ID" ] ; then # update env only if sentry id changed
-    SENTRY_NODE_ID=$TMP_SENTRY_NODE_ID
-    CDHelper text lineswap --insert="SENTRY_NODE_ID=$SENTRY_NODE_ID" --prefix="SENTRY_NODE_ID=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
-if [ -z "$SNAPSHOOT_NODE_ID" ] || [ "$SNAPSHOOT_NODE_ID" != "$TMP_SNAPSHOOT_NODE_ID" ] ; then # update env only if sentry id changed
-    SNAPSHOOT_NODE_ID=$TMP_SNAPSHOOT_NODE_ID
-    CDHelper text lineswap --insert="SNAPSHOOT_NODE_ID=$SNAPSHOOT_NODE_ID" --prefix="SNAPSHOOT_NODE_ID=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
+source $MNEMONICS
 
 echo "INFO: Secrets loaded..."

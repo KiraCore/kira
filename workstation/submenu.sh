@@ -53,7 +53,12 @@ while :; do
 
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NETWORK_NAME=\"testing\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    if [ "${INFRA_MODE,,}" == "validator" ] ; then
+        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot 
+    else
+        CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"

@@ -50,7 +50,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -f -a -v $SNAP_NODE_KEY_PATH $COMMON_PATH/node_key.json
+cp -f -a -v $KIRA_SECRETS/snapshoot_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$SYNC_FROM_SNAP" ] ; then
