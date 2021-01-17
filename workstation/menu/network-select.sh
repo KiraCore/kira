@@ -3,7 +3,7 @@ set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 while : ; do
-    SELECT="" && while [ "${SELECT,,}" != "c" ] && [ "${SELECT,,}" != "n" ] && [ "${SELECT,,}" != "s" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mCreate [N]ew network, use [S]napshoot or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while [ "${SELECT,,}" != "c" ] && [ "${SELECT,,}" != "n" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mCreate [N]ew network, use [S]napshoot or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
     
     NEW_NETWORK_NAME=""
     if [ "${SELECT,,}" == "n" ] ; then
@@ -34,7 +34,7 @@ while : ; do
         [ -z "$NEW_NETWORK_NAME" ] && echo -en "\e[33;1mWARNING: Snapshoot file was not selected or does not contain a genesis file, can't read the chain-id \e[0m\c" && continue
     else
         echo -en "\e[33;1mWARNING: Network name is not defined \e[0m\c" && echo ""
-        SELECT="" && while [ "${SELECT,,}" != "d" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mSet [D]efault (local-1) network name or press [ENTER] to try again: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while [ "${SELECT,,}" != "d" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mSet [D]efault (local-1) network name or press [ENTER] to try again: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         
         [ "${SELECT,,}" != "d" ] && continue
         NEW_NETWORK_NAME="local-1"
