@@ -34,10 +34,11 @@ SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs
 echo "INFO: Setting up validator config files..."
 # * Config sentry/configs/config.toml
 
+CDHelper text lineswap --insert="moniker = \"KIRA ${CONTAINER_NAME} NODE\"" --prefix="moniker =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
 # Set true for strict address routability rules & Set false for private or local networks
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
@@ -55,6 +56,7 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
+    -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest
 

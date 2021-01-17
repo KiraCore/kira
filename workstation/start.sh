@@ -61,7 +61,7 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh || exit 1
 # * Generate node_key.json for validator & sentry.
 
 rm -rfv $DOCKER_COMMON
-mkdir -p $DOCKER_COMMON
+mkdir -p "$DOCKER_COMMON"
 cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
 
 # Load or generate secret mnemonics
@@ -74,10 +74,25 @@ $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-c
 
 # Start Containers
 
-$KIRA_MANAGER/containers/start-validator.sh 
-$KIRA_MANAGER/containers/start-sentry.sh 
-$KIRA_MANAGER/containers/start-interx.sh 
-$KIRA_MANAGER/containers/start-frontend.sh 
+if [ "${INFRA_MODE,,}" == "local" ]; then
+    $KIRA_MANAGER/containers/start-validator.sh 
+    $KIRA_MANAGER/containers/start-sentry.sh 
+    $KIRA_MANAGER/containers/start-interx.sh 
+    $KIRA_MANAGER/containers/start-frontend.sh 
+elif [ "${INFRA_MODE,,}" == "sentry" ]; then
+    $KIRA_MANAGER/containers/start-sentry.sh 
+    $KIRA_MANAGER/containers/start-interx.sh 
+    $KIRA_MANAGER/containers/start-frontend.sh 
+elif [ "${INFRA_MODE,,}" == "validator" ]; then
+    $KIRA_MANAGER/containers/start-validator.sh 
+    $KIRA_MANAGER/containers/start-sentry.sh 
+    $KIRA_MANAGER/containers/start-interx.sh 
+    $KIRA_MANAGER/containers/start-frontend.sh 
+else
+  echo "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+  exit 1
+fi
+
 
 set +x
 echo "------------------------------------------------"

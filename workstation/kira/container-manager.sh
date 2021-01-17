@@ -228,6 +228,7 @@ while : ; do
     elif [ "${OPTION,,}" == "l" ] ; then
         LOG_LINES=5
         READ_HEAD=true
+        SHOW_ALL=false
         while : ; do
             clear
             echo "INFO: Attempting to display $NAME container log..."
@@ -236,13 +237,15 @@ while : ; do
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mTry to show [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
+            ACCEPT="" && while [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
-            [ "${ACCEPT,,}" == "m" ] && LOG_LINES=$(($LOG_LINES + 5))
-            [ "${ACCEPT,,}" == "l" ] && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
+            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 5))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"

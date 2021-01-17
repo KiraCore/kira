@@ -29,6 +29,7 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
     -e DEBUG_MODE="True" \
+    -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest
 
@@ -42,6 +43,6 @@ FAUCET_ADDR=$(docker exec -i "interx" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/fauc
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"
 
-docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex --yes
+docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id "$NETWORK_NAME" --home=/root/.simapp --fees 2000ukex --yes
 
 

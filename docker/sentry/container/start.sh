@@ -35,7 +35,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
-  sekaid init --chain-id=testing testing --home=$SEKAID_HOME
+  sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
 
   rm -fv $SEKAID_HOME/config/node_key.json
   rm -fv $SEKAID_HOME/config/config.toml

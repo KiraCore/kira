@@ -64,9 +64,11 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 echo "INFO: Setting up $CONTAINER_NAME config files..." # * Config ~/configs/config.toml
+CDHelper text lineswap --insert="moniker = \"KIRA ${CONTAINER_NAME} NODE\"" --prefix="moniker =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="seed = \"$SENTRY_SEED\"" --prefix="seed =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
+CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
 CDHelper text lineswap --insert="unconditional_peer_ids = \"$SENTRY_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
 # Set true for strict address routability rules & Set false for private or local networks
 CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
@@ -87,6 +89,7 @@ docker run -d \
     -e DEBUG_MODE="True" \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
+    -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     $CONTAINER_NAME:latest # use sentry image as base

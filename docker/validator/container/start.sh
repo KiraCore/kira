@@ -19,7 +19,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   mkdir -p $SEKAID_HOME/config
   cd $SEKAID_HOME/config
 
-  sekaid init --overwrite --chain-id=testing testing --home=$SEKAID_HOME
+  sekaid init --overwrite --chain-id="$NETWORK_NAME" "KIRA VALIDATOR NODE" --home=$SEKAID_HOME
 
   rm -fv $SEKAID_HOME/config/config.toml
   rm -fv $SEKAID_HOME/config/node_key.json

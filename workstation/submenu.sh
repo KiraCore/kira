@@ -31,8 +31,8 @@ displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
 echo -e "| Network Interface: $IFACE (default)" 
 echo -e "|-----------------------------------------------|"
-displayAlign left $printWidth " [1] | Quick Setup"
-displayAlign left $printWidth " [2] | Advanced Setup"
+displayAlign left $printWidth " [1] | Quick Setup $setupHintQuick"
+displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
@@ -53,6 +53,7 @@ while :; do
 
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="NETWORK_NAME=\"testing\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
@@ -61,14 +62,18 @@ while :; do
     $KIRA_MANAGER/kira/kira.sh
     exit 0
     ;;
-
   2*)
     echo "INFO: Starting Advanced Setup..."
-
     $KIRA_MANAGER/menu/branch-select.sh "false"
+    
+    if [ "${INFRA_MODE,,}" == "validator" ] ; then
+        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot 
+    else
+        $KIRA_MANAGER/menu/snapshoot-select.sh
+    fi
+    
     $KIRA_MANAGER/menu/interface-select.sh
-    $KIRA_MANAGER/menu/snapshoot-select.sh
-
+    
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""

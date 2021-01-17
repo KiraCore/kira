@@ -2,10 +2,13 @@
 set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-
 SELECT="" && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1m[R]ecover from existing snapshoot or [S]ync new blockchain state: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 
-[ "${SELECT,,}" == "s" ] && echo "INFO: Blockchain state will NOT be recovered from the snapshoot" && exit 0 
+if [ "${SELECT,,}" == "s" ] ; then
+    echo "INFO: Blockchain state will NOT be recovered from the snapshoot"
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    exit 0 
+fi
 
 DEFAULT_SNAP_DIR=$KIRA_SNAP
 echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
