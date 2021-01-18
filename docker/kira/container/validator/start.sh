@@ -4,15 +4,9 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring validator setup v0.0.2 ..."
+echo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="/root/executed"
-HALT_CHECK="${COMMON_DIR}/halt"
-
-while [ -f "$HALT_CHECK" ]; do
-  echo "INFO: Container is prevented from further, executing start script, halt file is present..."
-  sleep 30
-done
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME

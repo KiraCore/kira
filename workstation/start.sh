@@ -43,19 +43,16 @@ done
 wait
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Build base image
-source $KIRAMGR_SCRIPTS/update-base-image.sh
+# * Build images
+
 set -e
 
-# ------------------------------------------------------------------------------------------------------------------------------------------------
-# * Build other docker images in parallel
-$KIRAMGR_SCRIPTS/update-validator-image.sh &
-$KIRAMGR_SCRIPTS/update-sentry-image.sh &
-$KIRAMGR_SCRIPTS/update-snapshoot-image.sh &
+$KIRAMGR_SCRIPTS/update-base-image.sh
+$KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
-wait
+$KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
-$KIRAMGR_SCRIPTS/update-frontend-image.sh || exit 1
+wait
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.

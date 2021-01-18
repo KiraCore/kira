@@ -57,8 +57,9 @@ docker run -d \
     -e CFG_version="version" \
     -e CFG_seed_mode="true" \
     -e CFG_cors_allowed_origins="*" \
+    -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
-    $CONTAINER_NAME:latest
+    kira:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 

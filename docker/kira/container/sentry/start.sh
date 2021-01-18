@@ -4,14 +4,9 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring sentry..."
+echo "INFO: Staring sentry setup v0.0.3"
 
 EXECUTED_CHECK="/root/executed"
-HALT_CHECK="${COMMON_DIR}/halt"
-
-while [ -f "$HALT_CHECK" ]; do
-  sleep 30
-done
 
 while ! ping -c1 validator &>/dev/null; do
   echo "INFO: Waiting for ping response form validator node... ($(date))"

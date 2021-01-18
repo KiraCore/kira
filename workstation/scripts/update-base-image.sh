@@ -5,8 +5,7 @@ BASE_IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" 
 if [ "$BASE_IMAGE_EXISTS" == "False" ]; then
     $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
     $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
-    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/sentry" "sentry"
-    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/validator" "validator"
+    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kira" "kira"
 
     echo "INFO: Updating base image..."
     $KIRAMGR_SCRIPTS/update-image.sh "$KIRA_DOCKER/base-image" "base-image" "latest"

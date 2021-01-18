@@ -4,10 +4,9 @@ exec 2>&1
 set -e
 set -x
 
-echo "Staring snapshoot v0.0.2"
+echo "INFO: Staring snapshoot v0.0.3"
 
 EXECUTED_CHECK="/root/executed"
-HALT_CHECK="${COMMON_DIR}/halt"
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
@@ -18,9 +17,9 @@ DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echo "$SNAP_FILENAME" > $SNAP_LATEST
 
-while [ -f "$HALT_CHECK" ] || [ -f "$SNAP_DONE" ] ; do
-  echo "INFO: Halt file is present or snapshoot was already finalized"
-  sleep 30
+while [ -f "$SNAP_DONE" ] ; do
+  echo "INFO: Snapshoot was already finalized, nothing to do here"
+  sleep 600
 done
 
 while ! ping -c1 sentry &>/dev/null; do

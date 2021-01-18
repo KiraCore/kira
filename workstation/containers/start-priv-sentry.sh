@@ -46,15 +46,16 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME} NODE" \
     -e CFG_pex="false" \
-    -e CFG_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
+    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_persistent_peers="tcp://$VALIDATOR_SEED" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRYT_NODE_ID,$PRIV_SENTRYT_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_version="true" \
     -e CFG_seed_mode="false" \
+    -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
-    $CONTAINER_NAME:latest
+    kira:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 

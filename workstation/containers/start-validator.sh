@@ -61,8 +61,9 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_version="v2" \
+    -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
-    $CONTAINER_NAME:latest
+    kira:latest
 
 echo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1

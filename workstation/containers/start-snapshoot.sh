@@ -89,9 +89,10 @@ docker run -d \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
     -e CFG_cors_allowed_origins="\"*\"" \
+    -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
-    $CONTAINER_NAME:latest # use sentry image as base
+    kira:latest # use sentry image as base
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
