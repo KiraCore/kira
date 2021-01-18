@@ -23,6 +23,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   $SELF_CONTAINER/configure.sh
 
+  echo "INFO: Importing key files from common storage..."
   rm -fv $SEKAID_HOME/config/node_key.json
   rm -fv $SEKAID_HOME/config/priv_validator_key.json
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/

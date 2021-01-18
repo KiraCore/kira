@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 i=0
 IS_STARTED="false"
-
+CONTAINER_NAME="frontend"
 while [ $i -le 40 ]; do
     i=$((i + 1))
 
@@ -28,6 +28,9 @@ while [ $i -le 40 ]; do
         break
     fi
 done
+
+echo "INFO: Printing health status..."
+docker inspect --format "{{json .State.Health }}" "$CONTAINER_NAME" | jq || echo "INFO: Failed to display $CONTAINER_NAME container health status"
 
 if [ "${IS_STARTED,,}" != "true" ]; then
     echo "ERROR: Frontend was not started sucessfully within defined time"

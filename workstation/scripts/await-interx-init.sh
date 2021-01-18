@@ -5,6 +5,7 @@ i=0
 IS_STARTED="false"
 FAUCET_ADDR=""
 INTERX_STATUS_CODE=""
+CONTAINER_NAME="interx"
 while [ $i -le 20 ]; do
     i=$((i + 1))
 
@@ -49,6 +50,9 @@ while [ $i -le 20 ]; do
         break
     fi
 done
+
+echo "INFO: Printing health status..."
+docker inspect --format "{{json .State.Health }}" "$CONTAINER_NAME" | jq || echo "INFO: Failed to display $CONTAINER_NAME container health status"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
     echo "ERROR: INTERX was not started sucessfully within defined time"

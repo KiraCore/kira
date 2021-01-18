@@ -55,6 +55,7 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME} NODE" \
     -e CFG_pex="false" \
+    -e CFG_rpc_laddr="tcp://127.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
     -e CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \

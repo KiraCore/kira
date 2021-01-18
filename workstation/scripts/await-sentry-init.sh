@@ -42,6 +42,8 @@ while [ $i -le 40 ]; do
     fi
 done
 
+echo "INFO: Printing health status..."
+docker inspect --format "{{json .State.Health }}" "$CONTAINER_NAME" | jq || echo "INFO: Failed to display $CONTAINER_NAME container health status"
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
     echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
