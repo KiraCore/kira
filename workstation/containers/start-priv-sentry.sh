@@ -51,7 +51,7 @@ docker run -d \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRYT_NODE_ID,$PRIV_SENTRYT_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID" \
     -e CFG_addr_book_strict="true" \
-    -e CFG_version="true" \
+    -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \

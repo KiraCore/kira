@@ -88,7 +88,7 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
-    -e CFG_cors_allowed_origins="\"*\"" \
+    -e CFG_cors_allowed_origins="*" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
