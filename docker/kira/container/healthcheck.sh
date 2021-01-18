@@ -17,7 +17,7 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || e
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate self logs"
 
 
-if [ "${HALT_CHECK,,}" == "sentry" ] || [ "${HALT_CHECK,,}" == "priv-sentry" ] ; then
+if [ "${HALT_CHECK,,}" == "sentry" ] || [ "${HALT_CHECK,,}" == "priv_sentry" ] ; then
     source $SELF_CONTAINER/sentry/healthcheck.sh
 elif [ "${HALT_CHECK,,}" == "snapshoot" ] ; then
     source $SELF_CONTAINER/snapshoot/healthcheck.sh

@@ -12,7 +12,7 @@ while [ -f "$HALT_CHECK" ]; do
   sleep 30
 done
 
-if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv-sentry" ] ; then
+if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     source $SELF_CONTAINER/sentry/start.sh
 elif [ "${NODE_TYPE,,}" == "snapshoot" ] ; then
     source $SELF_CONTAINER/snapshoot/start.sh

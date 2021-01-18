@@ -1,7 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-CONTAINER_NAME="priv-sentry"
+CONTAINER_NAME="priv_sentry"
 SNAP_DESTINATION="$DOCKER_COMMON/$CONTAINER_NAME/snap.zip"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
