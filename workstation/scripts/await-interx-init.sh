@@ -51,8 +51,8 @@ while [ $i -le 20 ]; do
     fi
 done
 
-echo "INFO: Printing health status..."
-docker inspect --format "{{json .State.Health }}" "$CONTAINER_NAME" | jq || echo "INFO: Failed to display $CONTAINER_NAME container health status"
+echo "INFO: Printing $CONTAINER_NAME health status..."
+docker exec -i $CONTAINER_NAME cat /self/logs/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
     echo "ERROR: INTERX was not started sucessfully within defined time"

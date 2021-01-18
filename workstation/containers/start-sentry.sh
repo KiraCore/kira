@@ -45,18 +45,19 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
-    -e DEBUG_MODE="True" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
-    -e CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED" \
+    -e CFG_persistent_peers="tcp://$VALIDATOR_SEED" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
-    -e CFG_version="v2" \
     -e CFG_seed_mode="true" \
+    -e CFG_version="v2" \
     -e CFG_cors_allowed_origins="*" \
+    -e CFG_max_num_outbound_peers="100" \
+    -e CFG_max_num_inbound_peers="10" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     kira:latest

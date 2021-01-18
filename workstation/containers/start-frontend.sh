@@ -16,7 +16,6 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --network $KIRA_FRONTEND_NETWORK \
-    -e DEBUG_MODE="True" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     $CONTAINER_NAME:latest
 

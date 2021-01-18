@@ -7,7 +7,6 @@ set +e && chmod 555 $ETC_PROFILE && source $ETC_PROFILE &>/dev/null && set -e
 INFRA_BRANCH=$1
 SKIP_UPDATE=$2
 START_TIME_INIT=$3
-DEBUG_MODE=$4
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
@@ -15,8 +14,6 @@ DEBUG_MODE=$4
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
 
 KIRA_HOME="/home/$KIRA_USER"
 KIRA_DUMP="$KIRA_HOME/dump"
@@ -34,7 +31,6 @@ echo "| STARTED: INIT $SETUP_VER"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
-echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
 echo "|    KIRA USER: $KIRA_USER"
@@ -207,8 +203,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         echo "INFO: Essentials were already installed: $(git --version), Curl, Wget..."
     fi
 
-    CDHelper text lineswap --insert="SILENT_MODE=$SILENT_MODE" --prefix="SILENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="DEBUG_MODE=$DEBUG_MODE" --prefix="DEBUG_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     #########################################
     # END Installing Essentials
     #########################################
@@ -227,7 +221,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     chmod -R 555 $KIRA_MANAGER
 
     echo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT" "$DEBUG_MODE"
+    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
     echo "INFO: Init script restart finished."
     exit 0
 else

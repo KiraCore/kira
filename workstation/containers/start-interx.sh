@@ -28,7 +28,6 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
-    -e DEBUG_MODE="True" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest

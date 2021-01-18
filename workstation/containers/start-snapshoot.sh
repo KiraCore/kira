@@ -74,21 +74,22 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
-    -e DEBUG_MODE="True" \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_pex="false" \
     -e CFG_seed="$SENTRY_SEED" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_persistent_peers="tcp://$SENTRY_SEED" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID" \
+    -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
     -e CFG_cors_allowed_origins="*" \
+    -e CFG_max_num_outbound_peers="0" \
+    -e CFG_max_num_inbound_peers="1" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

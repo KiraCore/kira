@@ -2,7 +2,6 @@
 exec 2>&1
 
 set +e && source "/etc/profile" &>/dev/null && set -e
-if [ "$DEBUG_MODE" == "True" ]; then set -x; else set +x; fi
 
 NAME=$1
 DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
@@ -13,6 +12,7 @@ mkdir -p "$CONTAINER_DUMP" "$DOCKER_COMMON/$NAME"
 [ -z "$DUMP_ZIP" ] && DUMP_ZIP="false"
 HALT_FILE_EXISTED="true" && [ ! -f "$HALT_FILE" ] && HALT_FILE_EXISTED="false" && touch $HALT_FILE
 
+set +x
 echo "------------------------------------------------"
 echo "|          STARTED: DUMP LOGS v0.0.2           |"
 echo "------------------------------------------------"
@@ -20,6 +20,7 @@ echo "| CONTAINER NAME: $NAME"
 echo "|    ZIP RESULTS: $DUMP_ZIP"
 echo "| CONTAINER DUMP: $CONTAINER_DUMP"
 echo "------------------------------------------------"
+set -x
 
 rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
@@ -62,9 +63,11 @@ else
     echo "INFO: Container $NAME files will not be compressed in this run"
 fi
 
+set +x
 echo "INFO: Compressed all files into '$ZIP_FILE'"
 echo "INFO: Container ${NAME} loggs were dumped to $CONTAINER_DUMP"
 
 echo "------------------------------------------------"
 echo "|        FINISHED: DUMP LOGS    v0.0.2         |"
 echo "------------------------------------------------"
+set -x

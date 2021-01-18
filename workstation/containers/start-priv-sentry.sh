@@ -42,7 +42,6 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
-    -e DEBUG_MODE="True" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="false" \
@@ -53,6 +52,8 @@ docker run -d \
     -e CFG_addr_book_strict="true" \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
+    -e CFG_max_num_outbound_peers="100" \
+    -e CFG_max_num_inbound_peers="10" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     kira:latest
