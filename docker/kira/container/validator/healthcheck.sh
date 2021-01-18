@@ -5,7 +5,7 @@ set -x
 
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
+BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(sekaid status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 
@@ -13,7 +13,7 @@ if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
   HEIGHT=0
 fi
 
-echo "$HEIGHT" >$BLOCK_HEIGHT_FILE
+echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 
 if [ -z "$PREVIOUS_HEIGHT" ] || [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ]; then # not a number
   PREVIOUS_HEIGHT=0

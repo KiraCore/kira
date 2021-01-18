@@ -153,6 +153,7 @@ while :; do
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
             [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
+            [ "${name,,}" == "snapshoot" ] && [ -f "$SCAN_DONE" ] && HEALTH_TMP="" # no need for healthcheck anymore
             LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
