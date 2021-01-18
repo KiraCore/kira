@@ -78,7 +78,7 @@ docker run -d \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e CFG_moniker="KIRA ${CONTAINER_NAME} NODE" \
+    -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="false" \
     -e CFG_seed="$SENTRY_SEED" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
