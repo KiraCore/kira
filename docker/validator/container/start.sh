@@ -21,11 +21,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid init --overwrite --chain-id="$NETWORK_NAME" "KIRA VALIDATOR NODE" --home=$SEKAID_HOME
 
-  rm -fv $SEKAID_HOME/config/config.toml
+  $SELF_CONTAINER/configure.sh
+
   rm -fv $SEKAID_HOME/config/node_key.json
   rm -fv $SEKAID_HOME/config/priv_validator_key.json
-
-  cp -v $COMMON_DIR/config.toml $SEKAID_HOME/config/
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 

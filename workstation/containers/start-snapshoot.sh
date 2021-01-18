@@ -16,7 +16,7 @@ GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 rm -fvr "$SNAP_STATUS"
-mkdir -p "$SNAP_STATUS"
+mkdir -p "$SNAP_STATUS" "$COMMON_PATH"
 
 SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
@@ -61,20 +61,8 @@ fi
 echo "INFO: Cleaning up snapshoot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
-echo "INFO: Setting up $CONTAINER_NAME config files..." # * Config ~/configs/config.toml
-CDHelper text lineswap --insert="moniker = \"KIRA ${CONTAINER_NAME} NODE\"" --prefix="moniker =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="pex = false" --prefix="pex =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="seed = \"$SENTRY_SEED\"" --prefix="seed =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$SENTRY_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$SENTRY_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
-# Set true for strict address routability rules & Set false for private or local networks
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
-CDHelper text lineswap --insert="seed_mode = \"false\"" --prefix="seed_mode =" --path=$COMMON_PATH # pex must be true
-CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
@@ -90,6 +78,16 @@ docker run -d \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e CFG_moniker="KIRA ${CONTAINER_NAME} NODE" \
+    -e CFG_pex="false" \
+    -e CFG_seed="$SENTRY_SEED" \
+    -e CFG_persistent_peers="tcp://$SENTRY_SEED" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID" \
+    -e CFG_addr_book_strict="false" \
+    -e CFG_version="v2" \
+    -e CFG_seed_mode="false" \
+    -e CFG_cors_allowed_origins="\"*\"" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     $CONTAINER_NAME:latest # use sentry image as base

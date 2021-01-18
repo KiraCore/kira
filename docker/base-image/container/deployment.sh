@@ -43,20 +43,52 @@ apt install -y bc
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
+CDHELPER_VERSION="v0.6.50"
 FLUTTER_VERSION="1.26.0-1.0.pre-dev"
 DART_VERSION="2.12.0-205.0.dev"
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"
     DART_ARCH="arm64"
+    CDHELPER_ARCH="arm64"
+    CDHELPER_EXPECTED_HASH="6cfd73a429463aa9f2e5f9e8462f5ada50ecaa1b4e21ad6d05caef4f21943273"
 else
     GOLANG_ARCH="amd64"
     DART_ARCH="x64"
+    CDHELPER_ARCH="x64"
+    CDHELPER_EXPECTED_HASH="6345e3c37cb5eddee659d1a6c7068ff6cf0a1e6a74d1f6f5fec747338f9ebdaf"
 fi
 
 GO_TAR=go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
 FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
 DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
+
+echo "INFO: Installing CDHelper tool"
+
+if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
+    rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
+    wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
+    FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
+ 
+    if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
+        echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $CDHELPER_EXPECTED_HASH, but got $FILE_HASH\n"
+        exit 1
+    fi
+else
+    echo "INFO: CDHelper tool was already downloaded"
+fi
+ 
+INSTALL_DIR="/usr/local/bin/CDHelper"
+rm -rfv $INSTALL_DIR
+mkdir -pv $INSTALL_DIR
+unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
+chmod -R -v 555 $INSTALL_DIR
+ 
+ls -l /bin/CDHelper || echo "INFO: Symlink not found"
+rm /bin/CDHelper || echo "INFO: Failed to remove old symlink"
+ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "INFO: CDHelper symlink already exists"
+ 
+CDHelper version
 
 echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
 cd /tmp
@@ -81,3 +113,6 @@ unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
 flutter doctor
+
+
+

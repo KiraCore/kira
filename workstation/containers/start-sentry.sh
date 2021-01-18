@@ -20,6 +20,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
+mkdir -p "$COMMON_PATH"
 cp -a -v $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
@@ -28,22 +29,11 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
-echo "INFO: Setting up validator config files..."
+echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
-CDHelper text lineswap --insert="moniker = \"KIRA ${CONTAINER_NAME} NODE\"" --prefix="moniker =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="pex = true" --prefix="pex =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="persistent_peers = \"tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED\"" --prefix="persistent_peers =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="private_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID\"" --prefix="private_peer_ids =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="unconditional_peer_ids = \"$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID\"" --prefix="unconditional_peer_ids =" --path=$COMMON_PATH
-# Set true for strict address routability rules & Set false for private or local networks
-CDHelper text lineswap --insert="addr_book_strict = false" --prefix="addr_book_strict =" --path=$COMMON_PATH
-CDHelper text lineswap --insert="version = \"v2\"" --prefix="version =" --path=$COMMON_PATH # fastsync
-CDHelper text lineswap --insert="seed_mode = \"true\"" --prefix="seed_mode =" --path=$COMMON_PATH # pex must be true
-CDHelper text lineswap --insert="cors_allowed_origins = [ \"*\" ]" --prefix="cors_allowed_origins =" --path=$COMMON_PATH
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 echo "INFO: Starting sentry node..."
 
@@ -57,12 +47,21 @@ docker run -d \
     --net=$KIRA_SENTRY_NETWORK \
     -e DEBUG_MODE="True" \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e CFG_moniker="KIRA ${CONTAINER_NAME} NODE" \
+    -e CFG_pex="true" \
+    -e CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SNAPSHOOT_SEED" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_addr_book_strict="false" \
+    -e CFG_version="version" \
+    -e CFG_seed_mode="true" \
+    -e CFG_cors_allowed_origins="*" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 
-echo "INFO: Waiting for sentry to start..."
+echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" || exit 1
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"

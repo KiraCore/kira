@@ -35,13 +35,13 @@ function MnemonicGenerator() {
     fi
 
     if [ "${2,,}" == "val" ] ; then
-        echo "INFO: Ensuring validator private key is generated"
+        echo "INFO: Ensuring $1 private key is generated"
         if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
             rm -fv "$valkeyPath"
             priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=/dev/null --keyid=/dev/null
         fi
     elif [ "${2,,}" == "node" ] ; then
-        echo "INFO: Ensuring nodekey files are generated"
+        echo "INFO: Ensuring $1 nodekey files are generated"
 
         nodeIdVariableName="${1^^}_NODE_ID"
         nodeId="${!nodeIdVariableName}"
@@ -56,7 +56,7 @@ function MnemonicGenerator() {
             CDHelper text lineswap --insert="$nodeIdVariableName=\"$newNodeId\"" --prefix="$nodeIdVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
         fi
     elif [ "${2,,}" == "addr" ] ; then
-        echo "INFO: Address key does not require any kestore files"
+        echo "INFO: $1 address key does not require any kestore files"
     else
         echo "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
         exit 1

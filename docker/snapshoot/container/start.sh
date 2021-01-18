@@ -47,11 +47,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid init --chain-id="$NETWORK_NAME" "KIRA SNAPSHOOT NODE" --home=$SEKAID_HOME
 
-  rm -fv $SEKAID_HOME/config/node_key.json
-  rm -fv $SEKAID_HOME/config/config.toml
+  $SELF_CONTAINER/configure.sh
 
+  rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
-  cp $COMMON_DIR/config.toml $SEKAID_HOME/config/
   
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
