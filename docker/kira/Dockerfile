@@ -19,7 +19,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-HEALTHCHECK --interval=90s --timeout=900s --start-period=270s --retries=3 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
+HEALTHCHECK --interval=60s --timeout=600s --start-period=300s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
 
 CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]
 
