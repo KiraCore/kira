@@ -11,7 +11,7 @@ echo "------------------------------------------------"
 set -x
 
 docker run -d \
-    -p 80:$KIRA_FRONTEND_PORT \
+    -p $KIRA_FRONTEND_PORT:80 \
     --hostname $KIRA_FRONTEND_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

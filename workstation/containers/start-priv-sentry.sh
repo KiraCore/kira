@@ -37,7 +37,7 @@ VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
-    -p $DEFAULT_P2P_PORT:$KIRA_PRIV_SENTRY_P2P_PORT \
+    -p $KIRA_PRIV_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
     --hostname $KIRA_PRIV_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

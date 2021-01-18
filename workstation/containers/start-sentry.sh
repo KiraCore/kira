@@ -38,9 +38,9 @@ SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs
 echo "INFO: Starting sentry node..."
 
 docker run -d \
-    -p $DEFAULT_P2P_PORT:$KIRA_SENTRY_P2P_PORT \
-    -p $DEFAULT_RPC_PORT:$KIRA_SENTRY_RPC_PORT \
-    -p $DEFAULT_GRPC_PORT:$KIRA_SENTRY_GRPC_PORT \
+    -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SENTRY_GRPC_PORT:$DEFAULT_GRPC_PORT \
     --hostname $KIRA_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

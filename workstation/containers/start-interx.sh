@@ -23,7 +23,7 @@ set -x
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 docker run -d \
-    -p $DEFAULT_INTERX_PORT:$KIRA_INTERX_PORT \
+    -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
