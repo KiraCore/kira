@@ -9,7 +9,7 @@ set +x
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|   NODE ID: $SENTRY_NODE_ID"
+echo "|   NODE ID: $PRIV_SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
 echo "| SNAPSHOOT: $KIRA_SNAP_PATH"
@@ -60,7 +60,7 @@ docker run -d \
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" || exit 1
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
