@@ -9,7 +9,7 @@ CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
-mkdir -p "$COMMON_PATH"
+mkdir -p "$COMMON_PATH" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv-sentry" "$DOCKER_COMMON/snapshoot"
 
 echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
 echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
@@ -41,8 +41,8 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
-GENESIS_DESTINATION="$DOCKER_COMMON/sentry/genesis.json"
-rm -f $GENESIS_DESTINATION
+GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
+rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv-sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -67,5 +67,11 @@ docker run -d \
 
 echo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
+
+echo "INFO: Cloning genesis file..."
+cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
+cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
+cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv-sentry/genesis.json"
+cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
