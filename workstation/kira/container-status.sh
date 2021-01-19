@@ -1,7 +1,8 @@
 #!/bin/bash
-
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+
+echo "INFO: Started '$1' container status scan"
 
 set -x
 
@@ -44,11 +45,12 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     HOSTNAME=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.Hostname'  2> /dev/null || echo "")
     EXPOSED_PORTS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -c '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
+    NETWORK_SETTINGS=$(echo "$DOCKER_INSPECT" 2> /dev/null | jq -r ".[0].NetworkSettings.Networks" 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do
         i=$((i + 1))
-        IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
+        IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
         if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
             eval "IP_$net=$IP_TMP"
         else
@@ -67,9 +69,11 @@ else # container does NOT exists
     HOSTNAME="undefined"
     LIP="undefined"
     PORTS=""
+    NETWORK_SETTINGS=""
 fi
 
 if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was specified
+    echo "INFO: Output file was specified, dumpiung data into '$VARS_FILE'"
     VARS_FILE_TMP="${VARS_FILE}.tmp"
     rm -fv $VARS_FILE_TMP && touch $VARS_FILE_TMP
 
@@ -86,18 +90,23 @@ if [ ! -z "$VARS_FILE" ]; then # save status variables to file if output was spe
     echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE_TMP
     echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE_TMP
 
-    if [ "${EXISTS,,}" == "true" ] && [ ! -z "$NETWORKS" ]; then # container exists
+    if [ ! -z "${NETWORK_SETTINGS,,}" ] && [ ! -z "$NETWORKS" ]; then # container exists
+        echo "INFO: Network settings of the $NAME container were found, duming data..."
         i=-1
         for net in $NETWORKS; do
             i=$((i + 1))
-            IP_TMP=$(echo "$DOCKER_INSPECT" | jq -r ".[0].NetworkSettings.Networks.$net.IPAddress" || echo "")
+            IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
             if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
                 echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE_TMP
             else
                 echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE_TMP
             fi
         done
+    else
+        echo "INFO: Network settings of the $NAME container were NOT found"
     fi
 
     cp -f -a -v $VARS_FILE_TMP $VARS_FILE
 fi
+
+echo "INFO: Stopped '$1' container status scan"

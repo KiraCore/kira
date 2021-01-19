@@ -45,7 +45,7 @@ CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 
 for name in $CONTAINERS; do
     touch "$STATUS_SCAN_PATH/$name"
-    $KIRA_MANAGER/kira/container-status.sh $name "$STATUS_SCAN_PATH/$name" $NETWORKS 2> "$SCAN_LOGS/$name-status.error.log" & 
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$STATUS_SCAN_PATH/$name" "$NETWORKS" &> "$SCAN_LOGS/$name-status.error.log" & 
 done
 
 wait

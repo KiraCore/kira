@@ -6,7 +6,7 @@ echo -en "\e[31;1mInput halt height or press [ENTER] to snapshoot latest state: 
 read HALT_HEIGHT
 DEFAULT_SNAP_DIR=$KIRA_SNAP
 echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
-SELECT="" && while [ "${SELECT,,}" != "n" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mInput [N]ew snapshoot directory or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while [ "${SELECT,,}" != "n" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mInput [N]ew snapshoot directory or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 [ "${SELECT,,}" == "n" ] && read "$DEFAULT_SNAP_DIR"
 [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
 
@@ -16,7 +16,7 @@ mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOOT=""
 if [ -f "$KIRA_SNAP_PATH" ] ; then
-    SELECT="" && while [ "${SELECT,,}" != "s" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mChoose to [S]ync from snapshoot or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while [ "${SELECT,,}" != "s" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mChoose to [S]ync from snapshoot or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
     if [ "${SELECT,,}" == "s" ] ; then
         SNAPSHOOTS=`ls $DEFAULT_SNAP_DIR/*.zip` # get all zip files in the snap directory
         SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
