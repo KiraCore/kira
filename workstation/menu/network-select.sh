@@ -24,9 +24,10 @@ while : ; do
         done
     elif [ "${SELECT,,}" == "s" ] ; then
         $KIRA_MANAGER/menu/snapshoot-select.sh
+        set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
         
         if [ -z "$KIRA_SNAP_PATH" ] || [ ! -f "$KIRA_SNAP_PATH" ] ; then
-            echo "INFO: Snapshoot was not selected or '$KIRA_SNAP_PATH' file is not found"
+            echo "INFO: Snapshoot was not selected or '$KIRA_SNAP_PATH' file was not found"
         fi
         
         NEW_NETWORK_NAME=$(unzip -p $KIRA_SNAP_PATH genesis.json 2> /dev/null | jq -r '.chain_id' 2> /dev/null || echo "")
