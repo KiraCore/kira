@@ -54,6 +54,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
+    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE -d $DATA_DIR
     DATA_GENESIS="$DATA_DIR/genesis.json"
 
