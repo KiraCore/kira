@@ -2,8 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="sentry"
-SNAP_DESTINATION="$DOCKER_COMMON/$CONTAINER_NAME/snap.zip"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 set +x
 echo "------------------------------------------------"
@@ -21,12 +21,12 @@ set -x
 set -e
 
 mkdir -p "$COMMON_PATH"
-cp -a -v $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
+cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echo "INFO: State snapshoot was found, cloning..."
-    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+    cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..."

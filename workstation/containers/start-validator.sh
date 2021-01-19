@@ -34,7 +34,7 @@ set -x
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echo "INFO: State snapshoot '$KIRA_SNAP_PATH' was found, cloning..."
-    cp -a -v $KIRA_SNAP_PATH $SNAP_DESTINATION
+    cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..."

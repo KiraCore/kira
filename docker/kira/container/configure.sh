@@ -23,6 +23,6 @@ CFG="$SEKAID_HOME/config/config.toml"
 # Maximum number of inbound P2P peers that can dial your node and connect to it
 [ ! -z "$CFG_max_num_inbound_peers" ] && CDHelper text lineswap --insert="max_num_inbound_peers = \"$CFG_max_num_inbound_peers\"" --prefix="max_num_inbound_peers =" --path=$CFG
 # Maximum number of outbound P2P peers to connect to, excluding persistent peers
-[ ! -z "$CFG_max_num_outbound_peers " ] && CDHelper text lineswap --insert="max_num_outbound_peers = \"$CFG_max_num_outbound_peers \"" --prefix="max_num_outbound_peers  =" --path=$CFG
+[ ! -z "$CFG_max_num_outbound_peers " ] && CDHelper text lineswap --insert="max_num_outbound_peers = \"$CFG_max_num_outbound_peers\"" --prefix="max_num_outbound_peers =" --path=$CFG
 
 echo "INFO: Finished node configuration."

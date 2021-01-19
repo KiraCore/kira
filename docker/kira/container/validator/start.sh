@@ -42,6 +42,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     fi
 
     rm -fv "$SNAP_FILE"
+  else
+    echo "INFO: Snap file is NOT present, starting new sync..."
   fi
 
   set +x
