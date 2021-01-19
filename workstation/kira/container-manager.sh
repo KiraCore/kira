@@ -25,10 +25,11 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address 
+NODE_ID_PATH="$TMP_DIR/node-id-$NAME" # kira address 
 
 mkdir -p $TMP_DIR
-rm -fv $LIP_PATH $KADDR_PATH
-touch $LIP_PATH $KADDR_PATH
+rm -fv $LIP_PATH $KADDR_PATH $NODE_ID_PATH
+touch $LIP_PATH $KADDR_PATH $NODE_ID_PATH
 
 echo "INFO: Wiping halt files of $NAME container..."
 
@@ -46,6 +47,7 @@ while : ; do
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
     KADDR=$(cat $KADDR_PATH)
+    NODE_ID=$(cat $NODE_ID_PATH)
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
         if [ ! -z "$HOSTNAME" ] ; then
@@ -61,14 +63,21 @@ while : ; do
         fi
     fi
 
+    touch "${NODE_ID_PATH}.pid" && if ! kill -0 $(cat "${NODE_ID_PATH}.pid") 2> /dev/null ; then
+        if [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] || [ "${NAME,,}" == "validator" ] ; then
+            echo $(docker exec -i $NAME sekaid status 2> /dev/null | jq -c '.node_info.id' 2> /dev/null | xargs 2> /dev/null || echo "") > "$NODE_ID_PATH" &
+            PID3="$!" && echo "$PID3" > "${NODE_ID_PATH}.pid"
+        fi
+    fi
+
     clear
     
-    echo -e "\e[36;1m-------------------------------------------------"
-    echo "|        KIRA CONTAINER MANAGER v0.0.7          |"
-    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
+    echo -e "\e[36;1m-----------------------------------------------------"
+    echo "|          KIRA CONTAINER MANAGER v0.0.9            |"
+    echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') ----------------|"
 
     if [ "${LOADING,,}" == "true" ] ; then
-        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...     \e[36;1m|"
+        echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...         \e[36;1m|"
         while [ ! -f $SCAN_DONE ] ; do
             sleep 1
         done
@@ -100,25 +109,25 @@ while : ; do
     fi
 
     NAME_TMP="${NAME}${WHITESPACE}"
-    echo "|      Name: ${NAME_TMP:0:34} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+        echo "|      Name: ${NAME_TMP:0:38} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
 
     if [ ! -z "$REPO" ] ; then
         REPO_TMP=$(echo "$REPO" | grep -oP "^https://\K.*")
         REPO_TMP="${REPO}${WHITESPACE}"
-        echo "|      Repo: ${REPO_TMP:0:34} : $BRANCH"
+        echo "|      Repo: ${REPO_TMP:0:38} : $BRANCH"
     fi
 
     if [ "${NAME,,}" == "snapshoot" ] && [ -f "$SNAP_LATEST" ] ; then
         LAST_SNAP_FILE="$(cat $SNAP_LATEST)${WHITESPACE}"
         LAST_SNAP_PROGRESS="$(cat $SNAP_PROGRESS 2> /dev/null || echo "") %"
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
-        echo "| Last Snap: ${LAST_SNAP_FILE:0:34} : $LAST_SNAP_PROGRESS"
+        echo "| Last Snap: ${LAST_SNAP_FILE:0:38} : $LAST_SNAP_PROGRESS"
         echo "|  Snap Dir: ${KIRA_SNAP}"
     fi
 
     if [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
-        echo "|    Faucet: ${KADDR_TMP:0:34} "
+        echo "|    Faucet: ${KADDR_TMP:0:38} "
     fi
 
     if [ "${EXISTS,,}" == "true" ] ; then # container exists
@@ -126,41 +135,39 @@ while : ; do
             for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
                 port_tmp="${port}${WHITESPACE}"
                 port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
-                echo "| Port Map: ${port_tmp:0:35} |"
+                echo "| Port Map: ${port_tmp:0:39} |"
             done
         fi
         i=-1 ; for net in $NETWORKS ; do i=$((i+1))
             TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
             if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
                 IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
-                echo "| Local IP: ${IP_TMP:0:35} |"
+                echo "| Local IP: ${IP_TMP:0:39} |"
             fi
         done
     fi
 
     ALLOWED_OPTIONS="x"
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    echo "|-----------------------------------------------|"
-    if [ ! -z "$HOSTNAME" ] ; then
-        [ ! -z "$LIP" ] && TMP_HOSTNAME="${HOSTNAME} ($LIP) ${WHITESPACE}" || TMP_HOSTNAME="${HOSTNAME}${WHITESPACE}"
-        echo "|   Host: ${TMP_HOSTNAME:0:37} |"
-    fi
+    echo "|---------------------------------------------------|"
+    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && echo "|    Host: ${v:0:40} |"
+    [ ! -z "$NODE_ID" ]  && v="${NODE_ID}${WHITESPACE}"  && echo "| Node Id: ${v:0:40} |"
     [ "$STATUS" != "exited" ] && \
-    echo "| Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
+    echo "|  Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
     [ "$STATUS" == "exited" ] && \
-    echo "| Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
+    echo "|  Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
     [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && \
-    echo "| Health: $HEALTH"
-    echo "|-----------------------------------------------|"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
-    [ "$STATUS" == "exited" ]      && echo "| [S] | START container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-    [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-    [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit __________________________________ |\e[0m"
+    echo "|  Health: $HEALTH"
+                                      echo "|---------------------------------------------------|"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+    [ "$STATUS" == "exited" ]      && echo "| [S] | START container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+    [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+    [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit ______________________________________ |\e[0m"
 
     read -s -n 1 -t 6 OPTION || continue
     [ -z "$OPTION" ] && continue

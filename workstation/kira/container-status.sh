@@ -20,7 +20,7 @@ fi
 if [ "${NAME,,}" == "interx" ]; then
     BRANCH="$INTERX_BRANCH"
     REPO="$INTERX_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then
@@ -43,7 +43,7 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     FINISHED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.FinishedAt'  2> /dev/null || echo "")
     HOSTNAME=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.Hostname'  2> /dev/null || echo "")
     EXPOSED_PORTS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -c '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
-    PORTS=$(docker ps --format "{{.Ports}}" -aqf "name=$NAME" 2> /dev/null || echo "")
+    PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do
@@ -55,18 +55,8 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
             eval "IP_$net=\"\""
         fi
     done
-
-    if [ "${NAME,,}" == "interx" ]; then
-        sleep 0 # custom handle interx
-    elif [ "${NAME,,}" == "sentry" ]; then
-        sleep 0 # custom handle sentry
-    elif [ "${NAME,,}" == "validator" ]; then
-        sleep 0 # custom handle validator
-    elif [ "${NAME,,}" == "registry" ]; then
-        sleep 0 # custom handle registry
-    fi
 else # container does NOT exists
-    ID="undefined"
+    ID=""
     STATUS="stopped"
     PAUSED="false"
     HEALTH="undefined"
