@@ -85,4 +85,4 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-sekaid start --home=$SEKAID_HOME --trace
+sekaid start --home=$SEKAID_HOME --rpc.laddr="$CFG_rpc_laddr" --grpc.address="$CFG_grpc_laddr" --trace

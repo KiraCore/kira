@@ -67,6 +67,7 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="false" \
+    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_persistent_peers="tcp://$VALIDATOR_SEED" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRYT_NODE_ID,$PRIV_SENTRYT_NODE_ID" \
