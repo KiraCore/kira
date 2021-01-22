@@ -61,7 +61,7 @@ while [ $i -le 40 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /self/logs/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [ ! -f "$GENESIS_DESTINATION" ] ; then
     echo "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"

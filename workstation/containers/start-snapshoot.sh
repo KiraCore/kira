@@ -74,6 +74,9 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
+# cleanup
+rm -f -v $COMMON_PATH/healthcheck_script_output.txt
+
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \

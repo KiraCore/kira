@@ -4,8 +4,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
-HALT_DIR="$DOCKER_COMMON/$NAME"
-HALT_FILE="$HALT_DIR/halt"
+COMMON_PATH="$DOCKER_COMMON/$NAME"
+HALT_FILE="$COMMON_PATH/halt"
+HEALTHCHECK_PATH="$COMMON_PATH/healthcheck_script_output.txt "
 
 set +x
 echo "INFO: Launching KIRA Container Manager..."
@@ -16,6 +17,8 @@ SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
+CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+WHITESPACE="                                                          "
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
@@ -27,18 +30,11 @@ LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address 
 NODE_ID_PATH="$TMP_DIR/node-id-$NAME" # kira address 
 
-mkdir -p $TMP_DIR
-rm -fv $LIP_PATH $KADDR_PATH $NODE_ID_PATH
-touch $LIP_PATH $KADDR_PATH $NODE_ID_PATH
-
 echo "INFO: Wiping halt files of $NAME container..."
 
-rm -fv $HALT_FILE
-mkdir -p $HALT_DIR
-
-WHITESPACE="                                                          "
-CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
-mkdir -p $CONTAINER_DUMP
+mkdir -p "$TMP_DIR" "$COMMON_PATH" "$CONTAINER_DUMP"
+rm -fv "$LIP_PATH" "$KADDR_PATH" "$NODE_ID_PATH" "$HALT_FILE"
+touch $LIP_PATH $KADDR_PATH $NODE_ID_PATH
 
 HOSTNAME=""
 LOADING="true"
@@ -161,21 +157,22 @@ while : ; do
 
                                       echo "|---------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     [ "$STATUS" == "exited" ]      && echo "| [S] | START container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
     [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
     [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+                                      echo "|---------------------------------------------------|"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
+    [ -f "$HEALTHCHECK" ]          && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit ______________________________________ |\e[0m"
 
     read -s -n 1 -t 6 OPTION || continue
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "i" ] && [ "${OPTION,,}" != "l" ] && [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
+    if [ "${OPTION,,}" != "i" ] && [ "${OPTION,,}" != "l" ] && [ "${OPTION,,}" != "h" ] && [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
@@ -235,7 +232,7 @@ while : ; do
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
-        LOG_LINES=5
+        LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
         while : ; do
@@ -254,7 +251,7 @@ while : ; do
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"
@@ -266,14 +263,14 @@ while : ; do
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "h" ] ; then
-        LOG_LINES=5
+        LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
         while : ; do
             clear
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
-            docker exec -i $ID cat /self/logs/latest_block_height.txt > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            cat $HEALTHCHECK_PATH > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
@@ -285,7 +282,7 @@ while : ; do
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"

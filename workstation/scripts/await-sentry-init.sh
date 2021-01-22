@@ -43,7 +43,7 @@ while [ $i -le 40 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /self/logs/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
     echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"

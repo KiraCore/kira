@@ -7,6 +7,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="frontend"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -16,6 +17,11 @@ echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
+
+mkdir -p $COMMON_PATH
+
+# cleanup
+rm -f -v $COMMON_PATH/healthcheck_script_output.txt
 
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -27,6 +33,7 @@ docker run -d \
     --name $CONTAINER_NAME \
     --network $KIRA_FRONTEND_NETWORK \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME

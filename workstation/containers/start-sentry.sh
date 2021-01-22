@@ -51,6 +51,9 @@ touch "$PEERS_PATH" "$SEEDS_PATH"
 cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
 cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
+# cleanup
+rm -f -v $COMMON_PATH/healthcheck_script_output.txt
+
 echo "INFO: Starting sentry node..."
 
 docker run -d \
@@ -67,7 +70,7 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
-    -e CFG_grpc_laddr="0.0.0.0:$DEFAULT_GRPC_PORT" \
+    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_persistent_peers="tcp://$VALIDATOR_SEED" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \

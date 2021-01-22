@@ -16,6 +16,7 @@ rm -f "./config.tmp"
 set -e
 
 CONTAINER_NAME="interx"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -27,7 +28,10 @@ echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
-COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+mkdir -p $COMMON_PATH
+
+# cleanup
+rm -f -v $COMMON_PATH/healthcheck_script_output.txt
 
 docker run -d \
     --cpus="$CPU_RESERVED" \

@@ -53,6 +53,9 @@ GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
 rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
 
+# cleanup
+rm -f -v $COMMON_PATH/healthcheck_script_output.txt
+
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \

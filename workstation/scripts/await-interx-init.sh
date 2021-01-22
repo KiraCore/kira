@@ -52,7 +52,7 @@ while [ $i -le 20 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /self/logs/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
     echo "ERROR: INTERX was not started sucessfully within defined time"
