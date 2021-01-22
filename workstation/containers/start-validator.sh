@@ -68,10 +68,10 @@ docker run -d \
     --net=$KIRA_VALIDATOR_NETWORK \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc_laddr="127.0.0.1:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc_laddr="127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
-    -e CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED" \
+    -e CFG_persistent_peers="$SENTRY_SEED,$PRIV_SENTRY_SEED" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_max_num_outbound_peers="0" \
     -e CFG_max_num_inbound_peers="3" \
