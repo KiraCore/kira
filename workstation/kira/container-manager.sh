@@ -6,7 +6,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 HALT_FILE="$COMMON_PATH/halt"
-HEALTHCHECK_PATH="$COMMON_PATH/healthcheck.log"
+HEALTHCHECK_LOGS="$COMMON_PATH/healthcheck.log"
+START_LOGS="$COMMON_PATH/start.log"
 
 set +x
 echo "INFO: Launching KIRA Container Manager..."
@@ -163,8 +164,8 @@ while : ; do
     [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
                                       echo "|---------------------------------------------------|"
-    [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
-    [ -f "$HEALTHCHECK" ]          && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
+    [ -f "$START_LOGS" ]           && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
+    [ -f "$HEALTHCHECK_LOGS" ]     && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
     [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit ______________________________________ |\e[0m"
 
@@ -239,7 +240,7 @@ while : ; do
             clear
             echo "INFO: Attempting to display $NAME container log..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
-            docker logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
+            cat $START_LOGS > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
@@ -270,7 +271,7 @@ while : ; do
             clear
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
-            cat $HEALTHCHECK_PATH > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            cat $HEALTHCHECK_LOGS > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"

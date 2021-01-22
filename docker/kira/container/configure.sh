@@ -28,7 +28,7 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
         
         CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
-        CFG_persistent_peers="${CFG_persistent_peers}${peer}"
+        CFG_persistent_peers="tcp://${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
 fi
@@ -39,7 +39,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         [ -z "$seed" ] && continue # seed not found
         echo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
-        CFG_seeds="${CFG_seeds}${seed}"
+        CFG_seeds="tcp://${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
 fi
 
