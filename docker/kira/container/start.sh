@@ -13,11 +13,11 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-    $SELF_CONTAINER/sentry/start.sh | tee -a $COMMON_DIR/start.log
+    $SELF_CONTAINER/sentry/start.sh
 elif [ "${NODE_TYPE,,}" == "snapshoot" ] ; then
-    $SELF_CONTAINER/snapshoot/start.sh | tee -a $COMMON_DIR/start.log
+    $SELF_CONTAINER/snapshoot/start.sh
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
-    $SELF_CONTAINER/validator/start.sh | tee -a $COMMON_DIR/start.log
+    $SELF_CONTAINER/validator/start.sh
 else
   echo "ERROR: Unknown node type '$NODE_TYPE'"
   exit 1

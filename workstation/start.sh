@@ -50,9 +50,10 @@ set -e
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
-$KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
 wait
+
+$KIRAMGR_SCRIPTS/update-frontend-image.sh
 
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.

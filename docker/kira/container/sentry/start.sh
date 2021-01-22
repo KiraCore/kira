@@ -61,4 +61,4 @@ fi
 
 $SELF_CONTAINER/configure.sh
 
-sekaid start --home=$SEKAID_HOME --trace
+sekaid start --home=$SEKAID_HOME --grpc.address="$CFG_grpc_laddr" --trace
