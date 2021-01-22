@@ -6,7 +6,7 @@ set -x
 
 echo "INFO: Staring validator setup v0.0.3 ..."
 
-EXECUTED_CHECK="/root/executed"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME

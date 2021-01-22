@@ -7,7 +7,7 @@ set -x
 echo "Staring INTERX..."
 cd $SEKAI/INTERX
 
-EXECUTED_CHECK="/root/executed"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 
 while [ -f "$HALT_CHECK" ]; do

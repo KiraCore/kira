@@ -6,7 +6,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 HALT_FILE="$COMMON_PATH/halt"
-HEALTHCHECK_PATH="$COMMON_PATH/healthcheck_script_output.txt "
+HEALTHCHECK_PATH="$COMMON_PATH/healthcheck.log"
 
 set +x
 echo "INFO: Launching KIRA Container Manager..."

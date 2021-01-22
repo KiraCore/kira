@@ -6,7 +6,7 @@ set -x
 
 echo "INFO: Staring snapshoot v0.0.3"
 
-EXECUTED_CHECK="/root/executed"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
@@ -77,7 +77,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 fi
 
 touch ./output.log ./output2.log # make sure log files are present so we can cut them
-sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
+sekaid start --home=$SEKAID_HOME --rpc.laddr="$CFG_rpc_laddr" --grpc.address="$CFG_grpc_laddr" --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
 PID1="$!"
 
 PID_FINISHED="false"
@@ -113,7 +113,7 @@ while : ; do
   else
      echo "WARNING: Node finished running, starting tracking and checking final height..."
      rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
-     sekaid start --home=$SEKAID_HOME --trace &> ./output2.log & # launch sekai in state observer mode
+     sekaid start --home=$SEKAID_HOME --rpc.laddr="$CFG_rpc_laddr" --grpc.address="$CFG_grpc_laddr" --trace &> ./output2.log & # launch sekai in state observer mode
      PID1="$?"
      PID_FINISHED="true"
   fi
@@ -125,7 +125,7 @@ while : ; do
         echo "INFO: Printing current output log..."
         cat ./output.log | tail -n 100
         kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
-        sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
+        sekaid start --home=$SEKAID_HOME --rpc.laddr="$CFG_rpc_laddr" --grpc.address="$CFG_grpc_laddr" --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
         PID1="$!"
     fi
   else

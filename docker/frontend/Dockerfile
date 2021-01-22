@@ -15,15 +15,15 @@ ENV SELF_LOGS=/self/logs
 ENV SELF_CONTAINER=${SELF_HOME}/container
 ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
 
-RUN mkdir ${SELF_HOME} ${SELF_LOGS} ${SELF_CONTAINER} -p
+RUN mkdir -p ${SELF_HOME} ${SELF_LOGS} ${SELF_CONTAINER}
 ADD ./container ${SELF_CONTAINER}
 
 RUN apt update
 RUN apt install -y jq iputils-ping
 RUN chmod 777 -R ${SELF_HOME}
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${COMMON_DIR}/healthcheck_script_output.txt
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} | tee -a ${COMMON_DIR}/healthcheck.log
 
 COPY --from=build-env "/root/kira-frontend/src/build/web" /usr/share/nginx/html
 
-CMD ["sh", "-c", "/bin/bash ${SELF_CONTAINER}/start.sh"]
+CMD ["sh", "-c", "/bin/bash ${SELF_CONTAINER}/start.sh | tee -a ${COMMON_DIR}/start.log"]

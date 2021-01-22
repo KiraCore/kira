@@ -21,7 +21,7 @@ set -x
 mkdir -p $COMMON_PATH
 
 # cleanup
-rm -f -v $COMMON_PATH/healthcheck_script_output.txt
+rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
 
 docker run -d \
     --cpus="$CPU_RESERVED" \

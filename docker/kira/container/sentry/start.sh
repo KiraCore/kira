@@ -6,7 +6,7 @@ set -x
 
 echo "INFO: Staring sentry setup v0.0.3"
 
-EXECUTED_CHECK="/root/executed"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 
 while ! ping -c1 validator &>/dev/null; do
   echo "INFO: Waiting for ping response form validator node... ($(date))"
@@ -58,7 +58,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   touch $EXECUTED_CHECK
 fi
-
 
 $SELF_CONTAINER/configure.sh
 

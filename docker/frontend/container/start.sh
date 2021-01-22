@@ -6,7 +6,7 @@ set -x
 
 echo "Staring frontend..."
 
-EXECUTED_CHECK="/root/executed"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 
 while [ -f "$HALT_CHECK" ]; do

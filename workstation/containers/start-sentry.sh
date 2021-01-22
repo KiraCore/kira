@@ -52,7 +52,7 @@ cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
 cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
 # cleanup
-rm -f -v $COMMON_PATH/healthcheck_script_output.txt
+rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
 
 echo "INFO: Starting sentry node..."
 

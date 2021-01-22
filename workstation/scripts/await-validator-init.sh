@@ -29,7 +29,7 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting $CONTAINER_NAME initialization..."
-    IS_STARTED=$(docker exec -i "$CONTAINER_NAME" [ -f /root/executed ] && echo "true" || echo "false")
+    IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
     if [ "${IS_STARTED,,}" != "true" ] ; then
         sleep 12
         echo "WARNING: $CONTAINER_NAME is not initialized yet"
@@ -61,8 +61,10 @@ while [ $i -le 40 ]; do
     fi
 done
 
-echo "INFO: Printing $CONTAINER_NAME health status..."
-cat $COMMON_PATH/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+echo "INFO: Printing $CONTAINER_NAME health logs..."
+cat $COMMON_PATH/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+echo "INFO: Printing $CONTAINER_NAME start logs..."
+cat $COMMON_PATH/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
 
 if [ ! -f "$GENESIS_DESTINATION" ] ; then
     echo "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"
