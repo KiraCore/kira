@@ -76,11 +76,13 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-
-sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
+touch ./output.log ./output2.log # make sure log files are present so we can cut them
+sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
 PID1="$!"
 
 PID_FINISHED="false"
+LAST_SNAP_BLOCK=-1
+i=0
 while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
@@ -107,17 +109,36 @@ while : ; do
 
   if ps -p $PID1 > /dev/null ; then
      echo "INFO: Waiting for node to sync..."
-     sleep 10
+     sleep 30
   else
      echo "WARNING: Node finished running, starting tracking and checking final height..."
      rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
-     sekaid start --home=$SEKAID_HOME &> ./output2.log & # launch sekai in state observer mode
+     sekaid start --home=$SEKAID_HOME --trace &> ./output2.log & # launch sekai in state observer mode
      PID1="$?"
      PID_FINISHED="true"
+  fi
+
+  if [ "$LAST_SNAP_BLOCK" == "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
+    i=$((i + 1))
+    if [ $i -ge 4 ] ; then
+        echo "WARNING: Block did not changed for the last 2 minutes!"
+        echo "INFO: Printing current output log..."
+        cat ./output.log | tail -n 100
+        kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
+        sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
+        PID1="$!"
+    fi
+  else
+      echo "INFO: Success, block changed!"
+      LAST_SNAP_BLOCK="$SNAP_BLOCK"
+      i=0
   fi
 done
 
 kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
+
+echo "INFO: Printing latest output log..."
+cat ./output2.log | tail -n 100
 
 echo "INFO: Creating backup package..."
 cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data

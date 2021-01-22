@@ -32,8 +32,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
 
-  $SELF_CONTAINER/configure.sh
-
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   
@@ -61,4 +59,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-sekaid start --home=$SEKAID_HOME --rpc.laddr="tcp://0.0.0.0:26657" --grpc.address="0.0.0.0:9090" --trace
+
+$SELF_CONTAINER/configure.sh
+
+sekaid start --home=$SEKAID_HOME --trace

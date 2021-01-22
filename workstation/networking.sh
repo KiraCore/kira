@@ -59,6 +59,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echo "INFO: Setting up sentry mode networking..."
+    ZONE="sentry"
 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     echo "INFO: Setting up validator mode networking for $IFACE interface & stopping docker before changes are applied..."
@@ -91,11 +92,11 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then
             echo "INFO: Disabling public access to the port $PORT, networking is tured off ($PORTS_EXPOSURE)"
-            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" reject"
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" reject"
             continue
         elif [ "${PORTS_EXPOSURE,,}" == "enabled" ] ; then
             echo "INFO: Enabling public access to the port $PORT, networking is tured on ($PORTS_EXPOSURE)"
-            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" accept"
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" accept"
             continue 
         else
             echo "INFO: Custom global rules will be enforced for the port $PORT"
@@ -110,23 +111,33 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         
         if [ "${PORT_EXPOSURE,,}" == "disabled" ] ; then
             echo "INFO: Disabling public access to the port $PORT..."
-            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" reject"
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" reject"
             continue
         elif [ "${PORT_EXPOSURE,,}" == "enabled" ] ; then
             echo "INFO: Enabling public access to the port $PORT..."
-            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" accept"
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" accept"
             continue 
         elif [ "${PORT_EXPOSURE,,}" == "whitelist" ] ; then
             echo "INFO: Custom whitelist rules will be applied to the port $PORT..."
-            #firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" accept"
-            # TODO iterate over blacklist rules
+            while read ip; do
+                [ -z "$ip" ] && continue # only display non-empty lines
+                i=$((i + 1))
+                echo "INFO: Whitelisting address ${ip}..."
+                firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"$ip\" port port=\"$PORT\" protocol=\"tcp\" accept"
+            done < $WHITELIST
         elif [ "${PORT_EXPOSURE,,}" == "enabled" ] ; then
             echo "INFO: Custom blacklist rules will be applied to the port $PORT..."
-            #firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" accept"
-            # TODO reject blacklist ports
+            echo "INFO: Whitelisting all IP addresses other then the ones defined in the blacklist..."
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" accept"
+            while read ip; do
+                [ -z "$ip" ] && continue # only display non-empty lines
+                i=$((i + 1))
+                echo "INFO: Blacklisting address ${ip}..."
+                firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"$ip\" port port=\"$PORT\" protocol=\"tcp\" reject"
+            done < $BLACKLIST
         else
             echo "WARNING: Rule '$PORT_EXPOSURE' is unrecognized and can NOT be applied to the port $PORT, disabling port access"
-            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$p\" protocol=\"tcp\" reject"
+            firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"$PORT\" protocol=\"tcp\" reject"
             continue
         fi
     done
@@ -137,10 +148,10 @@ fi
 
 firewall-cmd --reload
 firewall-cmd --get-zones
-firewall-cmd --zone=demo --list-all
+firewall-cmd --zone=$ZONE --list-all
 firewall-cmd --zone=trusted --list-all 
 firewall-cmd --zone=public --list-all 
-firewall-cmd --set-default-zone=demo
+firewall-cmd --set-default-zone=$ZONE
 firewall-cmd --complete-reload
 firewall-cmd --check-config || echo "INFO: Failed to check firewall config"
 

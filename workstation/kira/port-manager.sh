@@ -48,10 +48,8 @@ while : ; do
         [ "${PORT_EXPOSURE,,}" != "enabled" ] && \
         echo "| [D] | Disable Port ACCESS    ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
         echo "|--------------------------------------------------|"
-        echo "| [E] | Show WHITELIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
-        echo "| [F] | Show BLACKLIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
-        echo "| [G] | Edit WHITELIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}g"
-        echo "| [H] | Edit BLACKLIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
+        echo "| [E] | Edit/Show WHITELIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+        echo "| [F] | Edit/Show BLACKLIST         ${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
         echo "| [R] | RELOAD Network Settings${WHITESPACE:0:18}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
      echo -e "| [X] | Exit _____________________________________ |\e[0m"
     
@@ -93,31 +91,36 @@ while : ; do
         while read p; do
             [ -z "$p" ] && continue # only display non-empty lines
             i=$((i + 1))
-            echo -e "${1}. $p"
+            echo "${1}. $p"
         done < $FILE
         echo "INFO: All $i ${TARGET}ED IP addresses were displayed"
-        REINITALIZE="false"
-    elif [ "${OPTION,,}" == "g" ] || [ "${OPTION,,}" == "h" ] ; then
-        [ "${OPTION,,}" == "g" ] && FILE=$WHITELIST && TARGET="WHITELIST"
-        [ "${OPTION,,}" == "h" ] && FILE=$BLACKLIST && TARGET="BLACKLIST"
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] ; do echo -en "\e[31;1mDo you want to [A]dd or [R]emove $TARGET addresses: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mDo you want to [A]dd or [R]emove $TARGET addresses or [S]kip action: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         echo -en "\e[31;1mInput comma separated list of IP addesses to $TARGET: \e[0m" && read IP_LIST
+        [ "${SELECT,,}" == "s" ] && continue
         [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
         [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
         i=0
         for ip in $(echo $IP_LIST | sed "s/,/ /g") ; do
             ip=$(echo "$ip" | xargs) # trim whitespace characters
+            ipArr=( $(echo $ip | tr "/" "\n") )
+            ip=${ipArr[0],,}
+            mask_tmp=${ipArr[1],,}
+            mask="" && [[ $mask_tmp =~ ^[0-9]+$ ]] && mask="$mask_tmp" # port must be a number
+            [ ! -z "$mask" ] && (($mask < 8 || $mask > 32)) && mask=""
             if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
-                echo "INFO: SUCCESS, '$ip' is a valid IP address and will be $TARGET"
-                [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$ip" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
+                ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
+                echo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
+                [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$ipRange" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
                 [ "${SELECT,,}" == "r" ] && CDHelper text lineswap --insert="" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
                 i=$((i + 1))
             else
                 echo "INFO: FAILURE, '$ip' is NOT a valid IP address and will NOT be $TARGET"
                 continue
             fi
-            grep "\S" $FILE
         done
+        echo "INFO: Saving unique changes to $FILE..."
+        grep "\S" $FILE
+        sort -u $FILE | tee $FILE
         echo "INFO: Total of $i IP addresses were $TARGET"
         REINITALIZE="true"
     elif [ "${OPTION,,}" == "x" ] ; then

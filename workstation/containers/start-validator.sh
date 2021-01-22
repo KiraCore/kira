@@ -10,6 +10,11 @@ CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
+
 rm -rfv $COMMON_PATH
 mkdir -p "$COMMON_PATH" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshoot"
 
@@ -28,6 +33,8 @@ echo "|-----------------------------------------------"
 echo "|   NETWORK: $KIRA_VALIDATOR_NETWORK"
 echo "|   NODE ID: $VALIDATOR_NODE_ID"
 echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
+echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
@@ -49,6 +56,9 @@ rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
+    --cpus="$CPU_RESERVED" \
+    --memory="$RAM_RESERVED" \
+    --oom-kill-disable \
     --hostname $KIRA_VALIDATOR_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

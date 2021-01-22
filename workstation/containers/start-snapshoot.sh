@@ -15,6 +15,11 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
+
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_PATH"
 
@@ -43,6 +48,8 @@ echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|    HOSTNAME: $KIRA_SNAPSHOOT_DNS"
 echo "| SYNC HEIGHT: $MAX_HEIGHT" 
 echo "|   SNAP FILE: $SNAP_FILE"
+echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 
 echo "INFO: Loading secrets..."
@@ -70,6 +77,9 @@ docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
+    --cpus="$CPU_RESERVED" \
+    --memory="$RAM_RESERVED" \
+    --oom-kill-disable \
     --hostname $KIRA_SNAPSHOOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

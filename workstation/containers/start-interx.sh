@@ -1,6 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
+
 echo "INFO: Loading secrets..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
@@ -17,12 +22,17 @@ echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_INTERX_NETWORK"
 echo "|  HOSTNAME: $KIRA_INTERX_DNS"
+echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 docker run -d \
+    --cpus="$CPU_RESERVED" \
+    --memory="$RAM_RESERVED" \
+    --oom-kill-disable \
     -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \

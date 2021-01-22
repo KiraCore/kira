@@ -44,8 +44,8 @@ apt install -y bc
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
 CDHELPER_VERSION="v0.6.50"
-FLUTTER_VERSION="1.26.0-1.0.pre-dev"
-DART_VERSION="2.12.0-205.0.dev"
+FLUTTER_VERSION="1.26.0-12.0.pre-dev"
+DART_VERSION="2.12.0-242.0.dev"
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"

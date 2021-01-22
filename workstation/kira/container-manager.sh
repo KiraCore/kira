@@ -158,9 +158,11 @@ while : ; do
     echo "|  Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
     [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && \
     echo "|  Health: $HEALTH"
+
                                       echo "|---------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
+    [ "${EXISTS,,}" == "true" ]    && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
     [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     [ "$STATUS" == "exited" ]      && echo "| [S] | START container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
@@ -251,7 +253,38 @@ while : ; do
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
-            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 5))
+            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
+            if [ "${ACCEPT,,}" == "s" ] ; then
+                if [ "${READ_HEAD,,}" == "true" ] ; then
+                    READ_HEAD="false"
+                else
+                    READ_HEAD="true"
+                fi
+            fi
+        done
+        OPTION=""
+        EXECUTED="true"
+    elif [ "${OPTION,,}" == "h" ] ; then
+        LOG_LINES=5
+        READ_HEAD=true
+        SHOW_ALL=false
+        while : ; do
+            clear
+            echo "INFO: Attempting to display $NAME container healthcheck logs..."
+            TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
+            docker exec -i $ID cat /self/logs/latest_block_height.txt > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            MAX=$(cat $TMP_DUMP | wc -l)
+            [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
+            echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
+            TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
+            ACCEPT="" && while [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
+            [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
+            [ "${ACCEPT,,}" == "r" ] && continue
+            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
             [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 5))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then

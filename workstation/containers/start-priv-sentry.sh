@@ -5,6 +5,11 @@ CONTAINER_NAME="priv_sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
+
 set +x
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
@@ -13,12 +18,19 @@ echo "|   NODE ID: $PRIV_SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
 echo "| SNAPSHOOT: $KIRA_SNAP_PATH"
+echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 
 echo "INFO: Loading secrets..."
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
+
+echo "INFO: Setting up $CONTAINER_NAME config vars..."
+# * Config sentry/configs/config.toml
+
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_PATH"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
@@ -29,14 +41,21 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
-echo "INFO: Setting up $CONTAINER_NAME config vars..."
-# * Config sentry/configs/config.toml
+COMMON_PEERS_PATH="$COMMON_PATH/peers"
+COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
+PEERS_PATH="$KIRA_CONFIGS/private_peers"
+SEEDS_PATH="$KIRA_CONFIGS/private_seeds"
+touch "$PEERS_PATH" "$SEEDS_PATH"
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
+cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
+    --cpus="$CPU_RESERVED" \
+    --memory="$RAM_RESERVED" \
+    --oom-kill-disable \
     -p $KIRA_PRIV_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
     --hostname $KIRA_PRIV_SENTRY_DNS \
     --restart=always \

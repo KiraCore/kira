@@ -178,9 +178,11 @@ while :; do
             echo "| [S] | START All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
-    echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    
     [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+    echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
@@ -256,6 +258,11 @@ while :; do
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Backing up blockchain state..."
         $KIRA_MANAGER/kira/kira-backup.sh || echo "ERROR: Snapshoot failed"
+        LOADING="true"
+        EXECUTED="true"
+    elif [ "${OPTION,,}" == "n" ] ; then
+        echo "INFO: Staring networking manager..."
+        $KIRA_MANAGER/kira/kira-networking.sh || echo "ERROR: Network manager failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
