@@ -13,6 +13,7 @@ NODE_ID=""
 rm -fv $GENESIS_DESTINATION
 
 CONTAINER_NAME="validator"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 while [ $i -le 40 ]; do
     i=$((i + 1))
@@ -61,7 +62,7 @@ while [ $i -le 40 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+cat $COMMON_PATH/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [ ! -f "$GENESIS_DESTINATION" ] ; then
     echo "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"

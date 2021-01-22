@@ -6,6 +6,8 @@ IS_STARTED="false"
 FAUCET_ADDR=""
 INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+
 while [ $i -le 20 ]; do
     i=$((i + 1))
 
@@ -13,17 +15,17 @@ while [ $i -le 20 ]; do
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "interx" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: INTERX container does not exists yet, waiting..."
+        echo "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
         continue
     else
-        echo "INFO: Success, INTERX container was found"
+        echo "INFO: Success, $CONTAINER_NAME container was found"
     fi
 
     echo "INFO: Awaiting interx initialization..."
     IS_STARTED=$(docker exec -i "interx" [ -f /root/executed ] && echo "true" || echo "false")
     if [ "${IS_STARTED,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: INTERX is not initialized yet"
+        echo "WARNING: $CONTAINER_NAME is not initialized yet"
         continue
     else
         echo "INFO: Success, interx was initialized"
@@ -34,7 +36,7 @@ while [ $i -le 20 ]; do
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
-        echo "WARNING: INTERX is not started yet"
+        echo "WARNING: $CONTAINER_NAME is not started yet"
         continue
     fi
 
@@ -43,7 +45,7 @@ while [ $i -le 20 ]; do
 
     if [ -z "${FAUCET_ADDR}" ] ; then
         sleep 30
-        echo "WARNING: INTERX faucet is initalized yet"
+        echo "WARNING: $CONTAINER_NAME faucet is initalized yet"
         continue
     else
         echo "INFO: Success, faucet was found"
@@ -52,11 +54,11 @@ while [ $i -le 20 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+cat $COMMON_PATH/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
-    echo "ERROR: INTERX was not started sucessfully within defined time"
+    echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
     exit 1
 else
-    echo "INFO: INTERX was started sucessfully"
+    echo "INFO: $CONTAINER_NAME was started sucessfully"
 fi

@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 
 i=0
 NODE_ID=""
@@ -43,7 +44,7 @@ while [ $i -le 40 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health status..."
-docker exec -i $CONTAINER_NAME cat /common/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+cat $COMMON_PATH/healthcheck_script_output.txt | tail -n 50 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
     echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
