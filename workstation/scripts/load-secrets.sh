@@ -30,7 +30,7 @@ function MnemonicGenerator() {
 
     if [ -z "$mnemonic" ] ; then # if mnemonic is not present then generate new one
         echo "INFO: $mnemonicVariableName was not found, regenerating..."
-        mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')"
+        mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
         CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
     fi
 

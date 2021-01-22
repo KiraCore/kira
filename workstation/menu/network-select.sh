@@ -38,10 +38,8 @@ while : ; do
             echo "INFO: Snapshoot was not selected or '$KIRA_SNAP_PATH' file was not found"
         fi
 
-        unzip -p $KIRA_SNAP_PATH genesis.json 2> /dev/null || echo "" > "$TMP_GENESIS_PATH"
-        NEW_NETWORK_NAME=$(jq .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
-        #NEW_NETWORK_NAME=$(unzip -p $KIRA_SNAP_PATH genesis.json 2> /dev/null | jq -r '.chain_id' 2> /dev/null || echo "")
-        
+        unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo "" > "$TMP_GENESIS_PATH"
+        NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
         [ -z "$NEW_NETWORK_NAME" ] && echo -en "\e[33;1mWARNING: Snapshoot file was not selected or does not contain a genesis file, can't read the chain-id \e[0m\c" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         echo "INFO: Network genesis will be importend from the external resource"
@@ -65,10 +63,10 @@ while : ; do
             continue
         fi
           
-        NEW_NETWORK_NAME=$(jq .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
-        [ ! -z "$NEW_NETWORK_NAME" ] && jq .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.json" && cp -a -f -v "/tmp/genesis.json" "$TMP_GENESIS_PATH"
+        NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+        [ ! -z "$NEW_NETWORK_NAME" ] && jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.json" && cp -a -f -v "/tmp/genesis.json" "$TMP_GENESIS_PATH"
           
-        NEW_NETWORK_NAME=$(jq .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+        NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
         if [ -z "$NEW_NETWORK_NAME"] ; then
             echo "WARNING: Genesis file has invalid format, try diffrent source"
             continue

@@ -65,7 +65,7 @@ while : ; do
 
     touch "${NODE_ID_PATH}.pid" && if ! kill -0 $(cat "${NODE_ID_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] || [ "${NAME,,}" == "validator" ] ; then
-            echo $(docker exec -i $NAME sekaid status 2> /dev/null | jq -c '.node_info.id' 2> /dev/null | xargs 2> /dev/null || echo "") > "$NODE_ID_PATH" &
+            echo $(docker exec -i $NAME sekaid status 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "") > "$NODE_ID_PATH" &
             PID3="$!" && echo "$PID3" > "${NODE_ID_PATH}.pid"
         fi
     fi
