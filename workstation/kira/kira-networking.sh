@@ -19,6 +19,7 @@ mkdir -p "$PORT_CFG_DIR"
 touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
 while : ; do
+    set +e && source "/etc/profile" &>/dev/null && set -e
     clear
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
@@ -56,6 +57,7 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "| [C] | Allow CUSTOM Configurationo of All Ports |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
        [ "${PORTS_EXPOSURE,,}" != "disabled" ] && \
        echo "| [D] | Force DISABLE All Ports                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
+       echo "| [I] | Change Network INTERFACE ($IFACE)        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
        echo "|------------------------------------------------|"
        echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
        echo "| [P] | Edit/Show Persistent PEERS List          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
@@ -93,6 +95,17 @@ echo -e "\e[37;1m--------------------------------------------------"
         echo "INFO: Enabling custom ports configuration..."
         PORTS_EXPOSURE="custom"
         CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+    elif [ "${OPTION,,}" == "i" ]; then
+        echo "INFO: Starting network interface selection menu..."
+        IFACE_OLD="$IFACE"
+        $KIRA_MANAGER/menu/interface-select.sh
+        set +e && source "/etc/profile" &>/dev/null && set -e
+        if [ "$IFACE_OLD" != "$IFACE" ] ; then
+            echo "INFO: Reinitalizing firewall..."
+            $KIRA_MANAGER/networking.sh
+        else
+            echo "INFO: Network interface was not changed"
+        fi
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"

@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
+[ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1| tr ':' '\n' | awk NF)
 ifaces=( $ifaces_iterate )
 
