@@ -13,6 +13,7 @@ BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
+NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
 
 while [ -f "$HALT_CHECK" ]; do
   sleep 30
@@ -58,7 +59,7 @@ http {
 }
 EOL
 
-    mkdir -p -v $NGINX_SERVICED_PATH
+    mkdir -p -v "$NGINX_SERVICED_PATH"
     printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" > $NGINX_SERVICED_PATH/override.conf
 
     touch $EXECUTED_CHECK
