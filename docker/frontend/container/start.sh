@@ -23,15 +23,9 @@ done
 echo "INFO: INTERX IP Found: $(getent hosts interx | awk '{ print $1 }')"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
-    echo "INFO: Building fronted from $REPO..."
-    cat > $FRONTEND_SRC/assets/config.json << EOL
-{
-  "api_url": "http://0.0.0.0:11000/api"
-}
-EOL
+    echo "INFO: Cloning fronted from '$BUILD_SOURCE' into '$BUILD_DESTINATION'..."
     mkdir -p "$BUILD_DESTINATION"
-    cp -v -f "$BUILD_SOURCE" "$BUILD_DESTINATION"
-
+    cp -rfv "$BUILD_SOURCE/." "$BUILD_DESTINATION"
     touch $EXECUTED_CHECK
 fi
 

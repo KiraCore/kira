@@ -27,8 +27,8 @@ if [ "$SKIP_UPDATE" == "False" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     wait < <(jobs -p)
 
     # we must ensure that recovery files can't be destroyed in the update process and cause a deadlock
-    rm -r -f -v $KIRA_MANAGER
-    cp -r $KIRA_WORKSTATION $KIRA_MANAGER
+    rm -rfv "$KIRA_MANAGER" && mkdir -p "$KIRA_MANAGER"
+    cp -rfv "$KIRA_WORKSTATION/." "$KIRA_MANAGER"
     chmod -R 555 $KIRA_MANAGER
 
     source $KIRA_MANAGER/setup.sh "True" "$START_TIME"

@@ -57,9 +57,8 @@ wait
 # ------------------------------------------------------------------------------------------------------------------------------------------------
 # * Generate node_key.json for validator & sentry.
 
-rm -rfv $DOCKER_COMMON
-mkdir -p "$DOCKER_COMMON"
-cp -r $KIRA_DOCKER/configs/. $DOCKER_COMMON
+rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON"
+cp -rfv "$KIRA_DOCKER/configs/." "$DOCKER_COMMON"
 
 # Load or generate secret mnemonics
 set +x

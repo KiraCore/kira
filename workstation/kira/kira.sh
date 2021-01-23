@@ -63,6 +63,7 @@ while :; do
     
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+    ESSENTIAL_CONTAINERS_COUNT=0
     
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
@@ -86,6 +87,10 @@ while :; do
             [ "${name,,}" == "registry" ] && continue
             [ "${name,,}" == "snapshoot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+
+            if [ "${name,,}" == "validator" ] || [ "${name,,}" == "sentry" ] ; then
+                [ "${STATUS_TMP,,}" == "running" ] && ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
+            fi
 
             # if block height check fails via validator then try via interx
             if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
@@ -181,7 +186,7 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
     
-    [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] && \
+    [ $ESSENTIAL_CONTAINERS_COUNT -lt 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
