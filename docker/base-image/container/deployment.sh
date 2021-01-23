@@ -36,10 +36,10 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     curl \
     iputils-ping \
     nano \
-    jq
+    jq 
 
 apt update -y
-apt install -y bc
+apt install -y bc dnsutils
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"

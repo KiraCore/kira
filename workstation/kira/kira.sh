@@ -63,13 +63,13 @@ while :; do
     
     STATUS_SOURCE="validator"
     NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-    ESSENTIAL_CONTAINERS_COUNT=0
-    
+
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
+        ESSENTIAL_CONTAINERS_COUNT=0
         i=-1
         for name in $CONTAINERS; do
             if [ -f "$STATUS_SCAN_PATH/$name" ] ; then
@@ -117,7 +117,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m------------------------------------------------- [mode]"
-    echo "|         KIRA NETWORK MANAGER v0.0.6           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.0.7           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
