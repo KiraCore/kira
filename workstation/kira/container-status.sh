@@ -43,7 +43,7 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     STARTED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.StartedAt'  2> /dev/null || echo "")
     FINISHED_AT=$(echo "$DOCKER_INSPECT" | jq -r '.[0].State.FinishedAt'  2> /dev/null || echo "")
     HOSTNAME=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.Hostname'  2> /dev/null || echo "")
-    EXPOSED_PORTS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -c '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
+    EXPOSED_PORTS=$(echo "$DOCKER_INSPECT" | jq -r '.[0].Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
     NETWORK_SETTINGS=$(echo "$DOCKER_INSPECT" 2> /dev/null | jq -r ".[0].NetworkSettings.Networks" 2> /dev/null || echo "")
 
