@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2

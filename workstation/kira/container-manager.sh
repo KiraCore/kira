@@ -241,7 +241,8 @@ while : ; do
             clear
             echo "INFO: Attempting to display $NAME container log..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
-            cat $START_LOGS > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
+            [ ! -f "$START_LOGS"] && docker logs --details --timestamps $ID > $START_LOGS || echo "WARNING: Failed to dump $NAME container logs"
+            cat $START_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container logs"
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"

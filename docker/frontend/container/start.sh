@@ -31,7 +31,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
 cat >$NGINX_CONFIG <<EOL
 worker_processes  1;
-error_log  /var/log/nginx/error.log warn;
+error_log  $COMMON_LOGS/nginx.log debug;
 pid        /var/run/nginx.pid;
 events {
     worker_connections  512;
@@ -39,9 +39,9 @@ events {
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
-    log_format  main  '$remote_addr - $remote_user [$time_local] "$request" '
-                      '$status $body_bytes_sent "$http_referer" '
-                      '"$http_user_agent" "$http_x_forwarded_for"';
+    log_format  main  '\$remote_addr - \$remote_user [\$time_local] "\$request" '
+                      '\$status $body_bytes_sent "\$http_referer" '
+                      '"\$http_user_agent" "\$http_x_forwarded_for"';
     access_log  /var/log/nginx/access.log  main;
     server {
         listen 80;
@@ -75,7 +75,9 @@ if [ ! -z "$PUBLIC_IP" ] ; then
 fi
 
 service nginx status
+service nginx enable
 service nginx restart
 sleep 1
 nginx -g 'daemon off;'
 service nginx status
+service nginx restart

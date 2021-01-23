@@ -48,7 +48,7 @@ if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
   HEIGHT=0
 fi
 
-echo "$HEIGHT" >$BLOCK_HEIGHT_FILE
+echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 
 if [ -z "$PREVIOUS_HEIGHT" ] || [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ]; then # not a number
   PREVIOUS_HEIGHT=0

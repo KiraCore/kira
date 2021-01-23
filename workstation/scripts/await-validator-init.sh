@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 DOCKER_COMMON=$1
 GENESIS_SOURCE=$2
@@ -21,7 +22,7 @@ while [ $i -le 40 ]; do
 
     echo "INFO: Waiting for $CONTAINER_NAME container to start..."
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
+    if [ "${CONTAINER_EXISTS,,}" != "true" ] ; then
         sleep 12
         echo "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
         continue

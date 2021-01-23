@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 i=0
 IS_STARTED="false"
@@ -32,9 +33,9 @@ while [ $i -le 40 ]; do
     fi
 done
 
-echo "INFO: Printing $CONTAINER_NAME health logs..."
+echo "INFO: Printing all $CONTAINER_NAME health logs..."
 cat $COMMON_LOGS/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
-echo "INFO: Printing $CONTAINER_NAME start logs..."
+echo "INFO: Printing all $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
 
 if [ "${IS_STARTED,,}" != "true" ]; then
