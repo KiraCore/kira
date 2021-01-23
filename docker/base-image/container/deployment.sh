@@ -46,7 +46,7 @@ GO_VERSION="1.15.6"
 CDHELPER_VERSION="v0.6.50"
 FLUTTER_CHANNEL="beta"
 FLUTTER_VERSION="1.25.0-8.3.pre-$FLUTTER_CHANNEL"
-DART_CHANNEL="beta"
+DART_CHANNEL_PATH="be/raw"
 DART_VERSION="latest"
 
 
@@ -111,11 +111,8 @@ mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential f
 touch $FLUTTER_CACHE/.dartignore
 touch $FLUTTER_CACHE/engine-dart-sdk.stamp
 
-wget https://storage.googleapis.com/dart-archive/channels/$DART_CHANNEL/release/$DART_VERSION/sdk/$DART_ZIP
+wget https://storage.googleapis.com/dart-archive/channels/$DART_CHANNEL_PATH/$DART_VERSION/sdk/$DART_ZIP
 unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
 flutter doctor
-
-
-
