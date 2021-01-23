@@ -8,6 +8,12 @@ ARG REPO
 ENV REPO="${REPO}"
 ENV BRANCH="${BRANCH}"
 ENV BUILD_HASH="${BUILD_HASH}"
+ENV FRONTEND_SRC="/root/kira-frontend/src"
+
+RUN cd /root && git clone ${REPO}
+RUN cd ${FRONTEND_SRC} && git checkout ${BRANCH}
+RUN cd ${FRONTEND_SRC} && flutter pub get
+RUN cd ${FRONTEND_SRC} && flutter build web --release
 
 ADD ./container ${SELF_CONTAINER}
 RUN chmod 777 -R ${SELF_HOME}
