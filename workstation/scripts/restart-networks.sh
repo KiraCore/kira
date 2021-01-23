@@ -39,13 +39,14 @@ for (( i=0; i<${len}; i++ )) ; do
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"
       docker network connect $network $container
-      ip=$(docker inspect $($KIRA_SCRIPTS/container-id.sh "$container") | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" | xargs || echo "")
+      ip=$(docker inspect $($KIRA_SCRIPTS/container-id.sh "$container") | jq -c ".[0].NetworkSettings.Networks.$network.IPAddress" || echo "")
       if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
           echo "WARNING: Failed to get '$container' container IP address relative to the new '$network' network"
           exit 1
       else
           dns="${container,,}.${network,,}.local"
           echo "INFO: IP Address '$ip' found, binding host..."
+          CDHelper text lineswap --insert="" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
           CDHelper text lineswap --insert="$ip $dns" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
       fi
     done

@@ -7,9 +7,12 @@ CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
+ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo "")
+IP=$(docker inspect $ID | jq -c ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo "")
+
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.38-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
-if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ]; then
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.39-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -30,13 +33,13 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
 
     sleep 1
 
-    ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME")
-    IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" | xargs || echo "")
-    
     if [ -z "$IP" ] || [ "${IP,,}" == "null" ] ; then
         echo "ERROR: Failed to get IP address of the $CONTAINER_NAME container"
         exit 1
     fi
+
+    ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo "")
+    IP=$(docker inspect $ID | jq -c ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo "")
     
     echo "INFO: IP Address $IP found, binding host..."
     CDHelper text lineswap --insert="$IP $KIRA_REGISTRY_DNS" --regex="$KIRA_REGISTRY_DNS" --path=$HOSTS_PATH --prepend-if-found-not=True
