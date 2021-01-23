@@ -13,7 +13,6 @@ BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
-NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
 
 while [ -f "$HALT_CHECK" ]; do
   sleep 30
@@ -59,15 +58,21 @@ http {
 }
 EOL
 
-    mkdir -p -v "$NGINX_SERVICED_PATH"
-    printf "[Service]\nExecStartPost=/bin/sleep 0.1\n" > $NGINX_SERVICED_PATH/override.conf
-
     touch $EXECUTED_CHECK
 fi
 
 PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2> /dev/null | awk -F'"' '{ print $2}' || echo "")
-[ -z "$PUBLIC_IP" ] && PUBLIC_IP="0.0.0.0"
-echo "{ \"api_url\": \"http://$PUBLIC_IP:11000/api\" }" > "${BUILD_DESTINATION}/assets/assets/config.json"
+if [ ! -z "$PUBLIC_IP" ] ; then
+    echo "INFO: Public IP addess '$PUBLIC_IP' was detected"
+    INTEREX_AVAILABLE=$(curl http://$PUBLIC_IP:11000/api/status -s -f -o /dev/null && echo "true" || echo "false")
+    if [ "${INTEREX_AVAILABLE,,}" == "true" ] ; then
+        echo "INFO: INTEREX is available externally, defaulting to '$PUBLIC_IP'"
+        echo "{ \"api_url\": \"http://$PUBLIC_IP:11000/api\" }" > "${BUILD_DESTINATION}/assets/assets/config.json"
+    else
+        echo "INFO: INTEREX is not available externally, defaulting to '0.0.0.0'"
+        echo "{ \"api_url\": \"http://0.0.0.0:11000/api\" }" > "${BUILD_DESTINATION}/assets/assets/config.json"
+    fi
+fi
 
 service nginx status
 service nginx restart

@@ -12,6 +12,7 @@ ENV FRONTEND_SRC="/root/kira-frontend/src"
 
 RUN cd /root && git clone ${REPO}
 RUN cd ${FRONTEND_SRC} && git checkout ${BRANCH}
+RUN echo '{ "api_url": "http://0.0.0.0:11000/api" }' > ${FRONTEND_SRC}/assets/config.json
 RUN cd ${FRONTEND_SRC} && flutter pub get
 RUN cd ${FRONTEND_SRC} && flutter build web --release
 
