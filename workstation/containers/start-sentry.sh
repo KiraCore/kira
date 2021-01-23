@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
@@ -33,7 +34,7 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SNAPSHOOT_SEED=$(echo "${SNAPSHOOT_NODE_ID}@snapshoot:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-mkdir -p "$COMMON_PATH"
+mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
@@ -52,7 +53,7 @@ cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
 cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
 # cleanup
-rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 echo "INFO: Starting sentry node..."
 

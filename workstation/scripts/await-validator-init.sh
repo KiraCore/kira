@@ -14,6 +14,7 @@ rm -fv $GENESIS_DESTINATION
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 
 while [ $i -le 40 ]; do
     i=$((i + 1))
@@ -62,9 +63,9 @@ while [ $i -le 40 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health logs..."
-cat $COMMON_PATH/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+cat $COMMON_LOGS/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 echo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_PATH/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
 
 if [ ! -f "$GENESIS_DESTINATION" ] ; then
     echo "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"

@@ -8,6 +8,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
@@ -16,7 +17,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
 rm -rfv $COMMON_PATH
-mkdir -p "$COMMON_PATH" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshoot"
+mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshoot"
 
 echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
 echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
@@ -54,7 +55,7 @@ GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
 
 # cleanup
 rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
-rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

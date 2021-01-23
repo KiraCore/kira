@@ -5,9 +5,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-HEALTHCHECK_LOGS="$COMMON_PATH/healthcheck.log"
-START_LOGS="$COMMON_PATH/start.log"
+HEALTHCHECK_LOGS="$COMMON_LOGS/healthcheck.log"
+START_LOGS="$COMMON_LOGS/start.log"
 
 set +x
 echo "INFO: Launching KIRA Container Manager..."
@@ -33,7 +34,7 @@ NODE_ID_PATH="$TMP_DIR/node-id-$NAME" # kira address
 
 echo "INFO: Wiping halt files of $NAME container..."
 
-mkdir -p "$TMP_DIR" "$COMMON_PATH" "$CONTAINER_DUMP"
+mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$LIP_PATH" "$KADDR_PATH" "$NODE_ID_PATH" "$HALT_FILE"
 touch $LIP_PATH $KADDR_PATH $NODE_ID_PATH
 

@@ -14,6 +14,7 @@ echo "INFO: Healthcheck => START"
 sleep 30 # rate limit
 
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} +
+find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
 STATUS_NGINX="$(service nginx status)"
 SUB_STR="nginx is running"

@@ -17,6 +17,7 @@ set -e
 
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
@@ -28,10 +29,10 @@ echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
-mkdir -p $COMMON_PATH
+mkdir -p $COMMON_LOGS
 
 # cleanup
-rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 docker run -d \
     --cpus="$CPU_RESERVED" \

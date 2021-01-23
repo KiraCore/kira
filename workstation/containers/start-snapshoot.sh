@@ -12,6 +12,7 @@ SYNC_FROM_SNAP=$2
 CONTAINER_NAME="snapshoot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
@@ -21,7 +22,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
 rm -fvr "$SNAP_STATUS"
-mkdir -p "$SNAP_STATUS" "$COMMON_PATH"
+mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
 SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
@@ -75,7 +76,7 @@ echo "INFO: Copy genesis file from sentry into snapshoot container common direco
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 # cleanup
-rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_PATH/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

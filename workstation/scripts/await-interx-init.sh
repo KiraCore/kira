@@ -7,6 +7,7 @@ FAUCET_ADDR=""
 INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 
 while [ $i -le 20 ]; do
     i=$((i + 1))
@@ -54,9 +55,9 @@ while [ $i -le 20 ]; do
 done
 
 echo "INFO: Printing $CONTAINER_NAME health logs..."
-cat $COMMON_PATH/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+cat $COMMON_LOGS/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 echo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_PATH/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
     echo "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"

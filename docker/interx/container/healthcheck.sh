@@ -15,6 +15,7 @@ sleep 30 # rate limit
 
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} +
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} +
+find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(curl 127.0.0.1:11000/api/status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null | xargs || echo "")
