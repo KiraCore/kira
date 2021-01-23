@@ -18,17 +18,19 @@ LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
     echo "INFO: List of external peers was found"
     while read peer ; do
+        peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         [ -z "$peer" ] && continue # peer not found
-        echo "INFO: Adding extra peer '$peer'"
         addrArr1=( $(echo $peer | tr "@" "\n") )
         nodeId=${addrArr1[0],,}
+        peer="tcp://$peer"
+        echo "INFO: Adding extra peer '$peer'"
 
         [ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
         [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
         [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
         
         CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
-        CFG_persistent_peers="tcp://${CFG_persistent_peers}${peer}"
+        CFG_persistent_peers="${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
 fi
@@ -36,10 +38,12 @@ fi
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
     echo "INFO: List of external seeds was found"
     while read seed ; do
+        peer=$(echo "$seed" | sed 's/tcp\?:\/\///')
         [ -z "$seed" ] && continue # seed not found
+        seed="tcp://$seed"
         echo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
-        CFG_seeds="tcp://${CFG_seeds}${seed}"
+        CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
 fi
 
