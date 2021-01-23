@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/scripts/restart-networks.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+set -x
 
 reconnect=$1
 target=$2
@@ -38,7 +39,7 @@ for (( i=0; i<${len}; i++ )) ; do
   if [ "${reconnect,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"
-      docker network connect $network $
+      docker network connect $network $container
       sleep 1
       ip=$(docker inspect $($KIRA_SCRIPTS/container-id.sh "$container") | jq -r ".[0].NetworkSettings.Networks.$network.IPAddress" || echo "")
       if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
