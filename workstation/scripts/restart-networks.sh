@@ -25,15 +25,15 @@ for (( i=0; i<${len}; i++ )) ; do
 
   if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
       for container in $containers ; do
-         echo "INFO: Disconnecting container $container"
-         docker network disconnect -f $network $container || echo "INFO: Failed to disconnect container $conatainer from network $network"
+         echo "INFO: Disconnecting container '$container'"
+         docker network disconnect -f $network $container || echo "INFO: Failed to disconnect container '$container' from network '$network'"
       done
   else
     echo "INFO: No containers were found to be attached to $network network"
   fi
 
-  docker network rm $network || echo "INFO: Failed to remove $network network"
-  docker network create --subnet=$subnet $network
+  sleep 1 && docker network rm $network || echo "INFO: Failed to remove $network network"
+  sleep 1 && docker network create --subnet=$subnet $network || echo "INFO: Failed to create $network network"
 
   if [ "${reconnect,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
