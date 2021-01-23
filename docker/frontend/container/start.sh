@@ -5,6 +5,7 @@ set -e
 set -x
 
 echo "INFO: Staring frontend v0.0.1"
+echo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -27,7 +28,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     cd /root
     git clone ${REPO}
     cd $FRONTEND_SRC
-    
     git checkout ${BRANCH}
     
     cat > $FRONTEND_SRC/assets/config.json << EOL
