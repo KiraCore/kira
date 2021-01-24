@@ -3,7 +3,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 START_TIME_NETWORKING="$(date -u +%s)"
-PORTS=( "$KIRA_FRONTEND_PORT" "$KIRA_SENTRY_GRPC_PORT" "$KIRA_INTERX_PORT" "$KIRA_SENTRY_P2P_PORT" "$KIRA_SENTRY_RPC_PORT" "$KIRA_PRIV_SENTRY_P2P_PORT" )
+PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled" # default networking state is all ports enabled to the public internet
 
 set +x
@@ -87,7 +87,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=$KIRA_SERVICE_SUBNET masquerade"
     firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=\"0.0.0.0/8\" port port=\"22\" protocol=\"tcp\" accept"
     
-    for PORT in $PORTS ; do
+    for PORT in "${PORTS[@]}" ; do
         PORT_EXPOSURE="PORT_EXPOSURE_$PORT" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then

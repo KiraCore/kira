@@ -73,7 +73,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     fi
 
     i=-1
-    for p in $PORTS; do
+    for p in "${PORTS[@]}" ; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             echo "INFO: Starting port manager ($p)..."

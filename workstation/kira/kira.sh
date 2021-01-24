@@ -192,7 +192,7 @@ while :; do
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
-    OPTION="" && read -s -n 1 -t 5 OPTION || OPTION=""
+    OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
