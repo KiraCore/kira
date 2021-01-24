@@ -22,7 +22,7 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 
 set +x
-clear
+printf "\033c"
 
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"

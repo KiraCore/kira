@@ -68,7 +68,7 @@ while : ; do
         fi
     fi
 
-    clear
+    printf "\033c"
     
     echo -e "\e[36;1m-----------------------------------------------------"
     echo "|          KIRA CONTAINER MANAGER v0.0.9            |"
@@ -100,7 +100,7 @@ while : ; do
     EXPOSED_PORTS="EXPOSED_PORTS_$NAME" && EXPOSED_PORTS="${!EXPOSED_PORTS}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
-        clear
+        printf "\033c"
         echo "WARNING: Container $NAME no longer exists, aborting container manager..."
         sleep 2
         break
@@ -238,7 +238,7 @@ while : ; do
         READ_HEAD=true
         SHOW_ALL=false
         while : ; do
-            clear
+            printf "\033c"
             echo "INFO: Attempting to display $NAME container log..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
             [ ! -f "$START_LOGS"] && docker logs --details --timestamps $ID > $START_LOGS || echo "WARNING: Failed to dump $NAME container logs"
@@ -270,7 +270,7 @@ while : ; do
         READ_HEAD=true
         SHOW_ALL=false
         while : ; do
-            clear
+            printf "\033c"
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
             TMP_DUMP=$CONTAINER_DUMP/tmp.log && rm -f $TMP_DUMP && touch $TMP_DUMP
             cat $HEALTHCHECK_LOGS > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"

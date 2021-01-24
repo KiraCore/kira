@@ -17,7 +17,7 @@ touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
-    clear
+    printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
            echo "|         KIRA NETWORKING MANAGER v0.0.1         |"
@@ -177,6 +177,14 @@ echo -e "\e[37;1m--------------------------------------------------"
     elif [ "${OPTION,,}" == "x" ]; then
         echo "INFO: Stopping kira networking manager..."
         break
+    fi
+
+    if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "c" ] || [ "${OPTION,,}" == "d" ] ; then
+        echo "INFO: To apply changes you will have to restart firewall"
+        SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mChoose to [R]estart FIREWALL container or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        [ "${SELECT,,}" == "c" ] && continue
+        echo "INFO: Reinitalizing firewall..."
+        $KIRA_MANAGER/networking.sh
     fi
 
     [ ! -z $OPTION ] && echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""

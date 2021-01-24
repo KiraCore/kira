@@ -4,7 +4,7 @@ ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -
 source $KIRA_MANAGER/utils.sh
 set +x
 
-clear
+printf "\033c"
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "KIRA DEPLOYMENT TOOL v$(cat $KIRA_MANAGER/VERSION)"

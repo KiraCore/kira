@@ -112,7 +112,7 @@ while :; do
     [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
     [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
 
-    clear
+    printf "\033c"
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m------------------------------------------------- [mode]"
@@ -185,7 +185,7 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
     
-    [ $ESSENTIAL_CONTAINERS_COUNT -lt 2 ] && \
+    [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
@@ -272,7 +272,7 @@ while :; do
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
-        clear
+        printf "\033c"
         echo "INFO: Stopping kira network scanner..."
         systemctl stop kirascan
         exit 0
