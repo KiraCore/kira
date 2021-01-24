@@ -74,8 +74,11 @@ if [ ! -z "$PUBLIC_IP" ] ; then
     fi
 fi
 
-service nginx status || echo "WARINING: NGINX didn't started yet"
-service nginx restart
-sleep 1
+
+netstat -nlp | grep 80 || echo "INFO: Bind to port 80 was not found"
+echo "INFO: Testing NGINX configuration"
+nginx -V
+nginx -t
+
+echo "INFO: Starting nginx in current process..."
 nginx -g 'daemon off;'
-service nginx status

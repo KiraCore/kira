@@ -11,10 +11,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
 echo "APT Update, Update and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    file \
-    build-essential \
-    hashdeep \
-    make \
+    file build-essential net-tools hashdeep make \
     nodejs \
     node-gyp \
     tar \
@@ -39,7 +36,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     jq 
 
 apt update -y
-apt install -y bc dnsutils
+apt install -y bc dnsutils psmisc 
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"

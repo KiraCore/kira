@@ -26,6 +26,8 @@ rm -f -v "$COMMON_PATH/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/e
 
 docker run -d \
     --cpus="$CPU_RESERVED" \
+    --cap-add=SYS_PTRACE \
+    --security-opt=apparmor:unconfined \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
     -p $KIRA_FRONTEND_PORT:80 \
