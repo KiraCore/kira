@@ -74,10 +74,8 @@ if [ ! -z "$PUBLIC_IP" ] ; then
     fi
 fi
 
-service nginx status
-service nginx enable
+service nginx status || echo "WARINING: NGINX didn't started yet"
 service nginx restart
 sleep 1
 nginx -g 'daemon off;'
 service nginx status
-service nginx restart
