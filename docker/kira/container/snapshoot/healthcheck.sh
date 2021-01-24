@@ -1,9 +1,6 @@
 #!/bin/bash
-
-exec 2>&1
-set -x
-
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"

@@ -1,9 +1,6 @@
 #!/bin/bash
-
-exec 2>&1
-set -x
-
 set +e && source "/etc/profile" &>/dev/null && set -e
+set -x
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(sekaid status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
