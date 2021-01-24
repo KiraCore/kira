@@ -50,7 +50,7 @@ for (( i=0; i<${len}; i++ )) ; do
           echo "INFO: IP Address '$ip' found, binding host..."
           CDHelper text lineswap --insert="" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
           CDHelper text lineswap --insert="$ip $dns" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
-          sort -u $HOSTS_PATH | tee $HOSTS_PATH
+          sort -u $HOSTS_PATH -o $HOSTS_PATH
       fi
     done
   else

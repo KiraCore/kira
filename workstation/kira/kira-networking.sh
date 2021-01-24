@@ -154,8 +154,7 @@ echo -e "\e[37;1m--------------------------------------------------"
             fi
         done
         echo "INFO: Saving unique changes to $FILE..."
-        grep "\S" $FILE
-        sort -u $FILE | tee $FILE
+        sort -u $FILE -o $FILE
         [ "${SELECT,,}" == "a" ] && echo "INFO: Total of $i $TARGET addresses were added"
         [ "${SELECT,,}" == "r" ] && echo "INFO: Total of $i $TARGET addresses were removed"
 

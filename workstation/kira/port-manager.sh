@@ -120,8 +120,7 @@ while : ; do
             fi
         done
         echo "INFO: Saving unique changes to $FILE..."
-        grep "\S" $FILE
-        sort -u $FILE | tee $FILE
+        sort -u $FILE -o $FILE
         echo "INFO: Total of $i IP addresses were $TARGET"
         REINITALIZE="true"
     elif [ "${OPTION,,}" == "x" ] ; then
