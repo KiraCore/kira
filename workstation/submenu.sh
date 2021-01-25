@@ -22,8 +22,6 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
 
-CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
-
 set +x
 printf "\033c"
 
