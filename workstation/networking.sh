@@ -39,7 +39,7 @@ firewall-cmd --permanent --delete-zone=demo || echo "INFO: Failed to delete demo
 firewall-cmd --permanent --delete-zone=validator || echo "INFO: Failed to delete validator zone"
 firewall-cmd --permanent --delete-zone=sentry || echo "INFO: Failed to delete sentry zone"
 firewall-cmd --permanent --new-zone=$ZONE || echo "INFO: Failed to create $ZONE already exists"
-firewall-cmd --permanent --change-interface=$IFACE
+firewall-cmd --permanent --zone=$ZONE --change-interface=$IFACE
 firewall-cmd --permanent --zone=$ZONE --change-interface=$IFACE
 firewall-cmd --permanent --zone=$ZONE --set-target=default
 firewall-cmd --permanent --zone=$ZONE --add-interface=docker0
