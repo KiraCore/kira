@@ -150,6 +150,13 @@ while :; do
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
     fi
 
+    [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
+    echo -e "|\e[0m\e[31;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS   \e[33;1m|"
+    [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
+    echo -e "|\e[0m\e[32;1m      ALL PORTS USE CUSTOM CONFIGURATION       \e[33;1m|"
+    [ "${PORTS_EXPOSURE,,}" == "disabled" ] && \
+    echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED        \e[33;1m|"
+
     if [ "${LOADING,,}" == "false" ] ; then
         echo "|-----------------------------------------------| [health]"
         i=-1
@@ -271,6 +278,7 @@ while :; do
         $KIRA_MANAGER/kira/kira-networking.sh || echo "ERROR: Network manager failed"
         LOADING="true"
         EXECUTED="true"
+        OPTION=""
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."

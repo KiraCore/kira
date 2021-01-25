@@ -3,7 +3,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 # ports have 3 diffrent configuration states, public, disabled & custom
-[ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
 WHITESPACE="                                                     "
 PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
 
@@ -20,14 +19,14 @@ while : ; do
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-           echo "|         KIRA NETWORKING MANAGER v0.0.1         |"
+           echo "|         KIRA NETWORKING MANAGER v0.0.5         |"
            [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
            echo -e "|\e[0m\e[32;1m      ALL PORTS USE CUSTOM CONFIGURATION        \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "disabled" ] && \
            echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED         \e[37;1m|"
-           echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') -------------| [status]"
+           echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') -------------| [config]"
     i=-1
     LAST_SNAP=""
     for p in "${PORTS[@]}" ; do
@@ -39,19 +38,18 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
         [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
-        PORT_EXPOSURE="PORT_EXPOSURE_$PORT" && PORT_EXPOSURE=": ${!PORT_EXPOSURE}"
-        [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="| enabled"
-        [ "${PORTS_EXPOSURE,,}" != "custom" ] && PORT_EXPOSURE="|" # do no show port exposure if not in custom state
+        PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+        [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"
         NAME_TMP="${NAME}${WHITESPACE}"
         TYPE_TMP="${TYPE}${WHITESPACE}"
-        echo "| [$i] | ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:22} $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
+        echo "| [$i] | ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:22} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
     done
        echo "|------------------------------------------------|"
        [ "${PORTS_EXPOSURE,,}" != "enabled" ] && \
        echo "| [E] | Force ENABLE All Ports                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
        [ "${PORTS_EXPOSURE,,}" != "custom" ] && \
-       echo "| [C] | Allow CUSTOM Configurationo of All Ports |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
+       echo "| [C] | Force CUSTOM Ports Configuration         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
        [ "${PORTS_EXPOSURE,,}" != "disabled" ] && \
        echo "| [D] | Force DISABLE All Ports                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
        IFACE_TMP="(${IFACE})${WHITESPACE:0:10}|"
@@ -59,10 +57,10 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "|------------------------------------------------|"
        echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
        echo "| [P] | Edit/Show Persistent PEERS List          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
-       echo "| [F] | Reload FIREWALL Settings${WHITESPACE:0:17}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
-       echo "| [R] | RELOAD Networking ${WHITESPACE:0:23}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
+       echo "| [F] | Reload FIREWALL Settings                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
+       echo "| [R] | RELOAD Networking                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     echo -e "| [X] | Exit ___________________________________ |\e[0m"
-    OPTION="" && read -s -n 1 -t 5 OPTION || OPTION=""
+    OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
@@ -78,6 +76,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         if [ "$OPTION" == "$i" ]; then
             echo "INFO: Starting port manager ($p)..."
             $KIRA_MANAGER/kira/port-manager.sh "$p"
+            OPTION=""
         fi
     done
     
@@ -179,7 +178,11 @@ echo -e "\e[37;1m--------------------------------------------------"
     fi
 
     if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "c" ] || [ "${OPTION,,}" == "d" ] ; then
-        echo "INFO: To apply changes you will have to restart firewall"
+        echo "INFO: Current '$FIREWALL_ZONE' zone rules"
+        firewall-cmd --list-ports
+        firewall-cmd --get-active-zones
+        firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
+        echo "INFO: To apply changes to above rules you will have to restart firewall"
         SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mChoose to [R]estart FIREWALL container or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
         echo "INFO: Reinitalizing firewall..."
