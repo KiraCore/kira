@@ -61,6 +61,10 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/t
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
 
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.168.0.0/16 masquerade"
+
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"22\" protocol=\"tcp\" accept"
 
 echo "INFO: Setting up '$ZONE' zone networking for '$IFACE' interface & stopping docker before changes are applied..."
