@@ -133,7 +133,7 @@ firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_M
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"127.0.0.1\" port port=\"1-65535\" protocol=\"tcp\" accept"
 
 firewall-cmd --get-zones
-firewall-cmd --zone=$ZONE --list-all
+firewall-cmd --zone=$ZONE --list-all || echo "INFO: Failed to list '$ZONE' zone"
 firewall-cmd --zone=trusted --list-all 
 firewall-cmd --zone=public --list-all 
 firewall-cmd --set-default-zone=$ZONE
