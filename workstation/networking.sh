@@ -35,7 +35,9 @@ firewall-cmd --permanent --zone=demo --remove-interface=docker0 || echo "INFO: F
 firewall-cmd --permanent --zone=validator --remove-interface=docker0 || echo "INFO: Failed to remove docker0 interface from validator zone"
 firewall-cmd --permanent --zone=sentry --remove-interface=docker0 || echo "INFO: Failed to remove docker0 interface from validator zone"
 
-firewall-cmd --permanent --delete-zone=$ZONE || echo "INFO: Failed to delete $ZONE zone"
+firewall-cmd --permanent --delete-zone=demo || echo "INFO: Failed to delete demo zone"
+firewall-cmd --permanent --delete-zone=validator || echo "INFO: Failed to delete validator zone"
+firewall-cmd --permanent --delete-zone=sentry || echo "INFO: Failed to delete sentry zone"
 firewall-cmd --permanent --new-zone=$ZONE || echo "INFO: Failed to create $ZONE already exists"
 firewall-cmd --permanent --change-interface=$IFACE
 firewall-cmd --permanent --zone=$ZONE --change-interface=$IFACE
