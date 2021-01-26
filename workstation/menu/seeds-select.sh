@@ -30,8 +30,8 @@ while : ; do
         exit 0
     fi
 
-    while read p ; do
-        [ -z "$p" ] && continue # only display non-empty lines
+    while read addr ; do
+        [ -z "$addr" ] && continue # only display non-empty lines
         i=$((i + 1))
 
         addr=$(echo "$addr" | xargs) # trim whitespace characters
@@ -47,9 +47,9 @@ while : ; do
         [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
 
         if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
-            echoWarn "WARNING: Seed '$p' is not reachable"
+            echoWarn "WARNING: Seed '$addr' is not reachable"
         else
-            set +x && echo "SUCCESS: Seed '$p' is ONLINE!" && set -x
+            set +x && echo "SUCCESS: Seed '$addr' is ONLINE!" && set -x
             exit 0
         fi
     done < $FILE
