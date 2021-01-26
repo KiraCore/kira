@@ -55,8 +55,9 @@ while : ; do
     echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
          
-    SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [R]emove, [W]ipe or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-    [ "${SELECT,,}" == "r" ] && break
+    SELECT="." && while [ "${SELECT,,}" != "d" ] && [ "${SELECT,,}" != "s" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [D]elete, [W]ipe, [R]efresh or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    [ "${SELECT,,}" == "r" ] && continue
+    [ "${SELECT,,}" == "s" ] && break
              
     if [ "${SELECT,,}" == "w" ] ; then
         SELECT="." && while [ "${SELECT,,}" != "y" ] && [ "${SELECT,,}" != "n" ] ; do echo -en "\e[31;1mAre you absolutely sure you want to DELETE all ${TARGET^^}? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
@@ -132,7 +133,7 @@ while : ; do
     echo "INFO: Saving unique changes to $FILE..."
     sort -u $FILE -o $FILE
     [ "${SELECT,,}" == "a" ] && echo "INFO: Total of $i $TARGET addresses were added"
-    [ "${SELECT,,}" == "r" ] && echo "INFO: Total of $i $TARGET addresses were removed"
+    [ "${SELECT,,}" == "d" ] && echo "INFO: Total of $i $TARGET addresses were removed"
 
     cp -a -v -f "$FILE" "$DESTINATION"
 done
