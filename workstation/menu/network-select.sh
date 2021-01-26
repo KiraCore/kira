@@ -58,7 +58,7 @@ while : ; do
         if [ -f "$NEW_GENESIS_SOURCE" ] ; then # if NEW_GENESIS_SOURCE is a file
             echo "INFO: Attempting to copy new genesis from '$NEW_GENESIS_SOURCE'"
             cp -a -f -v $NEW_GENESIS_SOURCE $TMP_GENESIS_PATH || echo "WARNING: Failed ot copy genesis from the source file '$NEW_GENESIS_SOURCE'"
-        elif [ ! -z $GENESIS_SOURCE ] ; then # if NEW_GENESIS_SOURCE is not empty
+        elif [ ! -z $NEW_GENESIS_SOURCE ] ; then # if NEW_GENESIS_SOURCE is not empty
             echo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
             wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || echo "WARNING: Download failed"
         else
