@@ -23,9 +23,9 @@ touch "$FILE" "$DESTINATION"
 while : ; do
     echo -e "INFO: Listing all ${TARGET^^}, please wait...\n"
     i=0
-    echo -e "\e[0m\e[33;1m-----------------------------------------------------------"
-                    echo "| ID. |  STATUS  |                ADDRESS                 @"
-                 echo -e "|-----|----------|-----------------------------------------\e[0m"
+    echo -e "\e[0m\e[33;1m------------------------------------------------------------"
+                    echo "| ID. |  STATUS  |                 ADDRESS                 @"
+                 echo -e "|-----|----------|------------------------------------------\e[0m"
     while read p ; do
         [ -z "$p" ] && continue # only display non-empty lines
         i=$((i + 1))
@@ -49,10 +49,10 @@ while : ; do
         TG="\e[0m\e[33;1m|\e[32;1m"
         TR="\e[0m\e[33;1m|\e[31;1m"
          
-        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:8} $TG $p\e[0m\n\n"
-        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:8} $TR $p\e[0m\n\n"
+        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:8} $TG $p\e[0m"
+        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:8} $TR $p\e[0m"
     done < $DESTINATION
-    echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
+    echo -e "\e[0m\e[33;1m------------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
          
     SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [R]emove, [W]ipe or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
@@ -85,17 +85,27 @@ while : ; do
         port="" && [[ $p3 =~ ^[0-9]+$ ]] && port="$p3" # port must be a number
         [ ! -z "$port" ] && (($port < 1 || $port > 65535)) && port=""
 
+        # in case of missing node id
         dnsStandalone="" && [[ "$(echo $p1 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p1" ]] && dnsStandalone="$p1" # DNS regex
         [ -z "$dnsStandalone" ] && [[ $p1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dnsStandalone="$p1" # IP is fine too
+        portStandalone="" && [[ $p2 =~ ^[0-9]+$ ]] && port="$p2" # port must be a number
+        [ ! -z "$portStandalone" ] && (($portStandalone < 1 || $portStandalone > 65535)) && portStandalone=""
 
+        # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then
             echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
             SVAL="." && while [ "${SVAL,,}" != "y" ] && [ "${SVAL,,}" != "n" ] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
+            # try to get node ID from the RPC or INTERX
             nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            port=$DEFAULT_P2P_PORT
+            [ -z "$nodeId" ] && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
+            [ -z "$port" ] && port=$DEFAULT_P2P_PORT
+            
+            [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && nodeId="$nodeId" || nodeId=""
             dns=$dnsStandalone
+            addr="${nodeId}@${dns}:${port}"
         fi
         
         nodeAddress="${nodeId}@${dns}:${port}"
