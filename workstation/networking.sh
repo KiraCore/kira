@@ -133,8 +133,10 @@ firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_M
 firewall-cmd --get-zones
 firewall-cmd --zone=$ZONE --list-all || echo "INFO: Failed to list '$ZONE' zone"
 firewall-cmd --zone=trusted --list-all 
-firewall-cmd --zone=public --list-all 
-firewall-cmd --set-default-zone=$ZONE
+firewall-cmd --zone=public --list-all
+firewall-cmd --reload
+firewall-cmd --complete-reload
+firewall-cmd --set-default-zone=$ZONE # can't set the zone before reloading first
 firewall-cmd --reload
 firewall-cmd --complete-reload
 firewall-cmd --check-config || echo "INFO: Failed to check firewall config"
