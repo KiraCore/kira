@@ -49,8 +49,8 @@ while : ; do
         TG="\e[0m\e[33;1m|\e[32;1m"
         TR="\e[0m\e[33;1m|\e[31;1m"
          
-        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:7} $TG $p\e[0m"
-        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR $p\e[0m"
+        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:7} $TG $addr\e[0m"
+        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR $addr\e[0m"
     done < $DESTINATION
     echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
@@ -116,7 +116,7 @@ while : ; do
                 if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
                     echo "WARNING: Node with address '$dns' is NOT reachable"
                     SELECT="." && while [ "${SELECT,,}" != "y" ] && [ "${SELECT,,}" != "n" ] ; do echo -en "\e[31;1mAre you absolutely sure you want to add '$dns' to ${TARGET^^} list? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-                    [ "${SELECT,,}" != "y" ] && echo "INFO: Address '$p' will NOT be added to ${TARGET^^} list" && continue
+                    [ "${SELECT,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
                 fi
                 echo "INFO: Adding address to the $TARGET list..."
                 CDHelper text lineswap --insert="$nodeAddress" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
