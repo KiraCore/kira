@@ -9,7 +9,7 @@ LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 
 while : ; do
 
-    rm -f "$TMP_GENESIS_PATH"
+    rm -fv "$TMP_GENESIS_PATH"
     NEW_NETWORK_NAME=""
     NEW_GENESIS_SOURCE=""
     NEW_NETWORK="false"
@@ -67,7 +67,7 @@ while : ; do
         fi
           
         NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
-        [ ! -z "$NEW_NETWORK_NAME" ] && jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.json" && cp -a -f -v "/tmp/genesis.json" "$TMP_GENESIS_PATH"
+        [ ! -z "$NEW_NETWORK_NAME" ] && jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.buffer.json" && cp -a -f -v "/tmp/genesis.buffer.json" "$TMP_GENESIS_PATH"
           
         NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
         if [ -z "$NEW_NETWORK_NAME"] ; then
