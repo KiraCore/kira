@@ -23,11 +23,11 @@ touch "$FILE" "$DESTINATION"
 while : ; do
     echo -e "INFO: Listing all ${TARGET^^}, please wait...\n"
     i=0
-    echo -e "\e[0m\e[33;1m------------------------------------------------------------"
-                    echo "| ID. |  STATUS  |                 ADDRESS                 @"
-                 echo -e "|-----|----------|------------------------------------------\e[0m"
-    while read p ; do
-        [ -z "$p" ] && continue # only display non-empty lines
+    echo -e "\e[0m\e[33;1m-----------------------------------------------------------"
+                    echo "| ID. |  STATUS |                 ADDRESS                 @"
+                 echo -e "|-----|---------|------------------------------------------\e[0m"
+    while read addr ; do
+        [ -z "$addr" ] && continue # only display non-empty lines
         i=$((i + 1))
                  
         addr=$(echo "$addr" | xargs) # trim whitespace characters
@@ -49,10 +49,10 @@ while : ; do
         TG="\e[0m\e[33;1m|\e[32;1m"
         TR="\e[0m\e[33;1m|\e[31;1m"
          
-        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:8} $TG $p\e[0m"
-        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:8} $TR $p\e[0m"
+        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:7} $TG $p\e[0m"
+        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR $p\e[0m"
     done < $DESTINATION
-    echo -e "\e[0m\e[33;1m------------------------------------------------------------\e[0m\n"
+    echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
          
     SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [R]emove, [W]ipe or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
