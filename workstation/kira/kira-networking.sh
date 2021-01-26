@@ -110,7 +110,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${SELECT,,}" == "p" ] && EXPOSURE="public" && CONTAINER="sentry"
         [ "${SELECT,,}" == "v" ] && EXPOSURE="private" && CONTAINER="priv_sentry"
         FILE="$PORT_CFG_DIR/${EXPOSURE}_${TYPE}"
-        $KIRA_MANAGER/kira/seed-edit.sh "$FILE" "$TARGET"
+        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$TARGET"
 
         DESTINATION_PATH="$DOCKER_COMMON/$CONTAINER/${$EXPOSURE}_${TYPE}"
         cp -a -v -f "$FILE" "$COMMON_PEERS_PATH"

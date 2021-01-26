@@ -16,7 +16,7 @@ while : ; do
     echoInfo "INFO: If you want to connect to external networks you have to specify at least one public seed node"
     echoInfo "INFO: If you are launching a new network you will have to wipe the contents of the seed list"
 
-    $KIRA_MANAGER/kira/seed-edit.sh "$PUBLIC_SEEDS" "Seed Nodes"
+    $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_SEEDS" "Seed Nodes"
     # TODO: Implement Backup & Recovery of network settings
 
     echoInfo "INFO: Testing seeds..."
