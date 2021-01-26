@@ -95,7 +95,7 @@ while : ; do
 
             nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             port=$DEFAULT_P2P_PORT
-            addr="${nodeId}@${dnsStandalone}:${port}"
+            dns=$dnsStandalone
         fi
         
         nodeAddress="${nodeId}@${dns}:${port}"
