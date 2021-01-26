@@ -90,8 +90,8 @@ while : ; do
 
         if [ ! -z "${dnsStandalone}" ] ; then
             echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
-            SELECT="." && while [ "${SELECT,,}" != "y" ] && [ "${SELECT,,}" != "n" ] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-            [ "${SELECT,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
+            SVAL="." && while [ "${SVAL,,}" != "y" ] && [ "${SVAL,,}" != "n" ] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
+            [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
             nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             port=$DEFAULT_P2P_PORT
