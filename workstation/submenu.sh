@@ -15,6 +15,10 @@ fi
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
 INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
+PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"
+PRIVATE_PEERS="$KIRA_CONFIGS/private_peers"
+PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
+PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 
 [ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="master"
 [ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
@@ -56,9 +60,11 @@ while :; do
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
-        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot 
+        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot
+        $KIRA_MANAGER/menu/seeds-select.sh
     else
         CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     fi
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
@@ -77,6 +83,8 @@ while :; do
     else
         $KIRA_MANAGER/menu/snapshoot-select.sh
     fi
+
+    $KIRA_MANAGER/menu/seeds-select.sh
     
     $KIRA_MANAGER/menu/interface-select.sh
     

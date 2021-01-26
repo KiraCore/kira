@@ -6,11 +6,13 @@ mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 
+
 while : ; do
 
     rm -f "$TMP_GENESIS_PATH"
     NEW_NETWORK_NAME=""
     NEW_GENESIS_SOURCE=""
+    NEW_NETWORK="false"
 
     SELECT="." && while [ "${SELECT,,}" != "n" ] && [ "${SELECT,,}" != "i" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mCreate [N]ew network, [I]mport genesis or use [S]napshoot: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 
@@ -30,6 +32,7 @@ while : ; do
             [[ $V2 != ?(-)+([0-9]) ]] && echo "WARNING: Network name suffix must be a number (0-9)!"
             break
         done
+        NEW_NETWORK="true"
     elif [ "${SELECT,,}" == "s" ] ; then # import from snapshoot
         $KIRA_MANAGER/menu/snapshoot-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
@@ -95,6 +98,8 @@ while : ; do
     fi
 
     CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
+    # if new network was created then we can delete public seeds from configuration
+    [ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$KIRA_CONFIGS/public_seeds"
     break
 done
 

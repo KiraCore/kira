@@ -107,7 +107,6 @@ for PORT in "${PORTS[@]}" ; do
         firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         while read ip; do
             [ -z "$ip" ] && continue # only display non-empty lines
-            i=$((i + 1))
             echo "INFO: Whitelisting address ${ip}..."
             firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_WHITELIST family=\"ipv4\" source address=\"$ip\" port port=\"$PORT\" protocol=\"tcp\" accept"
         done < $WHITELIST
@@ -115,7 +114,6 @@ for PORT in "${PORTS[@]}" ; do
         echo "INFO: Custom blacklist rules will be applied to the port $PORT..."
         while read ip; do
             [ -z "$ip" ] && continue # only display non-empty lines
-            i=$((i + 1))
             echo "INFO: Blacklisting address ${ip}..."
             firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_BLACKLIST family=\"ipv4\" source address=\"$ip\" port port=\"$PORT\" protocol=\"tcp\" reject"
         done < $BLACKLIST

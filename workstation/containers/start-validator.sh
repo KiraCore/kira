@@ -47,8 +47,8 @@ fi
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
@@ -63,10 +63,10 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    --hostname $KIRA_VALIDATOR_DNS \
+    --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
-    --name $CONTAINER_NAME \
-    --net=$KIRA_VALIDATOR_NETWORK \
+    --name "$CONTAINER_NAME" \
+    --net="$KIRA_VALIDATOR_NETWORK" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
@@ -81,7 +81,8 @@ docker run -d \
     -e CFG_seed_mode="false" \
     -e CFG_pex="false" \
     -e CFG_version="v2" \
-    -e NODE_TYPE=$CONTAINER_NAME \
+    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
+    -e NODE_TYPE="$CONTAINER_NAME" \
     -v $COMMON_PATH:/common \
     kira:latest
 

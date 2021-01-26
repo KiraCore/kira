@@ -110,52 +110,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${SELECT,,}" == "p" ] && EXPOSURE="public" && CONTAINER="sentry"
         [ "${SELECT,,}" == "v" ] && EXPOSURE="private" && CONTAINER="priv_sentry"
         FILE="$PORT_CFG_DIR/${EXPOSURE}_${TYPE}"
-
-        echo "INFO: Listing all ${TARGET^^}..."
-        i=0
-        while read p ; do
-            [ -z "$p" ] && continue # only display non-empty lines
-            i=$((i + 1))
-            echo "${1}. $p"
-        done < $FILE
-        echo "INFO: All $i ${TARGET^^} were displayed"
-
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [R]emove or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-        [ "${SELECT,,}" == "r" ] && continue
-
-        echo ""
-        [ "${OPTION,,}" == "s" ] && echo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port>"
-        echo -en "\e[31;1mInput comma separated list of $TARGET: \e[0m" && read ADDR_LIST
-        i=0
-        for addr in $(echo $ADDR_LIST | sed "s/,/ /g") ; do
-            addr=$(echo "$addr" | xargs) # trim whitespace characters
-            addrArr1=( $(echo $addr | tr "@" "\n") )
-            addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-            p1=${addrArr1[0],,}
-            p2=${addrArr2[0],,}
-            p3=${addrArr2[1],,}
-            
-            nodeId="" && [[ "$p1" =~ ^[a-f0-9]{40}$ ]] && nodeId="$p1"
-            dns="" && [[ "$(echo $p2 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p2" ]] && dns="$p2" # DNS regex
-            [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
-            port="" && [[ $p3 =~ ^[0-9]+$ ]] && port="$p3" # port must be a number
-            [ ! -z "$port" ] && (($port < 1 || $port > 65535)) && port=""
-
-            nodeAddress="${nodeId}@${dns}:${port}"
-            if [ ! -z "$nodeId" ] && [ ! -z "$dns" ]  && [ ! -z "$port" ] ; then
-                echo "INFO: SUCCESS, '$nodeAddress' is a valid $TARGET address, adding..."
-                [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$nodeAddress" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
-                [ "${SELECT,,}" == "r" ] && CDHelper text lineswap --insert="" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
-                i=$((i + 1))
-            else
-                echo "INFO: FAILURE, '${p1}@${p2}:${p3}' is NOT a valid $TARGET address"
-                continue
-            fi
-        done
-        echo "INFO: Saving unique changes to $FILE..."
-        sort -u $FILE -o $FILE
-        [ "${SELECT,,}" == "a" ] && echo "INFO: Total of $i $TARGET addresses were added"
-        [ "${SELECT,,}" == "r" ] && echo "INFO: Total of $i $TARGET addresses were removed"
+        $KIRA_MANAGER/kira/seed-edit.sh "$FILE" "$TARGET"
 
         DESTINATION_PATH="$DOCKER_COMMON/$CONTAINER/${$EXPOSURE}_${TYPE}"
         cp -a -v -f "$FILE" "$COMMON_PEERS_PATH"
