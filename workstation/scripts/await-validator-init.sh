@@ -40,9 +40,13 @@ while [ $i -le 40 ]; do
         echo "INFO: Success, $CONTAINER_NAME was initialized"
     fi
 
-    echo "INFO: Attempting to access genesis file..."
-    docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
+    # copy genesis from validator only if internal node syncing takes place
+    if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
+        echo "INFO: Attempting to access genesis file..."
+        docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
+    fi
 
+    # make sure genesis is present in the destination path
     if [ ! -f "$GENESIS_DESTINATION" ]; then
         sleep 12
         echo "WARNING: Failed to copy genesis file from $CONTAINER_NAME"

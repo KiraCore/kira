@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 CONTAINER_NAME="priv_sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -53,6 +54,11 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
 # cleanup
 rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
+    cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+fi
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

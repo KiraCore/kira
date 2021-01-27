@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 echo "INFO: Loading secrets..."
 
@@ -17,6 +18,8 @@ REGEN_SNAPSHOOT_NODE_KEYS="false"
 
 function MnemonicGenerator() {
     set +e && source "/etc/profile" &>/dev/null && set -e
+    source $KIRA_MANAGER/utils.sh
+
     MNEMONICS="$KIRA_SECRETS/mnemonics.env"
     source $MNEMONICS
 
@@ -29,19 +32,19 @@ function MnemonicGenerator() {
     mnemonic="${!mnemonicVariableName}"
 
     if [ -z "$mnemonic" ] ; then # if mnemonic is not present then generate new one
-        echo "INFO: $mnemonicVariableName was not found, regenerating..."
+        echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
         mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
         CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
     fi
 
     if [ "${2,,}" == "val" ] ; then
-        echo "INFO: Ensuring $1 private key is generated"
+        echoInfo "INFO: Ensuring $1 private key is generated"
         if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
             rm -fv "$valkeyPath"
             priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=/dev/null --keyid=/dev/null
         fi
     elif [ "${2,,}" == "node" ] ; then
-        echo "INFO: Ensuring $1 nodekey files are generated"
+        echoInfo "INFO: Ensuring $1 nodekey files are generated"
 
         nodeIdVariableName="${1^^}_NODE_ID"
         nodeId="${!nodeIdVariableName}"
@@ -56,16 +59,12 @@ function MnemonicGenerator() {
             CDHelper text lineswap --insert="$nodeIdVariableName=\"$newNodeId\"" --prefix="$nodeIdVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
         fi
     elif [ "${2,,}" == "addr" ] ; then
-        echo "INFO: $1 address key does not require any kestore files"
+        echoInfo "INFO: $1 address key does not require any kestore files"
     else
-        echo "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
+        echoErr "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
         exit 1
     fi
 }
-
-# XXX_ADDR_MNEMONIC
-# XXX_NODE_MNEMONIC
-# XXX_VAL_MNEMONIC
 
 MnemonicGenerator "signer" "addr" # INTERX message signing key
 MnemonicGenerator "faucet" "addr" # INTERX faucet key
@@ -81,4 +80,4 @@ MnemonicGenerator "validator" "val" # validator block signing key (priv_validato
 
 source $MNEMONICS
 
-echo "INFO: Secrets loaded..."
+echoInfo "INFO: Secrets loaded..."

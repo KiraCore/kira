@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 echo "INFO: Loading secrets..."
 
@@ -41,23 +42,30 @@ set -x
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
-    echo "INFO: State snapshoot '$KIRA_SNAP_PATH' was found, cloning..."
+    echoInfo "INFO: State snapshoot '$KIRA_SNAP_PATH' was found, cloning..."
     cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
-echo "INFO: Setting up $CONTAINER_NAME config vars..."
+echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
+LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 
 # cleanup
 rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
 rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
-echo "INFO: Starting $CONTAINER_NAME node..."
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
+    cp -f -a -v "$LOCAL_GENESIS_PATH" $GENESIS_DESTINATION
+    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
+fi
+
+echoInfo "INFO: Starting $CONTAINER_NAME node..."
 
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -86,10 +94,10 @@ docker run -d \
     -v $COMMON_PATH:/common \
     kira:latest
 
-echo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
+echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
-echo "INFO: Cloning genesis file..."
+echoInfo "INFO: Cloning genesis file..."
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
