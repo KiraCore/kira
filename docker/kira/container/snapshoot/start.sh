@@ -7,6 +7,11 @@ echo "INFO: Staring snapshoot v0.0.3"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
+SNAP_FILE="$COMMON_DIR/snap.zip"
+DATA_DIR="$SEKAID_HOME/data"
+LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+COMMON_GENESIS="$COMMON_DIR/genesis.json"
+
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -27,7 +32,7 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_DIR/genesis.json" ]; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
@@ -35,11 +40,6 @@ done
 echo "INFO: Sucess, genesis file was found!"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
-  SNAP_FILE="$COMMON_DIR/snap.zip"
-  DATA_DIR="$SEKAID_HOME/data"
-  LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-  COMMON_GENESIS="$COMMON_DIR/genesis.json"
-
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 

@@ -6,6 +6,11 @@ set -x
 echo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+SNAP_FILE="$COMMON_DIR/snap.zip"
+DATA_DIR="$SEKAID_HOME/data"
+LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+COMMON_GENESIS="$COMMON_DIR/genesis.json"
+GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 
 if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     echo "INFO: Checking if sentry can be synchronized from the validator node..."
@@ -18,7 +23,7 @@ else
     echo "INFO: Node will be synchronised from external networks"
 fi
 
-while [ -f "$SNAP_FILE" ] && [ ! -f "$COMMON_DIR/genesis.json" ]; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
@@ -26,11 +31,6 @@ done
 echo "INFO: Sucess, genesis file was found!"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
-  SNAP_FILE="$COMMON_DIR/snap.zip"
-  DATA_DIR="$SEKAID_HOME/data"
-  LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-  COMMON_GENESIS="$COMMON_DIR/genesis.json"
-
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
@@ -64,6 +64,4 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 fi
 
 $SELF_CONTAINER/configure.sh
-
-GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace
