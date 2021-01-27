@@ -10,7 +10,7 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 
 i=0
-while [ $i -le 20 ]; do
+while [ $i -le 40 ]; do
     i=$((i + 1))
 
     echo "INFO: Waiting for $CONTAINER_NAME container to start..."

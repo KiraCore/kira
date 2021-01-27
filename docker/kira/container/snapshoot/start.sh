@@ -1,6 +1,6 @@
 #!/bin/bash
-set +e && source "/etc/profile" &>/dev/null && set -e
 exec 2>&1
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 echo "INFO: Staring snapshoot v0.0.3"

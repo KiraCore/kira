@@ -10,6 +10,7 @@ RUN echo "Build hash: ${BUILD_HASH}"
 RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
 RUN cd ${SEKAI} && git checkout ${BRANCH}
+RUN cd ${SEKAI}/INTERX && make install
 
 ADD ./container ${SELF_CONTAINER}
 
