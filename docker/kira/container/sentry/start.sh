@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+exec 2>&1
 set -x
 
 echo "INFO: Staring sentry setup v0.0.4"

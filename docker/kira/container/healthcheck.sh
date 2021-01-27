@@ -1,11 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+exec 2>&1
 set -x
 
 echo "INFO: Health check => START"
 sleep 30 # rate limit not to overextend the log files
 
-set +e && source "/etc/profile" &>/dev/null && set -e
 HALT_CHECK="${COMMON_DIR}/halt"
 
 if [ -f "$HALT_CHECK" ]; then
