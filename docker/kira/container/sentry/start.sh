@@ -1,18 +1,21 @@
 #!/bin/bash
-
-exec 2>&1
-set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
-echo "INFO: Staring sentry setup v0.0.3"
+echo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
-while ! ping -c1 validator &>/dev/null; do
-  echo "INFO: Waiting for ping response form validator node... ($(date))"
-  sleep 5
-done
-echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
+if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
+    echo "INFO: Checking if sentry can be synchronized from the validator node..."
+    while ! ping -c1 validator &>/dev/null; do
+      echo "INFO: Waiting for ping response form validator node... ($(date))"
+      sleep 5
+    done
+    echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
+else
+    echo "INFO: Node will be synchronised from external networks"
+fi
 
 while [ -f "$SNAP_FILE" ] && [ ! -f "$COMMON_DIR/genesis.json" ]; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"

@@ -80,6 +80,7 @@ docker run -d \
     -e CFG_max_num_outbound_peers="100" \
     -e CFG_max_num_inbound_peers="10" \
     -e NODE_TYPE=$CONTAINER_NAME \
+    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -v $COMMON_PATH:/common \
     kira:latest
 

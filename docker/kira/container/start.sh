@@ -1,7 +1,5 @@
 #!/bin/bash
-
-exec 2>&1
-set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 echo "INFO: Staring $NODE_TYPE container..."
