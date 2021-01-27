@@ -69,7 +69,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 
   rm -fv $LOCAL_GENESIS
-  cp -a -v $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+  cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 
   echo "0" > $SNAP_PROGRESS
   touch $EXECUTED_CHECK

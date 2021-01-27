@@ -75,10 +75,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
   else
       echo "INFO: Common genesis file was found, attempting recovery..."
-      cp -v -a $COMMON_GENESIS $LOCAL_GENESIS
+      cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
   fi
 
-  cp -v -a $LOCAL_GENESIS $COMMON_GENESIS
+  cp -a -v -f $LOCAL_GENESIS $COMMON_GENESIS
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
   touch $EXECUTED_CHECK

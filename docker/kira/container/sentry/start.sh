@@ -58,7 +58,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 
   rm -fv $LOCAL_GENESIS
-  cp -a -v $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+  cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 
   touch $EXECUTED_CHECK
 fi
