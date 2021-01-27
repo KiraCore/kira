@@ -68,9 +68,6 @@ set -x
 $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
 echoInfo "INFO: Starting containers..."
-GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
-LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
-
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
     CDHelper text lineswap --insert="EXTERNAL_SYNC=false" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -82,7 +79,6 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Nodes will be synced from the external seed node"
     CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-    cp -f -a -v $LOCAL_GENESIS_PATH $GENESIS_DESTINATION
 
     $KIRA_MANAGER/containers/start-sentry.sh
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
@@ -101,7 +97,6 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     else
         echoInfo "INFO: Nodes will be synced from the external seed node"
         CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-        cp -f -a -v $LOCAL_GENESIS_PATH $GENESIS_DESTINATION
 
         $KIRA_MANAGER/containers/start-sentry.sh
 

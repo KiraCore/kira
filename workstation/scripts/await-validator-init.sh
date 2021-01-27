@@ -44,6 +44,9 @@ while [ $i -le 40 ]; do
     if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
         echo "INFO: Attempting to access genesis file..."
         docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
+    else
+        echo "INFO: Copying genesis from external resource..."
+        cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$GENESIS_DESTINATION"
     fi
 
     # make sure genesis is present in the destination path

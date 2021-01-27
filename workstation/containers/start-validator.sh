@@ -53,17 +53,10 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$KIRA_PRIV_SENTRY_P2P_POR
 
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
-LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 
 # cleanup
 rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
 rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
-
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    cp -f -a -v "$LOCAL_GENESIS_PATH" $GENESIS_DESTINATION
-    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
-fi
 
 echoInfo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -97,7 +90,13 @@ docker run -d \
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
-echoInfo "INFO: Cloning genesis file..."
+if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
+    echoInfo "INFO: Cloning extrnal genesis file..."
+    GENESIS_DESTINATION="$KIRA_CONFIGS/genesis.json"
+else
+    echoInfo "INFO: Cloning internal genesis file..."
+fi
+
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
 cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
