@@ -54,9 +54,16 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@sentry:$KIRA_PRIV_SENTRY_P2P_POR
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
 
-# cleanup
-rm -fv $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
+
 rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
+    cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+else
+    echoInfo "INFO: Synchronisation using internal genesis file ($GENESIS_DESTINATION) will be performed"
+    rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
+fi
 
 echoInfo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -91,15 +98,11 @@ echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genes
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
 
 if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
-    echoInfo "INFO: Cloning extrnal genesis file..."
-    GENESIS_DESTINATION="$KIRA_CONFIGS/genesis.json"
-else
     echoInfo "INFO: Cloning internal genesis file..."
+    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
+    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
+    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
+    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
 fi
-
-cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
-cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
-cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
-cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"

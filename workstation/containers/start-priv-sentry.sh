@@ -58,6 +58,10 @@ rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/e
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+    # sentry becomes a forward facing node
+    CFG_persistent_peers=""
+else
+    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
 
 echo "INFO: Starting $CONTAINER_NAME node..."
@@ -77,9 +81,9 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_persistent_peers="tcp://$VALIDATOR_SEED" \
+    -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRYT_NODE_ID,$PRIV_SENTRYT_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRYT_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
