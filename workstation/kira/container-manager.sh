@@ -29,14 +29,13 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
-KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address 
-NODE_ID_PATH="$TMP_DIR/node-id-$NAME" # kira address 
+KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
 echo "INFO: Wiping halt files of $NAME container..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
-rm -fv "$LIP_PATH" "$KADDR_PATH" "$NODE_ID_PATH" "$HALT_FILE"
-touch $LIP_PATH $KADDR_PATH $NODE_ID_PATH
+rm -fv "$LIP_PATH" "$KADDR_PATH" "$HALT_FILE"
+touch $LIP_PATH $KADDR_PATH
 
 HOSTNAME=""
 LOADING="true"
@@ -45,7 +44,6 @@ while : ; do
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
     KADDR=$(cat $KADDR_PATH)
-    NODE_ID=$(cat $NODE_ID_PATH)
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
         if [ ! -z "$HOSTNAME" ] ; then
@@ -61,11 +59,11 @@ while : ; do
         fi
     fi
 
-    touch "${NODE_ID_PATH}.pid" && if ! kill -0 $(cat "${NODE_ID_PATH}.pid") 2> /dev/null ; then
-        if [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] || [ "${NAME,,}" == "validator" ] ; then
-            echo $(docker exec -i $NAME sekaid status 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "") > "$NODE_ID_PATH" &
-            PID3="$!" && echo "$PID3" > "${NODE_ID_PATH}.pid"
-        fi
+    if [ "${NAME,,}" == "interx" ] || [ "${NAME,,}" == "validator" ] || [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
+        SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
+        [ "${NAME,,}" != "interx" ] && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
+        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
+        KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
     fi
 
     printf "\033c"
@@ -148,8 +146,13 @@ while : ; do
     ALLOWED_OPTIONS="x"
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
     echo "|---------------------------------------------------|"
-    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && echo "|    Host: ${v:0:40} |"
-    [ ! -z "$NODE_ID" ]  && v="${NODE_ID}${WHITESPACE}"  && echo "| Node Id: ${v:0:40} |"
+    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}"           && echo "|    Host: ${v:0:40} |"
+    [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "| Node Id: ${v:0:40} |"
+    if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
+        TMP_VAR="$WHITESPACE"
+        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="(catching up) ${WHITESPACE}"
+        echo "|   Block: ${TMP_VAR:0:40} |"
+    fi
     [ "$STATUS" != "exited" ] && \
     echo "|  Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
     [ "$STATUS" == "exited" ] && \

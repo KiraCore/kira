@@ -59,25 +59,36 @@ while :; do
         PROGRESS_SNAP="done" # show done progress
         [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
     fi
-    
-    STATUS_SOURCE="validator"
-    NETWORK_STATUS=$(docker exec -i "$STATUS_SOURCE" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 
+    
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
         ESSENTIAL_CONTAINERS_COUNT=0
+        KIRA_BLOCK=0
+        CATCHING_UP="false"
+
         i=-1
         for name in $CONTAINERS; do
-            if [ -f "$STATUS_SCAN_PATH/$name" ] ; then
-                source "$STATUS_SCAN_PATH/$name"
+            SCAN_PATH_VARS="$STATUS_SCAN_PATH/$name"
+            SEKAID_STATUS="${SCAN_PATH_VARS}.sekaid.status"
+
+            if [ -f "$SCAN_PATH_VARS" ] ; then
+                source "$SCAN_PATH_VARS"
+                i=$((i + 1))
             else
                 continue
             fi
 
-            i=$((i + 1))
+            SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
+            KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+            SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
+
+            # if some other node then snapshoot is syncig then infra is not ready
+            [ "${name,,}" != "snapshoot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
+
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
@@ -91,23 +102,15 @@ while :; do
                 [ "${STATUS_TMP,,}" == "running" ] && ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
             fi
 
-            # if block height check fails via validator then try via interx
-            if [ "${name,,}" == "interx" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
-                STATUS_SOURCE="$name"
-                NETWORK_STATUS=$(curl -s -m 1 http://$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo "")
-            fi
-    
-            # if block height check fails via validator then try via sentry
-            if [ "${name,,}" == "sentry" ] && [ "${STATUS_TMP,,}" == "running" ] && [ -z "${NETWORK_STATUS,,}" ]; then
-                STATUS_SOURCE="$name"
-                NETWORK_STATUS=$(docker exec -i "$name" sekaid status 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
+            if [ -z "$NETWORK_STATUS" ] || [ $KIRA_BLOCK_TMP -gt $KIRA_BLOCK ] ; then
+                NETWORK_STATUS=$SEKAID_STATUS
+                KIRA_BLOCK=$KIRA_BLOCK_TMP
+                STATUS_SOURCE
             fi
         done
         CONTAINERS_COUNT=$((i + 1))
     fi
 
-    KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-    KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
     [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
     [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
     [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
@@ -123,9 +126,14 @@ while :; do
     DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
     echo -e "|\e[34;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
 
-    KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
-    KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-    echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m: $STATUS_SOURCE"
+    if [ "${LOADING,,}" == "false" ] ; then
+        KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+        KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+
+        KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
+        KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
+        echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m|"
+    fi
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
@@ -144,6 +152,8 @@ while :; do
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
+    elif [ "${CATCHING_UP,,}" == "true" ] ; then
+        echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
         echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
     else
@@ -167,7 +177,18 @@ while :; do
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
             [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
             [ "${name,,}" == "snapshoot" ] && [ -f "$SCAN_DONE" ] && HEALTH_TMP="" # no need for healthcheck anymore
-            LABEL="| [$i] | Manage $name ($STATUS_TMP)                           "
+
+            if [ "${name,,}" != "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] ; then
+                SEKAID_STATUS=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.status" 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+                CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+                if [ "${CATCHING_UP,,}" == "true" ] ; then
+                    STATUS_TMP="catching up"
+                    LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+                    [ $LATEST_BLOCK -gt 0 ] && [ "${HEALTH_TMP,,}" == "healthy" ] && HEALTH_TMP=$LATEST_BLOCK
+                fi
+            fi
+
+            LABEL="| [$i] | Manage $name ($STATUS_TMP)$WHITESPACE"
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     else

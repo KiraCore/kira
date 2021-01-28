@@ -31,21 +31,39 @@ touch $CPU_SCAN_PATH
 touch $LIP_SCAN_PATH
 touch $IP_SCAN_PATH
 
+echo $(docker network ls --format="{{.Name}}" || "") > $NETWORKS_SCAN_PATH &
+PID1="$!"
+
+echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || "") > $CONTAINERS_SCAN_PATH &
+PID2="$!"
+
 echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
 echo $(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2> /dev/null | awk -F'"' '{ print $2}') > $IP_SCAN_PATH &
 echo $(/sbin/ifconfig $IFACE 2> /dev/null | grep -i mask 2> /dev/null | awk '{print $2}' 2> /dev/null | cut -f2 2> /dev/null || echo "0.0.0.0") > $LIP_SCAN_PATH &
 echo "$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%" > $RAM_SCAN_PATH &
 echo "$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%" > $DISK_SCAN_PATH &
 
-echo $(docker network ls --format="{{.Name}}" || "") > $NETWORKS_SCAN_PATH
-echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || "") > $CONTAINERS_SCAN_PATH
-
+wait $PID1
 NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
+
+wait $PID2
 CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 
 for name in $CONTAINERS; do
-    touch "$STATUS_SCAN_PATH/$name"
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$STATUS_SCAN_PATH/$name" "$NETWORKS" &> "$SCAN_LOGS/$name-status.error.log" & 
+    DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
+    DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
+    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH"
+
+    ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo "")
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
+    
+    [ -z "$ID" ] && echo "" > $DESTINATION_STATUS_PATH && continue
+
+    if [ "${name,,}" == "sentry" ] || [ "${name,,}" == "priv_sentry" ] || [ "${name,,}" == "validator" ] || [ "${name,,}" == "snapshoot" ] ; then
+        echo $(docker exec -i $name sekaid status 2> /dev/null | jq -r '.result' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+    elif [ "${name,,}" == "interx" ] ; then 
+        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+    fi
 done
 
 wait

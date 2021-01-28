@@ -9,13 +9,10 @@ set -x
 NAME=$1
 VARS_FILE=$2
 NETWORKS=$3
+ID=$4
 
-ID=$($KIRA_SCRIPTS/container-id.sh "$NAME")
-if [ -z "$ID" ] ; then
-    EXISTS="false"
-else
-    EXISTS="true"
-fi
+[ -z "$ID" ] && ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo "")
+EXISTS="true" && [ -z "$ID" ] && 
 
 # define global variables
 if [ "${NAME,,}" == "interx" ]; then
