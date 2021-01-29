@@ -59,7 +59,6 @@ while :; do
         PROGRESS_SNAP="done" # show done progress
         [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
     fi
-
     
     if [ "${LOADING,,}" == "false" ] ; then
         SUCCESS="true"
@@ -83,7 +82,8 @@ while :; do
             fi
 
             SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
-            KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+            TMP_VAR=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+            [[ $TMP_VAR =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP="$TMP_VAR" || KIRA_BLOCK_TMP="0"
             SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
 
             # if some other node then snapshoot is syncig then infra is not ready
@@ -98,14 +98,13 @@ while :; do
             [ "${name,,}" == "snapshoot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
 
-            if [ "${name,,}" == "validator" ] || [ "${name,,}" == "sentry" ] ; then
-                [ "${STATUS_TMP,,}" == "running" ] && ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
+            if [ "${STATUS_TMP,,}" == "running" ] && ( [ "${name,,}" == "validator" ] || [ "${name,,}" == "sentry" ] ) ; then
+                ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
             fi
 
-            if [ -z "$NETWORK_STATUS" ] || [ $KIRA_BLOCK_TMP -gt $KIRA_BLOCK ] ; then
+            if [ ! -z "$SEKAID_STATUS" ] && ( [ -z "$NETWORK_STATUS" ] || [ $KIRA_BLOCK_TMP -gt $KIRA_BLOCK ] ) ; then
                 NETWORK_STATUS=$SEKAID_STATUS
                 KIRA_BLOCK=$KIRA_BLOCK_TMP
-                STATUS_SOURCE
             fi
         done
         CONTAINERS_COUNT=$((i + 1))
@@ -119,7 +118,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m------------------------------------------------- [mode]"
-    echo "|         KIRA NETWORK MANAGER v0.0.7           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.0.8           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"

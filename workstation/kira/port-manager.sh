@@ -113,7 +113,8 @@ echo -e "\e[37;1m--------------------------------------------------"
             ipArr=( $(echo $ip | tr "/" "\n") )
             ip=${ipArr[0],,}
             mask_tmp=${ipArr[1],,}
-            mask="" && [[ $mask_tmp =~ ^[0-9]+$ ]] && mask="$mask_tmp" # port must be a number
+            # port must be a number
+            [[ $mask_tmp =~ ^[0-9]+$ ]] && mask="$mask_tmp" || mask="" 
             [ ! -z "$mask" ] && (($mask < 8 || $mask > 32)) && mask=""
             if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
                 ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
