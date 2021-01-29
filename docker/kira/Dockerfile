@@ -19,7 +19,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-HEALTHCHECK --interval=30s --timeout=600s --start-period=600s --retries=2 CMD ${HEALTHCHECK_SCRIPT} |& tee -a ${COMMON_LOGS}/healthcheck.log ; test ${PIPESTATUS[0]} = 0
+HEALTHCHECK --interval=30s --timeout=600s --start-period=600s --retries=2 CMD ${HEALTHCHECK_SCRIPT} | tee -a ${COMMON_LOGS}/healthcheck.log ; test ${PIPESTATUS[0]} = 0
 
-CMD ["sh", "-c", "/bin/bash ${START_SCRIPT} |& tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]
+CMD ["sh", "-c", "/bin/bash ${START_SCRIPT} | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]
 

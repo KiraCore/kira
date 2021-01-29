@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+exec 2>&1
 set -x
 
 HALT_CHECK="${COMMON_DIR}/halt"
