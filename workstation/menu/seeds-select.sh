@@ -24,9 +24,11 @@ while : ; do
     set -x
 
     if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] ; then
+        set +x
         echoInfo "INFO: No public seeds were specified"
         echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
         SVAL="." && while [ "${SVAL,,}" != "y" ] && [ "${SVAL,,}" != "n" ] ; do echo -en "\e[31;1mDo you want to launch a local network? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
+        set -x
         [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
         rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
         exit 0

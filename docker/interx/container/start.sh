@@ -8,6 +8,7 @@ cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
+CONFIG_PATH="$SEKAI/INTERX/config.json"
 
 while [ -f "$HALT_CHECK" ]; do
   sleep 30
@@ -21,10 +22,12 @@ done
 if [ ! -f "$EXECUTED_CHECK" ]; then
   mkdir -p cache
 
-  rm -f $SEKAI/INTERX/config.json
-  mv $COMMON_DIR/config.json $SEKAI/INTERX
+  rm -f $CONFIG_PATH
+  # mv $COMMON_DIR/config.json $SEKAI/INTERX
+  interxd init --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$CFG_port" --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic"
 
   touch $EXECUTED_CHECK
 fi
 
-GRPC=dns:///sentry:9090 RPC=http://sentry:26657 make start
+# GRPC=dns:///sentry:9090 RPC=http://sentry:26657 make start
+interxd start --config="$CONFIG_PATH"

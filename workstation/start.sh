@@ -4,6 +4,7 @@ source $KIRA_MANAGER/utils.sh
 
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
+SCAN_DIR="$KIRA_HOME/kirascan"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
 PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 
@@ -46,6 +47,9 @@ done
 wait
 
 echoInfo "INFO: Building images..."
+
+rm -frv "$SCAN_DIR"
+mkdir -p "$SCAN_DIR"
 
 set -e
 

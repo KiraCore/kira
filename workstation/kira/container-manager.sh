@@ -62,10 +62,10 @@ while : ; do
 
     if [ "${NAME,,}" == "interx" ] || [ "${NAME,,}" == "validator" ] || [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
         SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
-        [ "${NAME,,}" != "interx" ] && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
-        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        [ "${NAME,,}" != "interx" ] && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.NodeInfo.id' 2> /dev/null || echo "")
+        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
-        KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+        KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
         [[ $KIRA_NODE_BLOCK =~ ^[0-9]+$ ]] && KIRA_NODE_BLOCK="$KIRA_NODE_BLOCK" || KIRA_NODE_BLOCK="0"
     fi
 
@@ -288,7 +288,7 @@ while : ; do
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
 
-            if [ ! -f "$HEALTHCHECK_LOGS"] ; then
+            if [ ! -f "$HEALTHCHECK_LOGS" ] ; then
                 docker inspect --format "{{json .State.Health }}" "$ID" | jq -r '.' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
             else
                 cat $HEALTHCHECK_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container healthcheck logs"
@@ -300,7 +300,7 @@ while : ; do
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "d" ] && [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "d" ] && [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "d" ] && rm -fv "$HEALTHCHECK_LOGS" && continue

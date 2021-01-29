@@ -34,7 +34,7 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting node status..."
-    NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status | jq -r '.node_info.id' 2>/dev/null | xargs || echo "")
+    NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status | jq -r '.NodeInfo.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ]; then
         sleep 12
         echo "WARNING: Status and Node ID is not available"

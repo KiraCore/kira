@@ -17,7 +17,7 @@ find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} +
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
-HEIGHT=$(curl 127.0.0.1:11000/api/status 2>/dev/null | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+HEIGHT=$(curl 127.0.0.1:11000/api/status 2>/dev/null | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 
 if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number

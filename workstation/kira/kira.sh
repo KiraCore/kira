@@ -82,9 +82,9 @@ while :; do
             fi
 
             SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
-            TMP_VAR=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+            TMP_VAR=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
             [[ $TMP_VAR =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP="$TMP_VAR" || KIRA_BLOCK_TMP="0"
-            SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
+            SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
 
             # if some other node then snapshoot is syncig then infra is not ready
             [ "${name,,}" != "snapshoot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
@@ -126,8 +126,8 @@ while :; do
     echo -e "|\e[34;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
 
     if [ "${LOADING,,}" == "false" ] ; then
-        KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-        KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+        KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+        KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
 
         KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
@@ -179,10 +179,10 @@ while :; do
 
             if [ "${name,,}" != "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] ; then
                 SEKAID_STATUS=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.status" 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-                CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+                CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
                 if [ "${CATCHING_UP,,}" == "true" ] ; then
                     STATUS_TMP="catching up"
-                    LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+                    LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
                     [ $LATEST_BLOCK -gt 0 ] && [ "${HEALTH_TMP,,}" == "healthy" ] && HEALTH_TMP=$LATEST_BLOCK
                 fi
             fi

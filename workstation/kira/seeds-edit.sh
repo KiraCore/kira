@@ -101,8 +101,8 @@ while : ; do
             [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
             # try to get node ID from the RPC or INTERX
-            nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            [ -z "$nodeId" ] && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/status 2>/dev/null | jq -r '.NodeInfo.id' 2>/dev/null || echo "")
+            [ -z "$nodeId" ] && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.NodeInfo.id' 2>/dev/null || echo "")
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
             [ -z "$port" ] && port=$DEFAULT_P2P_PORT
             

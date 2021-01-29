@@ -10,10 +10,8 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 echo "INFO: Loading secrets..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
-rm -f "./config.tmp"
-jq --arg signer "${SIGNER_ADDR_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
-jq --arg faucet "${FAUCET_ADDR_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
-rm -f "./config.tmp"
+echo "$SIGNER_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/signing.mnemonic"
+echo "$FAUCET_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/faucet.mnemonic"
 set -e
 
 CONTAINER_NAME="interx"
@@ -45,6 +43,9 @@ docker run -d \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e CFG_grpc="dns:///sentry:9090" \
+    -e CFG_rpc="http://sentry:26657" \
+    -e CFG_port="$DEFAULT_INTERX_PORT" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest
 
