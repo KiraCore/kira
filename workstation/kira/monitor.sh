@@ -82,8 +82,10 @@ for name in $CONTAINERS; do
     DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH"
 
+    rm -fv "$DESTINATION_PATH.tmp"
+
     ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
     
     if [ -z "$ID" ] ; then
@@ -101,16 +103,14 @@ for name in $CONTAINERS; do
     fi
 done
 
-echo "INFO: Waiting for all scan processes to finalize"
-
 for name in $CONTAINERS; do
+    echo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     touch "${DESTINATION_PATH}.pid"
-    PIDX=$(cat "${DISK_SCAN_PATH}.pid" || echo "")
+    PIDX=$(cat "${DESTINATION_PATH}.pid" || echo "")
     
-    if ! kill -0 "$PIDX" 2> /dev/null ; then
-        wait $PIDX
-    fi
+    wait $PIDX || { echo "background failed: $?" >&2; exit 1;}
+    cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 done
 
 [ "${SCAN_DONE_MISSING,,}" == true ] && touch $SCAN_DONE

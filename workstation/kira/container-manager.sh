@@ -38,6 +38,7 @@ rm -fv "$LIP_PATH" "$KADDR_PATH" "$HALT_FILE"
 touch $LIP_PATH $KADDR_PATH
 
 HOSTNAME=""
+KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
@@ -62,14 +63,16 @@ while : ; do
     if [ "${NAME,,}" == "interx" ] || [ "${NAME,,}" == "validator" ] || [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
         SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
         [ "${NAME,,}" != "interx" ] && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
-        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
+        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
         KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+        [[ $KIRA_NODE_BLOCK =~ ^[0-9]+$ ]] && KIRA_NODE_BLOCK="$KIRA_NODE_BLOCK" || KIRA_NODE_BLOCK="0"
     fi
 
     printf "\033c"
     
     echo -e "\e[36;1m-----------------------------------------------------"
-    echo "|          KIRA CONTAINER MANAGER v0.0.9            |"
+    echo "|          KIRA CONTAINER MANAGER v0.0.10           |"
     echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') ----------------|"
 
     if [ "${LOADING,,}" == "true" ] ; then
@@ -149,8 +152,8 @@ while : ; do
     [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}"           && echo "|    Host: ${v:0:40} |"
     [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "| Node Id: ${v:0:40} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
-        TMP_VAR="$WHITESPACE"
-        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="(catching up) ${WHITESPACE}"
+        TMP_VAR="${KIRA_NODE_BLOCK}${WHITESPACE}"
+        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
         echo "|   Block: ${TMP_VAR:0:40} |"
     fi
     [ "$STATUS" != "exited" ] && \
