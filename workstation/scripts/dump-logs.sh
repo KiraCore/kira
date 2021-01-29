@@ -31,7 +31,7 @@ if [ -z $ID ] ; then
     exit 0
 fi
 
-docker exec -i $NAME printenv >$CONTAINER_DUMP/env.txt || echo "WARNING: Failed to fetch environment variables"
+docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echo "WARNING: Failed to fetch environment variables"
 echo $(docker inspect $ID || echo "") > $CONTAINER_DUMP/inspect.json || echo "WARNING: Failed to inspect container $NAME"
 
 if [ "$NAME" == "validator" ] || [ "$NAME" == "sentry" ] ; then

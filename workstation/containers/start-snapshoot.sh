@@ -25,7 +25,7 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
-SENTRY_STATUS=$(docker exec -i "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+SENTRY_STATUS=$(docker exec -it "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
 SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "")
 
