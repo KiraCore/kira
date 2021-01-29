@@ -11,6 +11,13 @@ PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"
 PRIVATE_PEERS="$KIRA_CONFIGS/private_peers"
 
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
+    echoWarn "WARNING: User chose to create new network, existing list of seeds & peers will be remove"
+    rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+    touch "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+    return
+fi
+
 while : ; do
     set +x
     echoInfo "INFO: If you want to connect to external networks you have to specify at least one public seed node"
