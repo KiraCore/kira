@@ -24,19 +24,13 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
 
+if [ "${SCAN_DONE_MISSING,,}" == true ] ; then
+    rm -fvr $SCAN_DIR
+fi
+
 mkdir -p $SCAN_DIR $STATUS_SCAN_PATH $SCAN_LOGS
 
-touch $CONTAINERS_SCAN_PATH
-touch $NETWORKS_SCAN_PATH
-touch $DISK_SCAN_PATH
-touch $RAM_SCAN_PATH
-touch $CPU_SCAN_PATH
-touch $LIP_SCAN_PATH
-touch $IP_SCAN_PATH
-
-if [ "${SCAN_DONE_MISSING,,}" == true ] ; then
-    rm -fv "${CPU_SCAN_PATH}.pid" "${IP_SCAN_PATH}.pid" "${LIP_SCAN_PATH}.pid" "${RAM_SCAN_PATH}.pid"
-fi
+touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH" "$LIP_SCAN_PATH" "$IP_SCAN_PATH"
 
 echo $(docker network ls --format="{{.Name}}" || "") > $NETWORKS_SCAN_PATH &
 PID1="$!"

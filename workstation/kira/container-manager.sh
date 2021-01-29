@@ -249,7 +249,7 @@ while : ; do
             echo "INFO: Attempting to display $NAME container log..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
 
-            if [ ! -f "$START_LOGS"] ; 
+            if [ ! -f "$START_LOGS"] ; then
                 docker logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
             else
                 cat $START_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container logs"
@@ -288,7 +288,7 @@ while : ; do
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
 
-            if [ ! -f "$HEALTHCHECK_LOGS"] ; 
+            if [ ! -f "$HEALTHCHECK_LOGS"] ; then
                 docker inspect --format "{{json .State.Health }}" "$ID" | jq -r '.' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
             else
                 cat $HEALTHCHECK_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container healthcheck logs"
