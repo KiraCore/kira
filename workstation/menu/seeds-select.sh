@@ -15,7 +15,7 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoWarn "WARNING: User chose to create new network, existing list of seeds & peers will be remove"
     rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-    return
+    exit 0
 fi
 
 while : ; do
