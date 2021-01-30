@@ -43,7 +43,7 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting $CONTAINER_NAME faucet to initalize..."
-    FAUCET_ADDR=$(docker exec -it "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -r '.address' | xargs || echo "")
+    FAUCET_ADDR=$(docker exec -it "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
 
     if [ -z "${FAUCET_ADDR}" ] ; then
         sleep 30

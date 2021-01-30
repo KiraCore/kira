@@ -25,9 +25,10 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
-SENTRY_STATUS=$(docker exec -it "sentry" sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "")
+
+SENTRY_STATUS=$(curl 127.0.0.1:$KIRA_SENTRY_RPC_PORT/status 2> /dev/null | jq -rc '.result' 2> /dev/null || echo "")
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "")
 
 if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] ; then
     echo "INFO: Failed to snapshoot state, public sentry is still catching up..."
@@ -35,7 +36,9 @@ if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] ; then
 fi
 
 if [ $MAX_HEIGHT -le 0 ] ; then
-    SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "") && [ -z "$SENTRY_BLOCK" ] && SENTRY_BLOCK="0"
+    SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "")
+    ( [ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ] ) && SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
+    ( [ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ] ) && SENTRY_BLOCK="0"
     MAX_HEIGHT=$SENTRY_BLOCK
 fi
 
