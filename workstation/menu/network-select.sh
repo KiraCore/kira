@@ -18,6 +18,7 @@ while : ; do
     SELECT="." && while [ "${SELECT,,}" != "n" ] && [ "${SELECT,,}" != "i" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mCreate [N]ew network, [I]mport genesis or use [S]napshoot: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
 
     if [ "${SELECT,,}" == "n" ] ; then # create new name
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         while : ; do
             echo "INFO: New KIRA network will be created!"
             echo "INFO: Network name should have a format of <name>-<number>, e.g. mynetwork-1"
@@ -39,13 +40,16 @@ while : ; do
         set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
         
         if [ -z "$KIRA_SNAP_PATH" ] || [ ! -f "$KIRA_SNAP_PATH" ] ; then
+            CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
             echo "INFO: Snapshoot was not selected or '$KIRA_SNAP_PATH' file was not found"
+            continue
         fi
 
         unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo "" > "$TMP_GENESIS_PATH"
         NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
         [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshoot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         echo "INFO: Network genesis will be importend from the external resource"
         if [ -f "$LOCAL_GENESIS_PATH" ]; then 
             echoInfo "INFO: Default genesis source: $LOCAL_GENESIS_PATH"
