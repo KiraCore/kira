@@ -35,7 +35,7 @@ PID2="$!"
 
 
 touch "${CPU_SCAN_PATH}.pid" && if ! kill -0 $(cat "${CPU_SCAN_PATH}.pid") 2> /dev/null ; then
-    echo $(mpstat -o JSON -u 30 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
+    echo $(mpstat -o JSON -u 15 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
     echo "$!" > "${CPU_SCAN_PATH}.pid"
 fi
 
@@ -86,7 +86,7 @@ for name in $CONTAINERS; do
     fi
     
     if [ "${name,,}" == "sentry" ] || [ "${name,,}" == "priv_sentry" ] || [ "${name,,}" == "validator" ] || [ "${name,,}" == "snapshoot" ] ; then
-        echo $(docker exec -t "$ID" sekaid status 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+        echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
         echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &

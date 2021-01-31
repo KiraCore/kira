@@ -84,7 +84,7 @@ LAST_SNAP_BLOCK=-1
 i=0
 while : ; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jq -r '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
   ( [ -z "${SNAP_BLOCK}" ] || [ "${SNAP_BLOCK,,}" == "null" ] ) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
 

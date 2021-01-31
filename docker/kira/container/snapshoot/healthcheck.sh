@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-exec 2>&1
 set -x
 
 SNAP_STATUS="$SNAP_DIR/status"
@@ -11,8 +10,8 @@ if [ -f "$SNAP_DONE" ] ; then
 fi
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE
-HEIGHT=$(sekaid status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(sekaid status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
+HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
+( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
 
 if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
   HEIGHT=0
