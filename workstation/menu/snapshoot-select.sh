@@ -1,6 +1,7 @@
 #!/bin/bash
 set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 AUTO_RECOVER="$1"
 
@@ -30,13 +31,14 @@ if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
     KIRA_SNAP=$DEFAULT_SNAP_DIR
 fi
 
-SNAPSHOOTS=`ls $KIRA_SNAP/*.zip` # get all zip files in the snap directory
+# get all zip files in the snap directory
+SNAPSHOOTS=`ls $KIRA_SNAP/*.zip` || SNAPSHOOTS=""
 SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
 SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
 
-if [ $SNAPSHOOTS_COUNT -le 0 ] ; then
-  echo "INFO: No snapshoots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-  echo -en "\e[31;1mINFO: Press any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+if [ $SNAPSHOOTS_COUNT -le 0 ] || [ -z "$SNAPSHOOTS" ] ; then
+  echoWarn "WARNING: No snapshoots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
+  echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
   exit 0
 fi
 
