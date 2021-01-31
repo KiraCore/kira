@@ -86,7 +86,7 @@ for name in $CONTAINERS; do
     fi
     
     if [ "${name,,}" == "sentry" ] || [ "${name,,}" == "priv_sentry" ] || [ "${name,,}" == "validator" ] || [ "${name,,}" == "snapshoot" ] ; then
-        echo $(docker exec -it "$ID" sekaid status 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+        echo $(docker exec -t "$ID" sekaid status 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
         echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &

@@ -54,7 +54,7 @@ docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
-FAUCET_ADDR=$(docker exec -it "interx" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
+FAUCET_ADDR=$(docker exec -t "interx" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"

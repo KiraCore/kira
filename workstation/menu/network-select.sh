@@ -1,6 +1,7 @@
 #!/bin/bash
 set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
@@ -43,14 +44,14 @@ while : ; do
 
         unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo "" > "$TMP_GENESIS_PATH"
         NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
-        [ -z "$NEW_NETWORK_NAME" ] && echo -en "\e[33;1mWARNING: Snapshoot file was not selected or does not contain a genesis file, can't read the chain-id \e[0m\c" && continue
+        [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshoot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         echo "INFO: Network genesis will be importend from the external resource"
         if [ -f "$LOCAL_GENESIS_PATH" ]; then 
-            echo "INFO: Default genesis source: $LOCAL_GENESIS_PATH"
-            echo -en "\e[31;1mProvide file name, URL or click [ENTER] to choose default source: \e[0m" && read NEW_GENESIS_SOURCE
+            echoInfo "INFO: Default genesis source: $LOCAL_GENESIS_PATH"
+            echoNErr "Provide file name, URL or click [ENTER] to choose default source: " && read NEW_GENESIS_SOURCE
         else
-            echo -en "\e[31;1mProvide file name or URL to genesis source: \e[0m" && read NEW_GENESIS_SOURCE
+            echoNErr "Provide file name or URL to genesis source: " && read NEW_GENESIS_SOURCE
         fi
           
         [ -z "$NEW_GENESIS_SOURCE" ] && NEW_GENESIS_SOURCE=$LOCAL_GENESIS_PATH

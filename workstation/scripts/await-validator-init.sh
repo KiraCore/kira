@@ -59,8 +59,8 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting node status..."
-    NODE_ID=$(docker exec -it "$CONTAINER_NAME" sekaid status | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(docker exec -it "$CONTAINER_NAME" sekaid status | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
+    NODE_ID=$(docker exec -t "$CONTAINER_NAME" sekaid status | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
+    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(docker exec -t "$CONTAINER_NAME" sekaid status | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ]; then
         sleep 12
         echo "WARNING: Status and Node ID is not available"

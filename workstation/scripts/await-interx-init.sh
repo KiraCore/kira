@@ -34,7 +34,7 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting $CONTAINER_NAME service to start..."
-    INTERX_STATUS_CODE=$(docker exec -it "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo "")
+    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
@@ -43,7 +43,7 @@ while [ $i -le 40 ]; do
     fi
 
     echo "INFO: Awaiting $CONTAINER_NAME faucet to initalize..."
-    FAUCET_ADDR=$(docker exec -it "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
+    FAUCET_ADDR=$(docker exec -t "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
 
     if [ -z "${FAUCET_ADDR}" ] ; then
         sleep 30
