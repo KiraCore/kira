@@ -1,8 +1,6 @@
 #!/bin/bash
-
-exec 2>&1
-
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 set -x
 
 START_TIME_CONTAINER_AWAIT="$(date -u +%s)"
@@ -35,8 +33,8 @@ while [ $ELAPSED -le $TIMEOUT ] && [ "$SUCCESS" == "False" ] ; do
 
     SUCCESS="True"
     ERROR="True"
-    docker cp $NAME:$TARGET_PASS_FILE "$DESTINATION/tmp-pass.file" &>/dev/null || SUCCESS="False"
-    docker cp $NAME:$TARGET_FAIL_FILE "$DESTINATION/tmp-fail.file" &>/dev/null || ERROR="False"
+    docker cp $NAME:$TARGET_PASS_FILE "$DESTINATION/tmp-pass.file" &> /dev/null || SUCCESS="False"
+    docker cp $NAME:$TARGET_FAIL_FILE "$DESTINATION/tmp-fail.file" &> /dev/null || ERROR="False"
 
     if [ "$ERROR" == "True" ] ; then
         echo "ERROR: Fail report file was found wihtin container $NAME after $ELAPSED seconds"
