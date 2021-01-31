@@ -19,8 +19,8 @@ SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
@@ -79,7 +79,7 @@ echo "INFO: Copy genesis file from sentry into snapshoot container common direco
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 # cleanup
-rm -f -v "$COMMON_LOGS/healthcheck.log" "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

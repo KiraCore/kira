@@ -35,12 +35,12 @@ PID2="$!"
 
 
 touch "${CPU_SCAN_PATH}.pid" && if ! kill -0 $(cat "${CPU_SCAN_PATH}.pid") 2> /dev/null ; then
-    echo $(mpstat -o JSON -u 15 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
+    echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
     echo "$!" > "${CPU_SCAN_PATH}.pid"
 fi
 
 touch "${IP_SCAN_PATH}.pid" && if ! kill -0 $(cat "${IP_SCAN_PATH}.pid") 2> /dev/null ; then
-    echo $(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=3 2> /dev/null | awk -F'"' '{ print $2}') > $IP_SCAN_PATH && sleep 60 &
+    echo $(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 2> /dev/null | awk -F'"' '{ print $2}') > $IP_SCAN_PATH && sleep 60 &
     echo "$!" > "${IP_SCAN_PATH}.pid"
 fi
 

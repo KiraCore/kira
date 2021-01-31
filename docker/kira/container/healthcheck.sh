@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-exec 2>&1
 set -x
 
 echo "INFO: Health check => START"
@@ -20,7 +19,7 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo 
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     $SELF_CONTAINER/sentry/healthcheck.sh
 elif [ "${NODE_TYPE,,}" == "snapshoot" ] ; then
-    $SELF_CONTAINER/snapshoot/healthcheck.sh
+    $SELF_CONTAINER/snapshoot/healthcheck.sh 
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     $SELF_CONTAINER/validator/healthcheck.sh
 else

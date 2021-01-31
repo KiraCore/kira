@@ -7,7 +7,6 @@ NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-HEALTHCHECK_LOGS="$COMMON_LOGS/healthcheck.log"
 START_LOGS="$COMMON_LOGS/start.log"
 
 set +x
@@ -291,13 +290,9 @@ while : ; do
         while : ; do
             printf "\033c"
             echo "INFO: Attempting to display $NAME container healthcheck logs..."
-            rm -f $TMP_DUMP && touch $TMP_DUMP
+            rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            if [ ! -f "$HEALTHCHECK_LOGS" ] ; then
-                docker inspect --format "{{json .State.Health }}" "$ID" | jq -r '.' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
-            else
-                cat $HEALTHCHECK_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container healthcheck logs"
-            fi
+            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
 
             MAX=$(cat $TMP_DUMP | wc -l)
             [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
@@ -305,10 +300,9 @@ while : ; do
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "d" ] && [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
-            [ "${ACCEPT,,}" == "d" ] && rm -fv "$HEALTHCHECK_LOGS" && continue
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
             [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))

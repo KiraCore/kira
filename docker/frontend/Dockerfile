@@ -19,6 +19,6 @@ RUN cd ${FRONTEND_SRC} && flutter build web --release
 ADD ./container ${SELF_CONTAINER}
 RUN chmod 777 -R ${SELF_HOME}
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} | tee -a ${COMMON_LOGS}/healthcheck.log ; test ${PIPESTATUS[0]} = 0
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
 
 CMD ["sh", "-c", "/bin/bash ${SELF_CONTAINER}/start.sh | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]

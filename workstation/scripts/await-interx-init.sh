@@ -55,8 +55,9 @@ while [ $i -le 40 ]; do
     fi
 done
 
-echo "INFO: Printing $CONTAINER_NAME health logs..."
-cat $COMMON_LOGS/healthcheck.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+echo "INFO: Printing all $CONTAINER_NAME health logs..."
+docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+
 echo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echo "INFO: Failed to display $CONTAINER_NAME container start logs"
 
