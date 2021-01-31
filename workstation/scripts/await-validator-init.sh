@@ -67,7 +67,7 @@ while [ $i -le 40 ]; do
         echoWarn "WARNING: Status and Node ID is not available"
         continue
     else
-        echoinfo "INFO: Success, $CONTAINER_NAME node id found: $NODE_ID"
+        echoInfo "INFO: Success, $CONTAINER_NAME node id found: $NODE_ID"
         break
     fi
 done
