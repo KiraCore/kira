@@ -7,6 +7,7 @@ CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+PREVIOUS_HEIGHT=0
 
 i=0
 NODE_ID=""
@@ -36,14 +37,34 @@ while [ $i -le 40 ]; do
     fi
 
     echoInfo "INFO: Awaiting node status..."
-    NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
+    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+    NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
+    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
         sleep 12
         echoWarn "WARNING: Status and Node ID is not available"
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME container id found: $NODE_ID"
+    fi
+
+    if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
+        echoInfo "INFO: Success, all tests passed, node is launching locally, no external sources needed"
+        break
+    fi
+
+    echoInfo "INFO: External source sync detected"
+    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+    
+    if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+        sleep 10
+        echoWarn "WARNING: New blocks are not beeing synced!"
+        PREVIOUS_HEIGHT=$HEIGHT
+        continue
+    else
+        echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks"
         break
     fi
 done
