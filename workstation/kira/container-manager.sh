@@ -79,9 +79,9 @@ while : ; do
     echo "|          KIRA CONTAINER MANAGER v0.0.10           |"
     echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') ----------------|"
 
-    if [ "${LOADING,,}" == "true" ] ; then
+    if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING CONTAINER STATUS ...         \e[36;1m|"
-        while [ ! -f $SCAN_DONE ] ; do
+        while [ ! -f $SCAN_DONE ] || [ ! -f "$CONTAINER_STATUS" ] ; do
             sleep 1
         done
         wait $PID1 
