@@ -106,7 +106,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
 
         if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
             echoInfo "INFO: No private seeds were configured, using internal public seed node"
-            SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+            SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
             echo "$SENTRY_SEED" > $PRIVATE_SEEDS
             $KIRA_MANAGER/containers/start-priv-sentry.sh 
         fi
