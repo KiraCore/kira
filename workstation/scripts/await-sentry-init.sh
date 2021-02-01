@@ -48,12 +48,7 @@ while [ $i -le 40 ]; do
         echoInfo "INFO: Success, $CONTAINER_NAME container id found: $NODE_ID"
     fi
 
-    if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
-        echoInfo "INFO: Success, all tests passed, node is launching locally, no external sources needed"
-        break
-    fi
-
-    echoInfo "INFO: External source sync detected"
+    echoInfo "INFO: Awaiting first blocks to be synced..."
     HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
     ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
     ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
@@ -82,7 +77,6 @@ else
     echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
 fi
 
-
 if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
     echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
     echoErr "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
@@ -90,4 +84,27 @@ if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
 else
     echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
 fi
+
+while : ; do
+    echoInfo "INFO: Syncing $CONTAINER_NAME node..."
+    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+    CATCHING_UP=$(echo "$STATUS" | jq -rc '.SyncInfo.catching_up' || echo "")
+    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.catching_up' || echo "")
+    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP="true"
+
+    if [ "${CATCHING_UP,,}" == "true" ] ; then
+        sleep 10
+        echoWarn "WARNING: New blocks are still beeing synced, height $HEIGHT"
+        continue
+    else
+        echoInfo "INFO: Success, $CONTAINER_NAME catched up with the latest blockchain state!"
+        break
+    fi
+done
+
+
+
 
