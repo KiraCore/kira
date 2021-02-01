@@ -8,6 +8,7 @@ SENTRY_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 PREVIOUS_HEIGHT=0
+HEIGHT=0
 
 i=0
 NODE_ID=""
@@ -54,8 +55,8 @@ while [ $i -le 40 ]; do
     ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
     
     if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+        echoWarn "WARNING: New blocks are not beeing synced yet!"
         sleep 10
-        echoWarn "WARNING: New blocks are not beeing synced!"
         PREVIOUS_HEIGHT=$HEIGHT
         continue
     else
@@ -85,6 +86,11 @@ else
     echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
 fi
 
+if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
+    exit 1
+fi
+
 while : ; do
     echoInfo "INFO: Syncing $CONTAINER_NAME node..."
     STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
@@ -96,15 +102,12 @@ while : ; do
     ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP="true"
 
     if [ "${CATCHING_UP,,}" == "true" ] ; then
+        echoInfo "INFO: Please wait, new blocks are still beeing synced, height $HEIGHT"
         sleep 10
-        echoWarn "WARNING: New blocks are still beeing synced, height $HEIGHT"
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME catched up with the latest blockchain state!"
         break
     fi
 done
-
-
-
 
