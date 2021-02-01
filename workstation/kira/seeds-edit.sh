@@ -55,7 +55,7 @@ while : ; do
     echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
          
-    SELECT="." && while [ "${SELECT,,}" != "d" ] && [ "${SELECT,,}" != "s" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [D]elete, [W]ipe, [R]efresh or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while [ "${SELECT,,}" != "w" ] && [ "${SELECT,,}" != "d" ] && [ "${SELECT,,}" != "s" ] && [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]dd, [D]elete, [W]ipe, [R]efresh or [S]kip making changes to the $TARGET list: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
     [ "${SELECT,,}" == "r" ] && continue
     [ "${SELECT,,}" == "s" ] && break
              
