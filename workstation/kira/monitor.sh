@@ -108,7 +108,7 @@ done
 
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)" 
-    if [ -f "$SNAP_LATEST_FILE" ] && [ "$SNAP_LATEST_FILE" != "$KIRA_SNAP_PATH" ] ; then
+    if [ -f "$SNAP_LATEST_FILE" ] ; then
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAP_LATEST_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
 fi

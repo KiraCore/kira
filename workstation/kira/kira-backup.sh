@@ -16,52 +16,50 @@ echo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOOT=""
-if [ -f "$KIRA_SNAP_PATH" ] ; then
-    SELECT="." && while [ "${SELECT,,}" != "s" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mChoose to [S]ync from snapshoot or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-    if [ "${SELECT,,}" == "s" ] ; then
-        # get all zip files in the snap directory
-        SNAPSHOOTS=`ls $DEFAULT_SNAP_DIR/*.zip` || SNAPSHOOTS=""
-        SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
-        [ -z "$SNAPSHOOTS" ] && SNAPSHOOTS_COUNT="0"
-        SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
-
-        if [ $SNAPSHOOTS_COUNT -le 0 ] || [ -z "$SNAPSHOOTS" ] ; then
-            echoWarn "WARNING: No snapshoots were found in the '$DEFAULT_SNAP_DIR' direcory"
-            echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
-            exit 0
+SELECT="." && while [ "${SELECT,,}" != "s" ] && [ ! -z "${SELECT,,}" ]; do echo -en "\e[31;1mChoose to [S]ync from snapshoot or press [ENTER] to continue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+if [ "${SELECT,,}" == "s" ] ; then
+    # get all zip files in the snap directory
+    SNAPSHOOTS=`ls $DEFAULT_SNAP_DIR/*.zip` || SNAPSHOOTS=""
+    SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
+    [ -z "$SNAPSHOOTS" ] && SNAPSHOOTS_COUNT="0"
+    SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
+     
+    if [ $SNAPSHOOTS_COUNT -le 0 ] || [ -z "$SNAPSHOOTS" ] ; then
+        echoWarn "WARNING: No snapshoots were found in the '$DEFAULT_SNAP_DIR' direcory"
+        echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
+        exit 0
+    else
+        i=-1
+        LAST_SNAP=""
+        for s in $SNAPSHOOTS ; do
+            i=$((i + 1))
+            echo "[$i] $s"
+            LAST_SNAP=$s
+        done
+        
+        [ ! -f "$SNAP_LATEST_PATH" ] && SNAP_LATEST_PATH=$LAST_SNAP
+        echo "INFO: Latest snapshoot: '$SNAP_LATEST_PATH'"
+        
+        OPTION=""
+        while : ; do
+            read -p "Input snapshoot number 0-$i (Default: latest): " OPTION
+            [ -z "$OPTION" ] && break
+            [ "${OPTION,,}" == "latest" ] && break
+            [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -le $i ] && break
+        done
+        
+        if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
+            SNAPSHOOTS=( $SNAPSHOOTS )
+            SNAPSHOOT=${SNAPSHOOTS[$OPTION]}
         else
-            i=-1
-            LAST_SNAP=""
-            for s in $SNAPSHOOTS ; do
-                i=$((i + 1))
-                echo "[$i] $s"
-                LAST_SNAP=$s
-            done
-            
-            [ ! -f "$SNAP_LATEST_PATH" ] && SNAP_LATEST_PATH=$LAST_SNAP
-            echo "INFO: Latest snapshoot: '$SNAP_LATEST_PATH'"
-            
-            OPTION=""
-            while : ; do
-                read -p "Input snapshoot number 0-$i (Default: latest): " OPTION
-                [ -z "$OPTION" ] && break
-                [ "${OPTION,,}" == "latest" ] && break
-                [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -le $i ] && break
-            done
-            
-            if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
-                SNAPSHOOTS=( $SNAPSHOOTS )
-                SNAPSHOOT=${SNAPSHOOTS[$OPTION]}
-            else
-                OPTION="latest"
-                SNAPSHOOT=$SNAP_LATEST_PATH
-            fi
-            
-            echoInfo "INFO: Snapshoot '$SNAPSHOOT' ($OPTION) was selected"
+            OPTION="latest"
+            SNAPSHOOT=$SNAP_LATEST_PATH
         fi
-
-        echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-    fi 
+        
+        echoInfo "INFO: Snapshoot '$SNAPSHOOT' ($OPTION) was selected"
+    fi
+     
+    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
