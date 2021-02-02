@@ -5,6 +5,7 @@ source $KIRA_MANAGER/utils.sh
 CONTAINER_NAME="sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
@@ -54,7 +55,7 @@ cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
 cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 
 # cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"

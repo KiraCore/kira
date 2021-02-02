@@ -10,6 +10,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")

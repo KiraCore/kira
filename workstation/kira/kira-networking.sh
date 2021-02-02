@@ -55,8 +55,8 @@ echo -e "\e[37;1m--------------------------------------------------"
        IFACE_TMP="(${IFACE})${WHITESPACE:0:10}|"
        echo "| [I] | Change Network INTERFACE $IFACE_TMP"        && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
        echo "|------------------------------------------------|"
-       echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
-       echo "| [P] | Edit/Show Persistent PEERS List          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+       echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+       echo "| [P] | Edit/Show Persistent PEERS List          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
        echo "| [F] | Reload FIREWALL Settings                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
        echo "| [R] | RELOAD Networking                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     echo -e "| [X] | Exit ___________________________________ |\e[0m"
@@ -64,7 +64,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
+    if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""

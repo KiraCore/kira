@@ -14,6 +14,7 @@ CONTAINER_NAME="snapshoot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
 GENESIS_SOURCE="/root/.simapp/config/genesis.json"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
@@ -79,7 +80,7 @@ echo "INFO: Copy genesis file from sentry into snapshoot container common direco
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 # cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

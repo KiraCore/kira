@@ -30,10 +30,10 @@ TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
-echo "INFO: Wiping halt files of $NAME container..."
+echo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
-rm -fv "$LIP_PATH" "$KADDR_PATH" "$HALT_FILE"
+rm -fv "$LIP_PATH" "$KADDR_PATH"
 touch $LIP_PATH $KADDR_PATH
 
 HOSTNAME=""
@@ -174,6 +174,8 @@ while : ; do
     [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
     [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    [ -f "$HALT_FILE" ]            && echo "| [K] | Un-HALT (revive) all processes              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
+    [ ! -f "$HALT_FILE" ]          && echo "| [K] | KILL (halt) all processes                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
                                       echo "|---------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
     [ "${EXISTS,,}" == "true" ]    && echo "| [H] | Show HEALTHCHECK logs                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
@@ -199,7 +201,7 @@ while : ; do
         docker exec -it $ID bash || docker exec -it $ID sh || FAILURE="true"
         
         if [ "${FAILURE,,}" == "true" ] ; then
-            ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
@@ -223,6 +225,18 @@ while : ; do
         $KIRA_SCRIPTS/container-restart.sh $NAME
         LOADING="true"
         EXECUTED="true"
+    elif [ "${OPTION,,}" == "k" ] ; then
+        if [ -f "$HALT_FILE" ] ; then
+            echo "INFO: Removing halt file"
+            rm -fv $HALT_FILE
+        else
+            echo "INFO: Creating halt file"
+            touch $HALT_FILE
+        fi
+        echo "INFO: Restarting container..."
+        $KIRA_SCRIPTS/container-restart.sh $NAME
+        LOADING="true"
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
         $KIRA_SCRIPTS/container-stop.sh $NAME
@@ -230,11 +244,13 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" != "running" ] ; then
         echo "INFO: Starting container..."
+        rm -fv $HALT_FILE
         $KIRA_SCRIPTS/container-start.sh $NAME
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
+        rm -fv $HALT_FILE
         $KIRA_SCRIPTS/container-pause.sh $NAME
         LOADING="true"
         EXECUTED="true"

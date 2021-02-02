@@ -24,14 +24,6 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 
 WHITESPACE="                                                          "
 
-echo "INFO: Wiping halt files of all containers..."
-rm -fv $DOCKER_COMMON/validator/halt
-rm -fv $DOCKER_COMMON/sentry/halt
-rm -fv $DOCKER_COMMON/priv_sentry/halt
-rm -fv $DOCKER_COMMON/snapshoot/halt
-rm -fv $DOCKER_COMMON/interx/halt
-rm -fv $DOCKER_COMMON/frontend/halt
-
 echo "INFO: Restarting network scanner..."
 systemctl daemon-reload
 systemctl restart kirascan

@@ -12,6 +12,9 @@ ID=$4
 [ -z "$ID" ] && ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo "")
 EXISTS="true" && [ -z "$ID" ] && EXISTS="false"
 
+COMMON_PATH="$DOCKER_COMMON/$NAME"
+HALT_FILE="$COMMON_PATH/halt"
+
 # define global variables
 if [ "${NAME,,}" == "interx" ]; then
     BRANCH="$INTERX_BRANCH"
@@ -39,7 +42,6 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
 
     STATUS=$(cat "$DOCKER_INSPECT" | jq -r '.State.Status' 2> /dev/null || echo "")
     PAUSED=$(cat "$DOCKER_INSPECT" | jq -r '.State.Paused'  2> /dev/null || echo "")
-    HEALTH=$(cat "$DOCKER_INSPECT" | jq -r '.State.Health.Status' 2> /dev/null || echo "")
     RESTARTING=$(cat "$DOCKER_INSPECT" | jq -r '.State.Restarting' 2> /dev/null || echo "")
     STARTED_AT=$(cat "$DOCKER_INSPECT" | jq -r '.State.StartedAt' 2> /dev/null || echo "")
     FINISHED_AT=$(cat "$DOCKER_INSPECT" | jq -r '.State.FinishedAt' 2> /dev/null || echo "")
@@ -47,6 +49,9 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     EXPOSED_PORTS=$(cat "$DOCKER_INSPECT" | jq -r '.Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
     NETWORK_SETTINGS=$(cat "$DOCKER_INSPECT" 2> /dev/null | jq -r ".NetworkSettings.Networks" 2> /dev/null || echo "")
+
+    [ -f "$HALT_FILE" ] && HEALTH="halted"
+    [ ! -f "$HALT_FILE" ] && HEALTH=$(cat "$DOCKER_INSPECT" | jq -r '.State.Health.Status' 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do
