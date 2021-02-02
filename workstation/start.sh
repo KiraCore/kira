@@ -7,6 +7,7 @@ START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
 PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
+PRIVATE_PEERS="$KIRA_CONFIGS/private_peers"
 
 cd $HOME
 
@@ -104,10 +105,10 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
 
         $KIRA_MANAGER/containers/start-sentry.sh
 
-        if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
-            echoInfo "INFO: No private seeds were configured, using internal public seed node"
+        if [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+            echoInfo "INFO: No private peers were configured, using public sentry as private peer"
             SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-            echo "$SENTRY_SEED" > $PRIVATE_SEEDS
+            echo "$SENTRY_SEED" > $PRIVATE_PEERS
             $KIRA_MANAGER/containers/start-priv-sentry.sh 
         fi
 
