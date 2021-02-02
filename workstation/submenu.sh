@@ -26,6 +26,8 @@ PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
 
+CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+
 set +x
 printf "\033c"
 

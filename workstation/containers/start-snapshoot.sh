@@ -118,6 +118,15 @@ docker run -d \
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
 
+echoInfo "INFO: Checking genesis SHA256 hash"
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum /root/.simapp/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
+    echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
+    exit 1
+else
+    echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
+fi
+
 set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
     echo "INFO: Snapshoot failed, '$CONTAINER_NAME' container did not start"

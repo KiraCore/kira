@@ -105,6 +105,18 @@ if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$KIRA_CONFIGS/genesis.json"
+
+    GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum /root/.simapp/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
+
+echoInfo "INFO: Checking genesis SHA256 hash"
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum /root/.simapp/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
+    echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
+    exit 1
+else
+    echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
