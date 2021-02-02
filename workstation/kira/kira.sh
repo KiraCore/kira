@@ -190,8 +190,7 @@ while :; do
                 ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
 
                 if [ "${CATCHING_UP,,}" == "true" ] ; then
-                    STATUS_TMP="catching up"
-                    [ $LATEST_BLOCK -gt 0 ] && [ "${HEALTH_TMP,,}" == "healthy" ] && HEALTH_TMP=$LATEST_BLOCK
+                    STATUS_TMP="syncing : $LATEST_BLOCK"
                 elif [ "$LATEST_BLOCK" != "$KIRA_BLOCK" ] && [ "$LATEST_BLOCK" != "0" ] ; then
                     STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
                 elif [ "$LATEST_BLOCK" == "$KIRA_BLOCK" ] ; then

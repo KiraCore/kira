@@ -64,7 +64,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
 
-  if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+  if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
     echo "INFO: Genesis file was NOT found, attempting to create new one"
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
