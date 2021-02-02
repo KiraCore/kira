@@ -21,7 +21,7 @@ RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
-
+GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
 
 echo "INFO: Restarting network scanner..."
@@ -127,9 +127,16 @@ while :; do
         KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
         ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
 
+        if [ -f "$GENESIS_JSON" ] ; then
+            GENESIS_SUM=$(sha256sum $GENESIS_JSON | awk '{ print $1 }')
+            GENESIS_SUM="$(echo $GENESIS_SUM | head -c 4)...$(echo $GENESIS_SUM | tail -c 5)"
+        else
+            GENESIS_SUM="genesis not found"
+        fi
+
         KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-        echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m|"
+        echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m: $GENESIS_SUM"
     fi
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "

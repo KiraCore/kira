@@ -6,6 +6,11 @@ set -x
 echo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+SNAP_FILE="$COMMON_DIR/snap.zip"
+DATA_DIR="$SEKAID_HOME/data"
+LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+DATA_GENESIS="$DATA_DIR/genesis.json"
+COMMON_GENESIS="$COMMON_DIR/genesis.json"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
@@ -22,12 +27,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
-  SNAP_FILE="$COMMON_DIR/snap.zip"
-  DATA_DIR="$SEKAID_HOME/data"
-  LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-  DATA_GENESIS="$DATA_DIR/genesis.json"
-  COMMON_GENESIS="$COMMON_DIR/genesis.json"
-
   if [ -f "$SNAP_FILE" ] ; then
     echo "INFO: Snap file was found, attepting data recovery..."
     
@@ -43,7 +42,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     rm -fv "$SNAP_FILE"
   else
-    echo "INFO: Snap file is NOT present, starting new sync..."
+    echo "INFO: Snap file is NOT present"
   fi
 
   set +x
@@ -65,7 +64,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
 
-  if [ ! -f "$COMMON_GENESIS" ] ; then
+  if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echo "INFO: Genesis file was NOT found, attempting to create new one"
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
@@ -74,11 +73,17 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
   else
-      echo "INFO: Common genesis file was found, attempting recovery..."
+      echo "INFO: Network will be stared from a predefined genesis file..."
+      [ ! -f "$COMMON_GENESIS" ] && echo "ERROR: Genesis file '$COMMON_GENESIS' was not found" && exit 1
+      rm -fv $LOCAL_GENESIS
       cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
   fi
 
+  rm -fv $COMMON_GENESIS
   cp -a -v -f $LOCAL_GENESIS $COMMON_GENESIS
+
+  echo "INFO: genesis.json SHA256 checksum:"
+  sha256sum $COMMON_GENESIS
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
   touch $EXECUTED_CHECK

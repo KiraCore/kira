@@ -91,23 +91,23 @@ if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
     exit 1
 fi
 
-while : ; do
-    echoInfo "INFO: Syncing $CONTAINER_NAME node..."
-    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-    CATCHING_UP=$(echo "$STATUS" | jq -rc '.SyncInfo.catching_up' || echo "")
-    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.catching_up' || echo "")
-    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
-    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP="true"
-
-    if [ "${CATCHING_UP,,}" == "true" ] ; then
-        echoInfo "INFO: Please wait, new blocks are still beeing synced, height $HEIGHT"
-        sleep 10
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME catched up with the latest blockchain state!"
-        break
-    fi
-done
+#while : ; do
+#    echoInfo "INFO: Syncing $CONTAINER_NAME node..."
+#    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+#    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+#    CATCHING_UP=$(echo "$STATUS" | jq -rc '.SyncInfo.catching_up' || echo "")
+#    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+#    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.catching_up' || echo "")
+#    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+#    ( [ -z "${CATCHING_UP}" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP="true"
+#
+#    if [ "${CATCHING_UP,,}" == "true" ] ; then
+#        echoInfo "INFO: Please wait, new blocks are still beeing synced, height $HEIGHT"
+#        sleep 10
+#        continue
+#    else
+#        echoInfo "INFO: Success, $CONTAINER_NAME catched up with the latest blockchain state!"
+#        break
+#    fi
+#done
 
