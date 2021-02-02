@@ -1,6 +1,8 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# systemctl restart kirascan && journalctl -u kirascan -f
+
 START_TIME="$(date -u +%s)"
 
 echo "INFO: Started kira network scann"
@@ -87,9 +89,11 @@ for name in $CONTAINERS; do
     
     if [ "${name,,}" == "sentry" ] || [ "${name,,}" == "priv_sentry" ] || [ "${name,,}" == "validator" ] || [ "${name,,}" == "snapshoot" ] ; then
         echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
         echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
         echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH &
     fi
 done
@@ -97,11 +101,34 @@ done
 for name in $CONTAINERS; do
     echo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
-    touch "${DESTINATION_PATH}.pid"
+    STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
+    touch "${DESTINATION_PATH}.pid" "${DESTINATION_PATH}.sekaid.status.pid" "$STATUS_PATH"
     PIDX=$(cat "${DESTINATION_PATH}.pid" || echo "")
+    PIDY=$(cat "${DESTINATION_PATH}.sekaid.status.pid" || echo "")
     
-    wait $PIDX || { echo "background failed: $?" >&2; exit 1;}
+    [ -z "$PIDX" ] && echo "INFO: Process X not found" && continue
+    wait $PIDX || { echo "background pid failed: $?" >&2; exit 1;}
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
+    
+    [ -z "$PIDY" ] && echo "INFO: Process Y not found" && continue
+    wait $PIDY || { echo "background status pid failed: $?" >&2; exit 1;}
+
+    SEKAID_STATUS=$(cat $STATUS_PATH)
+    if [ ! -z "$SEKAID_STATUS" ] && [ "${SEKAID_STATUS,,}" != "null" ] ; then
+        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
+        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" != "true" ] ) && CATCHING_UP="false"
+        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
+        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
+    else
+        LATEST_BLOCK="0"
+        CATCHING_UP="false"
+    fi
+    
+    echo "INFO: Saving status props..."
+    echo "$LATEST_BLOCK" > "${DESTINATION_PATH}.sekaid.latest_block_height"
+    echo "$CATCHING_UP" > "${DESTINATION_PATH}.sekaid.catching_up"
 done
 
 [ "${SCAN_DONE_MISSING,,}" == true ] && touch $SCAN_DONE

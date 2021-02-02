@@ -134,9 +134,11 @@ while :; do
             GENESIS_SUM="genesis not found"
         fi
 
-        KIRA_NETWORK="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
-        KIRA_BLOCK="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-        echo -e "|\e[35;1m ${KIRA_NETWORK:0:22}${KIRA_BLOCK:0:23} \e[33;1m: $GENESIS_SUM"
+        KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
+        KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
+        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $GENESIS_SUM"
+    else
+        KIRA_BLOCK="???"
     fi
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
@@ -182,23 +184,24 @@ while :; do
             [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
             [ "${name,,}" == "snapshoot" ] && [ -f "$SCAN_DONE" ] && HEALTH_TMP="" # no need for healthcheck anymore
 
-            if [ "${name,,}" != "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] ; then
-                SEKAID_STATUS=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.status" 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
-                CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
-                ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
-                LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
-                ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+            if [ "${name,,}" != "snapshoot" ] && [ "${STATUS_TMP,,}" != "exited" ] && [ "${STATUS_TMP,,}" != "stopped" ] ; then
+                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2> /dev/null || echo "")
+                CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2> /dev/null || echo "false")
                 ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
 
                 if [ "${CATCHING_UP,,}" == "true" ] ; then
                     STATUS_TMP="catching up"
                     [ $LATEST_BLOCK -gt 0 ] && [ "${HEALTH_TMP,,}" == "healthy" ] && HEALTH_TMP=$LATEST_BLOCK
-                elif [ $LATEST_BLOCK -gt 0 ] ; then
-                    STATUS_TMP="$STATUS_TMP:$LATEST_BLOCK"
+                elif [ "$LATEST_BLOCK" != "$KIRA_BLOCK" ] && [ "$LATEST_BLOCK" != "0" ] ; then
+                    STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
+                elif [ "$LATEST_BLOCK" == "$KIRA_BLOCK" ] ; then
+                    STATUS_TMP="$STATUS_TMP : latest"
                 fi
             fi
 
-            LABEL="| [$i] | Manage $name ($STATUS_TMP)$WHITESPACE"
+            NAME_TMP="${name}${WHITESPACE}"
+            STATUS_TMP="${STATUS_TMP}${WHITESPACE}"
+            LABEL="| [$i] | Manage ${NAME_TMP:0:11} : ${STATUS_TMP:0:21}"
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     else
