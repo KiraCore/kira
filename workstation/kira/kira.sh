@@ -186,11 +186,14 @@ while :; do
                 SEKAID_STATUS=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.status" 2> /dev/null | jq -r '.' 2> /dev/null || echo "")
                 CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
                 ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+                LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
+                ( [ -z "$LATEST_BLOCK" ] || [ "${LATEST_BLOCK,,}" == "null" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+
                 if [ "${CATCHING_UP,,}" == "true" ] ; then
                     STATUS_TMP="catching up"
-                    LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
-                    ( [ -z "$LATEST_BLOCK" ] || [ "${LATEST_BLOCK,,}" == "null" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
                     [ $LATEST_BLOCK -gt 0 ] && [ "${HEALTH_TMP,,}" == "healthy" ] && HEALTH_TMP=$LATEST_BLOCK
+                elif [ $LATEST_BLOCK -gt 0 ] ; then
+                    STATUS_TMP="$STATUS_TMP:$LATEST_BLOCK"
                 fi
             fi
 
