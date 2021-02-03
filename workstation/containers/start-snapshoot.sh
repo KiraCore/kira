@@ -77,6 +77,7 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/conf
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 CFG_seeds="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+CFG_persistent_peers=""
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
@@ -99,7 +100,7 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_seed="$CFG_seeds" \
-    -e CFG_persistent_peers="$CFG_seeds" \
+    -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \

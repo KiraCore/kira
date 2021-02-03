@@ -36,6 +36,7 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 CFG_seeds="tcp://$PRIV_SENTRY_SEED,tcp://$VALIDATOR_SEED"
+CFG_persistent_peers=""
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
@@ -83,7 +84,7 @@ docker run -d \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_seeds="$CFG_seeds" \
-    -e CFG_persistent_peers="$CFG_seeds" \
+    -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
