@@ -66,6 +66,7 @@ while :; do
         $KIRA_MANAGER/menu/seeds-select.sh
     else
         CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
         rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     fi
 
@@ -83,6 +84,7 @@ while :; do
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot 
     else
+        CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
         $KIRA_MANAGER/menu/snapshoot-select.sh
     fi
 

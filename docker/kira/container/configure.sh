@@ -11,6 +11,9 @@ COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
 LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
 
+LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
+LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
+
 [ -f "$COMMON_PEERS_PATH" ] && cp -a -v -f "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -a -v -f "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
 
@@ -65,5 +68,20 @@ fi
 [ ! -z "$CFG_max_num_inbound_peers" ] && CDHelper text lineswap --insert="max_num_inbound_peers = \"$CFG_max_num_inbound_peers\"" --prefix="max_num_inbound_peers =" --path=$CFG
 # Maximum number of outbound P2P peers to connect to, excluding persistent peers
 [ ! -z "$CFG_max_num_outbound_peers " ] && CDHelper text lineswap --insert="max_num_outbound_peers = \"$CFG_max_num_outbound_peers\"" --prefix="max_num_outbound_peers =" --path=$CFG
+
+
+echo "INFO: Starting state file configuration..."
+
+STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+
+if [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
+    echo "INFO: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
+    cat $LOCAL_STATE | jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" > "$LOCAL_STATE.tmp"
+    cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
+    rm -fv "$LOCAL_STATE.tmp"
+fi
+
+STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+echo "INFO: Minimum state height is set to $STATE_HEIGHT"
 
 echo "INFO: Finished node configuration."

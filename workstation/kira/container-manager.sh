@@ -213,7 +213,8 @@ while : ; do
             echo "INFO: To exit the container type 'exit'"
             docker exec -it $ID bash || docker exec -it $ID sh || echo "WARNING: Failed to inspect $NAME container"
         fi
-        rm -fv $HALT_FILE
+        
+        [ -f "$HALT_FILE" ] && echo "INFO: Applications running within your container were halted, you will have to choose Un-HALT option to start them again!"
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "d" ] ; then

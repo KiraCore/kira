@@ -113,3 +113,22 @@ while : ; do
     break
 done
 
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    echoInfo "INFO: Validator mode detected, last parameter to setup..."
+    echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
+    echoInfo "INFO: If you are creating a new network you can set minimum block height to 0 otherwise set it to the latest block height that the network can be at"
+    
+    while : ; do
+        echoNErr "Define minimum block height: " && read VALIDATOR_MIN_HEIGHT
+        ( [ -z "$VALIDATOR_MIN_HEIGHT" ] || [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt 0 ] ) && continue
+        break
+    done
+
+    echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $VALIDATOR_MIN_HEIGHT"
+    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+else
+    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
+
+
