@@ -33,7 +33,9 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+CFG_seeds="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED"
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
@@ -59,12 +61,7 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
-    # sentry becomes a forward facing node
-    #CFG_persistent_peers=""
-#else
-    #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
-CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -83,7 +80,8 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_persistent_peers="$CFG_persistent_peers" \
+    -e CFG_persistent_peers="$CFG_seeds" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
