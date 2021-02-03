@@ -8,15 +8,16 @@ GENESIS_SOURCE=$2
 GENESIS_DESTINATION=$3
 VALIDATOR_NODE_ID=$4
 
-i=0
-IS_STARTED="false"
-NODE_ID=""
-
-rm -fv $GENESIS_DESTINATION
-
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+IS_STARTED="false"
+NODE_ID=""
+PREVIOUS_HEIGHT=0
+HEIGHT=0
+i=0
+
+rm -fv $GENESIS_DESTINATION
 
 while [ $i -le 40 ]; do
     i=$((i + 1))
@@ -51,7 +52,7 @@ while [ $i -le 40 ]; do
     fi
 
     # make sure genesis is present in the destination path
-    if [ ! -f "$GENESIS_DESTINATION" ]; then
+    if [ ! -f "$GENESIS_DESTINATION" ] ; then
         sleep 12
         echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME"
         continue
@@ -59,15 +60,30 @@ while [ $i -le 40 ]; do
         echoInfo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
     fi
 
-    echoInfo "INFO: Awaiting $CONTAINER_NAME node status..."
-    NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
+    echoInfo "INFO: Awaiting node status..."
+    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+    NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
+    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
     if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
         sleep 12
         echoWarn "WARNING: Status and Node ID is not available"
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME node id found: $NODE_ID"
+    fi
+
+    echoInfo "INFO: Awaiting first blocks to be synced or produced..."
+    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+    
+    if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+        echoWarn "INFO: Please wait, new blocks are not beeing synced or produced yet!"
+        sleep 10
+        PREVIOUS_HEIGHT=$HEIGHT
+        continue
+    else
+        echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks"
         break
     fi
 done
@@ -97,4 +113,9 @@ if [ "${IS_STARTED,,}" != "true" ] ; then
     exit 1
 else
     echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
+fi
+
+if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly."
+    exit 1
 fi
