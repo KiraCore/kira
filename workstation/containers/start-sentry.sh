@@ -64,12 +64,13 @@ fi
 
 echo "INFO: Starting sentry node..."
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    # sentry becomes a forward facing node
-    CFG_persistent_peers=""
-else
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-fi
+#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+#    # sentry becomes a forward facing node
+#    CFG_persistent_peers=""
+#else
+#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+#fi
+CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 
 docker run -d \
     --cpus="$CPU_RESERVED" \

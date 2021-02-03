@@ -60,10 +60,11 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
     # sentry becomes a forward facing node
-    CFG_persistent_peers=""
+    #CFG_persistent_peers=""
 else
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
+CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 
