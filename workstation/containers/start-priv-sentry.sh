@@ -61,7 +61,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
     # sentry becomes a forward facing node
     #CFG_persistent_peers=""
-else
+#else
     #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
 CFG_persistent_peers="tcp://$VALIDATOR_SEED"
