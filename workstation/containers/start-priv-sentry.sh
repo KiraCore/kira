@@ -35,8 +35,8 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-CFG_seeds="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED"
-CFG_persistent_peers=""
+CFG_seeds="tcp://$SENTRY_SEED"
+CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json

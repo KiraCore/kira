@@ -27,6 +27,7 @@ PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
 
 CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +x
 printf "\033c"

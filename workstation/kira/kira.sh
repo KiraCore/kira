@@ -226,6 +226,10 @@ while : ; do
     
     [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    [ "${SNAP_EXPOSE,,}" == "true" ] && \
+    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+    [ "${SNAP_EXPOSE,,}" == "false" ] && \
+    echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
@@ -234,8 +238,6 @@ while : ; do
     OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
-
-    
 
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNWarn "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
@@ -310,6 +312,19 @@ while : ; do
     elif [ "${OPTION,,}" == "n" ] ; then
         echo "INFO: Staring networking manager..."
         $KIRA_MANAGER/kira/kira-networking.sh || echo "ERROR: Network manager failed"
+        LOADING="true"
+        EXECUTED="true"
+        OPTION=""
+    elif [ "${OPTION,,}" == "e" ] ; then
+        if [ "${SNAP_EXPOSE,,}" == "false" ] ; then
+            echo "INFO: Exposing latest snapshoot '$KIRA_SNAP_PATH' via INTERX"
+            CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            echoInfo "INFO: Await few minutes and your snapshoot will become available via 0.0.0.0:$KIRA_INTERX_PORT/downloads/snapshoot.zip"
+        else
+            echoInfo "INFO: Ensuring exposed snapshoot will be removed..."
+            CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            echoInfo "INFO: Await few minutes and your snapshoot will become unavailable"
+        fi
         LOADING="true"
         EXECUTED="true"
         OPTION=""

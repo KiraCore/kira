@@ -140,5 +140,24 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; t
     fi
 fi
 
+INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/reference"
+INTERX_SNAPSHOOT_PATH="$INTERX_REDERENCE_DIR/snapshoot.zip"
+if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
+    HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
+    HASH2=$(sha256sum "$INTERX_SNAPSHOOT_PATH" | awk '{ print $1 }' || echo "")
+
+    if [ "$HASH1" != "$HASH2" ] ; then
+        echo "INFO: Latest snapshoot is NOT exposed yet"
+        mkdir -p $INTERX_REDERENCE_DIR
+        rm -f -v $INTERX_SNAPSHOOT_PATH
+        cp -f -v -a "$KIRA_SNAP_PATH" "$DESTINATION"
+    else
+        echo "INFO: Latest snapshoot was already exposed, no need for updates"
+    fi
+elif [ -f "$INTERX_SNAPSHOOT_PATH" ] && [ "${SNAP_EXPOSE,,}" == "false" ]  ; then
+    echo "INFO: Removing publicly exposed snapshoot..."
+    rm -f -v $INTERX_SNAPSHOOT_PATH
+fi
+
 sleep 1
 echo "INFO: Success, network scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
