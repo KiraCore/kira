@@ -128,7 +128,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Halting $CONTAINER_NAME container"
     touch $HALT_FILE
     echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $
+    $KIRA_SCRIPTS/container-restart.sh
     
     echo "INFO: Creating new snapshoot..."
 
@@ -145,6 +145,11 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     docker exec -i "$CONTAINER_NAME" bash -c "cp -v -f $SEKAID_HOME/config/genesis.json $DATA_DIR"
     docker exec -i "$CONTAINER_NAME" bash -c "cd $SEKAID_HOME/data && zip -r -v /snap/$SNAP_FILENAME . *"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    echo "INFO: Un-Halting $CONTAINER_NAME container"
+    rm -fv $HALT_FILE
+    echo "INFO: Re-starting $CONTAINER_NAME container..."
+    $KIRA_SCRIPTS/container-restart.sh
 
     echo "INFO: New snapshoot ws created"
 fi
