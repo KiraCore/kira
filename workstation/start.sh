@@ -121,6 +121,8 @@ else
   exit 1
 fi
 
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" # restarts all networks and re-connect all containers just be be sure everything is routed correctly
+
 set +x
 echo "------------------------------------------------"
 echo "| FINISHED: LAUNCH SCRIPT                      |"

@@ -6,8 +6,9 @@ set -x
 
 RECONNECT=$1
 TARGET=$2
+
 [ -z "$RECONNECT" ] && RECONNECT="true"
-[ "$TARGET" == "null" ] && TARGET=""
+( [ "$TARGET" == "null" ] || [ "$TARGET" == "*" ] ) && TARGET=""
 
 START_TIME="$(date -u +%s)"
 set +x
