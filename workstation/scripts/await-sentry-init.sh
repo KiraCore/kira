@@ -93,9 +93,10 @@ if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
     exit 1
 fi
 
-SENTRY_NETWORK=$(echo $STATUS | jq -r '.node_info.network' 2> /dev/null || echo "")
-if [ "$NETWORK_NAME" != "$SENTRY_NETWORK" ] ; then
-    echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$SENTRY_NETWORK'"
+NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo "")
+( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo "")
+if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
+    echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'"
     exit 1
 fi
 
