@@ -54,7 +54,7 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2
 CFG_seeds="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 CFG_persistent_peers=""
 
-GENESIS_SOURCE="/root/.simapp/config/genesis.json"
+GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
 
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
@@ -110,12 +110,12 @@ if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$KIRA_CONFIGS/genesis.json"
 
-    GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum /root/.simapp/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+    GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum /root/.simapp/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
 if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1

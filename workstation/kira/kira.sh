@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set +x
@@ -29,7 +30,7 @@ systemctl daemon-reload
 systemctl restart kirascan
 
 LOADING="true"
-while :; do
+while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     SNAP_STATUS="$KIRA_SNAP/status"
     SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -92,7 +93,7 @@ while :; do
             [ "${name,,}" == "snapshoot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
 
-            if [ "${STATUS_TMP,,}" == "running" ] && ( [ "${name,,}" == "validator" ] || [ "${name,,}" == "sentry" ] ) ; then
+            if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]] ; then
                 ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
             fi
 
@@ -184,17 +185,15 @@ while :; do
             [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
             [ "${name,,}" == "snapshoot" ] && [ -f "$SCAN_DONE" ] && HEALTH_TMP="" # no need for healthcheck anymore
 
-            if [ "${name,,}" != "snapshoot" ] && [ "${STATUS_TMP,,}" != "exited" ] && [ "${STATUS_TMP,,}" != "stopped" ] ; then
+            if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]] ; then
                 LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2> /dev/null || echo "")
                 CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2> /dev/null || echo "false")
                 ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
 
                 if [ "${CATCHING_UP,,}" == "true" ] ; then
                     STATUS_TMP="syncing : $LATEST_BLOCK"
-                elif [ "$LATEST_BLOCK" != "$KIRA_BLOCK" ] && [ "$LATEST_BLOCK" != "0" ] ; then
+                else
                     STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
-                elif [ "$LATEST_BLOCK" == "$KIRA_BLOCK" ] ; then
-                    STATUS_TMP="$STATUS_TMP : latest"
                 fi
             fi
 
@@ -236,8 +235,10 @@ while :; do
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
+    
+
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
+        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNWarn "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
     fi
