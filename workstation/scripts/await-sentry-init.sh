@@ -107,23 +107,26 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-
         ( [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ) && echoErr "ERROR: Node failed, status could not be fetched, your netwok connectivity might have been interrupted" && exit 1
 
+        set +x
         SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
         ( [ -z "$SYNCING" ] || [ "${SYNCING,,}" == "null" ] ) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
         HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
         ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
         ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+        set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
 
-        echo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
-        echoInfo "INFO: Waiting for $CONTAINER_NAME to finish catching up."
-        sleep 10
+        set +x
+        echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        echoInfo "INFO: Do NOT close your terminal, waiting for $CONTAINER_NAME to finish catching up..."
+        set -x
+        sleep 30
     done
 
     echo "INFO: Halting $CONTAINER_NAME container"
@@ -152,6 +155,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh
 
-    echo "INFO: New snapshoot ws created"
+    echo "INFO: New snapshoot was created!"
+    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
