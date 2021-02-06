@@ -98,7 +98,6 @@ docker run -d \
     -e CFG_max_num_inbound_peers="10" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     kira:latest

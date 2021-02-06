@@ -74,7 +74,7 @@ echo "INFO: Starting state file configuration..."
 
 STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
 
-if [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
+if [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
     echo "INFO: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
     cat $LOCAL_STATE | jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" > "$LOCAL_STATE.tmp"
     cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE

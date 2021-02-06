@@ -114,7 +114,6 @@ docker run -d \
     -e CFG_max_num_outbound_peers="0" \
     -e CFG_max_num_inbound_peers="1" \
     -e NODE_TYPE=$CONTAINER_NAME \
-    -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     kira:latest # use sentry image as base

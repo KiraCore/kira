@@ -116,7 +116,7 @@ done
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     echoInfo "INFO: Validator mode detected, last parameter to setup..."
     echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
-    echoInfo "INFO: If you are creating a new network set minimum block height to 0 otherwise set it to the latest block height that the network can be at. If you do not set this parameter the latest height it will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused and in production environment a spacial care should be taken while setting this property!"
+    echoWarn "INFO: If you are creating a new network set minimum block height to 0 otherwise set it to the latest block height that the network can be at. If you do not set this parameter the latest height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused and in production environment a spacial care should be taken while setting this property!"
     
     while : ; do
         echoNErr "Define minimum block height: " && read VALIDATOR_MIN_HEIGHT
