@@ -35,8 +35,6 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-CFG_seeds="tcp://$PRIV_SENTRY_SEED"
-CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
@@ -62,6 +60,11 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+    CFG_seeds="tcp://$PRIV_SENTRY_SEED"
+    CFG_persistent_peers=""
+else
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
 
 echo "INFO: Starting sentry node..."

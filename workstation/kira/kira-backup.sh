@@ -16,7 +16,7 @@ echo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOOT=""
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|c)$ ]] ; do echoNErr "Choose to [S]ync from snapshoot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(s|c)$ ]] ; do echoNErr "Choose to [S]ync from snapshoot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
 if [ "${SELECT,,}" == "s" ] ; then
     # get all zip files in the snap directory
     SNAPSHOOTS=`ls $DEFAULT_SNAP_DIR/*.zip` || SNAPSHOOTS=""

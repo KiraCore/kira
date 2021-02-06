@@ -51,8 +51,6 @@ echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-CFG_seeds="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-CFG_persistent_peers=""
 
 GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
@@ -63,9 +61,13 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     rm -fv "$COMMON_PATH/genesis.json"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 else
     echoInfo "INFO: Synchronisation using internal genesis file ($GENESIS_DESTINATION) will be performed"
     rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
+    CFG_seeds=""
+    CFG_persistent_peers=""
 fi
 
 echoInfo "INFO: Starting $CONTAINER_NAME node..."
@@ -91,7 +93,7 @@ docker run -d \
     -e CFG_max_num_inbound_peers="3" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e CFG_version="v2" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
