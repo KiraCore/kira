@@ -2,6 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f
+set -x
 
 START_TIME="$(date -u +%s)"
 
@@ -14,6 +15,7 @@ CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 DISK_SCAN_PATH="$SCAN_DIR/disk"
 CPU_SCAN_PATH="$SCAN_DIR/cpu"
+HOSTS_SCAN_PATH="$SCAN_DIR/hosts"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
@@ -35,6 +37,10 @@ PID1="$!"
 echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || "") > $CONTAINERS_SCAN_PATH &
 PID2="$!"
 
+touch "${HOSTS_SCAN_PATH}.pid" && if ! kill -0 $(cat "${HOSTS_SCAN_PATH}.pid") 2> /dev/null ; then
+    $KIRA_MANAGER/scripts/update-hosts.sh > "$HOSTS_SCAN_PATH.log" &
+    echo "$!" > "${HOSTS_SCAN_PATH}.pid"
+fi
 
 touch "${CPU_SCAN_PATH}.pid" && if ! kill -0 $(cat "${CPU_SCAN_PATH}.pid") 2> /dev/null ; then
     echo $(mpstat -o JSON -u 5 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}') > $CPU_SCAN_PATH &
@@ -140,7 +146,7 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; t
     fi
 fi
 
-INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/reference"
+INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOOT_PATH="$INTERX_REDERENCE_DIR/snapshoot.zip"
 if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
     HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
@@ -150,7 +156,7 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
         echo "INFO: Latest snapshoot is NOT exposed yet"
         mkdir -p $INTERX_REDERENCE_DIR
         rm -f -v $INTERX_SNAPSHOOT_PATH
-        cp -f -v -a "$KIRA_SNAP_PATH" "$DESTINATION"
+        cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOOT_PATH"
     else
         echo "INFO: Latest snapshoot was already exposed, no need for updates"
     fi

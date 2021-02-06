@@ -6,8 +6,10 @@ set -x
 
 RECONNECT=$1
 TARGET=$2
+RESTART=$3
 
 [ -z "$RECONNECT" ] && RECONNECT="true"
+[ -z "$RESTART" ] && RESTART="true"
 ( [ "$TARGET" == "null" ] || [ "$TARGET" == "*" ] ) && TARGET=""
 
 START_TIME="$(date -u +%s)"
@@ -62,31 +64,13 @@ for (( i=0; i<${len}; i++ )) ; do
   fi
 done
 
-echo "INFO: Updating DNS names of all containers in the local hosts file"
-for (( i=0; i<${len}; i++ )) ; do
-    network=${networks[$i]}
-    containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo "")
-    ( [ -z "$containers" ] || [ "${containers,,}" == "null" ] ) && continue
-      
-    for container in $containers ; do
-      echo "INFO: Checking $container network info"
-      id=$($KIRA_SCRIPTS/container-id.sh "$container")
-      networkSettings=$(docker inspect $id | jq -rc ".[0].NetworkSettings.Networks.$network" || echo "")
-      ip=$(echo $networkSettings | jq -rc ".IPAddress" || echo "")
-      dns="${container,,}.${network,,}.local"
-      CDHelper text lineswap --insert="" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
-
-      if [ ! -z "$ip" ] && [ "${ip,,}" != "null" ] ; then
-          echo "INFO: IP Address '$ip' found, binding host..."
-          CDHelper text lineswap --insert="$ip $dns" --regex="$dns" --path=$HOSTS_PATH --prepend-if-found-not=True
-      fi
-      sort -u $HOSTS_PATH -o $HOSTS_PATH
-    done
-done
+echo "INFO: Restarting docker networking..."
 
 systemctl daemon-reload
 systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
 systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
+
+$KIRA_MANAGER/scripts/update-hosts.sh
 
 set +x
 echoWarn "------------------------------------------------"
@@ -94,3 +78,5 @@ echoWarn "| FINISHED: RESTART-NETWORKS SCRIPT            |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
+
+# 

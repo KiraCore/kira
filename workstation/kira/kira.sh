@@ -226,9 +226,9 @@ while : ; do
     
     [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
-    [ "${SNAP_EXPOSE,,}" == "true" ] && \
-    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     [ "${SNAP_EXPOSE,,}" == "false" ] && \
+    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+    [ "${SNAP_EXPOSE,,}" == "true" ] && \
     echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
@@ -327,7 +327,6 @@ while : ; do
         fi
         LOADING="true"
         EXECUTED="true"
-        OPTION=""
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
