@@ -6,10 +6,9 @@ source $KIRA_MANAGER/utils.sh
 AUTO_RECOVER="$1"
 
 while : ; then
-    SELECT="."
     SNAPSHOOT=""
     if [ "${AUTO_RECOVER,,}" == "false" ] ; then
-        while  [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshoot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshoot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
         
         if [ "${SELECT,,}" == "s" ] ; then
             echo "INFO: Blockchain state will NOT be recovered from the snapshoot"

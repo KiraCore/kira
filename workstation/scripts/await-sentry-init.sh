@@ -107,7 +107,13 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-        ( [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ) && echoErr "ERROR: Node failed, status could not be fetched, your netwok connectivity might have been interrupted" && exit 1
+        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+            echoErr "ERROR: Node failed or status could not be fetched, your netwok connectivity might have been interrupted"
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 ACCEPT && echo ""; done
+            [ "${SELECT,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
+            continue
+        fi
 
         set +x
         SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
