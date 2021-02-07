@@ -20,7 +20,7 @@ while : ; do
     [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
     echoInfo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -n1 SELECT -s && echo "" ; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -d'' -s -n1 SELECT && echo "" ; done
     [ "${SELECT,,}" == "t" ] && continue
     
     if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
