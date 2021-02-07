@@ -1,7 +1,7 @@
 #!/bin/bash
-set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+set +x
 
 while : ; do
     SNAPSHOOT=""
@@ -29,8 +29,9 @@ while : ; do
     fi
 
     if [ "${SELECT,,}" == "e" ] ; then
-        echo "INFO: To find latest snapshoot from the public nodes you can often use '<IP>:$KIRA_INTEREX_PORT/downloads/snapshoot.zip' as your URL"
+        echoInfo "INFO: To find latest snapshoot from the public nodes you can often use '<IP>:$KIRA_INTEREX_PORT/download/snapshoot.zip' as your URL"
         echoNErr "Input URL to download blockchain state from: " && read SNAP_URL
+        set -x
         if curl --head --fail --silent "$url" >/dev/null ; then
             echo "INFO: Resource was found, attempting download"
         else
@@ -39,11 +40,12 @@ while : ; do
         TMP_SNAP_DIR="$DEFAULT_SNAP_DIR/tmp"
         TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
         rm -f -v -r $TMP_SNAP_DIR
-        mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_PATH/test"
+        mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
         SUCCESS="true"
         wget "$SNAP_URL" -O $TMP_SNAP_PATH || SUCCESS="false"
         NETWORK=""
         GENSUM=""
+        set +x
 
         if [ "${SUCCESS,,}" != "true" ] || [ ! -f "$TMP_SNAP_PATH" ] ; then
             echoErr "ERROR: Failed to download snapshoot from '$SNAP_URL', resource you are trying to access might not be available or your network connection interrupted the download process"

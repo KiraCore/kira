@@ -319,7 +319,7 @@ while : ; do
         if [ "${SNAP_EXPOSE,,}" == "false" ] ; then
             echo "INFO: Exposing latest snapshoot '$KIRA_SNAP_PATH' via INTERX"
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshoot will become available via 0.0.0.0:$KIRA_INTERX_PORT/downloads/snapshoot.zip"
+            echoInfo "INFO: Await few minutes and your snapshoot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshoot.zip"
         else
             echoInfo "INFO: Ensuring exposed snapshoot will be removed..."
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
