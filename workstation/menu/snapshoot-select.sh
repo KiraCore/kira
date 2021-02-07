@@ -15,13 +15,13 @@ while : ; do
 
     DEFAULT_SNAP_DIR=$KIRA_SNAP
     echo "INFO: Default snapshoot storage directory: $DEFAULT_SNAP_DIR"
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(k|c)$ ]] ; do echoNErr "[K]eep default snapshoot storage directory or [C]hange: " && read -d'' -s -n1 SELECT && echo ""; done
+    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(k|c)$ ]] ; do echoNErr "[K]eep default snapshoot storage directory or [C]hange: " && read -d'' -s -n1 OPTION && echo ""; done
     
-    [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
+    [ "${OPTION,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
     echoInfo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -d'' -s -n1 SELECT && echo "" ; done
-    [ "${SELECT,,}" == "t" ] && continue
+    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -d'' -s -n1 OPTION && echo "" ; done
+    [ "${OPTION,,}" == "t" ] && continue
     
     if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
         CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -69,9 +69,9 @@ while : ; do
 
         echoWarn "WARNING: Snapshoot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
+        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo ""; done
 
-        if [ "${SELECT,,}" == "n" ] ; then
+        if [ "${OPTION,,}" == "n" ] ; then
             echoInfo "INFO: User rejected checksums, downloaded file will be removed"
             rm -fv $TMP_SNAP_PATH
             continue
