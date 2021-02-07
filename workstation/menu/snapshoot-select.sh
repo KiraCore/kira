@@ -3,20 +3,14 @@ set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 
-AUTO_RECOVER="$1"
-
 while : ; do
     SNAPSHOOT=""
-    if [ "${AUTO_RECOVER,,}" == "false" ] ; then
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshoot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
-        
-        if [ "${SELECT,,}" == "s" ] ; then
-            echo "INFO: Blockchain state will NOT be recovered from the snapshoot"
-            CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-            exit 0 
-        fi
-    else
-        echo "INFO: Auto recovery mode enabled"
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshoot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
+    
+    if [ "${SELECT,,}" == "s" ] ; then
+        echo "INFO: Blockchain state will NOT be recovered from the snapshoot"
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        exit 0 
     fi
 
     DEFAULT_SNAP_DIR=$KIRA_SNAP
@@ -26,7 +20,7 @@ while : ; do
     [ "${SELECT,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
     echoInfo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again" && read -n1 SELECT -s && echo "" ; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -n1 SELECT -s && echo "" ; done
     [ "${SELECT,,}" == "t" ] && continue
     
     if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
