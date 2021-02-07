@@ -24,11 +24,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   mkdir -p $CACHE_DIR
 
   rm -f $CONFIG_PATH
-  # mv $COMMON_DIR/config.json $SEKAI/INTERX
   interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$CFG_port" --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic"
 
   touch $EXECUTED_CHECK
 fi
 
-# GRPC=dns:///sentry:9090 RPC=http://sentry:26657 make start
 interxd start --config="$CONFIG_PATH"

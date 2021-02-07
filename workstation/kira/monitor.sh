@@ -146,7 +146,7 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; t
     fi
 fi
 
-INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/common/cache/reference"
 INTERX_SNAPSHOOT_PATH="$INTERX_REDERENCE_DIR/snapshoot.zip"
 if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
     HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")

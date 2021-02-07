@@ -76,7 +76,8 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED,tcp://$VALIDATOR_SEED"
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH

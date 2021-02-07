@@ -75,9 +75,9 @@ while : ; do
             fi
 
             SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
-            TMP_VAR=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
-            ( [ -z "$TMP_VAR" ] || [ "${TMP_VAR,,}" == "null" ] ) && TMP_VAR=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
-            [[ $TMP_VAR =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP="$TMP_VAR" || KIRA_BLOCK_TMP="0"
+            KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
+            [[ ! $KIRA_BLOCK_TMP =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "")
+            [[ ! $KIRA_BLOCK_TMP =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP="0"
             SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
             ( [ -z "$SYNCING_TMP" ] || [ "${SYNCING_TMP,,}" == "null" ] ) && SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
 
@@ -144,13 +144,16 @@ while : ; do
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
-    [ -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
-    [ ! -z "$PUBLIC_IP" ] && echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
+    [ -z "$PUBLIC_IP" ] && \
+    echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE" || \
+    echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
     if [ -f "$KIRA_SNAP_PATH" ] ; then # snapshoot is present 
         SNAP_FILENAME="SNAPSHOOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
-        echo -e "|\e[35;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
+        [ "${SNAP_EXPOSE,,}" == "true" ] && \
+        echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)" || \
+        echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
     fi
 
     if [ "${LOADING,,}" == "true" ] ; then
@@ -213,13 +216,11 @@ while : ; do
     echo "|-----------------------------------------------|"
     if [ "$CONTAINERS_COUNT" != "0" ] && [ "${LOADING,,}" == "false" ] ; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
-            echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${ALL_CONTAINERS_PAUSED,,}" == "true" ] && \
+            echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p" || \
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
         echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
-            echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "true" ] && \
+            echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s" || \
             echo "| [S] | START All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
         echo "|-----------------------------------------------|"
     fi
@@ -227,8 +228,7 @@ while : ; do
     [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     [ "${SNAP_EXPOSE,,}" == "false" ] && \
-    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
-    [ "${SNAP_EXPOSE,,}" == "true" ] && \
+    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
     echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"

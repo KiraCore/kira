@@ -112,10 +112,9 @@ echo -e "\e[37;1m--------------------------------------------------"
             ip=$(echo "$ip" | xargs) # trim whitespace characters
             ipArr=( $(echo $ip | tr "/" "\n") )
             ip=${ipArr[0],,}
-            mask_tmp=${ipArr[1],,}
+            mask=${ipArr[1],,}
             # port must be a number
-            [[ $mask_tmp =~ ^[0-9]+$ ]] && mask="$mask_tmp" || mask="" 
-            [ ! -z "$mask" ] && (($mask < 8 || $mask > 32)) && mask=""
+            ( [[ ! $mask =~ ^[0-9]+$ ]] || (($mask < 8 || $mask > 32)) ) && mask="" 
             if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
                 ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
                 echo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"

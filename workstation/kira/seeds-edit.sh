@@ -89,16 +89,14 @@ while : ; do
         nodeId="" && [[ "$p1" =~ ^[a-f0-9]{40}$ ]] && nodeId="$p1"
         dns="" && [[ "$(echo $p2 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p2" ]] && dns="$p2" # DNS regex
         [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
-        # port must be a number
-        [[ $p3 =~ ^[0-9]+$ ]] && port="$p3" || port=""
-        [ ! -z "$port" ] && (($port < 1 || $port > 65535)) && port=""
+        # port must be a number within the range of <1,65535>
+        port="" && ( [[ $p3 =~ ^[0-9]+$ ]] && (($p3 > 0 || $p3 < 65536)) ) && port="$p3"
 
         # in case of missing node id
         dnsStandalone="" && [[ "$(echo $p1 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p1" ]] && dnsStandalone="$p1" # DNS regex
         [ -z "$dnsStandalone" ] && [[ $p1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dnsStandalone="$p1" # IP is fine too
-        # port must be a number
-        [[ $p2 =~ ^[0-9]+$ ]] && port="$p2" || portStandalone="" 
-        [ ! -z "$portStandalone" ] && (($portStandalone < 1 || $portStandalone > 65535)) && portStandalone=""
+        # portStandalone must be a number within the range of <1,65535>
+        portStandalone="" && ( [[ $p2 =~ ^[0-9]+$ ]] && (($p2 > 0 || $p2 < 65536)) ) && portStandalone="$p2"
 
         # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then

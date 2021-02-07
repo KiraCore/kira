@@ -19,6 +19,8 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
+( [ -z "$HALT_HEIGHT" ] || [ $HALT_HEIGHT -le 0 ] ) && echo "ERROR: Invalid snapshoot height, cant be less or equal to 0" && exit 1
+
 echo "$SNAP_FILENAME" > $SNAP_LATEST
 
 while [ -f "$SNAP_DONE" ] ; do
@@ -84,11 +86,12 @@ LAST_SNAP_BLOCK=-1
 i=0
 while : ; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jq -r '.' 2> /dev/null || echo "")
-  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
-  ( [ -z "${SNAP_BLOCK}" ] || [ "${SNAP_BLOCK,,}" == "null" ] ) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") && [ -z "$SNAP_BLOCK" ] && SNAP_BLOCK="0"
+  SNAP_STATUS=$(sekaid status 2> /dev/null | jq -rc '.' 2> /dev/null || echo "")
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
+  [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") 
+  [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK="0"
 
-  # sve progress only if status is available or block is diffrent then 0
+  # save progress only if status is available or block is diffrent then 0
   [ "$SNAP_BLOCK" != "0" ] && echo $(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc) > $SNAP_PROGRESS
 
   if [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
@@ -96,7 +99,6 @@ while : ; do
 
       if [ "${PID_FINISHED,,}" == "true" ] ; then
         echo "ERROR: Node finished running but target height was not reached"
-
         echo "INFO: Output log"
         cat ./output.log | tail -n 100 || echo "WARNINIG: No output log was found!"
         kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
@@ -118,7 +120,7 @@ while : ; do
      PID_FINISHED="true"
   fi
 
-  if [ "$LAST_SNAP_BLOCK" == "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
+  if [ "$LAST_SNAP_BLOCK" -le "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
     i=$((i + 1))
     if [ $i -ge 4 ] ; then
         echo "WARNING: Block did not changed for the last 2 minutes!"
@@ -142,6 +144,7 @@ cat ./output2.log | tail -n 100
 
 echo "INFO: Creating backup package..."
 cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data
+echo "{\"height\":$HALT_HEIGHT}" > "$SEKAID_HOME/data/snapinfo.json"
 
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *

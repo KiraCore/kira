@@ -23,7 +23,7 @@ if [ "${SELECT,,}" == "s" ] ; then
     SNAPSHOOTS_COUNT=${#SNAPSHOOTS[@]}
     [ -z "$SNAPSHOOTS" ] && SNAPSHOOTS_COUNT="0"
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
-     
+    
     if [ $SNAPSHOOTS_COUNT -le 0 ] || [ -z "$SNAPSHOOTS" ] ; then
         echoWarn "WARNING: No snapshoots were found in the '$DEFAULT_SNAP_DIR' direcory"
         echoNErr "Press any key to abort..." && read -n 1 -s && echo ""

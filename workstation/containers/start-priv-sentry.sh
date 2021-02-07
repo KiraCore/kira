@@ -91,8 +91,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="100" \
-    -e CFG_max_num_inbound_peers="10" \
+    -e CFG_max_num_outbound_peers="32" \
+    -e CFG_max_num_inbound_peers="8" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \

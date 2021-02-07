@@ -70,7 +70,7 @@ while : ; do
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
         KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
         ( [ -z "$KIRA_NODE_BLOCK" ] || [ "${KIRA_NODE_BLOCK,,}" == "null" ] ) && KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
-        [[ $KIRA_NODE_BLOCK =~ ^[0-9]+$ ]] && KIRA_NODE_BLOCK="$KIRA_NODE_BLOCK" || KIRA_NODE_BLOCK="0"
+        [[ ! $KIRA_NODE_BLOCK =~ ^[0-9]+$ ]] && KIRA_NODE_BLOCK="0"
     fi
 
     printf "\033c"

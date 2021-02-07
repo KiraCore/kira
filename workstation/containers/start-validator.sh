@@ -85,9 +85,9 @@ docker run -d \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
     -e CFG_max_num_outbound_peers="0" \
-    -e CFG_max_num_inbound_peers="3" \
+    -e CFG_max_num_inbound_peers="1" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_pex="false" \
