@@ -240,7 +240,7 @@ while : ; do
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNWarn "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
     fi
@@ -337,7 +337,7 @@ while : ; do
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
 
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
-        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
+        echoNInfo -en "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
     fi
 
     if [ "${OPTION,,}" == "i" ]; then

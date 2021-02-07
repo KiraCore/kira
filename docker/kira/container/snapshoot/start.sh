@@ -41,7 +41,7 @@ done
 
 echo "INFO: Sucess, genesis file was found!"
 
-if [ ! -f "$EXECUTED_CHECK" ]; then
+if [ ! -f "$EXECUTED_CHECK" ] ; then
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
@@ -70,12 +70,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "INFO: Snap file is NOT present, starting new sync..."
   fi
 
-  rm -fv $LOCAL_GENESIS
-  cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
-
   echo "0" > $SNAP_PROGRESS
   touch $EXECUTED_CHECK
 fi
+
+cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 
 touch ./output.log ./output2.log # make sure log files are present so we can cut them
 sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
@@ -86,7 +85,7 @@ LAST_SNAP_BLOCK=-1
 i=0
 while : ; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2> /dev/null | jq -rc '.' 2> /dev/null || echo "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
   [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") 
   [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK="0"
