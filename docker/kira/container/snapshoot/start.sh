@@ -28,13 +28,13 @@ while [ -f "$SNAP_DONE" ] ; do
   sleep 600
 done
 
-while ! ping -c1 sentry &>/dev/null; do
+while ! ping -c1 sentry &>/dev/null ; do
   echo "INFO: Waiting for ping response form sentry node... ($(date))"
   sleep 5
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] ; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done

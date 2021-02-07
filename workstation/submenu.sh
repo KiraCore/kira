@@ -48,7 +48,7 @@ echo ""
 
 FAILED="false"
 
-while :; do
+while : ; do
   read -n1 -p "Input option: " KEY
   echo ""
 

@@ -6,7 +6,7 @@ echo "INFO: Staring $NODE_TYPE container..."
 
 HALT_CHECK="${COMMON_DIR}/halt"
 
-while [ -f "$HALT_CHECK" ]; do
+while [ -f "$HALT_CHECK" ] ; do
   sleep 30
 done
 

@@ -19,7 +19,7 @@ displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c"
 echo ""
 
-while :; do
+while : ; do
   read -n1 -p "Input option: " KEY
   echo ""
 

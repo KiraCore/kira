@@ -14,7 +14,7 @@ GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 
 if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     echo "INFO: Checking if sentry can be synchronized from the validator node..."
-    while ! ping -c1 validator &>/dev/null; do
+    while ! ping -c1 validator &>/dev/null ; do
       echo "INFO: Waiting for ping response form validator node... ($(date))"
       sleep 5
     done
