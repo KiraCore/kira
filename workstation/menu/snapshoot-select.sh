@@ -132,7 +132,7 @@ while : ; do
     fi
     
     break
-fi
+done
 
 SNAPSUM=$(sha256sum "$SNAPSHOOT" | awk '{ print $1 }' || echo "")
 echoInfo "INFO: Snapshoot '$SNAPSHOOT' was selected and will be set as latest state"
