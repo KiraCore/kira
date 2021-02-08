@@ -71,7 +71,7 @@ echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
 docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 150 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
     echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
@@ -138,7 +138,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Halting $CONTAINER_NAME container"
     touch $HALT_FILE
     echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh
+    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     
     echo "INFO: Creating new snapshoot..."
 
@@ -159,7 +159,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Un-Halting $CONTAINER_NAME container"
     rm -fv $HALT_FILE
     echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh
+    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
     echo "INFO: New snapshoot was created!"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
