@@ -9,6 +9,9 @@ EXECUTED_CHECK="$COMMON_DIR/executed"
 
 SNAP_FILE="$COMMON_DIR/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
+
+CFG="$SEKAID_HOME/config/config.toml"
+COMMON_CFG="$COMMON_DIR/config.toml"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_DIR/genesis.json"
 
@@ -70,6 +73,9 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
     echo "INFO: Snap file is NOT present, starting new sync..."
   fi
 
+  echo "INFO: Presering configuration file..."
+  cp -f -v -a "$CFG" "$COMMON_CFG"
+
   echo "0" > $SNAP_PROGRESS
   touch $EXECUTED_CHECK
 fi
@@ -114,13 +120,13 @@ while : ; do
      sleep 10
      kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
      rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
-     sekaid start --home=$SEKAID_HOME --trace &> ./output2.log & # launch sekai in state observer mode
+     sekaid start --home="$SEKAID_HOME" --trace &> ./output2.log & # launch sekai in state observer mode
      PID1="$?"
      PID_FINISHED="true"
+     sleep 10
   fi
 
   if [ "$LAST_SNAP_BLOCK" -le "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
-    i=$((i + 1))
     if [ $i -ge 4 ] || [ -z "$PID1" ] ; then
         if [ ! -z "$PID1" ] ; then
           echo "WARNING: Block did not changed for the last 2 minutes!"
@@ -132,9 +138,15 @@ while : ; do
         fi
 
         echo "INFO: Cloning genesis and strarting block sync..."
-        cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
-        sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
+        cp -f -v -a "$COMMON_CFG" "$CFG" # recover config from common folder
+        cp -a -v -f "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
+        sekaid start --home="$SEKAID_HOME" --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
         PID1="$!"
+        sleep 10
+        i=0
+    else
+        i=$((i + 1))
+        echo "INFO: Waiting for block update test $i/4"
     fi
   else
       echo "INFO: Success, block changed!"
@@ -151,7 +163,7 @@ echo "INFO: Printing latest output log..."
 cat ./output2.log | tail -n 100
 
 echo "INFO: Creating backup package..."
-cp $SEKAID_HOME/config/genesis.json $SEKAID_HOME/data
+cp "$COMMON_GENESIS" $SEKAID_HOME/data
 echo "{\"height\":$HALT_HEIGHT}" > "$SEKAID_HOME/data/snapinfo.json"
 
 # to prevent appending root path we must zip all from within the target data folder
