@@ -74,15 +74,12 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
   touch $EXECUTED_CHECK
 fi
 
-cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
-
 touch ./output.log ./output2.log # make sure log files are present so we can cut them
-sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
-PID1="$!"
 
 PID_FINISHED="false"
-LAST_SNAP_BLOCK=-1
+LAST_SNAP_BLOCK=0
 i=0
+PID1=""
 while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
@@ -108,11 +105,14 @@ while : ; do
       break
   fi
 
-  if ps -p $PID1 > /dev/null ; then
+  if ps -p "$PID1" > /dev/null ; then
      echo "INFO: Waiting for node to sync..."
      sleep 30
-  else
+  elif [ ! -z "$PID1" ] ; then
      echo "WARNING: Node finished running, starting tracking and checking final height..."
+     kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+     sleep 10
+     kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
      rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
      sekaid start --home=$SEKAID_HOME --trace &> ./output2.log & # launch sekai in state observer mode
      PID1="$?"
@@ -121,11 +121,18 @@ while : ; do
 
   if [ "$LAST_SNAP_BLOCK" -le "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
     i=$((i + 1))
-    if [ $i -ge 4 ] ; then
-        echo "WARNING: Block did not changed for the last 2 minutes!"
-        echo "INFO: Printing current output log..."
-        cat ./output.log | tail -n 100
-        kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
+    if [ $i -ge 4 ] || [ -z "$PID1" ] ; then
+        if [ ! -z "$PID1" ] ; then
+          echo "WARNING: Block did not changed for the last 2 minutes!"
+          echo "INFO: Printing current output log..."
+          cat ./output.log | tail -n 100
+          kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+          sleep 10
+          kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
+        fi
+
+        echo "INFO: Cloning genesis and strarting block sync..."
+        cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
         sekaid start --home=$SEKAID_HOME --halt-height="$HALT_HEIGHT" --trace &> ./output.log || echo "halted" &
         PID1="$!"
     fi
@@ -136,7 +143,9 @@ while : ; do
   fi
 done
 
-kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
+kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+sleep 10
+kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
 
 echo "INFO: Printing latest output log..."
 cat ./output2.log | tail -n 100
