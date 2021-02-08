@@ -335,10 +335,7 @@ while : ; do
     fi
 
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
-
-    if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ]; then
-        echoNInfo -en "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
-    fi
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
