@@ -82,7 +82,6 @@ fi
 
 touch ./output.log ./output2.log # make sure log files are present so we can cut them
 
-PID_FINISHED="false"
 LAST_SNAP_BLOCK=0
 TOP_SNAP_BLOCK=0
 i=0
@@ -109,29 +108,10 @@ while : ; do
     echo "$PERCENTAGE" > $SNAP_PROGRESS
   fi
 
-  if [ ! -z "$PID1" ] && [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
-      echo "INFO: Waiting for snapshoot node to sync $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
-
-      if [ "${PID_FINISHED,,}" == "true" ] ; then
-        echo "ERROR: Node finished running but target height was not reached"
-        echo "INFO: Output log"
-        cat ./output.log | tail -n 100 || echo "WARNINIG: No output log was found!"
-        kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
-        sleep 5
-        kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
-        sleep 10
-        kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
-        PID1=""
-      fi
-  elif [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
-      echo "INFO: Success, target height reached, the node was synced!"
-      break
-  fi
-
   if ps -p "$PID1" > /dev/null ; then
-     echo "INFO: Waiting for node to sync..."
+     echo "INFO: Waiting for snapshoot node to sync  $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
      sleep 30
-  elif [ ! -z "$PID1" ] ; then
+  elif [ ! -z "$PID1" ] && [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
      echo "WARNING: Node finished running, starting tracking and checking final height..."
      kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
      sleep 5
@@ -141,8 +121,8 @@ while : ; do
      rm -fv $CFG # invalidate all possible connections
      sekaid start --home="$SEKAID_HOME" --trace &> ./output2.log & # launch sekai in state observer mode
      PID1=$!
-     PID_FINISHED="true"
      sleep 10
+     break
   fi
 
   if [ "$LAST_SNAP_BLOCK" -le "$TOP_SNAP_BLOCK" ] ; then # restart process if block sync stopped
