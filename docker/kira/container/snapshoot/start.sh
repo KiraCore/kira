@@ -84,25 +84,33 @@ touch ./output.log ./output2.log # make sure log files are present so we can cut
 
 PID_FINISHED="false"
 LAST_SNAP_BLOCK=0
+TOP_SNAP_BLOCK=0
 i=0
 PID1=""
 while : ; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
-  [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") 
-  [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK="0"
+  ( [ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] ) && \
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "") 
+  ( [ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] ) && \
+  SNAP_BLOCK="0"
+
+  if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ] ; then
+      TOP_SNAP_BLOCK=$SNAP_BLOCK
+  fi
+  echo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
 
   # save progress only if status is available or block is diffrent then 0
-  if [ $SNAP_BLOCK -gt 0 ] ; then
+  if [ $TOP_SNAP_BLOCK -gt 0 ] ; then
     echo "INFO: Updating progress bar..."
-    [ $SNAP_BLOCK -lt $HALT_HEIGHT ] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
-    [ $SNAP_BLOCK -ge $HALT_HEIGHT ] && PERCENTAGE="100"
+    [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
+    [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] && PERCENTAGE="100"
     echo "$PERCENTAGE" > $SNAP_PROGRESS
   fi
 
-  if [ ! -z "$PID1" ] && [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
-      echo "INFO: Waiting for snapshoot node to sync $SNAP_BLOCK/$SENTRY_BLOCK..."
+  if [ ! -z "$PID1" ] && [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
+      echo "INFO: Waiting for snapshoot node to sync $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
 
       if [ "${PID_FINISHED,,}" == "true" ] ; then
         echo "ERROR: Node finished running but target height was not reached"
@@ -113,9 +121,9 @@ while : ; do
         kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
         sleep 10
         kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
-        exit 1
+        PID1=""
       fi
-  elif [ $SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
+  elif [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
       echo "INFO: Success, target height reached, the node was synced!"
       break
   fi
@@ -132,12 +140,12 @@ while : ; do
      kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
      rm -fv $CFG # invalidate all possible connections
      sekaid start --home="$SEKAID_HOME" --trace &> ./output2.log & # launch sekai in state observer mode
-     PID1="$?"
+     PID1=$!
      PID_FINISHED="true"
      sleep 10
   fi
 
-  if [ "$LAST_SNAP_BLOCK" -le "$SNAP_BLOCK" ] ; then # restart process if block sync stopped
+  if [ "$LAST_SNAP_BLOCK" -le "$TOP_SNAP_BLOCK" ] ; then # restart process if block sync stopped
     if [ $i -ge 4 ] || [ -z "$PID1" ] ; then
         if [ ! -z "$PID1" ] ; then
           echo "WARNING: Block did not changed for the last 2 minutes!"
@@ -163,7 +171,7 @@ while : ; do
     fi
   else
       echo "INFO: Success, block changed!"
-      LAST_SNAP_BLOCK="$SNAP_BLOCK"
+      LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
       i=0
   fi
 done
