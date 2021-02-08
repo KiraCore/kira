@@ -94,16 +94,25 @@ while : ; do
   [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]] && SNAP_BLOCK="0"
 
   # save progress only if status is available or block is diffrent then 0
-  [ "$SNAP_BLOCK" != "0" ] && echo $(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc) > $SNAP_PROGRESS
+  if [ $SNAP_BLOCK -gt 0 ] ; then
+    echo "INFO: Updating progress bar..."
+    [ $SNAP_BLOCK -lt $HALT_HEIGHT ] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
+    [ $SNAP_BLOCK -ge $HALT_HEIGHT ] && PERCENTAGE="100"
+    echo "$PERCENTAGE" > $SNAP_PROGRESS
+  fi
 
-  if [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
+  if [ ! -z "$PID1" ] && [ $SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
       echo "INFO: Waiting for snapshoot node to sync $SNAP_BLOCK/$SENTRY_BLOCK..."
 
       if [ "${PID_FINISHED,,}" == "true" ] ; then
         echo "ERROR: Node finished running but target height was not reached"
         echo "INFO: Output log"
         cat ./output.log | tail -n 100 || echo "WARNINIG: No output log was found!"
-        kill -9 $PID1 || echo "INFO: Failed to kill sekai PID $PID1"
+        kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+        sleep 5
+        kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+        sleep 10
+        kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
         exit 1
       fi
   elif [ $SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
@@ -116,10 +125,12 @@ while : ; do
      sleep 30
   elif [ ! -z "$PID1" ] ; then
      echo "WARNING: Node finished running, starting tracking and checking final height..."
-     kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+     kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+     sleep 5
+     kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
      sleep 10
      kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
-     rm -fv $SEKAID_HOME/config/config.toml # invalidate all possible connections
+     rm -fv $CFG # invalidate all possible connections
      sekaid start --home="$SEKAID_HOME" --trace &> ./output2.log & # launch sekai in state observer mode
      PID1="$?"
      PID_FINISHED="true"
@@ -132,7 +143,9 @@ while : ; do
           echo "WARNING: Block did not changed for the last 2 minutes!"
           echo "INFO: Printing current output log..."
           cat ./output.log | tail -n 100
-          kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+          kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+          sleep 5
+          kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
           sleep 10
           kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
         fi
@@ -155,7 +168,9 @@ while : ; do
   fi
 done
 
-kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully"
+kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+sleep 5
+kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
 sleep 10
 kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
 
