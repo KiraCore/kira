@@ -14,6 +14,7 @@ CFG="$SEKAID_HOME/config/config.toml"
 COMMON_CFG="$COMMON_DIR/config.toml"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_DIR/genesis.json"
+SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
@@ -84,6 +85,7 @@ touch ./output.log ./output2.log # make sure log files are present so we can cut
 
 LAST_SNAP_BLOCK=0
 TOP_SNAP_BLOCK=0
+FINISHED_RUNNING="false"
 i=0
 PID1=""
 while : ; do
@@ -100,6 +102,11 @@ while : ; do
   fi
   echo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
 
+  if [ "${FINISHED_RUNNING,,}" == "true" ] && [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] ; then
+      echo "ERROR: Expected node to reach halt height $HALT_HEIGHT but got $TOP_SNAP_BLOCK"
+      exit 1
+  fi
+
   # save progress only if status is available or block is diffrent then 0
   if [ $TOP_SNAP_BLOCK -gt 0 ] ; then
     echo "INFO: Updating progress bar..."
@@ -111,7 +118,7 @@ while : ; do
   if ps -p "$PID1" > /dev/null ; then
      echo "INFO: Waiting for snapshoot node to sync  $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
      sleep 30
-  elif [ ! -z "$PID1" ] && [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] ; then
+  elif [ ! -z "$PID1" ] ; then
      echo "WARNING: Node finished running, starting tracking and checking final height..."
      kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
      sleep 5
@@ -122,18 +129,28 @@ while : ; do
      sekaid start --home="$SEKAID_HOME" --trace &> ./output2.log & # launch sekai in state observer mode
      PID1=$!
      sleep 10
-     break
+     FINISHED_RUNNING="true"
+     continue
   fi
 
-  if [ "$LAST_SNAP_BLOCK" -le "$TOP_SNAP_BLOCK" ] ; then # restart process if block sync stopped
+  if [ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ] ; then
+      echo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
+      LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
+      i=0
+      continue
+  fi
+
+  echo "WARNING: Block did not changed! ($LAST_SNAP_BLOCK)"
+
+  if [ "$TOP_SNAP_BLOCK" -lt "$HALT_HEIGHT" ] ; then # restart process if block sync stopped
     if [ $i -ge 4 ] || [ -z "$PID1" ] ; then
         if [ ! -z "$PID1" ] ; then
           echo "WARNING: Block did not changed for the last 2 minutes!"
           echo "INFO: Printing current output log..."
           cat ./output.log | tail -n 100
-          kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+          kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P3"
           sleep 5
-          kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+          kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P4"
           sleep 10
           kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
         fi
@@ -149,10 +166,9 @@ while : ; do
         i=$((i + 1))
         echo "INFO: Waiting for block update test $i/4"
     fi
-  else
-      echo "INFO: Success, block changed!"
-      LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
-      i=0
+  elif [ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ] ; then
+      echo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
+      break
   fi
 done
 
@@ -167,7 +183,7 @@ cat ./output2.log | tail -n 100
 
 echo "INFO: Creating backup package..."
 cp "$COMMON_GENESIS" $SEKAID_HOME/data
-echo "{\"height\":$HALT_HEIGHT}" > "$SEKAID_HOME/data/snapinfo.json"
+echo "{\"height\":$HALT_HEIGHT}" > "$SNAP_INFO"
 
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *

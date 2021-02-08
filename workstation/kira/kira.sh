@@ -126,7 +126,8 @@ while : ; do
         KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
         ( [ -z "$NETWORK_STATUS" ] || [ "${NETWORK_STATUS,,}" == "null" ] ) && KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
         KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-        ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+        ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
+        [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && KIRA_BLOCK="???"
 
         if [ -f "$GENESIS_JSON" ] ; then
             GENESIS_SUM=$(sha256sum $GENESIS_JSON | awk '{ print $1 }')
@@ -306,7 +307,7 @@ while : ; do
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/kira/kira-backup.sh || echo "ERROR: Snapshoot failed"
+        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echo "ERROR: Snapshoot failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ] ; then

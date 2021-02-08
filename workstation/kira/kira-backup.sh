@@ -3,6 +3,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
+MIN_BLOCK_HEIGHT=$1
+[[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+[[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=0
+
 echoNErr "Input halt height or press [ENTER] to snapshoot latest state: " && read HALT_HEIGHT
 DEFAULT_SNAP_DIR=$KIRA_SNAP
 echo "INFO: Default snapshoot directory: $DEFAULT_SNAP_DIR"
