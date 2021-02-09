@@ -75,14 +75,9 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-else
-    VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-fi
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
 echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
@@ -108,8 +103,8 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID" \
+    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_version="v2" \
