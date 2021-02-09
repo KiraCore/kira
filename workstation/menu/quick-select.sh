@@ -135,7 +135,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Snapshoot archive download was sucessfull"
             set -x
-            SNAPSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo "")
+            
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
             SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
@@ -156,6 +156,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             else
                 echo "INFO: Success, snapshoot file integrity appears to be valid"
                 cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
+                SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
             fi
              
             rm -f -v -r "$TMP_SNAP_DIR/test"
@@ -232,7 +233,7 @@ if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOOT="$KIRA_SNAP/$SNAP_FILENAME"
     cp -f -v -a "$TMP_SNAP_PATH" "$SNAPSHOOT"
-    rm -fv $SNAPSHOOT
+    rm -fv $TMP_SNAP_PATH
 else
     SNAPSHOOT=""
 fi
