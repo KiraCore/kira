@@ -139,10 +139,11 @@ done
 
 [ "${SCAN_DONE_MISSING,,}" == true ] && touch $SCAN_DONE
 
-if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] && [ ! -z "$KIRA_SNAP_PATH" ]; then
+if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] ; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)" 
-    if [ -f "$SNAP_LATEST_FILE" ] ; then
-        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAP_LATEST_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ] ; then
+        KIRA_SNAP_PATH=$SNAP_LATEST_FILE
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
 fi
 
@@ -159,7 +160,7 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
     else
         echo "INFO: Latest snapshoot was already exposed, no need for updates"
     fi
-elif [ -f "$INTERX_SNAPSHOOT_PATH" ] && [ "${SNAP_EXPOSE,,}" == "false" ]  ; then
+elif [ -f "$INTERX_SNAPSHOOT_PATH" ] && ( [ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ] ) ; then
     echo "INFO: Removing publicly exposed snapshoot..."
     rm -f -v $INTERX_SNAPSHOOT_PATH
 fi

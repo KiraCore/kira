@@ -228,9 +228,13 @@ while : ; do
     
     [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
     echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
-    [ "${SNAP_EXPOSE,,}" == "false" ] && \
-    echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
-    echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+
+    if [ ! -z "$KIRA_SNAP_PATH" ] ; then
+        [ "${SNAP_EXPOSE,,}" == "false" ] && \
+        echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
+        echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+    fi
+
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
