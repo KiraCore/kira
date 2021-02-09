@@ -12,7 +12,7 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
 rm -fv "$TMP_GENESIS_PATH"
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]] ; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]] ; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
 
 if [ "${SELECT,,}" == "n" ] ; then
     $KIRA_MANAGER/menu/chain-id-select.sh
