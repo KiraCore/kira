@@ -32,7 +32,7 @@ while : ; do
         echoInfo "INFO: To find latest snapshoot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshoot.zip' as your URL"
         echoNErr "Input URL to download blockchain state from: " && read SNAP_URL
         set -x
-        if curl --head --fail --silent "$url" >/dev/null ; then
+        if curl -r0-0 --fail --silent "$url" >/dev/null ; then
             echo "INFO: Resource was found, attempting download"
         else
             echoErr "ERROR: Failue, it is NOT possible to access '$SNAP_URL'"

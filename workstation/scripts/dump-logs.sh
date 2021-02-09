@@ -58,7 +58,7 @@ if [ "${DUMP_ZIP,,}" == "true" ] ; then
     echo "INFO: Compressing dump files..."
     
     ZIP_FILE="$CONTAINER_DUMP/${NAME,,}.zip"
-    zip -r -q $ZIP_FILE $CONTAINER_DUMP
+    zip -9 -r -v $ZIP_FILE $CONTAINER_DUMP
 else
     echo "INFO: Container $NAME files will not be compressed in this run"
 fi

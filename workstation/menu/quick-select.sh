@@ -89,7 +89,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoInfo "INFO: Please wait, testing snapshoot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshoot.zip"
         set -x
-        if curl --head --fail --silent "$SNAP_URL" >/dev/null ; then
+        if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
             echoInfo "INFO: Snapshoot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
