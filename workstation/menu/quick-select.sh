@@ -196,7 +196,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
          
             while : ; do
                 echo "INFO: Default minmum block height is $VALIDATOR_MIN_HEIGHT"
-                echoNErr "Input block height to await before block production starts or press [ENTER]: " && read NEW_VALIDATOR_MIN_HEIGHT
+                echoNErr "Input minimum block height or press [ENTER] for (default): " && read NEW_VALIDATOR_MIN_HEIGHT
+                [ -z "$NEW_VALIDATOR_MIN_HEIGHT" ] && NEW_VALIDATOR_MIN_HEIGHT=$VALIDATOR_MIN_HEIGHT
                 ( [ -z "${NEW_VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $NEW_VALIDATOR_MIN_HEIGHT -lt $VALIDATOR_MIN_HEIGHT ] ) && echo "INFO: Minimum block height must be greater than $VALIDATOR_MIN_HEIGHT" && continue
                 VALIDATOR_MIN_HEIGHT=$NEW_VALIDATOR_MIN_HEIGHT
                 break
