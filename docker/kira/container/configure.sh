@@ -21,9 +21,15 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
     echo "INFO: List of external peers was found"
     while read peer ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
-        [ -z "$peer" ] && continue # peer not found
+        [ -z "$peer" ] && echo "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
+        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
+        addr=${addrArr2[0],,}
+        port=${addrArr2[1],,}
+
+        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+
         peer="tcp://$peer"
         echo "INFO: Adding extra peer '$peer'"
 
@@ -40,8 +46,16 @@ fi
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
     echo "INFO: List of external seeds was found"
     while read seed ; do
-        peer=$(echo "$seed" | sed 's/tcp\?:\/\///')
-        [ -z "$seed" ] && continue # seed not found
+        seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
+        [ -z "$seed" ] && echo "WARNING: seed not found" && continue
+        addrArr1=( $(echo $seed | tr "@" "\n") )
+        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+        nodeId=${addrArr1[0],,}
+        addr=${addrArr2[0],,}
+        port=${addrArr2[1],,}
+
+        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+
         seed="tcp://$seed"
         echo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
