@@ -18,6 +18,7 @@ SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
+SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
 
@@ -171,6 +172,8 @@ while : ; do
       break
   fi
 done
+
+touch $SNAP_FINALIZYNG
 
 kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
 sleep 5

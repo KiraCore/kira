@@ -4,18 +4,12 @@ set -x
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
-( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
-
-if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
-  HEIGHT=0
-fi
-
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-
-if [ -z "$PREVIOUS_HEIGHT" ] || [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ]; then # not a number
-  PREVIOUS_HEIGHT=0
-fi
+[ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ] && PREVIOUS_HEIGHT=0
 
 BLOCK_CHANGED="True"
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then

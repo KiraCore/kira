@@ -4,18 +4,22 @@ set -x
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
+SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
 
 if [ -f "$SNAP_DONE" ] ; then
+  echo "INFO: Success, snapshoot done!"
+  exit 0
+fi
+
+if [ -f "$SNAP_FINALIZYNG" ] ; then
+  echo "INFO: Success, snapshoot is finalizing!"
   exit 0
 fi
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
-( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
-
-if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
-  HEIGHT=0
-fi
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
 
 if [ ! -z "$HALT_HEIGHT" ] && [ $HALT_HEIGHT -le $HEIGHT ] ; then
     echo "INFO: Success, target height reached!"
@@ -23,12 +27,8 @@ if [ ! -z "$HALT_HEIGHT" ] && [ $HALT_HEIGHT -le $HEIGHT ] ; then
 fi
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
-
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-
-if [ -z "$PREVIOUS_HEIGHT" ] || [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ]; then # not a number
-  PREVIOUS_HEIGHT=0
-fi
+[ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ] && PREVIOUS_HEIGHT=0
 
 BLOCK_CHANGED="True"
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
