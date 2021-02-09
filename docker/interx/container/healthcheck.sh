@@ -18,19 +18,18 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo 
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 
-if [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ]; then # not a number
-  HEIGHT=0
-fi
+# not a number
+[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
 
 echo "$HEIGHT" >$BLOCK_HEIGHT_FILE
 
-if [ -z "$PREVIOUS_HEIGHT" ] || [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ]; then # not a number
-  PREVIOUS_HEIGHT=0
-fi
+# not a number
+[ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ] && PREVIOUS_HEIGHT=0
+
 
 BLOCK_CHANGED="True"
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then

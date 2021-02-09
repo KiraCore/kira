@@ -17,7 +17,7 @@ while : ; do
     echo "INFO: Default snapshoot storage directory: $DEFAULT_SNAP_DIR"
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(k|c)$ ]] ; do echoNErr "[K]eep default snapshoot storage directory or [C]hange: " && read -d'' -s -n1 OPTION && echo ""; done
     
-    [ "${OPTION,,}" == "c" ] && read "$DEFAULT_SNAP_DIR" && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
+    [ "${OPTION,,}" == "c" ] && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
     echoInfo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -d'' -s -n1 OPTION && echo "" ; done
@@ -29,7 +29,7 @@ while : ; do
     fi
 
     if [ "${SELECT,,}" == "e" ] ; then
-        echoInfo "INFO: To find latest snapshoot from the public nodes you can often use '<IP>:$KIRA_INTEREX_PORT/download/snapshoot.zip' as your URL"
+        echoInfo "INFO: To find latest snapshoot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshoot.zip' as your URL"
         echoNErr "Input URL to download blockchain state from: " && read SNAP_URL
         set -x
         if curl --head --fail --silent "$url" >/dev/null ; then

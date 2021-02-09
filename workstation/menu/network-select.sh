@@ -15,26 +15,19 @@ while : ; do
     NEW_GENESIS_SOURCE=""
     NEW_NETWORK="false"
 
-    SELECT="." && while [ "${SELECT,,}" != "n" ] && [ "${SELECT,,}" != "i" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mCreate [N]ew network, [I]mport genesis or use [S]napshoot: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]] ; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
 
     if [ "${SELECT,,}" == "n" ] ; then # create new name
-        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        while : ; do
-            echo "INFO: New KIRA network will be created!"
-            echo "INFO: Network name should have a format of <name>-<number>, e.g. mynetwork-1"
-            echo -en "\e[31;1mProvide name of your NEW network (chain-id): \e[0m" && read NEW_NETWORK_NAME
+        $KIRA_MANAGER/menu/chain-id-select.sh
         
-            NEW_NETWORK_NAME="${NEW_NETWORK_NAME,,}"
-            ARR=( $(echo "$NEW_NETWORK_NAME" | tr "-" "\n") ) && ARR_LEN=${#ARR[@]}
-            [ ${#NEW_NETWORK_NAME} -gt 16 ] && echo -en "\e[33;1mWARNING: Network name can't be longer than 16 characters! \e[0m\c" && continue
-            [ ${#NEW_NETWORK_NAME} -lt 3 ] && echo -en "\e[33;1mWARNING: Network name can't be shorter than 3 characters! \e[0m\c" && continue
-            [ $ARR_LEN -ne 2 ] && echo -en "\e[33;1mWARNING: Network name must contain '-' character separatin name from id! \e[0m\c" && continue
-            V1=${ARR[0]} && V2=${ARR[1]}
-            [[ $V1 =~ [^a-zA-Z] ]] && echo "WARNING: Network name prefix must be a word (a-z)!"
-            [[ $V2 != ?(-)+([0-9]) ]] && echo "WARNING: Network name suffix must be a number (0-9)!"
-            break
-        done
+        set -x
         NEW_NETWORK="true"
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        set +x
+
+        set +e && source "/etc/profile" &>/dev/null && set -e
+        # NETWORK_NAME & NEW_NETWORK gets set my chain-id selector
+        NEW_NETWORK_NAME=$NETWORK_NAME
     elif [ "${SELECT,,}" == "s" ] ; then # import from snapshoot
         $KIRA_MANAGER/menu/snapshoot-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
@@ -70,7 +63,7 @@ while : ; do
             echo "WARNING: Genesis source was not provided"
             continue
         fi
-          
+
         NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
         if [ ! -z "$NEW_NETWORK_NAME" ] && [ "$NEW_NETWORK_NAME" != "null" ] ; then
             jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.buffer.json"
@@ -108,15 +101,16 @@ while : ; do
 
     CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"0.0.0.0\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     # if new network was created then we can delete public seeds from configuration
     [ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$KIRA_CONFIGS/public_seeds"
     break
 done
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
+if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; then
     echoInfo "INFO: Validator mode detected, last parameter to setup..."
     echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
-    echoWarn "INFO: If you are creating a new network set minimum block height to 0 otherwise set it to the latest block height that the network can be at. If you do not set this parameter the latest height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused and in production environment a spacial care should be taken while setting this property!"
+    echoWarn "INFO: Set minimum block height to the latest block height that the network reached. If you do not set this parameter the latest height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused and in production environment a spacial care should be taken while setting this property!"
     
     while : ; do
         echoNErr "Define minimum block height: " && read VALIDATOR_MIN_HEIGHT

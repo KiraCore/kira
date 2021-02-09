@@ -6,10 +6,6 @@ source $KIRA_MANAGER/utils.sh
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
-PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
-PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
-PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"
-PRIVATE_PEERS="$KIRA_CONFIGS/private_peers"
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoWarn "WARNING: User chose to create new network, existing list of seeds & peers will be remove"
@@ -34,7 +30,7 @@ while : ; do
         set +x
         echoInfo "INFO: No public seeds were specified"
         echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-        SVAL="." && while [ "${SVAL,,}" != "y" ] && [ "${SVAL,,}" != "n" ] ; do echo -en "\e[31;1mDo you want to launch a local network? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
+        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to launch a local network? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
         set -x
         [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
         rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
