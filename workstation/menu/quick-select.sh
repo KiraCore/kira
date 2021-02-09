@@ -196,11 +196,10 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
          
             while : ; do
-                echo "INFO: Default minmum block height is $VALIDATOR_MIN_HEIGHT"
-                echoNErr "Input minimum block height or press [ENTER] for (default): " && read NEW_VALIDATOR_MIN_HEIGHT
-                [ -z "$NEW_VALIDATOR_MIN_HEIGHT" ] && NEW_VALIDATOR_MIN_HEIGHT=$VALIDATOR_MIN_HEIGHT
-                ( [ -z "${NEW_VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $NEW_VALIDATOR_MIN_HEIGHT -lt $VALIDATOR_MIN_HEIGHT ] ) && echo "INFO: Minimum block height must be greater than $VALIDATOR_MIN_HEIGHT" && continue
-                VALIDATOR_MIN_HEIGHT=$NEW_VALIDATOR_MIN_HEIGHT
+                echo "INFO: Default minmum block height is $HEIGHT"
+                echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
+                [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
+                ( [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 break
             done
         fi
