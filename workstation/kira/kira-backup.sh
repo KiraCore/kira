@@ -6,6 +6,7 @@ source $KIRA_MANAGER/utils.sh
 MIN_BLOCK_HEIGHT=$1
 [[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
 [[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=0
+[ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
 echoNErr "Input halt height or press [ENTER] to snapshoot latest state: " && read HALT_HEIGHT
 DEFAULT_SNAP_DIR=$KIRA_SNAP
@@ -20,9 +21,10 @@ echo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 while : ; do
-    [ -z "$MAX_SNAPS" ] && MAX_SNAPS=3
-    echoNErr "Input maximum number of snapshoots to persist, press [ENTER] for default ($MAX_SNAPS): " && read MAX_SNAPS
-    ( [ -z "${MAX_SNAPS##*[!0-9]*}" ] || [ $MAX_SNAPS -lt 1 ] || [ $MAX_SNAPS -gt 1024 ] ) && echoWarn "WARNINIG: Max number of snapshoots must be wihting range of 1 and 1024" && continue
+    echoNErr "Input maximum number of snapshoots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
+    [ -z "${NEW_MAX_SNAPS##*[!0-9]*}" ] && NEW_MAX_SNAPS=$MAX_SNAPS
+    ( [ -z "${NEW_MAX_SNAPS##*[!0-9]*}" ] || [ $NEW_MAX_SNAPS -lt 1 ] || [ $NEW_MAX_SNAPS -gt 1024 ] ) && echoWarn "WARNINIG: Max number of snapshoots must be wihting range of 1 and 1024" && continue
+    MAX_SNAPS=$NEW_MAX_SNAPS
     break
 done
 
