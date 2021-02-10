@@ -43,7 +43,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
             echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
-            echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1
+            echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
             [ -z "v1" ] && v1=$TRUSTED_NODE_ADDR
         else
             echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
