@@ -36,7 +36,6 @@ while [ $i -le 40 ]; do
         continue
     else
         echoInfo "INFO: Success, container was initialized"
-
     fi
 
     echoInfo "INFO: Awaiting node status..."

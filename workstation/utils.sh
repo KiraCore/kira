@@ -41,3 +41,8 @@ function echoNWarning() {
 function echoNErr() {
     echo -en "\e[0m\e[31;1m${1}\e[0m"
 }
+
+# echo command with a line number
+function echol() {
+    grep -n "$1" $0 |  sed "s/echo_line_no//" 
+}
