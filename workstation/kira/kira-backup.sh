@@ -21,7 +21,7 @@ mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 while : ; do
     [ -z "$MAX_SNAPS" ] && MAX_SNAPS=3
-    echoNErr "Input maximum number of snapshoots to persist, press [ENTER] for default ($MAX_SNAPS): " && MAX_SNAPS
+    echoNErr "Input maximum number of snapshoots to persist, press [ENTER] for default ($MAX_SNAPS): " && read MAX_SNAPS
     ( [ -z "${MAX_SNAPS##*[!0-9]*}" ] || [ $MAX_SNAPS -lt 1 ] || [ $MAX_SNAPS -gt 1024 ] ) && echoWarn "WARNINIG: Max number of snapshoots must be wihting range of 1 and 1024" && continue
     break
 done
