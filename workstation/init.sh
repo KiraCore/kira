@@ -259,10 +259,10 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     exit 0
 else
     echo "INFO: Skipping init update and cleaning up..."
-    apt-get autoclean
-    apt-get clean
-    apt-get autoremove
-    journalctl --vacuum-time=3d
+    apt-get autoclean || echo "WARNING: autoclean failed"
+    apt-get clean || echo "WARNING: clean failed"
+    apt-get autoremove || echo "WARNING: autoremove failed"
+    journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
 
     # NUCLEAR OPTION (USE ONLY IF YOU ENTIRELY RUN OUT OF SPACE) MAKE SURE YOU RESTART MACHINE BEFORE APPLYING
     # apt-get remove -y --purge $(dpkg -l 'linux-*' | sed '/^ii/!d;/'"$(uname -r | sed "s/\(.*\)-\([^0-9]\+\)/\1/")"'/d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d')
