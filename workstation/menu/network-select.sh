@@ -5,8 +5,6 @@ source $KIRA_MANAGER/utils.sh
 
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
-LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
-
 
 while : ; do
 

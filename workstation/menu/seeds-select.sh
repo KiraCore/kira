@@ -5,7 +5,6 @@ source $KIRA_MANAGER/utils.sh
 
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
-LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoWarn "WARNING: User chose to create new network, existing list of seeds & peers will be remove"

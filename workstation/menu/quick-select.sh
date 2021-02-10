@@ -5,7 +5,6 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/menu/chain-id-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 mkdir -p "$KIRA_CONFIGS"
-LOCAL_GENESIS_PATH="$KIRA_CONFIGS/genesis.json"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
