@@ -44,6 +44,8 @@ else
     echo "INFO: Docker $(docker -v) was already installed"
 fi
 
+echo "INFO: Cleaning up dangling volumes..."
+docker volume ls -qf dangling=true | xargs -r docker volume rm || echo "INFO: Failed to remove dangling vomues!"
 
 #mknod -m 777 /dev/null c 1 3
 #mknod -m 777 /dev/zero c 1 5

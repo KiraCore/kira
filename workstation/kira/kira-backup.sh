@@ -19,6 +19,13 @@ echo "INFO: Snapshoot directory will be set to '$DEFAULT_SNAP_DIR'"
 echo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
+while : ; do
+    [ -z "$MAX_SNAPS" ] && MAX_SNAPS=3
+    echoNErr "Input maximum number of snapshoots to persist, press [ENTER] for default ($MAX_SNAPS): " && MAX_SNAPS
+    ( [ -z "${MAX_SNAPS##*[!0-9]*}" ] || [ $MAX_SNAPS -lt 1 ] || [ $MAX_SNAPS -gt 1024 ] ) && echoWarn "WARNINIG: Max number of snapshoots must be wihting range of 1 and 1024" && continue
+    break
+done
+
 SNAPSHOOT=""
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(s|c)$ ]] ; do echoNErr "Choose to [S]ync from snapshoot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
 if [ "${SELECT,,}" == "s" ] ; then
@@ -68,3 +75,4 @@ fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
 $KIRA_MANAGER/containers/start-snapshoot.sh "$HALT_HEIGHT" "$SNAPSHOOT"
+CDHelper text lineswap --insert="MAX_SNAPS=$MAX_SNAPS" --prefix="MAX_SNAPS=" --path=$ETC_PROFILE --append-if-found-not=True

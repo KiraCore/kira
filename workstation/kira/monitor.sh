@@ -27,6 +27,7 @@ SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
+[ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
 mkdir -p $SCAN_DIR $STATUS_SCAN_PATH $SCAN_LOGS
 touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH" "$LIP_SCAN_PATH" "$IP_SCAN_PATH"
@@ -163,6 +164,12 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
 elif [ -f "$INTERX_SNAPSHOOT_PATH" ] && ( [ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ] ) ; then
     echo "INFO: Removing publicly exposed snapshoot..."
     rm -f -v $INTERX_SNAPSHOOT_PATH
+fi
+
+if [ -d $KIRA_SNAP ] ; then
+    echo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
+    find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echo "ERROR: Faile dto remove excessive snapshoots"
+    echo "INFO: Success, all excessive snaps were removed"
 fi
 
 sleep 1
