@@ -81,8 +81,8 @@ while : ; do
             SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
             ( [ -z "$SYNCING_TMP" ] || [ "${SYNCING_TMP,,}" == "null" ] ) && SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
 
-            # if some other node then snapshoot is syncig then infra is not ready
-            [ "${name,,}" != "snapshoot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
+            # if some other node then snapshot is syncig then infra is not ready
+            [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
 
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
@@ -90,7 +90,7 @@ while : ; do
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
             [ "${name,,}" == "registry" ] && continue
-            [ "${name,,}" == "snapshoot" ] && continue
+            [ "${name,,}" == "snapshot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
 
             if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]] ; then
@@ -149,8 +149,8 @@ while : ; do
     echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE" || \
     echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
 
-    if [ -f "$KIRA_SNAP_PATH" ] ; then # snapshoot is present 
-        SNAP_FILENAME="SNAPSHOOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
+    if [ -f "$KIRA_SNAP_PATH" ] ; then # snapshot is present 
+        SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
         [ "${SNAP_EXPOSE,,}" == "true" ] && \
         echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)" || \
@@ -186,7 +186,7 @@ while : ; do
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
-            [ "${name,,}" == "snapshoot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
+            [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]] ; then
                 LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2> /dev/null || echo "")
@@ -230,8 +230,8 @@ while : ; do
 
     if [ ! -z "$KIRA_SNAP_PATH" ] ; then
         [ "${SNAP_EXPOSE,,}" == "false" ] && \
-        echo "| [E] | EXPOSE Snapshoot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
-        echo "| [E] | Hide EXPOSED Snapshoot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+        echo "| [E] | EXPOSE Snapshot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
+        echo "| [E] | Hide EXPOSED Snapshot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     fi
 
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
@@ -310,7 +310,7 @@ while : ; do
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echo "ERROR: Snapshoot failed"
+        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echo "ERROR: Snapshot failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ] ; then
@@ -321,13 +321,13 @@ while : ; do
         OPTION=""
     elif [ "${OPTION,,}" == "e" ] ; then
         if [ "${SNAP_EXPOSE,,}" == "false" ] ; then
-            echo "INFO: Exposing latest snapshoot '$KIRA_SNAP_PATH' via INTERX"
+            echo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshoot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshoot.zip"
+            echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip"
         else
-            echoInfo "INFO: Ensuring exposed snapshoot will be removed..."
+            echoInfo "INFO: Ensuring exposed snapshot will be removed..."
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshoot will become unavailable"
+            echoInfo "INFO: Await few minutes and your snapshot will become unavailable"
         fi
         LOADING="true"
         EXECUTED="true"

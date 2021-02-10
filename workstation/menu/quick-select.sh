@@ -85,21 +85,21 @@ elif [ "${SELECT,,}" == "j" ] ; then
          
         SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:$DEFAULT_P2P_PORT"
          
-        echoInfo "INFO: Please wait, testing snapshoot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshoot.zip"
+        echoInfo "INFO: Please wait, testing snapshot access..."
+        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
         set -x
         if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
-            echoInfo "INFO: Snapshoot was found, download will be attempted shortly"
+            echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
-            echoInfo "INFO: Snapshoot was NOT found, download will NOT be attempted"
+            echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
             SNAP_AVAILABLE="false"
         fi
         set +x
          
         DOWNLOAD_SUCCESS="false"
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
-            echoInfo "INFO: Please wait, downloading snapshoot..."
+            echoInfo "INFO: Please wait, downloading snapshot..."
             DOWNLOAD_SUCCESS="true"
              
             set -x
@@ -109,8 +109,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             set +x
 
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
-                echoWarn "WARNING: Snapshoot download failed or connection with the node '$NODE_ADDR' is not stable"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshoot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                echoWarn "WARNING: Snapshot download failed or connection with the node '$NODE_ADDR' is not stable"
+                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
                     continue
@@ -118,8 +118,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 DOWNLOAD_SUCCESS="false"
             fi
         else
-            echoWarn "WARNING: Snapshoot is NOT available, node '$NODE_ADDR' is not exposing it publicly"
-            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshoot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+            echoWarn "WARNING: Snapshot is NOT available, node '$NODE_ADDR' is not exposing it publicly"
+            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
             if [ "${OPTION,,}" == "d" ] ; then
                 echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
                 continue
@@ -132,7 +132,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         rm -fv $TMP_GENESIS_PATH
          
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshoot archive download was sucessfull"
+            echoInfo "INFO: Snapshot archive download was sucessfull"
             set -x
             
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
@@ -144,16 +144,16 @@ elif [ "${SELECT,,}" == "j" ] ; then
             set +x
 
             if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
-                echoWarn "WARNING: Snapshoot is corrupted or created by outdated node"
+                echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
                 rm -f -v -r $TMP_SNAP_DIR
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshoot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
                     continue
                 fi
                 DOWNLOAD_SUCCESS="false"
             else
-                echo "INFO: Success, snapshoot file integrity appears to be valid"
+                echo "INFO: Success, snapshot file integrity appears to be valid"
                 cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
                 SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
             fi
@@ -162,9 +162,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
              
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshoot file integrity test passed"
+            echoInfo "INFO: Snapshot file integrity test passed"
         else
-            echoInfo "INFO: Snapshoot file integrity test failed or archive is not available, downloading genesis file..."
+            echoInfo "INFO: Snapshot file integrity test failed or archive is not available, downloading genesis file..."
              
             set -x
             rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
@@ -207,7 +207,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
-        echoNInfo "CONFIG:       Snapshoot file checksum: " && echoErr $SNAPSUM
+        echoNInfo "CONFIG:       Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:      Public seed node address: " && echoErr $SEED_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
 
@@ -227,13 +227,13 @@ fi
 
 set -x
 if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-    echo "INFO: Cloning tmp snapshoot into snap directory"
+    echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
-    SNAPSHOOT="$KIRA_SNAP/$SNAP_FILENAME"
-    cp -f -v -a "$TMP_SNAP_PATH" "$SNAPSHOOT"
+    SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
+    cp -f -v -a "$TMP_SNAP_PATH" "$SNAPSHOT"
     rm -fv $TMP_SNAP_PATH
 else
-    SNAPSHOOT=""
+    SNAPSHOT=""
 fi
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
@@ -245,7 +245,7 @@ fi
 
 rm -f -v -r $TMP_SNAP_DIR
 
-CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True

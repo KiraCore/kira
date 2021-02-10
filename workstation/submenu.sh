@@ -78,10 +78,10 @@ while : ; do
     $KIRA_MANAGER/menu/branch-select.sh "false"
     
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
-        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshoot 
+        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot 
     else
         CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-        $KIRA_MANAGER/menu/snapshoot-select.sh
+        $KIRA_MANAGER/menu/snapshot-select.sh
     fi
 
     $KIRA_MANAGER/menu/seeds-select.sh

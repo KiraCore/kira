@@ -3,7 +3,7 @@ exec 2>&1
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
-echo "INFO: Staring snapshoot v0.0.3"
+echo "INFO: Staring snapshot v0.0.3"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
@@ -24,12 +24,12 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
-( [ -z "$HALT_HEIGHT" ] || [ $HALT_HEIGHT -le 0 ] ) && echo "ERROR: Invalid snapshoot height, cant be less or equal to 0" && exit 1
+( [ -z "$HALT_HEIGHT" ] || [ $HALT_HEIGHT -le 0 ] ) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
 echo "$SNAP_FILENAME" > $SNAP_LATEST
 
 while [ -f "$SNAP_DONE" ] ; do
-  echo "INFO: Snapshoot was already finalized, nothing to do here"
+  echo "INFO: Snapshot was already finalized, nothing to do here"
   sleep 600
 done
 
@@ -50,7 +50,7 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
   rm -rfv $SEKAID_HOME
   mkdir -p $SEKAID_HOME/config/
 
-  sekaid init --chain-id="$NETWORK_NAME" "KIRA SNAPSHOOT NODE" --home=$SEKAID_HOME
+  sekaid init --chain-id="$NETWORK_NAME" "KIRA SNAPSHOT NODE" --home=$SEKAID_HOME
 
   $SELF_CONTAINER/configure.sh
 
@@ -65,9 +65,9 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
     DATA_GENESIS="$DATA_DIR/genesis.json"
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
+      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
       rm -fv $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshoot genesis into common folder
+      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshot genesis into common folder
     fi
 
     rm -fv "$SNAP_FILE"
@@ -117,7 +117,7 @@ while : ; do
   fi
 
   if ps -p "$PID1" > /dev/null ; then
-     echo "INFO: Waiting for snapshoot node to sync  $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
+     echo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$SENTRY_BLOCK..."
      sleep 30
   elif [ ! -z "$PID1" ] ; then
      echo "WARNING: Node finished running, starting tracking and checking final height..."
@@ -191,6 +191,6 @@ echo "{\"height\":$HALT_HEIGHT}" > "$SNAP_INFO"
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
 
-[ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshoot, file $DESTINATION_FILE was not found" && exit 1
+[ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 
 touch $SNAP_DONE

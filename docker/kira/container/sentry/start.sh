@@ -47,9 +47,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     DATA_GENESIS="$DATA_DIR/genesis.json"
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
+      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
       rm -fv $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshoot genesis into common folder
+      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshot genesis into common folder
     fi
 
     rm -fv "$SNAP_FILE"

@@ -19,7 +19,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 rm -rfv $COMMON_PATH
-mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshoot"
+mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshot"
 
 echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
 echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
@@ -43,7 +43,7 @@ set -x
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
-    echoInfo "INFO: State snapshoot '$KIRA_SNAP_PATH' was found, cloning..."
+    echoInfo "INFO: State snapshot '$KIRA_SNAP_PATH' was found, cloning..."
     cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
@@ -64,7 +64,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 else
     echoInfo "INFO: Synchronisation using internal genesis file ($GENESIS_DESTINATION) will be performed"
-    rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshoot/genesis.json"
+    rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshot/genesis.json"
     CFG_persistent_peers=""
 fi
 
@@ -83,9 +83,9 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOOT_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
     -e CFG_max_num_outbound_peers="0" \
     -e CFG_max_num_inbound_peers="3" \
     -e CFG_addr_book_strict="false" \
@@ -106,7 +106,7 @@ if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshoot/genesis.json"
+    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshot/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$KIRA_CONFIGS/genesis.json"
 
     GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")

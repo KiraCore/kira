@@ -20,7 +20,7 @@ echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
-echo "| SNAPSHOOT: $KIRA_SNAP_PATH"
+echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
@@ -41,7 +41,7 @@ cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
-    echo "INFO: State snapshoot was found, cloning..."
+    echo "INFO: State snapshot was found, cloning..."
     cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
@@ -88,8 +88,8 @@ docker run -d \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_version="v2" \

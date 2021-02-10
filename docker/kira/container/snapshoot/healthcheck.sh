@@ -7,12 +7,12 @@ SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
 
 if [ -f "$SNAP_DONE" ] ; then
-  echo "INFO: Success, snapshoot done!"
+  echo "INFO: Success, snapshot done!"
   exit 0
 fi
 
 if [ -f "$SNAP_FINALIZYNG" ] ; then
-  echo "INFO: Success, snapshoot is finalizing!"
+  echo "INFO: Success, snapshot is finalizing!"
   exit 0
 fi
 

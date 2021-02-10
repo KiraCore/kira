@@ -1,7 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/containers/start-snapshoot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/containers/start-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set -x
 
@@ -10,7 +10,7 @@ SYNC_FROM_SNAP=$2
 
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
 # ensure to create parent directory for shared status info
-CONTAINER_NAME="snapshoot"
+CONTAINER_NAME="snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -31,7 +31,7 @@ SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /de
 SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "")
 
 if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] || [ "${SENTRY_NETWORK,,}" == "null" ] ; then
-    echo "INFO: Failed to snapshoot state, public sentry is still catching up or network was not found..."
+    echo "INFO: Failed to snapshot state, public sentry is still catching up or network was not found..."
     exit 1
 fi
 
@@ -50,11 +50,11 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
-echo "|    HOSTNAME: $KIRA_SNAPSHOOT_DNS"
+echo "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
 echo "| SYNC HEIGHT: $MAX_HEIGHT" 
 echo "|   SNAP FILE: $SNAP_FILE"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
+echo "|     MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|     MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 
 echo "INFO: Loading secrets..."
@@ -62,15 +62,15 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-cp -f -a -v $KIRA_SECRETS/snapshoot_node_key.json $COMMON_PATH/node_key.json
+cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
 if [ -f "$SYNC_FROM_SNAP" ] ; then
-    echo "INFO: State snapshoot was found, cloning..."
+    echo "INFO: State snapshot was found, cloning..."
     cp -a -v -f $SYNC_FROM_SNAP $SNAP_DESTINATION
 fi
 
-echo "INFO: Cleaning up snapshoot container..."
+echo "INFO: Cleaning up snapshot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
@@ -79,7 +79,7 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
-echo "INFO: Copy genesis file from sentry into snapshoot container common direcotry..."
+echo "INFO: Copy genesis file from sentry into snapshot container common direcotry..."
 docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
 
 # cleanup
@@ -91,7 +91,7 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    --hostname $KIRA_SNAPSHOOT_DNS \
+    --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
@@ -118,7 +118,7 @@ docker run -d \
     kira:latest # use sentry image as base
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
-CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOOT_NODE_ID" || CONTAINER_CREATED="false"
+CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
@@ -131,10 +131,10 @@ fi
 
 set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
-    echo "INFO: Snapshoot failed, '$CONTAINER_NAME' container did not start"
+    echo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
 else
     echo "INFO: Success '$CONTAINER_NAME' container was started" && echo ""
-    echo -en "\e[31;1mINFO: Snapshoot destination: $SNAP_FILE\e[0m"  && echo ""
-    echo "INFO: Work in progress, await snapshoot container to reach 100% sync status"
+    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m"  && echo ""
+    echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
 set -x

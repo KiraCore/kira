@@ -22,7 +22,7 @@ if [ "${NAME,,}" == "interx" ]; then
 elif [ "${NAME,,}" == "frontend" ]; then
     BRANCH="$FRONTEND_BRANCH"
     REPO="$FRONTEND_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshoot" ] ; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then

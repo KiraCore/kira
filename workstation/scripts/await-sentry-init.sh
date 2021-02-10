@@ -101,7 +101,7 @@ fi
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-    echoInfo "INFO: Local snapshoot must be created before network can be started"
+    echoInfo "INFO: Local snapshot must be created before network can be started"
 
     while : ; do
         echoInfo "INFO: Awaiting node status..."
@@ -139,7 +139,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     
-    echo "INFO: Creating new snapshoot..."
+    echo "INFO: Creating new snapshot..."
 
     DATA_DIR="$SEKAID_HOME/data"
     LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
@@ -160,7 +160,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
-    echo "INFO: New snapshoot was created!"
+    echo "INFO: New snapshot was created!"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 

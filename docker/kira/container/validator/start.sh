@@ -34,7 +34,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     unzip $SNAP_FILE -d "$DATA_DIR"
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshoot folder, attempting recovery..."
+      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
       rm -fv $COMMON_GENESIS
       cp -v -a $DATA_GENESIS $COMMON_GENESIS
       cp -v -a $DATA_GENESIS $LOCAL_GENESIS

@@ -26,19 +26,19 @@ while : ; do
         set +e && source "/etc/profile" &>/dev/null && set -e
         # NETWORK_NAME & NEW_NETWORK gets set my chain-id selector
         NEW_NETWORK_NAME=$NETWORK_NAME
-    elif [ "${SELECT,,}" == "s" ] ; then # import from snapshoot
-        $KIRA_MANAGER/menu/snapshoot-select.sh
+    elif [ "${SELECT,,}" == "s" ] ; then # import from snapshot
+        $KIRA_MANAGER/menu/snapshot-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
         
         if [ -z "$KIRA_SNAP_PATH" ] || [ ! -f "$KIRA_SNAP_PATH" ] ; then
             CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-            echo "INFO: Snapshoot was not selected or '$KIRA_SNAP_PATH' file was not found"
+            echo "INFO: Snapshot was not selected or '$KIRA_SNAP_PATH' file was not found"
             continue
         fi
 
         unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo "" > "$TMP_GENESIS_PATH"
         NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
-        [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshoot file was not selected or does not contain a genesis file" && continue
+        [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         echo "INFO: Network genesis will be importend from the external resource"

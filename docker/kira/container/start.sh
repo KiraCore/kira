@@ -12,8 +12,8 @@ done
 
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     $SELF_CONTAINER/sentry/start.sh
-elif [ "${NODE_TYPE,,}" == "snapshoot" ] ; then
-    $SELF_CONTAINER/snapshoot/start.sh
+elif [ "${NODE_TYPE,,}" == "snapshot" ] ; then
+    $SELF_CONTAINER/snapshot/start.sh
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     $SELF_CONTAINER/validator/start.sh
 else

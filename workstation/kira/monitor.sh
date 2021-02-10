@@ -94,7 +94,7 @@ for name in $CONTAINERS; do
         echo "INFO: Container ID found: $ID"
     fi
     
-    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshoot)$ ]] ; then
+    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot)$ ]] ; then
         echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
     elif [ "${name,,}" == "interx" ] ; then 
@@ -149,26 +149,26 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] ; then
 fi
 
 INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
-INTERX_SNAPSHOOT_PATH="$INTERX_REDERENCE_DIR/snapshoot.zip"
+INTERX_SNAPSHOT_PATH="$INTERX_REDERENCE_DIR/snapshot.zip"
 if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
     HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
-    HASH2=$(sha256sum "$INTERX_SNAPSHOOT_PATH" | awk '{ print $1 }' || echo "")
+    HASH2=$(sha256sum "$INTERX_SNAPSHOT_PATH" | awk '{ print $1 }' || echo "")
 
     if [ "$HASH1" != "$HASH2" ] ; then
-        echo "INFO: Latest snapshoot is NOT exposed yet"
+        echo "INFO: Latest snapshot is NOT exposed yet"
         mkdir -p $INTERX_REDERENCE_DIR
-        cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOOT_PATH"
+        cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
     else
-        echo "INFO: Latest snapshoot was already exposed, no need for updates"
+        echo "INFO: Latest snapshot was already exposed, no need for updates"
     fi
-elif [ -f "$INTERX_SNAPSHOOT_PATH" ] && ( [ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ] ) ; then
-    echo "INFO: Removing publicly exposed snapshoot..."
-    rm -f -v $INTERX_SNAPSHOOT_PATH
+elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ( [ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ] ) ; then
+    echo "INFO: Removing publicly exposed snapshot..."
+    rm -f -v $INTERX_SNAPSHOT_PATH
 fi
 
 if [ -d $KIRA_SNAP ] ; then
     echo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-    find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echo "ERROR: Faile dto remove excessive snapshoots"
+    find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echo "ERROR: Faile dto remove excessive snapshots"
     echo "INFO: Success, all excessive snaps were removed"
 fi
 

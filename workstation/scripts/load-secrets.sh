@@ -14,7 +14,7 @@ source $MNEMONICS
 REGEN_PRIV_VALIDATOR_KEYS="false"
 REGEN_VALIDATOR_NODE_KEYS="false"
 REGEN_SENTRY_NODE_KEYS="false"
-REGEN_SNAPSHOOT_NODE_KEYS="false"
+REGEN_SNAPSHOT_NODE_KEYS="false"
 
 function MnemonicGenerator() {
     set +e && source "/etc/profile" &>/dev/null && set -e
@@ -73,7 +73,7 @@ MnemonicGenerator "validator" "addr" # validator controller key
 MnemonicGenerator "test" "addr" # generic test key
 MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
 MnemonicGenerator "priv_sentry" "node" # private sentry node key
-MnemonicGenerator "snapshoot" "node" # snapshoot sentry node key (snapshoot_node_key.json, snapshoot_node_id.key -> SNAPSHOOT_NODE_ID)
+MnemonicGenerator "snapshot" "node" # snapshot sentry node key (snapshot_node_key.json, snapshot_node_id.key -> SNAPSHOT_NODE_ID)
 MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
 # NOTE: private validator key is generated from the separate mnemonic then node key or address !!!
 MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)

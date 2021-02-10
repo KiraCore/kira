@@ -18,8 +18,8 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo 
 
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     $SELF_CONTAINER/sentry/healthcheck.sh
-elif [ "${NODE_TYPE,,}" == "snapshoot" ] ; then
-    $SELF_CONTAINER/snapshoot/healthcheck.sh 
+elif [ "${NODE_TYPE,,}" == "snapshot" ] ; then
+    $SELF_CONTAINER/snapshot/healthcheck.sh 
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     $SELF_CONTAINER/validator/healthcheck.sh
 else
