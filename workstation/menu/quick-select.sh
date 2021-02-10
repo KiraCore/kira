@@ -171,12 +171,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
             cp -a -f -v "$TMP_GENESIS_PATH.tmp" "$TMP_GENESIS_PATH" || echo "WARNING: Genesis copy failed"
-            GENESIS_NETWORK=$(jq -r .genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                 rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
                 wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-                GENESIS_NETWORK=$(jq -r .genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+                GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
             fi
             set +x
              
