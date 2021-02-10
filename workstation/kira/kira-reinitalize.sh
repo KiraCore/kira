@@ -19,7 +19,7 @@ INIT_SCRIPT=""
 INTEGRITY_HASH=""
 
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
-    ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default initialization script or [C]hange URL: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default initialization script or [C]hange URL: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
     if [ "${ACCEPT,,}" == "c" ] ; then
         read  -p "Input URL of the new initialization script: " INIT_SCRIPT
@@ -29,7 +29,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
 
     if [ "${INIT_SCRIPT}" == "$DEFAULT_INIT_SCRIPT" ] ; then
         echo "INFO: Default initialization script was selected"
-        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infra branch '$INFRA_BRANCH' or [C]hange it: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infra branch '$INFRA_BRANCH' or [C]hange it: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
         
         if [ "${ACCEPT,,}" == "c" ] ; then
             read  -p "Input desired banch name of the $GIT_USER/$GIT_REPO repository: " NEW_BRANCH
@@ -44,7 +44,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT && NEW_BRANCH=$INFRA_BRANCH )
     
     if [ ! -f "$INIT_SCRIPT_OUT" ] ; then
-        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
         [ "${ACCEPT,,}" == "x" ] && break
     else
         SUCCESS_DOWNLOAD="true"
@@ -58,7 +58,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
     echo "INFO: Success, init script was downloaded!"
     echo "INFO: SHA256: $FILE_HASH"
     while [ "${SUCCESS_HASH_CHECK,,}" == "false" ] ; do 
-        ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
         if [ "${ACCEPT,,}" == "v" ] ; then
             read -p "Input sha256sum hash of the file: " INTEGRITY_HASH
@@ -82,8 +82,8 @@ if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
 
-    SELECT="" && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 SELECT && echo ""; done
-    if [ "${SELECT,,}" == "r" ] ; then # wipe setup lock files
+    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo ""; done
+    if [ "${ACCEPT,,}" == "r" ] ; then # wipe setup lock files
         rm -fvr $KIRA_SETUP
         mkdir -p $KIRA_SETUP
     fi
