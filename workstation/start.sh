@@ -11,12 +11,12 @@ PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 cd $HOME
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTED: LAUNCH SCRIPT                       |"
-echo "|-----------------------------------------------"
-echo "|  SKIP UPDATE: $SKIP_UPDATE"
-echo "| SEKAI BRANCH: $SEKAI_BRANCH"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: LAUNCH SCRIPT                       |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|  SKIP UPDATE: $SKIP_UPDATE"
+echoWarn "| SEKAI BRANCH: $SEKAI_BRANCH"
+echoWarn "------------------------------------------------"
 set -x
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
@@ -122,8 +122,8 @@ else
 fi
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: LAUNCH SCRIPT                      |"
-echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: LAUNCH SCRIPT                      |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+echoWarn "------------------------------------------------"
 set -x

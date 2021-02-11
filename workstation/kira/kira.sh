@@ -230,8 +230,8 @@ while : ; do
 
     if [ ! -z "$KIRA_SNAP_PATH" ] ; then
         [ "${SNAP_EXPOSE,,}" == "false" ] && \
-        echo "| [E] | EXPOSE Snapshot                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
-        echo "| [E] | Hide EXPOSED Snapshot                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
+        echo "| [E] | EXPOSE Snapshot                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" || \
+        echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     fi
 
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"

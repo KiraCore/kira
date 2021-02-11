@@ -25,6 +25,7 @@ if [ "${SELECT,,}" == "n" ] ; then
     DOWNLOAD_SUCCESS="false"
     NEW_NETWORK="true"
     TRUSTED_NODE_ADDR="0.0.0.0"
+    SNAPSHOT=""
 
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
@@ -207,7 +208,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
-        echoNInfo "CONFIG:       Snapshot file checksum: " && echoErr $SNAPSUM
+        echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:      Public seed node address: " && echoErr $SEED_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
 
@@ -235,6 +236,8 @@ if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
 else
     SNAPSHOT=""
 fi
+
+rm -fvr "$KIRA_SNAP/status"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
     echo "INFO: New genesis found, replacing"
