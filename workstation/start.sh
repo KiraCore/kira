@@ -60,7 +60,7 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
 wait
 
-rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON/configs"
+rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON"
 
 echoInfo "INFO: Loading secrets & generating mnemonics..."
 set +x
