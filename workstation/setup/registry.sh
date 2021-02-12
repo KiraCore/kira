@@ -23,6 +23,8 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name $CONTAINER_NAME \
+        --log-opt max-size=5m \
+        --log-opt max-file=5 \
         -e REGISTRY_HTTP_ADDR="0.0.0.0:$KIRA_REGISTRY_PORT" \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \

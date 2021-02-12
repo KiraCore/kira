@@ -38,6 +38,8 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --network $KIRA_FRONTEND_NETWORK \
+    --log-opt max-size=5m \
+    --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
     $CONTAINER_NAME:latest

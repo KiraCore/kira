@@ -95,6 +95,8 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_SENTRY_NETWORK \
+    --log-opt max-size=5m \
+    --log-opt max-file=5 \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \

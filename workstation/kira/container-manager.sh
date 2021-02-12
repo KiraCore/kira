@@ -1,6 +1,6 @@
 #!/bin/bash
-
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
@@ -267,25 +267,34 @@ while : ; do
         TMP_DUMP=$CONTAINER_DUMP/tmp.log
         while : ; do
             printf "\033c"
-            echo "INFO: Attempting to display $NAME container log..."
+            echo "INFO: Please wait, reading $NAME ($ID) container log..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
 
             if [ ! -f "$START_LOGS" ] ; then
-                docker logs --details --timestamps $ID > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container logs"
+                docker logs --details --timestamps $ID > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to dump $NAME container logs"
             else
-                cat $START_LOGS > $TMP_DUMP || echo "WARNING: Failed to read $NAME container logs"
+                cat $START_LOGS > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to read $NAME container logs"
             fi
 
-            MAX=$(cat $TMP_DUMP | wc -l)
-            [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
+            LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
+            ( [ $LOG_LINES -gt $LINES_MAX ] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
+            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
+            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
-            TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "d" ] && [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
+
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
-            [ "${ACCEPT,,}" == "d" ] && rm -fv "$START_LOGS" && continue
+            if [ "${ACCEPT,,}" == "d" ] ; then
+                rm -fv "$START_LOGS"
+                echo "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
+                SHOW_ALL="false"
+                LOG_LINES=10
+                continue
+            fi
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
             [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
@@ -306,18 +315,20 @@ while : ; do
         TMP_DUMP=$CONTAINER_DUMP/tmp.log
         while : ; do
             printf "\033c"
-            echo "INFO: Attempting to display $NAME container healthcheck logs..."
+            echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
             docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
 
-            MAX=$(cat $TMP_DUMP | wc -l)
-            [ $LOG_LINES -gt $MAX ] && LOG_LINES=$MAX
+            LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
+            [ $LOG_LINES -gt $LINES_MAX ] && LOG_LINES=$LINES_MAX
+            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
+            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
-            ACCEPT="" && while [ "${ACCEPT,,}" != "a" ] && [ "${ACCEPT,,}" != "s" ] && [ "${ACCEPT,,}" != "m" ] && [ "${ACCEPT,,}" != "l" ] && [ "${ACCEPT,,}" != "c" ] && [ "${ACCEPT,,}" != "r" ] ; do echo -en "\e[36;1mShow [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue

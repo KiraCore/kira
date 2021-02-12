@@ -44,6 +44,8 @@ docker run -d \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
+    --log-opt max-size=5m \
+    --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_grpc="dns:///sentry:9090" \
     -e CFG_rpc="http://sentry:26657" \
