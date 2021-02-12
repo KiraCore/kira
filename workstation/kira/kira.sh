@@ -120,7 +120,7 @@ while : ; do
     DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
 
     [ ! -z "$CPU_UTIL" ] && [ ! -z "$RAM_UTIL" ] && [ ! -z "$DISK_UTIL" ] && \
-    echo -e "|\e[34;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
+    echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
 
     if [ "${LOADING,,}" == "false" ] ; then
         KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
