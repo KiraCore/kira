@@ -71,76 +71,79 @@ echo -e "\e[37;1m--------------------------------------------------"
     for p in "${PORTS[@]}" ; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
-            echo "INFO: Starting port manager ($p)..."
+            echoInfo "INFO: Starting port manager ($p)..."
             $KIRA_MANAGER/kira/port-manager.sh "$p"
             OPTION=""
         fi
     done
     
     if [ "${OPTION,,}" == "d" ]; then
-        echo "INFO: Disabling all ports..."
+        echoInfo "INFO: Disabling all ports..."
         PORTS_EXPOSURE="disabled"
         CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     elif [ "${OPTION,,}" == "e" ]; then
-        echo "INFO: Enabling all ports..."
+        echoInfo "INFO: Enabling all ports..."
         PORTS_EXPOSURE="enabled"
         CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     elif [ "${OPTION,,}" == "c" ]; then
-        echo "INFO: Enabling custom ports configuration..."
+        echoInfo "INFO: Enabling custom ports configuration..."
         PORTS_EXPOSURE="custom"
         CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     elif [ "${OPTION,,}" == "i" ]; then
-        echo "INFO: Starting network interface selection menu..."
+        echoInfo "INFO: Starting network interface selection menu..."
         IFACE_OLD="$IFACE"
         $KIRA_MANAGER/menu/interface-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e
         if [ "$IFACE_OLD" != "$IFACE" ] ; then
-            echo "INFO: Reinitalizing firewall..."
+            echoInfo "INFO: Reinitalizing firewall..."
             $KIRA_MANAGER/networking.sh
         else
-            echo "INFO: Network interface was not changed"
+            echoInfo "INFO: Network interface was not changed"
         fi
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echo -en "\e[31;1mChoose to list [P]ublic or Pri[V]ate $TARGET: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-        [ "${SELECT,,}" == "p" ] && EXPOSURE="public" && CONTAINER="sentry"
-        [ "${SELECT,,}" == "v" ] && EXPOSURE="private" && CONTAINER="priv_sentry"
-        FILE="$PORT_CFG_DIR/${EXPOSURE}_${TYPE}"
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo ""; done
+        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
+        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
+        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
+        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
+
+        echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$TARGET"
 
-        DESTINATION_PATH="$DOCKER_COMMON/$CONTAINER/${$EXPOSURE}_${TYPE}"
-        cp -a -v -f "$FILE" "$COMMON_PEERS_PATH"
+        echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
+        cp -a -v -f "$FILE" "$DOCKER_COMMON/$CONTAINER/$TYPE"
 
-        echo "INFO: To apply changes you will have to restart your $EXPOSURE facing container ($CONTAINER)"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echo -en "\e[31;1mChoose to [R]estart $CONTAINER container or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
         
-        echo "INFO: Re-starting $name container..."
-        $KIRA_SCRIPTS/container-restart.sh $name
+        echoInfo "INFO: Re-starting $CONTAINER container..."
+        $KIRA_SCRIPTS/container-restart.sh $CONTAINER
     elif [ "${OPTION,,}" == "f" ]; then
-        echo "INFO: Reinitalizing firewall..."
+        echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "r" ]; then
-        echo "INFO: Restarting networks..."
+        echoInfo "INFO: Restarting networks..."
         $KIRA_MANAGER/scripts/restart-networks.sh
     elif [ "${OPTION,,}" == "x" ]; then
-        echo "INFO: Stopping kira networking manager..."
+        echoInfo "INFO: Stopping kira networking manager..."
         break
     fi
 
     if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "c" ] || [ "${OPTION,,}" == "d" ] ; then
-        echo "INFO: Current '$FIREWALL_ZONE' zone rules"
+        echoInfo "INFO: Current '$FIREWALL_ZONE' zone rules"
         firewall-cmd --list-ports
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
-        echo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mChoose to [R]estart FIREWALL container or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
-        echo "INFO: Reinitalizing firewall..."
+        echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 
