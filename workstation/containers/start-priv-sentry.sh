@@ -91,7 +91,6 @@ docker run -d \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
-    -e CFG_version="v2" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="8" \
