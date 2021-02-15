@@ -100,7 +100,7 @@ docker run -d \
     -e CFG_max_num_inbound_peers="8" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -env-file "$KIRA_MANAGER/containers/sekaid.env" \
+    --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     kira:latest
