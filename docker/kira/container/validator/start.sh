@@ -72,6 +72,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
+
+    # default chain properties
+    jq '.app_state.customgov.network_properties.proposal_end_time = "10"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+    jq '.app_state.customgov.network_properties.proposal_enactment_time = "15"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
   else
       echo "INFO: Network will be stared from a predefined genesis file..."
       [ ! -f "$COMMON_GENESIS" ] && echo "ERROR: Genesis file '$COMMON_GENESIS' was not found" && exit 1
