@@ -35,8 +35,8 @@ KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 echo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
-rm -fv "$LIP_PATH" "$KADDR_PATH" "$VALADDR_SCAN_PATH"
-touch $LIP_PATH $KADDR_PATH $VALSTATUS_SCAN_PATH
+rm -fv "$LIP_PATH" "$KADDR_PATH"
+touch $LIP_PATH $KADDR_PATH
 
 VALADDR=""
 VALSTATUS=""
@@ -50,8 +50,8 @@ while : ; do
     KADDR=$(cat $KADDR_PATH)
     
     if [ "${NAME,,}" == "validator" ] ; then
-        VALADDR=$(cat $VALADDR_SCAN_PATH)
-        VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' /dev/null || echo "")
+        VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
+        [ ! -z "$VALADDR" ] && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' 2> /dev/null || echo "") || VALSTATUS=""
     fi
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
@@ -121,17 +121,17 @@ while : ; do
     fi
 
     NAME_TMP="${NAME}${WHITESPACE}"
-        echo "|      Name: ${NAME_TMP:0:38} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+        echo "|     Name: ${NAME_TMP:0:39} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
 
     if [ ! -z "$REPO" ] ; then
         REPO_TMP=$(echo "$REPO" | grep -oP "^https://\K.*")
         REPO_TMP="${REPO}${WHITESPACE}"
-        echo "|      Repo: ${REPO_TMP:0:38} : $BRANCH"
+        echo "|     Repo: ${REPO_TMP:0:39} : $BRANCH"
     fi
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
-        echo "| Validator: ${VALADDR_TMP:0:38} : $VALSTATUS"
+        echo "| Val.ADDR: ${VALADDR_TMP:0:39} : $VALSTATUS"
     fi
 
     if [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
