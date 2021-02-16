@@ -52,13 +52,20 @@ while : ; do
         [ -z "$NEW_GENESIS_SOURCE" ] && NEW_GENESIS_SOURCE=$LOCAL_GENESIS_PATH
          
         if [ -f "$NEW_GENESIS_SOURCE" ] ; then # if NEW_GENESIS_SOURCE is a file
-            echo "INFO: Attempting to copy new genesis from '$NEW_GENESIS_SOURCE'"
+            echoInfo "INFO: Attempting to copy new genesis from '$NEW_GENESIS_SOURCE'"
             cp -a -f -v $NEW_GENESIS_SOURCE $TMP_GENESIS_PATH || echo "WARNING: Failed ot copy genesis from the source file '$NEW_GENESIS_SOURCE'"
         elif [ ! -z $NEW_GENESIS_SOURCE ] ; then # if NEW_GENESIS_SOURCE is not empty
-            echo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
-            wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || echo "WARNING: Download failed"
+            echoInfo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
+            set -x
+            DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false" ( 
+            if [ "${DNPASS,,}" == "false" ] ; then
+                echoWarn "WARNING: Download failed, attempting second discovery..."
+                rm -fv $TMP_GENESIS_PATH
+                wget "$NEW_GENESIS_SOURCE:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Second download attempt failed"
+            fi
+            set +x
         else
-            echo "WARNING: Genesis source was not provided"
+            echoWarn "WARNING: Genesis source was not provided"
             continue
         fi
 
@@ -71,7 +78,7 @@ while : ; do
         fi
 
         if [ -z "$NEW_NETWORK_NAME" ] || [ "${NEW_NETWORK_NAME,,}" == "null" ] ; then
-            echo "WARNING: Genesis file has invalid format, try diffrent source"
+            echoWarn "WARNING: Genesis file has invalid format, try diffrent source"
             continue
         fi
           

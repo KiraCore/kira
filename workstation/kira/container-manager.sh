@@ -17,6 +17,8 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
+VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 WHITESPACE="                                                          "
@@ -33,9 +35,11 @@ KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 echo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
-rm -fv "$LIP_PATH" "$KADDR_PATH"
-touch $LIP_PATH $KADDR_PATH
+rm -fv "$LIP_PATH" "$KADDR_PATH" "$VALADDR_SCAN_PATH"
+touch $LIP_PATH $KADDR_PATH $VALSTATUS_SCAN_PATH
 
+VALADDR=""
+VALSTATUS=""
 HOSTNAME=""
 KIRA_NODE_BLOCK=""
 LOADING="true"
@@ -44,6 +48,11 @@ while : ; do
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
     LIP=$(cat $LIP_PATH)
     KADDR=$(cat $KADDR_PATH)
+    
+    if [ "${NAME,,}" == "validator" ] ; then
+        VALADDR=$(cat $VALADDR_SCAN_PATH)
+        VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' /dev/null || echo "")
+    fi
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
         if [ ! -z "$HOSTNAME" ] ; then
@@ -118,6 +127,11 @@ while : ; do
         REPO_TMP=$(echo "$REPO" | grep -oP "^https://\K.*")
         REPO_TMP="${REPO}${WHITESPACE}"
         echo "|      Repo: ${REPO_TMP:0:38} : $BRANCH"
+    fi
+
+    if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
+        VALADDR_TMP="${VALADDR}${WHITESPACE}"
+        echo "| Validator: ${VALADDR_TMP:0:38} : $VALSTATUS"
     fi
 
     if [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then

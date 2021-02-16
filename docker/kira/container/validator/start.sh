@@ -20,6 +20,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   sekaid init --overwrite --chain-id="$NETWORK_NAME" "KIRA VALIDATOR NODE" --home=$SEKAID_HOME
 
   $SELF_CONTAINER/configure.sh
+  set +e && source "/etc/profile" &>/dev/null && set -e
 
   echo "INFO: Importing key files from common storage..."
   rm -fv $SEKAID_HOME/config/node_key.json
@@ -92,5 +93,21 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
   touch $EXECUTED_CHECK
 fi
+
+VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
+TEST_ADDR=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME)
+FRONTEND_ADDR=$(sekaid keys show -a frontend --keyring-backend=test --home=$SEKAID_HOME)
+SIGNER_ADDR=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME)
+FAUCET_ADDR=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME)
+VALOPER_ADDR=$(sekaid val-address $VALIDATOR_ADDR)
+CONSPUB_ADDR=$(sekaid tendermint show-validator)
+
+CDHelper text lineswap --insert="TEST_ADDR=$TEST_ADDR" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SIGNER_ADDR=$SIGNER_ADDR" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FAUCET_ADDR=$FAUCET_ADDR" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_ADDR=$FRONTEND_ADDR" --prefix="FRONTEND_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 sekaid start --home=$SEKAID_HOME --trace

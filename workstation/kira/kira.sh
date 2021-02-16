@@ -21,6 +21,8 @@ CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
+VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
+VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
@@ -36,6 +38,9 @@ while : ; do
     SNAP_PROGRESS="$SNAP_STATUS/progress"
     SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
+
+    VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
+    [ ! -z "$VALADDR" ] && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' 2> /dev/null || echo "") || VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
@@ -165,8 +170,16 @@ while : ; do
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
     elif [ "${CATCHING_UP,,}" == "true" ] ; then
         echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
-    elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
-        echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
+    elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] ; then
+        if [ ! -z "$VALADDR" ] ; then
+            if [ "${VALSTATUS,,}" == "active" ] ; then
+                echo -e "|\e[0m\e[32;1m SUCCESS, VALIDATOR AND INFRA IS HEALTHY       \e[33;1m: $VALSTATUS"
+            else
+                echo -e "|\e[0m\e[31;1m FAILURE, VALIDATOR NODE IS NOT OPERATIONAL    \e[33;1m: $VALSTATUS"
+            fi
+        elif
+            echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
+        fi
     else
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
     fi

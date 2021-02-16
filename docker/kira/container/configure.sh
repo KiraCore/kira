@@ -83,6 +83,8 @@ fi
 # Maximum number of outbound P2P peers to connect to, excluding persistent peers
 [ ! -z "$CFG_max_num_outbound_peers " ] && CDHelper text lineswap --insert="max_num_outbound_peers = \"$CFG_max_num_outbound_peers\"" --prefix="max_num_outbound_peers =" --path=$CFG
 
+GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
+CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
 echo "INFO: Starting state file configuration..."
 

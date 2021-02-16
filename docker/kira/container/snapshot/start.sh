@@ -53,6 +53,7 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
   sekaid init --chain-id="$NETWORK_NAME" "KIRA SNAPSHOT NODE" --home=$SEKAID_HOME
 
   $SELF_CONTAINER/configure.sh
+  set +e && source "/etc/profile" &>/dev/null && set -e
 
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/

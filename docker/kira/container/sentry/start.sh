@@ -10,7 +10,6 @@ SNAP_FILE="$COMMON_DIR/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_DIR/genesis.json"
-GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 
 if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     echo "INFO: Checking if sentry can be synchronized from the validator node..."
@@ -64,4 +63,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 fi
 
 $SELF_CONTAINER/configure.sh
+set +e && source "/etc/profile" &>/dev/null && set -e
+
 sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace

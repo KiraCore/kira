@@ -20,6 +20,8 @@ RAM_SCAN_PATH="$SCAN_DIR/ram"
 LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
+VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
+VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -30,7 +32,7 @@ SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
 [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
 mkdir -p $SCAN_DIR $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS
-touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH" "$LIP_SCAN_PATH" "$IP_SCAN_PATH"
+touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH" "$LIP_SCAN_PATH" "$IP_SCAN_PATH" "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH"
 
 echo $(docker network ls --format="{{.Name}}" || "") > $NETWORKS_SCAN_PATH &
 PID1="$!"
@@ -66,6 +68,17 @@ fi
 touch "${DISK_SCAN_PATH}.pid" && if ! kill -0 $(cat "${DISK_SCAN_PATH}.pid") 2> /dev/null ; then
     echo "$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%" > $DISK_SCAN_PATH && sleep 60 &
     echo "$!" > "${DISK_SCAN_PATH}.pid"
+fi
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
+    [ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json || echo "") || VALSTATUS=""
+
+    echo "$VALADDR" > $VALADDR_SCAN_PATH
+    echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
+else
+    echo "" > $VALADDR_SCAN_PATH
+    echo "" > $VALSTATUS_SCAN_PATH
 fi
 
 wait $PID1
