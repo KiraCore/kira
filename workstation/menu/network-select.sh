@@ -57,7 +57,7 @@ while : ; do
         elif [ ! -z $NEW_GENESIS_SOURCE ] ; then # if NEW_GENESIS_SOURCE is not empty
             echoInfo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
             set -x
-            DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false" ( 
+            DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false" 
             if [ "${DNPASS,,}" == "false" ] ; then
                 echoWarn "WARNING: Download failed, attempting second discovery..."
                 rm -fv $TMP_GENESIS_PATH
