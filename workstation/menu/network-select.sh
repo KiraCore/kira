@@ -58,8 +58,10 @@ while : ; do
             echoInfo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
             set -x
             rm -fv $TMP_GENESIS_PATH
-            DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false" 
-            if [ "${DNPASS,,}" == "false" ] || [[ ! -s "$TMP_GENESIS_PATH" ]] ; then
+            DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false"
+            GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            if [ "${DNPASS,,}" == "false" ] || [ -z "$GENTEST" ] ; then
                 echoWarn "WARNING: Download failed, attempting second discovery..."
                 rm -fv $TMP_GENESIS_PATH
                 wget "$NEW_GENESIS_SOURCE:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Second download attempt failed"
