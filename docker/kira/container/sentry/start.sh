@@ -56,12 +56,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "INFO: Snap file is NOT present, starting new sync..."
   fi
 
-  rm -fv $LOCAL_GENESIS
-  cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
-
   touch $EXECUTED_CHECK
 fi
 
+rm -fv $LOCAL_GENESIS
+cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
 
