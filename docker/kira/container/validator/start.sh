@@ -75,8 +75,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     sekaid gentx-claim validator --keyring-backend=test --moniker="Hello World" --home=$SEKAID_HOME
 
     # default chain properties
-    jq '.app_state.customgov.network_properties.proposal_end_time = "10"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-    jq '.app_state.customgov.network_properties.proposal_enactment_time = "15"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+    jq '.app_state.customgov.network_properties.proposal_end_time = "600"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+    jq '.app_state.customgov.network_properties.proposal_enactment_time = "900"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
   else
       echo "INFO: Network will be stared from a predefined genesis file..."
       [ ! -f "$COMMON_GENESIS" ] && echo "ERROR: Genesis file '$COMMON_GENESIS' was not found" && exit 1
