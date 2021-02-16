@@ -172,12 +172,10 @@ while : ; do
         echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] ; then
         if [ ! -z "$VALADDR" ] ; then
-            if [ "${VALSTATUS,,}" == "active" ] ; then
-                echo -e "|\e[0m\e[32;1m SUCCESS, VALIDATOR AND INFRA IS HEALTHY       \e[33;1m: $VALSTATUS"
-            else
-                echo -e "|\e[0m\e[31;1m FAILURE, VALIDATOR NODE IS NOT OPERATIONAL    \e[33;1m: $VALSTATUS"
-            fi
-        elif
+            [ "${VALSTATUS,,}" == "active" ] && \
+            echo -e "|\e[0m\e[32;1m SUCCESS, VALIDATOR AND INFRA IS HEALTHY       \e[33;1m: $VALSTATUS" || \
+            echo -e "|\e[0m\e[31;1m FAILURE, VALIDATOR NODE IS NOT OPERATIONAL    \e[33;1m: $VALSTATUS"
+        else
             echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
         fi
     else
