@@ -77,6 +77,8 @@ if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
 else
     echo "INFO: CDHelper tool was already downloaded"
 fi
+
+CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
  
 INSTALL_DIR="/usr/local/bin/CDHelper"
 rm -rfv $INSTALL_DIR

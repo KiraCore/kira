@@ -3,8 +3,8 @@ FROM ubuntu:20.04
 # Local Update
 # (rm -fv $KIRA_INFRA/docker/base-image/Dockerfile) && nano $KIRA_INFRA/docker/base-image/Dockerfile
 
-ENV PROFILE_PATH="/etc/profile"
-ENV BASHRC_PATH="/root/.bashrc"
+ENV ETC_PROFILE="/etc/profile"
+ENV BASHRC="/root/.bashrc"
 ENV JOURNAL_LOGS="/var/log/journal"
 ENV COMMON_DIR="/common"
 ENV SNAP_DIR="/snap"
@@ -40,13 +40,12 @@ ENV SEKAID_BIN="${GOBIN}/sekaid"
 ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 ENV PATH="${PATH}:${FLUTTERROOT}/bin:${FLUTTERROOT}/bin/cache/dart-sdk/bin:${GOROOT}:${GOPATH}:${GOBIN}:/root/.cargo/bin:/root/go/bin"
 ENV COMMON_LOGS="${COMMON_DIR}/logs"
-ENV ETC_PROFILE="/etc/profile"
 
 RUN mkdir -p ${SNAP_DIR} ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin ${SEKAID_HOME} ${COMMON_DIR}
 
 ADD ./container ${SELF_CONTAINER}
 
-RUN chmod -R 777 ${SELF_HOME} && chmod 777 ${PROFILE_PATH} && chmod 777 ${BASHRC_PATH}
+RUN chmod -R 777 ${SELF_HOME} && chmod 555 ${ETC_PROFILE} && chmod 555 ${BASHRC}
 
 ARG DEBIAN_FRONTEND=noninteractive
 RUN LC_ALL=C ${BUILD_SCRIPT} && rm -rf /var/lib/apt/lists/*
