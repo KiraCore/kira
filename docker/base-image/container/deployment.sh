@@ -77,8 +77,6 @@ if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
 else
     echo "INFO: CDHelper tool was already downloaded"
 fi
-
-CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
  
 INSTALL_DIR="/usr/local/bin/CDHelper"
 rm -rfv $INSTALL_DIR
@@ -91,6 +89,8 @@ rm /bin/CDHelper || echo "INFO: Failed to remove old symlink"
 ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "INFO: CDHelper symlink already exists"
  
 CDHelper version
+
+CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
 
 echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
 cd /tmp
