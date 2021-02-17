@@ -1,29 +1,24 @@
 # (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.regnet.local:5000/base-image:latest AS build-env
+FROM registry.regnet.local:5000/base-image:latest
 
 ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
-RUN echo "START: Build hash: ${BUILD_HASH}, Branch: ${BRANCH}, Repo: ${REPO}"
+ENV REPO="${REPO}"
+ENV BRANCH="${BRANCH}"
+ENV BUILD_HASH="${BUILD_HASH}"
+ENV FRONTEND_SRC="/root/kira-frontend/src"
+
+RUN cd /root && git clone ${REPO}
+RUN cd ${FRONTEND_SRC} && git checkout ${BRANCH}
+RUN echo '{ "api_url": "http://0.0.0.0:11000/api" }' > ${FRONTEND_SRC}/assets/config.json
+RUN cd ${FRONTEND_SRC} && flutter pub get
+RUN cd ${FRONTEND_SRC} && flutter build web --release
+
 ADD ./container ${SELF_CONTAINER}
-RUN "${SELF_CONTAINER}/setup.sh"
-
-FROM nginx
-ENV SELF_HOME=/self/home
-ENV SELF_LOGS=/self/logs
-ENV SELF_CONTAINER=${SELF_HOME}/container
-ENV HEALTHCHECK_SCRIPT=${SELF_CONTAINER}/healthcheck.sh
-
-RUN mkdir ${SELF_HOME} ${SELF_LOGS} ${SELF_CONTAINER} -p
-ADD ./container ${SELF_CONTAINER}
-
-RUN apt update
-RUN apt install -y jq iputils-ping
 RUN chmod 777 -R ${SELF_HOME}
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
 
-COPY --from=build-env "/root/kira-frontend/src/build/web" /usr/share/nginx/html
-
-CMD ["sh", "-c", "/bin/bash ${SELF_CONTAINER}/start.sh"]
+CMD ["sh", "-c", "/bin/bash ${SELF_CONTAINER}/start.sh | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]

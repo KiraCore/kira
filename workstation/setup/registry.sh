@@ -7,9 +7,12 @@ CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="True"
 curl --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
+ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo "")
+IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo "")
+
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.38-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
-if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ]; then
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.39-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -20,6 +23,8 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
         --hostname $KIRA_REGISTRY_DNS \
         --restart=always \
         --name $CONTAINER_NAME \
+        --log-opt max-size=5m \
+        --log-opt max-file=5 \
         -e REGISTRY_HTTP_ADDR="0.0.0.0:$KIRA_REGISTRY_PORT" \
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
@@ -29,15 +34,14 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "True" ]] || [
     systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
 
     sleep 1
+    ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo "")
+    IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo "")
 
-    ID=$(docker inspect --format="{{.Id}}" $CONTAINER_NAME || echo "")
-    IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" | xargs || echo "")
-    
     if [ -z "$IP" ] || [ "${IP,,}" == "null" ] ; then
         echo "ERROR: Failed to get IP address of the $CONTAINER_NAME container"
         exit 1
     fi
-    
+
     echo "INFO: IP Address $IP found, binding host..."
     CDHelper text lineswap --insert="$IP $KIRA_REGISTRY_DNS" --regex="$KIRA_REGISTRY_DNS" --path=$HOSTS_PATH --prepend-if-found-not=True
 

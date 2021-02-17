@@ -10,7 +10,7 @@ RUN echo "Build hash: ${BUILD_HASH}"
 RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
 RUN cd ${SEKAI} && git checkout ${BRANCH}
-RUN mkdir -p "${COMMON_DIR}"
+RUN cd ${SEKAI}/INTERX && make install
 
 ADD ./container ${SELF_CONTAINER}
 
@@ -20,8 +20,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-# EXPOSE 11000
+HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT} $>> ${SELF_LOGS}/healthcheck_script_output.txt
-
-CMD ["sh", "-c", "/bin/bash ${START_SCRIPT}"]
+CMD ["sh", "-c", "/bin/bash ${START_SCRIPT} | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]

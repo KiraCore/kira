@@ -1,43 +1,76 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
+
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
+
+CONTAINER_NAME="interx"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
+
+mkdir -p $COMMON_LOGS
 
 echo "INFO: Loading secrets..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
-rm -f "./config.tmp"
-jq --arg signer "${SIGNER_MNEMONIC}" '.mnemonic = $signer' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
-jq --arg faucet "${FAUCET_MNEMONIC}" '.faucet.mnemonic = $faucet' $DOCKER_COMMON/interx/config.json >"./config.tmp" && mv "./config.tmp" $DOCKER_COMMON/interx/config.json
-rm -f "./config.tmp"
+echo "$SIGNER_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/signing.mnemonic"
+echo "$FAUCET_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/faucet.mnemonic"
 set -e
 
-CONTAINER_NAME="interx"
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
 echo "|   NETWORK: $KIRA_INTERX_NETWORK"
 echo "|  HOSTNAME: $KIRA_INTERX_DNS"
+echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
+# cleanup
+rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
+
 docker run -d \
-    -p $DEFAULT_INTERX_PORT:$KIRA_INTERX_PORT \
+    --cpus="$CPU_RESERVED" \
+    --memory="$RAM_RESERVED" \
+    --oom-kill-disable \
+    -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
     --net=$KIRA_INTERX_NETWORK \
-    -e DEBUG_MODE="True" \
-    -v $DOCKER_COMMON/interx:/common \
-    interx:latest
+    --log-opt max-size=5m \
+    --log-opt max-file=5 \
+    -e NETWORK_NAME="$NETWORK_NAME" \
+    -e CFG_grpc="dns:///sentry:9090" \
+    -e CFG_rpc="http://sentry:26657" \
+    -e CFG_port="$DEFAULT_INTERX_PORT" \
+    -v $COMMON_PATH:/common \
+    $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
+FAUCET_ADDR=$(curl 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' || echo "")
+
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"
 
-
-#FAUCET_ADDR=$(curl http://interx.servicenet.local:11000/api/faucet | jq -r '.address')
-#yes "y" | docker exec -i "validator" sekaid tx bank send validator $FAUCET_ADDR 200000ukex --keyring-backend=test --chain-id testing --home=/root/.simapp --fees 2000ukex
+if [ "${INFRA_MODE,,}" == "local" ] ; then
+    while : ; do
+        echoInfo "INFO: Demo mode detected, attempting to transfer funds into INTERX account..."
+        FAILED="false" && docker exec -i validator sekaid tx bank send validator $FAUCET_ADDR 100000000ukex --keyring-backend=test --chain-id "$NETWORK_NAME" --home=$SEKAID_HOME --fees 100ukex --yes || FAILED="true"
+        [ "${FAILED,,}" == "false" ] && echoInfo "INFO: Success, funds were sent to faucet account ($FAUCET_ADDR)" && break
+        echoWarn "WARNING: Failed to transfer funds into INTERX faucet account, retry in 10 seconds"
+        sleep 10
+    done
+else
+    echoWarn "WARNING: You are running in non-DEMO mode, you will have to fuel INTERX faucet address ($FAUCET_ADDR) on your own!"
+fi

@@ -2,8 +2,6 @@
 exec 2>&1
 set +e && source "/etc/profile" &>/dev/null && set -e
 
-if [ "$DEBUG_MODE" == "True" ] ; then set -x ; else set +x ; fi
-
 IMAGE_DIR=$1
 IMAGE_NAME=$2
 IMAGE_TAG=$3
@@ -14,6 +12,7 @@ KIRA_SETUP_FILE="$KIRA_SETUP/$IMAGE_NAME-$IMAGE_TAG"
 IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}}' --filter=reference="${IMAGE_NAME}:*" || echo "none")
 REGISTRY_IMAGE=$(docker images --format '{{.Repository}}:{{.Tag}}' --filter=reference="${KIRA_REGISTRY}/${IMAGE_NAME}" || echo "none")
 
+set +x
 echo "------------------------------------------------"
 echo "|         STARTED: DELETE IMAGE v0.0.1         |"
 echo "------------------------------------------------"
@@ -23,6 +22,7 @@ echo "|      IMAGE TAG: $IMAGE_TAG"
 echo "|          IMAGE: $IMAGE"
 echo "| REGISTRY IMAGE: $REGISTRY_IMAGE"
 echo "------------------------------------------------"
+set -x
 
 cd $IMAGE_DIR
 
@@ -39,7 +39,9 @@ docker exec -i registry sh -c "reboot" || echo "Docker Registry Reboot" && sleep
 
 docker images
 
+set +x
 echo "------------------------------------------------"
 echo "|        FINISHED: IMAGE DELETE v0.0.1         |"
 echo "------------------------------------------------"
+set -x
 

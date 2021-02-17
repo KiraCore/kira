@@ -1,48 +1,70 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
+set -x
+
+IS_STARTED="false"
+FAUCET_ADDR=""
+INTERX_STATUS_CODE=""
+CONTAINER_NAME="interx"
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
 
 i=0
-IS_STARTED="false"
-while [ $i -le 20 ]; do
+while [ $i -le 40 ]; do
     i=$((i + 1))
 
-    echo "INFO: Waiting for interx container to start..."
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "interx" || echo "error")
+    echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
+    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
     if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: INTERX container does not exists yet, waiting..."
+        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
         continue
     else
-        echo "INFO: Success, INTERX container was found"
+        echoInfo "INFO: Success, $CONTAINER_NAME container was found"
     fi
 
-    echo "INFO: Awaiting interx initialization..."
-    IS_STARTED=$(docker exec -i "interx" [ -f /root/executed ] && echo "true" || echo "false")
+    echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
+    IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
     if [ "${IS_STARTED,,}" != "true" ]; then
         sleep 12
-        echo "WARNING: INTERX is not initialized yet"
+        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
         continue
     else
-        echo "INFO: Success, interx was initialized"
+        echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
     fi
 
-    echo "INFO: Awaiting interx build to finalize..."
-    INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/status 2>/dev/null | xargs || echo "")
+    echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."
+    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
-        echo "WARNING: INTERX is not built yet"
+        echoWarn "WARNING: $CONTAINER_NAME is not started yet"
+        continue
+    fi
+
+    echoInfo "INFO: Awaiting $CONTAINER_NAME faucet to initalize..."
+    FAUCET_ADDR=$(docker exec -t "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
+
+    if [ -z "${FAUCET_ADDR}" ] || [ "$FAUCET_ADDR" == "null" ] ; then
+        sleep 30
+        echoWarn "WARNING: $CONTAINER_NAME faucet is initalized yet"
         continue
     else
-        echo "INFO: Success, interx was built"
+        echoInfo "INFO: Success, faucet was found"
         break
     fi
 done
 
-INTERX_STATUS_CODE=$(docker exec -i "interx" curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:11000/api/status 2>/dev/null | xargs || echo "")
-if [[ "$INTERX_STATUS_CODE" -ne "200" ]]; then
-    echo "ERROR: INTERX was not started sucessfully within defined time"
+echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
+docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+
+echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
+cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+
+if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
+    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
     exit 1
 else
-    echo "INFO: INTERX was started sucessfully"
+    echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
 fi

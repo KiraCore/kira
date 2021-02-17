@@ -12,9 +12,8 @@ if [ ! -f "$SETUP_CHECK" ] ; then
         pm-utils
 
     echo "INFO: Setting up system pre-requisites..."
-    CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True --silent=$SILENT_MODE
-    CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True --silent=$SILENT_MODE
-
+    CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
+    CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
 
     SCAN_DIR="$KIRA_HOME/kirascan"
     SCAN_DONE="$SCAN_DIR/done"

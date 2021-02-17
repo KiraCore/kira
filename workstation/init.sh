@@ -7,7 +7,6 @@ set +e && chmod 555 $ETC_PROFILE && source $ETC_PROFILE &>/dev/null && set -e
 INFRA_BRANCH=$1
 SKIP_UPDATE=$2
 START_TIME_INIT=$3
-DEBUG_MODE=$4
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
@@ -15,16 +14,21 @@ DEBUG_MODE=$4
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
-[ -z "$DEBUG_MODE" ] && DEBUG_MODE="False"
-[ -z "$SILENT_MODE" ] && SILENT_MODE="False"
+
+[ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
+[ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
+[ -z "$DEFAULT_GRPC_PORT" ] && DEFAULT_GRPC_PORT="9090"
+[ -z "$DEFAULT_INTERX_PORT" ] && DEFAULT_INTERX_PORT="11000"
 
 KIRA_HOME="/home/$KIRA_USER"
-KIRA_DUMP="$KIRA_HOME/DUMP"
+KIRA_DUMP="$KIRA_HOME/dump"
+KIRA_SNAP="$KIRA_HOME/snap"
 KIRA_SECRETS="$KIRA_HOME/.secrets"
+KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.50"
-SETUP_VER="v0.0.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.0.9" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -33,7 +37,6 @@ echo "| STARTED: INIT $SETUP_VER"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
-echo "|   DEBUG MODE: $DEBUG_MODE"
 echo "| INFRA BRANCH: $INFRA_BRANCH"
 echo "|   INFRA REPO: $INFRA_REPO"
 echo "|    KIRA USER: $KIRA_USER"
@@ -41,7 +44,7 @@ echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP"
+mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS"
 
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
@@ -78,6 +81,21 @@ fi
 echo ""
 set -x
 
+CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
+RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+
+if [ $CPU_CORES -lt 2 ] ; then
+    echo "ERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $CPU_CORES"
+    echo "INFO: Recommended CPU is 4 cores"
+    exit 1
+fi
+
+if [ $RAM_MEMORY -lt 3145728 ] ; then
+    echo "ERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $RAM_MEMORY kB"
+    echo "INFO: Recommended RAM is 8GB"
+    exit 1
+fi
+
 [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
 [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
 [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="master"
@@ -92,7 +110,7 @@ if [ "$KIRA_USER" == "root" ]; then
     exit 1
 fi
 
-if [ "$SKIP_UPDATE" == "False" ]; then
+if [ "${SKIP_UPDATE,,}" != "true" ]; then
     #########################################
     # START Installing Essentials
     #########################################
@@ -121,14 +139,15 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-8" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
-    if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ]; then
+    if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
+        rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
             software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
@@ -158,7 +177,7 @@ if [ "$SKIP_UPDATE" == "False" ]; then
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
                 echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-                SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ]; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
+                SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
                 [ "${SELECT,,}" == "x" ] && exit
                 echo "DANGER: You decided to disregard a potential vulnerability !!!"
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
@@ -182,7 +201,14 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SNAP=$KIRA_SNAP" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_CONFIGS=$KIRA_CONFIGS" --prefix="KIRA_CONFIGS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="PUBLIC_PEERS=$KIRA_CONFIGS/public_peers" --prefix="PUBLIC_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="PRIVATE_PEERS=$KIRA_CONFIGS/private_peers" --prefix="PRIVATE_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="PUBLIC_SEEDS=$KIRA_CONFIGS/public_seeds" --prefix="PUBLIC_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="PRIVATE_SEEDS=$KIRA_CONFIGS/private_seeds" --prefix="PRIVATE_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$KIRA_CONFIGS/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -200,13 +226,16 @@ if [ "$SKIP_UPDATE" == "False" ]; then
         CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
 
+        CDHelper text lineswap --insert="DEFAULT_P2P_PORT=$DEFAULT_P2P_PORT" --prefix="DEFAULT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DEFAULT_RPC_PORT=$DEFAULT_RPC_PORT" --prefix="DEFAULT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DEFAULT_GRPC_PORT=$DEFAULT_GRPC_PORT" --prefix="DEFAULT_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DEFAULT_INTERX_PORT=$DEFAULT_INTERX_PORT" --prefix="DEFAULT_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+
         touch $KIRA_SETUP_ESSSENTIALS
     else
         echo "INFO: Essentials were already installed: $(git --version), Curl, Wget..."
     fi
 
-    CDHelper text lineswap --insert="SILENT_MODE=$SILENT_MODE" --prefix="SILENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="DEBUG_MODE=$DEBUG_MODE" --prefix="DEBUG_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     #########################################
     # END Installing Essentials
     #########################################
@@ -220,16 +249,23 @@ if [ "$SKIP_UPDATE" == "False" ]; then
     chmod -R 555 $KIRA_INFRA
 
     # update old processes
-    rm -r -f $KIRA_MANAGER
-    cp -r $KIRA_WORKSTATION $KIRA_MANAGER
+    rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
+    cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
     echo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT" "$DEBUG_MODE"
+    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
     echo "INFO: Init script restart finished."
     exit 0
 else
-    echo "INFO: Skipping init update..."
+    echo "INFO: Skipping init update and cleaning up..."
+    apt-get autoclean || echo "WARNING: autoclean failed"
+    apt-get clean || echo "WARNING: clean failed"
+    apt-get autoremove || echo "WARNING: autoremove failed"
+    journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
+
+    # NUCLEAR OPTION (USE ONLY IF YOU ENTIRELY RUN OUT OF SPACE) MAKE SURE YOU RESTART MACHINE BEFORE APPLYING
+    # apt-get remove -y --purge $(dpkg -l 'linux-*' | sed '/^ii/!d;/'"$(uname -r | sed "s/\(.*\)-\([^0-9]\+\)/\1/")"'/d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d')
 fi
 
 CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -246,7 +282,7 @@ CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO
 
 set +x
 echo "INFO: Your host environment was initialized"
-echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are not running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions, and accept that you continue on your own risk.\e[0m"
+echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
 set -x
