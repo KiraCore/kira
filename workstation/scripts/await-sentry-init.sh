@@ -104,13 +104,17 @@ while : ; do
     if [ "${FAILURE,,}" == "true" ] ; then
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|e)$ ]] ; do echoNErr "Try to [R]estart $CONTAINER_NAME and try again or [E]xit: " && read -d'' -s -n1 ACCEPT && echo ""; done
         if [ "${ACCEPT,,}" == "r" ] ; then 
-            echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 1
-            $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME" &
+            echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+            $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
+            sleep 5
             continue
         else
             echoWarn "ERROR: Deployment failed!" && sleep 1
             exit 1
         fi
+    else
+        echoInfo "INFO: $CONTAINER_NAME launched sucessfully"
+        break
     fi
 done
 
