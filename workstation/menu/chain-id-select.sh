@@ -13,7 +13,7 @@ while : ; do
 
     NEW_NETWORK_NAME="${NEW_NETWORK_NAME,,}"
     ARR=( $(echo "$NEW_NETWORK_NAME" | tr "-" "\n") ) && ARR_LEN=${#ARR[@]}
-    [ ${#NEW_NETWORK_NAME} -gt 16 ] && echoWarn "WARNING: Network name can't be longer than 16 characters!" && continue
+    [ ${#NEW_NETWORK_NAME} -gt 12 ] && echoWarn "WARNING: Network name can't be longer than 12 characters!" && continue
     [ ${#NEW_NETWORK_NAME} -lt 3 ] && echoWarn "WARNING: Network name can't be shorter than 3 characters!" && continue
     [ $ARR_LEN -ne 2 ] && echoWarn "WARNING: Network name must contain single '-' character separating chain name from id!" && continue
     V1=${ARR[0]} && V2=${ARR[1]}
