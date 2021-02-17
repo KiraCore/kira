@@ -91,7 +91,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   sha256sum $COMMON_GENESIS
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
-  touch $EXECUTED_CHECK
 fi
 
 VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
@@ -110,4 +109,5 @@ CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALID
 CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
+touch $EXECUTED_CHECK
 sekaid start --home=$SEKAID_HOME --trace
