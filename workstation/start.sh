@@ -22,7 +22,7 @@ set -x
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
 
 echoInfo "INFO: Updating kira repository and fetching changes..."
-if [ "$SKIP_UPDATE" == "False" ]; then
+if [ "${SKIP_UPDATE,,}" == "false" ]; then
     $KIRA_MANAGER/setup.sh "$SKIP_UPDATE"
     $KIRA_MANAGER/networking.sh
     source $KIRA_MANAGER/start.sh "True"
@@ -61,6 +61,20 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 wait
 
 rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON"
+
+echoInfo "INFO: All images were updated"
+
+if [ ! -f "$KIRA_SETUP/reboot" ] ; then
+    echoWarn "WARNING: To apply all changes your machine must be rebooted!"
+    echoWarn "WARNING: After restart is compleated type 'kira' in your console terminal to continue"
+    echoNErr "Press any key to initiate reboot" && read -n 1 -s && echo ""
+    echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine..."
+    sleep 3
+    touch "$KIRA_SETUP/reboot"
+    reboot
+else
+    touch "$KIRA_SETUP/rebooted"
+fi
 
 echoInfo "INFO: Loading secrets & generating mnemonics..."
 set +x

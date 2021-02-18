@@ -67,7 +67,7 @@ else
     echoInfo "INFO: Synchronisation using internal genesis file ($GENESIS_DESTINATION) will be performed"
     rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshot/genesis.json"
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+    CFG_persistent_peers=""
 fi
 
 echoInfo "INFO: Starting $CONTAINER_NAME node..."

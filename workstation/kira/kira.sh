@@ -31,6 +31,14 @@ echo "INFO: Restarting network scanner..."
 systemctl daemon-reload
 systemctl restart kirascan
 
+
+if [ ! -f "$KIRA_SETUP/rebooted" ] ; then
+    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
+    sleep 1
+    $KIRA_MANAGER/start.sh "true" 
+    exit 0
+fi
+
 LOADING="true"
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e

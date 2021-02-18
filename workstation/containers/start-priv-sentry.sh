@@ -64,8 +64,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     CFG_persistent_peers="tcp://$SENTRY_SEED"
 else
     CFG_seeds=""
-    CFG_persistent_peers=""
-    #tcp://$VALIDATOR_SEED
+    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
 
 echo "INFO: Starting $CONTAINER_NAME node..."
