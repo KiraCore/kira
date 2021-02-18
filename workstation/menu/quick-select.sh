@@ -147,6 +147,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
                 echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
                 [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
+                [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
                 [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
                 [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
                 [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
