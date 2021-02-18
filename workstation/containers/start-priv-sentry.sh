@@ -74,7 +74,7 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_PRIV_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $DEFAULT_P2P_PORT:$KIRA_PRIV_SENTRY_P2P_PORT \
     --hostname $KIRA_PRIV_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -84,8 +84,8 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
-    -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_seeds="$CFG_seeds" \
