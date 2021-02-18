@@ -74,8 +74,8 @@ while [ $i -le 40 ]; do
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
     HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-    ( [ -z "${HEIGHT}" ] || [ "${HEIGHT,,}" == "null" ] ) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-    ( [ -z "$HEIGHT" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ) && HEIGHT=0
+    [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+    [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
     
     if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
         echoWarn "INFO: Please wait, new blocks are not beeing synced or produced yet!"
