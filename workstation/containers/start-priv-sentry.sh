@@ -60,11 +60,12 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
-    CFG_seeds="tcp://$SENTRY_SEED"
-    CFG_persistent_peers=""
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
 else
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CFG_persistent_peers=""
+    #tcp://$VALIDATOR_SEED
 fi
 
 echo "INFO: Starting $CONTAINER_NAME node..."
@@ -89,7 +90,7 @@ docker run -d \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="32" \

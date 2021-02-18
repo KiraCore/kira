@@ -60,11 +60,12 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
-    CFG_seeds="tcp://$PRIV_SENTRY_SEED"
-    CFG_persistent_peers=""
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
 else
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CFG_persistent_peers=""
+    #tcp://$VALIDATOR_SEED
 fi
 
 echo "INFO: Starting sentry node..."
