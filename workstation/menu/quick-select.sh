@@ -146,8 +146,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
             if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
                 echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
-                rm -f -v -r $TMP_SNAP_DIR
+                [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
+                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
+                [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
+                [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
                 OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                rm -f -v -r $TMP_SNAP_DIR
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
                     continue
