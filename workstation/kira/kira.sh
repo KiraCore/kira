@@ -11,6 +11,13 @@ if [ "${USER,,}" != root ] ; then
     exit 1
 fi
 
+if [ ! -f "$KIRA_SETUP/rebooted" ] ; then
+    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
+    sleep 1
+    $KIRA_MANAGER/start.sh "true"
+    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+fi
+
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"

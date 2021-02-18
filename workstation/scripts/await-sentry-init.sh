@@ -102,7 +102,10 @@ while : ; do
     fi
 
     if [ "${FAILURE,,}" == "true" ] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|e)$ ]] ; do echoNErr "Try to [R]estart $CONTAINER_NAME and try again or [E]xit: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        set +x
+        echoWarn "WARNING: If this issue persists 'reboot' your machine and try setup again!"
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|e)$ ]] ; do echoNErr "Attempt $CONTAINER_NAME container [R]estart or [A]bort: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
