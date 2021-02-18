@@ -75,7 +75,7 @@ if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     touch "$KIRA_SETUP/reboot"
     reboot
 else
-    echoInfo "INFO: Reboot was already executed, setup will continue..."
+    echoInfo "INFO: Reboot was already performed, setup will continue..."
     touch "$KIRA_SETUP/rebooted"
 fi
 
