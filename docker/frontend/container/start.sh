@@ -65,7 +65,7 @@ echo "INFO: Setting up default API configuration..."
 echo "{ \"api_url\": \"http://0.0.0.0:11000/api\" }" >"$CONFIG_JSON"
 
 i=0
-while [ $i -le 4 ]; do
+while [ $i -le 5 ]; do
     i=$((i + 1))
 
     PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
