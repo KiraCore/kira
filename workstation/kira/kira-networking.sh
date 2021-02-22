@@ -138,7 +138,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
