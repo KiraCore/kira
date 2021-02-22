@@ -48,10 +48,8 @@ while : ; do
         p2=${addrArr2[0],,}
         p3=${addrArr2[1],,}
 
-        nodeId="" && [[ "$p1" =~ ^[a-f0-9]{40}$ ]] && nodeId="$p1"
-        dns="" && [[ "$(echo $p2 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p2" ]] && dns="$p2" # DNS regex
-        [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
-
+        ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
+        ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
         if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
             echoWarn "WARNING: Seed '$addr' is not reachable"
         else

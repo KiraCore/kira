@@ -51,8 +51,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
          
         set -x
-        NODE_ADDR="" && [[ "$(echo $v1 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$v1" ]] && NODE_ADDR="$v1" # DNS regex
-        [ -z "$NODE_ADDR" ] && [[ $v1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && NODE_ADDR="$v1" # IP is fine too
+        ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
         set +x
          
         [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue

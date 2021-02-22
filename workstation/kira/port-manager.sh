@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/port-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 PORT=$1
@@ -65,8 +66,8 @@ echo -e "\e[37;1m--------------------------------------------------"
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ]; do echo -en "\e[33;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
-        [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        [ "${ACCEPT,,}" == "n" ] && echoWarn "WARINIG: Operation was cancelled" && sleep 1 && continue
         echo ""
     fi
     
@@ -92,44 +93,47 @@ echo -e "\e[37;1m--------------------------------------------------"
         CDHelper text lineswap --insert="PORT_EXPOSURE_$PORT=$PORT_EXPOSURE" --prefix="PORT_EXPOSURE_$PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         REINITALIZE="true"
     elif [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "f" ] ; then
-        [ "${OPTION,,}" == "e" ] && FILE=$WHITELIST && TARGET="WHITELIST"
-        [ "${OPTION,,}" == "f" ] && FILE=$BLACKLIST && TARGET="BLACKLIST"
-        echo "INFO: Listing all ${TARGET}ED addresses..."
-        i=0
-        while read p; do
-            [ -z "$p" ] && continue # only display non-empty lines
-            i=$((i + 1))
-            echo "#${i} -> $p"
-        done < $FILE
-        echo "INFO: All $i ${TARGET}ED IP addresses were displayed"
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mDo you want to [A]dd or [R]emove $TARGET addresses or [S]kip action: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
-        echo -en "\e[31;1mInput comma separated list of IP addesses to $TARGET: \e[0m" && read IP_LIST
-        [ "${SELECT,,}" == "s" ] && continue
-        [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
-        [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
-        i=0
-        for ip in $(echo $IP_LIST | sed "s/,/ /g") ; do
-            ip=$(echo "$ip" | xargs) # trim whitespace characters
-            ipArr=( $(echo $ip | tr "/" "\n") )
-            ip=${ipArr[0],,}
-            mask=${ipArr[1],,}
-            # port must be a number
-            ( [[ ! $mask =~ ^[0-9]+$ ]] || (($mask < 8 || $mask > 32)) ) && mask="" 
-            if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
-                ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
-                echo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
-                [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$ipRange" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
-                [ "${SELECT,,}" == "r" ] && CDHelper text lineswap --insert="" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
+        while : ; do
+            [ "${OPTION,,}" == "e" ] && FILE=$WHITELIST && TARGET="WHITELIST"
+            [ "${OPTION,,}" == "f" ] && FILE=$BLACKLIST && TARGET="BLACKLIST"
+            echoInfo "INFO: Listing all ${TARGET}ED addresses..."
+            i=0
+            while read p; do
+                [ -z "$p" ] && continue # only display non-empty lines
                 i=$((i + 1))
-            else
-                echo "INFO: FAILURE, '$ip' is NOT a valid IP address and will NOT be $TARGET"
-                continue
-            fi
+                echoWarn "#${i} -> $p"
+            done < $FILE
+            echoInfo "INFO: All $i ${TARGET}ED IP addresses were displayed"
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|r|e)$ ]] ; do echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
+            [ "${SELECT,,}" == "e" ] && break
+            [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
+            [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
+            echoNErr "Input comma separated list of IP addesses to $TARGET: " && read IP_LIST
+
+            i=0
+            for ip in $(echo $IP_LIST | sed "s/,/ /g") ; do
+                ip=$(echo "$ip" | xargs) # trim whitespace characters
+                ipArr=( $(echo $ip | tr "/" "\n") )
+                ip=${ipArr[0],,}
+                mask=${ipArr[1],,}
+                # port must be a number
+                ( [[ ! $mask =~ ^[0-9]+$ ]] || (($mask < 8 || $mask > 32)) ) && mask="" 
+                if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
+                    ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
+                    echoInfo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
+                    [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$ipRange" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
+                    [ "${SELECT,,}" == "r" ] && CDHelper text lineswap --insert="" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
+                    i=$((i + 1))
+                else
+                    echoInfo "INFO: FAILURE, '$ip' is NOT a valid IP address and will NOT be $TARGET"
+                    continue
+                fi
+            done
+            echoInfo "INFO: Saving unique changes to $FILE..."
+            sort -u $FILE -o $FILE
+            echoInfo "INFO: Total of $i IP addresses were $TARGET"
+            REINITALIZE="true"
         done
-        echo "INFO: Saving unique changes to $FILE..."
-        sort -u $FILE -o $FILE
-        echo "INFO: Total of $i IP addresses were $TARGET"
-        REINITALIZE="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         REINITALIZE="true"
     elif [ "${OPTION,,}" == "x" ] ; then
@@ -138,16 +142,16 @@ echo -e "\e[37;1m--------------------------------------------------"
     fi
     
     if [ "${REINITALIZE,,}" == "true" ] ; then
-        echo "INFO: Current '$FIREWALL_ZONE' zone rules"
+        echoInfo "INFO: Current '$FIREWALL_ZONE' zone rules"
         firewall-cmd --list-ports
         firewall-cmd --get-active-zones
-        firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
-        echo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mChoose to [R]estart FIREWALL container or [C]ontinue: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        firewall-cmd --zone=$FIREWALL_ZONE --list-all || echoWarn "WARNING: Failed to display current firewall rules"
+        echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
-        echo "INFO: Reinitalizing firewall..."
+        echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
