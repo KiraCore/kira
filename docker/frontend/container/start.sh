@@ -62,17 +62,19 @@ fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
 echo "INFO: Setting up default API configuration..."
-echo "{ \"api_url\": \"http://0.0.0.0:11000/api\" }" > "$CONFIG_JSON"
+echo "{ \"api_url\": \"http://0.0.0.0:11000/api\" }" >"$CONFIG_JSON"
 
 i=0
-while [ $i -le 4 ]; do
-    PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2> /dev/null | awk -F'"' '{ print $2}' || echo "")
-    if [ ! -z "$PUBLIC_IP" ] ; then
+while [ $i -le 5 ]; do
+    i=$((i + 1))
+
+    PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
+    if [ ! -z "$PUBLIC_IP" ]; then
         echo "INFO: Public IP addess '$PUBLIC_IP' was detected"
         INTEREX_AVAILABLE=$(curl http://$PUBLIC_IP:11000/api/status -s -f -o /dev/null && echo "true" || echo "false")
-        if [ "${INTEREX_AVAILABLE,,}" == "true" ] ; then
+        if [ "${INTEREX_AVAILABLE,,}" == "true" ]; then
             echo "INFO: INTEREX is available externally, defaulting to '$PUBLIC_IP'"
-            echo "{ \"api_url\": \"http://$PUBLIC_IP:11000/api\" }" > "$CONFIG_JSON"
+            echo "{ \"api_url\": \"http://$PUBLIC_IP:11000/api\" }" >"$CONFIG_JSON"
             break
         else
             echo "INFO: INTERX is NOT available yet over public network..."
