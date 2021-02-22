@@ -37,11 +37,9 @@ while : ; do
         p1=${addrArr1[0],,}
         p2=${addrArr2[0],,}
         p3=${addrArr2[1],,}
-        
-        nodeId="" && [[ "$p1" =~ ^[a-f0-9]{40}$ ]] && nodeId="$p1"
-        dns="" && [[ "$(echo $p2 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p2" ]] && dns="$p2" # DNS regex
-        [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
 
+        ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
+        ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
         if ! timeout 1 ping -c1 $dns &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
              
         INDEX_TMP=$(echo "${WHITESPACE}${i}." | tail -c 4)
@@ -85,18 +83,14 @@ while : ; do
         p1=${addrArr1[0],,}
         p2=${addrArr2[0],,}
         p3=${addrArr2[1],,}
-        
-        nodeId="" && [[ "$p1" =~ ^[a-f0-9]{40}$ ]] && nodeId="$p1"
-        dns="" && [[ "$(echo $p2 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p2" ]] && dns="$p2" # DNS regex
-        [ -z "$dns" ] && [[ $p2 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dns="$p2" # IP is fine too
-        # port must be a number within the range of <1,65535>
-        port="" && ( [[ $p3 =~ ^[0-9]+$ ]] && (($p3 > 0 || $p3 < 65536)) ) && port="$p3"
+
+        ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
+        ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
+        ($(isPort "$p3")) && port="$p3" || port=""
 
         # in case of missing node id
-        dnsStandalone="" && [[ "$(echo $p1 | grep -P '(?=^.{4,253}$)(^(?:[a-zA-Z](?:(?:[a-zA-Z0-9\-]){0,61}[a-zA-Z])?\.)+[a-zA-Z]{2,}$)')" == "$p1" ]] && dnsStandalone="$p1" # DNS regex
-        [ -z "$dnsStandalone" ] && [[ $p1 =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] && dnsStandalone="$p1" # IP is fine too
-        # portStandalone must be a number within the range of <1,65535>
-        portStandalone="" && ( [[ $p2 =~ ^[0-9]+$ ]] && (($p2 > 0 || $p2 < 65536)) ) && portStandalone="$p2"
+        ($(isDnsOrIp "$p1")) && dnsStandalone="$p1" || dnsStandalone="" 
+        ($(isPort "$p2")) && portStandalone="$p2" || portStandalone=""
 
         # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then
@@ -110,7 +104,7 @@ while : ; do
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
             [ -z "$port" ] && port=$DEFAULT_P2P_PORT
             
-            [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && nodeId="$nodeId" || nodeId=""
+            ($(isNodeId "$nodeId")) && nodeId="$nodeId" || nodeId=""
             dns=$dnsStandalone
             addr="${nodeId}@${dns}:${port}"
         fi
