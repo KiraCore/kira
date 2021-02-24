@@ -11,9 +11,13 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
 rm -fv "$TMP_GENESIS_PATH"
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]] ; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+if [ "${INFRA_MODE,,}" == "validator" ]; then
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+else # INFRA_MODE == "sentry"
+    SELECT="j"
+fi
 
-if [ "${SELECT,,}" == "n" ] ; then
+if [ "${SELECT,,}" == "n" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
     set +e && source "/etc/profile" &>/dev/null && set -e
     rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
