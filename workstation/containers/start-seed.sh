@@ -57,14 +57,14 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+if [ "${EXTERNAL_SYNC,,}" == "true" ]; then
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 else
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CFG_persistent_peers=""
 fi
 
 echo "INFO: Starting seed node..."
@@ -73,9 +73,7 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
-    -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SENTRY_GRPC_PORT:$DEFAULT_GRPC_PORT \
+    -p $KIRA_SEED_P2P_PORT:$DEFAULT_P2P_PORT \
     --hostname $KIRA_SEED_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -90,8 +88,8 @@ docker run -d \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_private_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="true" \
     -e CFG_max_num_outbound_peers="32" \
