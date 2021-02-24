@@ -13,13 +13,13 @@ echo -e "|-----------------------------------------------|"
 displayAlign center $printWidth "Select Deployment Mode"
 displayAlign left $printWidth " [1] | Demo Mode (local testnet)"
 displayAlign left $printWidth " [2] | Validator Mode (mainnet / testnet)"
-# displayAlign left $printWidth " [3] | Full Node Mode (Not ready yet)"
+displayAlign left $printWidth " [3] | Sentry Mode"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c"
 echo ""
 
-while : ; do
+while :; do
   read -n1 -p "Input option: " KEY
   echo ""
 
@@ -42,12 +42,11 @@ while : ; do
     ;;
 
   3*)
-    echo "INFO: Starting Full Node Deployment..."
+    echo "INFO: Starting Sentry Node Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
-    echo "Full Node Deployment mode is not yet ready. Please select other option."
-    exit 1
+    break
     ;;
   x*)
     exit 0
