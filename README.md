@@ -59,6 +59,20 @@ KIRA_INTERX_DNS="interx.servicenet.local"
 KIRA_FRONTEND_DNS="fontend.servicenet.local"
 ```
 
-### 2. Full Node Mode
+### 2. Validator Mode
 
-### 3. Validator Mode
+### 3. Sentry Mode
+```
+KIRA_REGISTRY_SUBNET="10.1.0.0/16"
+KIRA_SENTRY_SUBNET="10.3.0.0/16"
+KIRA_SERVICE_SUBNET="10.4.0.0/16"
+```
+
+```
+KIRA_REGISTRY_DNS="registry.regnet.local"
+KIRA_SEED_DNS="seed.sentrynet.local"
+KIRA_SENTRY_DNS="sentry.sentrynet.local"
+KIRA_PRIV_SENTRY_DNS="priv-sentry.sentrynet.local"
+KIRA_INTERX_DNS="interx.servicenet.local"
+KIRA_FRONTEND_DNS="fontend.servicenet.local"
+```

@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 START_TIME_NETWORKING="$(date -u +%s)"
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT)
+PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT)
 ZONE=$FIREWALL_ZONE
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
@@ -51,6 +51,7 @@ firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
+firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=22/tcp
 
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
@@ -59,6 +60,7 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PO
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
+firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
