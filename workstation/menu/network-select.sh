@@ -6,18 +6,22 @@ source $KIRA_MANAGER/utils.sh
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 
-while : ; do
+while :; do
 
     rm -fv "$TMP_GENESIS_PATH"
     NEW_NETWORK_NAME=""
     NEW_GENESIS_SOURCE=""
     NEW_NETWORK="false"
 
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]] ; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+    if [ "${INFRA_MODE,,}" == "validator" ]; then
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+    else # INFRA_MODE == "sentry"
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+    fi
 
-    if [ "${SELECT,,}" == "n" ] ; then # create new name
+    if [ "${SELECT,,}" == "n" ]; then # create new name
         $KIRA_MANAGER/menu/chain-id-select.sh
-        
+
         set -x
         NEW_NETWORK="true"
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True

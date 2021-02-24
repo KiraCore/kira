@@ -77,7 +77,7 @@ while :; do
     echo "INFO: Starting Advanced Setup..."
     $KIRA_MANAGER/menu/branch-select.sh "false"
 
-    if [ "${INFRA_MODE,,}" == "validator" ]; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ]; then
       $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
     else
       CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
