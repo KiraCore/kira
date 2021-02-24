@@ -100,9 +100,9 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Nodes will be synced from the external seed node"
     CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-sentry.sh
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
+    $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
