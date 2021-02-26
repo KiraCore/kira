@@ -162,9 +162,8 @@ while : ; do
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
-        [ "${CONSENSUS_STOPPED,,}" == "true" ] && \
-        echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m" || \
-        echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[32;1m CONSENSUS RUNNING\e[33;1m"
+        [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
+        [ "${CONSENSUS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[32;1m CONSENSUS RUNNING\e[33;1m"
     else
         KIRA_BLOCK="???"
     fi
