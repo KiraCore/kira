@@ -95,26 +95,26 @@ for name in $CONTAINERS; do
 
     rm -fv "$DESTINATION_PATH.tmp"
 
-    ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
-    echo "$!" > "$DESTINATION_PATH.pid"
-    
-    if [ -z "$ID" ] ; then
+    ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2>/dev/null || echo "")
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &>"$SCAN_LOGS/$name-status.error.log" &
+    echo "$!" >"$DESTINATION_PATH.pid"
+
+    if [ -z "$ID" ]; then
         echo "INFO: Container '$name' is not alive"
-        echo "" > $DESTINATION_STATUS_PATH
+        echo "" >$DESTINATION_STATUS_PATH
         continue
     else
         echo "INFO: Container ID found: $ID"
     fi
-    
-    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot)$ ]] ; then
-        echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
-        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
-    elif [ "${name,,}" == "interx" ] ; then 
+
+    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]]; then
+        echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "") >$DESTINATION_STATUS_PATH &
+        echo "$!" >"$DESTINATION_PATH.sekaid.status.pid"
+    elif [ "${name,,}" == "interx" ]; then
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
-        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH &
+        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2>/dev/null || echo "") >$DESTINATION_STATUS_PATH &
+        echo "$!" >"$DESTINATION_PATH.sekaid.status.pid"
+        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -r '.' 2>/dev/null || echo "") >$INTERX_STATUS_PATH &
     fi
 done
 
