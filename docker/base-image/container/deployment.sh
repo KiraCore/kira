@@ -41,10 +41,10 @@ apt install -y bc dnsutils psmisc
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
 CDHELPER_VERSION="v0.6.50"
-FLUTTER_CHANNEL="beta"
-FLUTTER_VERSION="1.25.0-8.3.pre-$FLUTTER_CHANNEL"
-DART_CHANNEL_PATH="be/raw"
-DART_VERSION="latest"
+FLUTTER_CHANNEL="dev"
+FLUTTER_VERSION="1.27.0-8.0.pre-$FLUTTER_CHANNEL"
+DART_CHANNEL_PATH="dev/release"
+DART_VERSION="2.13.0-59.0.dev"
 
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then

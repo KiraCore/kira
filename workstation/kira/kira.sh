@@ -30,6 +30,7 @@ LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
+VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
@@ -57,8 +58,11 @@ while : ; do
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
     LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
     PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
+    VALOPERS=$(cat $VALOPERS_SCAN_PATH 2> /dev/null || echo "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2> /dev/null || echo "0") %"
-    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2> /dev/null || echo "")" 
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2> /dev/null || echo "")"
+
+    CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.network_stopped' 2> /dev/null || echo "")" && ( [ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ] ) && CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2> /dev/null || echo "")" && ( [ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ] ) && CONSENSUS_STOPPED="???"
 
     if [ -f "$SNAP_DONE" ] ; then
         PROGRESS_SNAP="done" # show done progress
@@ -70,9 +74,9 @@ while : ; do
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
+        CATCHING_UP="false"
         ESSENTIAL_CONTAINERS_COUNT=0
         KIRA_BLOCK=0
-        CATCHING_UP="false"
 
         i=-1
         for name in $CONTAINERS; do
@@ -132,7 +136,7 @@ while : ; do
     DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
 
     [ ! -z "$CPU_UTIL" ] && [ ! -z "$RAM_UTIL" ] && [ ! -z "$DISK_UTIL" ] && \
-    echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:18}${DISK_TMP:0:11} \e[33;1m|"
+    echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
 
     if [ "${LOADING,,}" == "false" ] ; then
         KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.NodeInfo.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
@@ -151,6 +155,15 @@ while : ; do
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
         echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $GENESIS_SUM"
+
+        VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2> /dev/null || echo "")" && ( [ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ] ) && VALACTIVE="???"
+        VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2> /dev/null || echo "")" && ( [ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ] ) && VALTOTAL="???"
+        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.total_waiting' 2> /dev/null || echo "")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
+        VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
+        VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
+        VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
+        [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
+        [ "${CONSENSUS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
     else
         KIRA_BLOCK="???"
     fi
