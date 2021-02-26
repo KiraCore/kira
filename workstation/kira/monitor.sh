@@ -66,16 +66,13 @@ touch "${RAM_SCAN_PATH}.pid" && if ! kill -0 $(cat "${RAM_SCAN_PATH}.pid") 2> /d
     echo "$!" > "${RAM_SCAN_PATH}.pid"
 fi
 
-
 touch "${DISK_SCAN_PATH}.pid" && if ! kill -0 $(cat "${DISK_SCAN_PATH}.pid") 2> /dev/null ; then
     echo "$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%" > $DISK_SCAN_PATH && sleep 60 &
     echo "$!" > "${DISK_SCAN_PATH}.pid"
 fi
 
-touch "${VALOPERS_SCAN_PATH}.pid" && if ! kill -0 $(cat "${VALOPERS_SCAN_PATH}.pid") 2> /dev/null ; then
-    curl "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq || echo "" > $VALOPERS_SCAN_PATH &
-    echo "$!" > "${VALOPERS_SCAN_PATH}.pid"
-fi
+echo "INFO: Saving valopers info..."
+TMPVAL=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "") && echo $TMPVAL > $VALOPERS_SCAN_PATH
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
