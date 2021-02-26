@@ -159,10 +159,12 @@ while : ; do
         VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2> /dev/null || echo "")" && ( [ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ] ) && VALACTIVE="???"
         VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2> /dev/null || echo "")" && ( [ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ] ) && VALTOTAL="???"
         VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.total_waiting' 2> /dev/null || echo "")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
-        VALACTIVE="ACTIVE: ${VALACTIVE}${WHITESPACE}"
-        VALTOTAL="TOTAL: ${VALTOTAL}${WHITESPACE}"
+        VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
+        VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
-        echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m < VALIDATORS"
+        [ "${CONSENSUS_STOPPED,,}" == "true" ] && \
+        echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m" || \
+        echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[32;1m CONSENSUS RUNNING\e[33;1m"
     else
         KIRA_BLOCK="???"
     fi
@@ -190,9 +192,7 @@ while : ; do
     elif [ "${CATCHING_UP,,}" == "true" ] ; then
         echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ] ; then
-        if [ "${CONSENSUS_STOPPED,,}" == "true" ] ; then
-            echo -e "|\e[0m\e[33;1m   WARNING, NETWORK CONSENSUS WAS STOPPED  \e[33;1m|"
-        elif [ ! -z "$VALADDR" ] ; then
+        if [ ! -z "$VALADDR" ] ; then
             [ "${VALSTATUS,,}" == "active" ] && \
             echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS" || \
             echo -e "|\e[0m\e[31;1m   FAILURE, VALIDATOR NODE IS NOT OPERATIONAL  \e[33;1m: $VALSTATUS"
