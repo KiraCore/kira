@@ -41,6 +41,7 @@ while : ; do
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
         ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
         if ! timeout 1 ping -c1 $dns &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
+        [ "${STATUS,,}" == "online" ] && timeout 1 nc -z $dns $p3 &>/dev/null || STATUS="OFFLINE"
              
         INDEX_TMP=$(echo "${WHITESPACE}${i}." | tail -c 4)
         STATUS_TMP="${STATUS}${WHITESPACE}"
@@ -102,7 +103,13 @@ while : ; do
             nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             ( [ -z "$nodeId" ] || [ "${nodeId,,}" == "null" ] ) && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
-            [ -z "$port" ] && port=$DEFAULT_P2P_PORT
+
+            [ ! -z "$port" ] && timeout 1 nc -z $dns $port || port=""
+            [ -z "$port" ] && timeout 1 nc -z $dns 16656 && port="16656" :
+            [ -z "$port" ] && timeout 1 nc -z $dns 26656 && port="26656" :
+            [ -z "$port" ] && timeout 1 nc -z $dns 36656 && port="36656" :
+
+            [ -z "$port" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list, NO exposed P2P ports were found" && continue
             
             ($(isNodeId "$nodeId")) && nodeId="$nodeId" || nodeId=""
             dns=$dnsStandalone

@@ -13,10 +13,10 @@ while :; do
     NEW_GENESIS_SOURCE=""
     NEW_NETWORK="false"
 
-    if [ "${INFRA_MODE,,}" == "validator" ]; then
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
-    else # INFRA_MODE == "sentry"
+    if [ "${INFRA_MODE,,}" == "sentry" ]; then
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+    else
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
     fi
 
     if [ "${SELECT,,}" == "n" ]; then # create new name

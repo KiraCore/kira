@@ -11,10 +11,10 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
 rm -fv "$TMP_GENESIS_PATH"
 
-if [ "${INFRA_MODE,,}" == "validator" ]; then
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
-else # INFRA_MODE == "sentry"
+if [ "${INFRA_MODE,,}" == "sentry" ]; then
     SELECT="j"
+else
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
 fi
 
 if [ "${SELECT,,}" == "n" ]; then
@@ -86,9 +86,16 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoWarn "WARNING: Address '$NODE_ADDR' is not a valid, publicly exposed public node address"
             continue
         fi
-         
-        SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:$DEFAULT_P2P_PORT"
-         
+
+        SEED_NODE_ADDR="" && timeout 1 nc -z $NODE_ADDR 16656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:16656" :
+        [ -z "$SEED_NODE_ADDR" ] && timeout 1 nc -z $NODE_ADDR 26656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656" :
+        [ -z "$SEED_NODE_ADDR" ] && timeout 1 nc -z $NODE_ADDR 36656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656" :
+
+        if [ -z "$SEED_NODE_ADDR" ] ; then
+            echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node, choose diffrent public or private node to connect to"
+            continue
+        fi
+        
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
         set -x
