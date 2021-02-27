@@ -87,18 +87,19 @@ elif [ "${SELECT,,}" == "j" ] ; then
             continue
         fi
 
-        SEED_NODE_ADDR="" && timeout 1 nc -z $NODE_ADDR 16656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:16656" :
-        [ -z "$SEED_NODE_ADDR" ] && timeout 1 nc -z $NODE_ADDR 26656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656" :
-        [ -z "$SEED_NODE_ADDR" ] && timeout 1 nc -z $NODE_ADDR 36656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656" :
+        set -x
+        SEED_NODE_ADDR="" && timeout 2 nc -z $NODE_ADDR 16656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:16656" || echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'"
+        [ -z "$SEED_NODE_ADDR" ] && timeout 2 nc -z $NODE_ADDR 26656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656" || echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'"
+        [ -z "$SEED_NODE_ADDR" ] && timeout 2 nc -z $NODE_ADDR 36656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656" || echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'"
 
         if [ -z "$SEED_NODE_ADDR" ] ; then
+            set +x
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node, choose diffrent public or private node to connect to"
             continue
         fi
         
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-        set -x
         if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
             echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
