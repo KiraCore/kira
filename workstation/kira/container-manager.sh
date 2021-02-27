@@ -369,4 +369,4 @@ while : ; do
     fi
 done
 
-echo "INFO: Contianer Manager Stopped"
+echo "INFO: Container Manager Stopped"
