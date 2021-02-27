@@ -45,13 +45,20 @@ firewall-cmd --permanent --zone=$ZONE --set-target=default
 firewall-cmd --permanent --zone=$ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$ZONE --add-source="$ALL_IP"
 
+if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
+else
+    firewall-cmd --permanent --zone=$ZONE --remove-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$ZONE --remove-source-port=$KIRA_SEED_P2P_PORT/tcp
+fi
+
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_INTERX_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
-firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=22/tcp
 
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
@@ -60,7 +67,6 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PO
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
-firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"

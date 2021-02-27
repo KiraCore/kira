@@ -33,8 +33,8 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
@@ -45,15 +45,6 @@ if [ -f "$KIRA_SNAP_PATH" ]; then
     cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
 fi
 
-COMMON_PEERS_PATH="$COMMON_PATH/peers"
-COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
-PEERS_PATH="$KIRA_CONFIGS/public_peers"
-SEEDS_PATH="$KIRA_CONFIGS/public_seeds"
-touch "$PEERS_PATH" "$SEEDS_PATH"
-
-cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
-cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
-
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
@@ -61,7 +52,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ]; then
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 else
     CFG_seeds=""
     CFG_persistent_peers=""
@@ -83,17 +74,17 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
-    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID" \
+    -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID,$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID" \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="true" \
     -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="8" \
+    -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \

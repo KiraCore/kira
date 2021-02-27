@@ -34,7 +34,7 @@ for name in $CONTAINERS; do
         echo "INFO: Container ID found: $ID"
     fi
     
-    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot)$ ]] ; then
+    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
     elif [ "${name,,}" == "interx" ] ; then 
