@@ -88,9 +88,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
 
         set -x
-        SEED_NODE_ADDR="" && timeout 2 nc -z $NODE_ADDR 16656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:16656" || echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'"
-        [ -z "$SEED_NODE_ADDR" ] && timeout 2 nc -z $NODE_ADDR 26656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656" || echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'"
-        [ -z "$SEED_NODE_ADDR" ] && timeout 2 nc -z $NODE_ADDR 36656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656" || echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'"
+        SEED_NODE_ADDR="" && ( timeout 2 nc -z $NODE_ADDR 16656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:16656" || echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" )
+        [ -z "$SEED_NODE_ADDR" ] && ( timeout 2 nc -z $NODE_ADDR 26656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656" || echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" )
+        [ -z "$SEED_NODE_ADDR" ] && ( timeout 2 nc -z $NODE_ADDR 36656 && SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656" || echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" )
 
         if [ -z "$SEED_NODE_ADDR" ] ; then
             set +x
