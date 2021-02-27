@@ -102,6 +102,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
 
     $KIRA_MANAGER/containers/start-sentry.sh
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
+    $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
