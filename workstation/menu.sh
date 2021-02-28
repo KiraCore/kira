@@ -1,6 +1,5 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
-
 source $KIRA_MANAGER/utils.sh
 set +x
 
@@ -44,6 +43,7 @@ while :; do
   3*)
     echo "INFO: Starting Sentry Mode Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     break

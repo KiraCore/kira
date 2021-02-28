@@ -57,6 +57,18 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 fi
 
+if [ -z "$CFG_external_address" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ) ; then
+    echo "INFO: Scanning external address..."
+    PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
+
+    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then
+       echo "INFO: Node public address '$PUBLIC_IP' was found"
+       CFG_external_address="tcp://$PUBLIC_IP:$EXTERNAL_P2P_PORT"
+    else
+       echo "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
+    fi
+fi
+
 rm -fv $LOCAL_GENESIS
 cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 $SELF_CONTAINER/configure.sh

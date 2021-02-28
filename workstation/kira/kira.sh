@@ -34,6 +34,7 @@ VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
+CONTAINERS_COUNT="0"
 
 echo "INFO: Restarting network scanner..."
 systemctl daemon-reload

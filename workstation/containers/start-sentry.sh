@@ -98,6 +98,8 @@ docker run -d \
     -e CFG_max_num_inbound_peers="8" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
+    -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
+    -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

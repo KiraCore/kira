@@ -77,15 +77,18 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
+    -e CFG_external_address="" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID,$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID" \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_addr_book_strict="false" \
+    -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
+    -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
+    -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
