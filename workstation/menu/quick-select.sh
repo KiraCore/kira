@@ -89,8 +89,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         set -x
         NODE_PORT="" && if timeout 2 nc -z $NODE_ADDR 16656 ; then  NODE_PORT="16656" ; else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
-        [ -z "$NODE_PORT" ] && if timeout 2 nc -z $NODE_ADDR 26656 ; then  NODE_PORT="26656" ; else echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
-        [ -z "$NODE_PORT" ] && if timeout 2 nc -z $NODE_ADDR 36656 ; then  NODE_PORT="36656" ; else echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
+        if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 26656 ; then  NODE_PORT="26656" ; else echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
+        if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 36656 ; then  NODE_PORT="36656" ; else echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
 
         if [ -z "$NODE_PORT" ] ; then
             set +x
@@ -98,7 +98,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             continue
         fi
         
-        SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:36656"
+        SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:${NODE_PORT}"
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
         if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
