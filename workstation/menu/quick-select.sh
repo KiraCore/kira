@@ -8,6 +8,7 @@ mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
+VALIDATOR_MIN_HEIGHT="0"
 
 rm -fv "$TMP_GENESIS_PATH"
 
@@ -22,7 +23,6 @@ if [ "${SELECT,,}" == "n" ]; then
     set +e && source "/etc/profile" &>/dev/null && set -e
     rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     CHAIN_ID="$NETWORK_NAME"
-    VALIDATOR_MIN_HEIGHT="0"
     SEED_NODE_ADDR=""
     GENSUM=""
     SNAPSUM=""
@@ -205,7 +205,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
              
             echoInfo "INFO: Genesis file verification suceeded"
         fi
-             
+         
         GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo "")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
@@ -219,6 +219,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 ( [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 break
             done
+        else
+            VALIDATOR_MIN_HEIGHT=$HEIGHT
         fi
 
         echo "INFO: Startup configuration was finalized"
