@@ -166,12 +166,12 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
         sleep 30
     done
 
-    echo "INFO: Halting $CONTAINER_NAME container"
+    echoInfo "INFO: Halting $CONTAINER_NAME container"
     touch $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
+    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     
-    echo "INFO: Creating new snapshot..."
+    echoInfo "INFO: Creating new snapshot..."
 
     DATA_DIR="$SEKAID_HOME/data"
     LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
@@ -193,7 +193,9 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
-    echo "INFO: New snapshot was created!"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed tocreate snpashoot, file $DESTINATION_FILE was not found." && exit 1
+
+    echoInfo "INFO: New snapshot was created!"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 

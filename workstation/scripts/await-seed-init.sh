@@ -155,35 +155,5 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
         set -x
         sleep 30
     done
-
-    echo "INFO: Halting $CONTAINER_NAME container"
-    touch $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-    
-    echo "INFO: Creating new snapshot..."
-
-    DATA_DIR="$SEKAID_HOME/data"
-    LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-    SNAP_STATUS="$KIRA_SNAP/status"
-    
-    SNAP_FILENAME="${NETWORK_NAME}-$HEIGHT-$(date -u +%s).zip"
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_FILENAME"
-
-    mkdir -p $SNAP_STATUS
-    echo "$SNAP_FILENAME" > "$KIRA_SNAP/status/latest"
-
-    docker exec -i "$CONTAINER_NAME" bash -c "cp -v -f $SEKAID_HOME/config/genesis.json $DATA_DIR"
-    docker exec -i "$CONTAINER_NAME" bash -c "echo {'"'"'height'"'"':$HEIGHT} > $DATA_DIR/snapinfo.json"
-    docker exec -i "$CONTAINER_NAME" bash -c "cd $SEKAID_HOME/data && zip -r -v /snap/$SNAP_FILENAME . *"
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    echo "INFO: Un-Halting $CONTAINER_NAME container"
-    rm -fv $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-
-    echo "INFO: New snapshot was created!"
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 

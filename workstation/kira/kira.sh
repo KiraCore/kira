@@ -256,8 +256,9 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
     
-    [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
-    echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    if ( [ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] ) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ] ; then
+        echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    fi
 
     if [ ! -z "$KIRA_SNAP_PATH" ] ; then
         [ "${SNAP_EXPOSE,,}" == "false" ] && \
