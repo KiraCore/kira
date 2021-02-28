@@ -25,8 +25,8 @@ for name in $CONTAINERS; do
     echo "INFO: Processing container $name"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
-    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH" "$DOCKER_COMMON/$name/public_ip" "$DOCKER_COMMON/$name/local_ip"
     mkdir -p "$DOCKER_COMMON/$name"
+    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH" "$DOCKER_COMMON/$name/public_ip" "$DOCKER_COMMON/$name/local_ip"
     
     [ ! -z "$PUBLIC_IP" ] && echo "$PUBLIC_IP" > "$DOCKER_COMMON/$name/public_ip"
     [ ! -z "$LOCAL_IP" ] && echo "$LOCAL_IP" > "$DOCKER_COMMON/$name/local_ip"

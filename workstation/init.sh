@@ -150,7 +150,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude
         
         apt update -y
-        apt install -y bc dnsutils psmisc 
+        apt install -y bc dnsutils psmisc netcat
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"

@@ -36,7 +36,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     jq 
 
 apt update -y
-apt install -y bc dnsutils psmisc 
+apt install -y bc dnsutils psmisc netcat
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
