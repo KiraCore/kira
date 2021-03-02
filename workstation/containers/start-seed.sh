@@ -84,6 +84,7 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
+    -e CFG_allow_duplicate_ip="true" \
     -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
