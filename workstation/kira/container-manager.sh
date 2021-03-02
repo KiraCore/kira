@@ -68,7 +68,7 @@ while : ; do
         fi
     fi
 
-    if [ "${NAME,,}" == "interx" ] || [ "${NAME,,}" == "validator" ] || [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] ; then
+    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.NodeInfo.id' 2> /dev/null || echo "")
@@ -159,10 +159,10 @@ while : ; do
             fi
         done
         
-        if [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "seed" ] ; then
+        if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
             EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
             EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
-            EX_ADDR="${EX_ADDR}${WHITESPACE}"
+            EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
             [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
             echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
         fi
