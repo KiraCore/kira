@@ -121,7 +121,7 @@ while : ; do
     fi
 
     printf "\033c"
-    
+
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER v0.0.9           : $INFRA_MODE mode"
@@ -362,6 +362,7 @@ while : ; do
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
         systemctl stop kirascan
+        rm -f /dev/null; mknod -m 666 /dev/null c 1 3
         exit 0
     fi
 
