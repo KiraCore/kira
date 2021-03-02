@@ -75,6 +75,8 @@ fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
 DEFAULT_INTERX_PORT=11000
+echo "INFO: Printing current config file:"
+cat $CONFIG_JSON || echo "WARNINIG: Failed to print config file"
 echo "INFO: Setting up default API configuration..."
 echo "{ \"api_url\": \"http://0.0.0.0:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
 

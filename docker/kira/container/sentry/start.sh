@@ -26,7 +26,7 @@ else
     echo "INFO: Node will be synchronised from external networks"
 fi
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] ; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
