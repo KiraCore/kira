@@ -103,7 +103,7 @@ docker run -d \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
-    -v $DOCKER_COMMON_RO:ro /common_ro \
+    -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME

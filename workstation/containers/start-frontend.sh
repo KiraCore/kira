@@ -42,7 +42,7 @@ docker run -d \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -v $COMMON_PATH:/common \
-    -v $DOCKER_COMMON_RO:ro /common_ro \
+    -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME

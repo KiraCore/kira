@@ -115,7 +115,7 @@ docker run -d \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
-    -v $DOCKER_COMMON_RO:ro /common_ro \
+    -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest # use sentry image as base
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
