@@ -27,7 +27,7 @@ else
 fi
 
 while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
-  echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+  echo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"
   sleep 5
 done
 LOCAL_IP=$(cat $LIP_FILE || echo "")

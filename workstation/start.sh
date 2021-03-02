@@ -87,6 +87,13 @@ set -x
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
+echoInfo "INFO: Updating IP addresses info..."
+
+PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 2>/dev/null | awk -F'"' '{ print $2}')
+LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{print $2}' 2>/dev/null | cut -f2 2>/dev/null || echo "0.0.0.0")
+($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
+($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
+
 echoInfo "INFO: Starting containers..."
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echoInfo "INFO: Nodes will be synced from the pre-generated genesis"

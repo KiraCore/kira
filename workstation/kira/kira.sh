@@ -26,8 +26,6 @@ NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 DISK_SCAN_PATH="$SCAN_DIR/disk"
 CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
-LIP_SCAN_PATH="$SCAN_DIR/lip"
-IP_SCAN_PATH="$SCAN_DIR/ip"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
@@ -57,8 +55,8 @@ while : ; do
     CPU_UTIL=$(cat $CPU_SCAN_PATH 2> /dev/null || echo "")
     RAM_UTIL=$(cat $RAM_SCAN_PATH 2> /dev/null || echo "")
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
-    LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
-    PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
+    LOCAL_IP=$(cat $DOCKER_COMMON_RO/local_ip 2> /dev/null || echo "0.0.0.0")
+    PUBLIC_IP=$(cat $DOCKER_COMMON_RO/public_ip 2> /dev/null || echo "")
     VALOPERS=$(cat $VALOPERS_SCAN_PATH 2> /dev/null || echo "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2> /dev/null || echo "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2> /dev/null || echo "")"
@@ -122,12 +120,8 @@ while : ; do
         CONTAINERS_COUNT=$((i + 1))
     fi
 
-    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
-    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
-    [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
-
     printf "\033c"
-
+    
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER v0.0.9           : $INFRA_MODE mode"
