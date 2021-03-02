@@ -158,6 +158,14 @@ while : ; do
                 echo "| Local IP: ${IP_TMP:0:43} |"
             fi
         done
+        
+        if [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "seed" ] ; then
+            EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
+            EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
+            EX_ADDR="${EX_ADDR}${WHITESPACE}"
+            [ "${EX_ADDR_STATUS,,}" == "online" ] && "\e[32;1m$EX_ADDR_STATUS\e[33;1m" || "\e[31;1m$EX_ADDR_STATUS\e[33;1m"
+            echo "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
+        fi
     fi
 
     ALLOWED_OPTIONS="x"

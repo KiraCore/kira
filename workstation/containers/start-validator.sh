@@ -102,6 +102,7 @@ docker run -d \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
+    -v $DOCKER_COMMON_RO:ro /common_ro \
     kira:latest
 
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."

@@ -52,6 +52,7 @@ docker run -d \
     -e CFG_rpc="http://sentry:26657" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
     -v $COMMON_PATH:/common \
+    -v $DOCKER_COMMON_RO:ro /common_ro \
     $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME

@@ -60,7 +60,7 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
 wait
 
-rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON"
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
 
 echoInfo "INFO: All images were updated"
 

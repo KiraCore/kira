@@ -101,6 +101,7 @@ docker run -d \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
+    -v $DOCKER_COMMON_RO:ro /common_ro \
     kira:latest
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME

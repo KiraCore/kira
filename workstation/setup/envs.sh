@@ -51,6 +51,8 @@ RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 DOTNET_ROOT="/usr/bin/dotnet"
 SOURCES_LIST="/etc/apt/sources.list.d"
 DOCKER_COMMON="/docker/shared/common"
+# read only common directory
+DOCKER_COMMON_RO="/docker/shared/common_ro"
 
 DARTBIN="/usr/lib/dart/bin"
 FLUTTERROOT="/usr/lib/flutter"
@@ -60,10 +62,7 @@ BREWBIN="/home/$KIRA_USER/.linuxbrew/bin"
 MANPATH="/home/$KIRA_USER/.linuxbrew/share/man:\$MANPATH"
 INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
-mkdir -p $KIRA_STATE
-mkdir -p "/home/$KIRA_USER/.cargo"
-mkdir -p "/home/$KIRA_USER/Desktop"
-mkdir -p $SOURCES_LIST
+mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
 SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.66-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
@@ -100,6 +99,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
 
     CDHelper text lineswap --insert="HOSTS_PATH=$HOSTS_PATH" --prefix="HOSTS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRAMGR_SCRIPTS=$KIRAMGR_SCRIPTS" --prefix="KIRAMGR_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="SOURCES_LIST=$SOURCES_LIST" --prefix="SOURCES_LIST=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_IMG=$KIRA_IMG" --prefix="KIRA_IMG=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -86,6 +86,18 @@ else
     echo "" >$VALSTATUS_SCAN_PATH
 fi
 
+echo "INFO: Updating IP addresses info..."
+PUBLIC_IP=$(cat $IP_SCAN_PATH 2>/dev/null || echo "") && ( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=""
+LOCAL_IP=$(cat $LIP_SCAN_PATH 2>/dev/null || echo "") && ( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=""
+
+mkdir -p "$DOCKER_COMMON_RO"
+touch "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
+
+[ ! -z "$PUBLIC_IP" ] && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
+[ ! -z "$LOCAL_IP" ] && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
+
+echo "INFO: Local and Public IP addresses were updated"
+
 wait $PID1
 wait $PID2
 

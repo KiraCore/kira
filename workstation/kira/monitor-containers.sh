@@ -14,22 +14,12 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 
 NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
 CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
-
-echo "INFO: Updating IP addresses info..."
-PUBLIC_IP=$(cat $IP_SCAN_PATH 2>/dev/null || echo "") && ( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=""
-LOCAL_IP=$(cat $LIP_SCAN_PATH 2>/dev/null || echo "") && ( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=""
-
-echo "INFO: Updating IP addresses info..."
-CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 for name in $CONTAINERS; do
     echo "INFO: Processing container $name"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     mkdir -p "$DOCKER_COMMON/$name"
-    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH" "$DOCKER_COMMON/$name/public_ip" "$DOCKER_COMMON/$name/local_ip"
-    
-    [ ! -z "$PUBLIC_IP" ] && echo "$PUBLIC_IP" > "$DOCKER_COMMON/$name/public_ip"
-    [ ! -z "$LOCAL_IP" ] && echo "$LOCAL_IP" > "$DOCKER_COMMON/$name/local_ip"
+    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH"
 
     rm -fv "$DESTINATION_PATH.tmp"
 

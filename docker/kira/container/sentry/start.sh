@@ -7,9 +7,13 @@ echo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 SNAP_FILE="$COMMON_DIR/snap.zip"
+LIP_FILE="$COMMON_READ/local_ip"
+PIP_FILE="$COMMON_READ/public_ip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_DIR/genesis.json"
+
+echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     echo "INFO: Checking if sentry can be synchronized from the validator node..."
@@ -22,12 +26,16 @@ else
     echo "INFO: Node will be synchronised from external networks"
 fi
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
+while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] ; do
   echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
+LOCAL_IP=$(cat $LIP_FILE || echo "")
+PUBLIC_IP=$(cat $PIP_FILE || echo "")
 
 echo "INFO: Sucess, genesis file was found!"
+echo "INFO: Local IP: $LOCAL_IP"
+echo "INFO: Public IP: $PUBLIC_IP"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
@@ -57,18 +65,37 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 fi
 
-if [ -z "$CFG_external_address" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ) ; then
+EXTERNAL_ADDR=""
+if [ ! -z "$EXTERNAL_DOMAIN" ] ; then
+    echo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
+    EXTERNAL_ADDR="$EXTERNAL_DOMAIN"
+elif [ -z "$CFG_external_address" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ) ; then
     echo "INFO: Scanning external address..."
-    PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
+    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
+    if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
+    [ -z "$EXTERNAL_IP" ] && PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
 
-    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then
-       echo "INFO: Node public address '$PUBLIC_IP' was found"
-       CFG_external_address="tcp://$PUBLIC_IP:$EXTERNAL_P2P_PORT"
-       CDHelper text lineswap --insert="CFG_external_address=$CFG_external_address" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
+    if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then
+       echo "INFO: Node public address '$EXTERNAL_IP' was found"
+       EXTERNAL_ADDR="$EXTERNAL_IP"
     else
        echo "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
     fi
+else
+    echo "INFO: Node external address will not be advertised to other nodes"
 fi
+
+CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if [ ! -z "$EXTERNAL_ADDR" ] ; then
+    CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
+    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
+else
+    CFG_external_address="tcp://0.0.0.0:$EXTERNAL_P2P_PORT"
+    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
+fi
+
+CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv $LOCAL_GENESIS
 cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
