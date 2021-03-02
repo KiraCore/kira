@@ -85,7 +85,7 @@ while : ; do
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.0.10             |"
+    echo "|            KIRA CONTAINER MANAGER v0.0.11             |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -163,8 +163,8 @@ while : ; do
             EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
             EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
             EX_ADDR="${EX_ADDR}${WHITESPACE}"
-            [ "${EX_ADDR_STATUS,,}" == "online" ] && "\e[32;1m$EX_ADDR_STATUS\e[33;1m" || "\e[31;1m$EX_ADDR_STATUS\e[33;1m"
-            echo "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
+            [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
+            echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
         fi
     fi
 

@@ -86,7 +86,7 @@ while [ $i -le 5 ]; do
 
     if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
     if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
-    [ -z "$EXTERNAL_IP" ] && PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
+
     if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $DEFAULT_INTERX_PORT ; then
         echo "INFO: Public IP addess '$EXTERNAL_IP' was detected"
         INTEREX_AVAILABLE=$(curl http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api/status -s -f -o /dev/null && echo "true" || echo "false")

@@ -65,37 +65,36 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 fi
 
-EXTERNAL_ADDR=""
-if [ ! -z "$EXTERNAL_DOMAIN" ] ; then
-    echo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
-    EXTERNAL_ADDR="$EXTERNAL_DOMAIN"
-elif [ -z "$CFG_external_address" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ) ; then
-    echo "INFO: Scanning external address..."
-    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
-    if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
-    [ -z "$EXTERNAL_IP" ] && PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
 
-    if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then
-       echo "INFO: Node public address '$EXTERNAL_IP' was found"
-       EXTERNAL_ADDR="$EXTERNAL_IP"
-    else
-       echo "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
+if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]  ; then
+    if [ ! -z "$EXTERNAL_DOMAIN" ] ; then
+        echo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
+        EXTERNAL_ADDR="$EXTERNAL_DOMAIN"
+    elif [ -z "$CFG_external_address" ] ; then
+        echo "INFO: Scanning external address..."
+        if [ ! -z "$PUBLIC_IP" ] && timeout 3 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
+        if [ -z "$EXTERNAL_IP" ] && timeout 3 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
+
+        if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $EXTERNAL_P2P_PORT ; then
+           echo "INFO: Node public address '$EXTERNAL_IP' was found"
+           EXTERNAL_ADDR="$EXTERNAL_IP"
+        else
+            echo "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
+        fi
+    fi
+
+    if [ ! -z "$EXTERNAL_ADDR" ] ; then
+        CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
+        echo "$CFG_external_address" > "$COMMON_DIR/external_address"
+        CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
+    elif [ -z "$CFG_external_address" ] ; then
+        CFG_external_address=""
+        echo "tcp://0.0.0.0:$EXTERNAL_P2P_PORT" > "$COMMON_DIR/external_address"
     fi
 else
     echo "INFO: Node external address will not be advertised to other nodes"
 fi
-
-CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-
-if [ ! -z "$EXTERNAL_ADDR" ] ; then
-    CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
-    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
-else
-    CFG_external_address="tcp://0.0.0.0:$EXTERNAL_P2P_PORT"
-    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
-fi
-
-CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv $LOCAL_GENESIS
 cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
