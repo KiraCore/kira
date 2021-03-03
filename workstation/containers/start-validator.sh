@@ -46,19 +46,15 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
-GENESIS_DESTINATION="$DOCKER_COMMON/tmp/genesis.json"
-
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    rm -fv "$COMMON_PATH/genesis.json"
-    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
     CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 else
-    echoInfo "INFO: Synchronisation using internal genesis file ($GENESIS_DESTINATION) will be performed"
-    rm -fv $GENESIS_DESTINATION "$COMMON_PATH/genesis.json" "$DOCKER_COMMON/sentry/genesis.json" "$DOCKER_COMMON/priv_sentry/genesis.json" "$DOCKER_COMMON/snapshot/genesis.json"
+    echoInfo "INFO: Synchronisation using internal (self genrated) genesis file will be performed"
+    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file is present in the destination directory '$LOCAL_GENESIS_PATH' before generation attempt took place"
     CFG_seeds=""
     CFG_persistent_peers=""
 fi
@@ -99,22 +95,11 @@ docker run -d \
     kira:latest
 
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
-$KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$GENESIS_DESTINATION" "$VALIDATOR_NODE_ID" || exit 1
-
-if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
-    echoInfo "INFO: Cloning internal genesis file..."
-    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/validator/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshot/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$LOCAL_GENESIS_PATH"
-
-    GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
+$KIRAMGR_SCRIPTS/await-validator-init.sh "$DOCKER_COMMON" "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo "")
 if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
@@ -122,4 +107,5 @@ else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
 
+CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"

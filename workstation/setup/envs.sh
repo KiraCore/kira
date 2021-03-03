@@ -64,7 +64,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.66-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.67-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -100,6 +100,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="HOSTS_PATH=$HOSTS_PATH" --prefix="HOSTS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$DOCKER_COMMON_RO/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRAMGR_SCRIPTS=$KIRAMGR_SCRIPTS" --prefix="KIRAMGR_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="SOURCES_LIST=$SOURCES_LIST" --prefix="SOURCES_LIST=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_IMG=$KIRA_IMG" --prefix="KIRA_IMG=" --path=$ETC_PROFILE --append-if-found-not=True

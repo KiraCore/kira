@@ -23,7 +23,7 @@ INTERX_SNAPSHOT_PATH="$INTERX_REDERENCE_DIR/snapshot.zip"
 
 set +x
 echo "------------------------------------------------"
-echo "|       STARTING KIRA SNAPSHOOT SCAN           |"
+echo "|       STARTING KIRA SNAPSHOT SCAN            |"
 echo "|-----------------------------------------------"
 echo "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echo "|          SNAP_EXPOSE: $SNAP_EXPOSE"

@@ -51,8 +51,6 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
     CFG_persistent_peers="tcp://$SENTRY_SEED"
 else

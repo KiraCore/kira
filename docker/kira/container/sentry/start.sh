@@ -15,7 +15,7 @@ LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-COMMON_GENESIS="$COMMON_DIR/genesis.json"
+COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
@@ -62,14 +62,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
       SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
       if [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
-          echoErr "ERROR: Expected genesis checksum of the snapshoot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+          echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1
       else
           echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
-
-      rm -fv $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshot genesis into common folder
     fi
 
     # snap file should only be removed if sentry is a snapshot container otherwise it is supplied from read only volume and can't be modify by a container

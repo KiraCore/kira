@@ -60,9 +60,11 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
 wait
 
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
+echoInfo "INFO: All images were updated, setting up configuration files & variables..."
 
-echoInfo "INFO: All images were updated"
+cp -afv "$LOCAL_GENESIS_PATH" "/tmp/genesis.json"
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
+[ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$LOCAL_GENESIS_PATH" || cp -afv  "/tmp/genesis.json" "$LOCAL_GENESIS_PATH"
 
 if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x
@@ -94,44 +96,60 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{
 ($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
 ($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
 
+echoInfo "INFO: Setting up snapshoots and geesis file..."
+
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
 fi
 
-echoInfo "INFO: Starting containers..."
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-    CDHelper text lineswap --insert="EXTERNAL_SYNC=false" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+    EXTERNAL_SYNC="false"
+elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    echoInfo "INFO: Nodes will be synced from the external seed node"
+    EXTERNAL_SYNC="true"
+elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [ ! -f "$KIRA_SNAP_PATH" ] ; then
+        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
+        EXTERNAL_SYNC="false"
+    else
+        echoInfo "INFO: Nodes will be synced from the external seed node"
+        EXTERNAL_SYNC="true"
+    fi
+else
+  echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+  exit 1
+fi
 
+CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    echoInfo "INFO: Attempting to access genesis file from local configuration..."
+    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
+fi
+
+echoInfo "INFO: Starting '${INFRA_MODE,,} mode' setup, external sync '$EXTERNAL_SYNC' ..."
+if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh 
     $KIRA_MANAGER/containers/start-sentry.sh 
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    echoInfo "INFO: Nodes will be synced from the external seed node"
-    CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
     $KIRA_MANAGER/containers/start-sentry.sh
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
     $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] ; then
-        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-        CDHelper text lineswap --insert="EXTERNAL_SYNC=false" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
+    if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
     else
-        echoInfo "INFO: Nodes will be synced from the external seed node"
-        CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
         $KIRA_MANAGER/containers/start-sentry.sh
 
         if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then

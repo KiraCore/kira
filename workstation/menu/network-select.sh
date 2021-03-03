@@ -105,7 +105,7 @@ while :; do
     echo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     
-    if [ -f "$TMP_GENESIS_PATH" ] ; then # if fenesis was imported then replace locally
+    if [ -f "$TMP_GENESIS_PATH" ] ; then # if genesis was imported then replace locally
         echo "INFO: Backing up new genesis file..."
         rm -fv "$LOCAL_GENESIS_PATH"
         cp -a -f -v $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH

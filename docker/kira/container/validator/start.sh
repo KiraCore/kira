@@ -10,7 +10,7 @@ SNAP_FILE="$COMMON_DIR/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
-COMMON_GENESIS="$COMMON_DIR/genesis.json"
+COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
@@ -35,10 +35,15 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     unzip $SNAP_FILE -d "$DATA_DIR"
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-      rm -fv $COMMON_GENESIS
-      cp -vaf $DATA_GENESIS $COMMON_GENESIS
-      cp -vaf $DATA_GENESIS $LOCAL_GENESIS
+      echo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      if [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
+          echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+          exit 1
+      else
+          echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+      fi
       # no need for creating new genesis if one was already supplied externally
       EXTERNAL_SYNC="true"
     fi
@@ -85,9 +90,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       rm -fv $LOCAL_GENESIS
       cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
   fi
-
-  rm -fv $COMMON_GENESIS
-  cp -a -v -f $LOCAL_GENESIS $COMMON_GENESIS
 
   echo "INFO: genesis.json SHA256 checksum:"
   sha256sum $COMMON_GENESIS

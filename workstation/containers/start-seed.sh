@@ -41,15 +41,8 @@ cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ]; then
-    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-else
-    CFG_seeds=""
-    CFG_persistent_peers=""
-fi
+CFG_seeds=""
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
 echo "INFO: Starting seed node..."
 
@@ -95,12 +88,8 @@ docker run -d \
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-seed-init.sh "$CONTAINER_NAME" "$SEED_NODE_ID" || exit 1
 
-if [ -z "$GENESIS_SHA256" ] ; then
-    GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
 echoInfo "INFO: Checking genesis SHA256 hash"
+GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo "")
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
 if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"

@@ -211,7 +211,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="PRIVATE_PEERS=$KIRA_CONFIGS/private_peers" --prefix="PRIVATE_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PUBLIC_SEEDS=$KIRA_CONFIGS/public_seeds" --prefix="PUBLIC_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PRIVATE_SEEDS=$KIRA_CONFIGS/private_seeds" --prefix="PRIVATE_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$KIRA_CONFIGS/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
