@@ -40,7 +40,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       cp -vaf $DATA_GENESIS $COMMON_GENESIS
       cp -vaf $DATA_GENESIS $LOCAL_GENESIS
       # no need for creating new genesis if one was already supplied externally
-      EXTERNAL_SYNC="false"
+      EXTERNAL_SYNC="true"
     fi
 
     rm -fv "$SNAP_FILE"
