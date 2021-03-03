@@ -19,16 +19,16 @@ COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
-if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
-    echo "INFO: Checking if sentry can be synchronized from the validator node..."
-    while ! ping -c1 validator &>/dev/null ; do
-      echo "INFO: Waiting for ping response form validator node... ($(date))"
-      sleep 5
-    done
-    echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
-else
-    echo "INFO: Node will be synchronised from external networks"
-fi
+#if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
+#    echo "INFO: Checking if sentry can be synchronized from the validator node..."
+#    while ! ping -c1 validator &>/dev/null ; do
+#      echo "INFO: Waiting for ping response form validator node... ($(date))"
+#      sleep 5
+#    done
+#    echo "INFO: Validator IP Found: $(getent hosts validator | awk '{ print $1 }')"
+#else
+#    echo "INFO: Node will be synchronised from external networks"
+#fi
 
 while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
   echo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"

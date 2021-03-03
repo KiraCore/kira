@@ -11,6 +11,7 @@ DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
+NEW_NETWORK="false"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
@@ -45,7 +46,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
           echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
       # no need for creating new genesis if one was already supplied externally
-      EXTERNAL_SYNC="true"
+      NEW_NETWORK="true"
     fi
 
     rm -fv "$SNAP_FILE"
@@ -72,7 +73,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
 
-  if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
+  if [ "${NEW_NETWORK,,}" == "false" ] ; then
     echo "INFO: Genesis file was NOT found, attempting to create new one"
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME

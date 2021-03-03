@@ -50,13 +50,16 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-else
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-fi
+#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+#    CFG_seeds=""
+#    CFG_persistent_peers="tcp://$SENTRY_SEED"
+#else
+#    CFG_seeds=""
+#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+#fi
+
+CFG_seeds=""
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED"
 
 echo "INFO: Starting $CONTAINER_NAME node..."
 

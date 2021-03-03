@@ -40,8 +40,8 @@ while [ $i -le 40 ]; do
     fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then 
-        echoInfo "INFO: Attempting to access genesis file..."
+    if [ "${NEW_NETWORK,,}" == "true" ] ; then 
+        echoInfo "INFO: Attempting to access genesis file of the new network..."
         docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $LOCAL_GENESIS_PATH || rm -fv $LOCAL_GENESIS_PATH
     fi
 

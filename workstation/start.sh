@@ -96,7 +96,7 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{
 ($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
 ($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
 
-echoInfo "INFO: Setting up snapshoots and geesis file..."
+echoInfo "INFO: Setting up snapshots and geesis file..."
 
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 if [ -f "$KIRA_SNAP_PATH" ] ; then
@@ -111,23 +111,25 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Nodes will be synced from the external seed node"
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [ ! -f "$KIRA_SNAP_PATH" ] ; then
-        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-        EXTERNAL_SYNC="false"
-    else
+    if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
         echoInfo "INFO: Nodes will be synced from the external seed node"
         EXTERNAL_SYNC="true"
+    else
+        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
+        EXTERNAL_SYNC="false"
     fi
 else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
   exit 1
 fi
 
-CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+if [ "${NEW_NETWORK,,}" != "true" ] ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
-    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
+    [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
+else
+    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was present before network was instantiated!" && exit 1
 fi
 
 echoInfo "INFO: Starting '${INFRA_MODE,,} mode' setup, external sync '$EXTERNAL_SYNC' ..."
@@ -143,7 +145,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
+    if [ "${NEW_NETWORK,,}" == "true" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
@@ -152,12 +154,10 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     else
         $KIRA_MANAGER/containers/start-sentry.sh
 
-        if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
-            echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
-            SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-            echo "$SENTRY_SEED" > $PRIVATE_SEEDS
-            $KIRA_MANAGER/containers/start-priv-sentry.sh 
-        fi
+        #echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
+        #SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+        #echo "$SENTRY_SEED" > $PRIVATE_SEEDS
+        #$KIRA_MANAGER/containers/start-priv-sentry.sh 
 
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
