@@ -69,11 +69,11 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
       echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
       SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
       SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      if [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
+      if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
           echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1
       else
-          echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+          echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
     fi
 
