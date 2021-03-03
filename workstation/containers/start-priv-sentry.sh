@@ -6,7 +6,6 @@ CONTAINER_NAME="priv_sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -39,12 +38,6 @@ VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs
 mkdir -p "$COMMON_LOGS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
 
-rm -fv $SNAP_DESTINATION
-if [ -f "$KIRA_SNAP_PATH" ] ; then
-    echo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
-fi
-
 COMMON_PEERS_PATH="$COMMON_PATH/peers"
 COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
 PEERS_PATH="$KIRA_CONFIGS/private_peers"
@@ -59,7 +52,7 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
     CFG_persistent_peers="tcp://$SENTRY_SEED"
 else

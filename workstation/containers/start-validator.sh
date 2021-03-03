@@ -11,7 +11,6 @@ CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -41,12 +40,6 @@ echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
-rm -fv $SNAP_DESTINATION
-if [ -f "$KIRA_SNAP_PATH" ] ; then
-    echoInfo "INFO: State snapshot '$KIRA_SNAP_PATH' was found, cloning..."
-    cp -a -v -f $KIRA_SNAP_PATH $SNAP_DESTINATION
-fi
-
 echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -60,7 +53,7 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
     rm -fv "$COMMON_PATH/genesis.json"
-    cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$COMMON_PATH/genesis.json"
+    cp -f -a -v "$LOCAL_GENESIS_PATH" "$COMMON_PATH/genesis.json"
     CFG_seeds=""
     CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 else
@@ -114,7 +107,7 @@ if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/sentry/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/priv_sentry/genesis.json"
     cp -f -a -v $GENESIS_DESTINATION "$DOCKER_COMMON/snapshot/genesis.json"
-    cp -f -a -v $GENESIS_DESTINATION "$KIRA_CONFIGS/genesis.json"
+    cp -f -a -v $GENESIS_DESTINATION "$LOCAL_GENESIS_PATH"
 
     GENESIS_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -6,7 +6,11 @@ set -x
 echo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
-SNAP_FILE="$COMMON_DIR/snap.zip"
+
+[ "${NODE_TYPE,,}" == "snapshot" ] && \
+SNAP_FILE="$COMMON_DIR/snap.zip" || \
+SNAP_FILE="$COMMON_READ/snap.zip"
+
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
 DATA_DIR="$SEKAID_HOME/data"
@@ -55,11 +59,21 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      if [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
+          echoErr "ERROR: Expected genesis checksum of the snapshoot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+          exit 1
+      else
+          echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+      fi
+
       rm -fv $COMMON_GENESIS
       cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshot genesis into common folder
     fi
 
-    rm -fv "$SNAP_FILE"
+    # snap file should only be removed if sentry is a snapshot container otherwise it is supplied from read only volume and can't be modify by a container
+    [ "${NODE_TYPE,,}" == "snapshot" ] && rm -fv "$SNAP_FILE"
   else
     echo "INFO: Snap file is NOT present, starting new sync..."
   fi

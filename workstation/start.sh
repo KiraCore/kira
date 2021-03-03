@@ -94,6 +94,12 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{
 ($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
 ($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
 
+SNAP_DESTINATION="$COMMON_READ/snap.zip"
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echoInfo "INFO: State snapshot was found, cloning..."
+    cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+fi
+
 echoInfo "INFO: Starting containers..."
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
@@ -139,11 +145,13 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-frontend.sh
         $KIRA_MANAGER/containers/start-validator.sh 
     fi
-    
 else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
   exit 1
 fi
+
+echoInfo "INFO: Starting clenup..."
+rm -fv $SNAP_DESTINATION
 
 set +x
 echoWarn "------------------------------------------------"

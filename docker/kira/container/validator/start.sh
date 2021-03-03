@@ -37,8 +37,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
       rm -fv $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $LOCAL_GENESIS
+      cp -vaf $DATA_GENESIS $COMMON_GENESIS
+      cp -vaf $DATA_GENESIS $LOCAL_GENESIS
+      # no need for creating new genesis if one was already supplied externally
+      EXTERNAL_SYNC="false"
     fi
 
     rm -fv "$SNAP_FILE"

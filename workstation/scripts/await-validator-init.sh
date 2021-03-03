@@ -48,7 +48,7 @@ while [ $i -le 40 ]; do
         docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
     else
         echoInfo "INFO: Copying genesis from external resource..."
-        cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$GENESIS_DESTINATION"
+        cp -f -a -v "$LOCAL_GENESIS_PATH" "$GENESIS_DESTINATION"
     fi
 
     # make sure genesis is present in the destination path

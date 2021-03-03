@@ -30,7 +30,6 @@ VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
-GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
 
@@ -140,8 +139,8 @@ while : ; do
         ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
         [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && KIRA_BLOCK="???"
 
-        if [ -f "$GENESIS_JSON" ] ; then
-            GENESIS_SUM=$(sha256sum $GENESIS_JSON | awk '{ print $1 }')
+        if [ -f "$LOCAL_GENESIS_PATH" ] ; then
+            GENESIS_SUM=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }')
             GENESIS_SUM="$(echo $GENESIS_SUM | head -c 4)...$(echo $GENESIS_SUM | tail -c 5)"
         else
             GENESIS_SUM="genesis not found"
