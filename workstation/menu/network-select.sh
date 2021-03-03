@@ -23,16 +23,17 @@ while :; do
         $KIRA_MANAGER/menu/chain-id-select.sh
 
         set -x
-        NEW_NETWORK="true"
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         set +x
 
         set +e && source "/etc/profile" &>/dev/null && set -e
         # NETWORK_NAME & NEW_NETWORK gets set my chain-id selector
+        NEW_NETWORK="true"
         NEW_NETWORK_NAME=$NETWORK_NAME
     elif [ "${SELECT,,}" == "s" ] ; then # import from snapshot
         $KIRA_MANAGER/menu/snapshot-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e # make sure to get new env's
+        NEW_NETWORK="false"
         
         if [ -z "$KIRA_SNAP_PATH" ] || [ ! -f "$KIRA_SNAP_PATH" ] ; then
             CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
