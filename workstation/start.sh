@@ -94,7 +94,7 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{
 ($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
 ($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
 
-SNAP_DESTINATION="$COMMON_READ/snap.zip"
+SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
