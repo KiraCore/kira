@@ -265,7 +265,7 @@ if [ -f "$TMP_GENESIS_PATH" ] ; then
     rm -fv "$TMP_GENESIS_PATH"
 fi
 
-# making sure genesis already exists if joining exisitng network was initiated
+# Make sure genesis already exists if joining exisitng network was initiated
 if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
     echoErr "ERROR: Genesis file is missing despite attempt to join existing network"
     exit 1

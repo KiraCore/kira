@@ -3,9 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 set -x
 
-DOCKER_COMMON=$1
-GENESIS_SOURCE=$2
-VALIDATOR_NODE_ID=$3
+GENESIS_SOURCE=$1
+VALIDATOR_NODE_ID=$2
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"

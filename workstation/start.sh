@@ -46,13 +46,12 @@ for name in $CONTAINERS; do
 done
 
 wait
+set -e
+
+[ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found!" && exit 1
 
 echoInfo "INFO: Building images..."
-
-rm -frv "$SCAN_DIR"
-mkdir -p "$SCAN_DIR"
-
-set -e
+rm -frv "$SCAN_DIR" && mkdir -p "$SCAN_DIR"
 
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
