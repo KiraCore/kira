@@ -11,7 +11,6 @@ DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
-NEW_NETWORK="false"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rf $SEKAID_HOME
@@ -45,8 +44,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       else
           echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
-      # no need for creating new genesis if one was already supplied externally
-      NEW_NETWORK="true"
     fi
 
     rm -fv "$SNAP_FILE"
@@ -69,19 +66,22 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   yes $FRONTEND_ADDR_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
 
   echo "INFO: All accounts were recovered"
-  set +x
-
+ 
   sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
 
-  if [ "${NEW_NETWORK,,}" == "false" ] ; then
-    echo "INFO: Genesis file was NOT found, attempting to create new one"
+  if [ ! -f "$COMMON_GENESIS" ] ; then
+    echo "INFO: Genesis file was NOT found, attempting to create new one..."
+
+    [ "${NEW_NETWORK,,}" == "false" ] && echo "ERROR: Node was NOT supposed to create new network with new genesis file!" && exit 1
+
+    set +x
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
-
+    set -x
     # default chain properties
     jq '.app_state.customgov.network_properties.proposal_end_time = "600"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
     jq '.app_state.customgov.network_properties.proposal_enactment_time = "300"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
@@ -91,9 +91,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       rm -fv $LOCAL_GENESIS
       cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
   fi
-
-  echo "INFO: genesis.json SHA256 checksum:"
-  sha256sum $COMMON_GENESIS
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
 fi
@@ -115,4 +112,9 @@ CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_A
 CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 touch $EXECUTED_CHECK
+
+echo "INFO: Local genesis.json SHA256 checksum:"
+sha256sum $LOCAL_GENESIS
+
+echo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace

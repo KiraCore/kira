@@ -87,6 +87,7 @@ docker run -d \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="true" \
     -e CFG_pex="false" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
