@@ -40,7 +40,7 @@ while : ; do
 
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
         ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
-        if ! timeout 1 ping -c1 $dns &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
+        if ! timeout 1 nc -z $p2 $p3 &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
         [ "${STATUS,,}" == "online" ] && if ! timeout 1 nc -z $dns $p3 &>/dev/null ; then STATUS="OFFLINE" ; fi
              
         INDEX_TMP=$(echo "${WHITESPACE}${i}." | tail -c 4)
@@ -120,9 +120,9 @@ while : ; do
         if [ ! -z "$nodeId" ] && [ ! -z "$dns" ]  && [ ! -z "$port" ] ; then
             echo "INFO: SUCCESS, '$nodeAddress' is a valid $TARGET address!"
             if [ "${SELECT,,}" == "a" ] ; then
-                if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
-                    echo "WARNING: Node with address '$dns' is NOT reachable"
-                    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mAre you absolutely sure you want to add '$dns' to ${TARGET^^} list? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+                if ! timeout 1 nc -z $dns $port &>/dev/null ; then 
+                    echo "WARNING: Node address '$dns' or port '$port' is NOT reachable"
+                    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mAre you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
                     [ "${SELECT,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
                 fi
                 echo "INFO: Adding address to the $TARGET list..."

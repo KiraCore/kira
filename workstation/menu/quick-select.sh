@@ -42,7 +42,6 @@ if [ "${SELECT,,}" == "n" ]; then
         $KIRA_MANAGER/menu/chain-id-select.sh
         exit 0
     fi
-
 elif [ "${SELECT,,}" == "j" ] ; then
     NEW_NETWORK="false"
     while : ; do
