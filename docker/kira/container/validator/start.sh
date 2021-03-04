@@ -45,8 +45,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
           echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
     fi
-
-    rm -fv "$SNAP_FILE"
   else
     echo "INFO: Snap file is NOT present"
   fi

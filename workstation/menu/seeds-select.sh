@@ -29,7 +29,7 @@ while : ; do
         set +x
         echoInfo "INFO: No public seeds were specified"
         echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to launch a local network? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No seed nodes were specified, do you want to launch a network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
         set -x
         [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
         rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
