@@ -16,6 +16,7 @@ PIP_FILE="$COMMON_READ/public_ip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
+DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
@@ -55,7 +56,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE -d $DATA_DIR
-    DATA_GENESIS="$DATA_DIR/genesis.json"
 
     if [ -f "$DATA_GENESIS" ] ; then
       echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."

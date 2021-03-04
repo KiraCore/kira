@@ -6,7 +6,7 @@ set -x
 echo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
-SNAP_FILE="$COMMON_DIR/snap.zip"
+SNAP_FILE="$COMMON_READ/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"

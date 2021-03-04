@@ -120,13 +120,16 @@ CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NA
 set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
     echo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
+    $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
 else
-    echo "INFO: Success '$CONTAINER_NAME' container was started" && echo ""
+    echo "INFO: Success '$CONTAINER_NAME' container was started"
+    rm -fv "$SNAP_DESTINATION"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
     TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
     if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
         echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
+        $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
         exit 1
     fi
 
