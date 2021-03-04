@@ -8,7 +8,6 @@ mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
-VALIDATOR_MIN_HEIGHT="0"
 
 rm -fv "$TMP_GENESIS_PATH"
 
@@ -30,6 +29,7 @@ if [ "${SELECT,,}" == "n" ]; then
     NEW_NETWORK="true"
     TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
+    VALIDATOR_MIN_HEIGHT="0"
 
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
@@ -44,6 +44,7 @@ if [ "${SELECT,,}" == "n" ]; then
     fi
 elif [ "${SELECT,,}" == "j" ] ; then
     NEW_NETWORK="false"
+    VALIDATOR_MIN_HEIGHT="0"
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
             echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
