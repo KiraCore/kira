@@ -113,10 +113,10 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [ "${NEW_NETWORK,,}" == "true" ] ; then
         echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-        EXTERNAL_SYNC="true"
+        EXTERNAL_SYNC="false"
     else
         echoInfo "INFO: Nodes will be synced from the external seed node"
-        EXTERNAL_SYNC="false"
+        EXTERNAL_SYNC="true"
     fi
 else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
@@ -157,7 +157,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         #echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
         #SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
         #echo "$SENTRY_SEED" > $PRIVATE_SEEDS
-        #$KIRA_MANAGER/containers/start-priv-sentry.sh 
+        $KIRA_MANAGER/containers/start-priv-sentry.sh 
 
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
