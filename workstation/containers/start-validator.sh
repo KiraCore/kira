@@ -48,17 +48,14 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2
 GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
-#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-#    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-#    CFG_seeds=""
-#    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-#else
-#    CFG_seeds=""
-#    CFG_persistent_peers=""
-#fi
-
-CFG_seeds=""
-CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+else
+    CFG_seeds=""
+    CFG_persistent_peers=""
+fi
 
 echoInfo "INFO: Starting $CONTAINER_NAME node..."
 
@@ -86,6 +83,7 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="true" \
+    -e CFG_allow_duplicate_ip="true" \
     -e CFG_pex="false" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \

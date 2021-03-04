@@ -111,11 +111,11 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Nodes will be synced from the external seed node"
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
-        echoInfo "INFO: Nodes will be synced from the external seed node"
+    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [ "${NEW_NETWORK,,}" == "true" ] ; then
+        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
         EXTERNAL_SYNC="true"
     else
-        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
+        echoInfo "INFO: Nodes will be synced from the external seed node"
         EXTERNAL_SYNC="false"
     fi
 else
@@ -145,7 +145,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] ; then
+    if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
