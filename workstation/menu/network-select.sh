@@ -106,10 +106,11 @@ while :; do
     echo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     
+    rm -fv "$LOCAL_GENESIS_PATH"
     if [ -f "$TMP_GENESIS_PATH" ] ; then # if genesis was imported then replace locally
         echo "INFO: Backing up new genesis file..."
-        rm -fv "$LOCAL_GENESIS_PATH"
         cp -a -f -v $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
+        rm -fv "$TMP_GENESIS_PATH"
     fi
 
     CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -119,6 +120,12 @@ while :; do
     [ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$KIRA_CONFIGS/public_seeds"
     break
 done
+
+# Make sure genesis already exists if joining exisitng network was initiated
+if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+    echoErr "ERROR: Genesis file is missing despite attempt to join existing network"
+    exit 1
+fi
 
 if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; then
     echoInfo "INFO: Validator mode detected, last parameter to setup..."

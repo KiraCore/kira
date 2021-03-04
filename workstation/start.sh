@@ -7,6 +7,7 @@ START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
 PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
+TMP_GENESIS_PATH="/tmp/genesis.json"
 
 cd $HOME
 
@@ -61,11 +62,10 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 wait
 
 echoInfo "INFO: All images were updated, setting up configuration files & variables..."
-
-[ "${NEW_NETWORK,,}" == "false" ] && cp -afv "$LOCAL_GENESIS_PATH" "/tmp/genesis.json"
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
-[ "${NEW_NETWORK,,}" == "false" ] && cp -afv  "/tmp/genesis.json" "$LOCAL_GENESIS_PATH"
-[ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$LOCAL_GENESIS_PATH"
+rm -fv $TMP_GENESIS_PATH
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && rm -fv $LOCAL_GENESIS_PATH
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
 
 if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x

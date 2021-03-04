@@ -257,12 +257,18 @@ else
 fi
 
 rm -fvr "$KIRA_SNAP/status"
+rm -fv "$LOCAL_GENESIS_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
-    echo "INFO: New genesis found, replacing"
-    rm -fv "$LOCAL_GENESIS_PATH"
-    cp -f -v -a "$TMP_GENESIS_PATH" "$LOCAL_GENESIS_PATH"
+    echoInfo "INFO: New genesis found, replacing"
+    cp -vaf "$TMP_GENESIS_PATH" "$LOCAL_GENESIS_PATH"
     rm -fv "$TMP_GENESIS_PATH"
+fi
+
+# making sure genesis already exists if joining exisitng network was initiated
+if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+    echoErr "ERROR: Genesis file is missing despite attempt to join existing network"
+    exit 1
 fi
 
 rm -f -v -r $TMP_SNAP_DIR
