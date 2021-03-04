@@ -62,9 +62,10 @@ wait
 
 echoInfo "INFO: All images were updated, setting up configuration files & variables..."
 
-cp -afv "$LOCAL_GENESIS_PATH" "/tmp/genesis.json"
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv "$LOCAL_GENESIS_PATH" "/tmp/genesis.json"
 rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
-[ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$LOCAL_GENESIS_PATH" || cp -afv  "/tmp/genesis.json" "$LOCAL_GENESIS_PATH"
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv  "/tmp/genesis.json" "$LOCAL_GENESIS_PATH"
+[ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$LOCAL_GENESIS_PATH"
 
 if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x
