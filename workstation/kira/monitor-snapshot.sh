@@ -18,8 +18,8 @@ if [ ! -f $SCAN_DONE ] ; then
     exit 0
 fi
 
-INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
-INTERX_SNAPSHOT_PATH="$INTERX_REDERENCE_DIR/snapshot.zip"
+INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
 echo "------------------------------------------------"
@@ -47,7 +47,7 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
 
     if [ "$HASH1" != "$HASH2" ] ; then
         echo "INFO: Latest snapshot is NOT exposed yet"
-        mkdir -p $INTERX_REDERENCE_DIR
+        mkdir -p $INTERX_REFERENCE_DIR
         cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
     else
         echo "INFO: Latest snapshot was already exposed, no need for updates"
