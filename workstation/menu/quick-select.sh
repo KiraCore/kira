@@ -90,14 +90,14 @@ elif [ "${SELECT,,}" == "j" ] ; then
         set -x
         NODE_PORT="" && if timeout 2 nc -z $NODE_ADDR 16656 ; then
             NEW_NODE_ID=$(curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
-            if isNodeId "$NEW_NODE_ID" then
+            if isNodeId "$NEW_NODE_ID" ; then
                 NODE_PORT="16656"
                 NODE_ID="$NEW_NODE_ID"
                 echoWarn "WARNING: Seed node ID was not found"
             fi
         else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
         if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 26656 ; then
-            if isNodeId "$NODE_ID" then
+            if isNodeId "$NODE_ID" ; then
                 NODE_PORT="26656"
                 NODE_ID="$NODE_ID"
                 echoWarn "WARNING: Sentry node ID was not found"
@@ -105,7 +105,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         else echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
         if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 36656 ; then
             NEW_NODE_ID=$(curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
-            if isNodeId "$NEW_NODE_ID" then
+            if isNodeId "$NEW_NODE_ID" ; then
                 NODE_PORT="36656"
                 NODE_ID="$NEW_NODE_ID"
                 echoWarn "WARNING: Private sentry node ID was not found"
