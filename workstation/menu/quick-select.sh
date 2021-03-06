@@ -99,7 +99,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 NODE_PORT="26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
             else echoWarn "WARNING: Sentry node ID was NOT found" ; fi
-        else echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
+        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
         if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 36656 ; then
             NEW_NODE_ID=$(curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
             if $(isNodeId "$NEW_NODE_ID") ; then
@@ -107,7 +107,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 NODE_ID="$NEW_NODE_ID"
                 echoInfo "INFO: Private sentry node ID '$NODE_ID' was found"
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
-        else echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
+        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
 
         if [ -z "$NODE_PORT" ] || [ $(isNodeId "$NODE_ID") ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
@@ -248,7 +248,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
-        
+
         if [ "${OPTION,,}" == "r" ] ; then
             echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
             continue
