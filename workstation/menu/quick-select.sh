@@ -109,7 +109,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
 
-        if [ -z "$NODE_PORT" ] || [ $(isNodeId "$NODE_ID") ] ; then
+        if [ -z "$NODE_PORT" ] || [ ! $(isNodeId "$NODE_ID") ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
         fi
