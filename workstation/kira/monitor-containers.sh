@@ -13,7 +13,7 @@ NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 
-mkdir -p ""
+mkdir -p "$INTERX_REFERENCE_DIR"
 
 NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
 CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
