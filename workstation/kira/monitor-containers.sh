@@ -12,11 +12,22 @@ CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
+CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
+
+set +x
+echo "------------------------------------------------"
+echo "|       STARTING KIRA CONTAINER SCAN           |"
+echo "|-----------------------------------------------"
+echo "|             SCAN_DIR: $SCAN_DIR"
+echo "|           CONTAINERS: $CONTAINERS"
+echo "|             NETWORKS: $NETWORKS"
+echo "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
+echo "------------------------------------------------"
+set -x
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
-NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 for name in $CONTAINERS; do
     echo "INFO: Processing container $name"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
@@ -43,9 +54,9 @@ for name in $CONTAINERS; do
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
+        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -r '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH &
+        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH &
     fi
 done
 
@@ -64,18 +75,19 @@ for name in $CONTAINERS; do
     [ -z "$PIDY" ] && echo "INFO: Process Y not found" && continue
     wait $PIDY || { echo "background status pid failed: $?" >&2; exit 1;}
 
-    SEKAID_STATUS=$(cat $STATUS_PATH)
+    SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
     if [ ! -z "$SEKAID_STATUS" ] && [ "${SEKAID_STATUS,,}" != "null" ] ; then
-        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
-        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.catching_up' 2>/dev/null || echo "false")
+        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
         ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" != "true" ] ) && CATCHING_UP="false"
-        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
-        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
+        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
         ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
-        NODE=$(echo "$SEKAID_STATUS" | jq -r '.NodeInfo.id' 2>/dev/null || echo "false")
-        ( [ -z "$ID" ] || [ "${ID,,}" == "null" ] ) && ID=$(echo "$SEKAID_STATUS" | jq -r '.node_info.id' 2>/dev/null || echo "false")
-        ( [ -z "$ID" ] || [ "${ID,,}" != "true" ] ) && ID=""
-        ($(isNodeId "$ID")) && echo "$ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
+        if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
+            NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null || echo "false")
+            ( ! $(isNodeId "$NODE_ID")) && NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo "")
+            ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
+        fi
     else
         LATEST_BLOCK="0"
         CATCHING_UP="false"
