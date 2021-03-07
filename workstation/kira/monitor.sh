@@ -75,7 +75,7 @@ fi
 echo "INFO: Saving valopers info..."
 TMPVAL=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "") && echo $TMPVAL >$VALOPERS_SCAN_PATH
 
-if [ "${INFRA_MODE,,}" == "validator" ]; then
+if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
     VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
     [ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json || echo "") || VALSTATUS=""
 

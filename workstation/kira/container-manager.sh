@@ -120,14 +120,43 @@ while : ; do
         break
     fi
 
-    NAME_TMP="${NAME}${WHITESPACE}"
-        echo "|     Name: ${NAME_TMP:0:43} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+    NAME_TMP="${NAME} $(echo $ID | head -c 8)...$(echo $ID | tail -c 9)${WHITESPACE}"
+        echo "| Con.Name: ${NAME_TMP:0:43} |"
 
     if [ ! -z "$REPO" ] ; then
         VTMP=$(echo "$REPO" | sed -E 's/^\s*.*:\/\///g')
         VTMP="${VTMP}${WHITESPACE}"
         echo "|     Repo: ${VTMP:0:43} : $BRANCH"
     fi
+
+    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && \
+        echo "|     Host: ${v:0:43} |"
+
+    i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+        TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
+        if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
+            IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
+            echo "| Local IP: ${IP_TMP:0:43} |"
+        fi
+    done
+
+    if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
+        for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
+            port_tmp="${port}${WHITESPACE}"
+            port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
+            echo "| Port Map: ${port_tmp:0:43} |"
+        done
+    fi
+
+    [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
+    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" \
+    echo "|   Status: ${TMPVAR:0:43} |"
+    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" \
+    echo "|   Status: ${TMPVAR:0:43} |"
+    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && TMPVAR="${HEALTH}${WHITESPACE}" \
+    echo "|   Health: ${TMPVAR:0:43} |"
+
+    echo "|-------------------------------------------------------|"
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
@@ -143,48 +172,22 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ "${EXISTS,,}" == "true" ] ; then # container exists
-        if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
-            for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
-                port_tmp="${port}${WHITESPACE}"
-                port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
-                echo "| Port Map: ${port_tmp:0:43} |"
-            done
-        fi
-        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-            TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
-            if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
-                IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
-                echo "| Local IP: ${IP_TMP:0:43} |"
-            fi
-        done
-        
-        if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
-            EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
-            EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
-            EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
-            [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
-            echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
-        fi
+    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
+        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
+        EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
+        EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
+        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
+        echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
-
-    ALLOWED_OPTIONS="x"
-    [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    echo "|-------------------------------------------------------|"
-    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}"           && echo "|     Host: ${v:0:43} |"
+    
     [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         TMP_VAR="${KIRA_NODE_BLOCK}${WHITESPACE}"
         [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
         echo "|    Block: ${TMP_VAR:0:43} |"
     fi
-    [ "$STATUS" != "exited" ] && \
-    echo "|   Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
-    [ "$STATUS" == "exited" ] && \
-    echo "|   Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
-    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && \
-    echo "|   Health: $HEALTH"
 
+    ALLOWED_OPTIONS="x"
                                       echo "|-------------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
