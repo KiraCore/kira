@@ -152,7 +152,7 @@ while : ; do
 
         VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2> /dev/null || echo "")" && ( [ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ] ) && VALACTIVE="???"
         VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2> /dev/null || echo "")" && ( [ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ] ) && VALTOTAL="???"
-        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.total_waiting' 2> /dev/null || echo "")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
+        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"

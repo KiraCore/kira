@@ -17,8 +17,8 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 WHITESPACE="                                                          "
@@ -27,7 +27,6 @@ SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
-
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
@@ -39,7 +38,7 @@ rm -fv "$LIP_PATH" "$KADDR_PATH"
 touch $LIP_PATH $KADDR_PATH
 
 VALADDR=""
-VALSTATUS=""
+VALINFO=""
 HOSTNAME=""
 KIRA_NODE_BLOCK=""
 LOADING="true"
@@ -51,7 +50,7 @@ while : ; do
     
     if [ "${NAME,,}" == "validator" ] ; then
         VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
-        [ ! -z "$VALADDR" ] && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' 2> /dev/null || echo "") || VALSTATUS=""
+        [ ! -z "$VALADDR" ] && VALINFO=$(cat $VALINFO_SCAN_PATH 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") || VALINFO=""
     fi
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
@@ -160,7 +159,9 @@ while : ; do
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
-        echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VALSTATUS"
+
+        VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "???")
+        echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"

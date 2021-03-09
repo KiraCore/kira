@@ -3,6 +3,7 @@
 REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
+REGEX_NUMBER="^[+-]?([0-9]*[.])?([0-9]+)?$"
 
 function isDnsOrIp() {
     VTMP="false" && ( [[ "$1" =~ $REGEX_DNS ]] || [[ "$1" =~ $REGEX_IP ]] ) && VTMP="true"
@@ -16,6 +17,11 @@ function isPort() {
 
 function isNodeId() {
      VTMP="false" && [[ "$1" =~ $REGEX_NODE_ID ]] && VTMP="true"
+     echo $VTMP
+}
+
+function isNumber() {
+     VTMP="false" && [[ "$1" =~ $REGEX_NUMBER ]] && VTMP="true"
      echo $VTMP
 }
 
