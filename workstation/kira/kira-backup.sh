@@ -8,6 +8,11 @@ MIN_BLOCK_HEIGHT=$1
 [[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=0
 [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|a)$ ]]; do echoNErr "Do you want to continue to [B]ackup, or change [A]utomatic backup configs? : " && read -d'' -s -n1 SELECT && echo ""; done
+if [ "${SELECT,,}" == "a" ]; then
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(e|d)$ ]]; do echoNErr "Do you want to [E]nable or [D]isable automatic backup? : " && read -d'' -s -n1 SELECT && echo ""; done
+fi
+
 echoNErr "Input halt height or press [ENTER] to snapshot latest state: " && read HALT_HEIGHT
 echo "INFO: Default snapshot directory: $KIRA_SNAP"
 
