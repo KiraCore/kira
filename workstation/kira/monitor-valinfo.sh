@@ -25,13 +25,23 @@ else
     exit 0
 fi
 
+VALSTATUS=""
 VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
-[ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json || echo "") || VALSTATUS=""
+if [ ! -z "$VALADDR" ] ; then
+    echo "$VALADDR" > $VALADDR_SCAN_PATH
+else
+    VALADDR=$(cat $VALADDR_SCAN_PATH || echo "")
+fi
 
-if [ -z "$VALADDR" ] || [ -z "$VALSTATUS" ] ; then
+[ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "") || VALSTATUS=""
+
+if [ -z "$VALSTATUS" ] ; then
+    echo "ERROR: Validator address or status was not found, aborting..."
     echo "" > $VALINFO_SCAN_PATH
-    echo "" > $VALADDR_SCAN_PATH
     echo "" > $VALSTATUS_SCAN_PATH
+    exit 0
+else
+    echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
 fi
 
 VRANK=$(echo $VALSTATUS | jq -rc '.rank' 2> /dev/null || echo "")

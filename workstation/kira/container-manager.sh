@@ -157,8 +157,16 @@ while : ; do
     echo "|-------------------------------------------------------|"
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
+        VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
+        if [ ! -z "$VALINFO" ] ; then
+            VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
+            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "???")
+            VRANK=$(echo $VALINFO | jq -rc '.rank' 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(echo $VALINFO | jq -rc '.streak' 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(echo $VALINFO | jq -rc '.missed_blocks_counter' 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+            echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
+        fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
-        VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "???")
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
