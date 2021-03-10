@@ -148,18 +148,16 @@ while : ; do
     fi
 
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" \
+    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
-    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" \
+    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
-    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && TMPVAR="${HEALTH}${WHITESPACE}" \
+    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && TMPVAR="${HEALTH}${WHITESPACE}" && \
     echo "|   Health: ${TMPVAR:0:43} |"
-
     echo "|-------------------------------------------------------|"
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
-
         VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "???")
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
