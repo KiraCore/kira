@@ -1,8 +1,8 @@
 #!/bin/bash
-set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/menu/chain-id-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+set -x
 
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
@@ -14,12 +14,16 @@ rm -fv "$TMP_GENESIS_PATH"
 if [ "${INFRA_MODE,,}" == "sentry" ]; then
     SELECT="j"
 else
+    set +x
     SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    set -x
 fi
 
 if [ "${SELECT,,}" == "n" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
+    set +x
     set +e && source "/etc/profile" &>/dev/null && set -e
+    set -x
     rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     CHAIN_ID="$NETWORK_NAME"
     SEED_NODE_ADDR=""
@@ -31,12 +35,14 @@ if [ "${SELECT,,}" == "n" ]; then
     SNAPSHOT=""
     VALIDATOR_MIN_HEIGHT="0"
 
+    set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
     echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-    
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+    set -x
+
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"
         $KIRA_MANAGER/menu/chain-id-select.sh
@@ -46,7 +52,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
     NEW_NETWORK="false"
     VALIDATOR_MIN_HEIGHT="0"
     while : ; do
-        set -x
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
             set +x
             echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
@@ -54,11 +59,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
             set -x
             [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR
         else
+            set +x
             echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
+            set -x
         fi
 
         ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
-
         [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
          
         echoInfo "INFO: Please wait, testing connectivity..."
@@ -245,7 +251,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:      Public seed node address: " && echoErr $SEED_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
 
@@ -289,7 +294,6 @@ if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
 fi
 
 rm -f -v -r $TMP_SNAP_DIR
-
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
