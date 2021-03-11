@@ -137,7 +137,17 @@ while : ; do
         ( [ -z "$NETWORK_STATUS" ] || [ "${NETWORK_STATUS,,}" == "null" ] ) && KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
         KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
         ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-        [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && KIRA_BLOCK="???"
+        if [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ; then
+            KIRA_BLOCK="???"
+        else
+            [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
+            ( [ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ] ) && LAST_BLOCK=$KIRA_BLOCK
+            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME))
+            [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && DELTA_TIME=1
+            DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK ))
+            SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_BLOCKS / $DELTA_TIME ) " | bc)
+            KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+        fi
 
         if [ -f "$LOCAL_GENESIS_PATH" ] ; then
             GENESIS_SUM=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }')

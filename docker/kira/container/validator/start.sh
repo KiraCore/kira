@@ -7,6 +7,7 @@ echo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 SNAP_FILE="$COMMON_READ/snap.zip"
+VALOPERS_FILE="$COMMON_READ/valopers"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
@@ -113,6 +114,13 @@ touch $EXECUTED_CHECK
 
 echo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
+
+# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
+ACTIVE_VALIDATORS$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "1")
+([ -z "$ACTIVE_VALIDATORS" ] || [ "${ACTIVE_VALIDATORS,,}" == "null" ] || [ "${ACTIVE_VALIDATORS,,}" == "0" ]) && ACTIVE_VALIDATORS=1
+TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / $ACTIVE_VALIDATORS ) * 1000 ) + 100) " | bc)
+TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
 
 $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
