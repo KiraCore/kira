@@ -25,7 +25,7 @@ if [ "${SELECT,,}" == "c" ]; then
             AUTO_BACKUP_ENABLED="Enabled"
         elif [ "${NEW_AUTO_BACKUP_ENABLED,,}" == "d" ]; then
             AUTO_BACKUP_ENABLED="Disabled"
-        elif [ "${NEW_AUTO_BACKUP_ENABLED,,}" != $'\x0a' ]; then
+        elif [ ! -z "${NEW_AUTO_BACKUP_ENABLED}" ]; then
             echoWarn "Retry..." && continue
         fi
         break
