@@ -143,7 +143,7 @@ while : ; do
             [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
             ( [ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ] ) && LAST_BLOCK=$KIRA_BLOCK
             DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME))
-            [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && DELTA_TIME=1
+            ( [ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && DELTA_TIME=1
             DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK ))
             SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_BLOCKS / $DELTA_TIME ) " | bc)
             KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
