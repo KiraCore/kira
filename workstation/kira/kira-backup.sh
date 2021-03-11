@@ -12,15 +12,18 @@ SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want t
 if [ "${SELECT,,}" == "c" ]; then
     while :; do
         echoNErr "Input how often (in hours) the auto-backup should be performed, press [ENTER] for default ($AUTO_BACKUP_INTERVAL) : " && read NEW_AUTO_BACKUP_INTERVAL
+        echo $NEW_AUTO_BACKUP_INTERVAL
         [ -z "${NEW_AUTO_BACKUP_INTERVAL##*[!0-9]*}" ] && NEW_AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL
         ([ -z "${NEW_AUTO_BACKUP_INTERVAL##*[!0-9]*}" ] || [ $NEW_AUTO_BACKUP_INTERVAL -lt 1 ]) && echoWarn "WARNINIG: Auto backup interval must be bigger than 0" && continue
         AUTO_BACKUP_INTERVAL=$NEW_AUTO_BACKUP_INTERVAL
         break
     done
 
+    CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+
     while :; do
         echoNErr "Input you want to [E]nable/[D]isable auto-backup, press [ENTER] to skip with no change ($AUTO_BACKUP_ENABLED) : " && read NEW_AUTO_BACKUP_ENABLED
-
+        echo $NEW_AUTO_BACKUP_ENABLED
         if [ "${NEW_AUTO_BACKUP_ENABLED,,}" == "e" ]; then
             AUTO_BACKUP_ENABLED="Enabled"
         elif [ "${NEW_AUTO_BACKUP_ENABLED,,}" == "d" ]; then
@@ -30,6 +33,8 @@ if [ "${SELECT,,}" == "c" ]; then
         fi
         break
     done
+
+    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${AUTO_BACKUP_ENABLED,,}" == "Enabled" ]; then
         echo "INFO: Auto-backup enabled. Interval: $AUTO_BACKUP_INTERVAL"
