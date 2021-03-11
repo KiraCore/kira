@@ -71,7 +71,7 @@ touch "${DISK_SCAN_PATH}.pid" && if ! kill -0 $(cat "${DISK_SCAN_PATH}.pid") 2>/
 fi
 
 touch "${VALINFO_SCAN_PATH}.pid" && if ! kill -0 $(cat "${VALINFO_SCAN_PATH}.pid") 2>/dev/null; then
-    $KIRA_MANAGER/kira/monitor-valinfo.sh &> "${VALINFO_SCAN_PATH}.logs" &
+    $KIRA_MANAGER/kira/monitor-valinfo.sh &>"${VALINFO_SCAN_PATH}.logs" &
     echo "$!" >"${VALINFO_SCAN_PATH}.pid"
 fi
 
@@ -81,8 +81,8 @@ LOCAL_IP=$(cat $LIP_SCAN_PATH 2>/dev/null || echo "")
 
 mkdir -p "$DOCKER_COMMON_RO"
 
-($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
-($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
+($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" >"$DOCKER_COMMON_RO/public_ip"
+($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" >"$DOCKER_COMMON_RO/local_ip"
 
 echo "INFO: Local and Public IP addresses were updated"
 
@@ -96,6 +96,17 @@ $KIRA_MANAGER/kira/monitor-containers.sh
 
 echo "INFO: Starting snapshot monitor..."
 $KIRA_MANAGER/kira/monitor-snapshot.sh
+
+if [ -f $SCAN_DONE ] && [[ $AUTO_BACKUP_ENABLED = "Enabled" ]]; then
+    ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+    INTERVAL_AS_SECOND=$($AUTO_BACKUP_INTERVAL * 60)
+    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] || [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
+        AUTO_BACKUP_EXECUTED_TIME=$(date -u %s)
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        $KIRA_MANAGER/containers/start-snapshot.sh "" ""
+    fi
+fi
 
 sleep 1
 echo "INFO: Success, network scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
