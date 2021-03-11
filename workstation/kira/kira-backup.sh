@@ -28,6 +28,7 @@ if [ "${SELECT,,}" == "c" ]; then
         elif [ "${NEW_AUTO_BACKUP_ENABLED,,}" != $'\x0a' ]; then
             echoWarn "Retry..." && continue
         fi
+        break
     done
 
     if [ "${AUTO_BACKUP_ENABLED,,}" == "Enabled" ]; then
