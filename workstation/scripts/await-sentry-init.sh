@@ -194,8 +194,14 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed tocreate snpashoot, file $DESTINATION_FILE was not found." && exit 1
-
     echoInfo "INFO: New snapshot was created!"
+    SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+    rm -fv "$SNAP_DESTINATION"
+    cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
+    
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    
+    
 fi
 

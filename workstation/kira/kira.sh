@@ -306,10 +306,10 @@ while : ; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
-                echo "INFO: Stopping $name container..."
+                echo "INFO: Pausing $name container..."
                 $KIRA_SCRIPTS/container-pause.sh $name
             else
-                echo "INFO: Staring $name container..."
+                echo "INFO: UnPausing $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
             LOADING="true"
