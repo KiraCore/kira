@@ -227,6 +227,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo "")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
+            set +x
             echoInfo "INFO: Validator mode detected, last parameter to setup..."
             echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
          
@@ -234,9 +235,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 set +x
                 echo "INFO: Default minmum block height is $HEIGHT"
                 echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
-                set -x
                 [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
                 ( [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+                set -x
                 break
             done
         else

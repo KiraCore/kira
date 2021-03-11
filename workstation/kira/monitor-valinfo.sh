@@ -15,6 +15,8 @@ touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINF
 echo "INFO: Saving valopers info..."
 VALOPERS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "")
 echo "$VALOPERS" > $VALOPERS_SCAN_PATH
+# let containers know the validators info
+echo "$VALOPERS" > "$DOCKER_COMMON_RO/valopers"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
     echo "INFO: Validator info will the scanned..."
