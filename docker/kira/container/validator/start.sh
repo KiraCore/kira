@@ -92,6 +92,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   fi
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
+  touch $EXECUTED_CHECK
 fi
 
 VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
@@ -110,13 +111,11 @@ CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALID
 CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
-touch $EXECUTED_CHECK
-
 echo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
 # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
-ACTIVE_VALIDATORS$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "1")
+ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "1")
 ([ -z "$ACTIVE_VALIDATORS" ] || [ "${ACTIVE_VALIDATORS,,}" == "null" ] || [ "${ACTIVE_VALIDATORS,,}" == "0" ]) && ACTIVE_VALIDATORS=1
 TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / $ACTIVE_VALIDATORS ) * 1000 ) + 100) " | bc)
 TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
