@@ -95,6 +95,7 @@ while : ; do
 
         # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then
+            dns="$addr"
             echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
