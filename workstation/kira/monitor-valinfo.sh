@@ -14,6 +14,7 @@ touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINF
 
 echo "INFO: Saving valopers info..."
 VALOPERS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "")
+WAITING=$(echo $VALOPERS | jq '.waiting' || echo "" )
 echo "$VALOPERS" > $VALOPERS_SCAN_PATH
 # let containers know the validators info
 echo "$VALOPERS" > "$DOCKER_COMMON_RO/valopers"
@@ -38,9 +39,14 @@ fi
 [ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "") || VALSTATUS=""
 
 if [ -z "$VALSTATUS" ] ; then
-    echo "ERROR: Validator address or status was not found, aborting..."
+    echo "ERROR: Validator address or status was not found"
+    if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
+        echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
+    else
+        echo "" > $VALSTATUS_SCAN_PATH
+    fi
+
     echo "" > $VALINFO_SCAN_PATH
-    echo "" > $VALSTATUS_SCAN_PATH
     exit 0
 else
     echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
