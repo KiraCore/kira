@@ -66,7 +66,7 @@ docker run -d \
     -e CFG_external_address="" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID,$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID" \
+    -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID,$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
