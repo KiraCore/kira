@@ -7,6 +7,7 @@ START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
 PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
+TMP_GENESIS_PATH="/tmp/genesis.json"
 
 cd $HOME
 
@@ -45,13 +46,12 @@ for name in $CONTAINERS; do
 done
 
 wait
+set -e
+
+[ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found!" && exit 1
 
 echoInfo "INFO: Building images..."
-
-rm -frv "$SCAN_DIR"
-mkdir -p "$SCAN_DIR"
-
-set -e
+rm -frv "$SCAN_DIR" && mkdir -p "$SCAN_DIR"
 
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
@@ -60,9 +60,11 @@ $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 
 wait
 
-rm -rfv "$DOCKER_COMMON" && mkdir -p "$DOCKER_COMMON"
-
-echoInfo "INFO: All images were updated"
+echoInfo "INFO: All images were updated, setting up configuration files & variables..."
+rm -fv $TMP_GENESIS_PATH
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && rm -fv $LOCAL_GENESIS_PATH
+[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
 
 if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x
@@ -87,55 +89,87 @@ set -x
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
-echoInfo "INFO: Starting containers..."
+echoInfo "INFO: Updating IP addresses info..."
+
+PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 2>/dev/null | awk -F'"' '{ print $2}')
+LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{print $2}' 2>/dev/null | cut -f2 2>/dev/null || echo "0.0.0.0")
+($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip"
+($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip"
+
+echoInfo "INFO: Setting up snapshots and geesis file..."
+
+SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echoInfo "INFO: State snapshot was found, cloning..."
+    cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+fi
+
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-    CDHelper text lineswap --insert="EXTERNAL_SYNC=false" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+    EXTERNAL_SYNC="false"
+elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    echoInfo "INFO: Nodes will be synced from the external seed node"
+    EXTERNAL_SYNC="true"
+elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [ "${NEW_NETWORK,,}" == "true" ] ; then
+        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
+        EXTERNAL_SYNC="false"
+    else
+        echoInfo "INFO: Nodes will be synced from the external seed node"
+        EXTERNAL_SYNC="true"
+    fi
+else
+  echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+  exit 1
+fi
 
+CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if [ "${NEW_NETWORK,,}" != "true" ] ; then 
+    echoInfo "INFO: Attempting to access genesis file from local configuration..."
+    [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
+else
+    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was present before network was instantiated!" && exit 1
+fi
+
+echoInfo "INFO: Starting '${INFRA_MODE,,} mode' setup, external sync '$EXTERNAL_SYNC' ..."
+if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh 
     $KIRA_MANAGER/containers/start-sentry.sh 
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    echoInfo "INFO: Nodes will be synced from the external seed node"
-    CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
     $KIRA_MANAGER/containers/start-sentry.sh
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
+    $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] ; then
-        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
-        CDHelper text lineswap --insert="EXTERNAL_SYNC=false" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
+    if [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
     else
-        echoInfo "INFO: Nodes will be synced from the external seed node"
-        CDHelper text lineswap --insert="EXTERNAL_SYNC=true" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
         $KIRA_MANAGER/containers/start-sentry.sh
 
-        if [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] ; then
-            echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
-            SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-            echo "$SENTRY_SEED" > $PRIVATE_SEEDS
-            $KIRA_MANAGER/containers/start-priv-sentry.sh 
-        fi
+        #echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
+        #SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+        #echo "$SENTRY_SEED" > $PRIVATE_SEEDS
+        $KIRA_MANAGER/containers/start-priv-sentry.sh 
 
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
         $KIRA_MANAGER/containers/start-validator.sh 
     fi
-    
 else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
   exit 1
 fi
+
+echoInfo "INFO: Starting clenup..."
+rm -fv $SNAP_DESTINATION
 
 set +x
 echoWarn "------------------------------------------------"

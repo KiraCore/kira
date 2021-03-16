@@ -5,7 +5,12 @@ source $KIRA_MANAGER/utils.sh
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
+
+if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
+else
+    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
+fi
 
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
@@ -33,6 +38,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
+        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
         [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
         PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"

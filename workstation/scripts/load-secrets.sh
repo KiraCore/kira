@@ -73,6 +73,7 @@ MnemonicGenerator "validator" "addr" # validator controller key
 MnemonicGenerator "test" "addr" # generic test key
 MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
 MnemonicGenerator "priv_sentry" "node" # private sentry node key
+MnemonicGenerator "seed" "node" # seed node key
 MnemonicGenerator "snapshot" "node" # snapshot sentry node key (snapshot_node_key.json, snapshot_node_id.key -> SNAPSHOT_NODE_ID)
 MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
 # NOTE: private validator key is generated from the separate mnemonic then node key or address !!!

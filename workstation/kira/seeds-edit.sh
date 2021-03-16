@@ -40,7 +40,8 @@ while : ; do
 
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
         ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
-        if ! timeout 1 ping -c1 $dns &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
+        if ! timeout 1 nc -z $p2 $p3 &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
+        [ "${STATUS,,}" == "online" ] && if ! timeout 1 nc -z $dns $p3 &>/dev/null ; then STATUS="OFFLINE" ; fi
              
         INDEX_TMP=$(echo "${WHITESPACE}${i}." | tail -c 4)
         STATUS_TMP="${STATUS}${WHITESPACE}"
@@ -94,6 +95,7 @@ while : ; do
 
         # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then
+            dns="$addr"
             echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
@@ -102,7 +104,13 @@ while : ; do
             nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             ( [ -z "$nodeId" ] || [ "${nodeId,,}" == "null" ] ) && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
-            [ -z "$port" ] && port=$DEFAULT_P2P_PORT
+
+            [ ! -z "$port" ] && if ! timeout 1 nc -z $dns $port ; then port="" ; fi
+            [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
+            [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
+            [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echo "INFO: Port 36656 is not exposed by '$dns'"  ; fi
+
+            [ -z "$port" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list, NO exposed P2P ports were found" && continue
             
             ($(isNodeId "$nodeId")) && nodeId="$nodeId" || nodeId=""
             dns=$dnsStandalone
@@ -113,9 +121,9 @@ while : ; do
         if [ ! -z "$nodeId" ] && [ ! -z "$dns" ]  && [ ! -z "$port" ] ; then
             echo "INFO: SUCCESS, '$nodeAddress' is a valid $TARGET address!"
             if [ "${SELECT,,}" == "a" ] ; then
-                if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
-                    echo "WARNING: Node with address '$dns' is NOT reachable"
-                    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mAre you absolutely sure you want to add '$dns' to ${TARGET^^} list? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+                if ! timeout 1 nc -z $dns $port &>/dev/null ; then 
+                    echo "WARNING: Node address '$dns' or port '$port' is NOT reachable"
+                    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mAre you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
                     [ "${SELECT,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
                 fi
                 echo "INFO: Adding address to the $TARGET list..."

@@ -15,7 +15,6 @@ SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
@@ -79,9 +78,6 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
-echo "INFO: Copy genesis file from sentry into snapshot container common direcotry..."
-docker cp -a sentry:$GENESIS_SOURCE $COMMON_PATH
-
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
@@ -115,25 +111,28 @@ docker run -d \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
+    -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest # use sentry image as base
 
 echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
 
-echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-if [ ! -z "$TEST_SHA256" ] && [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
-    echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
-    exit 1
-else
-    echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
-fi
-
 set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
     echo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
+    $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
 else
-    echo "INFO: Success '$CONTAINER_NAME' container was started" && echo ""
+    echo "INFO: Success '$CONTAINER_NAME' container was started"
+    rm -fv "$SNAP_DESTINATION"
+
+    echoInfo "INFO: Checking genesis SHA256 hash"
+    TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+    if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
+        echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
+        $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
+        exit 1
+    fi
+
     echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m"  && echo ""
     echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi

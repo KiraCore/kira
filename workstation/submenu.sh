@@ -4,7 +4,7 @@ ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -
 if [ "${INFRA_MODE,,}" == "local" ]; then
   title="Demo Mode (local testnet)"
 elif [ "${INFRA_MODE,,}" == "sentry" ]; then
-  title="Full Node Mode"
+  title="Sentry Mode"
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
   title="Validator Mode"
 else
@@ -33,7 +33,7 @@ echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "$title"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
-echo -e "| Network Interface: $IFACE (default)" 
+echo -e "| Network Interface: $IFACE (default)"
 echo -e "|-----------------------------------------------|"
 displayAlign left $printWidth " [1] | Quick Setup $setupHintQuick"
 displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
@@ -44,7 +44,7 @@ echo ""
 
 FAILED="false"
 
-while : ; do
+while :; do
   read -n1 -p "Input option: " KEY
   echo ""
 
@@ -59,11 +59,11 @@ while : ; do
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
-        $KIRA_MANAGER/menu/quick-select.sh
+      $KIRA_MANAGER/menu/quick-select.sh
     else
-        CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-        rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+      CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
+      CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+      rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     fi
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
@@ -76,17 +76,17 @@ while : ; do
   2*)
     echo "INFO: Starting Advanced Setup..."
     $KIRA_MANAGER/menu/branch-select.sh "false"
-    
-    if [ "${INFRA_MODE,,}" == "validator" ] ; then
-        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot 
+
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
+      $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
     else
-        CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-        $KIRA_MANAGER/menu/snapshot-select.sh
+      CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+      $KIRA_MANAGER/menu/snapshot-select.sh
     fi
 
     $KIRA_MANAGER/menu/seeds-select.sh
     $KIRA_MANAGER/menu/interface-select.sh
-    
+
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""

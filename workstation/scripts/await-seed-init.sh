@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 CONTAINER_NAME=$1
-SENTRY_NODE_ID=$2
+SEED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -81,9 +81,9 @@ while : ; do
         echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
     fi
 
-    if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
+    if [ "$NODE_ID" != "$SEED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
-        echoErr "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
+        echoErr "ERROR: Expected '$SEED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
     else
         echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
@@ -121,29 +121,19 @@ while : ; do
     fi
 done
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
-    i=0
     while : ; do
         echoInfo "INFO: Awaiting node status..."
-        i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
-            set +x
-            echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
-
-            [ $i -lt 3 ] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
-
-            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
-            set -x
-            [ "${SVAL,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
-            i=0 && continue
-        else
-            i=0
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+            echoErr "ERROR: Node failed or status could not be fetched, your netwok connectivity might have been interrupted"
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 ACCEPT && echo ""; done
+            [ "${SELECT,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
+            continue
         fi
 
         set +x
@@ -165,43 +155,5 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
         set -x
         sleep 30
     done
-
-    echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch $HALT_FILE
-    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-    
-    echoInfo "INFO: Creating new snapshot..."
-
-    DATA_DIR="$SEKAID_HOME/data"
-    LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-    SNAP_STATUS="$KIRA_SNAP/status"
-    
-    SNAP_FILENAME="${NETWORK_NAME}-$HEIGHT-$(date -u +%s).zip"
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_FILENAME"
-
-    mkdir -p $SNAP_STATUS
-    echo "$SNAP_FILENAME" > "$KIRA_SNAP/status/latest"
-
-    docker exec -i "$CONTAINER_NAME" bash -c "cp -v -f $SEKAID_HOME/config/genesis.json $DATA_DIR"
-    docker exec -i "$CONTAINER_NAME" bash -c "echo {'"'"'height'"'"':$HEIGHT} > $DATA_DIR/snapinfo.json"
-    docker exec -i "$CONTAINER_NAME" bash -c "cd $SEKAID_HOME/data && zip -r -v /snap/$SNAP_FILENAME . *"
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    echo "INFO: Un-Halting $CONTAINER_NAME container"
-    rm -fv $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed tocreate snpashoot, file $DESTINATION_FILE was not found." && exit 1
-    echoInfo "INFO: New snapshot was created!"
-    SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-    rm -fv "$SNAP_DESTINATION"
-    cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
-    
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    
-    
 fi
 

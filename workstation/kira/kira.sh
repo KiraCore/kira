@@ -26,14 +26,12 @@ NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 DISK_SCAN_PATH="$SCAN_DIR/disk"
 CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
-LIP_SCAN_PATH="$SCAN_DIR/lip"
-IP_SCAN_PATH="$SCAN_DIR/ip"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
-GENESIS_JSON="$KIRA_CONFIGS/genesis.json"
 WHITESPACE="                                                          "
+CONTAINERS_COUNT="0"
 
 echo "INFO: Restarting network scanner..."
 systemctl daemon-reload
@@ -56,8 +54,8 @@ while : ; do
     CPU_UTIL=$(cat $CPU_SCAN_PATH 2> /dev/null || echo "")
     RAM_UTIL=$(cat $RAM_SCAN_PATH 2> /dev/null || echo "")
     DISK_UTIL=$(cat $DISK_SCAN_PATH 2> /dev/null || echo "")
-    LOCAL_IP=$(cat $LIP_SCAN_PATH 2> /dev/null || echo "0.0.0.0")
-    PUBLIC_IP=$(cat $IP_SCAN_PATH 2> /dev/null || echo "")
+    LOCAL_IP=$(cat $DOCKER_COMMON_RO/local_ip 2> /dev/null || echo "0.0.0.0")
+    PUBLIC_IP=$(cat $DOCKER_COMMON_RO/public_ip 2> /dev/null || echo "")
     VALOPERS=$(cat $VALOPERS_SCAN_PATH 2> /dev/null || echo "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2> /dev/null || echo "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2> /dev/null || echo "")"
@@ -121,15 +119,11 @@ while : ; do
         CONTAINERS_COUNT=$((i + 1))
     fi
 
-    [ "$LOCAL_IP" == "172.17.0.1" ] && LOCAL_IP="0.0.0.0"
-    [ "$LOCAL_IP" == "172.16.0.1" ] && LOCAL_IP="0.0.0.0"
-    [ -z "$LOCAL_IP" ] && LOCAL_IP="0.0.0.0"
-
     printf "\033c"
 
     ALLOWED_OPTIONS="x"
-    echo -e "\e[33;1m------------------------------------------------- [mode]"
-    echo "|         KIRA NETWORK MANAGER v0.0.8           : $INFRA_MODE mode"
+    echo -e "\e[33;1m-------------------------------------------------"
+    echo "|         KIRA NETWORK MANAGER v0.0.9           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -143,10 +137,19 @@ while : ; do
         ( [ -z "$NETWORK_STATUS" ] || [ "${NETWORK_STATUS,,}" == "null" ] ) && KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
         KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
         ( [ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-        [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] && KIRA_BLOCK="???"
+        if [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ; then
+            KIRA_BLOCK="???"
+        else
+            [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
+            ( [ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ] ) && LAST_BLOCK=$KIRA_BLOCK
+            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME)) && ( [ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && DELTA_TIME=1
+            DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK ))
+            [ "$DELTA_BLOCKS" != "0" ] && SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_TIME / $DELTA_BLOCKS ) " | bc)
+            [ "$DELTA_BLOCKS" != "0" ] && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+        fi
 
-        if [ -f "$GENESIS_JSON" ] ; then
-            GENESIS_SUM=$(sha256sum $GENESIS_JSON | awk '{ print $1 }')
+        if [ -f "$LOCAL_GENESIS_PATH" ] ; then
+            GENESIS_SUM=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }')
             GENESIS_SUM="$(echo $GENESIS_SUM | head -c 4)...$(echo $GENESIS_SUM | tail -c 5)"
         else
             GENESIS_SUM="genesis not found"
@@ -158,7 +161,7 @@ while : ; do
 
         VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2> /dev/null || echo "")" && ( [ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ] ) && VALACTIVE="???"
         VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2> /dev/null || echo "")" && ( [ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ] ) && VALTOTAL="???"
-        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.total_waiting' 2> /dev/null || echo "")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
+        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
@@ -219,12 +222,12 @@ while : ; do
             [ "${HEALTH_TMP,,}" == "null" ] && HEALTH_TMP="" # do not display
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
-            if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]] ; then
-                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2> /dev/null || echo "")
-                CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2> /dev/null || echo "false")
-                ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
+            if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
+                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo "")
+                CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2>/dev/null || echo "false")
+                ([ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ]) && LATEST_BLOCK=0
 
-                if [ "${CATCHING_UP,,}" == "true" ] ; then
+                if [ "${CATCHING_UP,,}" == "true" ]; then
                     STATUS_TMP="syncing : $LATEST_BLOCK"
                 else
                     STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
@@ -249,6 +252,7 @@ while : ; do
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] && \
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p" || \
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
         echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && \
             echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s" || \
@@ -256,8 +260,9 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
     
-    [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] && \
-    echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    if ( [ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ] ) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ] ; then
+        echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+    fi
 
     if [ ! -z "$KIRA_SNAP_PATH" ] ; then
         [ "${SNAP_EXPOSE,,}" == "false" ] && \
@@ -270,7 +275,7 @@ while : ; do
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     echo -e "| [X] | Exit __________________________________ |\e[0m"
 
-    OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
+    OPTION="" && read -s -n 1 -t 15 OPTION || OPTION=""
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
@@ -278,11 +283,6 @@ while : ; do
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
-    fi
-
-    if [ "${OPTION,,}" == "r" ] ; then
-        echo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
     fi
 
     EXECUTED="false"
@@ -315,16 +315,21 @@ while : ; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
-                echo "INFO: Stopping $name container..."
+                echo "INFO: Pausing $name container..."
                 $KIRA_SCRIPTS/container-pause.sh $name
             else
-                echo "INFO: Staring $name container..."
+                echo "INFO: UnPausing $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
             LOADING="true"
             EXECUTED="true"
         fi
     done
+
+    if [ "${OPTION,,}" == "r" ] ; then
+        echo "INFO: Reconnecting all networks..."
+        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+    fi
 
     if [ "${OPTION,,}" == "d" ]; then
         echo "INFO: Dumping firewal info..."
@@ -366,6 +371,7 @@ while : ; do
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
         systemctl stop kirascan
+        rm -f /dev/null; mknod -m 666 /dev/null c 1 3
         exit 0
     fi
 

@@ -17,8 +17,8 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
+VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
 WHITESPACE="                                                          "
@@ -27,7 +27,6 @@ SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
-
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
@@ -39,7 +38,7 @@ rm -fv "$LIP_PATH" "$KADDR_PATH"
 touch $LIP_PATH $KADDR_PATH
 
 VALADDR=""
-VALSTATUS=""
+VALINFO=""
 HOSTNAME=""
 KIRA_NODE_BLOCK=""
 LOADING="true"
@@ -51,7 +50,7 @@ while : ; do
     
     if [ "${NAME,,}" == "validator" ] ; then
         VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
-        [ ! -z "$VALADDR" ] && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2> /dev/null | jq -rc '.status' 2> /dev/null || echo "") || VALSTATUS=""
+        [ ! -z "$VALADDR" ] && VALINFO=$(cat $VALINFO_SCAN_PATH 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") || VALINFO=""
     fi
 
     touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
@@ -68,7 +67,7 @@ while : ; do
         fi
     fi
 
-    if [ "${NAME,,}" == "interx" ] || [ "${NAME,,}" == "validator" ] || [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] ; then
+    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.NodeInfo.id' 2> /dev/null || echo "")
@@ -85,7 +84,7 @@ while : ; do
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.0.10             |"
+    echo "|            KIRA CONTAINER MANAGER v0.0.11             |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -120,8 +119,8 @@ while : ; do
         break
     fi
 
-    NAME_TMP="${NAME}${WHITESPACE}"
-        echo "|     Name: ${NAME_TMP:0:43} : $(echo $ID | head -c 4)...$(echo $ID | tail -c 5)"
+    NAME_TMP="${NAME} $(echo $ID | head -c 8)...$(echo $ID | tail -c 9)${WHITESPACE}"
+        echo "| Con.Name: ${NAME_TMP:0:43} |"
 
     if [ ! -z "$REPO" ] ; then
         VTMP=$(echo "$REPO" | sed -E 's/^\s*.*:\/\///g')
@@ -129,9 +128,46 @@ while : ; do
         echo "|     Repo: ${VTMP:0:43} : $BRANCH"
     fi
 
+    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && \
+        echo "|     Host: ${v:0:43} |"
+
+    i=-1 ; for net in $NETWORKS ; do i=$((i+1))
+        TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
+        if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
+            IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
+            echo "| Local IP: ${IP_TMP:0:43} |"
+        fi
+    done
+
+    if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
+        for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
+            port_tmp="${port}${WHITESPACE}"
+            port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
+            echo "| Port Map: ${port_tmp:0:43} |"
+        done
+    fi
+
+    [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
+    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" && \
+    echo "|   Status: ${TMPVAR:0:43} |"
+    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" && \
+    echo "|   Status: ${TMPVAR:0:43} |"
+    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && TMPVAR="${HEALTH}${WHITESPACE}" && \
+    echo "|   Health: ${TMPVAR:0:43} |"
+    echo "|-------------------------------------------------------|"
+
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
+        VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
+        if [ ! -z "$VALINFO" ] ; then
+            VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
+            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "???") && [ "${VTOP,,}" == "null" ] && VTOP="???"
+            VRANK=$(echo $VALINFO | jq -rc '.rank' 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(echo $VALINFO | jq -rc '.streak' 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(echo $VALINFO | jq -rc '.missed_blocks_counter' 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+            echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
+        fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
-        echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VALSTATUS"
+        echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
@@ -143,40 +179,22 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ "${EXISTS,,}" == "true" ] ; then # container exists
-        if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
-            for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
-                port_tmp="${port}${WHITESPACE}"
-                port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
-                echo "| Port Map: ${port_tmp:0:43} |"
-            done
-        fi
-        i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-            TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
-            if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
-                IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
-                echo "| Local IP: ${IP_TMP:0:43} |"
-            fi
-        done
+    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
+        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
+        EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
+        EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
+        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
+        echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
-
-    ALLOWED_OPTIONS="x"
-    [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    echo "|-------------------------------------------------------|"
-    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}"           && echo "|     Host: ${v:0:43} |"
+    
     [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         TMP_VAR="${KIRA_NODE_BLOCK}${WHITESPACE}"
         [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
         echo "|    Block: ${TMP_VAR:0:43} |"
     fi
-    [ "$STATUS" != "exited" ] && \
-    echo "|   Status: $STATUS ($(echo $STARTED_AT | head -c 19))"
-    [ "$STATUS" == "exited" ] && \
-    echo "|   Status: $STATUS ($(echo $FINISHED_AT | head -c 19))"
-    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && \
-    echo "|   Health: $HEALTH"
 
+    ALLOWED_OPTIONS="x"
                                       echo "|-------------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
@@ -369,4 +387,4 @@ while : ; do
     fi
 done
 
-echo "INFO: Contianer Manager Stopped"
+echo "INFO: Container Manager Stopped"

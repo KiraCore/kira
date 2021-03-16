@@ -9,6 +9,7 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+COMMON_GLOBAL_PATH="$DOCKER_COMMON/global"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
@@ -51,6 +52,7 @@ docker run -d \
     -e CFG_rpc="http://sentry:26657" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
     -v $COMMON_PATH:/common \
+    -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
 
 docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME

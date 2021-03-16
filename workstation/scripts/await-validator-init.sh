@@ -3,10 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 set -x
 
-DOCKER_COMMON=$1
-GENESIS_SOURCE=$2
-GENESIS_DESTINATION=$3
-VALIDATOR_NODE_ID=$4
+GENESIS_SOURCE=$1
+VALIDATOR_NODE_ID=$2
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -16,8 +14,6 @@ NODE_ID=""
 PREVIOUS_HEIGHT=0
 HEIGHT=0
 i=0
-
-rm -fv $GENESIS_DESTINATION
 
 while [ $i -le 40 ]; do
     i=$((i + 1))
@@ -43,21 +39,18 @@ while [ $i -le 40 ]; do
     fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "${EXTERNAL_SYNC,,}" != "true" ] ; then 
-        echoInfo "INFO: Attempting to access genesis file..."
-        docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $GENESIS_DESTINATION || rm -fv $GENESIS_DESTINATION
-    else
-        echoInfo "INFO: Copying genesis from external resource..."
-        cp -f -a -v "$KIRA_CONFIGS/genesis.json" "$GENESIS_DESTINATION"
+    if [ "${NEW_NETWORK,,}" == "true" ] ; then 
+        echoInfo "INFO: Attempting to access genesis file of the new network..."
+        docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $LOCAL_GENESIS_PATH || rm -fv $LOCAL_GENESIS_PATH
     fi
 
     # make sure genesis is present in the destination path
-    if [ ! -f "$GENESIS_DESTINATION" ] ; then
+    if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
         sleep 12
         echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME"
         continue
     else
-        echoInfo "INFO: Success, genesis file was copied to $GENESIS_DESTINATION"
+        echoInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
     fi
 
     echoInfo "INFO: Awaiting node status..."
@@ -94,7 +87,7 @@ docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.s
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
-if [ ! -f "$GENESIS_DESTINATION" ] ; then
+if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
     echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"
     exit 1
 fi

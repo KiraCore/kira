@@ -13,7 +13,7 @@ DATA_DIR="$SEKAID_HOME/data"
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_CFG="$COMMON_DIR/config.toml"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-COMMON_GENESIS="$COMMON_DIR/genesis.json"
+COMMON_GENESIS="$COMMON_READ/genesis.json"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 SNAP_STATUS="$SNAP_DIR/status"
@@ -66,9 +66,15 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
     DATA_GENESIS="$DATA_DIR/genesis.json"
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-      rm -fv $COMMON_GENESIS
-      cp -v -a $DATA_GENESIS $COMMON_GENESIS # move snapshot genesis into common folder
+      echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
+          echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+          exit 1
+      else
+          echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+      fi
     fi
 
     rm -fv "$SNAP_FILE"

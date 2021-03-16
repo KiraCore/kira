@@ -27,7 +27,7 @@ KIRA_SECRETS="$KIRA_HOME/.secrets"
 KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.50"
+CDHELPER_VERSION="v0.6.51"
 SETUP_VER="v0.0.9" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -129,17 +129,15 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
     SEKAID_HOME="/root/.simapp"
 
-    mkdir -p $KIRA_INFRA
-    mkdir -p $KIRA_SEKAI
-    mkdir -p $KIRA_FRONTEND
-    mkdir -p $KIRA_INTERX
+    DOCKER_COMMON="/docker/shared/common"
+    # read only common directory
+    DOCKER_COMMON_RO="/docker/shared/common_ro"
 
-    mkdir -p $KIRA_SETUP
-    mkdir -p $KIRA_MANAGER
+    mkdir -p $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-9" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-10" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -150,7 +148,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude
         
         apt update -y
-        apt install -y bc dnsutils psmisc 
+        apt install -y bc dnsutils psmisc netcat
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
@@ -165,10 +163,10 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
         if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
             CDHELPER_ARCH="arm64"
-            EXPECTED_HASH="6cfd73a429463aa9f2e5f9e8462f5ada50ecaa1b4e21ad6d05caef4f21943273"
+            EXPECTED_HASH="c2e40c7143f4097c59676f037ac6eaec68761d965bd958889299ab32f1bed6b3"
         else
             CDHELPER_ARCH="x64"
-            EXPECTED_HASH="6345e3c37cb5eddee659d1a6c7068ff6cf0a1e6a74d1f6f5fec747338f9ebdaf"
+            EXPECTED_HASH="082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7"
         fi
 
         FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
@@ -211,7 +209,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="PRIVATE_PEERS=$KIRA_CONFIGS/private_peers" --prefix="PRIVATE_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PUBLIC_SEEDS=$KIRA_CONFIGS/public_seeds" --prefix="PUBLIC_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PRIVATE_SEEDS=$KIRA_CONFIGS/private_seeds" --prefix="PRIVATE_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$KIRA_CONFIGS/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -225,6 +222,10 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$DOCKER_COMMON_RO/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True

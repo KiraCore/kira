@@ -15,16 +15,13 @@ while : ; do
 
     DEFAULT_SNAP_DIR=$KIRA_SNAP
     echo "INFO: Default snapshot storage directory: $DEFAULT_SNAP_DIR"
-    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(k|c)$ ]] ; do echoNErr "[K]eep default snapshot storage directory or [C]hange: " && read -d'' -s -n1 OPTION && echo ""; done
-    
-    [ "${OPTION,,}" == "c" ] && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}" # read and trim leading slash
+    echoNErr "Input new snapshot storage directory or press [ENTER] for default: " && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}"
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
-    echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
-    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|t)$ ]] ; do echoNErr "Choose to [A]ccept directory or [T]ry again: " && read -d'' -s -n1 OPTION && echo "" ; done
-    [ "${OPTION,,}" == "t" ] && continue
-    
-    if [ "$KIRA_SNAP" != "$DEFAULT_SNAP_DIR" ] ; then
-        CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+    if [ ! -d "$DEFAULT_SNAP_DIR" ] ; then
+        echoWarn "WARNING: Directory '$DEFAULT_SNAP_DIR' does not exist!"
+        continue
+    else
+        echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
         KIRA_SNAP=$DEFAULT_SNAP_DIR
     fi
 
@@ -37,7 +34,7 @@ while : ; do
         else
             echoErr "ERROR: Failue, it is NOT possible to access '$SNAP_URL'"
         fi
-        TMP_SNAP_DIR="$DEFAULT_SNAP_DIR/tmp"
+        TMP_SNAP_DIR="$KIRA_SNAP/tmp"
         TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
         rm -f -v -r $TMP_SNAP_DIR
         mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
@@ -138,4 +135,4 @@ echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && ec
 set -x
 
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
+CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -3,13 +3,15 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 START_TIME_NETWORKING="$(date -u +%s)"
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT)
+PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT)
 ZONE=$FIREWALL_ZONE
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
 PRIORITY_MIN="-31000"
 PRIORITY_MAX="32767"
 ALL_IP="0.0.0.0/0"
+PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "0.0.0.0")
+LOCAL_IP=$(/sbin/ifconfig $IFACE 2>/dev/null | grep -i mask 2>/dev/null | awk '{print $2}' 2>/dev/null | cut -f2 2>/dev/null || echo "0.0.0.0")
 
 set +x
 echo "------------------------------------------------"
@@ -18,6 +20,8 @@ echo "|-----------------------------------------------"
 echo "| DEPLOYMENT MODE: $INFRA_MODE"
 echo "|   FIREWALL ZONE: $ZONE"
 echo "|  PORTS EXPOSURE: $PORTS_EXPOSURE"
+echo "|       PUBLIC IP: $PUBLIC_IP"
+echo "|        LOCAL IP: $LOCAL_IP"
 echo "------------------------------------------------"
 set -x
 
@@ -44,6 +48,14 @@ firewall-cmd --permanent --zone=$ZONE --change-interface=$IFACE
 firewall-cmd --permanent --zone=$ZONE --set-target=default
 firewall-cmd --permanent --zone=$ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$ZONE --add-source="$ALL_IP"
+
+if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
+else
+    firewall-cmd --permanent --zone=$ZONE --remove-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$ZONE --remove-source-port=$KIRA_SEED_P2P_PORT/tcp
+fi
 
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_INTERX_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_P2P_PORT/tcp
@@ -122,8 +134,18 @@ for PORT in "${PORTS[@]}" ; do
         firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
     fi
+
+    if [ ! -z "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "0.0.0.0" ] ; then
+        echo "INFO: Whitleisting (self) PUBLIC IP $PUBLIC_IP"
+        firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_WHITELIST family=\"ipv4\" source address=\"$PUBLIC_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
+    fi
+    
+    if [ ! -z "$LOCAL_IP" ] && [ "$LOCAL_IP" != "0.0.0.0" ] ; then
+        echo "INFO: Whitleisting (self) LOCAL IP $LOCAL_IP"
+        firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_WHITELIST family=\"ipv4\" source address=\"$LOCAL_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
+    fi
 done
-      
+
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"10.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"

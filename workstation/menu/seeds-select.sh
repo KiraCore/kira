@@ -22,14 +22,11 @@ while : ; do
     # TODO: Implement Backup & Recovery of network settings
 
     echoInfo "INFO: Testing seeds..."
-
     set -x
 
     if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] ; then
         set +x
-        echoInfo "INFO: No public seeds were specified"
-        echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to launch a local network? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No seed nodes were specified, do you want to launch a network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
         set -x
         [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
         rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
@@ -50,17 +47,17 @@ while : ; do
 
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
         ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
-        if ! timeout 1 ping -c1 $dns &>/dev/null ; then 
-            echoWarn "WARNING: Seed '$addr' is not reachable"
-        else
+        if timeout 2 nc -z $p2 $p3 ; then
             set +x && echo "SUCCESS: Seed '$addr' is ONLINE!" && set -
             rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
             exit 0
+        else
+            echoWarn "WARNING: Seed '$addr' is not reachable"
         fi
     done < $PUBLIC_SEEDS
     
     set +x
-    echoWarn "WARNING: Not a single seed node defined in the configuration is reachable, you will not be able to launch your node!"
+    echoWarn "WARNING: Not a single seed node defined in the configuration list is reachable, you will not be able to launch your node!"
     SVAL="." && while [ "${SVAL,,}" != "t" ] && [ "${SVAL,,}" != "x" ] ; do echo -en "\e[31;1mDo you want to [T]ry again or [E]xit? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
     [ "${SVAL,,}" == "x" ] && echo "INFO: Action was cancelled by the user" && exit 1
 done

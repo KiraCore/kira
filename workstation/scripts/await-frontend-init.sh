@@ -25,7 +25,7 @@ while [ $i -le 40 ]; do
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
     if [ "${IS_STARTED,,}" != "true" ]; then
-        sleep 12
+        sleep 20
         echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
         continue
     else

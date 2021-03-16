@@ -9,11 +9,10 @@ MIN_BLOCK_HEIGHT=$1
 [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
 echoNErr "Input halt height or press [ENTER] to snapshot latest state: " && read HALT_HEIGHT
-DEFAULT_SNAP_DIR=$KIRA_SNAP
-echo "INFO: Default snapshot directory: $DEFAULT_SNAP_DIR"
+echo "INFO: Default snapshot directory: $KIRA_SNAP"
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|c)$ ]] ; do echoNErr "Input [N]ew snapshot directory or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
-[ "${SELECT,,}" == "n" ] && read "$DEFAULT_SNAP_DIR"
+echoNErr "Input new snapshot directory or press [ENTER] to continue: " && read DEFAULT_SNAP_DIR
+[ ! -z "$DEFAULT_SNAP_DIR" ] && [ ! -d "$DEFAULT_SNAP_DIR" ] && echoWarn "WARNING: Directory '$DEFAULT_SNAP_DIR' was not found" && DEFAULT_SNAP_DIR=""
 [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
 
 echo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"

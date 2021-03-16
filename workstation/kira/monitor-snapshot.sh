@@ -2,9 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f
-set -x
 
-echo "INFO: Started kira snapshot scann"
+set -x
 
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
@@ -19,6 +18,19 @@ if [ ! -f $SCAN_DONE ] ; then
     exit 0
 fi
 
+INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+
+set +x
+echo "------------------------------------------------"
+echo "|       STARTING KIRA SNAPSHOT SCAN            |"
+echo "|-----------------------------------------------"
+echo "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
+echo "|          SNAP_EXPOSE: $SNAP_EXPOSE"
+echo "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
+echo "------------------------------------------------"
+set -x
+
 [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] ; then
@@ -29,15 +41,13 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ] ; then
     fi
 fi
 
-INTERX_REDERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
-INTERX_SNAPSHOT_PATH="$INTERX_REDERENCE_DIR/snapshot.zip"
 if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] ; then
     HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
     HASH2=$(sha256sum "$INTERX_SNAPSHOT_PATH" | awk '{ print $1 }' || echo "")
 
     if [ "$HASH1" != "$HASH2" ] ; then
         echo "INFO: Latest snapshot is NOT exposed yet"
-        mkdir -p $INTERX_REDERENCE_DIR
+        mkdir -p $INTERX_REFERENCE_DIR
         cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
     else
         echo "INFO: Latest snapshot was already exposed, no need for updates"

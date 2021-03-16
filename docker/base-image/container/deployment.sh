@@ -36,11 +36,11 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     jq 
 
 apt update -y
-apt install -y bc dnsutils psmisc 
+apt install -y bc dnsutils psmisc netcat
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
-CDHELPER_VERSION="v0.6.50"
+CDHELPER_VERSION="v0.6.51"
 FLUTTER_CHANNEL="dev"
 FLUTTER_VERSION="1.27.0-8.0.pre-$FLUTTER_CHANNEL"
 DART_CHANNEL_PATH="dev/release"
@@ -51,12 +51,12 @@ if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]
     GOLANG_ARCH="arm64"
     DART_ARCH="arm64"
     CDHELPER_ARCH="arm64"
-    CDHELPER_EXPECTED_HASH="6cfd73a429463aa9f2e5f9e8462f5ada50ecaa1b4e21ad6d05caef4f21943273"
+    CDHELPER_EXPECTED_HASH="c2e40c7143f4097c59676f037ac6eaec68761d965bd958889299ab32f1bed6b3"
 else
     GOLANG_ARCH="amd64"
     DART_ARCH="x64"
     CDHELPER_ARCH="x64"
-    CDHELPER_EXPECTED_HASH="6345e3c37cb5eddee659d1a6c7068ff6cf0a1e6a74d1f6f5fec747338f9ebdaf"
+    CDHELPER_EXPECTED_HASH="082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7"
 fi
 
 GO_TAR=go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz

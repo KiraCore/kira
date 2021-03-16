@@ -8,6 +8,8 @@ echo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
+LIP_FILE="$COMMON_READ/local_ip"
+PIP_FILE="$COMMON_READ/public_ip"
 BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
@@ -22,6 +24,17 @@ while ! ping -c1 interx &>/dev/null ; do
     sleep 5
 done
 echo "INFO: INTERX IP Found: $(getent hosts interx | awk '{ print $1 }')"
+
+while [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
+    echo "INFO: Waiting for local or public IP address discovery"
+    sleep 10
+done
+
+LOCAL_IP=$(cat $LIP_FILE || echo "")
+PUBLIC_IP=$(cat $PIP_FILE || echo "")
+
+echo "INFO: Local IP: $LOCAL_IP"
+echo "INFO: Public IP: $PUBLIC_IP"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "INFO: Cloning fronted from '$BUILD_SOURCE' into '$BUILD_DESTINATION'..."
@@ -61,26 +74,32 @@ EOL
 fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
+DEFAULT_INTERX_PORT=11000
+echo "INFO: Printing current config file:"
+cat $CONFIG_JSON || echo "WARNINIG: Failed to print config file"
 echo "INFO: Setting up default API configuration..."
-echo "{ \"api_url\": \"http://0.0.0.0:11000/api\" }" >"$CONFIG_JSON"
+echo "{ \"api_url\": \"http://0.0.0.0:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
 
 i=0
 while [ $i -le 5 ]; do
     i=$((i + 1))
 
-    PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=1 +tries=1 2>/dev/null | awk -F'"' '{ print $2}' || echo "")
-    if [ ! -z "$PUBLIC_IP" ]; then
-        echo "INFO: Public IP addess '$PUBLIC_IP' was detected"
-        INTEREX_AVAILABLE=$(curl http://$PUBLIC_IP:11000/api/status -s -f -o /dev/null && echo "true" || echo "false")
+    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
+    if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
+
+    if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $DEFAULT_INTERX_PORT ; then
+        echo "INFO: Public IP addess '$EXTERNAL_IP' was detected"
+        INTEREX_AVAILABLE=$(curl http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api/status -s -f -o /dev/null && echo "true" || echo "false")
         if [ "${INTEREX_AVAILABLE,,}" == "true" ]; then
-            echo "INFO: INTEREX is available externally, defaulting to '$PUBLIC_IP'"
-            echo "{ \"api_url\": \"http://$PUBLIC_IP:11000/api\" }" >"$CONFIG_JSON"
+            echo "INFO: INTEREX is available externally, defaulting to '$EXTERNAL_IP'"
+            echo "{ \"api_url\": \"http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
             break
         else
             echo "INFO: INTERX is NOT available yet over public network..."
             sleep 15
         fi
     else
+        EXTERNAL_IP="0.0.0.0"
         echo "INFO: Public IP is not avilable yet"
         sleep 15
     fi

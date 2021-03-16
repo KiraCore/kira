@@ -7,6 +7,7 @@ ENV ETC_PROFILE="/etc/profile"
 ENV BASHRC="/root/.bashrc"
 ENV JOURNAL_LOGS="/var/log/journal"
 ENV COMMON_DIR="/common"
+ENV COMMON_READ="/common_ro"
 ENV SNAP_DIR="/snap"
 
 # Env necessary for the individual child container setup
@@ -41,7 +42,7 @@ ENV RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
 ENV PATH="${PATH}:${FLUTTERROOT}/bin:${FLUTTERROOT}/bin/cache/dart-sdk/bin:${GOROOT}:${GOPATH}:${GOBIN}:/root/.cargo/bin:/root/go/bin"
 ENV COMMON_LOGS="${COMMON_DIR}/logs"
 
-RUN mkdir -p ${SNAP_DIR} ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin ${SEKAID_HOME} ${COMMON_DIR}
+RUN mkdir -p ${COMMON_READ} ${SNAP_DIR} ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONFIGS} ${SELF_UPDATE} ${SELF_UPDATE_TMP} ${SELF_LOGS} ${SELF_CONTAINER} ${GOPATH}/src ${GOPATH}/bin ${SEKAID_HOME} ${COMMON_DIR}
 
 ADD ./container ${SELF_CONTAINER}
 
