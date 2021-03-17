@@ -15,21 +15,30 @@ fi
 
 while : ; do
     set +x
-    echoInfo "INFO: If you want to connect to external networks you have to specify at least one public seed node"
-    echoInfo "INFO: If you are launching a new network you will have to wipe the contents of the seed list"
+    echoInfo "INFO: If you want to connect to external networks you have to specify at least one public or private seed node"
+    echoInfo "INFO: If you are launching a new network you should wipe entire content of the seed list"
 
-    $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_SEEDS" "Seed Nodes"
+    if [ "${INFRA_MODE,,}" == "validator" ] ; then
+        SEEDS_EDIT="$PRIVATE_SEEDS"
+        SEEDS_WIPE="$PUBLIC_SEEDS"
+        TARGET_EDIT="Private Nodes"
+    else
+        SEEDS_EDIT="$PUBLIC_SEEDS"
+        SEEDS_WIPE="$PRIVATE_SEEDS"
+        TARGET_EDIT="Seed Nodes"
+    fi
+    $KIRA_MANAGER/kira/seeds-edit.sh "$SEEDS_EDIT" "$TARGET_EDIT"
     # TODO: Implement Backup & Recovery of network settings
 
     echoInfo "INFO: Testing seeds..."
     set -x
 
-    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] ; then
+    if [[ -z $(grep '[^[:space:]]' $SEEDS_EDIT) ]] ; then
         set +x
-        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No seed nodes were specified, do you want to launch a network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+        SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No public or private seed nodes were specified, do you want to launch a network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
         set -x
         [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
-        rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
+        rm -f -v "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
         exit 0
     fi
 
@@ -48,13 +57,13 @@ while : ; do
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
         ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
         if timeout 2 nc -z $p2 $p3 ; then
-            set +x && echo "SUCCESS: Seed '$addr' is ONLINE!" && set -
-            rm -f -v "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
+            set +x && echo "SUCCESS: Seed '$addr' is ONLINE!" && set -x
+            rm -f -v "$SEEDS_WIPE" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
             exit 0
         else
             echoWarn "WARNING: Seed '$addr' is not reachable"
         fi
-    done < $PUBLIC_SEEDS
+    done < $SEEDS_EDIT
     
     set +x
     echoWarn "WARNING: Not a single seed node defined in the configuration list is reachable, you will not be able to launch your node!"

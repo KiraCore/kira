@@ -5,6 +5,8 @@ set -x
 
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
+SAVE_SNAPSHOT=$3
+[ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -121,7 +123,7 @@ while : ; do
     fi
 done
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ; then
+if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
@@ -200,8 +202,5 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
     
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    
-    
 fi
 
