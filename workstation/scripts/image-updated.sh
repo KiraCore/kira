@@ -19,9 +19,9 @@ cd $IMAGE_DIR
 OLD_HASH=$(cat $KIRA_SETUP_FILE)
 NEW_HASH="$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)-$INTEGRITY"
 
-CREATE_NEW_IMAGE="False"
+CREATE_NEW_IMAGE="false"
 if [ -z $(docker images -q $IMAGE_NAME || "") ] || [ "$OLD_HASH" != "$NEW_HASH" ] ; then
-    echo "False"
+    echo "false"
 else
-    echo "True"
+    echo "true"
 fi
