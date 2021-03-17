@@ -21,7 +21,7 @@ while : ; do
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
         SEEDS_EDIT="$PRIVATE_SEEDS"
         SEEDS_WIPE="$PUBLIC_SEEDS"
-        TARGET_EDIT="Private Nodes"
+        TARGET_EDIT="Private Seed Nodes"
     else
         SEEDS_EDIT="$PUBLIC_SEEDS"
         SEEDS_WIPE="$PRIVATE_SEEDS"

@@ -195,7 +195,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed tocreate snpashoot, file $DESTINATION_FILE was not found." && exit 1
+    ll "$KIRA_SNAP"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
     echoInfo "INFO: New snapshot was created!"
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"
