@@ -302,4 +302,9 @@ CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NET
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
-echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    echo "$SEED_NODE_ADDR" > $PRIVATE_SEEDS
+else
+    echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+fi
