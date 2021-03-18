@@ -80,7 +80,7 @@ docker run -d \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_seeds="" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
@@ -93,6 +93,7 @@ docker run -d \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
+    -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
