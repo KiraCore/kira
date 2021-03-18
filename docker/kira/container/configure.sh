@@ -56,13 +56,6 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
 
         ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
 
-        if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-            [ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
-            [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
-            CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
-            CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
-        fi
-
         seed="tcp://$seed"
         echo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
