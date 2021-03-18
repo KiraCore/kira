@@ -95,22 +95,38 @@ while : ; do
 
         # if detected missing node id, try to recover it
         if [ ! -z "${dnsStandalone}" ] ; then
-            dns="$addr"
+            dns="$dnsStandalone"
             echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echo -en "\e[31;1mDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): \e[0m\c" && read -d'' -s -n1 SVAL && echo ""; done
-            [ "${SVAL,,}" != "y" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
+            [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
-            # try to get node ID from the RPC or INTERX
-            nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            ( [ -z "$nodeId" ] || [ "${nodeId,,}" == "null" ] ) && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
+            [ ! -z "$port" ] && if ! timeout 1 nc -z $dns $port ; then
+                echoWarn "WARNING: Port '$port' is not accessible or not defined, attempting discovery..." 
+                port=""
+            fi
 
-            [ ! -z "$port" ] && if ! timeout 1 nc -z $dns $port ; then port="" ; fi
-            [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
-            [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
-            [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echo "INFO: Port 36656 is not exposed by '$dns'"  ; fi
+            if [[ "${TARGET,,}" =~ "priv" ]]; then
+                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
+                [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echo "INFO: Port 36656 is not exposed by '$dns'" ; fi
+                [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
+            else
+                [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
+                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
+                [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echo "INFO: Port 36656 is not exposed by '$dns'" ; fi
+            fi
 
-            [ -z "$port" ] && echo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list, NO exposed P2P ports were found" && continue
+            [ -z "$port" ] && echoWarn "WARNING: Address '$addr' will NOT be added to ${TARGET^^} list, NO exposed P2P ports were found" && continue
+
+            if ( ! $(isNodeId "$nodeId")) ; then
+                echoWarn "WARNING: Node ID was not defined, attepting discovery..."
+                [ "$port" == "16656" ] && containerName="seed"
+                [ "$port" == "26656" ] && containerName="sentry"
+                [ "$port" == "36656" ] && containerName="priv_sentry"
+                nodeId=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/${containerName,,}_node_id" || echo "")
+                ( ! $(isNodeId "$nodeId")) && nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+                ( ! $(isNodeId "$nodeId")) && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            fi
             
             ($(isNodeId "$nodeId")) && nodeId="$nodeId" || nodeId=""
             dns=$dnsStandalone

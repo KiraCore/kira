@@ -8,13 +8,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 INTERX_HASH=$($KIRA_SCRIPTS/git-hash.sh $KIRA_INTERX)
 INTERX_INTEGRITY="${INTERX_BRANCH}_${INTERX_HASH}"
 
-INTERX_IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/interx" "interx" "latest" "$INTERX_INTEGRITY" || echo "error")
-if [ "$INTERX_IMAGE_EXISTS" == "False" ]; then
+IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/interx" "interx" "latest" "$INTERX_INTEGRITY" || echo "error")
+if [ "${IMAGE_EXISTS,,}" == "false" ]; then
     echo "All images were updated, starting interx image..."
     $KIRAMGR_SCRIPTS/update-image.sh "$KIRA_DOCKER/interx" "interx" "latest" "$INTERX_INTEGRITY" "REPO=$INTERX_REPO" "BRANCH=$INTERX_BRANCH" #4
-elif [ "$INTERX_IMAGE_EXISTS" == "True" ]; then
+elif [ "${IMAGE_EXISTS,,}" == "frue" ]; then
     echo "INFO: interx image is up to date"
 else
-    echo "ERROR: Failed to test if interx image exists"
+    echo "ERROR: Failed to test if interx image exists: '$IMAGE_EXISTS'"
     exit 1
 fi

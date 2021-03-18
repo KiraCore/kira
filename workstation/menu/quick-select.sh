@@ -40,6 +40,13 @@ if [ "${SELECT,,}" == "n" ]; then
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
     echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
+    echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
+    echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
+    echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
+    echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
+    echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
+
+    
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
 
@@ -252,6 +259,11 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:      Public seed node address: " && echoErr $SEED_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
+        echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
+        echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
+        echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
+        echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
+        echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
 
@@ -302,4 +314,9 @@ CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NET
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
-echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    echo "$SEED_NODE_ADDR" > $PRIVATE_SEEDS
+else
+    echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+fi
