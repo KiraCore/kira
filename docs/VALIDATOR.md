@@ -9,6 +9,6 @@ sekaid query customslashing signing-infos $(sekaid valcons-address $VALIDATOR_AD
 # Joining validator with INACTIVE status
 
 ```
-sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --yes
+sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --yes | jq
 ```
 
