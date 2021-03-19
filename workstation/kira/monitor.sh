@@ -115,6 +115,8 @@ if [ -f $SCAN_DONE ] && [[ $AUTO_BACKUP_ENABLED = "Enabled" ]]; then
         echo "(5) time to backup: ${AUTO_BACKUP_EXECUTED_TIME}" >"${AUTO_BACKUP_SCAN_PATH}.log"
         CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
 
+        rm -fv $SCAN_DONE
+
         $KIRA_MANAGER/containers/start-snapshot.sh "" ""
     fi
 fi
