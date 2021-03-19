@@ -157,11 +157,7 @@ while :; do
 
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-        KIRA_AUTO_BACKUP_TMP=""
-        if [ "${AUTO_BACKUP_ENABLED}" == "Enabled" ]; then
-            KIRA_AUTO_BACKUP_TMP=" (A)"
-        fi
-        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: ${GENESIS_SUM}${KIRA_AUTO_BACKUP_TMP}"
+        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $GENESIS_SUM"
 
         VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2>/dev/null || echo "")" && ([ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ]) && VALACTIVE="???"
         VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2>/dev/null || echo "")" && ([ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ]) && VALTOTAL="???"
@@ -184,9 +180,13 @@ while :; do
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
+        KIRA_AUTO_BACKUP_TMP=""
+        if [ "${AUTO_BACKUP_ENABLED}" == "Enabled" ]; then
+            KIRA_AUTO_BACKUP_TMP=" (A)"
+        fi
         [ "${SNAP_EXPOSE,,}" == "true" ] &&
-            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)" ||
-            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
+            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${KIRA_AUTO_BACKUP_TMP}" ||
+            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${KIRA_AUTO_BACKUP_TMP}"
     fi
 
     if [ "${LOADING,,}" == "true" ]; then
