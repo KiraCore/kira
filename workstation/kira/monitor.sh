@@ -7,7 +7,7 @@ set -x
 
 START_TIME="$(date -u +%s)"
 
-echo "INFO: Started kira network scann"
+echo "INFO: Started kira network scan"
 
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_LOGS="$SCAN_DIR/logs"

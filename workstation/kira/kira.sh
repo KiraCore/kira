@@ -158,7 +158,7 @@ while : ; do
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
         KIRA_AUTO_BACKUP_TMP=""
-        if [ "${AUTO_BACKUP_ENABLED,,}" == "enabled" ]; then
+        if [ "${AUTO_BACKUP_ENABLED,,}" == "Enabled" ]; then
             KIRA_AUTO_BACKUP_TMP=" (A)"
         fi
         echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: ${GENESIS_SUM}${KIRA_AUTO_BACKUP_TMP}"
