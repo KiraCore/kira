@@ -137,5 +137,3 @@ else
     echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
 set -x
-
-touch $SNAP_DONE
