@@ -7,10 +7,7 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
     echo "INFO: Installing DUC dependencies..."
-    apt-get install -y perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
-    echo "INFO: Installing XRDP dependencies..."
-    apt-get install -y autoconf libtool fuse libpam0g-dev libjpeg-dev libfuse-dev libx11-dev libxfixes-dev \
-        libxrandr-dev nasm gnome-tweak-tool net-tools
+    apt-get install -y autoconf libtool fuse nasm net-tools perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
 
     echo "INFO: Cleaning up generic network dependencies..."
     apt-get remove -y ufw firewalld
