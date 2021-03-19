@@ -105,17 +105,13 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
-    echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
     EXTERNAL_SYNC="false"
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    echoInfo "INFO: Nodes will be synced from the external seed node"
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) || [ "${NEW_NETWORK,,}" == "true" ] ; then
-        echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
+    if [ "${NEW_NETWORK,,}" == "true" ] || ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) ; then
         EXTERNAL_SYNC="false"
     else
-        echoInfo "INFO: Nodes will be synced from the external seed node"
         EXTERNAL_SYNC="true"
     fi
 else
@@ -123,6 +119,8 @@ else
   exit 1
 fi
 
+[ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$INFRA_MODE' mode"
+[ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$INFRA_MODE' mode"
 CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
 
 if [ "${NEW_NETWORK,,}" != "true" ] ; then 
