@@ -98,6 +98,7 @@ $KIRA_MANAGER/kira/monitor-containers.sh
 echo "INFO: Starting snapshot monitor..."
 $KIRA_MANAGER/kira/monitor-snapshot.sh
 
+touch "${AUTO_BACKUP_SCAN_PATH}.log"
 cat "(1) Log Started..." >"${AUTO_BACKUP_SCAN_PATH}.log"
 
 if [ -f $SCAN_DONE ] && [[ $AUTO_BACKUP_ENABLED = "Enabled" ]]; then
