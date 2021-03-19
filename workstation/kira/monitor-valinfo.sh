@@ -14,6 +14,7 @@ touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINF
 
 echo "INFO: Saving valopers info..."
 VALOPERS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "")
+WAITING=$(echo $VALOPERS | jq '.waiting' || echo "" )
 echo "$VALOPERS" > $VALOPERS_SCAN_PATH
 # let containers know the validators info
 echo "$VALOPERS" > "$DOCKER_COMMON_RO/valopers"
@@ -38,31 +39,37 @@ fi
 [ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "") || VALSTATUS=""
 
 if [ -z "$VALSTATUS" ] ; then
-    echo "ERROR: Validator address or status was not found, aborting..."
-    echo "" > $VALINFO_SCAN_PATH
-    echo "" > $VALSTATUS_SCAN_PATH
-    exit 0
+    echo "ERROR: Validator address or status was not found"
+    if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
+        echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
+    else
+        echo "" > $VALSTATUS_SCAN_PATH
+    fi
 else
     echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
 fi
 
-VRANK=$(echo $VALSTATUS | jq -rc '.rank' 2> /dev/null || echo "")
-VALIDATORS=$(echo $VALOPERS 2> /dev/null | jq -rc '.validators|=sort_by(.rank)|.validators|reverse' 2> /dev/null || echo "")
-
-if $(isNumber "$VRANK") && [ ! -z "$VALIDATORS" ] ; then
-    i=0
+VALOPER_FOUND="false"
+VALIDATORS=$(echo $VALOPERS 2> /dev/null | jq -rc '.validators' 2> /dev/null || echo "")
+if [ -z "$VALIDATORS" ] ; then
+    echo "INFO: Failed to querry velopers info"
+    echo "" > $VALINFO_SCAN_PATH
+else
     for row in $(echo "$VALIDATORS" 2> /dev/null | jq -rc '.[] | @base64' 2> /dev/null || echo ""); do
-        i=$((i+1))
         vobj=$(echo ${row} | base64 --decode 2> /dev/null | jq -rc 2> /dev/null || echo "")
         vaddr=$(echo "$vobj" 2> /dev/null | jq -rc '.address' 2> /dev/null || echo "")
         if [ "$VALADDR" == "$vaddr" ] ; then
-            vobj=$(echo "$vobj" | jq -rc ". += {\"top\": \"$i\"}" || echo "")
             echo "$vobj" > $VALINFO_SCAN_PATH
-            exit 0
+            VALOPER_FOUND="true"
+            break
         fi
     done
 fi
 
-echo "" > $VALINFO_SCAN_PATH
+if [ "${VALOPER_FOUND,,}" != "true" ] ; then
+    echo "INFO: Validator '$VALADDR' was not found in the valopers querry"
+    echo "" > $VALINFO_SCAN_PATH
+    exit 0
+fi
 
 sleep 60

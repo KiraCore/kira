@@ -51,7 +51,7 @@ echo "|     BUILD ARG 3: $ARG3_KEY=$ARG3_VAL"
 echo "------------------------------------------------"
 set -x
 
-if [[ $($KIRAMGR_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "True" ]]; then
+if [[ $($KIRAMGR_SCRIPTS/image-updated.sh "$IMAGE_DIR" "$IMAGE_NAME" "$IMAGE_TAG" "$INTEGRITY") != "true" ]]; then
 
     if [ "$OLD_HASH" != "$NEW_HASH" ]; then
         echoWarn "WARNING: Image '$IMAGE_DIR' hash changed from $OLD_HASH to $NEW_HASH"

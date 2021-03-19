@@ -5,6 +5,8 @@ set -x
 
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
+SAVE_SNAPSHOT=$3
+[ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -121,7 +123,7 @@ while : ; do
     fi
 done
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ; then
+if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
@@ -193,15 +195,13 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "sentry" ] ;
     echo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed tocreate snpashoot, file $DESTINATION_FILE was not found." && exit 1
+    ls -1 "$KIRA_SNAP"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
     echoInfo "INFO: New snapshot was created!"
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"
     cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
     
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    
-    
 fi
 

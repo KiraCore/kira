@@ -142,11 +142,10 @@ while : ; do
         else
             [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
             ( [ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ] ) && LAST_BLOCK=$KIRA_BLOCK
-            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME))
-            ( [ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && DELTA_TIME=1
+            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME)) && ( [ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]] ) && DELTA_TIME=1
             DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK ))
-            SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_BLOCKS / $DELTA_TIME ) " | bc)
-            [ "$SECONDS_PER_BLOCK" != "0" ] && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+            [ "$DELTA_BLOCKS" != "0" ] && SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_TIME / $DELTA_BLOCKS ) " | bc)
+            [ "$DELTA_BLOCKS" != "0" ] && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
         if [ -f "$LOCAL_GENESIS_PATH" ] ; then

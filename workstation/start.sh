@@ -111,7 +111,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Nodes will be synced from the external seed node"
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [ "${NEW_NETWORK,,}" == "true" ] ; then
+    if ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) || [ "${NEW_NETWORK,,}" == "true" ] ; then
         echoInfo "INFO: Nodes will be synced from the pre-generated genesis"
         EXTERNAL_SYNC="false"
     else
@@ -139,7 +139,7 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    $KIRA_MANAGER/containers/start-sentry.sh
+    $KIRA_MANAGER/containers/start-sentry.sh "true"
     $KIRA_MANAGER/containers/start-priv-sentry.sh 
     $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
@@ -152,13 +152,18 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
     else
-        $KIRA_MANAGER/containers/start-sentry.sh
-
-        #echoInfo "INFO: No private seeds were configured, using public sentry as private seed"
-        #SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.sentrynet:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-        #echo "$SENTRY_SEED" > $PRIVATE_SEEDS
-        $KIRA_MANAGER/containers/start-priv-sentry.sh 
-
+        if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
+            # save snapshoot from sentry first
+            $KIRA_MANAGER/containers/start-sentry.sh "true"
+            $KIRA_MANAGER/containers/start-priv-sentry.sh
+        elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+            # save snapshoot from private sentry first
+            $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
+            $KIRA_MANAGER/containers/start-sentry.sh
+        else
+            echoErr "ERROR: No public or priveate seeds were found, syning your node from external source will not be possible"
+            exit 1
+        fi
         $KIRA_MANAGER/containers/start-interx.sh 
         $KIRA_MANAGER/containers/start-frontend.sh
         $KIRA_MANAGER/containers/start-validator.sh 

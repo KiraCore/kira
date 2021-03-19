@@ -129,17 +129,15 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
     SEKAID_HOME="/root/.simapp"
 
-    mkdir -p $KIRA_INFRA
-    mkdir -p $KIRA_SEKAI
-    mkdir -p $KIRA_FRONTEND
-    mkdir -p $KIRA_INTERX
+    DOCKER_COMMON="/docker/shared/common"
+    # read only common directory
+    DOCKER_COMMON_RO="/docker/shared/common_ro"
 
-    mkdir -p $KIRA_SETUP
-    mkdir -p $KIRA_MANAGER
+    mkdir -p $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-9" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-10" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -224,6 +222,10 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$DOCKER_COMMON_RO/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True

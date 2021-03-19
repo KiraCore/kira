@@ -115,9 +115,9 @@ echo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
 # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
-ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "1")
-([ -z "$ACTIVE_VALIDATORS" ] || [ "${ACTIVE_VALIDATORS,,}" == "null" ] || [ "${ACTIVE_VALIDATORS,,}" == "0" ]) && ACTIVE_VALIDATORS=1
-TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / $ACTIVE_VALIDATORS ) * 1000 ) + 100) " | bc)
+ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
+([ -z "$ACTIVE_VALIDATORS" ] || [ "${ACTIVE_VALIDATORS,,}" == "null" ]) && ACTIVE_VALIDATORS=0
+TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
 TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
 CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
 
