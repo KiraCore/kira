@@ -22,6 +22,7 @@ LIP_SCAN_PATH="$SCAN_DIR/lip"
 IP_SCAN_PATH="$SCAN_DIR/ip"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
+AUTO_BACKUP_SCAN_PATH="$SCAN_DIR/autobackup"
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -97,11 +98,17 @@ $KIRA_MANAGER/kira/monitor-containers.sh
 echo "INFO: Starting snapshot monitor..."
 $KIRA_MANAGER/kira/monitor-snapshot.sh
 
+cat "(1) Log Started..." >"${AUTO_BACKUP_SCAN_PATH}.log"
+
 if [ -f $SCAN_DONE ] && [[ $AUTO_BACKUP_ENABLED = "Enabled" ]]; then
+    cat "(2) Enabled pass" >"${AUTO_BACKUP_SCAN_PATH}.log"
     ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+    cat "(3) Elapsed time: ${ELAPSED_TIME}" >"${AUTO_BACKUP_SCAN_PATH}.log"
     INTERVAL_AS_SECOND=$($AUTO_BACKUP_INTERVAL * 60)
+    cat "(4) Interval second: ${INTERVAL_AS_SECOND}" >"${AUTO_BACKUP_SCAN_PATH}.log"
     if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] || [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
         AUTO_BACKUP_EXECUTED_TIME=$(date -u %s)
+        cat "(5) time to backup: ${AUTO_BACKUP_EXECUTED_TIME}" >"${AUTO_BACKUP_SCAN_PATH}.log"
         CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
 
         $KIRA_MANAGER/containers/start-snapshot.sh "" ""
