@@ -157,11 +157,15 @@ while : ; do
 
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $GENESIS_SUM"
+        KIRA_AUTO_BACKUP_TMP=""
+        if [ "${AUTO_BACKUP_ENABLED,,}" == "enabled" ]; then
+            KIRA_AUTO_BACKUP_TMP=" (A)"
+        fi
+        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: ${GENESIS_SUM}${KIRA_AUTO_BACKUP_TMP}"
 
-        VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2> /dev/null || echo "")" && ( [ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ] ) && VALACTIVE="???"
-        VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2> /dev/null || echo "")" && ( [ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ] ) && VALTOTAL="???"
-        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2> /dev/null || echo "???")" && ( [ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ] ) && VALWAITING="???"
+        VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2>/dev/null || echo "")" && ([ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ]) && VALACTIVE="???"
+        VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2>/dev/null || echo "")" && ([ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ]) && VALTOTAL="???"
+        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2>/dev/null || echo "???")" && ([ -z "$VALWAITING" ] || [ "${VALWAITING,,}" == "null" ]) && VALWAITING="???"
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
