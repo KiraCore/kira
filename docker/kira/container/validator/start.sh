@@ -56,14 +56,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   SIGNER_KEY=$COMMON_DIR/signer_addr_mnemonic.key && SIGNER_ADDR_MNEMONIC=$(cat $SIGNER_KEY)
   FAUCET_KEY=$COMMON_DIR/faucet_addr_mnemonic.key && FAUCET_ADDR_MNEMONIC=$(cat $FAUCET_KEY)
   VALIDATOR_KEY=$COMMON_DIR/validator_addr_mnemonic.key && VALIDATOR_ADDR_MNEMONIC=$(cat $VALIDATOR_KEY)
-  FRONTEND_KEY=$COMMON_DIR/frontend_addr_mnemonic.key && FRONTEND_ADDR_MNEMONIC=$(cat $FRONTEND_KEY)
   TEST_KEY=$COMMON_DIR/test_addr_mnemonic.key && TEST_ADDR_MNEMONIC=$(cat $TEST_KEY)
 
   yes $SIGNER_ADDR_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
   yes $FAUCET_ADDR_MNEMONIC | sekaid keys add faucet --keyring-backend=test --home=$SEKAID_HOME --recover
   yes $VALIDATOR_ADDR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
   yes $TEST_ADDR_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover
-  yes $FRONTEND_ADDR_MNEMONIC | sekaid keys add frontend --keyring-backend=test --home=$SEKAID_HOME --recover
 
   echo "INFO: All accounts were recovered"
  
@@ -73,12 +71,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "INFO: Genesis file was NOT found, attempting to create new one..."
     [ "${NEW_NETWORK,,}" == "false" ] && echo "ERROR: Node was NOT supposed to create new network with new genesis file!" && exit 1
 
-    set +x
-    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show frontend -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,1000000000validatortoken,1000000000stake --home=$SEKAID_HOME
+    set +x 
+    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299999600000000ukex,299999600000000utest,2000000000000000samolian --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest,100000000000000samolian --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
     set -x
     # default chain properties
@@ -91,13 +88,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
   fi
 
-  rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $FRONTEND_KEY $TEST_KEY
+  rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $TEST_KEY
   touch $EXECUTED_CHECK
 fi
 
 VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
 TEST_ADDR=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME)
-FRONTEND_ADDR=$(sekaid keys show -a frontend --keyring-backend=test --home=$SEKAID_HOME)
 SIGNER_ADDR=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME)
 FAUCET_ADDR=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME)
 VALOPER_ADDR=$(sekaid val-address $VALIDATOR_ADDR)
@@ -106,7 +102,6 @@ CONSPUB_ADDR=$(sekaid tendermint show-validator)
 CDHelper text lineswap --insert="TEST_ADDR=$TEST_ADDR" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SIGNER_ADDR=$SIGNER_ADDR" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FAUCET_ADDR=$FAUCET_ADDR" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_ADDR=$FRONTEND_ADDR" --prefix="FRONTEND_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True

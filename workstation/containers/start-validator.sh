@@ -23,7 +23,6 @@ mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_CO
 echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
 echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
 echo "$VALIDATOR_ADDR_MNEMONIC" > $COMMON_PATH/validator_addr_mnemonic.key
-echo "$FRONTEND_ADDR_MNEMONIC" > $COMMON_PATH/frontend_addr_mnemonic.key
 echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
 cp -a $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
 cp -a $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
