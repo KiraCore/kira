@@ -370,8 +370,9 @@ while : ; do
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
-        systemctl stop kirascan
-        rm -f /dev/null; mknod -m 666 /dev/null c 1 3
+        # systemctl stop kirascan
+        rm -f /dev/null
+        mknod -m 666 /dev/null c 1 3
         exit 0
     fi
 
