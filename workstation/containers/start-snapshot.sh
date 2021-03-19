@@ -25,19 +25,19 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
-SENTRY_STATUS=$(curl 127.0.0.1:$KIRA_SENTRY_RPC_PORT/status 2> /dev/null | jq -rc '.result' 2> /dev/null || echo "")
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2> /dev/null || echo "")
+SENTRY_STATUS=$(curl 127.0.0.1:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
 
-if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] || [ "${SENTRY_NETWORK,,}" == "null" ] ; then
+if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] || [ "${SENTRY_NETWORK,,}" == "null" ]; then
     echo "INFO: Failed to snapshot state, public sentry is still catching up or network was not found..."
     exit 1
 fi
 
-if [ $MAX_HEIGHT -le 0 ] ; then
-    SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "")
-    ( [ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ] ) && SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
-    ( [ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ] ) && SENTRY_BLOCK="0"
+if [ $MAX_HEIGHT -le 0 ]; then
+    SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+    ([ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ]) && SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
+    ([ -z "$SENTRY_BLOCK" ] || [ "${SENTRY_BLOCK,,}" == "null" ]) && SENTRY_BLOCK="0"
     MAX_HEIGHT=$SENTRY_BLOCK
 fi
 
@@ -50,7 +50,7 @@ echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
 echo "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
-echo "| SYNC HEIGHT: $MAX_HEIGHT" 
+echo "| SYNC HEIGHT: $MAX_HEIGHT"
 echo "|   SNAP FILE: $SNAP_FILE"
 echo "|     MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echo "|     MAX RAM: $RAM_RESERVED"
@@ -64,7 +64,7 @@ set -e
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
-if [ -f "$SYNC_FROM_SNAP" ] ; then
+if [ -f "$SYNC_FROM_SNAP" ]; then
     echo "INFO: State snapshot was found, cloning..."
     cp -a -v -f $SYNC_FROM_SNAP $SNAP_DESTINATION
 fi
@@ -118,7 +118,7 @@ echo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
 
 set +x
-if [ "${CONTAINER_CREATED,,}" != "true" ] ; then
+if [ "${CONTAINER_CREATED,,}" != "true" ]; then
     echo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
     $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
 else
@@ -127,13 +127,15 @@ else
 
     echoInfo "INFO: Checking genesis SHA256 hash"
     TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-    if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
+    if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ]; then
         echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
         $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
         exit 1
     fi
 
-    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m"  && echo ""
+    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m" && echo ""
     echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
 set -x
+
+touch $SNAP_DONE
