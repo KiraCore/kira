@@ -11,6 +11,8 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
+LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
+LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
 CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
@@ -25,6 +27,9 @@ echo "|             NETWORKS: $NETWORKS"
 echo "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
 echo "------------------------------------------------"
 set -x
+
+[ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
+[ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo "" > $LATEST_STATUS_SCAN_PATH
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -60,6 +65,8 @@ for name in $CONTAINERS; do
     fi
 done
 
+NEW_LATEST_BLOCK=0
+NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
@@ -81,12 +88,17 @@ for name in $CONTAINERS; do
         ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
         ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" != "true" ] ) && CATCHING_UP="false"
         LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
-        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
-        ( [ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ] ) && LATEST_BLOCK=0
+        (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+        (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
             NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null || echo "false")
             ( ! $(isNodeId "$NODE_ID")) && NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo "")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
+        fi
+
+        if [ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ] ; then
+            LATEST_BLOCK="$NEW_LATEST_BLOCK"
+            NEW_LATEST_STATUS="$SEKAID_STATUS"
         fi
     else
         LATEST_BLOCK="0"
@@ -97,5 +109,12 @@ for name in $CONTAINERS; do
     echo "$LATEST_BLOCK" > "${DESTINATION_PATH}.sekaid.latest_block_height"
     echo "$CATCHING_UP" > "${DESTINATION_PATH}.sekaid.catching_up"
 done
+
+# save latest known block height
+OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
+(! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
+[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] && echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
+# save latest known status
+[ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
 echo "INFO: Finished kira contianers monitor"

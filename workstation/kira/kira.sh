@@ -26,6 +26,8 @@ NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
 DISK_SCAN_PATH="$SCAN_DIR/disk"
 CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
+LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
+LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
@@ -59,6 +61,8 @@ while :; do
     VALOPERS=$(cat $VALOPERS_SCAN_PATH 2>/dev/null || echo "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2>/dev/null || echo "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo "")"
+    KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
+    KIRA_STATUS=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo "")
 
     CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.network_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
 
@@ -74,7 +78,6 @@ while :; do
         ALL_CONTAINERS_HEALTHY="true"
         CATCHING_UP="false"
         ESSENTIAL_CONTAINERS_COUNT=0
-        KIRA_BLOCK=0
 
         i=-1
         for name in $CONTAINERS; do
@@ -89,9 +92,6 @@ while :; do
             fi
 
             SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
-            KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-            [[ ! $KIRA_BLOCK_TMP =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
-            [[ ! $KIRA_BLOCK_TMP =~ ^[0-9]+$ ]] && KIRA_BLOCK_TMP="0"
             SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.SyncInfo.catching_up' 2>/dev/null || echo "false")
             ([ -z "$SYNCING_TMP" ] || [ "${SYNCING_TMP,,}" == "null" ]) && SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
 
@@ -109,11 +109,6 @@ while :; do
 
             if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]]; then
                 ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
-            fi
-
-            if [ ! -z "$SEKAID_STATUS" ] && ([ -z "$NETWORK_STATUS" ] || [ $KIRA_BLOCK_TMP -gt $KIRA_BLOCK ]); then
-                NETWORK_STATUS=$SEKAID_STATUS
-                KIRA_BLOCK=$KIRA_BLOCK_TMP
             fi
         done
         CONTAINERS_COUNT=$((i + 1))
@@ -133,11 +128,9 @@ while :; do
         echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
 
     if [ "${LOADING,,}" == "false" ]; then
-        KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.NodeInfo.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-        ([ -z "$NETWORK_STATUS" ] || [ "${NETWORK_STATUS,,}" == "null" ]) && KIRA_NETWORK=$(echo $NETWORK_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-        KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.SyncInfo.latest_block_height' 2>/dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-        ([ -z "$KIRA_BLOCK" ] || [ "${KIRA_BLOCK,,}" == "null" ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]]) && KIRA_BLOCK=$(echo $NETWORK_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "???") && [ -z "$KIRA_BLOCK" ] && KIRA_BLOCK="???"
-        if [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]]; then
+        KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.NodeInfo.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+        ([ -z "$KIRA_STATUS" ] || [ "${KIRA_STATUS,,}" == "null" ]) && KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
+        if [ $KIRA_BLOCK -le 0 ]; then
             KIRA_BLOCK="???"
         else
             [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
@@ -180,13 +173,11 @@ while :; do
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
-        KIRA_AUTO_BACKUP_TMP=""
-        if [ "$AUTO_BACKUP_ENABLED" == true ]; then
-            KIRA_AUTO_BACKUP_TMP=" (A)"
-        fi
+        AUTO_BACKUP_TMP="" && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && AUTO_BACKUP_TMP="(A)"
+        
         [ "${SNAP_EXPOSE,,}" == "true" ] &&
-            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${KIRA_AUTO_BACKUP_TMP}" ||
-            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${KIRA_AUTO_BACKUP_TMP}"
+            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${AUTO_BACKUP_TMP}" ||
+            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${AUTO_BACKUP_TMP}"
     fi
 
     if [ "${LOADING,,}" == "true" ]; then

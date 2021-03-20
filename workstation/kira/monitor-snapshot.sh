@@ -7,11 +7,12 @@ set -x
 
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
-
+LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
+
 
 if [ ! -f $SCAN_DONE ]; then
     echo "INFO: Scan is not done yet, aborting snapshot monitor"
@@ -20,6 +21,7 @@ fi
 
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 
 set +x
 echo "------------------------------------------------"
@@ -28,6 +30,7 @@ echo "|-----------------------------------------------"
 echo "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echo "|          SNAP_EXPOSE: $SNAP_EXPOSE"
 echo "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
+echo "|         LATEST BLOCK: $LATEST_BLOCK"
 echo "------------------------------------------------"
 set -x
 
@@ -61,6 +64,23 @@ if [ -d $KIRA_SNAP ]; then
     echo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
     find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echo "ERROR: Failed to remove excessive snapshots"
     echo "INFO: Success, all excessive snaps were removed"
+fi
+
+[ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
+if [ -f $SCAN_DONE ] && [ "$AUTO_BACKUP_ENABLED" == true ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
+    ELAPSED_TIME=0
+    if [ ! -z "$AUTO_BACKUP_EXECUTED_TIME" ]; then
+        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+    fi
+    INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
+    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] || [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
+        AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
+        rm -fv $SCAN_DONE
+        [ -f $KIRA_SNAP_PATH ] SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
+        $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP"
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
 fi
 
 echo "INFO: Finished kira snapshot scann"

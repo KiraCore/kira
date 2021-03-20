@@ -18,7 +18,7 @@ sekaid query customslashing signing-infos $(sekaid valcons-address $VALIDATOR_AD
 # Claim Validator Seat (WAITING status)
 
 ```
-sekaid tx customstaking claim-validator-seat --from validator --keyring-backend=test --home=$SEKAID_HOME --moniker="NODE-B" --chain-id=$NETWORK_NAME --fees=100ukex --yes
+sekaid tx customstaking claim-validator-seat --from validator --keyring-backend=test --home=$SEKAID_HOME --moniker="NODE-B" --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
 # Re-Joining Validator set (INACTIVE status)
