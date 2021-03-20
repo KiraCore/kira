@@ -98,7 +98,7 @@ $KIRA_MANAGER/kira/monitor-containers.sh
 echo "INFO: Starting snapshot monitor..."
 $KIRA_MANAGER/kira/monitor-snapshot.sh
 
-if [ -f $SCAN_DONE ] && [[ $AUTO_BACKUP_ENABLED = "Enabled" ]]; then
+if [ -f $SCAN_DONE ] && [ "$AUTO_BACKUP_ENABLED" == true ]; then
     ELAPSED_TIME=0
     if [ ! -z "$AUTO_BACKUP_EXECUTED_TIME" ]; then
         ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))

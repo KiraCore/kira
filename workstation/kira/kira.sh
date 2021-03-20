@@ -181,7 +181,7 @@ while :; do
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
         KIRA_AUTO_BACKUP_TMP=""
-        if [ "${AUTO_BACKUP_ENABLED}" == "Enabled" ]; then
+        if [ "$AUTO_BACKUP_ENABLED" == true ]; then
             KIRA_AUTO_BACKUP_TMP=" (A)"
         fi
         [ "${SNAP_EXPOSE,,}" == "true" ] &&

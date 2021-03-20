@@ -37,9 +37,9 @@ KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
 [ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
 
-AUTO_BACKUP_INTERVAL=12       # 12 hour
-AUTO_BACKUP_ENABLED="Enabled" # "Enabled" | "Disabled"
-AUTO_BACKUP_EXECUTED_TIME=""  # timestamp to indicate the latest auto-backup execution time
+AUTO_BACKUP_INTERVAL=12 # 12 hour
+AUTO_BACKUP_ENABLED=true
+AUTO_BACKUP_EXECUTED_TIME="" # timestamp to indicate the latest auto-backup execution time
 
 KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 

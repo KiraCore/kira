@@ -21,13 +21,14 @@ if [ "${SELECT,,}" == "c" ]; then
 
     CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
 
+    [[ $AUTO_BACKUP_ENABLED = true ]] && AUTO_BACKUP_ENABLED_TEXT="Enabled" || AUTO_BACKUP_ENABLED_TEXT="Disabled"
     while :; do
-        echoNErr "Input you want to [E]nable/[D]isable auto-backup, press [ENTER] to skip with no change ($AUTO_BACKUP_ENABLED) : " && read NEW_AUTO_BACKUP_ENABLED
+        echoNErr "Input you want to [E]nable/[D]isable auto-backup, press [ENTER] to skip with no change ($AUTO_BACKUP_ENABLED_TEXT) : " && read NEW_AUTO_BACKUP_ENABLED
         echo $NEW_AUTO_BACKUP_ENABLED
         if [ "${NEW_AUTO_BACKUP_ENABLED,,}" == "e" ]; then
-            AUTO_BACKUP_ENABLED="Enabled"
+            AUTO_BACKUP_ENABLED=true
         elif [ "${NEW_AUTO_BACKUP_ENABLED,,}" == "d" ]; then
-            AUTO_BACKUP_ENABLED="Disabled"
+            AUTO_BACKUP_ENABLED=false
         elif [ ! -z "${NEW_AUTO_BACKUP_ENABLED}" ]; then
             echoWarn "Retry..." && continue
         fi
@@ -36,7 +37,7 @@ if [ "${SELECT,,}" == "c" ]; then
 
     CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    if [ "${AUTO_BACKUP_ENABLED,,}" == "Enabled" ]; then
+    if [ "$AUTO_BACKUP_ENABLED" == true ]; then
         echo "INFO: Auto-backup enabled. Interval: $AUTO_BACKUP_INTERVAL"
     else
         echo "INFO: Auto-backup disabled"
