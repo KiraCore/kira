@@ -151,11 +151,11 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-frontend.sh
     else
         if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
-            # save snapshoot from sentry first
+            # save snapshot from sentry first
             $KIRA_MANAGER/containers/start-sentry.sh "true"
             $KIRA_MANAGER/containers/start-priv-sentry.sh
         elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
-            # save snapshoot from private sentry first
+            # save snapshot from private sentry first
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
         else

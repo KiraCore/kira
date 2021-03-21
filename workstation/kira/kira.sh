@@ -254,8 +254,16 @@ while :; do
     fi
 
     if ([ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]; then
-        AUTO_BACKUP_TMP=""
-        [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && AUTO_BACKUP_TMP=": AUTO-SNAP ${AUTO_BACKUP_INTERVAL}h${WHITESPACE}" || AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
+        if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] ; then
+            [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
+            ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+            INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
+            TIME_LEFT=$(($INTERVAL_AS_SECOND - $ELAPSED_TIME))
+            [ $TIME_LEFT -lt 0 ] && TIME_LEFT=0
+            AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"
+        else
+            AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
+        fi
         echo "| [B] | BACKUP Chain State ${AUTO_BACKUP_TMP:0:21}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     fi
 

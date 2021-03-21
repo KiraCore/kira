@@ -4,11 +4,23 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-valinfo.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
+SCRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
+
+set +x
+echo "------------------------------------------------"
+echo "|       STARTING KIRA VALIDATORS SCAN          |"
+echo "|-----------------------------------------------"
+echo "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
+echo "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
+echo "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
+echo "|   VALADDR_SCAN_PATH: $VALADDR_SCAN_PATH"
+echo "------------------------------------------------"
+set -x
 
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
@@ -73,3 +85,10 @@ if [ "${VALOPER_FOUND,,}" != "true" ] ; then
 fi
 
 sleep 60
+
+set +x
+echo "------------------------------------------------"
+echo "| FINISHED: VALIDATORS MONITOR                 |"
+echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echo "------------------------------------------------"
+set -x

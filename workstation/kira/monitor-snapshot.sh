@@ -1,10 +1,12 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f
 
 set -x
 
+SCRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
@@ -67,17 +69,26 @@ if [ -d $KIRA_SNAP ]; then
 fi
 
 [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
-[ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
-if [ -f $SCAN_DONE ] && [ "$AUTO_BACKUP_ENABLED" == true ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
+if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
+    echo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
+    CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
     ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
     INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
     if [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
         rm -fv $SCAN_DONE
         [ -f $KIRA_SNAP_PATH ] SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
         $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
+else
+    echo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
 fi
 
-echo "INFO: Finished kira snapshot scann"
+set +x
+echo "------------------------------------------------"
+echo "| FINISHED: SNAPSHOT MONITOR                   |"
+echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echo "------------------------------------------------"
+set -x

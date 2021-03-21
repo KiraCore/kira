@@ -118,11 +118,9 @@ OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 # save latest known status
 [ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
-echo "INFO: Finished kira contianers monitor"
-
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echoWarn "------------------------------------------------"
+echo "------------------------------------------------"
+echo "| FINISHED: CONTAINERS MONITOR                 |"
+echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echo "------------------------------------------------"
 set -x
