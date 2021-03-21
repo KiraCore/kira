@@ -67,18 +67,15 @@ if [ -d $KIRA_SNAP ]; then
 fi
 
 [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
+[ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
 if [ -f $SCAN_DONE ] && [ "$AUTO_BACKUP_ENABLED" == true ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
-    ELAPSED_TIME=0
-    if [ ! -z "$AUTO_BACKUP_EXECUTED_TIME" ]; then
-        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-    fi
+    ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
     INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] || [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
-        AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
+    if [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
         rm -fv $SCAN_DONE
         [ -f $KIRA_SNAP_PATH ] SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
         $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
 fi

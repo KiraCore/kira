@@ -37,10 +37,6 @@ KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
 [ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
 
-AUTO_BACKUP_INTERVAL=12 # 12 hour
-AUTO_BACKUP_ENABLED=true
-AUTO_BACKUP_EXECUTED_TIME="" # timestamp to indicate the latest auto-backup execution time
-
 KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 
 KIRA_IMG="$KIRA_INFRA/common/img"
@@ -124,10 +120,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="BREWBIN=$BREWBIN" --prefix="BREWBIN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=$AUTO_BACKUP_EXECUTED_TIME" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
 
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$DARTBIN" --prefix="PATH=" --and-contains-not=":$DARTBIN" --path=$ETC_PROFILE

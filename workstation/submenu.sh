@@ -26,6 +26,8 @@ CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256="
 CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=12" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +x
 printf "\033c"
