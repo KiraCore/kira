@@ -8,7 +8,7 @@ MIN_BLOCK_HEIGHT=$1
 [[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=0
 [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration? : " && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
 
 while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
@@ -36,12 +36,9 @@ if [ "${SELECT,,}" == "c" ]; then
         AUTO_BACKUP_INTERVAL="$NEW_AUTO_BACKUP_INTERVAL"
         break
     done
-
+    
+    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-    if [ ! -z "${NEW_AUTO_BACKUP_ENABLED}" ] ; then 
-        CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
     exit 0
 fi
 

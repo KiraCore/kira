@@ -7,6 +7,7 @@ set -x
 
 echo "INFO: Started kira network contianers monitor..."
 
+SCRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
 NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
@@ -19,7 +20,7 @@ CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 
 set +x
 echo "------------------------------------------------"
-echo "|       STARTING KIRA CONTAINER SCAN           |"
+echo "|       STARTING KIRA CONTAINER SCAN v0.0.2    |"
 echo "|-----------------------------------------------"
 echo "|             SCAN_DIR: $SCAN_DIR"
 echo "|           CONTAINERS: $CONTAINERS"
@@ -97,7 +98,7 @@ for name in $CONTAINERS; do
         fi
 
         if [ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ] ; then
-            LATEST_BLOCK="$NEW_LATEST_BLOCK"
+            NEW_LATEST_BLOCK="$LATEST_BLOCK"
             NEW_LATEST_STATUS="$SEKAID_STATUS"
         fi
     else
@@ -118,3 +119,10 @@ OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 [ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
 echo "INFO: Finished kira contianers monitor"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "------------------------------------------------"
+set -x

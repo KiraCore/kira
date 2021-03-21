@@ -173,11 +173,9 @@ while :; do
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
         SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
-        AUTO_BACKUP_TMP="" && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && AUTO_BACKUP_TMP="(A)"
-        
         [ "${SNAP_EXPOSE,,}" == "true" ] &&
-            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${AUTO_BACKUP_TMP}" ||
-            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5) ${AUTO_BACKUP_TMP}"
+            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)" ||
+            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
     fi
 
     if [ "${LOADING,,}" == "true" ]; then
@@ -256,7 +254,9 @@ while :; do
     fi
 
     if ([ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]; then
-        echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
+        AUTO_BACKUP_TMP=""
+        [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && AUTO_BACKUP_TMP=": AUTO-SNAP ${AUTO_BACKUP_INTERVAL}h${WHITESPACE}" || AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
+        echo "| [B] | BACKUP Chain State ${AUTO_BACKUP_TMP:0:21}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     fi
 
     if [ ! -z "$KIRA_SNAP_PATH" ]; then
