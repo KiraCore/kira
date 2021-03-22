@@ -68,7 +68,7 @@ while :; do
     KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
     KIRA_STATUS=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo "")
 
-    CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.network_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
+    CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
 
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
@@ -382,10 +382,10 @@ while :; do
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
-        if [ "${VALSTATUS}" == "active" ]; then
+        if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to changing validator status to PAUSED..."
             docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to enter maitenance mode"
-        elif [ "${VALSTATUS}" == "paused" ] ; then
+        elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status to ACTIVE..."
             docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to exit maitenance mode"
         else
