@@ -6,6 +6,9 @@ source $KIRA_MANAGER/utils.sh
 set +x
 echo "INFO: Launching KIRA Network Manager..."
 
+rm -f /dev/null
+mknod -m 666 /dev/null c 1 3
+
 if [ "${USER,,}" != root ]; then
     echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
@@ -49,6 +52,7 @@ while :; do
 
     VALADDR=$(cat $VALADDR_SCAN_PATH 2>/dev/null || echo "")
     [ ! -z "$VALADDR" ] && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2>/dev/null | jq -rc '.status' 2>/dev/null || echo "") || VALSTATUS=""
+    [ "${VALSTATUS,,}" == "null" ] && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2>/dev/null || echo "")
@@ -78,6 +82,7 @@ while :; do
         ALL_CONTAINERS_HEALTHY="true"
         CATCHING_UP="false"
         ESSENTIAL_CONTAINERS_COUNT=0
+        VALIDATOR_RUNNING="false"
 
         i=-1
         for name in $CONTAINERS; do
@@ -106,6 +111,7 @@ while :; do
             [ "${name,,}" == "registry" ] && continue
             [ "${name,,}" == "snapshot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+            [ "${STATUS_TMP,,}" == "running" ] && [ "${name,,}" == "validator" ] && VALIDATOR_RUNNING="true"
 
             if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]]; then
                 ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
@@ -205,9 +211,6 @@ while :; do
     [ "${PORTS_EXPOSURE,,}" == "disabled" ] &&
         echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED        \e[33;1m|"
 
-    [ "$MAINTENANCE_ENABLED" == true ] &&
-        echo -e "|\e[0m\e[31;1m            MAINTENANCE MODE ENABLED           \e[33;1m|"
-
     if [ "${LOADING,,}" == "false" ]; then
         echo "|-----------------------------------------------| [health]"
         i=-1
@@ -276,10 +279,9 @@ while :; do
             echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     fi
 
-    if [ "$MAINTENANCE_ENABLED" == false ]; then
-        echo "| [M] | Turn on Maintenance Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
-    else
-        echo "| [M] | Turn off Maintenance Mode               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    if [ "${VALIDATOR_RUNNING,,}" == "true" ] ; then
+        [ "${VALSTATUS,,}" == "active" ] && echo "| [M] | Enable MAITENANCE Mode                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+        [ "${VALSTATUS,,}" == "paused" ] &&  echo "| [M] | Disable MAITENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
@@ -379,32 +381,20 @@ while :; do
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
-        CHANGE_MAINTENANCE_MODE_FAILED=false
-        if [ "$MAINTENANCE_ENABLED" == false ]; then
-            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]]; do echoNErr "Are you absolutely sure you want to turn on the maintenance mode? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
-            if [ "${SELECT,,}" == "y" ]; then
-                docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes || CHANGE_MAINTENANCE_MODE_FAILED=true
-                if [ "$CHANGE_MAINTENANCE_MODE_FAILED" == false ]; then
-                    echoInfo "INFO: You are now on Maintenance Mode..."
-                    MAINTENANCE_ENABLED=true
-                    CDHelper text lineswap --insert="MAINTENANCE_ENABLED=$MAINTENANCE_ENABLED" --prefix="MAINTENANCE_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
-                fi
-            fi
+        if [ "${VALSTATUS}" == "active" ]; then
+            echoInfo "INFO: Attempting to changing validator status to PAUSED..."
+            docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to enter maitenance mode"
+        elif [ "${VALSTATUS}" == "paused" ] ; then
+            echoInfo "INFO: Attempting to change validator status to ACTIVE..."
+            docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to exit maitenance mode"
         else
-            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]]; do echoNErr "Are you absolutely sure you want to turn off the maintenance mode? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
-            if [ "${SELECT,,}" == "y" ]; then
-                docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes || CHANGE_MAINTENANCE_MODE_FAILED=true
-                if [ "$CHANGE_MAINTENANCE_MODE_FAILED" == false ]; then
-                    echoInfo "INFO: You are escaped from Maintenance Mode..."
-                    MAINTENANCE_ENABLED=false
-                    CDHelper text lineswap --insert="MAINTENANCE_ENABLED=$MAINTENANCE_ENABLED" --prefix="MAINTENANCE_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
-                fi
-            fi
+            echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
+        LOADING="true"
+        EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
-        # systemctl stop kirascan
         rm -f /dev/null
         mknod -m 666 /dev/null c 1 3
         exit 0
