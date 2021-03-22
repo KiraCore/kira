@@ -111,7 +111,8 @@ while :; do
             [ "${name,,}" == "registry" ] && continue
             [ "${name,,}" == "snapshot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
-            [ "${STATUS_TMP,,}" == "running" ] && [ "${name,,}" == "validator" ] && VALIDATOR_RUNNING="true"
+            [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
+            [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
 
             if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]]; then
                 ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
@@ -281,7 +282,7 @@ while :; do
 
     if [ "${VALIDATOR_RUNNING,,}" == "true" ] ; then
         [ "${VALSTATUS,,}" == "active" ] && echo "| [M] | Enable MAITENANCE Mode                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
-        [ "${VALSTATUS,,}" == "paused" ] &&  echo "| [M] | Disable MAITENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+        [ "${VALSTATUS,,}" == "paused" ] && echo "| [M] | Disable MAITENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
     fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
