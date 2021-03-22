@@ -205,6 +205,9 @@ while :; do
     [ "${PORTS_EXPOSURE,,}" == "disabled" ] &&
         echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED        \e[33;1m|"
 
+    [ "$MAINTENANCE_ENABLED" == true ] &&
+        echo -e "|\e[0m\e[31;1m            MAINTENANCE MODE ENABLED           \e[33;1m|"
+
     if [ "${LOADING,,}" == "false" ]; then
         echo "|-----------------------------------------------| [health]"
         i=-1
@@ -254,7 +257,7 @@ while :; do
     fi
 
     if ([ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]; then
-        if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] ; then
+        if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ]; then
             [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
             ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
             INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
@@ -273,6 +276,11 @@ while :; do
             echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     fi
 
+    if [ "$MAINTENANCE_ENABLED" == false ]; then
+        echo "| [M] | Turn on Maintenance Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    else
+        echo "| [M] | Turn off Maintenance Mode               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    fi
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
@@ -370,6 +378,29 @@ while :; do
         fi
         LOADING="true"
         EXECUTED="true"
+    elif [ "${OPTION,,}" == "m" ]; then
+        CHANGE_MAINTENANCE_MODE_FAILED=false
+        if [ "$MAINTENANCE_ENABLED" == false ]; then
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]]; do echoNErr "Are you absolutely sure you want to turn on the maintenance mode? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
+            if [ "${SELECT,,}" == "y" ]; then
+                docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes || CHANGE_MAINTENANCE_MODE_FAILED=true
+                if [ "$CHANGE_MAINTENANCE_MODE_FAILED" == false ]; then
+                    echoInfo "INFO: You are now on Maintenance Mode..."
+                    MAINTENANCE_ENABLED=true
+                    CDHelper text lineswap --insert="MAINTENANCE_ENABLED=$MAINTENANCE_ENABLED" --prefix="MAINTENANCE_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+                fi
+            fi
+        else
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]]; do echoNErr "Are you absolutely sure you want to turn off the maintenance mode? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
+            if [ "${SELECT,,}" == "y" ]; then
+                docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes || CHANGE_MAINTENANCE_MODE_FAILED=true
+                if [ "$CHANGE_MAINTENANCE_MODE_FAILED" == false ]; then
+                    echoInfo "INFO: You are escaped from Maintenance Mode..."
+                    MAINTENANCE_ENABLED=false
+                    CDHelper text lineswap --insert="MAINTENANCE_ENABLED=$MAINTENANCE_ENABLED" --prefix="MAINTENANCE_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+                fi
+            fi
+        fi
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."

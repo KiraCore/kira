@@ -59,6 +59,8 @@ BREWBIN="/home/$KIRA_USER/.linuxbrew/bin"
 MANPATH="/home/$KIRA_USER/.linuxbrew/share/man:\$MANPATH"
 INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
+MAINTENANCE_ENABLED=false
+
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
 SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.67-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
@@ -120,6 +122,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="BREWBIN=$BREWBIN" --prefix="BREWBIN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="MAINTENANCE_ENABLED=$MAINTENANCE_ENABLED" --prefix="MAINTENANCE_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$DARTBIN" --prefix="PATH=" --and-contains-not=":$DARTBIN" --path=$ETC_PROFILE
