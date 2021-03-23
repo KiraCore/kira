@@ -25,6 +25,16 @@ function isNumber() {
      echo $VTMP
 }
 
+function isInteger() {
+     VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && VTMP="true"
+     echo $VTMP
+}
+
+function isNaturalNumber() {
+     VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && [ $1 -ge 0 ] && VTMP="true"
+     echo $VTMP
+}
+
 displayAlign() {
   align=$1
   width=$2

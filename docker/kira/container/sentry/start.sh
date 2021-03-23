@@ -66,15 +66,19 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 fi
 
 
-if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]  ; then
-    if [ ! -z "$EXTERNAL_DOMAIN" ] ; then
+if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]  ; then
+    if [ ! -z "$EXTERNAL_DOMAIN" ] && [ "${NODE_TYPE,,}" != "priv_sentry" ] ; then
         echo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
         EXTERNAL_ADDR="$EXTERNAL_DOMAIN"
     elif [ -z "$CFG_external_address" ] ; then
         echo "INFO: Scanning external address..."
-        if [ ! -z "$PUBLIC_IP" ] && timeout 3 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
-        if [ -z "$EXTERNAL_IP" ] && timeout 3 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
-
+        if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
+            if timeout 3 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; else EXTERNAL_IP=0.0.0.0 ; fi
+        else
+            if [ ! -z "$PUBLIC_IP" ] && timeout 3 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
+            if [ -z "$EXTERNAL_IP" ] && timeout 3 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
+        fi
+        
         if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $EXTERNAL_P2P_PORT ; then
            echo "INFO: Node public address '$EXTERNAL_IP' was found"
            EXTERNAL_ADDR="$EXTERNAL_IP"

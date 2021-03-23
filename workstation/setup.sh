@@ -57,8 +57,6 @@ touch /tmp/rs_manager
 touch /tmp/rs_git_manager
 touch /tmp/rs_container_manager
 
-rm -f /dev/null; mknod -m 666 /dev/null c 1 3
-
 set +x
 echo "------------------------------------------------"
 echo "| FINISHED: SETUP SCRIPT                       |"
