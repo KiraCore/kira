@@ -84,8 +84,6 @@ if [ "${VALOPER_FOUND,,}" != "true" ] ; then
     exit 0
 fi
 
-sleep 60
-
 set +x
 echo "------------------------------------------------"
 echo "| FINISHED: VALIDATORS MONITOR                 |"

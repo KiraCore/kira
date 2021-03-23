@@ -19,6 +19,13 @@ if [ ! -f "$KIRA_SETUP/rebooted" ]; then
     echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
 fi
 
+if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
+    echoInfo "INFO: Setup was not compleated sucessfully, starting new setup attempt..."
+    sleep 1
+    $KIRA_MANAGER/start.sh "false"
+    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+fi
+
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
