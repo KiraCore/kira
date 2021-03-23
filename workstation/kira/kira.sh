@@ -14,16 +14,26 @@ fi
 
 if [ ! -f "$KIRA_SETUP/rebooted" ]; then
     echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
+    systemctl stop kirascan
     sleep 1
     $KIRA_MANAGER/start.sh "true"
     echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
 fi
 
 if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
-    echoInfo "INFO: Setup was not compleated sucessfully, starting new setup attempt..."
-    sleep 1
-    $KIRA_MANAGER/start.sh "false"
-    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
+    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(c|s)$ ]]; do echoNErr "Choose to [C]ontinue current instalation process or fully [R]initalize new node: " && read -d'' -s -n1 VSEL && echo ""; done
+    systemctl stop kirascan
+    
+    if [ "${VSEL,,}" == "c" ] ; then
+        sleep 1
+        $KIRA_MANAGER/start.sh "false"
+        echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+    else
+        cd $HOME
+        source $KIRA_MANAGER/kira/kira-reinitalize.sh
+        source $KIRA_MANAGER/kira/kira.sh
+    fi
 fi
 
 cd $KIRA_HOME
