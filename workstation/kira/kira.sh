@@ -5,9 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 set +x
 echo "INFO: Launching KIRA Network Manager..."
-
-rm -f /dev/null
-mknod -m 666 /dev/null c 1 3
+rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
 if [ "${USER,,}" != root ]; then
     echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
@@ -396,8 +394,7 @@ while :; do
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echo "INFO: Stopping kira network scanner..."
-        rm -f /dev/null
-        mknod -m 666 /dev/null c 1 3
+        rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
         exit 0
     fi
 
