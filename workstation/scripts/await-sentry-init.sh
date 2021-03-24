@@ -106,7 +106,7 @@ while : ; do
     if [ "${FAILURE,,}" == "true" ] ; then
         set +x
         echoWarn "WARNING: If this issue persists 'reboot' your machine and try setup again!"
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|e)$ ]] ; do echoNErr "Attempt $CONTAINER_NAME container [R]estart or [A]bort: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|a)$ ]] ; do echoNErr "Attempt $CONTAINER_NAME container [R]estart or [A]bort: " && read -d'' -s -n1 ACCEPT && echo ""; done
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
