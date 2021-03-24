@@ -60,8 +60,7 @@ while : ; do
              
     if [ "${SELECT,,}" == "w" ] ; then
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to DELETE all ${TARGET^^}? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
-        echo "INFO: You selected NOT do wipe all ${TARGET^^}"
-        [ "${SELECT,,}" != "y" ] && break
+        [ "${SELECT,,}" != "n" ] && echo "INFO: You selected NOT do wipe all ${TARGET^^}" && break
         echo "INFO: You selected to delete all ${TARGET^^}"
         echo "" > $FILE
         continue
