@@ -46,15 +46,17 @@ for name in $CONTAINERS; do
     ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
     $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
-    
-    if [ -z "$ID" ] ; then
-        echo "INFO: Container '$name' is not alive"
+
+    if [ "$($KIRA_SCRIPTS/container-running.sh $ID)" != "true" ] ; then
+        echo "INFO: Container '$name' is not running"
         echo "" > $DESTINATION_STATUS_PATH
+        echo "" > "$DESTINATION_PATH.pid"
+        echo "" > "$DESTINATION_PATH.sekaid.status.pid"
         continue
     else
         echo "INFO: Container ID found: $ID"
     fi
-    
+
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"

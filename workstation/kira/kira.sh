@@ -314,6 +314,12 @@ while :; do
         echo ""
     fi
 
+    if [ "${OPTION,,}" == "r" ]; then
+        echo "INFO: Restarting docker..."
+        systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
+        systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
+    fi
+
     EXECUTED="false"
     i=-1
     for name in $CONTAINERS; do
