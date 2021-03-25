@@ -28,6 +28,13 @@ sekaid tx customgov permission whitelist-permission --from validator --keyring-b
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
+## Change Token Alias
+```
+http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex-300x300.png
+```
+
+
+
 ## Vote Yes on the Latest Proposal
 
 ```
