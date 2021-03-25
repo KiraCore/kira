@@ -42,6 +42,10 @@ ls -l /bin/kira || echo "WARNING: KIRA Manager symlink not found"
 rm /bin/kira || echo "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
+systemctl daemon-reload
+systemctl stop docker || echoErr "ERROR: Failed to stop docker service"
+systemctl stop kirascan  || echoErr "ERROR: Failed to stop kirascan service"
+
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh

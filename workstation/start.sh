@@ -37,6 +37,10 @@ fi
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
+echo "INFO: Restarting docker..."
+systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
+systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
+
 echoInfo "INFO: Restarting registry..."
 $KIRA_SCRIPTS/container-restart.sh "registry" &
 

@@ -4,7 +4,7 @@
 ## Query Permissions
 
 ```
-( read -p "INPUT ADDRESS: " ADDR && [ -z "$ADDR" ] && ADDR=$VALIDATOR_ADDR ) : sekaid query customgov permissions $ADDR
+( read -p "INPUT ADDRESS: " ADDR || ADDR=$VALIDATOR_ADDR ) && sekaid query customgov permissions $VALIDATOR_ADDR
 ```
 
 
@@ -16,9 +16,12 @@ sekaid tx customgov permission whitelist-permission --from validator --keyring-b
 sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteSetPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
-## Add Permission to Change Token Alias
+## Claim Permissions as Sudo to Change Token Alias
+
 ```
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermUpsertTokenAlias --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
 # Proposals
@@ -30,10 +33,16 @@ read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov prop
 
 ## Change Token Alias
 ```
-http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex-300x300.png
+sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
+ --symbol="KEX" \
+ --name="KIRA" \
+ --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg" \
+ --decimals=6 \
+ --denoms="ukex" \
+ --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
-
+sekaid query tokens all-aliases --chain-id=$NETWORK_NAME
 
 ## Vote Yes on the Latest Proposal
 
