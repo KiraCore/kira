@@ -1,5 +1,5 @@
 #!/bin/bash
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
 SNAP_STATUS="$SNAP_DIR/status"

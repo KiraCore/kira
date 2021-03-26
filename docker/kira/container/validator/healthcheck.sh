@@ -1,5 +1,5 @@
 #!/bin/bash
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" && touch $BLOCK_HEIGHT_FILE

@@ -49,8 +49,6 @@ for name in $CONTAINERS; do
 
     if [ "$($KIRA_SCRIPTS/container-running.sh $ID)" != "true" ] ; then
         echo "INFO: Container '$name' is not running"
-        echo "" > $DESTINATION_STATUS_PATH
-        echo "" > "$DESTINATION_PATH.pid"
         echo "" > "$DESTINATION_PATH.sekaid.status.pid"
         continue
     else

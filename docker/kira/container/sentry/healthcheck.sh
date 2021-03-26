@@ -1,5 +1,5 @@
 #!/bin/bash
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
 LIP_FILE="$COMMON_READ/local_ip"

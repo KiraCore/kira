@@ -39,6 +39,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg" \
  --decimals=6 \
  --denoms="ukex" \
+ --description="This is an initial alias update" \
  --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
