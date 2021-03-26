@@ -114,7 +114,10 @@ done
 # save latest known block height
 OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
-[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] && echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
+if [ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] ; then
+    echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
+    echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
+fi
 # save latest known status
 [ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
