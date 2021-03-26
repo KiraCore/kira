@@ -1,6 +1,6 @@
 #!/bin/bash
 exec 2>&1
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
 echo "INFO: Staring validator setup v0.0.3 ..."
@@ -72,10 +72,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     [ "${NEW_NETWORK,,}" == "false" ] && echo "ERROR: Node was NOT supposed to create new network with new genesis file!" && exit 1
 
     set +x 
-    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299999600000000ukex,299999600000000utest,2000000000000000samolian --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,100000000utest,100000000000000samolian --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299999600000000ukex,29999960000000000test,2000000000000000000000000000samolean --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test,100000000000000000000000000samolean --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
     set -x
     # default chain properties

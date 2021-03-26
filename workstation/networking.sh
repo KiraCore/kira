@@ -26,7 +26,6 @@ echo "------------------------------------------------"
 set -x
 
 echo "INFO: Stopping docker & restaring firewall"
-systemctl daemon-reload
 systemctl stop docker
 systemctl restart firewalld
 
@@ -159,15 +158,12 @@ firewall-cmd --zone=public --list-all
 firewall-cmd --reload
 firewall-cmd --complete-reload
 firewall-cmd --set-default-zone=$ZONE # can't set the zone before reloading first
-firewall-cmd --reload
-firewall-cmd --complete-reload
 firewall-cmd --check-config || echo "INFO: Failed to check firewall config"
 
 echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 
 # restart the services
 systemctl restart firewalld
-systemctl restart docker
 
 echo "INFO: Restarting docker..."
 systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"

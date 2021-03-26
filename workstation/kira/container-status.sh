@@ -38,7 +38,7 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     [ -z "$NETWORKS" ] && NETWORKS=$(docker network ls --format="{{.Name}}" || "")
 
     DOCKER_INSPECT="$VARS_FILE.inspect"
-    echo $(docker inspect "$ID" 2> /dev/null | jq -r '.[0]' || echo "") > $DOCKER_INSPECT
+    echo $(timeout 3 docker inspect "$ID" 2> /dev/null | jq -r '.[0]' || echo "") > $DOCKER_INSPECT
 
     STATUS=$(cat "$DOCKER_INSPECT" | jq -r '.State.Status' 2> /dev/null || echo "")
     PAUSED=$(cat "$DOCKER_INSPECT" | jq -r '.State.Paused'  2> /dev/null || echo "")
@@ -63,6 +63,13 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
             eval "IP_$net=\"\""
         fi
     done
+else
+    STATUS=""
+    PAUSED=""
+    HEALTH=""
+    RESTARTING=""
+    STARTED_AT=""
+    FINISHED_AT=""
 fi
 
 [ -z "$STATUS" ] && STATUS="stopped"

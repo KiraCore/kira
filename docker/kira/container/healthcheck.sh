@@ -1,5 +1,5 @@
 #!/bin/bash
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
 echo "INFO: Health check => START"
@@ -16,15 +16,22 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || e
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
+FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
-  $SELF_CONTAINER/sentry/healthcheck.sh
+  $SELF_CONTAINER/sentry/healthcheck.sh || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
-  $SELF_CONTAINER/snapshot/healthcheck.sh
+  $SELF_CONTAINER/snapshot/healthcheck.sh || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
-  $SELF_CONTAINER/validator/healthcheck.sh
+  $SELF_CONTAINER/validator/healthcheck.sh || FAILED="true"
 else
   echo "ERROR: Unknown node type '$NODE_TYPE'"
   exit 1
 fi
 
-exit 0
+if [ "$FAILED" == "true" ] ; then
+    echo "ERROR: $NODE_TYPE healthcheck failed"
+    exit 1
+else
+    exit 0
+fi
+

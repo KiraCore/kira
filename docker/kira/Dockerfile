@@ -10,6 +10,7 @@ RUN echo "Build hash: ${BUILD_HASH}"
 RUN git clone ${REPO} ${SEKAI} && cd ${SEKAI} && git checkout ${BRANCH}
 RUN cd ${SEKAI} && go install ./cmd/sekaid
 RUN sekaid version --long
+RUN echo "source ${SEKAI}/env.sh" >> ${ETC_PROFILE}
 
 ADD ./container ${SELF_CONTAINER}
 

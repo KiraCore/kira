@@ -1,6 +1,10 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+
+# setup was started and not is not compleated yet
+rm -fv "$KIRA_SETUP/setup_complete"
 
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
@@ -20,18 +24,22 @@ echoWarn "| SEKAI BRANCH: $SEKAI_BRANCH"
 echoWarn "------------------------------------------------"
 set -x
 
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
 echoInfo "INFO: Updating kira repository and fetching changes..."
 if [ "${SKIP_UPDATE,,}" == "false" ]; then
     $KIRA_MANAGER/setup.sh "$SKIP_UPDATE"
     $KIRA_MANAGER/networking.sh
-    source $KIRA_MANAGER/start.sh "True"
+    source $KIRA_MANAGER/start.sh "true"
     exit 0
 fi
 
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
+
+echo "INFO: Restarting docker..."
+systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
+systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
 
 echoInfo "INFO: Restarting registry..."
 $KIRA_SCRIPTS/container-restart.sh "registry" &
@@ -173,6 +181,9 @@ fi
 
 echoInfo "INFO: Starting clenup..."
 rm -fv $SNAP_DESTINATION
+
+# setup was compleated
+touch "$KIRA_SETUP/setup_complete"
 
 set +x
 echoWarn "------------------------------------------------"

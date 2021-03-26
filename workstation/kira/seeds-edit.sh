@@ -60,15 +60,11 @@ while : ; do
              
     if [ "${SELECT,,}" == "w" ] ; then
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to DELETE all ${TARGET^^}? (y/n): " && read -d'' -s -n1 SELECT && echo ""; done
-        echo "INFO: You selected NOT do wipe all ${TARGET^^}"
-        [ "${SELECT,,}" != "y" ] && break
-        echo "INFO: You selected to delete all ${TARGET^^}"
-        echo "" > $FILE
-        continue
+        [ "${SELECT,,}" != "n" ] && echo "INFO: You selected NOT do wipe all ${TARGET^^}" && break
+        echo "INFO: You selected to delete all ${TARGET^^}" && echo "" > $FILE && continue
     fi
        
-    echo ""
-    [ "${OPTION,,}" == "s" ] && echo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port>"
+    echo "" && [ "${OPTION,,}" == "s" ] && echo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port>"
     echo -en "\e[31;1mInput comma separated list of $TARGET: \e[0m" && read ADDR_LIST
 
     if [ -z "$ADDR_LIST" ] ; then

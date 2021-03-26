@@ -32,7 +32,7 @@ while : ; do
         if curl -r0-0 --fail --silent "$url" >/dev/null ; then
             echo "INFO: Resource was found, attempting download"
         else
-            echoErr "ERROR: Failue, it is NOT possible to access '$SNAP_URL'"
+            echoErr "ERROR: It is NOT possible to access '$SNAP_URL'"
         fi
         TMP_SNAP_DIR="$KIRA_SNAP/tmp"
         TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"

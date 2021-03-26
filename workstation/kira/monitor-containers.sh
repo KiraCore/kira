@@ -46,15 +46,15 @@ for name in $CONTAINERS; do
     ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
     $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
-    
-    if [ -z "$ID" ] ; then
-        echo "INFO: Container '$name' is not alive"
-        echo "" > $DESTINATION_STATUS_PATH
+
+    if [ "$($KIRA_SCRIPTS/container-running.sh $ID)" != "true" ] ; then
+        echo "INFO: Container '$name' is not running"
+        echo "" > "$DESTINATION_PATH.sekaid.status.pid"
         continue
     else
         echo "INFO: Container ID found: $ID"
     fi
-    
+
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
         echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
@@ -114,7 +114,10 @@ done
 # save latest known block height
 OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
-[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] && echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
+if [ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] ; then
+    echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
+    echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
+fi
 # save latest known status
 [ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 

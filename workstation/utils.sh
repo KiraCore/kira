@@ -6,33 +6,45 @@ REGEX_NODE_ID="^[a-f0-9]{40}$"
 REGEX_NUMBER="^[+-]?([0-9]*[.])?([0-9]+)?$"
 
 function isDnsOrIp() {
-    VTMP="false" && ( [[ "$1" =~ $REGEX_DNS ]] || [[ "$1" =~ $REGEX_IP ]] ) && VTMP="true"
-    echo $VTMP
+    if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && ( [[ "$1" =~ $REGEX_DNS ]] || [[ "$1" =~ $REGEX_IP ]] ) && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 function isPort() {
-     VTMP="false" && ( [[ "$1" =~ ^[0-9]+$ ]] && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
-     echo $VTMP
+    if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && ( [[ "$1" =~ ^[0-9]+$ ]] && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 function isNodeId() {
-     VTMP="false" && [[ "$1" =~ $REGEX_NODE_ID ]] && VTMP="true"
-     echo $VTMP
+    if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && [[ "$1" =~ $REGEX_NODE_ID ]] && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 function isNumber() {
-     VTMP="false" && [[ "$1" =~ $REGEX_NUMBER ]] && VTMP="true"
-     echo $VTMP
+     if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && [[ "$1" =~ $REGEX_NUMBER ]] && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 function isInteger() {
-     VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && VTMP="true"
-     echo $VTMP
+    if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 function isNaturalNumber() {
-     VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && [ $1 -ge 0 ] && VTMP="true"
-     echo $VTMP
+    if [ -z "$1" ] ; then echo "false" ; else
+        VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && [ $1 -ge 0 ] && VTMP="true"
+        echo $VTMP
+    fi
 }
 
 displayAlign() {

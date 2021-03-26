@@ -4,6 +4,11 @@ exec 2>&1
 set -x
 
 HALT_CHECK="${COMMON_DIR}/halt"
+BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
+COMMON_CONSENSUS="$COMMON_READ/consensus"
+COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
+
+touch $BLOCK_HEIGHT_FILE
 
 if [ -f "$HALT_CHECK" ]; then
   exit 0
@@ -39,7 +44,6 @@ if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
   exit 1
 fi
 
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height.txt" && touch $BLOCK_HEIGHT_FILE
 HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
 [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
 [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
@@ -48,10 +52,8 @@ PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 [ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ] && PREVIOUS_HEIGHT=0
 
-BLOCK_CHANGED="True"
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
   echo "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
-  BLOCK_CHANGED="False"
   exit 1
 else
   echo "SUCCESS: New blocks were created or synced: $HEIGHT"

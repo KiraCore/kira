@@ -14,9 +14,28 @@ fi
 
 if [ ! -f "$KIRA_SETUP/rebooted" ]; then
     echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
+    systemctl stop kirascan
     sleep 1
     $KIRA_MANAGER/start.sh "true"
     echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+fi
+
+if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
+    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
+    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(i|r|k)$ ]]; do echoNErr "Choose to continue [I]nstalation process, fully [R]initalize new node or open [K]ira Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    
+    if [ "${VSEL,,}" != "k" ] ; then
+        systemctl stop kirascan
+        if [ "${VSEL,,}" == "i" ] ; then
+            sleep 1
+            $KIRA_MANAGER/start.sh "false"
+            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+        else
+            cd $HOME
+            source $KIRA_MANAGER/kira/kira-reinitalize.sh
+            source $KIRA_MANAGER/kira/kira.sh
+        fi
+    fi
 fi
 
 cd $KIRA_HOME
@@ -32,6 +51,7 @@ LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
+CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
@@ -65,9 +85,10 @@ while :; do
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo "")"
     KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
     KIRA_STATUS=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo "")
+    CONSENSUS=$(cat $CONSENSUS_SCAN_PATH 2>/dev/null || echo "")
 
-    CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
-
+    CONSENSUS_STOPPED="$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
+    
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
         [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
@@ -138,12 +159,8 @@ while :; do
         if [ $KIRA_BLOCK -le 0 ]; then
             KIRA_BLOCK="???"
         else
-            [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
-            ([ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ]) && LAST_BLOCK=$KIRA_BLOCK
-            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME)) && ([ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]]) && DELTA_TIME=1
-            DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK))
-            [ "$DELTA_BLOCKS" != "0" ] && SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_TIME / $DELTA_BLOCKS ) " | bc)
-            [ "$DELTA_BLOCKS" != "0" ] && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+            SECONDS_PER_BLOCK="$(echo "$CONSENSUS" | jq -rc '.average_block_time' 2>/dev/null || echo "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
+            ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
         if [ -f "$LOCAL_GENESIS_PATH" ]; then
@@ -295,6 +312,12 @@ while :; do
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]]; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
+    fi
+
+    if [ "${OPTION,,}" == "r" ]; then
+        echo "INFO: Restarting docker..."
+        systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
+        systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
     fi
 
     EXECUTED="false"
