@@ -98,7 +98,6 @@ if [ "$NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
     exit 1
 else
     echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
-    exit 0
 fi
 
 if [ "${IS_STARTED,,}" != "true" ] ; then
@@ -120,10 +119,10 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
     PERMSET_UPSERTALIAS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermCreateUpsertTokenAliasProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq"
     PERMSETVOTE_UPSERTALIAS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermVoteUpsertTokenAliasProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq"
     
-    PERMSET_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_PERMISSIONS_PROPOSALS" | jq -rc '.code' || echo "") && sleep 6
-    PERMSETVOTE_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_PERMISSIONS_PROPOSALS" | jq -rc '.code' || echo "") && sleep 6
-    PERMSET_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_UPSERTALIAS_PROPOSALS" | jq -rc '.code' || echo "") && sleep 6
-    PERMSETVOTE_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_UPSERTALIAS_PROPOSALS" | jq -rc '.code' || echo "") && sleep 6
+    PERMSET_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_PERMISSIONS_PROPOSALS" | jq -rc '.code' || echo "")
+    PERMSETVOTE_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_PERMISSIONS_PROPOSALS" | jq -rc '.code' || echo "")
+    PERMSET_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_UPSERTALIAS_PROPOSALS" | jq -rc '.code' || echo "")
+    PERMSETVOTE_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_UPSERTALIAS_PROPOSALS" | jq -rc '.code' || echo "")
 
     if [ "0000" != "${PERMSET_PERMISSIONS_PROPOSALS_RESULT}${PERMSETVOTE_PERMISSIONS_PROPOSALS_RESULT}${PERMSET_UPSERTALIAS_PROPOSALS_RESULT}${PERMSETVOTE_UPSERTALIAS_PROPOSALS_RESULT}" ] ; then
         echoErr "ERROR: One of the permission assignments failed"
@@ -171,16 +170,16 @@ EOL
     VOTE_YES_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -rc '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote \$LAST_PROPOSAL 1 --from=validator --chain-id=\$NETWORK_NAME --keyring-backend=test --fees=100ukex --yes | jq"
     QUERY_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes \$LAST_PROPOSAL --output json | jq && sekaid query customgov proposal \$LAST_PROPOSAL --output json | jq && echo Time now: \$(date '+%Y-%m-%dT%H:%M:%S')"
 
-    PROP_UPSERT_KEX_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT" | jq -rc '.code' || echo "") && sleep 6
-    PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "") && sleep 6
+    PROP_UPSERT_KEX_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT" | jq -rc '.code' || echo "")
+    PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
 
-    PROP_UPSERT_TEST_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT" | jq -rc '.code' || echo "") && sleep 6
-    PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "") && sleep 6
+    PROP_UPSERT_TEST_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT" | jq -rc '.code' || echo "")
+    PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
 
-    PROP_UPSERT_SAMOLEAN_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT" | jq -rc '.code' || echo "") && sleep 6
-    PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "") && sleep 6
+    PROP_UPSERT_SAMOLEAN_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT" | jq -rc '.code' || echo "")
+    PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
 
     if [ "000000" != "${PROP_UPSERT_KEX_RESULT}${PROP_UPSERT_KEX_VOTE_RESULT}${PROP_UPSERT_TEST_RESULT}${PROP_UPSERT_TEST_VOTE_RESULT}${PROP_UPSERT_SAMOLEAN_RESULT}${PROP_UPSERT_SAMOLEAN_VOTE_RESULT}" ] ; then
