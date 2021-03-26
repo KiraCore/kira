@@ -11,7 +11,7 @@ BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 touch "$BLOCK_HEIGHT_FILE"
 
 LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo "")
-CONSENSUS=$(cat $COMMON_CONSENSUS || echo "")
+CONSENSUS=$(cat $COMMON_CONSENSUS | jq -rc || echo "")
 CONSENSUS_STOPPED=$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' || echo "")
 HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
 
@@ -33,7 +33,7 @@ if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
   if [ $LATEST_BLOCK_HEIGHT -ge 1 ] && [ $LATEST_BLOCK_HEIGHT -le $HEIGHT ] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
       echo "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
   else
-    exit 1
+      exit 1
   fi
 else
   echo "SUCCESS: New blocks were created or synced: $HEIGHT"
