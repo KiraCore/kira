@@ -112,7 +112,7 @@ if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
     exit 1
 fi
 
-if [ "${NEW_NETWORK,,}" != "true" ] ; then 
+if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
     PERMSET_PERMISSIONS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermCreateSetPermissionsProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq"
     PERMSETVOTE_PERMISSIONS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermVoteSetPermissionProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq"
