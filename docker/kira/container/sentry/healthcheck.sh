@@ -62,3 +62,5 @@ else
     echo "WARNING: This node is NOT advertising its it's public or local external address to other nodes in the network!"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 fi
+
+exit 0
