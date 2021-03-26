@@ -10,6 +10,7 @@ VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
+CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
 
 set +x
 echo "------------------------------------------------"
@@ -19,6 +20,7 @@ echo "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echo "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
 echo "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
 echo "|   VALADDR_SCAN_PATH: $VALADDR_SCAN_PATH"
+echo "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
 echo "------------------------------------------------"
 set -x
 
@@ -26,10 +28,14 @@ touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINF
 
 echo "INFO: Saving valopers info..."
 VALOPERS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "")
+CONSENSUS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/consensus" | jq -rc || echo "")
 WAITING=$(echo $VALOPERS | jq '.waiting' || echo "" )
 echo "$VALOPERS" > $VALOPERS_SCAN_PATH
+echo "$CONSENSUS" > $CONSENSUS_SCAN_PATH
+
 # let containers know the validators info
 echo "$VALOPERS" > "$DOCKER_COMMON_RO/valopers"
+echo "$CONSENSUS" > "$DOCKER_COMMON_RO/consensus"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
     echo "INFO: Validator info will the scanned..."

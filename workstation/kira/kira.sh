@@ -51,6 +51,7 @@ LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
+CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
@@ -84,9 +85,10 @@ while :; do
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo "")"
     KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
     KIRA_STATUS=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo "")
+    CONSENSUS=$(cat $CONSENSUS_SCAN_PATH 2>/dev/null || echo "")
 
-    CONSENSUS_STOPPED="$(echo "$VALOPERS" | jq -rc '.status.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
-
+    CONSENSUS_STOPPED="$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' 2>/dev/null || echo "")" && ([ -z "$CONSENSUS_STOPPED" ] || [ "${CONSENSUS_STOPPED,,}" == "null" ]) && CONSENSUS_STOPPED="???"
+    
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
         [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
@@ -157,12 +159,8 @@ while :; do
         if [ $KIRA_BLOCK -le 0 ]; then
             KIRA_BLOCK="???"
         else
-            [ -z "$BLOCK_TIME" ] && BLOCK_TIME="$(date -u +%s)"
-            ([ -z "$LAST_BLOCK" ] || [ $KIRA_BLOCK -lt $LAST_BLOCK ]) && LAST_BLOCK=$KIRA_BLOCK
-            DELTA_TIME=$(($(date -u +%s) - $BLOCK_TIME)) && ([ $DELTA_TIME -lt 1 ] || [[ ! $KIRA_BLOCK =~ ^[0-9]+$ ]]) && DELTA_TIME=1
-            DELTA_BLOCKS=$(($KIRA_BLOCK - $LAST_BLOCK))
-            [ "$DELTA_BLOCKS" != "0" ] && SECONDS_PER_BLOCK=$(echo "scale=1; ( $DELTA_TIME / $DELTA_BLOCKS ) " | bc)
-            [ "$DELTA_BLOCKS" != "0" ] && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+            SECONDS_PER_BLOCK="$(echo "$CONSENSUS" | jq -rc '.average_block_time' 2>/dev/null || echo "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
+            ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
         if [ -f "$LOCAL_GENESIS_PATH" ]; then
