@@ -14,7 +14,7 @@ fi
 
 if [ ! -f "$KIRA_SETUP/rebooted" ]; then
     echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
-    systemctl stop kirascan
+    systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
     sleep 1
     $KIRA_MANAGER/start.sh "true"
     echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
@@ -58,7 +58,7 @@ CONTAINERS_COUNT="0"
 
 echo "INFO: Restarting network scanner..."
 systemctl daemon-reload
-systemctl restart kirascan
+systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
 LOADING="true"
 while :; do
@@ -426,7 +426,7 @@ while :; do
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME
-        systemctl stop kirascan
+        systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
         exit 0
