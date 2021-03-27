@@ -1,17 +1,18 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SKIP_UPDATE=$1
 START_TIME=$2
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTED: SETUP                               |"
-echo "|-----------------------------------------------"
-echo "| SKIP UPDATE: $SKIP_UPDATE"
-echo "|  START TIME: $START_TIME"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: SETUP                               |"
+echoWarn "|-----------------------------------------------"
+echoWarn "| SKIP UPDATE: $SKIP_UPDATE"
+echoWarn "|  START TIME: $START_TIME"
+echoWarn "------------------------------------------------"
 set -x
 
 [ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
@@ -32,14 +33,14 @@ if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
 
     source $KIRA_MANAGER/setup.sh "true" "$START_TIME"
 elif [ "${SKIP_UPDATE,,}" == "true" ]; then
-    echo "INFO: Skipping kira Update..."
+    echoInfo "INFO: Skipping kira Update..."
 else
-    echo "ERROR: SKIP_UPDATE propoerty is invalid or undefined"
+    echoErr "ERROR: SKIP_UPDATE propoerty is invalid or undefined"
     exit 1
 fi
 
-ls -l /bin/kira || echo "WARNING: KIRA Manager symlink not found"
-rm /bin/kira || echo "WARNING: Failed to remove old KIRA Manager symlink"
+ls -l /bin/kira || echoWarn "WARNING: KIRA Manager symlink not found"
+rm /bin/kira || echoWarn "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
 systemctl stop docker || echoErr "ERROR: Failed to stop docker service"
@@ -59,8 +60,8 @@ touch /tmp/rs_git_manager
 touch /tmp/rs_container_manager
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: SETUP SCRIPT                       |"
-echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: SETUP SCRIPT                       |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
+echoWarn "------------------------------------------------"
 set -x
