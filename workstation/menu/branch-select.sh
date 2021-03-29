@@ -10,9 +10,16 @@ SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
 INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 
-[ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="master"
-[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
-[ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
+# All branches should have the same name across all repos to be considered compatible
+if [ "$INFRA_BRANCH" == "master" ] || [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
+    DEFAULT_BRANCH="$INFRA_BRANCH"
+else
+    DEFAULT_BRANCH="master"
+fi
+
+[ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="$DEFAULT_BRANCH"
+[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="$DEFAULT_BRANCH"
+[ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="$DEFAULT_BRANCH"
 
 if [ "${USE_DEFAULTS,,}" != "true" ] ; then
     echo -en "\e[31;1mPlease select branches for each repository, [ENTER] if default\e[0m" && echo ""
