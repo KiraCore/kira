@@ -4,7 +4,7 @@ ETC_PROFILE="/etc/profile"
 
 set +e && chmod 555 $ETC_PROFILE && source $ETC_PROFILE &>/dev/null && set -e
 
-INFRA_BRANCH=$1
+INFRA_BRANCH="${1,,}"
 SKIP_UPDATE=$2
 START_TIME_INIT=$3
 
@@ -13,7 +13,7 @@ START_TIME_INIT=$3
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="False"
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
 [ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
 [ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
@@ -96,9 +96,16 @@ if [ $RAM_MEMORY -lt 3145728 ] ; then
     exit 1
 fi
 
-[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="master"
-[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="master"
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="master"
+# All branches should have the same name across all repos to be considered compatible
+if [ "$INFRA_BRANCH" == "master" ] || [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
+    DEFAULT_BRANCH="$INFRA_BRANCH"
+else
+    DEFAULT_BRANCH="master"
+fi
+
+[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
+[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="$DEFAULT_BRANCH"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
