@@ -72,10 +72,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     [ "${NEW_NETWORK,,}" == "false" ] && echo "ERROR: Node was NOT supposed to create new network with new genesis file!" && exit 1
 
     set +x 
-    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299999600000000ukex,29999960000000000test,2000000000000000000000000000samolean --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299998800000000ukex,29999780000000000test,2000000000000000000000000000samolean --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show test -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test --home=$SEKAID_HOME
     sekaid add-genesis-account $(sekaid keys show signer -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test --home=$SEKAID_HOME
-    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 100000000ukex,10000000000test,100000000000000000000000000samolean --home=$SEKAID_HOME
+    sekaid add-genesis-account $(sekaid keys show faucet -a --keyring-backend=test --home=$SEKAID_HOME) 1000000000ukex,200000000000test,3000000000000000000000000000samolean --home=$SEKAID_HOME
     sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
     set -x
     # default chain properties

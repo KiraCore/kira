@@ -6,7 +6,7 @@ REGEX_NODE_ID="^[a-f0-9]{40}$"
 REGEX_NUMBER="^[+-]?([0-9]*[.])?([0-9]+)?$"
 
 function isDnsOrIp() {
-    if [ -z "$1" ] ; then echo "false" ; else
+    if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "false" ; else
         VTMP="false" && ( [[ "$1" =~ $REGEX_DNS ]] || [[ "$1" =~ $REGEX_IP ]] ) && VTMP="true"
         echo $VTMP
     fi
