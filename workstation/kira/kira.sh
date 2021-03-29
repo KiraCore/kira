@@ -187,10 +187,12 @@ while :; do
     fi
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
-    [ ! -z "$PUBLIC_IP" ] && PUBLIC_IP="$PUBLIC_IP                          "
-    [ -z "$PUBLIC_IP" ] &&
-        echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE" ||
+    if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
+        echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
+    else
+        PUBLIC_IP="$PUBLIC_IP                          "
         echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
+    fi
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
