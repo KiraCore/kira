@@ -53,6 +53,9 @@ if [ ! -z "$EXTERNAL_ADDR" ] ; then
   if timeout 2 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
       echo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
       echo "ONLINE" > "$COMMON_DIR/external_address_status"
+  elif timeout 2 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then 
+      echo "WARNINIG: Your node external address is only exposed to the local networks!"
+      echo "LOCAL" > "$COMMON_DIR/external_address_status"
   else
     echo "ERROR: Your node external address is not visible to other nodes, failed to diall '$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT'"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
