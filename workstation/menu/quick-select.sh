@@ -78,7 +78,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then 
             echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" && continue
         else
-            echoInfo "INFO: Success, node `$NODE_ADDR` is online!"
+            echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
  
         STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
