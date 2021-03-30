@@ -57,6 +57,8 @@ docker run -d \
     --net=$KIRA_SENTRY_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    --dns="1.1.1.1" \
+    --dns="8.8.8.8" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
