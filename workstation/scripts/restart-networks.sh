@@ -68,7 +68,7 @@ echo "INFO: Restarting docker networking..."
 
 systemctl daemon-reload
 systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
-systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
+systemctl restart NetworkManager docker || echo "WARNING: Coudn NOT restart network manager"
 
 $KIRA_MANAGER/scripts/update-hosts.sh
 

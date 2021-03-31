@@ -80,13 +80,13 @@ elif [ "${SELECT,,}" == "j" ] ; then
         else
             echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
- 
-        STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-        STATUS=$(curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+
+        STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
+        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo "")
 
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
-            STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-            STATUS=$(curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo "")
+            STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
+            STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
         fi
          
         HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
@@ -99,22 +99,22 @@ elif [ "${SELECT,,}" == "j" ] ; then
             continue
         fi
 
-        NODE_PORT="" && if timeout 2 nc -z $NODE_ADDR 16656 ; then
-            NEW_NODE_ID=$(curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+        NODE_PORT="" && if timeout 3 nc -z $NODE_ADDR 16656 ; then
+            NEW_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
             if $(isNodeId "$NEW_NODE_ID") ; then
                 NODE_PORT="16656"
                 NODE_ID="$NEW_NODE_ID"
                 echoInfo "INFO: Seed node ID '$NODE_ID' was found"
             else echoWarn "WARNING: Seed node ID was NOT found" ; fi
         else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
-        if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 26656 ; then
+        if [ -z "$NODE_PORT" ] && timeout 3 nc -z $NODE_ADDR 26656 ; then
             if $(isNodeId "$NODE_ID") ; then
                 NODE_PORT="26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
             else echoWarn "WARNING: Sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
-        if [ -z "$NODE_PORT" ] && timeout 2 nc -z $NODE_ADDR 36656 ; then
-            NEW_NODE_ID=$(curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+        if [ -z "$NODE_PORT" ] && timeout 3 nc -z $NODE_ADDR 36656 ; then
+            NEW_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
             if $(isNodeId "$NEW_NODE_ID") ; then
                 NODE_PORT="36656"
                 NODE_ID="$NEW_NODE_ID"
