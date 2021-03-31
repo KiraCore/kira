@@ -28,7 +28,7 @@ CPU_LOAD=$(mpstat -o JSON -u 3 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load
 echo "$CPU_LOAD" > $CPU_SCAN_PATH
 sleep 2
 
-RAM_TOTAL=$("$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%" || echo "")
+RAM_TOTAL=$(echo "$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%" || echo "")
 echo "$RAM_TOTAL" > $RAM_SCAN_PATH
 sleep 2
 
