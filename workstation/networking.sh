@@ -169,7 +169,7 @@ echo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/nul
 systemctl restart firewalld
 
 echo "INFO: Restarting docker..."
-systemctl restart NetworkManager docker || echo "WARNING: Failed to restart network manager"
+systemctl restart NetworkManager docker || echo "WARNING: Could NOT restart network manager"
 
 echo "INFO: All iptables rules"
 iptables -L -v -n

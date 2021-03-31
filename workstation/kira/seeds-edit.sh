@@ -22,6 +22,7 @@ touch "$FILE" "$DESTINATION"
 
 while : ; do
     echo -e "INFO: Listing all ${TARGET^^}, please wait...\n"
+    cat $DESTINATION > $FILE
     i=0
     echo -e "\e[0m\e[33;1m-----------------------------------------------------------"
                     echo "| ID. |  STATUS |                 ADDRESS                 @"

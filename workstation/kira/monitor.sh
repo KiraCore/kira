@@ -26,6 +26,7 @@ SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
 
 while : ; do
+    sleep 1
     set +e && source "/etc/profile" &>/dev/null && set -e
     
     SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
