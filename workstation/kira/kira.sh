@@ -214,7 +214,7 @@ while :; do
         if [ ! -z "$VALADDR" ]; then
             [ "${VALSTATUS,,}" == "active" ] &&
                 echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS" ||
-                echo -e "|\e[0m\e[31;1m   FAILURE, VALIDATOR NODE IS NOT OPERATIONAL  \e[33;1m: $VALSTATUS"
+                echo -e "|\e[0m\e[31;1m     VALIDATOR NODE IS NOT CREATING BLOCKS     \e[33;1m: $VALSTATUS"
         else
             echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
         fi
