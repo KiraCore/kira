@@ -38,9 +38,9 @@ TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 
 TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
 
 if [ "${ACTIVE_VALIDATORS}" != "0" ] && [ "${TIMEOUT_COMMIT}ms" != "$CFG_timeout_commit" ] ; then
-    echoInfo "INFO: Commit timeout changed to $TIMEOUT_COMMIT"
+    echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
     CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="timeout_commit = \"$TIMEOUT_COMMIT\"" --prefix="timeout_commit =" --path=$CFG
+    CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}ms\"" --prefix="timeout_commit =" --path=$CFG
 fi
 
 echoInfo "INFO: Finished healthcheck"

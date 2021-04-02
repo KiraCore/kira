@@ -117,12 +117,15 @@ ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || e
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
     TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
 elif [ -z "$CFG_timeout_commit" ] ; then
-    TIMEOUT_COMMIT="5000"
+    TIMEOUT_COMMIT="5000ms"
+else
+    TIMEOUT_COMMIT=$CFG_timeout_commit
 fi
 
 echoInfo "INFO: Timeout commit ${TIMEOUT_COMMIT}ms"
-[ "$CFG_timeout_commit" != "${TIMEOUT_COMMIT}ms" ] && CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] && CDHelper text lineswap --insert="CFG_timeout_commit=$TIMEOUT_COMMIT" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
 
 $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
