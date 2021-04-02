@@ -9,3 +9,9 @@ sekaid query tokens all-aliases --output=json | jq
 ```
 sekaid query customgov network-properties --output=json | jq
 ```
+
+## Show List Of Validator
+
+```
+echo $(curl 0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true | jq)
+```

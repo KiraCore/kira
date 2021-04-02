@@ -10,3 +10,10 @@ INTER also provides faucet address which can be found by sending following reque
 ```
 echo $(curl 0.0.0.0:$KIRA_INTERX_PORT/api/faucet | jq -rc '.address')
 ```
+
+
+## Quick Faucet Fuel
+
+```
+read -p "INPUT ADDRESS: " ADDR && sekaid tx bank send validator $ADDR "100000000ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq && sekaid tx bank send validator $ADDR "10000000000test" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq && sekaid tx bank send validator $ADDR "100000000000000000000samolean" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq
+```

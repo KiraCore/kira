@@ -53,8 +53,8 @@ while : ; do
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
         HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
             echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
@@ -140,8 +140,8 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
         SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
         ( [ -z "$SYNCING" ] || [ "${SYNCING,,}" == "null" ] ) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
         HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then

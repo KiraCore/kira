@@ -19,14 +19,14 @@ NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
 CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
 
 set +x
-echo "------------------------------------------------"
-echo "|       STARTING KIRA CONTAINER SCAN v0.0.2    |"
-echo "|-----------------------------------------------"
-echo "|             SCAN_DIR: $SCAN_DIR"
-echo "|           CONTAINERS: $CONTAINERS"
-echo "|             NETWORKS: $NETWORKS"
-echo "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "|       STARTING KIRA CONTAINER SCAN v0.0.2    |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|             SCAN_DIR: $SCAN_DIR"
+echoWarn "|           CONTAINERS: $CONTAINERS"
+echoWarn "|             NETWORKS: $NETWORKS"
+echoWarn "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
+echoWarn "------------------------------------------------"
 set -x
 
 [ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
@@ -122,8 +122,8 @@ fi
 [ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: CONTAINERS MONITOR                 |"
-echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "------------------------------------------------"
 set -x

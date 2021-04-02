@@ -1,6 +1,7 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 set -x
 
 echo "INFO: Staring snapshot v0.0.3"

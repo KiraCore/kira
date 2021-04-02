@@ -1,10 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echo "INFO: Staring frontend v0.0.1"
-echo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
+echoInfo "INFO: Staring frontend v0.0.1"
+echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -20,24 +21,24 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 while ! ping -c1 interx &>/dev/null ; do
-    echo "INFO: Waiting for ping response form INTERX container... (`date`)"
+    echoInfo "INFO: Waiting for ping response form INTERX container... (`date`)"
     sleep 5
 done
-echo "INFO: INTERX IP Found: $(getent hosts interx | awk '{ print $1 }')"
+echoInfo "INFO: INTERX IP Found: $(getent hosts interx | awk '{ print $1 }')"
 
 while [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
-    echo "INFO: Waiting for local or public IP address discovery"
+    echoInfo "INFO: Waiting for local or public IP address discovery"
     sleep 10
 done
 
 LOCAL_IP=$(cat $LIP_FILE || echo "")
 PUBLIC_IP=$(cat $PIP_FILE || echo "")
 
-echo "INFO: Local IP: $LOCAL_IP"
-echo "INFO: Public IP: $PUBLIC_IP"
+echoInfo "INFO: Local IP: $LOCAL_IP"
+echoInfo "INFO: Public IP: $PUBLIC_IP"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
-    echo "INFO: Cloning fronted from '$BUILD_SOURCE' into '$BUILD_DESTINATION'..."
+    echoInfo "INFO: Cloning fronted from '$BUILD_SOURCE' into '$BUILD_DESTINATION'..."
     mkdir -p "$BUILD_DESTINATION/assets/assets"
     cp -rfv "$BUILD_SOURCE/." "$BUILD_DESTINATION"
 
@@ -75,9 +76,9 @@ fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
 DEFAULT_INTERX_PORT=11000
-echo "INFO: Printing current config file:"
-cat $CONFIG_JSON || echo "WARNINIG: Failed to print config file"
-echo "INFO: Setting up default API configuration..."
+echoInfo "INFO: Printing current config file:"
+cat $CONFIG_JSON || echoWarn "WARNINIG: Failed to print config file"
+echoInfo "INFO: Setting up default API configuration..."
 echo "{ \"api_url\": \"http://0.0.0.0:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
 
 i=0
@@ -88,30 +89,30 @@ while [ $i -le 5 ]; do
     if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
 
     if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $DEFAULT_INTERX_PORT ; then
-        echo "INFO: Public IP addess '$EXTERNAL_IP' was detected"
+        echoInfo "INFO: Public IP addess '$EXTERNAL_IP' was detected"
         INTEREX_AVAILABLE=$(curl http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api/status -s -f -o /dev/null && echo "true" || echo "false")
         if [ "${INTEREX_AVAILABLE,,}" == "true" ]; then
             echo "INFO: INTEREX is available externally, defaulting to '$EXTERNAL_IP'"
             echo "{ \"api_url\": \"http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
             break
         else
-            echo "INFO: INTERX is NOT available yet over public network..."
+            echoInfo "INFO: INTERX is NOT available yet over public network..."
             sleep 15
         fi
     else
         EXTERNAL_IP="0.0.0.0"
-        echo "INFO: Public IP is not avilable yet"
+        echoInfo "INFO: Public IP is not avilable yet"
         sleep 15
     fi
 done
 
-echo "INFO: Current configuration:"
+echoInfo "INFO: Current configuration:"
 cat $CONFIG_JSON
 
-netstat -nlp | grep 80 || echo "INFO: Bind to port 80 was not found"
-echo "INFO: Testing NGINX configuration"
+netstat -nlp | grep 80 || echoWarn "WARNINIG: Bind to port 80 was not found"
+echoInfo "INFO: Testing NGINX configuration"
 nginx -V
 nginx -t
 
-echo "INFO: Starting nginx in current process..."
+echoInfo "INFO: Starting nginx in current process..."
 nginx -g 'daemon off;'
