@@ -19,6 +19,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 if [ ! -f $SCAN_DONE ]; then
     echo "INFO: Scan is not done yet, aborting snapshot monitor"
+    sleep 60
     exit 0
 fi
 
@@ -27,17 +28,17 @@ INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
 
 set +x
-echo "------------------------------------------------"
-echo "|       STARTING KIRA SNAPSHOT SCAN            |"
-echo "|-----------------------------------------------"
-echo "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
-echo "|          SNAP_EXPOSE: $SNAP_EXPOSE"
-echo "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
-echo "|         LATEST BLOCK: $LATEST_BLOCK"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "|       STARTING KIRA SNAPSHOT SCAN            |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
+echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
+echoWarn "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
+echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
+echoWarn "------------------------------------------------"
 set -x
 
-[ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=3
 
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)"
@@ -87,9 +88,11 @@ else
     echo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
 fi
 
+sleep 60
+
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: SNAPSHOT MONITOR                   |"
-echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: SNAPSHOT MONITOR                   |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "------------------------------------------------"
 set -x

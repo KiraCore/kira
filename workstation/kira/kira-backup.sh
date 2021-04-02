@@ -4,16 +4,16 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
 MIN_BLOCK_HEIGHT=$1
-[[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
-[[ ! $MIN_BLOCK_HEIGHT =~ ^[0-9]+$ ]] && MIN_BLOCK_HEIGHT=0
-[ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
+(! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+(! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=0
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=3
 
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
 
 while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
-    [ -z "${NEW_MAX_SNAPS##*[!0-9]*}" ] && NEW_MAX_SNAPS=$MAX_SNAPS
-    ([ -z "${NEW_MAX_SNAPS##*[!0-9]*}" ] || [ $NEW_MAX_SNAPS -lt 1 ] || [ $NEW_MAX_SNAPS -gt 1024 ]) && echoWarn "WARNINIG: Max number of snapshots must be wihting range of 1 and 1024" && continue
+    (! $(isNaturalNumber "$NEW_MAX_SNAPS")) && NEW_MAX_SNAPS=$MAX_SNAPS
+    ([ $NEW_MAX_SNAPS -lt 1 ] || [ $NEW_MAX_SNAPS -gt 1024 ]) && echoWarn "WARNINIG: Max number of snapshots must be wihting range of 1 and 1024" && continue
     MAX_SNAPS=$NEW_MAX_SNAPS
     CDHelper text lineswap --insert="MAX_SNAPS=$MAX_SNAPS" --prefix="MAX_SNAPS=" --path=$ETC_PROFILE --append-if-found-not=True
     break
@@ -44,14 +44,14 @@ fi
 
 
 echoNErr "Input halt height or press [ENTER] to snapshot latest state: " && read HALT_HEIGHT
-echo "INFO: Default snapshot directory: $KIRA_SNAP"
+echoInfo "INFO: Default snapshot directory: $KIRA_SNAP"
 
 echoNErr "Input new snapshot directory or press [ENTER] to continue: " && read DEFAULT_SNAP_DIR
 [ ! -z "$DEFAULT_SNAP_DIR" ] && [ ! -d "$DEFAULT_SNAP_DIR" ] && echoWarn "WARNING: Directory '$DEFAULT_SNAP_DIR' was not found" && DEFAULT_SNAP_DIR=""
 [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
 
-echo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
-echo "INFO: Making sure that snap direcotry exists..."
+echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
+echoInfo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOT=""

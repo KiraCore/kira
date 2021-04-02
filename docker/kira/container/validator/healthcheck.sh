@@ -14,12 +14,12 @@ CFG="$SEKAID_HOME/config/config.toml"
 touch $BLOCK_HEIGHT_FILE
 
 HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
-[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
-[ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-[ -z "${PREVIOUS_HEIGHT##*[!0-9]*}" ] && PREVIOUS_HEIGHT=0
+(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
   echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
@@ -34,13 +34,15 @@ echoInfo "INFO: Latest Block Height: $HEIGHT"
 echoInfo "INFO: Updating commit timeout..."
 ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
-TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-
-if [ "${ACTIVE_VALIDATORS}" != "0" ] && [ "${TIMEOUT_COMMIT}ms" != "$CFG_timeout_commit" ] ; then
-    echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
-    CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}ms\"" --prefix="timeout_commit =" --path=$CFG
+if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
+    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
+    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    
+    if [ "${TIMEOUT_COMMIT}ms" != "$CFG_timeout_commit" ] ; then
+        echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
+        CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}ms\"" --prefix="timeout_commit =" --path=$CFG
+    fi
 fi
 
 echoInfo "INFO: Finished healthcheck"

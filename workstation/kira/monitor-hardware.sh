@@ -12,14 +12,14 @@ CPU_SCAN_PATH="$SCAN_DIR/cpu"
 RAM_SCAN_PATH="$SCAN_DIR/ram"
 
 set +x
-echo "------------------------------------------------"
-echo "|       STARTING KIRA HARDWARE SCAN            |"
-echo "|-----------------------------------------------"
-echo "|       SCAN_DIR: $SCAN_DIR"
-echo "| DISK_SCAN_PATH: $DISK_SCAN_PATH"
-echo "|  CPU_SCAN_PATH: $CPU_SCAN_PATH"
-echo "|  RAM_SCAN_PATH: $RAM_SCAN_PATH"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "|       STARTING KIRA HARDWARE SCAN            |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|       SCAN_DIR: $SCAN_DIR"
+echoWarn "| DISK_SCAN_PATH: $DISK_SCAN_PATH"
+echoWarn "|  CPU_SCAN_PATH: $CPU_SCAN_PATH"
+echoWarn "|  RAM_SCAN_PATH: $RAM_SCAN_PATH"
+echoWarn "------------------------------------------------"
 set -x
 
 touch "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH"
@@ -58,8 +58,8 @@ sleep 60
 
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: HARDWARE MONITOR                   |"
-echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: HARDWARE MONITOR                   |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "------------------------------------------------"
 set -x

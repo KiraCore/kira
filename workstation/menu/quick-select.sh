@@ -181,7 +181,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
             SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo "")
             SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo "")
-            [ -z "${SNAP_HEIGHT##*[!0-9]*}" ] && SNAP_HEIGHT=0
+            (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
 
             if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
                 echoWarn "WARNING: Snapshot is corrupted or created by outdated node"

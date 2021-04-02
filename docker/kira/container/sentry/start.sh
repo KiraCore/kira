@@ -1,9 +1,10 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echo "INFO: Staring sentry setup v0.0.4"
+echoInfo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
@@ -21,15 +22,15 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
-  echo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"
+  echoInfo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"
   sleep 5
 done
 LOCAL_IP=$(cat $LIP_FILE || echo "")
 PUBLIC_IP=$(cat $PIP_FILE || echo "")
 
-echo "INFO: Sucess, genesis file was found!"
-echo "INFO: Local IP: $LOCAL_IP"
-echo "INFO: Public IP: $PUBLIC_IP"
+echoInfo "INFO: Sucess, genesis file was found!"
+echoInfo "INFO: Local IP: $LOCAL_IP"
+echoInfo "INFO: Public IP: $PUBLIC_IP"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
@@ -41,37 +42,37 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   
   if [ -f "$SNAP_FILE" ] ; then
-    echo "INFO: Snap file was found, attepting data recovery..."
+    echoInfo "INFO: Snap file was found, attepting data recovery..."
     
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE -d $DATA_DIR
 
     if [ -f "$DATA_GENESIS" ] ; then
-      echo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
+      echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
       SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
       SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
       if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
           echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1
       else
-          echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+          echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
     fi
 
     # snap file should only be removed if sentry is a snapshot container otherwise it is supplied from read only volume and can't be modify by a container
     [ "${NODE_TYPE,,}" == "snapshot" ] && rm -fv "$SNAP_FILE"
   else
-    echo "INFO: Snap file is NOT present, starting new sync..."
+    echoInfo "INFO: Snap file is NOT present, starting new sync..."
   fi
 fi
 
 
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]  ; then
     if [ ! -z "$EXTERNAL_DOMAIN" ] && [ "${NODE_TYPE,,}" != "priv_sentry" ] ; then
-        echo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
+        echoInfo "INFO: Domain name '$EXTERNAL_DOMAIN' will be used as external address advertised to other nodes"
         EXTERNAL_ADDR="$EXTERNAL_DOMAIN"
     elif [ -z "$CFG_external_address" ] ; then
-        echo "INFO: Scanning external address..."
+        echoInfo "INFO: Scanning external address..."
         if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
             if timeout 3 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; else EXTERNAL_IP=0.0.0.0 ; fi
         else
@@ -80,10 +81,10 @@ if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || 
         fi
         
         if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $EXTERNAL_P2P_PORT ; then
-           echo "INFO: Node public address '$EXTERNAL_IP' was found"
+           echoInfo "INFO: Node public address '$EXTERNAL_IP' was found"
            EXTERNAL_ADDR="$EXTERNAL_IP"
         else
-            echo "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
+            echoWarn "WARNING: Failed to discover external IP address, your node is not exposed to the public internet or its P2P port $EXTERNAL_P2P_PORT was not exposed"
         fi
     fi
 
@@ -97,7 +98,7 @@ if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || 
         echo "tcp://0.0.0.0:$EXTERNAL_P2P_PORT" > "$COMMON_DIR/external_address"
     fi
 else
-    echo "INFO: Node external address will not be advertised to other nodes"
+    echoInfo "INFO: Node external address will not be advertised to other nodes"
 fi
 
 rm -fv $LOCAL_GENESIS
