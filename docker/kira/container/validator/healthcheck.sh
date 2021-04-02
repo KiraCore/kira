@@ -37,11 +37,13 @@ ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || e
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
     TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
+    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
     
-    if [ "${TIMEOUT_COMMIT}ms" != "$CFG_timeout_commit" ] ; then
+    if [ "${TIMEOUT_COMMIT}" != "$CFG_timeout_commit" ] ; then
         echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
-        CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}ms" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}ms\"" --prefix="timeout_commit =" --path=$CFG
+        CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}\"" --prefix="timeout_commit =" --path=$CFG
     fi
 fi
 
