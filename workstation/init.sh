@@ -97,15 +97,17 @@ if [ $RAM_MEMORY -lt 3145728 ] ; then
 fi
 
 # All branches should have the same name across all repos to be considered compatible
-if [ "$INFRA_BRANCH" == "master" ] || [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
+if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
     DEFAULT_BRANCH="$INFRA_BRANCH"
+    SEKAI_BRANCH="$DEFAULT_BRANCH"
+    FRONTEND_BRANCH="$DEFAULT_BRANCH"
+    INTERX_BRANCH="$DEFAULT_BRANCH"
 else
     DEFAULT_BRANCH="master"
+    [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
+    [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="$DEFAULT_BRANCH"
+    [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
 fi
-
-[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
-[ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="$DEFAULT_BRANCH"
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"

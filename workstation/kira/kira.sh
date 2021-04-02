@@ -4,11 +4,11 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set +x
-echo "INFO: Launching KIRA Network Manager..."
+echoInfo "INFO: Launching KIRA Network Manager..."
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
 if [ "${USER,,}" != root ]; then
-    echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
+    echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
 fi
 
@@ -56,7 +56,7 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
 
-echo "INFO: Restarting network scanner..."
+echoInfo "INFO: Restarting network scanner..."
 systemctl daemon-reload
 systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
@@ -214,7 +214,7 @@ while :; do
         if [ ! -z "$VALADDR" ]; then
             [ "${VALSTATUS,,}" == "active" ] &&
                 echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS" ||
-                echo -e "|\e[0m\e[31;1m   FAILURE, VALIDATOR NODE IS NOT OPERATIONAL  \e[33;1m: $VALSTATUS"
+                echo -e "|\e[0m\e[31;1m    VALIDATOR NODE IS NOT PRODUCING BLOCKS     \e[33;1m: $VALSTATUS"
         else
             echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
         fi
@@ -317,7 +317,7 @@ while :; do
     fi
 
     if [ "${OPTION,,}" == "r" ]; then
-        echo "INFO: Restarting docker..."
+        echoInfo "INFO: Restarting docker..."
         systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
         systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
     fi
@@ -332,30 +332,30 @@ while :; do
             EXECUTED="true"
             break
         elif [ "${OPTION,,}" == "d" ]; then
-            echo "INFO: Dumping all loggs from $name container..."
+            echoInfo "INFO: Dumping all loggs from $name container..."
             $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
-            echo "INFO: Re-starting $name container..."
+            echoInfo "INFO: Re-starting $name container..."
             $KIRA_SCRIPTS/container-restart.sh $name
             EXECUTED="true"
             LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
-                echo "INFO: Stopping $name container..."
+                echoInfo "INFO: Stopping $name container..."
                 $KIRA_SCRIPTS/container-stop.sh $name
             else
-                echo "INFO: Staring $name container..."
+                echoInfo "INFO: Staring $name container..."
                 $KIRA_SCRIPTS/container-start.sh $name
             fi
             LOADING="true"
             EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
-                echo "INFO: Pausing $name container..."
+                echoInfo "INFO: Pausing $name container..."
                 $KIRA_SCRIPTS/container-pause.sh $name
             else
-                echo "INFO: UnPausing $name container..."
+                echoInfo "INFO: UnPausing $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
             LOADING="true"
@@ -364,37 +364,37 @@ while :; do
     done
 
     if [ "${OPTION,,}" == "r" ]; then
-        echo "INFO: Reconnecting all networks..."
+        echoInfo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"
     fi
 
     if [ "${OPTION,,}" == "d" ]; then
-        echo "INFO: Dumping firewal info..."
-        ufw status verbose >"$KIRA_DUMP/ufw-status.txt" || echo "INFO: Failed to get firewal status"
-        echo "INFO: Compresing all dumped files..."
+        echoInfo "INFO: Dumping firewal info..."
+        ufw status verbose >"$KIRA_DUMP/ufw-status.txt" || echoErr "ERROR: Failed to get firewal status"
+        echoInfo "INFO: Compresing all dumped files..."
         ZIP_FILE="$KIRA_DUMP/kira.zip"
         rm -fv $ZIP_FILE
         zip -9 -r -v $ZIP_FILE $KIRA_DUMP
-        echo "INFO: All dump files were exported into $ZIP_FILE"
+        echoInfo "INFO: All dump files were exported into $ZIP_FILE"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
-        echo "INFO: Reconnecting all networks..."
+        echoInfo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"
-        echo "INFO: Reinitalizing firewall..."
+        echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ]; then
-        echo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echo "ERROR: Snapshot failed"
+        echoInfo "INFO: Backing up blockchain state..."
+        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echoErr "ERROR: Snapshot failed"
         LOADING="true"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ]; then
-        echo "INFO: Staring networking manager..."
-        $KIRA_MANAGER/kira/kira-networking.sh || echo "ERROR: Network manager failed"
+        echoInfo "INFO: Staring networking manager..."
+        $KIRA_MANAGER/kira/kira-networking.sh || echoErr "ERROR: Network manager failed"
         LOADING="true"
         EXECUTED="true"
         OPTION=""
     elif [ "${OPTION,,}" == "e" ]; then
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
-            echo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
+            echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
             echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip"
         else
@@ -418,7 +418,7 @@ while :; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
-        echo "INFO: Stopping kira network scanner..."
+        echoInfo "INFO: Stopping kira network scanner..."
         rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
         exit 0
     fi

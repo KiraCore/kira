@@ -7,7 +7,7 @@ set -x
 
 START_TIME="$(date -u +%s)"
 
-echo "INFO: Started kira network scan"
+echoInfo "INFO: Started kira network scan"
 
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_LOGS="$SCAN_DIR/logs"
@@ -63,13 +63,14 @@ while : ; do
         echo "$!" >"${SNAPSHOT_SCAN_PATH}.pid"
     fi
     
+    echoInfo "INFO: Waiting for network and docker processes querry to finalize..."
     wait $PID1
     wait $PID2
     
-    echo "INFO: Starting container monitor..."
+    echoInfo "INFO: Starting container monitor..."
     $KIRA_MANAGER/kira/monitor-containers.sh
     
     [ "${SCAN_DONE_MISSING,,}" == true ] && touch $SCAN_DONE
     
-    echo "INFO: Success, network scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
+    echoInfo "INFO: Success, network scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
 done

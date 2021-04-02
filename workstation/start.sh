@@ -64,7 +64,10 @@ rm -frv "$SCAN_DIR" && mkdir -p "$SCAN_DIR"
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
-$KIRAMGR_SCRIPTS/update-frontend-image.sh &
+
+if [ "${INFRA_MODE,,}" != "validator" ] ; then
+    $KIRAMGR_SCRIPTS/update-frontend-image.sh &
+fi
 
 wait
 
@@ -160,8 +163,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
-        $KIRA_MANAGER/containers/start-interx.sh 
-        $KIRA_MANAGER/containers/start-frontend.sh
+        $KIRA_MANAGER/containers/start-interx.sh
     else
         if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
             # save snapshot from sentry first
@@ -175,8 +177,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
             echoErr "ERROR: No public or priveate seeds were found, syning your node from external source will not be possible"
             exit 1
         fi
-        $KIRA_MANAGER/containers/start-interx.sh 
-        $KIRA_MANAGER/containers/start-frontend.sh
+        $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 
     fi
 else

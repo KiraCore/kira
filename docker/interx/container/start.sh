@@ -1,9 +1,10 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echo "Staring INTERX..."
+echoinfo "Staring INTERX..."
 cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
@@ -16,7 +17,7 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 while ! ping -c1 sentry &>/dev/null; do
-    echo "INFO: Waiting for ping response form sentry node... ($(date))"
+    echoinfo "INFO: Waiting for ping response form sentry node... ($(date))"
     sleep 5
 done
 

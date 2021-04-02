@@ -10,12 +10,12 @@ WHITESPACE="                          "
 FILE="/tmp/seeds.tmp"
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTED: SEED EDITOR v0.0.1                  |"
-echo "|-----------------------------------------------"
-echo "|  TARGET FILE: $DESTINATION"
-echo "| CONTENT TYPE: $TARGET"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: SEED EDITOR v0.0.1                  |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|  TARGET FILE: $DESTINATION"
+echoWarn "| CONTENT TYPE: $TARGET"
+echoWarn "------------------------------------------------"
 
 rm -f $FILE
 touch "$FILE" "$DESTINATION"
@@ -160,9 +160,9 @@ while : ; do
 done
 
 set +x
-echo "------------------------------------------------"
-echo "| CLOSED: SEED EDITOR                          |"
-echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_SEED_EDITOR)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| CLOSED: SEED EDITOR                          |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME_SEED_EDITOR)) seconds"
+echoWarn "------------------------------------------------"
 set -x
 

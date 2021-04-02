@@ -13,15 +13,15 @@ VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
 CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
 
 set +x
-echo "------------------------------------------------"
-echo "|       STARTING KIRA VALIDATORS SCAN          |"
-echo "|-----------------------------------------------"
-echo "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
-echo "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
-echo "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
-echo "|   VALADDR_SCAN_PATH: $VALADDR_SCAN_PATH"
-echo "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "|       STARTING KIRA VALIDATORS SCAN          |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
+echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
+echoWarn "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
+echoWarn "|   VALADDR_SCAN_PATH: $VALADDR_SCAN_PATH"
+echoWarn "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
+echoWarn "------------------------------------------------"
 set -x
 
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
@@ -48,13 +48,17 @@ fi
 
 VALSTATUS=""
 VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
-if [ ! -z "$VALADDR" ] ; then
+if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
     echo "$VALADDR" > $VALADDR_SCAN_PATH
 else
     VALADDR=$(cat $VALADDR_SCAN_PATH || echo "")
 fi
 
-[ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "") || VALSTATUS=""
+if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
+    VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "")
+else
+    VALSTATUS=""
+fi
 
 if [ -z "$VALSTATUS" ] ; then
     echo "ERROR: Validator address or status was not found"
@@ -91,8 +95,8 @@ if [ "${VALOPER_FOUND,,}" != "true" ] ; then
 fi
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: VALIDATORS MONITOR                 |"
-echo "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: VALIDATORS MONITOR                 |"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "------------------------------------------------"
 set -x
