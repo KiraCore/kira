@@ -48,13 +48,17 @@ fi
 
 VALSTATUS=""
 VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo "")
-if [ ! -z "$VALADDR" ] ; then
+if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
     echo "$VALADDR" > $VALADDR_SCAN_PATH
 else
     VALADDR=$(cat $VALADDR_SCAN_PATH || echo "")
 fi
 
-[ ! -z "$VALADDR" ] && VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "") || VALSTATUS=""
+if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
+    VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo "")
+else
+    VALSTATUS=""
+fi
 
 if [ -z "$VALSTATUS" ] ; then
     echo "ERROR: Validator address or status was not found"

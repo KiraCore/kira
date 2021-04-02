@@ -156,7 +156,7 @@ while : ; do
     echo "|   Health: ${TMPVAR:0:43} |"
     echo "|-------------------------------------------------------|"
 
-    if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ]  ; then
+    if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
         if [ ! -z "$VALINFO" ] ; then
             VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
