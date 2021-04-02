@@ -117,6 +117,7 @@ ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || e
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 100) " | bc)
     TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
     TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
 elif [ -z "$CFG_timeout_commit" ] ; then
     TIMEOUT_COMMIT="5000ms"
