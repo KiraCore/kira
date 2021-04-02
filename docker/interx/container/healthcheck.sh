@@ -15,7 +15,7 @@ if [ -f "$HALT_CHECK" ]; then
   exit 0
 fi
 
-echoinfo "INFO: Healthcheck => START"
+echoInfo "INFO: Healthcheck => START"
 sleep 30 # rate limit
 
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate journal"
@@ -51,5 +51,5 @@ else
   echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echoinfo "INFO: Latest Block Height: $HEIGHT"
+echoInfo "INFO: Latest Block Height: $HEIGHT"
 exit 0
