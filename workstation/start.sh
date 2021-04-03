@@ -101,16 +101,17 @@ set -x
 $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
 echoInfo "INFO: Updating IP addresses info..."
-
-PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 | awk -F'"' '{ print $2}' || echo "")
-( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @resolver1.opendns.com myip.opendns.com +time=5 +tries=1 | awk -F'"' '{ print $1}' || echo "")
-( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @ns1.google.com -t txt o-o.myaddr.l.google.com -4 | xargs || echo "")
-( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo "")
-LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo "")
-( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo "0.0.0.0")
-
-($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip" || echo "0.0.0.0" > "$DOCKER_COMMON_RO/public_ip" 
-($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip" || echo "0.0.0.0" > "$DOCKER_COMMON_RO/local_ip"
+systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
+rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
+i=0 && LOCAL_IP="" && PUBLIC_IP=""
+while ( (! $(isDnsOrIp "$LOCAL_IP")) && (! $(isDnsOrIp "$PUBLIC_IP")) ) ; do
+    i=$((i + 1))
+    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
+    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
+    [ "$i" == "30" ] && echoErr "ERROR: Public IP ($PUBLIC_IP) or Private IP ($LOCAL_IP) address could not be found, kirascan servise was interrupted" && exit 1 
+    echoInfo "INFO: Waiting for public and private IP address to be updated..."
+    sleep 30
+done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
