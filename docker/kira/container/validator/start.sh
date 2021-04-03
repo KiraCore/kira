@@ -125,8 +125,10 @@ else
     TIMEOUT_COMMIT=$CFG_timeout_commit
 fi
 
-echoInfo "INFO: Timeout commit ${TIMEOUT_COMMIT}ms"
-[ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] && CDHelper text lineswap --insert="CFG_timeout_commit=$TIMEOUT_COMMIT" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
+    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
+    CDHelper text lineswap --insert="CFG_timeout_commit=$TIMEOUT_COMMIT" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
 
 $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
