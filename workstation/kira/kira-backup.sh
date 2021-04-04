@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 MIN_BLOCK_HEIGHT=$1
 (! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
 (! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=0
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=3
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
 

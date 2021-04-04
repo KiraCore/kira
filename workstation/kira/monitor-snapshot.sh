@@ -38,7 +38,7 @@ echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
 echoWarn "------------------------------------------------"
 set -x
 
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=3
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)"
