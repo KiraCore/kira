@@ -30,7 +30,7 @@ while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     
     SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
-    [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=3
+    [ -z "${MAX_SNAPS##*[!0-9]*}" ] && MAX_SNAPS=2
     
     mkdir -p $SCAN_DIR $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS
     touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH"
