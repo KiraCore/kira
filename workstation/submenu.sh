@@ -37,7 +37,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
 
     if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
         echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found"
-        echoNErr "Input minimum of 24 comma separated seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
         VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
         [ -z "$VALIDATOR_ADDR_MNEMONIC" ] && VALIDATOR_ADDR_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
         CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
@@ -46,7 +46,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
 
     if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
         echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found"
-        echoNErr "Input minimum of 24 comma separated seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
         VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
         [ -z "$VALIDATOR_VAL_MNEMONIC" ] && VALIDATOR_VAL_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
         CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
