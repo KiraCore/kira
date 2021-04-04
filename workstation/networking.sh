@@ -67,7 +67,9 @@ firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
+# required for SSH
 firewall-cmd --permanent --zone=$ZONE --add-port=22/tcp
+# required for DNS service
 firewall-cmd --permanent --zone=$ZONE --add-port=53/udp
 
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
@@ -76,7 +78,9 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PO
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
+# required for SSH
 firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
+# required for DNS service
 firewall-cmd --permanent --zone=$ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
