@@ -77,7 +77,7 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tc
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
-firewall-cmd --permanent --zone=$ZONE --add-source=53/udp
+firewall-cmd --permanent --zone=$ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
