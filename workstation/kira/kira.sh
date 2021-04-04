@@ -144,7 +144,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.0.9           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.1           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -310,7 +310,7 @@ while :; do
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]]; then
+    if ! [[ "${OPTION,,}" =~ ^(x|n)$ ]] && [[ $OPTION != ?(-)+([0-9]) ]]; then
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]]; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
@@ -328,9 +328,7 @@ while :; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
-            OPTION="" # reset option
-            EXECUTED="true"
-            break
+            OPTION="" && EXECUTED="true" && break
         elif [ "${OPTION,,}" == "d" ]; then
             echoInfo "INFO: Dumping all loggs from $name container..."
             $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
@@ -338,8 +336,7 @@ while :; do
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
             $KIRA_SCRIPTS/container-restart.sh $name
-            EXECUTED="true"
-            LOADING="true"
+            EXECUTED="true" && LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echoInfo "INFO: Stopping $name container..."
@@ -348,8 +345,7 @@ while :; do
                 echoInfo "INFO: Staring $name container..."
                 $KIRA_SCRIPTS/container-start.sh $name
             fi
-            LOADING="true"
-            EXECUTED="true"
+            LOADING="true" && EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
                 echoInfo "INFO: Pausing $name container..."
@@ -358,8 +354,7 @@ while :; do
                 echoInfo "INFO: UnPausing $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
-            LOADING="true"
-            EXECUTED="true"
+            LOADING="true" && EXECUTED="true"
         fi
     done
 
@@ -384,14 +379,11 @@ while :; do
     elif [ "${OPTION,,}" == "b" ]; then
         echoInfo "INFO: Backing up blockchain state..."
         $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echoErr "ERROR: Snapshot failed"
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ]; then
         echoInfo "INFO: Staring networking manager..."
         $KIRA_MANAGER/kira/kira-networking.sh || echoErr "ERROR: Network manager failed"
-        LOADING="true"
-        EXECUTED="true"
-        OPTION=""
+        LOADING="false" && EXECUTED="true" && OPTION=""
     elif [ "${OPTION,,}" == "e" ]; then
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
@@ -402,8 +394,7 @@ while :; do
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
             echoInfo "INFO: Await few minutes and your snapshot will become unavailable"
         fi
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to changing validator status to PAUSED..."
@@ -414,8 +405,7 @@ while :; do
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echoInfo "INFO: Stopping kira network scanner..."

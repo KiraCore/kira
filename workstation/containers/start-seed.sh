@@ -9,7 +9,7 @@ HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 set +x
@@ -70,7 +70,7 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
-    -e CFG_allow_duplicate_ip="true" \
+    -e CFG_allow_duplicate_ip="false" \
     -e CFG_max_num_outbound_peers="1024" \
     -e CFG_max_num_inbound_peers="1024" \
     -e NODE_TYPE=$CONTAINER_NAME \

@@ -1,5 +1,6 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 if [ "${INFRA_MODE,,}" == "local" ]; then
   title="Demo Mode (local testnet)"
@@ -8,7 +9,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ]; then
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
   title="Validator Mode"
 else
-  echo "ERROR: Unknown operation mode"
+  echoErr "ERROR: Unknown operation mode"
   exit 1
 fi
 
@@ -28,6 +29,31 @@ CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP
 CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
 [ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=1" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
 [ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
+    set +x
+    source $MNEMONICS
+
+    if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
+        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found"
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+        VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
+        [ -z "$VALIDATOR_ADDR_MNEMONIC" ] && VALIDATOR_ADDR_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
+        CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) was saved to $MNEMONICS"
+    fi
+
+    if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
+        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found"
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
+        VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
+        [ -z "$VALIDATOR_VAL_MNEMONIC" ] && VALIDATOR_VAL_MNEMONIC="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq -r '.[0].mnemonic')"
+        CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"
+    fi
+    set -x    
+fi
 
 set +x
 printf "\033c"
