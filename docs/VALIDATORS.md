@@ -33,7 +33,4 @@ sekaid tx customslashing activate --from validator --keyring-backend=test --home
 ```
 sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq
 sekaid tx customslashing inactivate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --yes | jq
-
-
 ```
-
