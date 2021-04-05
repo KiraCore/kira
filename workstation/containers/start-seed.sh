@@ -71,8 +71,8 @@ docker run -d \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="1024" \
-    -e CFG_max_num_inbound_peers="1024" \
+    -e CFG_max_num_outbound_peers="256" \
+    -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
