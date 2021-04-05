@@ -122,8 +122,8 @@ while : ; do
             fi
 
             if [[ "${TARGET,,}" =~ "priv" ]]; then
-                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
                 [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echoInfo "INFO: Port 36656 is not exposed by '$dns'" ; fi
+                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
                 [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
             else
                 [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
