@@ -333,7 +333,7 @@ else
     [ ! -z "$SEED_NODE_ADDR" ] && \
     echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
     [ ! -z "$SENTRY_NODE_ADDR" ] && \
-    echo "$SENTRY_NODE_ADDR" > $PUBLIC_SEEDS
+    echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
     echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
 fi
