@@ -119,7 +119,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         PRIV_SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 36656 ; then
             PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
-            if $(isNodeId "$NEW_NODE_ID") ; then
+            if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
                 PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
