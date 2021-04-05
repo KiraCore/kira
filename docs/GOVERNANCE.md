@@ -71,6 +71,3 @@ LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.propos
 sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 60 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
 
 sekaid tx customgov proposal vote $NEXT_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes
-
-echo done
-
