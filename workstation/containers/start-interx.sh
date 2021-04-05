@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"

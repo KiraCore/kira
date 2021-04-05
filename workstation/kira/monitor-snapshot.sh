@@ -38,30 +38,37 @@ echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
 echoWarn "------------------------------------------------"
 set -x
 
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=3
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 
+CHECKSUM_TEST="false"
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)"
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CHECKSUM_TEST="true"
     fi
 fi
 
-if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ]; then
-    HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
-    HASH2=$(sha256sum "$INTERX_SNAPSHOT_PATH" | awk '{ print $1 }' || echo "")
+if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ; then
+    echo "INFO: Generting sha256 of the snapshoot file..."
+    KIRA_SNAP_SHA256=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
+    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
 
-    if [ "$HASH1" != "$HASH2" ]; then
+if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] && [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ] ; then
+    if [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ]; then
         echo "INFO: Latest snapshot is NOT exposed yet"
         mkdir -p $INTERX_REFERENCE_DIR
         cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
+        CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
     else
         echo "INFO: Latest snapshot was already exposed, no need for updates"
     fi
 elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ([ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ]); then
     echo "INFO: Removing publicly exposed snapshot..."
     rm -f -v $INTERX_SNAPSHOT_PATH
+    CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 if [ -d $KIRA_SNAP ]; then
@@ -88,7 +95,7 @@ else
     echo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
 fi
 
-sleep 60
+sleep 30
 
 set +x
 echoWarn "------------------------------------------------"

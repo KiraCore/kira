@@ -144,7 +144,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.0.9           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.1           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -152,27 +152,21 @@ while :; do
 
     [ ! -z "$CPU_UTIL" ] && [ ! -z "$RAM_UTIL" ] && [ ! -z "$DISK_UTIL" ] &&
         echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
-
+    
     if [ "${LOADING,,}" == "false" ]; then
         KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.NodeInfo.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
         ([ -z "$KIRA_STATUS" ] || [ "${KIRA_STATUS,,}" == "null" ]) && KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "???") && [ -z "$KIRA_NETWORK" ] && KIRA_NETWORK="???"
-        if [ $KIRA_BLOCK -le 0 ]; then
+        if (! $(isNaturalNumber "$KIRA_BLOCK")) || [ "$KIRA_BLOCK" == "0" ]; then
             KIRA_BLOCK="???"
         else
             SECONDS_PER_BLOCK="$(echo "$CONSENSUS" | jq -rc '.average_block_time' 2>/dev/null || echo "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
             ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
-        if [ -f "$LOCAL_GENESIS_PATH" ]; then
-            GENESIS_SUM=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }')
-            GENESIS_SUM="$(echo $GENESIS_SUM | head -c 4)...$(echo $GENESIS_SUM | tail -c 5)"
-        else
-            GENESIS_SUM="genesis not found"
-        fi
-
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
-        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $GENESIS_SUM"
+        [ -z "$GENESIS_SHA256" ] && GENESIS_SHA256="????????????"
+        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
 
         VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2>/dev/null || echo "")" && ([ -z "$VALACTIVE" ] || [ "${VALACTIVE,,}" == "null" ]) && VALACTIVE="???"
         VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2>/dev/null || echo "")" && ([ -z "$VALTOTAL" ] || [ "${VALTOTAL,,}" == "null" ]) && VALTOTAL="???"
@@ -196,10 +190,10 @@ while :; do
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"
-        SNAP_SHA256=$(sha256sum $KIRA_SNAP_PATH | awk '{ print $1 }')
+        [ -z "$KIRA_SNAP_SHA256" ] && KIRA_SNAP_SHA256="????????????"
         [ "${SNAP_EXPOSE,,}" == "true" ] &&
-            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)" ||
-            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $SNAP_SHA256 | head -c 4)...$(echo $SNAP_SHA256 | tail -c 5)"
+            echo -e "|\e[32;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $KIRA_SNAP_SHA256 | head -c 4)...$(echo $KIRA_SNAP_SHA256 | tail -c 5)" ||
+            echo -e "|\e[31;1m ${SNAP_FILENAME:0:45} \e[33;1m: $(echo $KIRA_SNAP_SHA256 | head -c 4)...$(echo $KIRA_SNAP_SHA256 | tail -c 5)"
     fi
 
     if [ "${LOADING,,}" == "true" ]; then
@@ -310,7 +304,7 @@ while :; do
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]]; then
+    if ! [[ "${OPTION,,}" =~ ^(x|n)$ ]] && [[ $OPTION != ?(-)+([0-9]) ]]; then
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]]; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo ""
@@ -328,9 +322,7 @@ while :; do
         i=$((i + 1))
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
-            OPTION="" # reset option
-            EXECUTED="true"
-            break
+            OPTION="" && EXECUTED="true" && break
         elif [ "${OPTION,,}" == "d" ]; then
             echoInfo "INFO: Dumping all loggs from $name container..."
             $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
@@ -338,8 +330,7 @@ while :; do
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
             $KIRA_SCRIPTS/container-restart.sh $name
-            EXECUTED="true"
-            LOADING="true"
+            EXECUTED="true" && LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echoInfo "INFO: Stopping $name container..."
@@ -348,8 +339,7 @@ while :; do
                 echoInfo "INFO: Staring $name container..."
                 $KIRA_SCRIPTS/container-start.sh $name
             fi
-            LOADING="true"
-            EXECUTED="true"
+            LOADING="true" && EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
                 echoInfo "INFO: Pausing $name container..."
@@ -358,8 +348,7 @@ while :; do
                 echoInfo "INFO: UnPausing $name container..."
                 $KIRA_SCRIPTS/container-unpause.sh $name
             fi
-            LOADING="true"
-            EXECUTED="true"
+            LOADING="true" && EXECUTED="true"
         fi
     done
 
@@ -384,14 +373,11 @@ while :; do
     elif [ "${OPTION,,}" == "b" ]; then
         echoInfo "INFO: Backing up blockchain state..."
         $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echoErr "ERROR: Snapshot failed"
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ]; then
         echoInfo "INFO: Staring networking manager..."
         $KIRA_MANAGER/kira/kira-networking.sh || echoErr "ERROR: Network manager failed"
-        LOADING="true"
-        EXECUTED="true"
-        OPTION=""
+        LOADING="false" && EXECUTED="true" && OPTION=""
     elif [ "${OPTION,,}" == "e" ]; then
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
@@ -402,8 +388,7 @@ while :; do
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
             echoInfo "INFO: Await few minutes and your snapshot will become unavailable"
         fi
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to changing validator status to PAUSED..."
@@ -414,8 +399,7 @@ while :; do
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ]; then
         printf "\033c"
         echoInfo "INFO: Stopping kira network scanner..."
