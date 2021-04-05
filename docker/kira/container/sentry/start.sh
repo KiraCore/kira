@@ -107,4 +107,4 @@ $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 touch $EXECUTED_CHECK
-sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace --pruning=everything 
+sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace

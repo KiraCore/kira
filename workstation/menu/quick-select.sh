@@ -325,17 +325,8 @@ CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NET
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
-    echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && \
-    echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
-else
-    [ ! -z "$SENTRY_NODE_ADDR" ] && \
-    echo "$SENTRY_NODE_ADDR" > $PUBLIC_SEEDS
-    [ ! -z "$SEED_NODE_ADDR" ] && \
-    echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
-    echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
-fi
+[ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+[ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+[ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS

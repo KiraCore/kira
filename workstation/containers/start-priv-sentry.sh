@@ -84,9 +84,9 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="512" \
-    -e CFG_max_num_inbound_peers="512" \
+    -e CFG_allow_duplicate_ip="false" \
+    -e CFG_max_num_outbound_peers="256" \
+    -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \

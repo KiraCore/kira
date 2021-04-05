@@ -42,26 +42,24 @@ fi
 
 echoInfo "INFO: Latest Block Height: $HEIGHT"
 
-if [ ! -z "$EXTERNAL_ADDR" ] ; then
-  echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
+if [ ! -z "$EXTERNAL_ADDR" ] && [ "$EXTERNAL_ADDR" != "0.0.0.0" ] ; then
+    echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
+    LOCAL_IP=$(cat $LIP_FILE || echo "")
+    PUBLIC_IP=$(cat $PIP_FILE || echo "")
+    echoInfo "INFO: Local IP: $LOCAL_IP"
+    echoInfo "INFO: Public IP: $PUBLIC_IP"
 
-  LOCAL_IP=$(cat $LIP_FILE || echo "")
-  PUBLIC_IP=$(cat $PIP_FILE || echo "")
-
-  echoInfo "INFO: Local IP: $LOCAL_IP"
-  echoInfo "INFO: Public IP: $PUBLIC_IP"
-
-  if timeout 2 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
-      echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
-      echo "ONLINE" > "$COMMON_DIR/external_address_status"
-  elif timeout 2 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then 
-      echoWarn "WARNINIG: Your node external address is only exposed to the local networks!"
-      echo "LOCAL" > "$COMMON_DIR/external_address_status"
-  else
-    echoErr "ERROR: Your node external address is not visible to other nodes, failed to diall '$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT'"
-    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-    exit 1
-  fi
+    if timeout 2 nc -z $PUBLIC_IP $EXTERNAL_P2P_PORT ; then 
+        echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed to the internet"
+        echo "ONLINE" > "$COMMON_DIR/external_address_status"
+    elif timeout 2 nc -z $LOCAL_IP $EXTERNAL_P2P_PORT ; then 
+        echoWarn "WARNINIG: Your node external address is only exposed to the local networks!"
+        echo "LOCAL" > "$COMMON_DIR/external_address_status"
+    else
+        echoErr "ERROR: Your node external address is not visible to other nodes, failed to diall '$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT'"
+        echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+        exit 1
+    fi
 else
     echoWarn "WARNING: This node is NOT advertising its it's public or local external address to other nodes in the network!"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"

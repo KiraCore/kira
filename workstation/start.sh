@@ -154,8 +154,18 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    $KIRA_MANAGER/containers/start-sentry.sh "true"
-    $KIRA_MANAGER/containers/start-priv-sentry.sh 
+    if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
+        # save snapshot from sentry first
+        $KIRA_MANAGER/containers/start-sentry.sh "true"
+        $KIRA_MANAGER/containers/start-priv-sentry.sh
+    elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+        # save snapshot from private sentry first
+        $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
+        $KIRA_MANAGER/containers/start-sentry.sh
+    else
+        echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+    fi
+
     $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
@@ -175,8 +185,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
         else
-            echoErr "ERROR: No public or priveate seeds were found, syning your node from external source will not be possible"
-            exit 1
+            echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
         fi
         $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 
