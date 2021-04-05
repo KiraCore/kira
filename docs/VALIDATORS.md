@@ -36,3 +36,4 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 
 
 ```
+
