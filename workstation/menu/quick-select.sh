@@ -100,13 +100,13 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
 
         SEED_NODE_ADDR=""
-        #if timeout 3 nc -z $NODE_ADDR 16656 ; then
-        #    SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
-        #    if $(isNodeId "$SEED_NODE_ID") ; then
-        #        SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
-        #        echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
-        #    else echoWarn "WARNING: Seed node ID was NOT found" ; fi
-        #else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
+        if timeout 3 nc -z $NODE_ADDR 16656 ; then
+            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+            if $(isNodeId "$SEED_NODE_ID") ; then
+                SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
+                echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
+            else echoWarn "WARNING: Seed node ID was NOT found" ; fi
+        else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
 
         SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 26656 ; then
@@ -260,8 +260,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
-        #[ ! -z "$SEED_NODE_ADDR" ] && \
-        #echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
+        [ ! -z "$SEED_NODE_ADDR" ] && \
+        echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
         [ ! -z "$SENTRY_NODE_ADDR" ] && \
         echoNInfo "CONFIG:    Public Sentry node address: " && echoErr $SENTRY_NODE_ADDR
         [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
@@ -325,15 +325,13 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    #[ ! -z "$SEED_NODE_ADDR" ] && \
-    #echo "$SEED_NODE_ADDR" > $PRIVATE_SEEDS
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
     echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
     [ ! -z "$SENTRY_NODE_ADDR" ] && \
     echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 else
-    #[ ! -z "$SEED_NODE_ADDR" ] && \
-    #echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+    [ ! -z "$SEED_NODE_ADDR" ] && \
+    echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
     [ ! -z "$SENTRY_NODE_ADDR" ] && \
     echo "$SENTRY_NODE_ADDR" > $PUBLIC_SEEDS
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
