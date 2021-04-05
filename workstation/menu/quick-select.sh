@@ -26,7 +26,7 @@ if [ "${SELECT,,}" == "n" ]; then
     set -x
     rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     CHAIN_ID="$NETWORK_NAME"
-    SEED_NODE_ADDR=""
+    SEED_NODE_ADDR="" && SENTRY_NODE_ADDR="" && PRIV_SENTRY_NODE_ADDR=""
     GENSUM=""
     SNAPSUM=""
     DOWNLOAD_SUCCESS="false"
@@ -99,35 +99,38 @@ elif [ "${SELECT,,}" == "j" ] ; then
             continue
         fi
 
-        NODE_PORT="" && if timeout 3 nc -z $NODE_ADDR 16656 ; then
-            NEW_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
-            if $(isNodeId "$NEW_NODE_ID") ; then
-                NODE_PORT="16656"
-                NODE_ID="$NEW_NODE_ID"
-                echoInfo "INFO: Seed node ID '$NODE_ID' was found"
+        SEED_NODE_ADDR=""
+        if timeout 3 nc -z $NODE_ADDR 16656 ; then
+            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+            if $(isNodeId "$SEED_NODE_ID") ; then
+                SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
+                echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
             else echoWarn "WARNING: Seed node ID was NOT found" ; fi
         else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
-        if [ -z "$NODE_PORT" ] && timeout 3 nc -z $NODE_ADDR 26656 ; then
+
+        SENTRY_NODE_ADDR=""
+        if timeout 3 nc -z $NODE_ADDR 26656 ; then
             if $(isNodeId "$NODE_ID") ; then
-                NODE_PORT="26656"
+                SENTRY_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
             else echoWarn "WARNING: Sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
-        if [ -z "$NODE_PORT" ] && timeout 3 nc -z $NODE_ADDR 36656 ; then
-            NEW_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+
+        PRIV_SENTRY_NODE_ADDR=""
+        if timeout 3 nc -z $NODE_ADDR 36656 ; then
+            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
             if $(isNodeId "$NEW_NODE_ID") ; then
-                NODE_PORT="36656"
-                NODE_ID="$NEW_NODE_ID"
-                echoInfo "INFO: Private sentry node ID '$NODE_ID' was found"
+                PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
+                echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
+        
 
-        if [ -z "$NODE_PORT" ] || [ ! $(isNodeId "$NODE_ID") ] ; then
+        if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
         fi
-        
-        SEED_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:${NODE_PORT}"
+
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
         if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
@@ -257,7 +260,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
-        echoNInfo "CONFIG:      Public seed node address: " && echoErr $SEED_NODE_ADDR
+        [ ! -z "$SEED_NODE_ADDR" ] && \
+        echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
+        [ ! -z "$SENTRY_NODE_ADDR" ] && \
+        echoNInfo "CONFIG:    Public Sentry node address: " && echoErr $SENTRY_NODE_ADDR
+        [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
+        echoNInfo "CONFIG:   Private Sentry node address: " && echoErr $PRIV_SENTRY_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
         echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
@@ -317,7 +325,17 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    [ ! -z "$SEED_NODE_ADDR" ] && \
     echo "$SEED_NODE_ADDR" > $PRIVATE_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
+    echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && \
+    echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 else
+    [ ! -z "$SEED_NODE_ADDR" ] && \
     echo "$SEED_NODE_ADDR" > $PUBLIC_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && \
+    echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
+    echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
 fi
