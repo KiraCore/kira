@@ -38,6 +38,7 @@ if [ "${SELECT,,}" == "n" ]; then
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
+    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
     echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
     echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
@@ -257,6 +258,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
+        echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
