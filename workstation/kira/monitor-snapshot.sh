@@ -49,8 +49,10 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
 fi
 
 if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ]; then
-    HASH1=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
-    HASH2=$(sha256sum "$INTERX_SNAPSHOT_PATH" | awk '{ print $1 }' || echo "")
+    HASH1=$(md5sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
+    sleep 1
+    HASH2=$(md5sum "$INTERX_SNAPSHOT_PATH" | awk '{ print $1 }' || echo "")
+    sleep 1
 
     if [ "$HASH1" != "$HASH2" ]; then
         echo "INFO: Latest snapshot is NOT exposed yet"
@@ -88,7 +90,7 @@ else
     echo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
 fi
 
-sleep 60
+sleep 120
 
 set +x
 echoWarn "------------------------------------------------"
