@@ -21,7 +21,7 @@ while : ; do
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-           echo "|         KIRA NETWORKING MANAGER v0.2.1         |"
+           echo "|         KIRA NETWORKING MANAGER v0.2.2         |"
            [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "custom" ] && \

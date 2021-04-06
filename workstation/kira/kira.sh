@@ -144,7 +144,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.2.1           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.2           : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -320,6 +320,10 @@ while :; do
     i=-1
     for name in $CONTAINERS; do
         i=$((i + 1))
+        COMMON_PATH="$DOCKER_COMMON/$name"
+        mkdir -p "$COMMON_PATH"
+        HALT_FILE="$COMMON_PATH/halt"
+        EXIT_FILE="$COMMON_PATH/exit"
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
             OPTION="" && EXECUTED="true" && break
@@ -329,14 +333,20 @@ while :; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
+            touch $EXIT_FILE
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
             $KIRA_SCRIPTS/container-restart.sh $name
+            rm -fv "$HALT_FILE" "$EXIT_FILE"
             EXECUTED="true" && LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echoInfo "INFO: Stopping $name container..."
+                cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
                 $KIRA_SCRIPTS/container-stop.sh $name
+                rm -fv "$HALT_FILE" "$EXIT_FILE"
             else
                 echoInfo "INFO: Staring $name container..."
+                rm -fv "$HALT_FILE" "$EXIT_FILE"
                 $KIRA_SCRIPTS/container-start.sh $name
             fi
             LOADING="true" && EXECUTED="true"

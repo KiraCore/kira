@@ -7,6 +7,7 @@ NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
 START_LOGS="$COMMON_LOGS/start.log"
 
 set +x
@@ -84,7 +85,7 @@ while : ; do
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.2.1              |"
+    echo "|            KIRA CONTAINER MANAGER v0.2.2              |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -251,43 +252,45 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
+        touch "$EXIT_FILE"
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
         $KIRA_SCRIPTS/container-restart.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "k" ] ; then
         if [ -f "$HALT_FILE" ] ; then
             echo "INFO: Removing halt file"
             rm -fv $HALT_FILE
         else
             echo "INFO: Creating halt file"
-            touch $HALT_FILE
+            touch "$HALT_FILE" "$EXIT_FILE"
         fi
+
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
+        touch "$EXIT_FILE"
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
         $KIRA_SCRIPTS/container-stop.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" != "running" ] ; then
         echo "INFO: Starting container..."
-        rm -fv $HALT_FILE
+        rm -fv "$HALT_FILE" "$EXIT_FILE"
         $KIRA_SCRIPTS/container-start.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
         rm -fv $HALT_FILE
         $KIRA_SCRIPTS/container-pause.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "paused" ] ; then
         echo "INFO: UnPausing container..."
         $KIRA_SCRIPTS/container-unpause.sh $NAME
-        LOADING="true"
-        EXECUTED="true"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
         LOG_LINES=10
         READ_HEAD=true

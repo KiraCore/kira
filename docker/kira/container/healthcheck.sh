@@ -7,9 +7,17 @@ echo "INFO: Health check => START"
 sleep 30 # rate limit not to overextend the log files
 
 HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
+
+if [ -f "$EXIT_CHECK" ]; then
+  echo "INFO: Ensuring sekaid process is killed"
+  touch $HALT_CHECK
+  pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+  rm -fv $EXIT_CHECK
+fi
 
 if [ -f "$HALT_CHECK" ]; then
-  echo "INFO: Healtc heck => STOP (halted)"
+  echo "INFO: health heck => STOP (halted)"
   exit 0
 fi
 
