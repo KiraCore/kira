@@ -21,7 +21,7 @@ SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 8 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && [ -z "$LATETS_BLOCK" ] && LATETS_BLOCK=0
 
