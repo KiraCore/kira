@@ -61,6 +61,10 @@ function isNaturalNumber() {
     fi
 }
 
+function isNullOrEmpty() {
+    if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "true" ; else echo "false" ; fi
+}
+
 displayAlign() {
   align=$1
   width=$2
