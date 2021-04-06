@@ -54,7 +54,8 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
+    #CFG_persistent_peers="tcp://$SENTRY_SEED"
+    CFG_persistent_peers=""
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
