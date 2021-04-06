@@ -34,11 +34,11 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         peer="tcp://$peer"
         echoInfo "INFO: Adding extra peer '$peer'"
 
-        [ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
+        #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
         [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
         [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
         
-        CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
+        #CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH

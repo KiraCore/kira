@@ -335,9 +335,9 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
-    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SEED_NODE_ADDR" >> $PRIVATE_PEERS
     [ ! -z "$SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
+    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SEED_NODE_ADDR" >> $PRIVATE_PEERS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
 fi
 
 echoInfo "INFO: Finished quick select!"
