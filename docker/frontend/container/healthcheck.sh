@@ -4,12 +4,20 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-HALT_CHECK="${COMMON_DIR}/halt"
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
-
 touch $BLOCK_HEIGHT_FILE
+
+HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
+
+if [ -f "$EXIT_CHECK" ]; then
+  echo "INFO: Ensuring nginx process is killed"
+  touch $HALT_CHECK
+  pkill -15 nginx || echo "WARNING: Failed to kill nginx"
+  rm -fv $EXIT_CHECK
+fi
 
 if [ -f "$HALT_CHECK" ]; then
   exit 0

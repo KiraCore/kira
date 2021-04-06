@@ -26,6 +26,7 @@ fi
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
+DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -61,6 +62,7 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] && [ "$KIRA_SNAP
         echo "INFO: Latest snapshot is NOT exposed yet"
         mkdir -p $INTERX_REFERENCE_DIR
         cp -f -v -a "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
+        cp -f -v -a "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
         CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
     else
         echo "INFO: Latest snapshot was already exposed, no need for updates"

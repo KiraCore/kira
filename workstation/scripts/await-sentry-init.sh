@@ -9,7 +9,6 @@ SAVE_SNAPSHOT=$3
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-HALT_FILE="$COMMON_PATH/halt"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -168,8 +167,11 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         sleep 30
     done
 
+    HALT_FILE="$COMMON_PATH/halt"
+    EXIT_FILE="$COMMON_PATH/exit"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch $HALT_FILE
+    touch $EXIT_FILE
+    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     

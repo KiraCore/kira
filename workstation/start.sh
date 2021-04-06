@@ -196,7 +196,7 @@ else
 fi
 
 echoInfo "INFO: Starting clenup..."
-rm -fv $SNAP_DESTINATION
+# rm -fv $SNAP_DESTINATION
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"

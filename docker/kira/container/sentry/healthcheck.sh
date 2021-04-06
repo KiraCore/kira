@@ -5,17 +5,21 @@ set -x
 
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
+EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 
-touch "$BLOCK_HEIGHT_FILE"
+touch "$BLOCK_HEIGHT_FILE" "$EXCEPTION_COUNTER_FILE"
 
+EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo "")
 LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo "")
 CONSENSUS=$(cat $COMMON_CONSENSUS | jq -rc || echo "")
 CONSENSUS_STOPPED=$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' || echo "")
 HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
 
+(! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
@@ -34,6 +38,14 @@ if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
   if [ $LATEST_BLOCK_HEIGHT -ge 1 ] && [ $LATEST_BLOCK_HEIGHT -le $HEIGHT ] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
       echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
   else
+      EXCEPTION_COUNTER=$(($i + 1))
+      if [ $EXCEPTION_COUNTER -ge 4 ] ; then
+          echoWarn "WARNINIG: Node will be setup from scratch during future restart"
+          echo "0" > $EXCEPTION_COUNTER_FILE
+          rm -fv $EXECUTED_CHECK
+      else
+          echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
+      fi
       exit 1
   fi
 else
@@ -65,4 +77,5 @@ else
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 fi
 
+echo "0" > $EXCEPTION_COUNTER_FILE
 exit 0
