@@ -155,7 +155,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [ $HEIGHT -ge $PREVIOUS_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+        [ $HEIGHT -ge $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
