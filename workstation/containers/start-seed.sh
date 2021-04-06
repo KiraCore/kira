@@ -9,8 +9,8 @@ HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 7 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 7 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 set +x
 echo "------------------------------------------------"
@@ -72,8 +72,8 @@ docker run -d \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="256" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_outbound_peers="512" \
+    -e CFG_max_num_inbound_peers="512" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \

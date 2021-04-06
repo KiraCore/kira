@@ -327,12 +327,13 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
+SAVED="false"
 if ($(isPublicIp $NODE_ADDR)) ; then
-    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS && SAVED="true"
+    [ ! -z "$SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS && SAVED="true"
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS && SAVED="true"
 else
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
-    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PRIVATE_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS && SAVED="true"
+    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$SEED_NODE_ADDR" >> $PRIVATE_SEEDS && SAVED="true"
+    [ ! -z "$SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS && SAVED="true"
 fi

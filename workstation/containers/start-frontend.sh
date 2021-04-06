@@ -4,8 +4,8 @@ source $KIRA_MANAGER/utils.sh
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 7 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 7 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="frontend"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
