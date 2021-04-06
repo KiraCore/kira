@@ -116,7 +116,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
 
         echoInfo "INFO: Starting $TYPE editor..."
-        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$TARGET"
+        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
 
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
         cp -a -v -f "$FILE" "$DOCKER_COMMON/$CONTAINER/$TYPE"

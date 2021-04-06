@@ -21,8 +21,8 @@ SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 7 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 7 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
@@ -126,8 +126,8 @@ docker run -d \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="2" \
-    -e CFG_max_num_inbound_peers="2" \
+    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_inbound_peers="4" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

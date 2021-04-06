@@ -21,7 +21,7 @@ while : ; do
     if [ "${TVAL,,}" == "v" ] ; then
         $KIRA_MANAGER/kira/seeds-edit.sh "$PRIVATE_SEEDS" "Private Seed Nodes"
     elif [ "${TVAL,,}" == "p" ] ; then
-        $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_SEEDS" "Seed Nodes"
+        $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_SEEDS" "Public Seed Nodes"
     elif [ "${TVAL,,}" == "w" ] ; then
         echoInfo "INFO: Wiping all public and private seed node lists"
         rm -f -v "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
