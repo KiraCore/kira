@@ -71,7 +71,7 @@ for name in $CONTAINERS; do
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
     SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
-    if [ ! -z "$SEKAID_STATUS" ] && [ "${SEKAID_STATUS,,}" != "null" ] ; then
+    if (! $(isNullEmpty "$SEKAID_STATUS")) ; then
         CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.catching_up' 2>/dev/null || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"

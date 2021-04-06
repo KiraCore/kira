@@ -127,13 +127,13 @@ while :; do
     sleep 30
   elif [ ! -z "$PID1" ]; then
     echo "WARNING: Node finished running, starting tracking and checking final height..."
-    kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+    kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
     sleep 5
-    kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+    kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
     sleep 10
-    kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
+    kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
     rm -fv $CFG # invalidate all possible connections
-    sekaid start --home="$SEKAID_HOME" --trace --pruning=everything &>./output2.log &# launch sekai in state observer mode
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --pruning=everything &>./output2.log &# launch sekai in state observer mode
     PID1=$!
     sleep 10
     FINISHED_RUNNING="true"
@@ -165,7 +165,7 @@ while :; do
       echo "INFO: Cloning genesis and strarting block sync..."
       cp -f -v -a "$COMMON_CFG" "$CFG"               # recover config from common folder
       cp -a -v -f "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
-      sekaid start --home="$SEKAID_HOME" --halt-height="$HALT_HEIGHT" --trace --pruning=everything &>./output.log || echo "halted" &
+      sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --halt-height="$HALT_HEIGHT" --trace --pruning=everything &>./output.log || echo "halted" &
       PID1="$!"
       sleep 10
       i=0
@@ -181,11 +181,11 @@ done
 
 touch $SNAP_FINALIZYNG
 
-kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
 sleep 5
-kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
 sleep 10
-kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
+kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
 
 echo "INFO: Printing latest output log..."
 cat ./output2.log | tail -n 100
