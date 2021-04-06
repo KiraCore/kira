@@ -54,7 +54,8 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
+    #CFG_persistent_peers="tcp://$SENTRY_SEED"
+    CFG_persistent_peers=""
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
@@ -86,8 +87,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="0" \
-    -e CFG_max_num_inbound_peers="0" \
+    -e CFG_max_num_outbound_peers="32" \
+    -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
