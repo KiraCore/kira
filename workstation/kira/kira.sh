@@ -144,7 +144,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.2.2           : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.2.1         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -234,15 +234,9 @@ while :; do
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
-                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo "")
+                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo "") && (! $(isNaturalNumber)) && LATEST_BLOCK=0
                 CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2>/dev/null || echo "false")
-                ([ -z "$LATEST_BLOCK" ] || [ -z "${LATEST_BLOCK##*[!0-9]*}" ]) && LATEST_BLOCK=0
-
-                if [ "${CATCHING_UP,,}" == "true" ]; then
-                    STATUS_TMP="syncing : $LATEST_BLOCK"
-                else
-                    STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
-                fi
+                [ "${CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
 
             NAME_TMP="${name}${WHITESPACE}"

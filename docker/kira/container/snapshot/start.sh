@@ -101,10 +101,8 @@ while :; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-  ([ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]]) &&
-    SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
-  ([ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]]) &&
-    SNAP_BLOCK="0"
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
   if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then
     TOP_SNAP_BLOCK=$SNAP_BLOCK

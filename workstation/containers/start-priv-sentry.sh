@@ -66,6 +66,7 @@ docker run -d \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
     -p $KIRA_PRIV_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $KIRA_PRIV_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
     --hostname $KIRA_PRIV_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

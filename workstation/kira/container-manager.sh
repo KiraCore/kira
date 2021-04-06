@@ -29,14 +29,13 @@ SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
-LIP_PATH="$TMP_DIR/lip-$NAME"
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
 echo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
-rm -fv "$LIP_PATH" "$KADDR_PATH"
-touch $LIP_PATH $KADDR_PATH
+rm -fv "$KADDR_PATH"
+touch $KADDR_PATH
 
 VALADDR=""
 VALINFO=""
@@ -46,19 +45,11 @@ LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-    LIP=$(cat $LIP_PATH 2> /dev/null || echo "")
     KADDR=$(cat $KADDR_PATH 2> /dev/null || echo "")
     
     if [ "${NAME,,}" == "validator" ] ; then
         VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
         [ ! -z "$VALADDR" ] && VALINFO=$(cat $VALINFO_SCAN_PATH 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") || VALINFO=""
-    fi
-
-    touch "${LIP_PATH}.pid" && if ! kill -0 $(cat "${LIP_PATH}.pid") 2> /dev/null ; then
-        if [ ! -z "$HOSTNAME" ] ; then
-            echo $(getent hosts $HOSTNAME 2> /dev/null | awk '{print $1}' 2> /dev/null | xargs 2> /dev/null || echo "") > "$LIP_PATH" &
-            PID1="$!" && echo "$PID1" > "${LIP_PATH}.pid"
-        fi
     fi
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -72,20 +63,21 @@ while : ; do
         SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.NodeInfo.id' 2> /dev/null || echo "")
-            ( [ -z "$KIRA_NODE_ID" ] || [ "${KIRA_NODE_ID,,}" == "null" ] ) && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
+            (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
+            (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
         KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
-        ( [ -z "$KIRA_NODE_CATCHING_UP" ] || [ "${KIRA_NODE_CATCHING_UP,,}" == "null" ] ) && KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$KIRA_NODE_CATCHING_UP")) && KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
         KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
-        ( [ -z "$KIRA_NODE_BLOCK" ] || [ "${KIRA_NODE_BLOCK,,}" == "null" ] ) && KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
-        [[ ! $KIRA_NODE_BLOCK =~ ^[0-9]+$ ]] && KIRA_NODE_BLOCK="0"
+        (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+        (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
 
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.2.2              |"
+    echo "|            KIRA CONTAINER MANAGER v0.2.2.1            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -93,7 +85,6 @@ while : ; do
         while [ ! -f $SCAN_DONE ] || [ ! -f "$CONTAINER_STATUS" ] ; do
             sleep 1
         done
-        wait $PID1 
         LOADING="false"
         continue
     fi

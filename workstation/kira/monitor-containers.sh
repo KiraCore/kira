@@ -47,22 +47,13 @@ for name in $CONTAINERS; do
     $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
 
-    if [ "$($KIRA_SCRIPTS/container-running.sh $ID)" != "true" ] ; then
-        echo "INFO: Container '$name' is not running"
-        echo "" > "$DESTINATION_PATH.sekaid.status.pid"
-        continue
-    else
-        echo "INFO: Container ID found: $ID"
-    fi
-
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-        echo $(docker exec -i "$ID" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
-        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
+        RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
+        echo $(timeout 1 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "") > $DESTINATION_STATUS_PATH
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH &
-        echo "$!" > "$DESTINATION_PATH.sekaid.status.pid"
-        echo $(timeout 1 curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH &
+        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH
     fi
 done
 
@@ -72,22 +63,18 @@ for name in $CONTAINERS; do
     echo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
-    touch "${DESTINATION_PATH}.pid" "${DESTINATION_PATH}.sekaid.status.pid" "$STATUS_PATH"
+    touch "${DESTINATION_PATH}.pid" "$STATUS_PATH"
     PIDX=$(cat "${DESTINATION_PATH}.pid" || echo "")
-    PIDY=$(cat "${DESTINATION_PATH}.sekaid.status.pid" || echo "")
     
     [ -z "$PIDX" ] && echo "INFO: Process X not found" && continue
     wait $PIDX || { echo "background pid failed: $?" >&2; exit 1;}
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
-    
-    [ -z "$PIDY" ] && echo "INFO: Process Y not found" && continue
-    wait $PIDY || { echo "background status pid failed: $?" >&2; exit 1;}
 
     SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
     if [ ! -z "$SEKAID_STATUS" ] && [ "${SEKAID_STATUS,,}" != "null" ] ; then
         CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.catching_up' 2>/dev/null || echo "false")
-        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" == "null" ] ) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
-        ( [ -z "$CATCHING_UP" ] || [ "${CATCHING_UP,,}" != "true" ] ) && CATCHING_UP="false"
+        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
+        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
         LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
@@ -112,14 +99,13 @@ for name in $CONTAINERS; do
 done
 
 # save latest known block height
-OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
-(! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
+OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] ; then
     echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
 fi
 # save latest known status
-[ ! -z "$NEW_LATEST_STATUS" ] && [ "${NEW_LATEST_STATUS,,}" != "null" ] && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
+(! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
 set +x
 echoWarn "------------------------------------------------"
