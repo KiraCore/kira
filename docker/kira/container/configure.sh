@@ -29,7 +29,7 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
 
-        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+        (! $(isNodeId "$nodeId")) && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
 
         peer="tcp://$peer"
         echoInfo "INFO: Adding extra peer '$peer'"
@@ -55,7 +55,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
 
-        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
 
         seed="tcp://$seed"
         echoInfo "INFO: Adding extra seed '$seed'"
