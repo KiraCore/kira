@@ -127,6 +127,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
     i=0
+    PREVIOUS_HEIGHT=0
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
@@ -148,11 +149,13 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         fi
 
         set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
-        ( [ -z "$SYNCING" ] || [ "${SYNCING,,}" == "null" ] ) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        [ $HEIGHT -ge $PREVIOUS_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
@@ -162,7 +165,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
         set +x
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
-        echoInfo "INFO: Do NOT close your terminal, waiting for $CONTAINER_NAME to finish catching up..."
+        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
     done

@@ -126,7 +126,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
         
-
         if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
@@ -262,6 +261,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
+        echoNInfo "CONFIG:      Public Internet Exposure: " && echoErr $(isPublicIp $NODE_ADDR) 
         [ ! -z "$SEED_NODE_ADDR" ] && \
         echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
         [ ! -z "$SENTRY_NODE_ADDR" ] && \
@@ -327,6 +327,12 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
-[ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-[ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-[ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+if ($(isPublicIp $NODE_ADDR)) ; then
+    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+else
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PRIVATE_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+fi
