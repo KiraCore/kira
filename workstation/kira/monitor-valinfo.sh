@@ -27,8 +27,8 @@ set -x
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echo "INFO: Saving valopers info..."
-VALOPERS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc || echo "")
-CONSENSUS=$(timeout 5 wget -qO- "$KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/consensus" | jq -rc || echo "")
+VALOPERS=$(timeout 60 curl "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc '.' || echo "")
+CONSENSUS=$(timeout 60 curl "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" | jq -rc '.' || echo "")
 WAITING=$(echo $VALOPERS | jq '.waiting' || echo "" )
 echo "$VALOPERS" > $VALOPERS_SCAN_PATH
 echo "$CONSENSUS" > $CONSENSUS_SCAN_PATH
@@ -93,6 +93,8 @@ if [ "${VALOPER_FOUND,,}" != "true" ] ; then
     echo "" > $VALINFO_SCAN_PATH
     exit 0
 fi
+
+sleep 5
 
 set +x
 echoWarn "------------------------------------------------"

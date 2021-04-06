@@ -21,8 +21,8 @@ SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 8 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 7 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 7 ) / 1024 " | bc)m"
 LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
@@ -41,27 +41,6 @@ PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jq -r '.node_info.network' 2>/d
 
 SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
 PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
-
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
-CFG_persistent_peers=""
-
-if [ "${SENTRY_CATCHING_UP,,}" == "false" ] && [ "$SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $SENTRY_BLOCK ] ; then
-    echo "INFO: Public sentry is healthy and will be added to the persistent peers list..."
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-fi
-
-if [ "${PRIV_SENTRY_CATCHING_UP,,}" == "false" ] && [ "$PRIV_SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $PRIV_SENTRY_BLOCK ] ; then
-    echo "INFO: Private sentry is healthy and will be added to the persistent peers list..."
-    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
-    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
-fi
-
-if [ -z "$CFG_persistent_peers" ] ; then
-    echo "INFO: Failed to snapshot state, not a single healthy persistent peer was found..."
-    exit 1
-fi
 
 [ $MAX_HEIGHT -le 0 ] && MAX_HEIGHT=$LATETS_BLOCK
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
@@ -84,6 +63,28 @@ echo "INFO: Loading secrets..."
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
+
+echo "INFO: Checking peers info..."
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+
+CFG_persistent_peers=""
+
+if [ "${SENTRY_CATCHING_UP,,}" == "false" ] && [ "$SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $SENTRY_BLOCK ] ; then
+    echo "INFO: Public sentry is healthy and will be added to the persistent peers list..."
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
+fi
+
+if [ "${PRIV_SENTRY_CATCHING_UP,,}" == "false" ] && [ "$PRIV_SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $PRIV_SENTRY_BLOCK ] ; then
+    echo "INFO: Private sentry is healthy and will be added to the persistent peers list..."
+    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
+    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
+fi
+
+if [ -z "$CFG_persistent_peers" ] ; then
+    echo "INFO: Failed to snapshot state, not a single healthy persistent peer was found..."
+    exit 1
+fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 

@@ -125,13 +125,13 @@ while : ; do
 
     i=-1 ; for net in $NETWORKS ; do i=$((i+1))
         TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
-        if [ ! -z "$TMP_IP" ] && [ "${TMP_IP,,}" != "null" ] ; then
+        if (! $(isNullOrEmpty "$TMP_IP")) ; then
             IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
             echo "| Local IP: ${IP_TMP:0:43} |"
         fi
     done
 
-    if [ ! -z "$PORTS" ] && [ "${PORTS,,}" != "null" ] ; then  
+    if (! $(isNullOrEmpty "$PORTS")) ; then  
         for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
             port_tmp="${port}${WHITESPACE}"
             port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
@@ -144,7 +144,7 @@ while : ; do
     echo "|   Status: ${TMPVAR:0:43} |"
     [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
-    [ "$HEALTH" != "null" ] && [ ! -z "$HEALTH" ] && TMPVAR="${HEALTH}${WHITESPACE}" && \
+    (! $(isNullOrEmpty "$HEALTH")) && TMPVAR="${HEALTH}${WHITESPACE}" && \
     echo "|   Health: ${TMPVAR:0:43} |"
     echo "|-------------------------------------------------------|"
 
@@ -152,7 +152,7 @@ while : ; do
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
         if [ ! -z "$VALINFO" ] ; then
             VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
-            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "???") && [ "${VTOP,,}" == "null" ] && VTOP="???"
+            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
             VRANK=$(echo $VALINFO | jq -rc '.rank' 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
             VSTREAK=$(echo $VALINFO | jq -rc '.streak' 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
             VMISSED=$(echo $VALINFO | jq -rc '.missed_blocks_counter' 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
@@ -225,7 +225,8 @@ while : ; do
             [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
-            touch $HALT_FILE
+            touch "$EXIT_FILE"
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh $NAME
             echo "INFO: Waiting for container to start..."
             sleep 3
@@ -244,7 +245,7 @@ while : ; do
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
         touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-restart.sh $NAME
         rm -fv "$HALT_FILE" "$EXIT_FILE"
         LOADING="true" && EXECUTED="true"
@@ -257,14 +258,14 @@ while : ; do
             touch "$HALT_FILE" "$EXIT_FILE"
         fi
 
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
         touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 5 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/5) ..." && cntr=$(($cntr + 1)) && sleep 20 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-stop.sh $NAME
         rm -fv "$HALT_FILE" "$EXIT_FILE"
         LOADING="true" && EXECUTED="true"
