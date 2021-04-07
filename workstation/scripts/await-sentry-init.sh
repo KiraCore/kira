@@ -9,6 +9,8 @@ SAVE_SNAPSHOT=$3
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -109,7 +111,10 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+            touch "$EXIT_FILE"
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
+            rm -fv "$HALT_FILE" "$EXIT_FILE"
             sleep 5
             continue
         else
@@ -177,6 +182,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
+    rm -fv "$HALT_FILE" "$EXIT_FILE"
     
     echoInfo "INFO: Creating new snapshot..."
 
@@ -196,9 +202,11 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     echo "INFO: Un-Halting $CONTAINER_NAME container"
-    rm -fv $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
+    touch $EXIT_FILE
+    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
+    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
+    rm -fv "$HALT_FILE" "$EXIT_FILE"
 
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
