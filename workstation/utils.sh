@@ -77,6 +77,16 @@ function isNaturalNumber() {
     fi
 }
 
+function isFileEmpty() {
+    if [ -z "$1" ] || [ ! -f "$1" ] ; then echo "true" ; else
+        if [[ ! -z $(grep '[^[:space:]]' $1) ]] ; then
+            echo "true"
+        else
+            echo "false"
+        fi
+    fi
+}
+
 displayAlign() {
   align=$1
   width=$2

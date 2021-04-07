@@ -154,11 +154,11 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
+    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
         # save snapshot from sentry first
         $KIRA_MANAGER/containers/start-sentry.sh "true"
         $KIRA_MANAGER/containers/start-priv-sentry.sh
-    elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+    elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
         # save snapshot from private sentry first
         $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
         $KIRA_MANAGER/containers/start-sentry.sh
@@ -175,12 +175,12 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
         $KIRA_MANAGER/containers/start-interx.sh
-    else
-        if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
+    else 
+        if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
             # save snapshot from sentry first
             $KIRA_MANAGER/containers/start-sentry.sh "true"
             $KIRA_MANAGER/containers/start-priv-sentry.sh
-        elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+        elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
             # save snapshot from private sentry first
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
