@@ -128,7 +128,7 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [ $SNAP_HEIGHT -gt 0 ] && [ ! -z "$SNAP_
 
     # to prevent appending root path we must zip all from within the target data folder
     cd $SEKAID_HOME/data && zip -r "$SNAP_FILE_OUTPUT" . *
-    [ ! -f "$SNAP_FILE_OUTPUT" ] echo "INFO: Failed to create snapshot, file $SNAP_FILE_OUTPUT was not found" && exit 1
+    [ ! -f "$SNAP_FILE_OUTPUT" ] && echo "INFO: Failed to create snapshot, file $SNAP_FILE_OUTPUT was not found" && exit 1
     rm -fv "$SNAP_HEIGHT_FILE" "$SNAP_NAME_FILE"
 fi
 

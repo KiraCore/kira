@@ -197,6 +197,6 @@ echo "{\"height\":$HALT_HEIGHT}" >"$SNAP_INFO"
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
 
-[ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
+[ ! -f "$DESTINATION_FILE" ] && echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 
 touch $SNAP_DONE
