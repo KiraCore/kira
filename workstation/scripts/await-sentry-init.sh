@@ -188,9 +188,10 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     rm -fv "$HALT_FILE" "$EXIT_FILE"
     
     echoInfo "INFO: Creating new snapshot..."
-    
+    i=0
     DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
-    while [ ! -f "$DESTINATION_FILE" ] ; do
+    while [ ! -f "$DESTINATION_FILE" ] && [ -f $SNAP_HEIGHT_FILE ] ; do
+        i=$((i + 1))
         echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
         sleep 30
     done
@@ -203,6 +204,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
     echoInfo "INFO: New snapshot was created!"
+    
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"
     cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
