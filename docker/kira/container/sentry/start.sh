@@ -7,10 +7,11 @@ set -x
 echoInfo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
+SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 
-[ "${NODE_TYPE,,}" == "snapshot" ] && \
-SNAP_FILE="$COMMON_DIR/snap.zip" || \
-SNAP_FILE="$COMMON_READ/snap.zip"
+SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
+SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
@@ -21,16 +22,27 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ] && [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
+while [ ! -f "$SNAP_FILE_INPUT" ] && [ ! -f "$COMMON_GENESIS" ] ; do
   echoInfo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"
   sleep 5
 done
+
+while [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
+  echoInfo "INFO: Waiting for Local or Public IP to be provisioned... ($(date))"
+  sleep 5
+done
+
 LOCAL_IP=$(cat $LIP_FILE || echo "")
 PUBLIC_IP=$(cat $PIP_FILE || echo "")
+SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo "")
+SNAP_NAME=$(cat $SNAP_NAME_FILE || echo "")
+SNAP_FILE_OUTPUT="$COMMON_DIR/$SNAP_NAME_FILE"
 
 echoInfo "INFO: Sucess, genesis file was found!"
-echoInfo "INFO: Local IP: $LOCAL_IP"
-echoInfo "INFO: Public IP: $PUBLIC_IP"
+echoInfo "INFO:    Local IP: $LOCAL_IP"
+echoInfo "INFO:   Public IP: $PUBLIC_IP"
+echoInfo "INFO: Snap Height: $SNAP_HEIGHT"
+echoInfo "INFO:   Snap Name: $SNAP_NAME_FILE"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
@@ -41,11 +53,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   
-  if [ -f "$SNAP_FILE" ] ; then
+  if [ -f "$SNAP_FILE_INPUT" ] ; then
     echoInfo "INFO: Snap file was found, attepting data recovery..."
     
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d $DATA_DIR
+    unzip $SNAP_FILE_INPUT -d $DATA_DIR
 
     if [ -f "$DATA_GENESIS" ] ; then
       echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
@@ -58,9 +70,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
           echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
       fi
     fi
-
-    # snap file should only be removed if sentry is a snapshot container otherwise it is supplied from read only volume and can't be modify by a container
-    [ "${NODE_TYPE,,}" == "snapshot" ] && rm -fv "$SNAP_FILE"
   else
     echoInfo "INFO: Snap file is NOT present, starting new sync..."
   fi
@@ -107,4 +116,22 @@ $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 touch $EXECUTED_CHECK
-sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace  
+
+if ($(isNaturalNumber $SNAP_HEIGHT)) && [ $SNAP_HEIGHT -gt 0 ] && [ ! -z "$SNAP_NAME_FILE" ] ; then
+    echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
+    rm -fv $SNAP_FILE_OUTPUT
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"
+  
+    echo "INFO: Creating backup package '$SNAP_FILE_OUTPUT' ..."
+    cp -afv "$LOCAL_GENESIS" $SEKAID_HOME/data
+    echo "{\"height\":$SNAP_HEIGHT}" > "$SNAP_INFO"
+
+    # to prevent appending root path we must zip all from within the target data folder
+    cd $SEKAID_HOME/data && zip -r "$SNAP_FILE_OUTPUT" . *
+    [ ! -f "$SNAP_FILE_OUTPUT" ] echo "INFO: Failed to create snapshot, file $SNAP_FILE_OUTPUT was not found" && exit 1
+    rm -fv $SNAP_HEIGHT_FILE
+fi
+
+echoInfo "INFO: Starting sekaid..."
+sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace 
+

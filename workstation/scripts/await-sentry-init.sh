@@ -11,6 +11,8 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
+SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
+SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -175,38 +177,28 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         sleep 30
     done
 
-    HALT_FILE="$COMMON_PATH/halt"
-    EXIT_FILE="$COMMON_PATH/exit"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     touch $EXIT_FILE
     cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
+    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
+    echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
+    echo "$SNAP_NAME" >  $SNAP_NAME_FILE
     rm -fv "$HALT_FILE" "$EXIT_FILE"
     
     echoInfo "INFO: Creating new snapshot..."
-
-    DATA_DIR="$SEKAID_HOME/data"
-    LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-    SNAP_STATUS="$KIRA_SNAP/status"
     
-    SNAP_FILENAME="${NETWORK_NAME}-$HEIGHT-$(date -u +%s).zip"
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_FILENAME"
+    DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
+    while [ ! -f "$DESTINATION_FILE" ] ; do
+        echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
+        sleep 30
+    done
 
+    SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
-    echo "$SNAP_FILENAME" > "$KIRA_SNAP/status/latest"
-
-    docker exec -i "$CONTAINER_NAME" bash -c "cp -v -f $SEKAID_HOME/config/genesis.json $DATA_DIR"
-    docker exec -i "$CONTAINER_NAME" bash -c "echo {'"'"'height'"'"':$HEIGHT} > $DATA_DIR/snapinfo.json"
-    docker exec -i "$CONTAINER_NAME" bash -c "cd $SEKAID_HOME/data && zip -r -v /snap/$SNAP_FILENAME . *"
+    echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    echo "INFO: Un-Halting $CONTAINER_NAME container"
-    touch $EXIT_FILE
-    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
-    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-    rm -fv "$HALT_FILE" "$EXIT_FILE"
 
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
