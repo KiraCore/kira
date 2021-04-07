@@ -36,7 +36,7 @@ LOCAL_IP=$(cat $LIP_FILE || echo "")
 PUBLIC_IP=$(cat $PIP_FILE || echo "")
 SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo "")
 SNAP_NAME=$(cat $SNAP_NAME_FILE || echo "")
-SNAP_FILE_OUTPUT="$COMMON_DIR/$SNAP_NAME"
+SNAP_FILE_OUTPUT="/snap/$SNAP_NAME"
 
 echoInfo "INFO: Sucess, genesis file was found!"
 echoInfo "INFO:    Local IP: $LOCAL_IP"
