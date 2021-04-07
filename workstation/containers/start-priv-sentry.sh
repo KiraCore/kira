@@ -53,8 +53,14 @@ cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+        echo "INFO: Node will sync from the public sentry..."
+        CFG_persistent_peers="tcp://$SENTRY_SEED"
+    else
+        echo "INFO: Node will sync blocks from its own seed list..."
+        CFG_persistent_peers=""
+    fi
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
