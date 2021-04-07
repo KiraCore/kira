@@ -8,6 +8,12 @@ sleep 30 # rate limit not to overextend the log files
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
+EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
+
+touch "$EXCEPTION_COUNTER_FILE"
+
+EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo "")
+(! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
 
 if [ -f "$EXIT_CHECK" ]; then
   echo "INFO: Ensuring sekaid process is killed"
@@ -18,6 +24,7 @@ fi
 
 if [ -f "$HALT_CHECK" ]; then
   echo "INFO: health heck => STOP (halted)"
+  echo "0" > $EXCEPTION_COUNTER_FILE
   exit 0
 fi
 
@@ -34,13 +41,23 @@ elif [ "${NODE_TYPE,,}" == "validator" ]; then
   $SELF_CONTAINER/validator/healthcheck.sh || FAILED="true"
 else
   echo "ERROR: Unknown node type '$NODE_TYPE'"
-  exit 1
+  FAILED="true"
 fi
 
-if [ "$FAILED" == "true" ] ; then
+if [ "${FAILED,,}" == "true" ] ; then
     echo "ERROR: $NODE_TYPE healthcheck failed"
+    EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
+
+    if [ $EXCEPTION_COUNTER -ge 2 ] ; then
+        echo "WARNINIG: Unhealthy status, node will reboot"
+        echo "0" > $EXCEPTION_COUNTER_FILE
+        pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+        sleep 5
+    else
+        echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
+    fi
     exit 1
 else
+    echo "0" > $EXCEPTION_COUNTER_FILE
     exit 0
 fi
-

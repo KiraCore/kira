@@ -131,28 +131,28 @@ while : ; do
             ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
             priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
 
-            if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns 16656 ; then 
-                 tmp_addr="${seed_node_id}@${dns}:16656"
-                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                 echoInfo "INFO: Port 16656 is exposed by '$dns'" ; 
-            else 
-                echoInfo "INFO: Port 16656 is not exposed as '$dns'" ; 
-            fi
-
-            if ($(isNodeId "$sentry_node_id")) && timeout 1 nc -z $dns 26656 ; then 
-                 tmp_addr="${sentry_node_id}@${dns}:26656"
-                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                 echoInfo "INFO: Port 26656 is exposed as '$dns'" ; 
-            else 
-                echoInfo "INFO: Port 26656 is not exposed by '$dns'" ; 
-            fi
-
-            if ($(isNodeId "$priv_sentry_node_id")) && timeout 1 nc -z $dns 36656 ; then 
-                tmp_addr="${priv_sentry_node_id}@${dns}:36656"
+            if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
+                tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port 36656 is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed by '$dns'" ; 
             else 
-                echoInfo "INFO: Port 36656 is not exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is not exposed as '$dns'" ; 
+            fi
+
+            if ($(isNodeId "$sentry_node_id")) && timeout 1 nc -z $dns $KIRA_SENTRY_P2P_PORT ; then 
+                tmp_addr="${sentry_node_id}@${dns}:$KIRA_SENTRY_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+            else 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
+            fi
+
+            if ($(isNodeId "$priv_sentry_node_id")) && timeout 1 nc -z $dns $KIRA_PRIV_SENTRY_P2P_PORT ; then 
+                tmp_addr="${priv_sentry_node_id}@${dns}:$KIRA_PRIV_SENTRY_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+            else 
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
             fi
         else
             DETECTED_NODES="${nodeId}@${dns}:${port}"
