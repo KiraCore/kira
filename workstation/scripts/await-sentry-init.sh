@@ -178,13 +178,13 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     done
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch $EXIT_FILE
-    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
-    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
+    touch "$EXIT_FILE"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
+    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
+    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
+    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     rm -fv "$HALT_FILE" "$EXIT_FILE"
     
     echoInfo "INFO: Creating new snapshot..."
@@ -192,6 +192,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
     while [ ! -f "$DESTINATION_FILE" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
         i=$((i + 1))
+        cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
         sleep 30
     done
