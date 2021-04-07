@@ -36,13 +36,13 @@ LOCAL_IP=$(cat $LIP_FILE || echo "")
 PUBLIC_IP=$(cat $PIP_FILE || echo "")
 SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo "")
 SNAP_NAME=$(cat $SNAP_NAME_FILE || echo "")
-SNAP_FILE_OUTPUT="$COMMON_DIR/$SNAP_NAME_FILE"
+SNAP_FILE_OUTPUT="$COMMON_DIR/$SNAP_NAME"
 
 echoInfo "INFO: Sucess, genesis file was found!"
 echoInfo "INFO:    Local IP: $LOCAL_IP"
 echoInfo "INFO:   Public IP: $PUBLIC_IP"
 echoInfo "INFO: Snap Height: $SNAP_HEIGHT"
-echoInfo "INFO:   Snap Name: $SNAP_NAME_FILE"
+echoInfo "INFO:   Snap Name: $SNAP_NAME"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -rfv $SEKAID_HOME
@@ -122,7 +122,7 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [ $SNAP_HEIGHT -gt 0 ] && [ ! -z "$SNAP_
     rm -fv $SNAP_FILE_OUTPUT
     sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"
   
-    echo "INFO: Creating backup package '$SNAP_FILE_OUTPUT' ..."
+    echoInfo "INFO: Creating backup package '$SNAP_FILE_OUTPUT' ..."
     cp -afv "$LOCAL_GENESIS" $SEKAID_HOME/data
     echo "{\"height\":$SNAP_HEIGHT}" > "$SNAP_INFO"
 
