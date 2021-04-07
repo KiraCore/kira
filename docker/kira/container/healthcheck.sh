@@ -9,11 +9,14 @@ sleep 30 # rate limit not to overextend the log files
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
+EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
 
-touch "$EXCEPTION_COUNTER_FILE"
+touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE"
 
 EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo "")
+EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo "")
 (! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
+(! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
 
 if [ -f "$EXIT_CHECK" ]; then
   echo "INFO: Ensuring sekaid process is killed"
@@ -45,8 +48,10 @@ else
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then
-    echo "ERROR: $NODE_TYPE healthcheck failed"
     EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
+    EXCEPTION_TOTAL=$(($EXCEPTION_TOTAL + 1))
+    echo "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/2 times, total $EXCEPTION_TOTAL"
+    echo "$EXCEPTION_TOTAL" > $EXCEPTION_TOTAL_FILE
 
     if [ $EXCEPTION_COUNTER -ge 2 ] ; then
         echo "WARNINIG: Unhealthy status, node will reboot"
@@ -57,6 +62,7 @@ if [ "${FAILED,,}" == "true" ] ; then
         echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
     fi
     exit 1
+    
 else
     echo "0" > $EXCEPTION_COUNTER_FILE
     exit 0
