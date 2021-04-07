@@ -6,6 +6,7 @@ CONTAINER_NAME="seed"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -32,14 +33,24 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
 
 # cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
+rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$EXIT_FILE"
+
+PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" | xargs || echo "")
+if ($(isPublicIp $PUBLIC_IP)) && timeout 3 nc -z $PUBLIC_IP $KIRA_SENTRY_P2P_PORT ; then
+    PUB_SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$PUBLIC_IP:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    CFG_seeds="tcp://$PUB_SENTRY_SEED"
+else
+    CFG_seeds=""
+fi
+
+CFG_persistent_peers="tcp://$SENTRY_SEED"
 
 echo "INFO: Starting seed node..."
 
@@ -62,8 +73,8 @@ docker run -d \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_external_address="" \
-    -e CFG_seeds="" \
-    -e CFG_persistent_peers="tcp://$SENTRY_SEED" \
+    -e CFG_seeds="$CFG_seeds" \
+    -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID,$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \

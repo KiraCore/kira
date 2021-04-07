@@ -35,6 +35,7 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
+SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$KIRA_SEED_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
@@ -58,6 +59,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
         echo "INFO: Node will sync from the private sentry..."
         CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
     else
+        echo "INFO: Node will sync blocks from its own seed list..."
         CFG_persistent_peers=""
     fi
 else
