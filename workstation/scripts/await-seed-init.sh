@@ -8,6 +8,7 @@ SEED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -108,7 +109,10 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+            touch "$EXIT_FILE"
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
+            rm -fv "$HALT_FILE" "$EXIT_FILE"
             sleep 5
             continue
         else

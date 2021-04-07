@@ -118,15 +118,22 @@ echo -e "\e[37;1m--------------------------------------------------"
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
 
+        COMMON_PATH="$DOCKER_COMMON/$DOCKER_COMMON"
+        EXIT_FILE="$COMMON_PATH/exit"
+        HALT_FILE="$COMMON_PATH/halt"
+
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
-        cp -a -v -f "$FILE" "$DOCKER_COMMON/$CONTAINER/$TYPE"
+        cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
         
         echoInfo "INFO: Re-starting $CONTAINER container..."
+        touch "$EXIT_FILE"
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-restart.sh $CONTAINER
+        rm -fv "$HALT_FILE" "$EXIT_FILE"
     elif [ "${OPTION,,}" == "f" ]; then
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
