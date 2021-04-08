@@ -110,7 +110,7 @@ CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_A
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
+# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
 ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
 
