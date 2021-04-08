@@ -124,8 +124,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] || ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) ; then
-        EXTERNAL_SYNC="false"
+    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) && ($(isFileEmpty $PRIVATE_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
+        EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"
     fi

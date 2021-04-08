@@ -50,7 +50,16 @@ else
     CFG_seeds=""
 fi
 
-CFG_persistent_peers="tcp://$SENTRY_SEED"
+if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+    echo "INFO: Node will sync from the public sentry..."
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
+fi
+
+if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+    echo "INFO: Node will sync from the private sentry..."
+    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
+    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
+fi
 
 echo "INFO: Starting seed node..."
 
