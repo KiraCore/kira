@@ -82,10 +82,11 @@ fi
 
 if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     EXTERNAL_ADDR="$LOCAL_IP"
-elif [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
+elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 else
     echoErr "ERROR: Unknown node type '$NODE_TYPE'"
+    exit 1
 fi
 
 CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
