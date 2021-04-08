@@ -341,7 +341,7 @@ while : ; do
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
             [ $LOG_LINES -gt $LINES_MAX ] && LOG_LINES=$LINES_MAX
