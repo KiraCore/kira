@@ -102,12 +102,12 @@ echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
 rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
 i=0 && LOCAL_IP="" && PUBLIC_IP=""
-while ( (! $(isDnsOrIp "$LOCAL_IP")) && (! $(isDnsOrIp "$PUBLIC_IP")) ) ; do
+while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
     i=$((i + 1))
     PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
     LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
-    [ "$i" == "30" ] && echoErr "ERROR: Public IP ($PUBLIC_IP) or Private IP ($LOCAL_IP) address could not be found, kirascan servise was interrupted" && exit 1 
-    echoInfo "INFO: Waiting for public and private IP address to be updated..."
+    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
+    echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
     sleep 30
 done
 
