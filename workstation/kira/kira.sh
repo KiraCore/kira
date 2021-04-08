@@ -398,10 +398,20 @@ while :; do
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to changing validator status to PAUSED..."
-            docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to enter maitenance mode"
+            tx=$(docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo "")
+            if [ -z "$tx" ] ; then
+                echoErr "ERROR: Failed to enter maitenance mode, unpause tx could not be broadcasted"
+            else
+                echoInfo "INFO: Pause Tx '$tx' was broadcasted, please await couple of minutes for your validator to enter paused status"
+            fi
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status to ACTIVE..."
-            docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes | jq || echoErr "ERROR: Failed to exit maitenance mode"
+            tx=$(docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo "")
+            if [ -z "$tx" ] ; then
+                echoErr "ERROR: Failed to exit maitenance mode, unpause tx could not be broadcasted"
+            else
+                echoInfo "INFO: UnPause Tx '$tx' was broadcasted, please await couple of minutes for your validator to exit paused status"
+            fi
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
