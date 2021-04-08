@@ -11,10 +11,10 @@ FILE="/tmp/seeds.tmp"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: SEED EDITOR v0.0.2                  |"
+echoWarn "| STARTED: SEED EDITOR v0.2.2.3                |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|  TARGET FILE: $DESTINATION"
-echoWarn "| CONTENT TYPE: $TARGET"
+echoWarn "| CONTENT TYPE: ${TARGET^^}"
 echoWarn "------------------------------------------------"
 
 rm -f $FILE
@@ -76,7 +76,7 @@ while : ; do
              
     [ "${SELECT,,}" == "w" ] && echoInfo "INFO: All ${TARGET^^} were removed" && echo "" > $FILE && continue
     echoInfo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port> but you can also input standalone DNS or IP addresses"
-    echoNErr "Input comma separated list of $TARGET: " && read ADDR_LIST
+    echoNErr "Input comma separated list of ${TARGET^^}: " && read ADDR_LIST
     [ -z "$ADDR_LIST" ] && echoWarn "WARNING: No addresses were specified, try again" && continue
 
     i=0
@@ -97,7 +97,7 @@ while : ; do
 
         if [ "${SELECT,,}" == "d" ] ; then
             if [ "${dns}" == "${addr}" ] || [ "${nodeId}" == "${addr}" ] ; then
-                echoInfo "INFO: Removing all '$addr' address from the $TARGET list..."
+                echoInfo "INFO: Removing all '$addr' address from the ${TARGET^^} list..."
                 CDHelper text lineswap --insert="" --regex="$addr" --path=$FILE --append-if-found-not=True --silent=True
                 i=$((i + 1))
                 continue
@@ -108,10 +108,14 @@ while : ; do
         ($(isDnsOrIp "$p1")) && dnsStandalone="$p1" || dnsStandalone="" 
         ($(isPort "$p2")) && portStandalone="$p2" || portStandalone=""
 
+        ($(isIp "$dns")) && ($(isPublicIp "$dns")) && echoWarn "WARNING: Address '$dns' is an IP address of a public, internet network"
+        ($(isIp "$dns")) && (! $(isPublicIp "$dns")) && echoWarn "WARNING: Address '$dns' is an IP address of a local, private network"
+
         # if detected missing node id, try to recover it
+        DETECTED_NODES=""
         if [ ! -z "${dnsStandalone}" ] ; then
             dns="$dnsStandalone"
-            echoWarn "WARNING:'$addr' is NOT a valid $TARGET address but a standalone IP or DNS"
+            echoWarn "WARNING: '$addr' is NOT a valid ${TARGET^^} address but a standalone IP or DNS"
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
@@ -121,58 +125,71 @@ while : ; do
                 port=""
             fi
 
-            if [[ "${TARGET,,}" =~ "priv" ]]; then
-                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
-                [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echoInfo "INFO: Port 36656 is not exposed by '$dns'" ; fi
-                [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
-            else
-                [ -z "$port" ] && if timeout 1 nc -z $dns 16656 ; then port="16656" ; else echoInfo "INFO: Port 16656 is not exposed by '$dns'"  ; fi
-                [ -z "$port" ] && if timeout 1 nc -z $dns 26656 ; then port="26656" ; else echoInfo "INFO: Port 26656 is not exposed by '$dns'"  ; fi
-                [ -z "$port" ] && if timeout 1 nc -z $dns 36656 ; then port="36656" ; else echoInfo "INFO: Port 36656 is not exposed by '$dns'" ; fi
+            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+
+            if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
+                tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed by '$dns'" ; 
+            else 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is not exposed as '$dns'" ; 
             fi
 
-            [ -z "$port" ] && echoWarn "WARNING: Address '$addr' will NOT be added to ${TARGET^^} list, NO exposed P2P ports were found" && continue
+            if ($(isNodeId "$sentry_node_id")) && timeout 1 nc -z $dns $KIRA_SENTRY_P2P_PORT ; then 
+                tmp_addr="${sentry_node_id}@${dns}:$KIRA_SENTRY_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+            else 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
+            fi
 
-            if ( ! $(isNodeId "$nodeId")) ; then
-                echoWarn "WARNING: Node ID was not defined, attepting discovery..."
-                [ "$port" == "16656" ] && containerName="seed"
-                [ "$port" == "26656" ] && containerName="sentry"
-                [ "$port" == "36656" ] && containerName="priv_sentry"
-                nodeId=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/${containerName,,}_node_id" || echo "")
-                ( ! $(isNodeId "$nodeId")) && nodeId=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-                ( ! $(isNodeId "$nodeId")) && nodeId=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
+            if ($(isNodeId "$priv_sentry_node_id")) && timeout 1 nc -z $dns $KIRA_PRIV_SENTRY_P2P_PORT ; then 
+                tmp_addr="${priv_sentry_node_id}@${dns}:$KIRA_PRIV_SENTRY_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+            else 
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
             fi
-            
-            ($(isNodeId "$nodeId")) && nodeId="$nodeId" || nodeId=""
-            dns=$dnsStandalone
-            addr="${nodeId}@${dns}:${port}"
-        fi
-        
-        nodeAddress="${nodeId}@${dns}:${port}"
-        if [ ! -z "$nodeId" ] && [ ! -z "$dns" ]  && [ ! -z "$port" ] ; then
-            echoInfo "INFO: SUCCESS, '$nodeAddress' is a valid $TARGET address!"
-            if [ "${SELECT,,}" == "a" ] ; then
-                if ! timeout 1 nc -z $dns $port &>/dev/null ; then 
-                    echoWarn "WARNING: Node address '$dns' or port '$port' is NOT reachable"
-                    SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
-                    [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
-                fi
-                echoInfo "INFO: Adding address to the $TARGET list..."
-                CDHelper text lineswap --insert="$nodeAddress" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
-            else
-                echoInfo "INFO: Removing address from the $TARGET list..."
-                CDHelper text lineswap --insert="" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
-            fi
-            i=$((i + 1))
         else
-            echoWarn "WARNING: '$addr' is NOT a valid $TARGET address"
-            continue
+            DETECTED_NODES="${nodeId}@${dns}:${port}"
         fi
+
+        [ -z "$DETECTED_NODES" ] && echoErr "ERROR: '$addr' is NOT valid or not exposed ${TARGET^^} address" && continue
+        
+        for nodeAddress in $(echo $DETECTED_NODES | sed "s/,/ /g") ; do
+            nodeAddress=$(echo "$nodeAddress" | xargs) # trim whitespace characters
+            addrArr1=( $(echo $nodeAddress | tr "@" "\n") )
+            addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+            nodeId=${addrArr1[0],,}
+            dns=${addrArr2[0],,}
+            port=${addrArr2[1],,}
+
+            if  ($(isNodeId "$nodeId")) && ($(isDnsOrIp "$dns")) && ($(isPort "$port")) ; then
+                if [ "${SELECT,,}" == "a" ] ; then
+                    SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+                    [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$nodeAddress' will NOT be added to ${TARGET^^} list" && continue
+                    
+                    echoInfo "INFO: Adding address to the ${TARGET^^} list..."
+                    CDHelper text lineswap --insert="$nodeAddress" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
+                else
+                    echoInfo "INFO: Removing address from the ${TARGET^^} list..."
+                    CDHelper text lineswap --insert="" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
+                fi
+                i=$((i + 1))
+            else
+                echoWarn "WARNING: '$nodeAddress' is NOT a valid ${TARGET^^} address"
+                continue
+            fi
+        done
     done
 
     sort -u $FILE -o $FILE
-    [ "${SELECT,,}" == "a" ] && echoInfo "INFO: Total of $i $TARGET addresses were added"
-    [ "${SELECT,,}" == "d" ] && echoInfo "INFO: Total of $i $TARGET addresses were removed"
+    [ "${SELECT,,}" == "a" ] && echoInfo "INFO: Total of $i ${TARGET^^} addresses were added"
+    [ "${SELECT,,}" == "d" ] && echoInfo "INFO: Total of $i ${TARGET^^} addresses were removed"
 done
 
 set +x

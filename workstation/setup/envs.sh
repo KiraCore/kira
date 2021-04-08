@@ -33,7 +33,13 @@ KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
 [ -z "$KIRA_INTERX_PORT" ] && KIRA_INTERX_PORT="11000"
 [ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
 [ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
+
+[ -z "$KIRA_SEED_RPC_PORT" ] && KIRA_SEED_RPC_PORT="16657"
 [ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
+[ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
+[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
+[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
+
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
 [ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
 
@@ -61,7 +67,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.67-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
+SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.68-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -76,6 +82,11 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_SENTRY_P2P_PORT=$KIRA_SENTRY_P2P_PORT" --prefix="KIRA_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_P2P_PORT=$KIRA_PRIV_SENTRY_P2P_PORT" --prefix="KIRA_PRIV_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_RPC_PORT=$KIRA_SENTRY_RPC_PORT" --prefix="KIRA_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_RPC_PORT=$KIRA_PRIV_SENTRY_RPC_PORT" --prefix="KIRA_PRIV_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SEED_RPC_PORT=$KIRA_SEED_RPC_PORT" --prefix="KIRA_SEED_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SNAPSHOT_RPC_PORT=$KIRA_SNAPSHOT_RPC_PORT" --prefix="KIRA_SNAPSHOT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_VALIDATOR_RPC_PORT=$KIRA_VALIDATOR_RPC_PORT" --prefix="KIRA_VALIDATOR_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+
     CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True

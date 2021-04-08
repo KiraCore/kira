@@ -22,23 +22,28 @@ SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
-LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && [ -z "$LATETS_BLOCK" ] && LATETS_BLOCK=0
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
-SENTRY_STATUS=$(curl 127.0.0.1:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && [ -z "$SENTRY_CATCHING_UP" ] && SENTRY_CATCHING_UP="true"
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
+echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 
-if [ "${SENTRY_CATCHING_UP,,}" != "false" ] || [ -z "$SENTRY_NETWORK" ] || [ "${SENTRY_NETWORK,,}" == "null" ] || [ $LATETS_BLOCK -le 0 ] ; then
-    echo "INFO: Failed to snapshot state, sentries are still catching up or network was not found..."
-    exit 1
-fi
+SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
+PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
+
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
+PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
+
+SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
+PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
 
 [ $MAX_HEIGHT -le 0 ] && MAX_HEIGHT=$LATETS_BLOCK
-SNAP_FILENAME="${SENTRY_NETWORK}-$MAX_HEIGHT-$(date -u +%s).zip"
+SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
 
 set +x
@@ -59,6 +64,18 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
+echo "INFO: Checking peers info..."
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+
+if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+    echo "INFO: Node will sync from the private sentry..."
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+else
+    echo "INFO: Node will sync blocks from its own seed list..."
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
+fi
+
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
 rm -fv $SNAP_DESTINATION
@@ -70,12 +87,6 @@ fi
 echo "INFO: Cleaning up snapshot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
-
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
@@ -85,6 +96,7 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
+    -p $KIRA_SNAPSHOT_RPC_PORT:$DEFAULT_RPC_PORT \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -96,16 +108,16 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="0" \
-    -e CFG_max_num_inbound_peers="1" \
+    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_inbound_peers="4" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

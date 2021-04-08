@@ -4,10 +4,20 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-HALT_CHECK="${COMMON_DIR}/halt"
+
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" 
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
+
+HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
+
+if [ -f "$EXIT_CHECK" ]; then
+  echo "INFO: Ensuring interxd process is killed"
+  touch $HALT_CHECK
+  pkill -15 interxd || echo "WARNING: Failed to kill interxd"
+  rm -fv $EXIT_CHECK
+fi
 
 touch $BLOCK_HEIGHT_FILE
 
