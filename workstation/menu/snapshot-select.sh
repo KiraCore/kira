@@ -129,7 +129,7 @@ done
 
 SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo "")
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
-echoWarn "WARNING: This is last chance to nsure following snapshot checksum is valid: $SNAPSUM"
+echoWarn "WARNING: This is last chance to ensure following snapshot checksum is valid: $SNAPSUM"
 echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 
 set -x
