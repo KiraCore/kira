@@ -15,7 +15,7 @@ HALT_FILE="$COMMON_PATH/halt"
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 rm -rfv $COMMON_PATH
 mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshot"
@@ -49,8 +49,13 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+        echo "INFO: Node will sync from the private sentry..."
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    else
+        echo "INFO: Node will sync blocks from its own seed list..."
+        CFG_persistent_peers="tcp://$SENTRY_SEED"
+    fi
 else
     CFG_seeds=""
     CFG_persistent_peers=""
@@ -62,6 +67,7 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
+    -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
@@ -70,15 +76,15 @@ docker run -d \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_grpc_laddr="tcp://127.0.0.1:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://127.0.0.1:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
-    -e CFG_max_num_outbound_peers="2" \
-    -e CFG_max_num_inbound_peers="3" \
+    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
     -e CFG_addr_book_strict="false" \

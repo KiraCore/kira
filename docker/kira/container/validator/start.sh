@@ -134,4 +134,4 @@ $SELF_CONTAINER/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 echoInfo "INFO: Starting validator..."
-sekaid start --home=$SEKAID_HOME --trace --pruning=everything 
+sekaid start --home=$SEKAID_HOME --trace  

@@ -21,7 +21,7 @@ while : ; do
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-           echo "|         KIRA NETWORKING MANAGER v0.2.1         |"
+           echo "|         KIRA NETWORKING MANAGER v0.2.2.3       |"
            [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
@@ -116,17 +116,24 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
 
         echoInfo "INFO: Starting $TYPE editor..."
-        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$TARGET"
+        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
+
+        COMMON_PATH="$DOCKER_COMMON/$DOCKER_COMMON"
+        EXIT_FILE="$COMMON_PATH/exit"
+        HALT_FILE="$COMMON_PATH/halt"
 
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
-        cp -a -v -f "$FILE" "$DOCKER_COMMON/$CONTAINER/$TYPE"
+        cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
         
         echoInfo "INFO: Re-starting $CONTAINER container..."
+        touch "$EXIT_FILE"
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-restart.sh $CONTAINER
+        rm -fv "$HALT_FILE" "$EXIT_FILE"
     elif [ "${OPTION,,}" == "f" ]; then
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh

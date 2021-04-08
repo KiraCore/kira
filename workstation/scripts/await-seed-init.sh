@@ -8,6 +8,7 @@ SEED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -108,7 +109,10 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+            touch "$EXIT_FILE"
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
+            rm -fv "$HALT_FILE" "$EXIT_FILE"
             sleep 5
             continue
         else
@@ -125,8 +129,10 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
+    PREVIOUS_HEIGHT=0
     while : ; do
         echoInfo "INFO: Awaiting node status..."
+        i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
@@ -134,14 +140,18 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
             SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 ACCEPT && echo ""; done
             [ "${SELECT,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
             continue
+        else
+            i=0
         fi
 
         set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
-        ( [ -z "$SYNCING" ] || [ "${SYNCING,,}" == "null" ] ) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
+        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        [ $HEIGHT -ge $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
@@ -151,7 +161,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
 
         set +x
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
-        echoInfo "INFO: Do NOT close your terminal, waiting for $CONTAINER_NAME to finish catching up..."
+        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
     done

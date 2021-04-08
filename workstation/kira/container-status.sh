@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e && set -x
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 echo "INFO: Started '$1' container status scan v0.0.3"
@@ -39,29 +40,24 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
 
     DOCKER_INSPECT="$VARS_FILE.inspect"
     echo $(timeout 3 docker inspect "$ID" 2> /dev/null | jq -r '.[0]' || echo "") > $DOCKER_INSPECT
+    DOCKER_INSPECT_RESULT=$(cat "$DOCKER_INSPECT" | jq -rc '.' || echo "")
 
-    STATUS=$(cat "$DOCKER_INSPECT" | jq -r '.State.Status' 2> /dev/null || echo "")
-    PAUSED=$(cat "$DOCKER_INSPECT" | jq -r '.State.Paused'  2> /dev/null || echo "")
-    RESTARTING=$(cat "$DOCKER_INSPECT" | jq -r '.State.Restarting' 2> /dev/null || echo "")
-    STARTED_AT=$(cat "$DOCKER_INSPECT" | jq -r '.State.StartedAt' 2> /dev/null || echo "")
-    FINISHED_AT=$(cat "$DOCKER_INSPECT" | jq -r '.State.FinishedAt' 2> /dev/null || echo "")
-    HOSTNAME=$(cat "$DOCKER_INSPECT" | jq -r '.Config.Hostname' 2> /dev/null || echo "")
-    EXPOSED_PORTS=$(cat "$DOCKER_INSPECT" | jq -r '.Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
+    STATUS=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Status' 2> /dev/null || echo "")
+    PAUSED=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Paused'  2> /dev/null || echo "")
+    RESTARTING=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Restarting' 2> /dev/null || echo "")
+    STARTED_AT=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.StartedAt' 2> /dev/null || echo "")
+    FINISHED_AT=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.FinishedAt' 2> /dev/null || echo "")
+    HOSTNAME=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.Config.Hostname' 2> /dev/null || echo "")
+    EXPOSED_PORTS=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
-    NETWORK_SETTINGS=$(cat "$DOCKER_INSPECT" 2> /dev/null | jq -r ".NetworkSettings.Networks" 2> /dev/null || echo "")
-
-    [ -f "$HALT_FILE" ] && HEALTH="halted"
-    [ ! -f "$HALT_FILE" ] && HEALTH=$(cat "$DOCKER_INSPECT" | jq -r '.State.Health.Status' 2> /dev/null || echo "")
+    NETWORK_SETTINGS=$(echo "$DOCKER_INSPECT_RESULT" 2> /dev/null | jq -r ".NetworkSettings.Networks" 2> /dev/null || echo "")
+    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Health.Status' 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do
         i=$((i + 1))
         IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
-        if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
-            eval "IP_$net=$IP_TMP"
-        else
-            eval "IP_$net=\"\""
-        fi
+        (! $(isNullOrempty "$IP_TMP")) && eval "IP_$net=$IP_TMP" || eval "IP_$net=\"\""
     done
 else
     STATUS=""
@@ -100,11 +96,7 @@ if [ ! -z "${NETWORK_SETTINGS,,}" ] && [ ! -z "$NETWORKS" ]; then # container ex
     for net in $NETWORKS; do
         i=$((i + 1))
         IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
-        if [ ! -z "$IP_TMP" ] && [ "${IP_TMP,,}" != "null" ]; then
-            echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE
-        else
-            echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
-        fi
+        (! $(isNullOrempty "$IP_TMP")) && echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE || echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
     done
 else
     echo "INFO: Network settings of the $NAME container were NOT found"

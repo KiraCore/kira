@@ -126,7 +126,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
             else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
         
-
         if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
@@ -202,7 +201,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 fi
                 DOWNLOAD_SUCCESS="false"
             else
-                echo "INFO: Success, snapshot file integrity appears to be valid"
+                echoInfo "INFO: Success, snapshot file integrity appears to be valid"
                 cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
                 SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
             fi
@@ -210,11 +209,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             rm -f -v -r "$TMP_SNAP_DIR/test"
         fi
              
-        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshot file integrity test passed"
-        else
-            echoInfo "INFO: Snapshot file integrity test failed or archive is not available, downloading genesis file..."
-
+        if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
+            echoWarn "INFO: Genesis file was not found, downloading..."
             rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
@@ -262,6 +258,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
+        echoNInfo "CONFIG:      Public Internet Exposure: " && echoErr $(isPublicIp $NODE_ADDR) 
         [ ! -z "$SEED_NODE_ADDR" ] && \
         echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
         [ ! -z "$SENTRY_NODE_ADDR" ] && \
@@ -325,17 +322,16 @@ CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NET
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
-    echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && \
-    echo "$SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+SAVED="false"
+if ($(isPublicIp $NODE_ADDR)) ; then
+    echoInfo "INFO: Node address '$NODE_ADDR' is a public IP address, public seeds will be added..."
+    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
 else
-    [ ! -z "$SENTRY_NODE_ADDR" ] && \
-    echo "$SENTRY_NODE_ADDR" > $PUBLIC_SEEDS
-    [ ! -z "$SEED_NODE_ADDR" ] && \
-    echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
-    echo "$PRIV_SENTRY_NODE_ADDR" > $PRIVATE_SEEDS
+    echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
 fi
+
+echoInfo "INFO: Finished quick select!"
