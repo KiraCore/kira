@@ -74,7 +74,7 @@ while : ; do
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.2.2.3            |"
+    echo "|            KIRA CONTAINER MANAGER v0.2.3.0            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
