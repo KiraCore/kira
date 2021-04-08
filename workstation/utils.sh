@@ -79,7 +79,7 @@ function isNaturalNumber() {
 
 function isFileEmpty() {
     if [ -z "$1" ] || [ ! -f "$1" ] ; then echo "true" ; else
-        if [[ ! -z $(grep '[^[:space:]]' $1) ]] ; then
+        if [[ -z $(grep '[^[:space:]]' $1) ]] ; then
             echo "true"
         else
             echo "false"
