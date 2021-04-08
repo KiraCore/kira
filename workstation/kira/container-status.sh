@@ -41,17 +41,19 @@ if [ "${EXISTS,,}" == "true" ]; then # container exists
     DOCKER_INSPECT="$VARS_FILE.inspect"
     echo $(timeout 3 docker inspect "$ID" 2> /dev/null | jq -r '.[0]' || echo "") > $DOCKER_INSPECT
     DOCKER_INSPECT_RESULT=$(cat "$DOCKER_INSPECT" | jq -rc '.' || echo "")
+    DOCKER_STATE=$(cat "$DOCKER_INSPECT_RESULT" | jq -rc '.State' || echo "")
+    DOCKER_CONFIG=$(cat "$DOCKER_INSPECT_RESULT" | jq -rc '.Config' || echo "")
 
-    STATUS=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Status' 2> /dev/null || echo "")
-    PAUSED=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Paused'  2> /dev/null || echo "")
-    RESTARTING=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Restarting' 2> /dev/null || echo "")
-    STARTED_AT=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.StartedAt' 2> /dev/null || echo "")
-    FINISHED_AT=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.FinishedAt' 2> /dev/null || echo "")
-    HOSTNAME=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.Config.Hostname' 2> /dev/null || echo "")
-    EXPOSED_PORTS=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.Config.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
+    STATUS=$(echo "$DOCKER_STATE" | jq -r '.Status' 2> /dev/null || echo "")
+    PAUSED=$(echo "$DOCKER_STATE" | jq -r '.Paused'  2> /dev/null || echo "")
+    RESTARTING=$(echo "$DOCKER_STATE" | jq -r '.Restarting' 2> /dev/null || echo "")
+    STARTED_AT=$(echo "$DOCKER_STATE" | jq -r '.StartedAt' 2> /dev/null || echo "")
+    FINISHED_AT=$(echo "$DOCKER_STATE" | jq -r '.FinishedAt' 2> /dev/null || echo "")
+    HOSTNAME=$(echo "$DOCKER_CONFIG" | jq -r '.Hostname' 2> /dev/null || echo "")
+    EXPOSED_PORTS=$(echo "$DOCKER_CONFIG" | jq -r '.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
     NETWORK_SETTINGS=$(echo "$DOCKER_INSPECT_RESULT" 2> /dev/null | jq -r ".NetworkSettings.Networks" 2> /dev/null || echo "")
-    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_INSPECT_RESULT" | jq -r '.State.Health.Status' 2> /dev/null || echo "")
+    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jq -r '.Health.Status' 2> /dev/null || echo "")
 
     i=-1
     for net in $NETWORKS; do

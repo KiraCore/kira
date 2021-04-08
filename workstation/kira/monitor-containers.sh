@@ -72,11 +72,9 @@ for name in $CONTAINERS; do
 
     SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
     if (! $(isNullEmpty "$SEKAID_STATUS")) ; then
-        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.catching_up' 2>/dev/null || echo "false")
-        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
+        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
-        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "0")
-        (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
             NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null || echo "false")
