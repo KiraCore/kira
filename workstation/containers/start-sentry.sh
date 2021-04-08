@@ -41,15 +41,8 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
-
-COMMON_PEERS_PATH="$COMMON_PATH/peers"
-COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
-PEERS_PATH="$KIRA_CONFIGS/public_peers"
-SEEDS_PATH="$KIRA_CONFIGS/public_seeds"
-touch "$PEERS_PATH" "$SEEDS_PATH"
-
-cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
-cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
+cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"

@@ -40,15 +40,8 @@ VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
-
-COMMON_PEERS_PATH="$COMMON_PATH/peers"
-COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
-PEERS_PATH="$KIRA_CONFIGS/private_peers"
-SEEDS_PATH="$KIRA_CONFIGS/private_seeds"
-touch "$PEERS_PATH" "$SEEDS_PATH"
-
-cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
-cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
+cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
