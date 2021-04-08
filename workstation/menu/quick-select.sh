@@ -201,7 +201,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 fi
                 DOWNLOAD_SUCCESS="false"
             else
-                echo "INFO: Success, snapshot file integrity appears to be valid"
+                echoInfo "INFO: Success, snapshot file integrity appears to be valid"
                 cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
                 SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
             fi
@@ -209,11 +209,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             rm -f -v -r "$TMP_SNAP_DIR/test"
         fi
              
-        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshot file integrity test passed"
-        else
-            echoInfo "INFO: Snapshot file integrity test failed or archive is not available, downloading genesis file..."
-
+        if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
+            echoWarn "INFO: Genesis file was not found, downloading..."
             rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
