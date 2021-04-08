@@ -326,10 +326,14 @@ while :; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
-            touch $EXIT_FILE
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-            $KIRA_SCRIPTS/container-restart.sh $name
-            rm -fv "$HALT_FILE" "$EXIT_FILE"
+            if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+                touch $EXIT_FILE
+                cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+                $KIRA_SCRIPTS/container-restart.sh $name
+                rm -fv "$HALT_FILE" "$EXIT_FILE"
+            else
+                $KIRA_SCRIPTS/container-restart.sh $name
+            fi
             EXECUTED="true" && LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
