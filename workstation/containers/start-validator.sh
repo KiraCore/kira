@@ -49,8 +49,13 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
     echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+        echo "INFO: Node will sync from the private sentry..."
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    else
+        echo "INFO: Node will sync blocks from its own seed list..."
+        CFG_persistent_peers="tcp://$SENTRY_SEED"
+    fi
 else
     CFG_seeds=""
     CFG_persistent_peers=""

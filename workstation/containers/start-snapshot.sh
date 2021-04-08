@@ -68,22 +68,12 @@ echo "INFO: Checking peers info..."
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-CFG_persistent_peers=""
-
-if [ "${SENTRY_CATCHING_UP,,}" == "false" ] && [ "$SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $SENTRY_BLOCK ] ; then
-    echo "INFO: Public sentry is healthy and will be added to the persistent peers list..."
+if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+    echo "INFO: Node will sync from the private sentry..."
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+else
+    echo "INFO: Node will sync blocks from its own seed list..."
     CFG_persistent_peers="tcp://$SENTRY_SEED"
-fi
-
-if [ "${PRIV_SENTRY_CATCHING_UP,,}" == "false" ] && [ "$PRIV_SENTRY_NETWORK" == "$NETWORK_NAME" ] && [ $LATETS_BLOCK -le $PRIV_SENTRY_BLOCK ] ; then
-    echo "INFO: Private sentry is healthy and will be added to the persistent peers list..."
-    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
-    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
-fi
-
-if [ -z "$CFG_persistent_peers" ] ; then
-    echo "INFO: Failed to snapshot state, not a single healthy persistent peer was found..."
-    exit 1
 fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
