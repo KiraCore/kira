@@ -1,32 +1,31 @@
 
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
-SETUP_CHECK="$KIRA_SETUP/docker-v0.0.10" 
+SETUP_CHECK="$KIRA_SETUP/docker-v0.0.11" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
-    echo "INFO: Attempting to remove old docker..."
-    service docker stop || echo "WARNING: Failed to stop docker servce"
-    apt remove --purge docker -y || echo "WARNING: Failed to remove docker"
-    apt remove --purge containerd -y || echo "WARNING: Failed to remove containerd"
-    apt remove --purge runc -y || echo "WARNING: Failed to remove runc"
-    apt remove --purge docker-engine -y || echo "WARNING: Failed to remove docker-engine"
-    apt remove --purge docker.io -y || echo "WARNING: Failed to remove docker.io"
-    apt remove --purge docker.io -y || echo "WARNING: Failed to remove docker.io"
-    apt remove --purge docker-ce -y || echo "WARNING: Failed to remove docker-ce"
-    apt remove --purge docker-ce-cli -y || echo "WARNING: Failed to remove docker-ce-cli"
-    apt remove --purge containerd.io -y || echo "WARNING: Failed to remove containerd.io"
-    apt autoremove -y || echo "WARNING: Failed autoremove"
-    rm -rfv /etc/docker
-    rm -rfv /var/lib/docker
+    echoInfo "INFO: Attempting to remove old docker..."
+    
+    docker system prune -f || echoWarn "WARNING: failed to prune docker system"
+    service docker stop || echoWarn "WARNING: Failed to stop docker servce"
+    apt remove --purge docker -y || echoWarn "WARNING: Failed to remove docker"
+    apt remove --purge containerd -y || echoWarn "WARNING: Failed to remove containerd"
+    apt remove --purge runc -y || echoWarn "WARNING: Failed to remove runc"
+    apt remove --purge docker.io -y || echoWarn "WARNING: Failed to remove docker.io"
+    apt autoremove -y docker.io || echoWarn "WARNING: Failed autoremove"
+    iptables -F || echoWarn "WARNING: Failed to flush iptables"
+    groupdel docker || echoWarn "WARNING: Failed to delete docker group"
+    rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock"
+    rm -rfv "/var/lib/containerd"
 
-    echo "INFO: Installing Docker..."
+    echoInfo "INFO: Installing Docker..."
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
     apt-get update
-    #apt install docker-ce docker-ce-cli containerd.io -y
     apt install containerd docker.io -y
 
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
@@ -40,12 +39,13 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
 EOL
 
     systemctl enable --now docker
+    service docker restart || echoWarn "WARNING: Failed to restart docker"
     docker -v
     touch $SETUP_CHECK
 else
-    echo "INFO: Docker $(docker -v) was already installed"
+    echoInfo "INFO: Docker $(docker -v) was already installed"
 fi
 
-echo "INFO: Cleaning up dangling volumes..."
+echoInfo "INFO: Cleaning up dangling volumes..."
 docker volume ls -qf dangling=true | xargs -r docker volume rm || echo "INFO: Failed to remove dangling vomues!"
 
