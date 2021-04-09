@@ -29,16 +29,6 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     #apt install docker-ce docker-ce-cli containerd.io -y
     apt install containerd docker.io -y
 
-    DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
-    rm -f -v $DOCKER_DAEMON_JSON
-    cat >$DOCKER_DAEMON_JSON <<EOL
-{
-  "iptables": false,
-  "storage-driver": "overlay2",
-  "mtu": 1420
-}
-EOL
-
     systemctl enable --now docker
     docker -v
     touch $SETUP_CHECK
