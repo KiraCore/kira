@@ -180,7 +180,7 @@ echoInfo "INFO: Restarting docker..."
 systemctl restart NetworkManager docker || echoWarn "WARNING: Could NOT restart network manager"
 
 echoInfo "INFO: All iptables rules"
-iptables -L -v -n
+iptables -L -v -n || echoWarn "WARNING: Failed to list iptable rules"
 
 echoInfo "INFO: Current '$ZONE' zone rules"
 firewall-cmd --list-ports
