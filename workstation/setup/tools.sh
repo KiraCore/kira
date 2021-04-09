@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/base-tools-v0.1.15"
+SETUP_CHECK="$KIRA_SETUP/base-tools-v0.1.17"
 if [ ! -f "$SETUP_CHECK" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
@@ -21,6 +21,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
     md5deep \
     sysstat \
     htop
+
+  apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r` || echo "ERROR: Failed to install monitoring tools"
 
   pip3 install ECPy
 

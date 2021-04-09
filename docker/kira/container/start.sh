@@ -1,8 +1,9 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 set -x
 
-echo "INFO: Staring $NODE_TYPE container..."
+echoInfo "INFO: Staring $NODE_TYPE container..."
 
 HALT_CHECK="${COMMON_DIR}/halt"
 
@@ -17,6 +18,6 @@ elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
   $SELF_CONTAINER/validator/start.sh
 else
-  echo "ERROR: Unknown node type '$NODE_TYPE'"
+  echoErr "ERROR: Unknown node type '$NODE_TYPE'"
   exit 1
 fi

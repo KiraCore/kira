@@ -10,6 +10,9 @@ SAVE_SNAPSHOT=$3
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
+SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
+SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -55,8 +58,8 @@ while : ; do
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
         HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
             echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
@@ -110,7 +113,10 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+            touch "$EXIT_FILE"
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
+            rm -fv "$HALT_FILE" "$EXIT_FILE"
             sleep 5
             continue
         else
@@ -128,6 +134,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: Local snapshot must be created before network can be started"
 
     i=0
+    PREVIOUS_HEIGHT=0
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
@@ -149,11 +156,13 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         fi
 
         set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "false")
-        ( [ -z "$SYNCING" ] || [ "${SYNCING,,}" == "null" ] ) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "false")
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-        [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        [ $HEIGHT -gt $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
@@ -163,41 +172,40 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
         set +x
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
-        echoInfo "INFO: Do NOT close your terminal, waiting for $CONTAINER_NAME to finish catching up..."
+        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
     done
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch $HALT_FILE
+    touch "$EXIT_FILE"
+    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
+    echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
+    echo "$SNAP_NAME" >  $SNAP_NAME_FILE
+    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
+    rm -fv "$HALT_FILE" "$EXIT_FILE"
     
     echoInfo "INFO: Creating new snapshot..."
+    i=0
+    DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
+    while [ ! -f "$DESTINATION_FILE" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
+        i=$((i + 1))
+        cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
+        sleep 30
+    done
 
-    DATA_DIR="$SEKAID_HOME/data"
-    LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
     SNAP_STATUS="$KIRA_SNAP/status"
-    
-    SNAP_FILENAME="${NETWORK_NAME}-$HEIGHT-$(date -u +%s).zip"
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_FILENAME"
-
     mkdir -p $SNAP_STATUS
-    echo "$SNAP_FILENAME" > "$KIRA_SNAP/status/latest"
-
-    docker exec -i "$CONTAINER_NAME" bash -c "cp -v -f $SEKAID_HOME/config/genesis.json $DATA_DIR"
-    docker exec -i "$CONTAINER_NAME" bash -c "echo {'"'"'height'"'"':$HEIGHT} > $DATA_DIR/snapinfo.json"
-    docker exec -i "$CONTAINER_NAME" bash -c "cd $SEKAID_HOME/data && zip -r -v /snap/$SNAP_FILENAME . *"
+    echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    echo "INFO: Un-Halting $CONTAINER_NAME container"
-    rm -fv $HALT_FILE
-    echo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
 
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
     echoInfo "INFO: New snapshot was created!"
+
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"
     cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"

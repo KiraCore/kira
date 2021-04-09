@@ -32,7 +32,7 @@ case \"\$1\" in
         echo \"INFO: Restarting docker...\"
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
         echo \"INFO: Restarting docker network manager...\"
-        systemctl restart NetworkManager docker || echo \"ERROR: Failed to restart docker network manager\"
+        systemctl restart NetworkManager docker || echo \"WARNING: Could NOT restart docker network manager\"
         $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"

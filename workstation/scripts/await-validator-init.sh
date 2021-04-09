@@ -67,8 +67,8 @@ while [ $i -le 40 ]; do
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
     HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-    [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
-    [ -z "${HEIGHT##*[!0-9]*}" ] && HEIGHT=0
+    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
     
     if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
         echoWarn "INFO: Please wait, new blocks are not beeing synced or produced yet!"
@@ -168,19 +168,22 @@ EOL
 )
 
     VOTE_YES_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -rc '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote \$LAST_PROPOSAL 1 --from=validator --chain-id=\$NETWORK_NAME --keyring-backend=test --fees=100ukex --yes | jq"
-    QUERY_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes \$LAST_PROPOSAL --output json | jq && sekaid query customgov proposal \$LAST_PROPOSAL --output json | jq && echo Time now: \$(date '+%Y-%m-%dT%H:%M:%S')"
+    QUERY_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes \$LAST_PROPOSAL --output json | jq && sekaid query customgov proposal \$LAST_PROPOSAL --output json | jq"
 
     PROP_UPSERT_KEX_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT" | jq -rc '.code' || echo "")
     PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
+    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     PROP_UPSERT_TEST_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT" | jq -rc '.code' || echo "")
     PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
+    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     PROP_UPSERT_SAMOLEAN_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT" | jq -rc '.code' || echo "")
     PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jq -rc '.code' || echo "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo ""
+    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     if [ "000000" != "${PROP_UPSERT_KEX_RESULT}${PROP_UPSERT_KEX_VOTE_RESULT}${PROP_UPSERT_TEST_RESULT}${PROP_UPSERT_TEST_VOTE_RESULT}${PROP_UPSERT_SAMOLEAN_RESULT}${PROP_UPSERT_SAMOLEAN_VOTE_RESULT}" ] ; then
         echoErr "ERROR: Failed to vote on one of the initial proposals"

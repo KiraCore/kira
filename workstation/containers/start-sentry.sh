@@ -12,8 +12,8 @@ HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 set +x
 echo "------------------------------------------------"
@@ -35,26 +35,26 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
+SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$KIRA_SEED_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
-
-COMMON_PEERS_PATH="$COMMON_PATH/peers"
-COMMON_SEEDS_PATH="$COMMON_PATH/seeds"
-PEERS_PATH="$KIRA_CONFIGS/public_peers"
-SEEDS_PATH="$KIRA_CONFIGS/public_seeds"
-touch "$PEERS_PATH" "$SEEDS_PATH"
-
-cp -a -v -f "$PEERS_PATH" "$COMMON_PEERS_PATH"
-cp -a -v -f "$SEEDS_PATH" "$COMMON_SEEDS_PATH"
+cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+        echo "INFO: Node will sync from the private sentry..."
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    else
+        echo "INFO: Node will sync blocks from its own seed list..."
+        CFG_persistent_peers=""
+    fi
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
@@ -84,11 +84,11 @@ docker run -d \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID" \
-    -e CFG_addr_book_strict="false" \
+    -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="false" \
-    -e CFG_allow_duplicate_ip="true" \
+    -e CFG_allow_duplicate_ip="false" \
     -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="32" \
+    -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \

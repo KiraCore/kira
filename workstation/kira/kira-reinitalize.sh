@@ -8,8 +8,8 @@ GIT_REPO=$(echo $INFRA_REPO | cut -d'/' -f5)
 NEW_BRANCH=$INFRA_BRANCH
 DEFAULT_INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$INFRA_BRANCH/workstation/init.sh"
 
-echo "INFO: Re-Initalizing Infrastructure..."
-echo "INFO: Default init script: $DEFAULT_INIT_SCRIPT"
+echoInfo "INFO: Re-Initalizing Infrastructure..."
+echoInfo "INFO: Default init script: $DEFAULT_INIT_SCRIPT"
 
 INIT_SCRIPT_OUT="/tmp/init.sh"
 SUCCESS_DOWNLOAD="false"
@@ -28,18 +28,18 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     fi 
 
     if [ "${INIT_SCRIPT}" == "$DEFAULT_INIT_SCRIPT" ] ; then
-        echo "INFO: Default initialization script was selected"
+        echoInfo "INFO: Default initialization script was selected"
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infra branch '$INFRA_BRANCH' or [C]hange it: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
         
         if [ "${ACCEPT,,}" == "c" ] ; then
             read  -p "Input desired banch name of the $GIT_USER/$GIT_REPO repository: " NEW_BRANCH
             [ -z "$NEW_BRANCH" ] && NEW_BRANCH=$INFRA_BRANCH
-            echo "INFO: Changing infrastructure branch from $INFRA_BRANCH to $NEW_BRANCH"
+            echoInfo "INFO: Changing infrastructure branch from $INFRA_BRANCH to $NEW_BRANCH"
             INIT_SCRIPT="https://raw.githubusercontent.com/$GIT_USER/$GIT_REPO/$NEW_BRANCH/workstation/init.sh"
         fi
     fi
     
-    echo "INFO: Downloading initialization script $INIT_SCRIPT"
+    echoInfo "INFO: Downloading initialization script $INIT_SCRIPT"
     rm -fv $INIT_SCRIPT_OUT
     wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT && NEW_BRANCH=$INFRA_BRANCH )
     
@@ -55,8 +55,8 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
 done
 
 if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then 
-    echo "INFO: Success, init script was downloaded!"
-    echo "INFO: SHA256: $FILE_HASH"
+    echoInfo "INFO: Success, init script was downloaded!"
+    echoInfo "INFO: SHA256: $FILE_HASH"
     while [ "${SUCCESS_HASH_CHECK,,}" == "false" ] ; do 
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
@@ -71,7 +71,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         fi
     
         echo "$INTEGRITY_HASH $INIT_SCRIPT_OUT" | sha256sum --check && SUCCESS_HASH_CHECK="true"
-        [ "${SUCCESS_HASH_CHECK,,}" == "false" ] && echo "WARNING: File has diffrent shecksum then expected!"
+        [ "${SUCCESS_HASH_CHECK,,}" == "false" ] && echoWarn "WARNING: File has diffrent shecksum then expected!"
         [ "${SUCCESS_HASH_CHECK,,}" == "true" ] && break
     done
 fi
@@ -88,7 +88,20 @@ else
         mkdir -p $KIRA_SETUP
     fi
 
-    [ "$INFRA_BRANCH" != "$NEW_BRANCH" ] && CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    if [ "$INFRA_BRANCH" != "$NEW_BRANCH" ] ; then
+        # All branches should have the same name across all repos to be considered compatible
+        if [[ $NEW_BRANCH == mainnet* ]] || [[ $NEW_BRANCH == testnet* ]] ; then
+            DEFAULT_BRANCH="$NEW_BRANCH"
+            SEKAI_BRANCH="$DEFAULT_BRANCH"
+            FRONTEND_BRANCH="$DEFAULT_BRANCH"
+            INTERX_BRANCH="$DEFAULT_BRANCH"
+        fi
+
+        CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
     source $INIT_SCRIPT_OUT "$NEW_BRANCH"
 fi
 

@@ -9,8 +9,6 @@ rm -fv "$KIRA_SETUP/setup_complete"
 SKIP_UPDATE=$1
 START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
-PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"
-PRIVATE_SEEDS="$KIRA_CONFIGS/private_seeds"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 
 cd $HOME
@@ -64,7 +62,10 @@ rm -frv "$SCAN_DIR" && mkdir -p "$SCAN_DIR"
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
-$KIRAMGR_SCRIPTS/update-frontend-image.sh &
+
+if [ "${INFRA_MODE,,}" != "validator" ] ; then
+    $KIRAMGR_SCRIPTS/update-frontend-image.sh &
+fi
 
 wait
 
@@ -98,14 +99,17 @@ set -x
 $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 
 echoInfo "INFO: Updating IP addresses info..."
-
-PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 | awk -F'"' '{ print $2}' || echo "")
-( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @resolver1.opendns.com myip.opendns.com +time=5 +tries=1 | awk -F'"' '{ print $1}' || echo "")
-LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo "")
-( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo "0.0.0.0")
-
-($(isDnsOrIp "$PUBLIC_IP")) && echo "$PUBLIC_IP" > "$DOCKER_COMMON_RO/public_ip" || echo "0.0.0.0" > "$DOCKER_COMMON_RO/public_ip" 
-($(isDnsOrIp "$LOCAL_IP")) && echo "$LOCAL_IP" > "$DOCKER_COMMON_RO/local_ip" || echo "0.0.0.0" > "$DOCKER_COMMON_RO/local_ip"
+systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
+rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
+i=0 && LOCAL_IP="" && PUBLIC_IP=""
+while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
+    i=$((i + 1))
+    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
+    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
+    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
+    echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
+    sleep 30
+done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
@@ -120,8 +124,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] || ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) ; then
-        EXTERNAL_SYNC="false"
+    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) && ($(isFileEmpty $PRIVATE_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
+        EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"
     fi
@@ -148,8 +152,18 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    $KIRA_MANAGER/containers/start-sentry.sh "true"
-    $KIRA_MANAGER/containers/start-priv-sentry.sh 
+    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+        # save snapshot from sentry first
+        $KIRA_MANAGER/containers/start-sentry.sh "true"
+        $KIRA_MANAGER/containers/start-priv-sentry.sh
+    elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+        # save snapshot from private sentry first
+        $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
+        $KIRA_MANAGER/containers/start-sentry.sh
+    else
+        echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+    fi
+
     $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
@@ -158,23 +172,20 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         $KIRA_MANAGER/containers/start-validator.sh 
         $KIRA_MANAGER/containers/start-sentry.sh 
         $KIRA_MANAGER/containers/start-priv-sentry.sh 
-        $KIRA_MANAGER/containers/start-interx.sh 
-        $KIRA_MANAGER/containers/start-frontend.sh
-    else
-        if [[ ! -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PUBLIC_PEERS) ]] ; then
+        $KIRA_MANAGER/containers/start-interx.sh
+    else 
+        if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
             # save snapshot from sentry first
             $KIRA_MANAGER/containers/start-sentry.sh "true"
             $KIRA_MANAGER/containers/start-priv-sentry.sh
-        elif [[ ! -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] || [[ ! -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ; then
+        elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
             # save snapshot from private sentry first
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
         else
-            echoErr "ERROR: No public or priveate seeds were found, syning your node from external source will not be possible"
-            exit 1
+            echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
         fi
-        $KIRA_MANAGER/containers/start-interx.sh 
-        $KIRA_MANAGER/containers/start-frontend.sh
+        $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 
     fi
 else
@@ -183,7 +194,7 @@ else
 fi
 
 echoInfo "INFO: Starting clenup..."
-rm -fv $SNAP_DESTINATION
+# rm -fv $SNAP_DESTINATION
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"

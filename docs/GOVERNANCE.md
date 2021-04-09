@@ -56,3 +56,24 @@ LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.propos
 ```
 LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 ```
+
+## Quick & Dirty Setup For Adding new Validator To The Testnet
+
+```
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && out="" && tx=$(sekaid tx bank send validator $ADDR "99000ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json | jq -rc '.txhash') && while [ -z "$out" ] ; do echo "Waiting for tx bank send '$tx' to be included in the block..." && sleep 15 && out=$(sekaid query tx $tx --output=json 2> /dev/null | jq -rc '.' || echo "") ; done && echo $out | jq && \
+echo "" && \
+out="" && tx=$(sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json | jq -rc '.txhash') && while [ -z "$out" ] ; do echo "Waiting for tx customgov proposal assign-permission '$tx' to be included in the block..." && sleep 15 && out=$(sekaid query tx $tx --output=json 2> /dev/null | jq -rc '.' || echo "") ; done && echo $out | jq && LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && \
+echo "" && \
+out="" && tx=$(sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json | jq -rc '.txhash') && while [ -z "$out" ] ; do echo "Waiting for tx customgov proposal vote '$tx' to be included in the block..." && sleep 15 && out=$(sekaid query tx $tx --output=json 2> /dev/null | jq -rc '.' || echo "") ; done && echo $out | jq && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+```
+
+## Change Proposals Speed
+
+LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && NEXT_PROPOSAL=$((LAST_PROPOSAL + 1)) 
+
+sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 60 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
+
+sekaid tx customgov proposal vote $NEXT_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes
+
+
+

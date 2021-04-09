@@ -1,9 +1,10 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echo "Staring INTERX..."
+echoInfo "Staring INTERX..."
 cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
@@ -16,7 +17,7 @@ while [ -f "$HALT_CHECK" ]; do
 done
 
 while ! ping -c1 sentry &>/dev/null; do
-    echo "INFO: Waiting for ping response form sentry node... ($(date))"
+    echoInfo "INFO: Waiting for ping response form sentry node... ($(date))"
     sleep 5
 done
 
@@ -27,9 +28,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$CFG_port" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --faucet_time_limit=30 \
-      --faucet_amounts="100000ukex,20000000test,300000000000000000samolean" \
-      --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean" \
-      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex"
+      --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
+      --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean,1lol" \
+      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex"
 
   touch $EXECUTED_CHECK
 fi

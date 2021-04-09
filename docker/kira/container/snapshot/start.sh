@@ -1,6 +1,7 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 set -x
 
 echo "INFO: Staring snapshot v0.0.3"
@@ -100,10 +101,8 @@ while :; do
   echo "INFO: Checking node status..."
   SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-  ([ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]]) &&
-    SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
-  ([ -z "$SNAP_BLOCK" ] || [ "${SNAP_BLOCK,,}" == "null" ] || [[ ! $SNAP_BLOCK =~ ^[0-9]+$ ]]) &&
-    SNAP_BLOCK="0"
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
   if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then
     TOP_SNAP_BLOCK=$SNAP_BLOCK
@@ -128,13 +127,13 @@ while :; do
     sleep 30
   elif [ ! -z "$PID1" ]; then
     echo "WARNING: Node finished running, starting tracking and checking final height..."
-    kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+    kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
     sleep 5
-    kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+    kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
     sleep 10
-    kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
+    kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
     rm -fv $CFG # invalidate all possible connections
-    sekaid start --home="$SEKAID_HOME" --trace &>./output2.log &# launch sekai in state observer mode
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output2.log &# launch sekai in state observer mode
     PID1=$!
     sleep 10
     FINISHED_RUNNING="true"
@@ -166,7 +165,7 @@ while :; do
       echo "INFO: Cloning genesis and strarting block sync..."
       cp -f -v -a "$COMMON_CFG" "$CFG"               # recover config from common folder
       cp -a -v -f "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
-      sekaid start --home="$SEKAID_HOME" --halt-height="$HALT_HEIGHT" --trace &>./output.log || echo "halted" &
+      sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --halt-height="$HALT_HEIGHT" --trace  &>./output.log || echo "halted" &
       PID1="$!"
       sleep 10
       i=0
@@ -182,11 +181,11 @@ done
 
 touch $SNAP_FINALIZYNG
 
-kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
 sleep 5
-kill -15 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
 sleep 10
-kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
+kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
 
 echo "INFO: Printing latest output log..."
 cat ./output2.log | tail -n 100
@@ -198,6 +197,6 @@ echo "{\"height\":$HALT_HEIGHT}" >"$SNAP_INFO"
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
 
-[ ! -f "$DESTINATION_FILE" ] echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
+[ ! -f "$DESTINATION_FILE" ] && echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 
 touch $SNAP_DONE

@@ -1,5 +1,6 @@
 #!/bin/bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 if [ "${INFRA_MODE,,}" == "local" ]; then
   title="Demo Mode (local testnet)"
@@ -8,9 +9,11 @@ elif [ "${INFRA_MODE,,}" == "sentry" ]; then
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
   title="Validator Mode"
 else
-  echo "ERROR: Unknown operation mode"
+  echoErr "ERROR: Unknown operation mode"
   exit 1
 fi
+
+systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped or does NOT exist yet"
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
@@ -23,11 +26,38 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
 
 CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=1" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"false\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+    MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
+    set +x
+    source $MNEMONICS
+
+    if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
+        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found within the private key store '$MNEMONICS'"
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+        VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
+        [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
+    fi
+
+    if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
+        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found within the private key store '$MNEMONICS'"
+        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
+        VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
+        [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"
+    fi
+    set -x
+else
+    [ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
 
 set +x
 printf "\033c"

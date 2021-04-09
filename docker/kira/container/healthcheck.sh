@@ -1,14 +1,33 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 set -x
 
 echo "INFO: Health check => START"
 sleep 30 # rate limit not to overextend the log files
 
 HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
+EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
+EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
+
+touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE"
+
+EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo "")
+EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo "")
+(! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
+(! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
+
+if [ -f "$EXIT_CHECK" ]; then
+  echo "INFO: Ensuring sekaid process is killed"
+  touch $HALT_CHECK
+  pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+  rm -fv $EXIT_CHECK
+fi
 
 if [ -f "$HALT_CHECK" ]; then
-  echo "INFO: Healtc heck => STOP (halted)"
+  echo "INFO: health heck => STOP (halted)"
+  echo "0" > $EXCEPTION_COUNTER_FILE
   exit 0
 fi
 
@@ -25,13 +44,26 @@ elif [ "${NODE_TYPE,,}" == "validator" ]; then
   $SELF_CONTAINER/validator/healthcheck.sh || FAILED="true"
 else
   echo "ERROR: Unknown node type '$NODE_TYPE'"
-  exit 1
+  FAILED="true"
 fi
 
-if [ "$FAILED" == "true" ] ; then
-    echo "ERROR: $NODE_TYPE healthcheck failed"
+if [ "${FAILED,,}" == "true" ] ; then
+    EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
+    EXCEPTION_TOTAL=$(($EXCEPTION_TOTAL + 1))
+    echo "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/2 times, total $EXCEPTION_TOTAL"
+    echo "$EXCEPTION_TOTAL" > $EXCEPTION_TOTAL_FILE
+
+    if [ $EXCEPTION_COUNTER -ge 2 ] ; then
+        echo "WARNINIG: Unhealthy status, node will reboot"
+        echo "0" > $EXCEPTION_COUNTER_FILE
+        pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+        sleep 5
+    else
+        echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
+    fi
     exit 1
+    
 else
+    echo "0" > $EXCEPTION_COUNTER_FILE
     exit 0
 fi
-

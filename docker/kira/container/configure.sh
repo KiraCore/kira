@@ -1,9 +1,10 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echo "INFO: Starting node configuration..."
+echoInfo "INFO: Starting node configuration..."
 
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_PEERS_PATH="$COMMON_DIR/peers"
@@ -18,7 +19,7 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -a -v -f "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
-    echo "INFO: List of external peers was found"
+    echoInfo "INFO: List of external peers was found"
     while read peer ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         [ -z "$peer" ] && echo "WARNING: peer not found" && continue
@@ -28,23 +29,23 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
 
-        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+        (! $(isNodeId "$nodeId")) && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
 
         peer="tcp://$peer"
-        echo "INFO: Adding extra peer '$peer'"
+        echoInfo "INFO: Adding extra peer '$peer'"
 
-        [ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
+        #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
         [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
         [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
         
-        CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
+        #CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
 fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
-    echo "INFO: List of external seeds was found"
+    echoInfo "INFO: List of external seeds was found"
     while read seed ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         [ -z "$seed" ] && echo "WARNING: seed not found" && continue
@@ -54,10 +55,10 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
 
-        ! [[ "$nodeId" =~ ^[a-f0-9]{40}$ ]] && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
 
         seed="tcp://$seed"
-        echo "INFO: Adding extra seed '$seed'"
+        echoInfo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
@@ -96,17 +97,17 @@ fi
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-echo "INFO: Starting state file configuration..."
+echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
 
 if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
-    echo "INFO: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
+    echoWarn "WARNING: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
     cat $LOCAL_STATE | jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" > "$LOCAL_STATE.tmp"
     cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
     rm -fv "$LOCAL_STATE.tmp"
 fi
 
 STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
-echo "INFO: Minimum state height is set to $STATE_HEIGHT"
+echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 
-echo "INFO: Finished node configuration."
+echoInfo "INFO: Finished node configuration."

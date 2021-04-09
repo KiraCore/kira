@@ -10,7 +10,7 @@ id=$($KIRA_SCRIPTS/container-id.sh "$name")
 
 # e.g. registry:2
 if [ -z "$id" ] ; then
-    echo "False"
+    echo "false"
 else
-    echo "True"
+    echo "true"
 fi
