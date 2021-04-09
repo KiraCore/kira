@@ -84,8 +84,8 @@ firewall-cmd --permanent --zone=$ZONE --add-source-port=22/tcp
 firewall-cmd --permanent --zone=$ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
-firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
-firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.168.0.0/16 masquerade"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.0.0.0/8 masquerade"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.0.0.0/8 masquerade"
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"22\" protocol=\"tcp\" accept"
 
@@ -157,8 +157,8 @@ for PORT in "${PORTS[@]}" ; do
 done
 
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"10.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
-firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
-firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
+firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"0.0.0.0\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"127.0.0.1\" port port=\"1-65535\" protocol=\"tcp\" accept"
 
