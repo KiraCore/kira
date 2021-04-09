@@ -11,7 +11,7 @@ EXIT_FILE="$COMMON_PATH/exit"
 START_LOGS="$COMMON_LOGS/start.log"
 
 set +x
-echo "INFO: Launching KIRA Container Manager..."
+echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
@@ -31,7 +31,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
-echo "INFO: Cleanup, getting container manager ready..."
+echoInfo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$KADDR_PATH"

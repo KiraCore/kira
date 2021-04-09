@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-containers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f
+# systemctl restart kirascan && journalctl -u kirascan -f --output cat
 set -x
 
 echo "INFO: Started kira network contianers monitor..."
@@ -35,7 +35,7 @@ set -x
 mkdir -p "$INTERX_REFERENCE_DIR"
 
 for name in $CONTAINERS; do
-    echo "INFO: Processing container $name"
+    echoInfo "INFO: Processing container $name"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     mkdir -p "$DOCKER_COMMON/$name"
@@ -44,12 +44,12 @@ for name in $CONTAINERS; do
     rm -fv "$DESTINATION_PATH.tmp"
 
     ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/$name-status.error.log" &
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/${name}-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-        echo $(timeout 1 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "") > $DESTINATION_STATUS_PATH
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
         echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH
@@ -60,14 +60,14 @@ done
 NEW_LATEST_BLOCK=0
 NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
-    echo "INFO: Waiting for '$name' scan processes to finalize"
+    echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     touch "${DESTINATION_PATH}.pid" "$STATUS_PATH"
     PIDX=$(cat "${DESTINATION_PATH}.pid" || echo "")
     
-    [ -z "$PIDX" ] && echo "INFO: Process X not found" && continue
-    wait $PIDX || { echo "background pid failed: $?" >&2; exit 1;}
+    [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
+    wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
     SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
@@ -91,7 +91,7 @@ for name in $CONTAINERS; do
         CATCHING_UP="false"
     fi
     
-    echo "INFO: Saving status props..."
+    echoInfo "INFO: Saving status props..."
     echo "$LATEST_BLOCK" > "${DESTINATION_PATH}.sekaid.latest_block_height"
     echo "$CATCHING_UP" > "${DESTINATION_PATH}.sekaid.catching_up"
 done

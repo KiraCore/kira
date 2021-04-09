@@ -7,20 +7,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
   apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    python \
-    python3 \
-    python3-pip \
-    software-properties-common \
-    tar \
-    zip \
-    jq \
-    php-cli \
-    unzip \
-    php7.4-gmp \
-    php-mbstring \
-    md5deep \
-    sysstat \
-    htop
+    python python3 python3-pip software-properties-common tar zip jq php-cli unzip \
+    php7.4-gmp php-mbstring md5deep sysstat htop ccze
 
   apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r` || echo "ERROR: Failed to install monitoring tools"
 
