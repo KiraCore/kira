@@ -11,6 +11,7 @@ SYNC_FROM_SNAP=$2
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
 # ensure to create parent directory for shared status info
 CONTAINER_NAME="snapshot"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 SNAP_STATUS="$KIRA_SNAP/status"
 SCAN_DIR="$KIRA_HOME/kirascan"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
@@ -50,7 +51,7 @@ set +x
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|     NETWORK: $KIRA_SENTRY_NETWORK"
+echo "|     NETWORK: $CONTAINER_NETWORK"
 echo "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
 echo "| SYNC HEIGHT: $MAX_HEIGHT"
 echo "|  SNAP DEST.: $SNAP_FILE"
@@ -90,8 +91,10 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-echo "INFO: Starting $CONTAINER_NAME node..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -100,7 +103,7 @@ docker run -d \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_SENTRY_NETWORK \
+    --net=$CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e HALT_HEIGHT="$MAX_HEIGHT" \

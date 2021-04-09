@@ -8,6 +8,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"
+CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_GLOBAL_PATH="$DOCKER_COMMON/global"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -26,7 +27,7 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|   NETWORK: $KIRA_INTERX_NETWORK"
+echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_INTERX_DNS"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echo "|   MAX RAM: $RAM_RESERVED"
@@ -36,6 +37,10 @@ set -x
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -44,7 +49,7 @@ docker run -d \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_INTERX_NETWORK \
+    --net=$CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -63,7 +68,7 @@ $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 FAUCET_ADDR=$(curl 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' || echo "")
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_INTERX_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do
