@@ -8,6 +8,7 @@ set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 
 CONTAINER_NAME="validator"
+CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -31,7 +32,7 @@ set -e
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|   NETWORK: $KIRA_VALIDATOR_NETWORK"
+echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|   NODE ID: $VALIDATOR_NODE_ID"
 echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -61,8 +62,10 @@ else
     CFG_persistent_peers=""
 fi
 
-echoInfo "INFO: Starting $CONTAINER_NAME node..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -71,7 +74,7 @@ docker run -d \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
-    --net="$KIRA_VALIDATOR_NETWORK" \
+    --net="$CONTAINER_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -114,4 +117,4 @@ else
 fi
 
 CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"

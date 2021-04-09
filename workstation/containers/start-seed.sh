@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 
 CONTAINER_NAME="seed"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -18,7 +19,7 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $SEED_NODE_ID"
-echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
+echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_SEED_DNS"
 echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -61,8 +62,10 @@ if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; th
     CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
 fi
 
-echo "INFO: Starting seed node..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -72,7 +75,7 @@ docker run -d \
     --hostname $KIRA_SEED_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_SENTRY_NETWORK \
+    --net=$CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -116,5 +119,4 @@ else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"

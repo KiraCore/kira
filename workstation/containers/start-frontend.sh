@@ -8,6 +8,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="frontend"
+CONTAINER_NETWORK="$KIRA_FRONTEND_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -27,6 +28,10 @@ mkdir -p $COMMON_LOGS
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --cap-add=SYS_PTRACE \
@@ -37,7 +42,7 @@ docker run -d \
     --hostname $KIRA_FRONTEND_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --network $KIRA_FRONTEND_NETWORK \
+    --network $CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -51,5 +56,5 @@ echo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_FRONTEND_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 

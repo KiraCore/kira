@@ -6,6 +6,7 @@ SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 
 CONTAINER_NAME="priv_sentry"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -20,7 +21,7 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $PRIV_SENTRY_NODE_ID"
-echo "|   NETWORK: $KIRA_SENTRY_NETWORK"
+echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
 echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -58,8 +59,10 @@ else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
 
-echo "INFO: Starting $CONTAINER_NAME node..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -69,7 +72,7 @@ docker run -d \
     --hostname $KIRA_PRIV_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_SENTRY_NETWORK \
+    --net=$CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -84,7 +87,7 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_allow_duplicate_ip="false" \
+    -e CFG_allow_duplicate_ip="true" \
     -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
@@ -115,5 +118,5 @@ else
 fi
 
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
