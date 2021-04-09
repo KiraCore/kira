@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-
+ 
 set +x
 echoInfo "INFO: Launching KIRA Network Manager..."
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :

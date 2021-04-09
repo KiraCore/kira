@@ -27,7 +27,7 @@ mkdir -p $DESTINATION
 while [ $ELAPSED -le $TIMEOUT ] && [ "$SUCCESS" == "False" ] ; do
     ELAPSED=$(($(date -u +%s)-$START_TIME_CONTAINER_AWAIT))
     CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh $NAME || echo "error")
-    if [ "$CONTAINER_EXISTS" != "True"  ] ; then
+    if [ "${CONTAINER_EXISTS,,}" != "true"  ] ; then
         continue
     fi
 
