@@ -13,7 +13,7 @@ IP=$(docker inspect $ID | jq -r ".[0].NetworkSettings.Networks.$KIRA_REGISTRY_NE
 CONTAINER_EXISTS=$(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME" || echo "error")
 
 # ensure docker registry exists
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.41-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
+SETUP_CHECK="$KIRA_SETUP/registry-v0.0.43-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
 if [[ "${CONTAINER_EXISTS,,}" != "true" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
@@ -69,6 +69,9 @@ if [[ "${CONTAINER_EXISTS,,}" != "true" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CO
 EOL
 
     $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
+
+    systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
+
     touch $SETUP_CHECK
 else
     echo "Container 'registry' already exists."
@@ -77,3 +80,4 @@ fi
 
 docker ps # list containers
 docker images
+route -n
