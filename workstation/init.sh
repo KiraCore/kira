@@ -10,8 +10,19 @@ START_TIME_INIT=$3
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
-[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 
+[ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
+if [ "$KIRA_USER" == "root" ]; then
+    echo "ERROR: You must login as non root user to your machine!"
+    exit 1
+fi
+
+if [ "${USER,,}" != root ]; then
+    echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
+    exit 1
+fi
+
+[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
@@ -113,12 +124,6 @@ fi
 [ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
 
-[ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
-if [ "$KIRA_USER" == "root" ]; then
-    echo "ERROR: You must login as non root user to your machine!"
-    exit 1
-fi
-
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
     #########################################
     # START Installing Essentials
@@ -146,7 +151,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-10" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-11" | md5sum | awk '{ print $1 }' || echo "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
