@@ -89,7 +89,7 @@ docker run -d \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="false" \
-    -e CFG_allow_duplicate_ip="false" \
+    -e CFG_allow_duplicate_ip="true" \
     -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="256" \
     -e NODE_TYPE=$CONTAINER_NAME \
