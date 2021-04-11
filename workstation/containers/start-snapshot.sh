@@ -84,10 +84,12 @@ rm -fv $SNAP_DESTINATION
 rm -rfv $SNAP_DESTINATION_DIR
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    #cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    # copy & repair
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
-    mkdir -p "$SNAP_DESTINATION_DIR"
-    unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
+    mkdir -p "$SNAP_DESTINATION_DIR" && cd $SNAP_DESTINATION_DIR
+    7z x $SNAP_DESTINATION
+    cd $KIRA_HOME
+    # unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
     rm -fv $SNAP_DESTINATION
 fi
 
