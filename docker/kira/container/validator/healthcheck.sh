@@ -3,7 +3,8 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-echoInfo "INFO: Starting healthcheck"
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: Starting healthcheck $START_TIME"
 
 VALOPERS_FILE="$COMMON_READ/valopers"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
@@ -13,8 +14,8 @@ CFG="$SEKAID_HOME/config/config.toml"
 
 touch $BLOCK_HEIGHT_FILE
 
-HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
@@ -22,17 +23,18 @@ echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
 if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
-  echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
-  exit 1
+    echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
+    sleep 10
+    exit 1
 else
-  echoInfo "SUCCESS: New blocks were created or synced: $HEIGHT"
+    echoInfo "SUCCESS: New blocks were created or synced: $HEIGHT"
 fi
 
 echoInfo "INFO: Latest Block Height: $HEIGHT"
 
 # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
 echoInfo "INFO: Updating commit timeout..."
-ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
+ACTIVE_VALIDATORS=$(jq -rc '.status.active_validators' $VALOPERS_FILE || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
@@ -47,5 +49,8 @@ if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     fi
 fi
 
-echoInfo "INFO: Finished healthcheck"
+echo "------------------------------------------------"
+echo "| FINISHED: HEALTHCHECK                        |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echo "------------------------------------------------"
 exit 0

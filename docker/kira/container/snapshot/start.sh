@@ -60,7 +60,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
   if [ -f "$SNAP_FILE" ]; then
-    echo "INFO: Snap file was found, attepting data recovery..."
+    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
+    zip -T -v $SNAP_FILE
 
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE -d $DATA_DIR
@@ -68,8 +69,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if [ -f "$DATA_GENESIS" ]; then
       echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
       if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ]; then
         echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
         exit 1
@@ -99,9 +100,9 @@ i=0
 PID1=""
 while :; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "")
-  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo -n "")
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
   if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then

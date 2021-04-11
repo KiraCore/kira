@@ -4,6 +4,9 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: Starting healthcheck $START_TIME"
+
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
@@ -53,8 +56,8 @@ if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
   exit 1
 fi
 
-HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
+HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
@@ -68,5 +71,8 @@ else
   echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echoInfo "INFO: Latest Block Height: $HEIGHT"
+echo "------------------------------------------------"
+echo "| FINISHED: HEALTHCHECK                        |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echo "------------------------------------------------"
 exit 0

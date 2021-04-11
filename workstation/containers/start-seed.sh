@@ -43,7 +43,7 @@ cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$EXIT_FILE"
 
-PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" | xargs || echo "")
+PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" | xargs || echo -n "")
 if ($(isPublicIp $PUBLIC_IP)) && timeout 3 nc -z $PUBLIC_IP $KIRA_SENTRY_P2P_PORT ; then
     PUB_SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$PUBLIC_IP:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     CFG_seeds="tcp://$PUB_SENTRY_SEED"
@@ -93,7 +93,7 @@ docker run -d \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
     -e CFG_max_num_outbound_peers="128" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_inbound_peers="1024" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
@@ -110,8 +110,8 @@ echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-seed-init.sh "$CONTAINER_NAME" "$SEED_NODE_ID" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo "")
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo -n "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1

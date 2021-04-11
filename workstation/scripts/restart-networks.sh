@@ -39,7 +39,7 @@ for (( i=0; i<${len}; i++ )) ; do
     continue
   fi
   echo "INFO: Restarting $network ($subnet)"
-  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo "")
+  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
 
   if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
       for container in $containers ; do

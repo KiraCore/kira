@@ -8,7 +8,7 @@ MIN_BLOCK_HEIGHT=$1
 (! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=0
 (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo -n ""; done
 
 while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
@@ -55,7 +55,7 @@ echoInfo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOT=""
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(s|c)$ ]]; do echoNErr "Choose to [S]ync from snapshot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+SELECT="." && while ! [[ "${SELECT,,}" =~ ^(s|c)$ ]]; do echoNErr "Choose to [S]ync from snapshot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo -n ""; done
 if [ "${SELECT,,}" == "s" ]; then
     # get all zip files in the snap directory
     SNAPSHOTS=$(ls $DEFAULT_SNAP_DIR/*.zip) || SNAPSHOTS=""
@@ -65,7 +65,7 @@ if [ "${SELECT,,}" == "s" ]; then
           
     if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ]; then
         echoWarn "WARNING: No snapshots were found in the '$DEFAULT_SNAP_DIR' direcory"
-        echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
+        echoNErr "Press any key to abort..." && read -n 1 -s && echo -n ""
         exit 0
     else
         i=-1
@@ -98,7 +98,7 @@ if [ "${SELECT,,}" == "s" ]; then
         echoInfo "INFO: Snapshot '$SNAPSHOT' ($OPTION) was selected"
     fi
          
-    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
 fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

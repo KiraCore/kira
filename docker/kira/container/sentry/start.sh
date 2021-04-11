@@ -37,10 +37,10 @@ while ($(isFileEmpty "$PIP_FILE")) && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "$
   sleep 5
 done
 
-LOCAL_IP=$(cat $LIP_FILE || echo "")
-PUBLIC_IP=$(cat $PIP_FILE || echo "")
-SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo "")
-SNAP_NAME=$(cat $SNAP_NAME_FILE || echo "")
+LOCAL_IP=$(cat $LIP_FILE || echo -n "")
+PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
+SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo -n "")
+SNAP_NAME=$(cat $SNAP_NAME_FILE || echo -n "")
 SNAP_FILE_OUTPUT="/snap/$SNAP_NAME"
 
 echoInfo "INFO: Sucess, genesis file was found!"
@@ -59,15 +59,16 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   
   if [ -f "$SNAP_FILE_INPUT" ] ; then
-    echoInfo "INFO: Snap file was found, attepting data recovery..."
+    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
+    zip -T -v $SNAP_FILE_INPUT
     
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE_INPUT -d $DATA_DIR
 
     if [ -f "$DATA_GENESIS" ] ; then
       echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
       if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
           echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1

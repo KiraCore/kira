@@ -29,18 +29,19 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
   if [ -f "$SNAP_FILE" ] ; then
-    echoInfo "INFO: Snap file was found, attepting data recovery..."
+    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
+    zip -T -v $SNAP_FILE
     
     rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
     unzip $SNAP_FILE -d "$DATA_DIR"
 
-    SNAP_HEIGHT=$(cat $SNAP_INFO | jq -rc '.height' || echo "0")
+    SNAP_HEIGHT=$(jq -rc '.height' $SNAP_INFO || echo "0")
     echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"
 
     if [ -f "$DATA_GENESIS" ] ; then
       echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
       if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
           echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1
@@ -111,7 +112,7 @@ echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
 # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
-ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
+ACTIVE_VALIDATORS=$(jq -rc '.status.active_validators' $VALOPERS_FILE || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
 
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then

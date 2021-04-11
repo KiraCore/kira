@@ -5,7 +5,7 @@ set +x
 
 while : ; do
     SNAPSHOT=""
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo -n ""; done
     
     if [ "${SELECT,,}" == "s" ] ; then
         echo "INFO: Blockchain state will NOT be recovered from the snapshot"
@@ -51,7 +51,7 @@ while : ; do
         else
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo "")
+            NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
 
             if [ ! -f "$DATA_GENESIS" ] || [ -z "$NETWORK"] || [ "${NETWORK,,}" == "null" ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"
@@ -59,16 +59,16 @@ while : ; do
                 continue
             else
                 echoInfo "INFO: Success, snapshot was downloaded"
-                GENSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo "")
+                GENSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo -n "")
                 rm -f -v -r "$TMP_SNAP_DIR/test"
             fi
         fi
 
-        SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
+        SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
 
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo ""; done
+        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo -n ""; done
 
         if [ "${OPTION,,}" == "n" ] ; then
             echoInfo "INFO: User rejected checksums, downloaded file will be removed"
@@ -91,11 +91,11 @@ while : ; do
     
     if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ] ; then
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
       exit 0
     fi
     
-    echo -en "\e[31;1mPlease select snapshot to recover from:\e[0m" && echo ""
+    echo -en "\e[31;1mPlease select snapshot to recover from:\e[0m" && echo -n ""
     
     i=-1
     LAST_SNAP=""
@@ -127,10 +127,10 @@ while : ; do
     break
 done
 
-SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo "")
+SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo -n "")
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to nsure following snapshot checksum is valid: $SNAPSUM"
-echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
 
 set -x
 

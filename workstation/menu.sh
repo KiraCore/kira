@@ -16,11 +16,11 @@ displayAlign left $printWidth " [3] | Sentry Mode (mainnet / testnet)"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c"
-echo ""
+echo -n ""
 
 while :; do
   read -n1 -p "Input option: " KEY
-  echo ""
+  echo -n ""
 
   case ${KEY,,} in
   1*)

@@ -75,13 +75,13 @@ displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
-echo ""
+echo -n ""
 
 FAILED="false"
 
 while :; do
   read -n1 -p "Input option: " KEY
-  echo ""
+  echo -n ""
 
   case ${KEY,,} in
   1*)
@@ -104,7 +104,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
     exit 0
@@ -125,7 +125,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
     exit 0

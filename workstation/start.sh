@@ -79,7 +79,7 @@ if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x
     echoWarn "WARNING: To apply all changes your machine must be rebooted!"
     echoWarn "WARNING: After restart is compleated type 'kira' in your console terminal to continue"
-    echoNErr "Press any key to initiate reboot" && read -n 1 -s && echo ""
+    echoNErr "Press any key to initiate reboot" && read -n 1 -s && echo -n ""
     echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine..."
     sleep 3
     set -x
@@ -104,8 +104,8 @@ rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
 i=0 && LOCAL_IP="" && PUBLIC_IP=""
 while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
     i=$((i + 1))
-    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
-    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
+    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo -n "")
     [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
     echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
     sleep 30

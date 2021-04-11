@@ -53,7 +53,7 @@ fi
 
 if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ; then
     echo "INFO: Generting sha256 of the snapshoot file..."
-    KIRA_SNAP_SHA256=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
+    KIRA_SNAP_SHA256=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 

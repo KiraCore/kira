@@ -24,7 +24,12 @@ sekaid tx customstaking claim-validator-seat --from validator --keyring-backend=
 # Re-Joining Validator set (INACTIVE status)
 
 ```
-sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --yes | jq
+
+
+out="" && tx=$(sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --yes --broadcast-mode=async | jq -rc '.txhash') && \
+while [ -z "$out" ] ; do echo "Waiting for '$tx' to be included in the block..." && sleep 5 && \
+out=$(sekaid query tx $tx --output=json 2> /dev/null | jq -rc '.' || echo -n "") ; done && \
+echo $out | jq
 ```
 
 

@@ -29,7 +29,7 @@ while : ; do
   
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.3.0  |"
+          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.3.1  |"
           echo "|------------- $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
         [ "${PORT_EXPOSURE,,}" == "enabled" ] && \
@@ -67,9 +67,9 @@ echo -e "\e[37;1m--------------------------------------------------"
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo -n ""; done
         [ "${ACCEPT,,}" == "n" ] && echoWarn "WARINIG: Operation was cancelled" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
     
     REINITALIZE="false"
@@ -105,7 +105,7 @@ echo -e "\e[37;1m--------------------------------------------------"
                 echoWarn "#${i} -> $p"
             done < $FILE
             echoInfo "INFO: All $i ${TARGET}ED IP addresses were displayed"
-            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|r|e)$ ]] ; do echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|r|e)$ ]] ; do echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && read -d'' -s -n1 SELECT && echo -n ""; done
             [ "${SELECT,,}" == "e" ] && break
             [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
             [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
@@ -148,11 +148,11 @@ echo -e "\e[37;1m--------------------------------------------------"
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echoWarn "WARNING: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo -n ""; done
         [ "${SELECT,,}" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo -n ""
 done

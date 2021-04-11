@@ -11,7 +11,7 @@ FILE="/tmp/seeds.tmp"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: SEED EDITOR v0.2.3.0                |"
+echoWarn "| STARTED: SEED EDITOR v0.2.3.1                |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|  TARGET FILE: $DESTINATION"
 echoWarn "| CONTENT TYPE: ${TARGET^^}"
@@ -55,13 +55,13 @@ while : ; do
     echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
     echo "INFO: All $i ${TARGET^^} were displayed"
          
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|d|w|r|s|e)$ ]] ; do echoNErr "Choose to [A]dd, [D]elete, [W]ipe, [R]efresh, [S]ave changes to the $TARGET list or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|d|w|r|s|e)$ ]] ; do echoNErr "Choose to [A]dd, [D]elete, [W]ipe, [R]efresh, [S]ave changes to the $TARGET list or [E]xit: " && read -d'' -s -n1 SELECT && echo -n ""; done
     [ "${SELECT,,}" == "r" ] && continue
     [ "${SELECT,,}" == "e" ] && exit 0
 
     if [ "${SELECT,,}" == "s" ] ; then
-        FILE_HASH=$(sha256sum "$FILE" | awk '{ print $1 }' || echo "")
-        DESTINATION_HASH=$(sha256sum "$DESTINATION" | awk '{ print $1 }' || echo "")
+        FILE_HASH=$(sha256sum "$FILE" | awk '{ print $1 }' || echo -n "")
+        DESTINATION_HASH=$(sha256sum "$DESTINATION" | awk '{ print $1 }' || echo -n "")
 
         if [ "$FILE_HASH" != "$DESTINATION_HASH" ] ; then
             echoInfo "INFO: Saving unique changes to $DESTINATION..."
@@ -74,7 +74,7 @@ while : ; do
         continue
     fi
              
-    [ "${SELECT,,}" == "w" ] && echoInfo "INFO: All ${TARGET^^} were removed" && echo "" > $FILE && continue
+    [ "${SELECT,,}" == "w" ] && echoInfo "INFO: All ${TARGET^^} were removed" && echo -n "" > $FILE && continue
     echoInfo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port> but you can also input standalone DNS or IP addresses"
     echoNErr "Input comma separated list of ${TARGET^^}: " && read ADDR_LIST
     [ -z "$ADDR_LIST" ] && echoWarn "WARNING: No addresses were specified, try again" && continue
@@ -116,7 +116,7 @@ while : ; do
         if [ ! -z "${dnsStandalone}" ] ; then
             dns="$dnsStandalone"
             echoWarn "WARNING: '$addr' is NOT a valid ${TARGET^^} address but a standalone IP or DNS"
-            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && read -d'' -s -n1 SVAL && echo -n ""; done
             [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
@@ -125,11 +125,11 @@ while : ; do
                 port=""
             fi
 
-            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
-            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
+            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo -n "")
+            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
@@ -170,7 +170,7 @@ while : ; do
 
             if  ($(isNodeId "$nodeId")) && ($(isDnsOrIp "$dns")) && ($(isPort "$port")) ; then
                 if [ "${SELECT,,}" == "a" ] ; then
-                    SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+                    SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Are you absolutely sure you want to add '$nodeAddress' to ${TARGET^^} list? (y/n): " && read -d'' -s -n1 SVAL && echo -n ""; done
                     [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$nodeAddress' will NOT be added to ${TARGET^^} list" && continue
                     
                     echoInfo "INFO: Adding address to the ${TARGET^^} list..."

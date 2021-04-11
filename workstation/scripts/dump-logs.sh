@@ -32,7 +32,7 @@ if [ -z $ID ] ; then
 fi
 
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echo "WARNING: Failed to fetch environment variables"
-echo $(docker inspect $ID || echo "") > $CONTAINER_DUMP/inspect.json || echo "WARNING: Failed to inspect container $NAME"
+echo $(docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echo "WARNING: Failed to inspect container $NAME"
 
 if [ "$NAME" == "validator" ] || [ "$NAME" == "sentry" ] ; then
     DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"

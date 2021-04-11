@@ -7,7 +7,7 @@ set -e
 if [ -z "$1" ] ; then
     echo "false"
 else
-    STATUS=$(timeout 2 docker inspect "$1" 2> /dev/null | jq -rc '.[0].State.Status' 2> /dev/null || echo "")
+    STATUS=$(timeout 2 docker inspect "$1" 2> /dev/null | jq -rc '.[0].State.Status' 2> /dev/null || echo -n "")
     if [ "${STATUS,,}" == "running" ] || [ "${STATUS,,}" == "starting" ] ; then
         echo "true"
     else

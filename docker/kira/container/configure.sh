@@ -98,16 +98,16 @@ GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
 echoInfo "INFO: Starting state file configuration..."
-STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+STATE_HEIGHT=$(jq -rc '.height' $LOCAL_STATE || echo "0")
 
 if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
-    cat $LOCAL_STATE | jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" > "$LOCAL_STATE.tmp"
+    (jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
     cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
     rm -fv "$LOCAL_STATE.tmp"
 fi
 
-STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+STATE_HEIGHT=$(jq -rc '.height' $LOCAL_STATE || echo "0")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."

@@ -15,10 +15,10 @@ while :; do
 
     if [ "${INFRA_MODE,,}" == "sentry" ]; then
         set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo -n ""; done
     else
         set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo -n ""; done
     fi
 
     set -x
@@ -45,8 +45,8 @@ while :; do
             continue
         fi
 
-        unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo "" > "$TMP_GENESIS_PATH"
-        NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo "")
+        unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo -n "" > "$TMP_GENESIS_PATH"
+        NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
         [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -70,8 +70,8 @@ while :; do
             echoInfo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
             rm -fv $TMP_GENESIS_PATH
             DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false"
-            GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
-            ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+            ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
             if [ "${DNPASS,,}" == "false" ] || [ -z "$GENTEST" ] ; then
                 echoWarn "WARNING: Download failed, attempting second discovery..."
                 rm -fv $TMP_GENESIS_PATH
@@ -82,12 +82,12 @@ while :; do
             continue
         fi
 
-        NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+        NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
         if [ ! -z "$NEW_NETWORK_NAME" ] && [ "$NEW_NETWORK_NAME" != "null" ] ; then
             jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.buffer.json"
             cp -a -f -v "/tmp/genesis.buffer.json" "$TMP_GENESIS_PATH"
         else
-            NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
         fi
 
         if [ -z "$NEW_NETWORK_NAME" ] || [ "${NEW_NETWORK_NAME,,}" == "null" ] ; then
@@ -98,7 +98,7 @@ while :; do
         set +x
         echo "INFO: Success, genesis file was found and has a valid format"
         echo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256sum $TMP_GENESIS_PATH)"
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]ccep or [R]eject the checksum: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]ccep or [R]eject the checksum: \e[0m\c" && read -d'' -s -n1 SELECT && echo -n ""; done
         set -x
 
         if [ "${SELECT}" == "r" ] ; then
@@ -106,13 +106,13 @@ while :; do
             continue
         fi
     else
-        echo -en "\e[33;1mWARNING: Network name is not defined \e[0m\c" && echo ""
+        echo -en "\e[33;1mWARNING: Network name is not defined \e[0m\c" && echo -n ""
         continue
     fi
 
     set +x
     echo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
     set -x
     
     rm -fv "$LOCAL_GENESIS_PATH"
@@ -150,7 +150,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
 
     echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $VALIDATOR_MIN_HEIGHT"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
 else
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi

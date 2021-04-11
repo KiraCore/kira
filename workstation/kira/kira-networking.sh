@@ -21,7 +21,7 @@ while : ; do
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-           echo "|         KIRA NETWORKING MANAGER v0.2.3.0       |"
+           echo "|         KIRA NETWORKING MANAGER v0.2.3.1       |"
            [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
@@ -68,9 +68,9 @@ echo -e "\e[37;1m--------------------------------------------------"
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo -n ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
 
     i=-1
@@ -109,7 +109,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo -n ""; done
         [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
         [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
         [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
@@ -126,7 +126,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo -n ""; done
         [ "${SELECT,,}" == "c" ] && continue
         
         echoInfo "INFO: Re-starting $CONTAINER container..."
@@ -151,12 +151,12 @@ echo -e "\e[37;1m--------------------------------------------------"
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo -n ""; done
         [ "${SELECT,,}" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo -n ""
 done
 

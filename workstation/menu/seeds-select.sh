@@ -16,7 +16,7 @@ fi
 while : ; do
     echoWarn "WARNING: If you want to connect to external networks you have to specify at least one public seed or a private peer node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the public and private seed & peer nodes list"
-    TVAL="." && while ! [[ "${TVAL,,}" =~ ^(p|v|e|w)$ ]] ; do echoNErr "Edit list of [P]ublic Seed Nodes, Pri[V]ate Peer Nodes, [W]ipe all or [E]xit: " && read -d'' -s -n1 TVAL && echo ""; done
+    TVAL="." && while ! [[ "${TVAL,,}" =~ ^(p|v|e|w)$ ]] ; do echoNErr "Edit list of [P]ublic Seed Nodes, Pri[V]ate Peer Nodes, [W]ipe all or [E]xit: " && read -d'' -s -n1 TVAL && echo -n ""; done
     [ "${TVAL,,}" == "e" ] && echoInfo "INFO: Seed editor was aborted by the user" && break
     if [ "${TVAL,,}" == "v" ] ; then
         $KIRA_MANAGER/kira/seeds-edit.sh "$PRIVATE_PEERS" "Private Peer Nodes"
@@ -28,7 +28,7 @@ while : ; do
         touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
     elif [ "${TVAL,,}" == "e" ] ; then
         if ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
-            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No public or private seed nodes were specified, are you sure you want to launch network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
+            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No public or private seed nodes were specified, are you sure you want to launch network locally? (y/n): " && read -d'' -s -n1 SVAL && echo -n ""; done
             [ "${SVAL,,}" != "y" ] && echo "INFO: Action was cancelled by the user" && continue
             rm -f -v "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PRIVATE_PEERS" "$PUBLIC_PEERS"
         fi

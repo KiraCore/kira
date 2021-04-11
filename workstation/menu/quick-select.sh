@@ -15,7 +15,7 @@ if [ "${INFRA_MODE,,}" == "sentry" ]; then
     SELECT="j"
 else
     set +x
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo -n ""; done
     set -x
 fi
 
@@ -48,7 +48,7 @@ if [ "${SELECT,,}" == "n" ]; then
     echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     
-    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo -n ""; done
     set -x
 
     if [ "${OPTION,,}" == "r" ] ; then
@@ -83,16 +83,16 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
 
         STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo "")
+        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-            STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+            STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
         fi
          
-        HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
-        CHAIN_ID=$(echo "$STATUS" | jq -rc '.node_info.network' 2>/dev/null || echo "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo "")
+        HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jq -rc '.node_info.network' 2>/dev/null || echo -n "")
+        NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ -z "${NODE_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
             echo "INFO: Could NOT read status, block height, chian-id or node-id"
@@ -102,7 +102,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         SEED_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 16656 ; then
-            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
             if $(isNodeId "$SEED_NODE_ID") ; then
                 SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
                 echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
@@ -119,7 +119,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         PRIV_SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 36656 ; then
-            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
             if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
                 PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
@@ -153,7 +153,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
                 echoWarn "WARNING: Snapshot download failed or connection with the node '$NODE_ADDR' is not stable"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo -n ""; done
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
@@ -164,7 +164,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         else
             set +x
             echoWarn "WARNING: Snapshot is NOT available, node '$NODE_ADDR' is not exposing it publicly"
-            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo -n ""; done
             set -x
             if [ "${OPTION,,}" == "d" ] ; then
                 echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
@@ -182,8 +182,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
             SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-            SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo "")
-            SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo "")
+            SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
+            SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo -n "")
             (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
 
             if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
@@ -193,7 +193,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
                 [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
                 [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo -n ""; done
                 rm -f -v -r $TMP_SNAP_DIR
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
@@ -203,7 +203,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             else
                 echoInfo "INFO: Success, snapshot file integrity appears to be valid"
                 cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
-                SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
+                SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
             fi
              
             rm -f -v -r "$TMP_SNAP_DIR/test"
@@ -215,12 +215,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
             cp -a -f -v "$TMP_GENESIS_PATH.tmp" "$TMP_GENESIS_PATH" || echo "WARNING: Genesis copy failed"
-            GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                 rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
                 wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-                GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+                GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
             fi
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
@@ -231,7 +231,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Genesis file verification suceeded"
         fi
          
-        GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo "")
+        GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo -n "")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
             set +x
@@ -272,7 +272,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
         echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo -n ""; done
         set -x
 
         if [ "${OPTION,,}" == "r" ] ; then

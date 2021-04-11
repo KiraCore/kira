@@ -44,37 +44,33 @@ KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-    KADDR=$(cat $KADDR_PATH 2> /dev/null || echo "")
-    
-    if [ "${NAME,,}" == "validator" ] ; then
-        VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
-        [ ! -z "$VALADDR" ] && VALINFO=$(cat $VALINFO_SCAN_PATH 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") || VALINFO=""
-    fi
+    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo -n "")
+    KADDR=$(cat $KADDR_PATH 2> /dev/null || echo -n "")
+    [ "${NAME,,}" == "validator" ] && VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo -n "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
-            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jq -r '.address' 2> /dev/null || echo "") > "$KADDR_PATH" &
+            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jq -r '.address' 2> /dev/null || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi
 
     if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-        SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
+        SEKAID_STATUS_FILE="${CONTAINER_STATUS}.sekaid.status"
         if [ "${NAME,,}" != "interx" ] ; then 
-            KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
+            KIRA_NODE_ID=$(jq -r '.node_info.id' $SEKAID_STATUS_FILE 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
-        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        KIRA_NODE_CATCHING_UP=$(jq -r '.sync_info.catching_up' $SEKAID_STATUS_FILE 2> /dev/null || echo -n "")
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
-        KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+        KIRA_NODE_BLOCK=$(jq -r '.sync_info.latest_block_height' $SEKAID_STATUS_FILE 2> /dev/null || echo "0")
         (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
 
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.2.3.0            |"
+    echo "|            KIRA CONTAINER MANAGER v0.2.3.1            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -99,7 +95,6 @@ while : ; do
     FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
     HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!HOSTNAME}"
     PORTS="PORTS_$NAME" && PORTS="${!PORTS}"
-    EXPOSED_PORTS="EXPOSED_PORTS_$NAME" && EXPOSED_PORTS="${!EXPOSED_PORTS}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -147,12 +142,12 @@ while : ; do
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
-        if [ ! -z "$VALINFO" ] ; then
-            VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
-            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
-            VRANK=$(echo $VALINFO | jq -rc '.rank' 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
-            VSTREAK=$(echo $VALINFO | jq -rc '.streak' 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
-            VMISSED=$(echo $VALINFO | jq -rc '.missed_blocks_counter' 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+        if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
+            VSTATUS=$(jq -rc '.status' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+            VTOP=$(jq -rc '.top' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
+            VRANK=$(jq -rc '.rank' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(jq -rc '.streak' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(jq -rc '.missed_blocks_counter' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
@@ -162,14 +157,14 @@ while : ; do
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
     elif [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
         LAST_SNAP_FILE="$(cat $SNAP_LATEST)${WHITESPACE}"
-        LAST_SNAP_PROGRESS="$(cat $SNAP_PROGRESS 2> /dev/null || echo "") %"
+        LAST_SNAP_PROGRESS="$(cat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
         echo "|     Snap: ${LAST_SNAP_FILE:0:43} : $LAST_SNAP_PROGRESS"
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
     if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
-        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
+        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
         EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
         EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
@@ -204,9 +199,9 @@ while : ; do
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "i" ] && [ "${OPTION,,}" != "l" ] && [ "${OPTION,,}" != "h" ] && [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+        ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
 
     EXECUTED="false"
@@ -218,7 +213,7 @@ while : ; do
         docker exec -it $ID bash || docker exec -it $ID sh || FAILURE="true"
         
         if [ "${FAILURE,,}" == "true" ] ; then
-            ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
             [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
@@ -304,13 +299,13 @@ while : ; do
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
 
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             if [ "${ACCEPT,,}" == "d" ] ; then
                 rm -fv "$START_LOGS"
-                echo "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
+                echo -n "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
@@ -348,7 +343,7 @@ while : ; do
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
@@ -375,7 +370,7 @@ while : ; do
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
     
     if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
-        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
+        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo -n ""
     fi
 done
 
