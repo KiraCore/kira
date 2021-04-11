@@ -79,7 +79,7 @@ if [ ! -f "$KIRA_SETUP/reboot" ] ; then
     set +x
     echoWarn "WARNING: To apply all changes your machine must be rebooted!"
     echoWarn "WARNING: After restart is compleated type 'kira' in your console terminal to continue"
-    echoNErr "Press any key to initiate reboot" && read -n 1 -s && echo -n ""
+    echoNErr "Press any key to initiate reboot" && read -n 1 -s && echo ""
     echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine..."
     sleep 3
     set -x

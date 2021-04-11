@@ -146,7 +146,7 @@ else
         exit 1
     fi
 
-    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m" && echo -n ""
+    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m" && echo ""
     echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
 set -x

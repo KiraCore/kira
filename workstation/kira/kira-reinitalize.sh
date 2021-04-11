@@ -19,7 +19,7 @@ INIT_SCRIPT=""
 INTEGRITY_HASH=""
 
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
-    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default initialization script or [C]hange URL: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
+    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default initialization script or [C]hange URL: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
     if [ "${ACCEPT,,}" == "c" ] ; then
         read  -p "Input URL of the new initialization script: " INIT_SCRIPT
@@ -29,7 +29,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
 
     if [ "${INIT_SCRIPT}" == "$DEFAULT_INIT_SCRIPT" ] ; then
         echoInfo "INFO: Default initialization script was selected"
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infra branch '$INFRA_BRANCH' or [C]hange it: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infra branch '$INFRA_BRANCH' or [C]hange it: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
         
         if [ "${ACCEPT,,}" == "c" ] ; then
             read  -p "Input desired banch name of the $GIT_USER/$GIT_REPO repository: " NEW_BRANCH
@@ -44,7 +44,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     wget $INIT_SCRIPT -O $INIT_SCRIPT_OUT || ( echo "ERROR: Failed to download $INIT_SCRIPT" && rm -fv $INIT_SCRIPT_OUT && NEW_BRANCH=$INFRA_BRANCH )
     
     if [ ! -f "$INIT_SCRIPT_OUT" ] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
         [ "${ACCEPT,,}" == "x" ] && break
     else
         SUCCESS_DOWNLOAD="true"
@@ -58,14 +58,14 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
     echoInfo "INFO: Success, init script was downloaded!"
     echoInfo "INFO: SHA256: $FILE_HASH"
     while [ "${SUCCESS_HASH_CHECK,,}" == "false" ] ; do 
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo -n "" ; done
+        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
         if [ "${ACCEPT,,}" == "v" ] ; then
             read -p "Input sha256sum hash of the file: " INTEGRITY_HASH
         else
             echoInfo "INFO: Hash verification was skipped"
             echoWarn "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
-            echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+            echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
             SUCCESS_HASH_CHECK="true"
             break
         fi
@@ -78,7 +78,7 @@ fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
     echo -e "\nINFO: Re-initialization failed or was aborted\n"
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
 

@@ -91,7 +91,7 @@ while : ; do
     
     if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ] ; then
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
       exit 0
     fi
     
@@ -130,7 +130,7 @@ done
 SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo -n "")
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to nsure following snapshot checksum is valid: $SNAPSUM"
-echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 
 set -x
 

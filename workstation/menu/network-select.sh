@@ -112,7 +112,7 @@ while :; do
 
     set +x
     echo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     
     rm -fv "$LOCAL_GENESIS_PATH"
@@ -150,7 +150,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
 
     echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $VALIDATOR_MIN_HEIGHT"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 else
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi

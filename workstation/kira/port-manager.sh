@@ -154,5 +154,5 @@ echo -e "\e[37;1m--------------------------------------------------"
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo -n ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done

@@ -104,7 +104,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
     exit 0
@@ -125,7 +125,7 @@ while :; do
 
     $KIRA_MANAGER/start.sh "False" || FAILED="true"
     [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     set -x
     $KIRA_MANAGER/kira/kira.sh
     exit 0

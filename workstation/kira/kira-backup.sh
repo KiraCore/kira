@@ -65,7 +65,7 @@ if [ "${SELECT,,}" == "s" ]; then
           
     if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ]; then
         echoWarn "WARNING: No snapshots were found in the '$DEFAULT_SNAP_DIR' direcory"
-        echoNErr "Press any key to abort..." && read -n 1 -s && echo -n ""
+        echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
         exit 0
     else
         i=-1
@@ -98,7 +98,7 @@ if [ "${SELECT,,}" == "s" ]; then
         echoInfo "INFO: Snapshot '$SNAPSHOT' ($OPTION) was selected"
     fi
          
-    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo -n ""
+    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

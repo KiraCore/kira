@@ -17,7 +17,7 @@ if [ ! -f "$KIRA_SETUP/rebooted" ]; then
     systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped, starting new setup..."
     sleep 1
     $KIRA_MANAGER/start.sh "true"
-    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo -n ""
+    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
 fi
 
 if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
@@ -29,7 +29,7 @@ if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
         if [ "${VSEL,,}" == "i" ] ; then
             sleep 1
             $KIRA_MANAGER/start.sh "false"
-            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo -n ""
+            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
         else
             cd $HOME
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
@@ -420,7 +420,7 @@ while :; do
     fi
 
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
-    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo -n ""
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $HOME

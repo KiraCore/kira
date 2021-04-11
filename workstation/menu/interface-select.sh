@@ -26,7 +26,7 @@ if [ ! -z "$OPTION" ] ; then
 fi
 
 echo -en "\e[33;1mINFO: NETWORK interface '$IFACE' was selected\e[0m" && echo -n ""
-echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 set -x
 CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
 

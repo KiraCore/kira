@@ -28,7 +28,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
     echo "DANGER: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
     echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-    echo -en "\e[31;1mPress any key to exit or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+    echo -en "\e[31;1mPress any key to exit or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
     exit 1
   fi
 
@@ -52,7 +52,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
     SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
     [ "${SELECT,,}" == "x" ] && exit
     echo "DANGER: You decided to disregard a potential vulnerability !!!"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo -n ""
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
   fi
 
   cd $KMS_KEYIMPORT_DIR
