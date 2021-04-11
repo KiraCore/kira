@@ -82,7 +82,7 @@ if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true
 else
     echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
 
-    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo -n ""; done
+    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo ""; done
     if [ "${ACCEPT,,}" == "r" ] ; then # wipe setup lock files
         rm -fvr $KIRA_SETUP
         mkdir -p $KIRA_SETUP

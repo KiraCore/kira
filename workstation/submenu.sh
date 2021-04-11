@@ -75,13 +75,13 @@ displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
-echo -n ""
+echo ""
 
 FAILED="false"
 
 while :; do
   read -n1 -p "Input option: " KEY
-  echo -n ""
+  echo ""
 
   case ${KEY,,} in
   1*)

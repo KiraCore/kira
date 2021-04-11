@@ -15,10 +15,10 @@ while :; do
 
     if [ "${INFRA_MODE,,}" == "sentry" ]; then
         set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo -n ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
     else
         set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo -n ""; done
+        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
     fi
 
     set -x
@@ -98,7 +98,7 @@ while :; do
         set +x
         echo "INFO: Success, genesis file was found and has a valid format"
         echo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256sum $TMP_GENESIS_PATH)"
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]ccep or [R]eject the checksum: \e[0m\c" && read -d'' -s -n1 SELECT && echo -n ""; done
+        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]ccep or [R]eject the checksum: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
         set -x
 
         if [ "${SELECT}" == "r" ] ; then

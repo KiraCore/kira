@@ -5,7 +5,7 @@ set +x
 
 while : ; do
     SNAPSHOT=""
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo -n ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
     
     if [ "${SELECT,,}" == "s" ] ; then
         echo "INFO: Blockchain state will NOT be recovered from the snapshot"
@@ -68,7 +68,7 @@ while : ; do
 
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo -n ""; done
+        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo ""; done
 
         if [ "${OPTION,,}" == "n" ] ; then
             echoInfo "INFO: User rejected checksums, downloaded file will be removed"
