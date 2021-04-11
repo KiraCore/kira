@@ -8,8 +8,11 @@ echo "INFO: Staring snapshot v0.0.3"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
-SNAP_FILE="$COMMON_DIR/snap.zip"
+SNAP_DIR_INPUT="$COMMON_DIR/snap"
+SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
+
 DATA_DIR="$SEKAID_HOME/data"
+DATA_GENESIS="$DATA_DIR/genesis.json"
 
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_CFG="$COMMON_DIR/config.toml"
@@ -40,8 +43,8 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
-  echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+while ( [ -f "$EXECUTED_CHECK" ] || [ ! -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ) && [ ! -f "$COMMON_GENESIS" ] ; do
+  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
 
@@ -59,13 +62,18 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE" ]; then
-    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
-    zip -T -v $SNAP_FILE
-
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d $DATA_DIR
-    DATA_GENESIS="$DATA_DIR/genesis.json"
+  if [ -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ; then
+    echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+    if [ -f "$SNAP_FILE_INPUT" ] ; then 
+        zip -T -v $SNAP_FILE_INPUT
+        rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
+        unzip $SNAP_FILE_INPUT -d $DATA_DIR
+    elif [ ! -d "$SNAP_DIR_INPUT" ] ; then
+        cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+    else
+        echoErr "ERROR: Snap file or directory was not found"
+        exit 1
+    fi
 
     if [ -f "$DATA_GENESIS" ]; then
       echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
@@ -79,7 +87,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       fi
     fi
 
-    rm -fv "$SNAP_FILE"
+    rm -fv "$SNAP_FILE_INPUT"
+    rm -rfv "$SNAP_DIR_INPUT"
   else
     echo "INFO: Snap file is NOT present, starting new sync..."
   fi

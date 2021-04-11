@@ -10,6 +10,7 @@ EXECUTED_CHECK="$COMMON_DIR/executed"
 SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
 SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 
+SNAP_DIR_INPUT="$COMMON_READ/snap"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
@@ -22,8 +23,8 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
-while [ ! -f "$SNAP_FILE_INPUT" ] && [ ! -f "$COMMON_GENESIS" ] ; do
-  echoInfo "INFO: Waiting for genesis file and ip addresses info to be provisioned... ($(date))"
+while ( [ -f "$EXECUTED_CHECK" ] || [ ! -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ) && [ ! -f "$COMMON_GENESIS" ] ; do
+  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
 
@@ -41,7 +42,7 @@ LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo -n "")
 SNAP_NAME=$(cat $SNAP_NAME_FILE || echo -n "")
-SNAP_FILE_OUTPUT="/snap/$SNAP_NAME"
+SNAP_OUTPUT="/snap/$SNAP_NAME"
 
 echoInfo "INFO: Sucess, genesis file was found!"
 echoInfo "INFO:    Local IP: $LOCAL_IP"
@@ -58,12 +59,18 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   
-  if [ -f "$SNAP_FILE_INPUT" ] ; then
-    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
-    zip -T -v $SNAP_FILE_INPUT
-    
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE_INPUT -d $DATA_DIR
+  if [ -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ; then
+    echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+    if [ -f "$SNAP_FILE_INPUT" ] ; then 
+        zip -T -v $SNAP_FILE_INPUT
+        rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
+        unzip $SNAP_FILE_INPUT -d $DATA_DIR
+    elif [ ! -d "$SNAP_DIR_INPUT" ] ; then
+        cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+    else
+        echoErr "ERROR: Snap file or directory was not found"
+        exit 1
+    fi
 
     if [ -f "$DATA_GENESIS" ] ; then
       echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
@@ -98,22 +105,22 @@ CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\""
 rm -fv $LOCAL_GENESIS
 cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 $SELF_CONTAINER/configure.sh
-set +e && source "/etc/profile" &>/dev/null && set -e
+set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 
 touch $EXECUTED_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [ $SNAP_HEIGHT -gt 0 ] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
-    rm -fv $SNAP_FILE_OUTPUT
+    rm -frv $SNAP_OUTPUT
     sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"
   
-    echoInfo "INFO: Creating backup package '$SNAP_FILE_OUTPUT' ..."
+    echoInfo "INFO: Creating backup package '$SNAP_OUTPUT' ..."
     cp -afv "$LOCAL_GENESIS" $SEKAID_HOME/data
     echo "{\"height\":$SNAP_HEIGHT}" > "$SNAP_INFO"
 
     # to prevent appending root path we must zip all from within the target data folder
-    cd $SEKAID_HOME/data && zip -r "$SNAP_FILE_OUTPUT" . *
-    [ ! -f "$SNAP_FILE_OUTPUT" ] && echo "INFO: Failed to create snapshot, file $SNAP_FILE_OUTPUT was not found" && exit 1
+    cp -rfv "$SEKAID_HOME/data/." "$SNAP_OUTPUT"
+    [ ! -d "$SNAP_OUTPUT" ] && echo "INFO: Failed to create snapshot, directory $SNAP_OUTPUT was not found" && exit 1
     rm -fv "$SNAP_HEIGHT_FILE" "$SNAP_NAME_FILE"
 fi
 

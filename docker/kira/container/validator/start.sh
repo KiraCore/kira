@@ -7,7 +7,8 @@ set -x
 echoInfo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
-SNAP_FILE="$COMMON_READ/snap.zip"
+SNAP_DIR_INPUT="$COMMON_READ/snap"
+SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 VALOPERS_FILE="$COMMON_READ/valopers"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
@@ -28,12 +29,18 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE" ] ; then
-    echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
-    zip -T -v $SNAP_FILE
-    
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d "$DATA_DIR"
+  if [ -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ; then
+    echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+    if [ -f "$SNAP_FILE_INPUT" ] ; then 
+        zip -T -v $SNAP_FILE_INPUT
+        rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
+        unzip $SNAP_FILE_INPUT -d $DATA_DIR
+    elif [ ! -d "$SNAP_DIR_INPUT" ] ; then
+        cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+    else
+        echoErr "ERROR: Snap file or directory was not found"
+        exit 1
+    fi
 
     SNAP_HEIGHT=$(jq -rc '.height' $SNAP_INFO || echo "0")
     echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"

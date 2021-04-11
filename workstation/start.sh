@@ -113,10 +113,15 @@ done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
+SNAP_DESTINATION_DIR="$DOCKER_COMMON_RO/snap"
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+rm -fv $SNAP_DESTINATION
+rm -rfv $SNAP_DESTINATION_DIR
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    # cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    mkdir -p "$SNAP_DESTINATION_DIR"
+    unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -194,7 +199,8 @@ else
 fi
 
 echoInfo "INFO: Starting clenup..."
-# rm -fv $SNAP_DESTINATION
+rm -fv $SNAP_DESTINATION
+rm -rfv $SNAP_DESTINATION_DIR
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"

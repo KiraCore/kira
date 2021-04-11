@@ -18,7 +18,6 @@ LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -79,10 +78,15 @@ fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
+SNAP_DESTINATION_DIR="$COMMON_PATH/snap"
+SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 rm -fv $SNAP_DESTINATION
-if [ -f "$SYNC_FROM_SNAP" ]; then
-    echo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $SYNC_FROM_SNAP $SNAP_DESTINATION
+rm -rfv $SNAP_DESTINATION_DIR
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echoInfo "INFO: State snapshot was found, cloning..."
+    #cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    mkdir -p "$SNAP_DESTINATION_DIR"
+    unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
 fi
 
 echo "INFO: Cleaning up snapshot container..."
@@ -137,6 +141,7 @@ if [ "${CONTAINER_CREATED,,}" != "true" ]; then
 else
     echo "INFO: Success '$CONTAINER_NAME' container was started"
     rm -fv "$SNAP_DESTINATION"
+    rm -rfv "$SNAP_DESTINATION_DIR"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
     TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")

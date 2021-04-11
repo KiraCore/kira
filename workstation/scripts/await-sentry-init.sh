@@ -179,32 +179,37 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     touch "$EXIT_FILE"
-    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
+    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
     cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     rm -fv "$HALT_FILE" "$EXIT_FILE"
-    
+
     echoInfo "INFO: Creating new snapshot..."
     i=0
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
-    while [ ! -f "$DESTINATION_FILE" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
+    DESTINATION_DIR="$KIRA_SNAP/$SNAP_NAME"
+    DESTINATION_FILE="${DESTINATION_DIR}.zip"
+    while [ ! -d "$DESTINATION_DIR" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
         i=$((i + 1))
         cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
         sleep 30
     done
 
+    echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
+    cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
+    rm -rf "$DESTINATION_DIR"
+    
+    ls -1 "$KIRA_SNAP"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
+    echoInfo "INFO: New snapshot was created!"
+
     SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    ls -1 "$KIRA_SNAP"
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
-    echoInfo "INFO: New snapshot was created!"
 
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"
