@@ -95,7 +95,7 @@ while : ; do
       exit 0
     fi
     
-    echo -en "\e[31;1mPlease select snapshot to recover from:\e[0m" && echo -n ""
+    echo -en "\e[31;1mPlease select snapshot to recover from:\e[0m" && echo ""
     
     i=-1
     LAST_SNAP=""
