@@ -23,7 +23,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
-while ( [ -f "$EXECUTED_CHECK" ] || [ ! -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ) && [ ! -f "$COMMON_GENESIS" ] ; do
+while [ -f "$EXECUTED_CHECK" ] || (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) || (! $(isFileEmpty "$COMMON_GENESIS")) ; do
   echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
@@ -58,14 +58,14 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
-  
-  if [ -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ; then
+
+  if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
     echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
-    if [ -f "$SNAP_FILE_INPUT" ] ; then 
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
         zip -T -v $SNAP_FILE_INPUT
         rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
         unzip $SNAP_FILE_INPUT -d $DATA_DIR
-    elif [ ! -d "$SNAP_DIR_INPUT" ] ; then
+    elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
         cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
     else
         echoErr "ERROR: Snap file or directory was not found"

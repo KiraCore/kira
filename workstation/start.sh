@@ -126,6 +126,8 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     cd $KIRA_HOME
     # unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
     rm -fv $SNAP_DESTINATION
+else
+    echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then

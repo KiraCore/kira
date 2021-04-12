@@ -87,6 +87,12 @@ function isFileEmpty() {
     fi
 }
 
+function isDirEmpty() {
+    if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
+        echo false
+    fi
+}
+
 displayAlign() {
   align=$1
   width=$2

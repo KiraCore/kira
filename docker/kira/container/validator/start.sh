@@ -29,13 +29,13 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE_INPUT" ] || [ ! -d "$SNAP_DIR_INPUT" ] ; then
+  if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
     echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
-    if [ -f "$SNAP_FILE_INPUT" ] ; then 
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
         zip -T -v $SNAP_FILE_INPUT
         rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
         unzip $SNAP_FILE_INPUT -d $DATA_DIR
-    elif [ ! -d "$SNAP_DIR_INPUT" ] ; then
+    elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
         cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
     else
         echoErr "ERROR: Snap file or directory was not found"
