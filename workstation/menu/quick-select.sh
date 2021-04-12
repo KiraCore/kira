@@ -111,6 +111,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 26656 ; then
+            SENTRY_NODE_ID=$NODE_ID
             if $(isNodeId "$NODE_ID") ; then
                 SENTRY_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
@@ -323,6 +324,7 @@ if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
 fi
 
 rm -f -v -r $TMP_SNAP_DIR
+NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -338,6 +340,65 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
     [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+
+    echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+    TMP_PEERS="/tmp/peers.txt"
+    TMP_SHUFFLED_PEERS="/tmp/peers-shuffled.txt"
+    DOWNLOAD_SUCCESS="true"
+    rm -fv "$TMP_PEERS" "$TMP_SHUFFLED_PEERS"
+    wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/peers.txt" -O $TMP_PEERS || DOWNLOAD_SUCCESS="false"
+
+    if (! $(isFileEmpty "$TMP_PEERS")) && [ ${DOWNLOAD_SUCCESS,,} == "true" ]; then
+        shuf $TMP_PEERS > $TMP_SHUFFLED_PEERS
+        i=0
+        while read peer; do
+            peer=$(echo $peer | xargs || echo "")
+            addrArr1=( $(echo $peer | tr "@" "\n") )
+            addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+            nodeId=${addrArr1[0],,}
+            ip=${addrArr2[0],,}
+            port=${addrArr2[1],,}
+
+            (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($ip)" && continue
+            (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue 
+
+            if grep -q "$nodeId" "$PUBLIC_SEEDS"; then
+                echoWarn "WARNING: Node id '$nodeId' is already present in the seeds list ($ip)" && continue 
+            fi
+
+            if grep -q "$ip" "$PUBLIC_SEEDS"; then
+                echoWarn "WARNING: Address '$ip' is already present in the seeds list" && continue 
+            fi
+
+            if ! timeout 0.1 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue  ; fi
+
+            STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
+            STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+            if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
+
+            KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
+            KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+            if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
+
+            chain_id=$(echo "$STATUS" | grep -Eo '"chain_id"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
+
+            catching_up=$(echo "$KIRA_STATUS" | grep -Eo '"catching_up"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
+
+            latest_block_height=$(echo "$KIRA_STATUS" | grep -Eo '"latest_block_height"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
+            [ $latest_block_height -lt $VALIDATOR_MIN_HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$VALIDATOR_MIN_HEIGHT' ($ip)" && continue 
+
+            echoInfo "INFO: Active peer found: '$peer' adding to public seeds list..."
+            echo "$peer" >> $PUBLIC_SEEDS
+            i=$(($i + 1))
+        done < $TMP_SHUFFLED_PEERS
+
+        echoInfo "INFO: Found total of $i new peers"
+    else
+        echoInfo "INFO: No extra public peers were found..."
+    fi
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS

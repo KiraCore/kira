@@ -19,6 +19,7 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
 SNAPSHOT_SCAN_PATH="$SCAN_DIR/snapshot"
 HARDWARE_SCAN_PATH="$SCAN_DIR/hardware"
+PEERS_SCAN_PATH="$SCAN_DIR/peers"
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -61,6 +62,12 @@ while : ; do
         echo "INFO: Starting snapshot monitor..."
         $KIRA_MANAGER/kira/monitor-snapshot.sh &>"${SNAPSHOT_SCAN_PATH}.logs" &
         echo "$!" >"${SNAPSHOT_SCAN_PATH}.pid"
+    fi
+
+    touch "${PEERS_SCAN_PATH}.pid" && if ! kill -0 $(cat "${PEERS_SCAN_PATH}.pid") 2>/dev/null; then
+        echo "INFO: Starting peers monitor..."
+        $KIRA_MANAGER/kira/monitor-peers.sh &>"${PEERS_SCAN_PATH}.logs" &
+        echo "$!" >"${PEERS_SCAN_PATH}.pid"
     fi
     
     echoInfo "INFO: Waiting for network and docker processes querry to finalize..."

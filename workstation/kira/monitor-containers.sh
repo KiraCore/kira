@@ -20,7 +20,7 @@ CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo -n "")
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|       STARTING KIRA CONTAINER SCAN v0.2.2.3  |"
+echoWarn "|     STARTING KIRA CONTAINER SCAN v0.2.2.3    |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|             SCAN_DIR: $SCAN_DIR"
 echoWarn "|           CONTAINERS: $CONTAINERS"

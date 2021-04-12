@@ -51,9 +51,10 @@ while :; do
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         echo "INFO: Network genesis will be importend from the external resource"
-        if [ -f "$LOCAL_GENESIS_PATH" ]; then 
+        if [ -f "$LOCAL_GENESIS_PATH" ]; then
+            LOCAL_CHAIN_ID=$(jq -r .chain_id $LOCAL_GENESIS_PATH 2> /dev/null || echo -n "corrupted")
             set +x
-            echoInfo "INFO: Default genesis source: $LOCAL_GENESIS_PATH"
+            echoInfo "INFO: Default genesis source: $LOCAL_GENESIS_PATH ($LOCAL_CHAIN_ID)"
             echoNErr "Provide file name, URL or click [ENTER] to choose default source: " && read NEW_GENESIS_SOURCE
         else
             set +x
