@@ -90,8 +90,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="128" \
-    -e CFG_max_num_inbound_peers="1024" \
+    -e CFG_max_num_outbound_peers="64" \
+    -e CFG_max_num_inbound_peers="512" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \

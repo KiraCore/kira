@@ -33,10 +33,11 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
   "iptables": false,
-  "storage-driver": "overlay2",
-  "mtu": 1420
 }
 EOL
+
+#"storage-driver": "overlay2",
+#"mtu": 1420
 
     systemctl enable --now docker
     service docker restart || echoWarn "WARNING: Failed to restart docker"
