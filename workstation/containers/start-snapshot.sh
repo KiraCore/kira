@@ -90,9 +90,9 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     zip -T -v $SNAP_DESTINATION || echoErr "ERROR: Unzip '$KIRA_SNAP_PATH' test failed!"
     FAILED="false" && unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR || FAILED="true"
     if [ "${FAILED,,}" == "true" ] ; then
-        echoWarn "WARNING: 7c failed, attempting unzip extraction..."
-        cd $SNAP_DESTINATION_DIR
+        echoWarn "WARNING: Unzip failed, attempting 7z extraction..."
         rm -fvr $SNAP_DESTINATION_DIR && mkdir -p $SNAP_DESTINATION_DIR
+        cd $SNAP_DESTINATION_DIR
         7z x $SNAP_DESTINATION || echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed!"
         cd $KIRA_HOME
     fi
