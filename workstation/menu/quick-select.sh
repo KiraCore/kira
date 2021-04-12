@@ -179,34 +179,41 @@ elif [ "${SELECT,,}" == "j" ] ; then
          
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Snapshot archive download was sucessfull"
-            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
-            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-            SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
-            SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo -n "")
-            (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+            UNZIP_FAILED="false"
+            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || UNZIP_FAILED="true"
+            [ "${UNZIP_FAILED,,}" == "false" ] && zip -T -v $TMP_SNAP_PATH || UNZIP_FAILED="true"
 
-            if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
-                echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
-                [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
-                [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
-                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
-                [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
-                [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
-                rm -f -v -r $TMP_SNAP_DIR
-                if [ "${OPTION,,}" == "d" ] ; then
-                    echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
-                    continue
+            if [ "${UNZIP_FAILED,,}" == "false" ] ; then
+                DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
+                SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
+                SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
+                SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo -n "")
+                (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+    
+                if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
+                    echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
+                    [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
+                    [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
+                    [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
+                    [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
+                    [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                    rm -f -v -r $TMP_SNAP_DIR
+                    if [ "${OPTION,,}" == "d" ] ; then
+                        echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
+                        continue
+                    fi
+                    DOWNLOAD_SUCCESS="false"
+                else
+                    echoInfo "INFO: Success, snapshot file integrity appears to be valid"
+                    cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
+                    SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
                 fi
-                DOWNLOAD_SUCCESS="false"
+                 
+                rm -f -v -r "$TMP_SNAP_DIR/test"
             else
-                echoInfo "INFO: Success, snapshot file integrity appears to be valid"
-                cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
-                SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
+                echo "INFO: Unzip failed, archive might be corruped"
             fi
-             
-            rm -f -v -r "$TMP_SNAP_DIR/test"
         fi
              
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
@@ -293,7 +300,8 @@ if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-    cp -f -v -a "$TMP_SNAP_PATH" "$SNAPSHOT"
+    # repair & safe copy
+    rm -fv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
     rm -fv $TMP_SNAP_PATH
 else
     SNAPSHOT=""

@@ -7,7 +7,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
   apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    python python3 python3-pip software-properties-common tar zip jq php-cli unzip p7zip-full \
+    python python3 python3-pip software-properties-common tar jq php-cli zip unzip p7zip-full \
     php7.4-gmp php-mbstring md5deep sysstat htop ccze
 
   # tools required to execute: perf top --sort comm,dso

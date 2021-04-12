@@ -158,8 +158,9 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude
+            software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential \
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude \
+            zip unzip p7zip-full 
         
         apt update -y
         apt install -y bc dnsutils psmisc netcat nmap
