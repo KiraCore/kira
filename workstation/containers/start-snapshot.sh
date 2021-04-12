@@ -87,7 +87,11 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     # copy & repair
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
     mkdir -p "$SNAP_DESTINATION_DIR" && cd $SNAP_DESTINATION_DIR
+    sleep 1 && chmod -v 555 $SNAP_DESTINATION
+    zip -T -v $SNAP_DESTINATION
+    set +x
     7z x $SNAP_DESTINATION
+    set -x
     cd $KIRA_HOME
     # unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR
     rm -fv $SNAP_DESTINATION
