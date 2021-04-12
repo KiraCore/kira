@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-seed.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="seed"
 CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"

@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-priv-sentry.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"

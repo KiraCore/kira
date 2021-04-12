@@ -87,13 +87,19 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     # copy & repair
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
     mkdir -p "$SNAP_DESTINATION_DIR"
-    zip -T -v $SNAP_DESTINATION || echoErr "ERROR: Unzip '$KIRA_SNAP_PATH' test failed!"
     FAILED="false" && unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR || FAILED="true"
     if [ "${FAILED,,}" == "true" ] ; then
-        echoWarn "WARNING: Unzip failed, attempting 7z extraction..."
+        echoWarn "WARNING: Unzip failed, attempting integrity testing and 7z extraction..."
+        zip -T -v $SNAP_DESTINATION || echoErr "ERROR: Unzip '$KIRA_SNAP_PATH' test failed!"
         rm -fvr $SNAP_DESTINATION_DIR && mkdir -p $SNAP_DESTINATION_DIR
-        cd $SNAP_DESTINATION_DIR
-        7z x $SNAP_DESTINATION || echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed!"
+        cd $SNAP_DESTINATION_DIR && FAILED="false"
+        7z x $SNAP_DESTINATION || FAILED="true"
+        if [ "${FAILED,,}" == "true" ] ; then
+            echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed, clenaing up aftermatch..."
+            rm -fv $SNAP_DESTINATION
+            rm -rfv "$SNAP_DESTINATION_DIR"
+            exit 1
+        fi
         cd $KIRA_HOME
     fi
     rm -fv $SNAP_DESTINATION
