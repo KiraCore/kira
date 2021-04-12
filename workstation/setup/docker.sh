@@ -32,7 +32,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "iptables": false,
+  "iptables": false
 }
 EOL
 
@@ -40,7 +40,10 @@ EOL
 #"mtu": 1420
 
     systemctl enable --now docker
+    sleep 5
     service docker restart || echoWarn "WARNING: Failed to restart docker"
+    sleep 5
+    journalctl -u docker -n 100 --no-pager
     docker -v
     touch $SETUP_CHECK
 else
