@@ -40,6 +40,7 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
+touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
 cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
 cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
