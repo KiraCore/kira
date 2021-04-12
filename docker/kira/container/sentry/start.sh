@@ -23,7 +23,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
-while [ -f "$EXECUTED_CHECK" ] || (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) || (! $(isFileEmpty "$COMMON_GENESIS")) ; do
+while [ -f "$EXECUTED_CHECK" ] || ($(isFileEmpty "$SNAP_FILE_INPUT")) || ($(isDirEmpty "$SNAP_DIR_INPUT")) || ($(isFileEmpty "$COMMON_GENESIS")) ; do
   echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done

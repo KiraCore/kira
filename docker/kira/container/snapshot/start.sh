@@ -43,7 +43,7 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ -f "$EXECUTED_CHECK" ] || (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) || (! $(isFileEmpty "$COMMON_GENESIS")) ; do
+while [ -f "$EXECUTED_CHECK" ] || ($(isFileEmpty "$SNAP_FILE_INPUT")) || ($(isDirEmpty "$SNAP_DIR_INPUT")) || ($(isFileEmpty "$COMMON_GENESIS")) ; do
   echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
