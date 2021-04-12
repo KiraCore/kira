@@ -94,13 +94,13 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
         rm -fvr $SNAP_DESTINATION_DIR && mkdir -p $SNAP_DESTINATION_DIR
         cd $SNAP_DESTINATION_DIR && FAILED="false"
         7z x $SNAP_DESTINATION || FAILED="true"
+        cd $KIRA_HOME
         if [ "${FAILED,,}" == "true" ] ; then
             echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed, clenaing up aftermatch..."
             rm -fv $SNAP_DESTINATION
             rm -rfv "$SNAP_DESTINATION_DIR"
-            exit 1
+            sleep 5
         fi
-        cd $KIRA_HOME
     fi
     rm -fv $SNAP_DESTINATION
 fi

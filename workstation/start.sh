@@ -134,7 +134,7 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
             echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed, clenaing up aftermatch..."
             rm -fv $SNAP_DESTINATION
             rm -rfv "$SNAP_DESTINATION_DIR"
-            exit 1
+            sleep 5
         fi
     fi
 else

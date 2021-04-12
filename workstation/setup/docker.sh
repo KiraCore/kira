@@ -2,7 +2,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# quick edit: FILE="$KIRA_MANAGER/setup/docker.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
@@ -32,12 +32,11 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
-  "iptables": false
+  "iptables": false,
+  "storage-driver": "overlay2",
+  "mtu": 1420
 }
 EOL
-
-#"storage-driver": "overlay2",
-#"mtu": 1420
 
     systemctl enable --now docker
     sleep 5
@@ -51,5 +50,5 @@ else
 fi
 
 echoInfo "INFO: Cleaning up dangling volumes..."
-docker volume ls -qf dangling=true | xargs -r docker volume rm || echo "INFO: Failed to remove dangling vomues!"
+docker volume ls -qf dangling=true | xargs -r docker volume rm || echoWarn "WARNING: Failed to remove dangling vomues!"
 

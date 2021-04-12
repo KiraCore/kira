@@ -61,12 +61,11 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "true" ]] || [
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
   "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"],
-  "iptables": false
+  "iptables": false.
+  "storage-driver": "overlay2",
+  "mtu": 1420
 }
 EOL
-
-# "storage-driver": "overlay2",
-# "mtu": 1420
 
     $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
     touch $SETUP_CHECK
