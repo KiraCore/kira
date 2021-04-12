@@ -18,8 +18,8 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     apt remove --purge runc -y || echoWarn "WARNING: Failed to remove runc"
     apt remove --purge docker.io -y || echoWarn "WARNING: Failed to remove docker.io"
     apt autoremove -y docker.io || echoWarn "WARNING: Failed autoremove"
-    # iptables -F || echoWarn "WARNING: Failed to flush iptables"
-    # groupdel docker || echoWarn "WARNING: Failed to delete docker group"
+    iptables -F || echoWarn "WARNING: Failed to flush iptables"
+    groupdel docker || echoWarn "WARNING: Failed to delete docker group"
     rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock"
     rm -rfv "/var/lib/containerd"
 
