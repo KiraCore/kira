@@ -10,17 +10,15 @@ ID=$4
 SCRIPT_START_TIME="$(date -u +%s)"
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN v0.0.4  |"
-echoWarn "|-----------------------------------------------"
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN v0.2.3.22 |"
+echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"
 echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|             ID: $ID"
-echoWarn "------------------------------------------------"
+echoWarn "|-------------------------------------------------"
 set -x
-
-EXISTS="true" && [ -z "$ID" ] && EXISTS="false"
 
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 HALT_FILE="$COMMON_PATH/halt"
@@ -43,37 +41,49 @@ elif [ "${NAME,,}" == "registry" ]; then
     REPO="master"
 fi
 
-if [ "${EXISTS,,}" == "true" ]; then # container exists
-    DOCKER_INSPECT="$VARS_FILE.inspect"
-    echo $(timeout 3 docker inspect "$ID" 2> /dev/null | jq -rc '.[0]' || echo "") > $DOCKER_INSPECT
-    DOCKER_INSPECT_RESULT=$(cat "$DOCKER_INSPECT" | jq -rc '.' || echo "")
-    DOCKER_STATE=$(echo "$DOCKER_INSPECT_RESULT" | jq -rc '.State' || echo "")
-    DOCKER_CONFIG=$(echo "$DOCKER_INSPECT_RESULT" | jq -rc '.Config' || echo "")
+DOCKER_INSPECT="$VARS_FILE.inspect"
+DOCKER_STATE="$DOCKER_INSPECT.state"
+DOCKER_CONFIG="$DOCKER_INSPECT.config"
+DOCKER_NETWORKS="$DOCKER_INSPECT.networks"
 
-    STATUS=$(echo "$DOCKER_STATE" | jq -r '.Status' 2> /dev/null || echo "")
-    PAUSED=$(echo "$DOCKER_STATE" | jq -r '.Paused'  2> /dev/null || echo "")
-    RESTARTING=$(echo "$DOCKER_STATE" | jq -r '.Restarting' 2> /dev/null || echo "")
-    STARTED_AT=$(echo "$DOCKER_STATE" | jq -r '.StartedAt' 2> /dev/null || echo "")
-    FINISHED_AT=$(echo "$DOCKER_STATE" | jq -r '.FinishedAt' 2> /dev/null || echo "")
-    HOSTNAME=$(echo "$DOCKER_CONFIG" | jq -r '.Hostname' 2> /dev/null || echo "")
-    EXPOSED_PORTS=$(echo "$DOCKER_CONFIG" | jq -r '.ExposedPorts' 2> /dev/null | jq 'keys'  2> /dev/null | jq -r '.[]' 2> /dev/null | tr '\n' ','  2> /dev/null | tr -d '"' 2> /dev/null | tr -d '/tcp'  2> /dev/null | sed 's/,$//g' 2> /dev/null || echo "")
-    PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo "")
-    NETWORK_SETTINGS=$(echo "$DOCKER_INSPECT_RESULT" 2> /dev/null | jq -r ".NetworkSettings.Networks" 2> /dev/null || echo "")
-    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jq -r '.Health.Status' 2> /dev/null || echo "")
+if (! $(isNullOrEmpty "$ID")) ; then
+    EXISTS="true"
+    echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") > $DOCKER_INSPECT
+else
+    EXISTS="false"
+fi
 
-    i=-1
+echo "ID_$NAME=\"$ID\"" > $VARS_FILE
+echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
+
+if [ "${EXISTS,,}" == "true" ] ; then
+    echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
+    (jq -rc '.[0].State' $DOCKER_INSPECT || echo -n "") > $DOCKER_STATE
+    (jq -rc '.[0].NetworkSettings.Networks' $DOCKER_INSPECT || echo -n "") > $DOCKER_NETWORKS
+
+    STATUS=$(cat $DOCKER_STATE | grep -Eo '"Status"[^,]*' | grep -Eo '[^:]*$' | xargs | awk '{print $1;}' 2> /dev/null || echo -n "")
+    PAUSED=$(cat $DOCKER_STATE | grep -Eo '"Paused"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+    RESTARTING=$(cat $DOCKER_STATE | grep -Eo '"Restarting"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+    STARTED_AT=$(cat $DOCKER_STATE | grep -Eo '"StartedAt"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+    FINISHED_AT=$(cat $DOCKER_STATE | grep -Eo '"FinishedAt"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+    HOSTNAME=$(jq -r '.[0].Config.Hostname' $DOCKER_INSPECT 2> /dev/null || echo -n "")
+    PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
+    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jq -r '.Health.Status' $DOCKER_STATE 2> /dev/null || echo -n "")
+
     for net in $NETWORKS; do
-        i=$((i + 1))
-        IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
-        (! $(isNullOrEmpty "$IP_TMP")) && eval "IP_$net=$IP_TMP" || eval "IP_$net=\"\""
+        sleep 0.1
+        IP_TMP=$(jq -r ".$net.IPAddress" $DOCKER_NETWORKS 2> /dev/null || echo -n "")
+        (! $(isNullOrEmpty "$IP_TMP")) && echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE || echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
     done
 else
+    echoErr "ERROR: Could not inspect '$NAME' container '$ID'"
     STATUS=""
     PAUSED=""
     HEALTH=""
     RESTARTING=""
     STARTED_AT=""
     FINISHED_AT=""
+    rm -fv $DOCKER_STATE $DOCKER_CONFIG $DOCKER_NETWORKS
 fi
 
 [ -z "$STATUS" ] && STATUS="stopped"
@@ -83,32 +93,18 @@ fi
 [ -z "$STARTED_AT" ] && STARTED_AT="0"
 [ -z "$FINISHED_AT" ] && FINISHED_AT="0"
 
-echo "INFO: Output file was specified, dumpiung data into '$VARS_FILE'"
+echoInfo "INFO: Dumpiung data into '$VARS_FILE'"
 
-echo "ID_$NAME=\"$ID\"" > $VARS_FILE
 echo "STATUS_$NAME=\"$STATUS\"" >> $VARS_FILE
 echo "PAUSED_$NAME=\"$PAUSED\"" >> $VARS_FILE
 echo "HEALTH_$NAME=\"$HEALTH\"" >> $VARS_FILE
 echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE
 echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE
 echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE
-echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
 echo "BRANCH_$NAME=\"$BRANCH\"" >> $VARS_FILE
 echo "REPO_$NAME=\"$REPO\"">> $VARS_FILE
 echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE
 echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE
-
-if [ ! -z "${NETWORK_SETTINGS,,}" ] && [ ! -z "$NETWORKS" ]; then # container exists
-    echoInfo "INFO: Network settings of the $NAME container were found, saving data..."
-    i=-1
-    for net in $NETWORKS; do
-        i=$((i + 1))
-        IP_TMP=$(echo "$NETWORK_SETTINGS" 2> /dev/null | jq -r ".$net.IPAddress" 2> /dev/null || echo "")
-        (! $(isNullOrEmpty "$IP_TMP")) && echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE || echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
-    done
-else
-    echoWarn "WARNING: Network settings of the $NAME container were NOT found"
-fi
 
 echoInfo "INFO: Printing scan results: "
 cat $VARS_FILE
@@ -119,3 +115,7 @@ echoWarn "| FINISHED: CONTAINER '$NAME' STATUS SCAN"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
+
+# Examples:
+# VARS_FILE=/home/ubuntu/kirascan/status/sentry.tmp
+# cat "$SCAN_LOGS/sentry-status.error.log"

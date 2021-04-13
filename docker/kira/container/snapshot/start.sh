@@ -8,8 +8,11 @@ echo "INFO: Staring snapshot v0.0.3"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
-SNAP_FILE="$COMMON_DIR/snap.zip"
+SNAP_DIR_INPUT="$COMMON_DIR/snap"
+SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
+
 DATA_DIR="$SEKAID_HOME/data"
+DATA_GENESIS="$DATA_DIR/genesis.json"
 
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_CFG="$COMMON_DIR/config.toml"
@@ -40,8 +43,8 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
-  echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isDirEmpty "$SNAP_DIR_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
+  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
 
@@ -59,29 +62,37 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE" ]; then
-    echo "INFO: Snap file was found, attepting data recovery..."
-
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d $DATA_DIR
-    DATA_GENESIS="$DATA_DIR/genesis.json"
-
-    if [ -f "$DATA_GENESIS" ]; then
-      echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ]; then
-        echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
-        exit 1
-      else
-        echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
-      fi
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+        echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+        if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
+            cd $DATA_DIR
+            jar xvf $SNAP_FILE_INPUT
+            cd $SEKAID_HOME
+        elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+            cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+        else
+            echoErr "ERROR: Snap file or directory was not found"
+            exit 1
+        fi
+    
+        if [ -f "$DATA_GENESIS" ]; then
+            echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
+            SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ]; then
+              echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+              exit 1
+            else
+              echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+            fi
+        fi
+    
+        rm -fv "$SNAP_FILE_INPUT"
+        rm -rfv "$SNAP_DIR_INPUT"
+    else
+        echo "INFO: Snap file is NOT present, starting new sync..."
+        sekaid unsafe-reset-all --home=$SEKAID_HOME
     fi
-
-    rm -fv "$SNAP_FILE"
-  else
-    echo "INFO: Snap file is NOT present, starting new sync..."
-  fi
 
   echo "INFO: Presering configuration file..."
   cp -f -v -a "$CFG" "$COMMON_CFG"
@@ -99,9 +110,9 @@ i=0
 PID1=""
 while :; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "")
-  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo -n "")
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
+  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
   if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then
@@ -195,7 +206,7 @@ cp "$COMMON_GENESIS" $SEKAID_HOME/data
 echo "{\"height\":$HALT_HEIGHT}" >"$SNAP_INFO"
 
 # to prevent appending root path we must zip all from within the target data folder
-cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
+cd $SEKAID_HOME/data && zip -9 -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] && echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 

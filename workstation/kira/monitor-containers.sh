@@ -15,12 +15,12 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
-NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo "")
+NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo -n "")
+CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo -n "")
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|       STARTING KIRA CONTAINER SCAN v0.0.2    |"
+echoWarn "|     STARTING KIRA CONTAINER SCAN v0.2.2.3    |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|             SCAN_DIR: $SCAN_DIR"
 echoWarn "|           CONTAINERS: $CONTAINERS"
@@ -30,7 +30,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 [ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
-[ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo "" > $LATEST_STATUS_SCAN_PATH
+[ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -43,17 +43,17 @@ for name in $CONTAINERS; do
 
     rm -fv "$DESTINATION_PATH.tmp"
 
-    ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo "")
+    ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo -n "")
     $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/${name}-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $DESTINATION_STATUS_PATH
-        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo "") > $INTERX_STATUS_PATH
+        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo -n "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo -n "") > $INTERX_STATUS_PATH
     fi
 done
 
@@ -64,27 +64,26 @@ for name in $CONTAINERS; do
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     touch "${DESTINATION_PATH}.pid" "$STATUS_PATH"
-    PIDX=$(cat "${DESTINATION_PATH}.pid" || echo "")
+    PIDX=$(cat "${DESTINATION_PATH}.pid" || echo -n "")
     
     [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
-    SEKAID_STATUS=$(cat $STATUS_PATH | jq -rc '.' || echo "")
-    if (! $(isNullEmpty "$SEKAID_STATUS")) ; then
-        CATCHING_UP=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.catching_up' 2>/dev/null || echo "false")
+    if (! $(isFileEmpty "$STATUS_PATH")) ; then
+        CATCHING_UP=$(jq -rc '.sync_info.catching_up' $STATUS_PATH 2>/dev/null || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
-        LATEST_BLOCK=$(echo "$SEKAID_STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "0")
+        LATEST_BLOCK=$(jq -rc '.sync_info.latest_block_height' $STATUS_PATH 2>/dev/null || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
-            NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null || echo "false")
-            ( ! $(isNodeId "$NODE_ID")) && NODE_ID=$(echo "$SEKAID_STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo "")
+            NODE_ID=$(jq -rc '.NodeInfo.id' $STATUS_PATH 2>/dev/null || echo "false")
+            ( ! $(isNodeId "$NODE_ID")) && NODE_ID=$(jq -rc '.node_info.id' $STATUS_PATH 2>/dev/null || echo -n "")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 
         if [ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
-            NEW_LATEST_STATUS="$SEKAID_STATUS"
+            NEW_LATEST_STATUS="$(cat $STATUS_PATH)"
         fi
     else
         LATEST_BLOCK="0"

@@ -18,7 +18,6 @@ LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
-SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -31,17 +30,17 @@ mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 
-SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
-PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
+PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
 
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
-PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
+PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
 
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
-PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo -n "")
+PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo -n "")
 
-SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
-PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
+SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
+PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
 
 [ $MAX_HEIGHT -le 0 ] && MAX_HEIGHT=$LATETS_BLOCK
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
@@ -79,10 +78,13 @@ fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
-rm -fv $SNAP_DESTINATION
-if [ -f "$SYNC_FROM_SNAP" ]; then
-    echo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $SYNC_FROM_SNAP $SNAP_DESTINATION
+SNAP_DESTINATION_DIR="$COMMON_PATH/snap"
+SNAP_DESTINATION="$COMMON_PATH/snap.zip"
+rm -rfv $SNAP_DESTINATION $SNAP_DESTINATION_DIR
+if [ -f "$KIRA_SNAP_PATH" ] ; then
+    echoInfo "INFO: State snapshot was found, cloning..."
+    # copy & repair
+    zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
 fi
 
 echo "INFO: Cleaning up snapshot container..."
@@ -137,9 +139,10 @@ if [ "${CONTAINER_CREATED,,}" != "true" ]; then
 else
     echo "INFO: Success '$CONTAINER_NAME' container was started"
     rm -fv "$SNAP_DESTINATION"
+    rm -rfv "$SNAP_DESTINATION_DIR"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
-    TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+    TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
     if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ]; then
         echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
         $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"

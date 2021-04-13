@@ -3,6 +3,9 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: Starting healthcheck $START_TIME"
+
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
 
@@ -13,12 +16,11 @@ EXECUTED_CHECK="$COMMON_DIR/executed"
 
 touch "$BLOCK_HEIGHT_FILE"
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo "")
-CONSENSUS=$(cat $COMMON_CONSENSUS | jq -rc || echo "")
-CONSENSUS_STOPPED=$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' || echo "")
-HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo "")
+LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
+CONSENSUS_STOPPED=$(jq -rc '.consensus_stopped' $COMMON_CONSENSUS || echo -n "")
+HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
 
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 
@@ -33,13 +35,15 @@ if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
   echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
   echoWarn "WARNING: Consensus Stopped: $CONSENSUS_STOPPED"
 
-  if [ $LATEST_BLOCK_HEIGHT -ge 1 ] && [ $LATEST_BLOCK_HEIGHT -le $HEIGHT ] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
-      echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
-  else
-      exit 1
-  fi
+    if [ $LATEST_BLOCK_HEIGHT -ge 1 ] && [ $LATEST_BLOCK_HEIGHT -le $HEIGHT ] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
+        echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
+    else
+        echoErr "ERROR: Block production stopped"
+        sleep 3
+        exit 1
+    fi
 else
-  echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
+    echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
 fi
 
 echoInfo "INFO: Latest Block Height: $HEIGHT"
@@ -58,4 +62,8 @@ else
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 fi
 
+echo "------------------------------------------------"
+echo "| FINISHED: HEALTHCHECK                        |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echo "------------------------------------------------"
 exit 0

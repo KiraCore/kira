@@ -4,6 +4,8 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: Starting healthcheck $START_TIME"
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" 
 COMMON_CONSENSUS="$COMMON_READ/consensus"
@@ -32,12 +34,11 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || e
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo "")
-CONSENSUS=$(cat $COMMON_CONSENSUS | jq -rc || echo "")
-CONSENSUS_STOPPED=$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' || echo "")
-HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
+LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
+CONSENSUS_STOPPED=$(jq -rc '.consensus_stopped' $COMMON_CONSENSUS || echo -n "")
+HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
 
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 
@@ -61,5 +62,8 @@ else
   echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echoInfo "INFO: Latest Block Height: $HEIGHT"
+echo "------------------------------------------------"
+echo "| FINISHED: HEALTHCHECK                        |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echo "------------------------------------------------"
 exit 0

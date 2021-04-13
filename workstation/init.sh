@@ -89,7 +89,7 @@ else
     echo "INFO: Initalizing setup script..."
 fi
 
-echo ""
+echo -n ""
 set -x
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
@@ -151,15 +151,16 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-11" | md5sum | awk '{ print $1 }' || echo "")
+    ESSENTIALS_HASH=$(echo "$SETUP_VER-$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-11" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
         rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
         apt-get update -y
         apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-            software-properties-common apt-transport-https ca-certificates gnupg curl wget git unzip build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude
+            software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential \
+            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude \
+            zip unzip p7zip-full 
         
         apt update -y
         apt install -y bc dnsutils psmisc netcat nmap
@@ -183,7 +184,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             EXPECTED_HASH="082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7"
         fi
 
-        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo "")
+        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo -n "")
 
         if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
             rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip

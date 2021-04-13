@@ -41,9 +41,9 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-        ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo -n "")
+        NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo -n "")
+        ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo -n "")
         if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
             sleep 20
             echoWarn "WARNING: Status and Node ID is not available"
@@ -53,8 +53,8 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
@@ -95,8 +95,8 @@ while : ; do
         FAILURE="true"
     fi
 
-    NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo "")
-    ( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo "")
+    NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo -n "")
+    ( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo -n "")
     if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
         echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'"
         FAILURE="true"
@@ -133,7 +133,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo -n "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
             echoErr "ERROR: Node failed or status could not be fetched, your netwok connectivity might have been interrupted"
@@ -145,11 +145,11 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
         fi
 
         set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo -n "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo -n "")
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo -n "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
         [ $HEIGHT -ge $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x

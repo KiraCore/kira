@@ -31,8 +31,8 @@ while [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
     sleep 10
 done
 
-LOCAL_IP=$(cat $LIP_FILE || echo "")
-PUBLIC_IP=$(cat $PIP_FILE || echo "")
+LOCAL_IP=$(cat $LIP_FILE || echo -n "")
+PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
 echoInfo "INFO: Local IP: $LOCAL_IP"
 echoInfo "INFO: Public IP: $PUBLIC_IP"

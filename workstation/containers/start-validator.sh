@@ -107,8 +107,8 @@ echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genes
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
+GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1

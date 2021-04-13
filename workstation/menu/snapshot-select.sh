@@ -51,7 +51,7 @@ while : ; do
         else
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo "")
+            NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
 
             if [ ! -f "$DATA_GENESIS" ] || [ -z "$NETWORK"] || [ "${NETWORK,,}" == "null" ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"
@@ -59,12 +59,12 @@ while : ; do
                 continue
             else
                 echoInfo "INFO: Success, snapshot was downloaded"
-                GENSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo "")
+                GENSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo -n "")
                 rm -f -v -r "$TMP_SNAP_DIR/test"
             fi
         fi
 
-        SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
+        SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
 
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
@@ -127,7 +127,7 @@ while : ; do
     break
 done
 
-SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo "")
+SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo -n "")
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to nsure following snapshot checksum is valid: $SNAPSUM"
 echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""

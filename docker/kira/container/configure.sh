@@ -20,6 +20,7 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found"
+    set +x
     while read peer ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         [ -z "$peer" ] && echo "WARNING: peer not found" && continue
@@ -42,10 +43,12 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
+    set -x
 fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
     echoInfo "INFO: List of external seeds was found"
+    set +x
     while read seed ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         [ -z "$seed" ] && echo "WARNING: seed not found" && continue
@@ -62,6 +65,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
+    set -x
 fi
 
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
@@ -98,16 +102,16 @@ GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
 echoInfo "INFO: Starting state file configuration..."
-STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+STATE_HEIGHT=$(jq -rc '.height' $LOCAL_STATE || echo "0")
 
 if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
-    cat $LOCAL_STATE | jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" > "$LOCAL_STATE.tmp"
+    (jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
     cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
     rm -fv "$LOCAL_STATE.tmp"
 fi
 
-STATE_HEIGHT=$(cat $LOCAL_STATE | jq -rc '.height' || echo "0")
+STATE_HEIGHT=$(jq -rc '.height' $LOCAL_STATE || echo "0")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."

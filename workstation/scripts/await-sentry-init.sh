@@ -45,9 +45,9 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-        ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo -n "")
+        NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo -n "")
+        ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo -n "")
         if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
             sleep 20
             echoWarn "WARNING: Status and Node ID is not available"
@@ -57,8 +57,8 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
@@ -99,8 +99,8 @@ while : ; do
         FAILURE="true"
     fi
 
-    NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo "")
-    ( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo "")
+    NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo -n "")
+    ( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo -n "")
     if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
         echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'"
         FAILURE="true"
@@ -138,7 +138,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo -n "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
@@ -156,11 +156,11 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         fi
 
         set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo -n "")
+        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo -n "")
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo -n "")
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
         [ $HEIGHT -gt $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
@@ -179,32 +179,37 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     touch "$EXIT_FILE"
-    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
+    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
     cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     rm -fv "$HALT_FILE" "$EXIT_FILE"
-    
+
     echoInfo "INFO: Creating new snapshot..."
     i=0
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
-    while [ ! -f "$DESTINATION_FILE" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
+    DESTINATION_DIR="$KIRA_SNAP/$SNAP_NAME"
+    DESTINATION_FILE="${DESTINATION_DIR}.zip"
+    while [ ! -d "$DESTINATION_DIR" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
         i=$((i + 1))
         cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
         sleep 30
     done
 
+    echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
+    cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
+    rm -rf "$DESTINATION_DIR"
+    
+    ls -1 "$KIRA_SNAP"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
+    echoInfo "INFO: New snapshot was created!"
+
     SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    ls -1 "$KIRA_SNAP"
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
-    echoInfo "INFO: New snapshot was created!"
 
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"

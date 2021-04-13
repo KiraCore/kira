@@ -2,17 +2,21 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-SETUP_CHECK="$KIRA_SETUP/base-tools-v0.1.17"
+SETUP_CHECK="$KIRA_SETUP/base-tools-v0.1.19"
 if [ ! -f "$SETUP_CHECK" ]; then
   echo "INFO: Update and Intall basic tools and dependencies..."
   apt-get update -y --fix-missing
   apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    python python3 python3-pip software-properties-common tar zip jq php-cli unzip \
+    python python3 python3-pip software-properties-common tar jq php-cli zip unzip p7zip-full \
     php7.4-gmp php-mbstring md5deep sysstat htop ccze
 
+  # tools required to execute: perf top --sort comm,dso
   apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r` || echo "ERROR: Failed to install monitoring tools"
 
   pip3 install ECPy
+
+  # jar extraction tool is essential for large file unzip
+  apt install -y default-jre default-jdk 
 
   cd $KIRA_HOME
   curl -sS https://getcomposer.org/installer -o composer-setup.php

@@ -68,25 +68,22 @@ while :; do
     SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
 
-    VALADDR=$(cat $VALADDR_SCAN_PATH 2>/dev/null || echo "")
-    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2>/dev/null | jq -rc '.status' 2>/dev/null || echo "")
+    VALADDR=$(cat $VALADDR_SCAN_PATH 2>/dev/null || echo -n "")
+    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(jq -rc '.status' $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2>/dev/null || echo "")
-    CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2>/dev/null || echo "")
-    CPU_UTIL=$(cat $CPU_SCAN_PATH 2>/dev/null || echo "")
-    RAM_UTIL=$(cat $RAM_SCAN_PATH 2>/dev/null || echo "")
-    DISK_UTIL=$(cat $DISK_SCAN_PATH 2>/dev/null || echo "")
+    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2>/dev/null || echo -n "")
+    CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2>/dev/null || echo -n "")
+    CPU_UTIL=$(cat $CPU_SCAN_PATH 2>/dev/null || echo -n "")
+    RAM_UTIL=$(cat $RAM_SCAN_PATH 2>/dev/null || echo -n "")
+    DISK_UTIL=$(cat $DISK_SCAN_PATH 2>/dev/null || echo -n "")
     LOCAL_IP=$(cat $DOCKER_COMMON_RO/local_ip 2>/dev/null || echo "0.0.0.0")
-    PUBLIC_IP=$(cat $DOCKER_COMMON_RO/public_ip 2>/dev/null || echo "")
-    VALOPERS=$(cat $VALOPERS_SCAN_PATH 2>/dev/null || echo "")
+    PUBLIC_IP=$(cat $DOCKER_COMMON_RO/public_ip 2>/dev/null || echo -n "")
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2>/dev/null || echo "0") %"
-    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo "")"
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo -n "")"
     KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
-    KIRA_STATUS=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo "")
-    CONSENSUS=$(cat $CONSENSUS_SCAN_PATH 2>/dev/null || echo "")
-    CONSENSUS_STOPPED="$(echo "$CONSENSUS" | jq -rc '.consensus_stopped' 2>/dev/null || echo "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
+    CONSENSUS_STOPPED="$(jq -rc '.consensus_stopped' $CONSENSUS_SCAN_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
     
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
@@ -105,7 +102,7 @@ while :; do
         i=-1
         for name in $CONTAINERS; do
             SCAN_PATH_VARS="$STATUS_SCAN_PATH/$name"
-            SEKAID_STATUS="${SCAN_PATH_VARS}.sekaid.status"
+            SEKAID_STATUS_FILE="${SCAN_PATH_VARS}.sekaid.status"
 
             if [ -f "$SCAN_PATH_VARS" ]; then
                 source "$SCAN_PATH_VARS"
@@ -114,8 +111,7 @@ while :; do
                 continue
             fi
 
-            SEKAID_STATUS=$(cat "${SCAN_PATH_VARS}.sekaid.status" 2>/dev/null | jq -r '.' 2>/dev/null || echo "")
-            SYNCING_TMP=$(echo $SEKAID_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo "false")
+            SYNCING_TMP=$(jq -r '.sync_info.catching_up' $SEKAID_STATUS_FILE 2>/dev/null || echo "false")
 
             # if some other node then snapshot is syncig then infra is not ready
             [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
@@ -142,7 +138,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.2.3.0         : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.3.2         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -152,13 +148,13 @@ while :; do
         echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
     
     if [ "${LOADING,,}" == "false" ]; then
-        KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.NodeInfo.network' 2>/dev/null || echo "")
-        ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK=$(echo $KIRA_STATUS | jq -r '.node_info.network' 2>/dev/null || echo "")
+        KIRA_NETWORK=$(jq -r '.NodeInfo.network' $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo -n "")
+        ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK=$(jq -r '.node_info.network' $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo -n "")
         ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK="???"
         if (! $(isNaturalNumber "$KIRA_BLOCK")) || [ "$KIRA_BLOCK" == "0" ]; then
             KIRA_BLOCK="???"
         else
-            SECONDS_PER_BLOCK="$(echo "$CONSENSUS" | jq -rc '.average_block_time' 2>/dev/null || echo "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
+            SECONDS_PER_BLOCK="$(jq -rc '.average_block_time' $CONSENSUS_SCAN_PATH 2>/dev/null || echo -n "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
             ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
@@ -167,9 +163,9 @@ while :; do
         [ -z "$GENESIS_SHA256" ] && GENESIS_SHA256="????????????"
         echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
         
-        VALACTIVE="$(echo "$VALOPERS" | jq -rc '.status.active_validators' 2>/dev/null || echo "")" && ($(isNullOrEmpty "$VALACTIVE")) && VALACTIVE="???"
-        VALTOTAL="$(echo "$VALOPERS" | jq -rc '.status.total_validators' 2>/dev/null || echo "")" && ($(isNullOrEmpty "$VALTOTAL")) && VALTOTAL="???"
-        VALWAITING="$(echo "$VALOPERS" | jq -rc '.status.waiting_validators' 2>/dev/null || echo "")" && ($(isNullOrEmpty "$VALWAITING")) && VALWAITING="???"
+        VALACTIVE="$(jq -rc '.status.active_validators' $VALOPERS_SCAN_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALACTIVE")) && VALACTIVE="???"
+        VALTOTAL="$(jq -rc '.status.total_validators' $VALOPERS_SCAN_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALTOTAL")) && VALTOTAL="???"
+        VALWAITING="$(jq -rc '.status.waiting_validators' $VALOPERS_SCAN_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALWAITING")) && VALWAITING="???"
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
@@ -232,7 +228,7 @@ while :; do
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
-                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo "") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
                 CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2>/dev/null || echo "false")
                 [ "${CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
@@ -299,7 +295,7 @@ while :; do
     if ! [[ "${OPTION,,}" =~ ^(x|n)$ ]] && [[ $OPTION != ?(-)+([0-9]) ]]; then
         ACCEPT="" && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]]; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
 
     if [ "${OPTION,,}" == "r" ]; then
@@ -398,7 +394,7 @@ while :; do
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to changing validator status to PAUSED..."
-            tx=$(docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo "")
+            tx=$(docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo -n "")
             if [ -z "$tx" ] ; then
                 echoErr "ERROR: Failed to enter maitenance mode, unpause tx could not be broadcasted"
             else
@@ -406,7 +402,7 @@ while :; do
             fi
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status to ACTIVE..."
-            tx=$(docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo "")
+            tx=$(docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | jq -rc '.txhash' || echo -n "")
             if [ -z "$tx" ] ; then
                 echoErr "ERROR: Failed to exit maitenance mode, unpause tx could not be broadcasted"
             else

@@ -24,11 +24,11 @@ set -x
 
 touch "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH"
 
-CPU_LOAD=$(mpstat -o JSON -u 4 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}' || echo "")
+CPU_LOAD=$(mpstat -o JSON -u 4 1 | grep -Eo '"idle"[^,]*' | grep -Eo '[^:]*$' | xargs | awk '{print 100 - $1"%"}' || echo -n "")
 echo "$CPU_LOAD" > $CPU_SCAN_PATH
 sleep 2
 
-RAM_TOTAL=$(echo "$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%" || echo "")
+RAM_TOTAL=$(echo "$(awk '/MemFree/{free=$2} /MemTotal/{total=$2} END{print (100-((free*100)/total))}' /proc/meminfo)%" || echo -n "")
 echo "$RAM_TOTAL" > $RAM_SCAN_PATH
 sleep 2
 
@@ -36,14 +36,14 @@ DISK_LEFT=$(echo "$(df --output=pcent / | tail -n 1 | tr -d '[:space:]|%')%")
 echo "$DISK_LEFT" > $DISK_SCAN_PATH
 sleep 2
 
-PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 | awk -F'"' '{ print $2}' || echo "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @resolver1.opendns.com myip.opendns.com +time=5 +tries=1 | awk -F'"' '{ print $1}' || echo "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @ns1.google.com -t txt o-o.myaddr.l.google.com -4 | xargs || echo "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo "")
+PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 | awk -F'"' '{ print $2}' || echo -n "")
+( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @resolver1.opendns.com myip.opendns.com +time=5 +tries=1 | awk -F'"' '{ print $1}' || echo -n "")
+( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @ns1.google.com -t txt o-o.myaddr.l.google.com -4 | xargs || echo -n "")
+( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo -n "")
 sleep 2
 
-LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo "")
-( ! $(isIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo "")
+LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo -n "")
+( ! $(isIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo -n "")
 sleep 2
 
 echo "INFO: Updating IP addresses info..."

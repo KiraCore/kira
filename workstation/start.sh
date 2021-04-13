@@ -104,8 +104,8 @@ rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
 i=0 && LOCAL_IP="" && PUBLIC_IP=""
 while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
     i=$((i + 1))
-    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
-    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
+    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo -n "")
     [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
     echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
     sleep 30
@@ -113,10 +113,15 @@ done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
+SNAP_DESTINATION_DIR="$DOCKER_COMMON_RO/snap"
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+rm -rfv $SNAP_DESTINATION $SNAP_DESTINATION_DIR
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    # copy & repair
+    zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
+else
+    echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -194,7 +199,8 @@ else
 fi
 
 echoInfo "INFO: Starting clenup..."
-# rm -fv $SNAP_DESTINATION
+rm -fv $SNAP_DESTINATION
+rm -rfv $SNAP_DESTINATION_DIR
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"

@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-priv-sentry.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
@@ -40,6 +41,7 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d 
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
+touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
 cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
 cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
@@ -88,8 +90,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_outbound_peers="64" \
+    -e CFG_max_num_inbound_peers="512" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
@@ -107,8 +109,8 @@ echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo "")
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
+GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo -n "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1

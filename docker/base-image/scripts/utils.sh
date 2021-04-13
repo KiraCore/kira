@@ -78,12 +78,18 @@ function isNaturalNumber() {
 }
 
 function isFileEmpty() {
-    if [ -z "$1" ] || [ ! -f "$1" ] ; then echo "true" ; else
+    if [ -z "$1" ] || [ ! -f "$1" ] || [ ! -s "$1" ] ; then echo "true" ; else
         if [[ -z $(grep '[^[:space:]]' $1) ]] ; then
             echo "true"
         else
             echo "false"
         fi
+    fi
+}
+
+function isDirEmpty() {
+    if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
+        echo false
     fi
 }
 
