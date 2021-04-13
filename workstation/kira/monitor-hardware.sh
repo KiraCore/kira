@@ -24,7 +24,7 @@ set -x
 
 touch "$DISK_SCAN_PATH" "$RAM_SCAN_PATH" "$CPU_SCAN_PATH"
 
-CPU_LOAD=$(mpstat -o JSON -u 4 1 | jq '.sysstat.hosts[0].statistics[0]["cpu-load"][0].idle' | awk '{print 100 - $1"%"}' || echo -n "")
+CPU_LOAD=$(mpstat -o JSON -u 4 1 | grep -Eo '"idle"[^,]*' | grep -Eo '[^:]*$' | xargs | awk '{print 100 - $1"%"}' || echo -n "")
 echo "$CPU_LOAD" > $CPU_SCAN_PATH
 sleep 2
 

@@ -40,7 +40,7 @@ if ($(isFileEmpty $TMP_BOOK)) ; then
     exit 0
 fi
 
-CHECKSUM=$(timeout 30 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status | jq -rc '.genesis_checksum' || echo -n "")
+CHECKSUM=$(timeout 30 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status | grep -Eo '"genesis_checksum"[^,]*' | grep -Eo '[^:]*$' | xargs || echo -n "")
 if ($(isNullOrEmpty "$CHECKSUM")) ; then
     echoWarn "WARNING: Invalid local genesis checksum '$CHECKSUM'"
     exit 0 
@@ -72,11 +72,11 @@ while read ip; do
     if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-    STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+    STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-    KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+    KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
 
     chain_id=$(echo "$STATUS" | grep -Eo '"chain_id"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")

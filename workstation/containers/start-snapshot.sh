@@ -85,10 +85,6 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     # copy & repair
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
-    #mkdir -p "$SNAP_DESTINATION_DIR" && cd $SNAP_DESTINATION_DIR
-    #jar xvf $SNAP_DESTINATION
-    #cd $KIRA_HOME
-    #rm -fv $SNAP_DESTINATION
 fi
 
 echo "INFO: Cleaning up snapshot container..."
