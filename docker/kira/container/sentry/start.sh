@@ -60,11 +60,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
-        echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+        echoInfo "INFO: Snap file was found, attepting integrity verification adn data recovery..."
         if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
-            zip -T -v $SNAP_FILE_INPUT
-            rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-            unzip $SNAP_FILE_INPUT -d $DATA_DIR
+            cd $DATA_DIR
+            jar xvf $SNAP_FILE_INPUT
+            cd $SEKAID_HOME
         elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
             cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
         else

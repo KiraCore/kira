@@ -16,7 +16,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq 
 
 apt update -y
-apt install -y bc dnsutils psmisc netcat
+apt install -y bc dnsutils psmisc netcat default-jre default-jdk 
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"
