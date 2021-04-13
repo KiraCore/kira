@@ -24,3 +24,6 @@ kira1gfs2d5hynuqvspn54dpff85q3ev25uhfxqzrns
 kira19pk4t7axzj8q4su05nzsrar42yc988p9rqvhu5
 kira1plv9zmw5fpz0p4epz0phvrmn2vgzrx03rf8msv
 kira1mvym7sfhgwnfj3k93x265x8zdylle42kc9je4c
+
+
+# sekaid tx bank send validator kira1plv9zmw5fpz0p4epz0phvrmn2vgzrx03rf8msv "1ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --broadcast-mode=async --gas=1000000000 | txAwait

@@ -122,12 +122,7 @@ function jsonMinify() {
 function jsonQuickParse() {
     OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null)
     [ -z "$OUT" ] && exit 1
-    TMP=${OUT%\}}
-    if [ "${TMP,,}" == "true" ] || [ "${TMP,,}" == "false" ] || ($(isNumber "$TMP")) ; then
-        echo $TMP
-    else
-        echo $OUT
-    fi
+    echo ${OUT%\}}
 }
 
 function pipe() {
