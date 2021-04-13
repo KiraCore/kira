@@ -121,22 +121,9 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     # copy & repair
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
-    mkdir -p "$SNAP_DESTINATION_DIR"
-    FAILED="false" && unzip $SNAP_DESTINATION -d $SNAP_DESTINATION_DIR || FAILED="true"
-    if [ "${FAILED,,}" == "true" ] ; then
-        echoWarn "WARNING: Unzip failed, attempting integrity testing and 7z extraction..."
-        zip -T -v $SNAP_DESTINATION || echoErr "ERROR: Unzip '$KIRA_SNAP_PATH' test failed!"
-        rm -fvr $SNAP_DESTINATION_DIR && mkdir -p $SNAP_DESTINATION_DIR
-        cd $SNAP_DESTINATION_DIR && FAILED="false"
-        7z x $SNAP_DESTINATION || FAILED="true"
-        cd $KIRA_HOME
-        if [ "${FAILED,,}" == "true" ] ; then
-            echoErr "ERROR: 7z x '$KIRA_SNAP_PATH' failed, clenaing up aftermatch..."
-            rm -fv $SNAP_DESTINATION
-            rm -rfv "$SNAP_DESTINATION_DIR"
-            sleep 5
-        fi
-    fi
+    mkdir -p "$SNAP_DESTINATION_DIR" && cd $SNAP_DESTINATION_DIR
+    jar xvf $SNAP_DESTINATION
+    cd $KIRA_HOME
 else
     echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi
