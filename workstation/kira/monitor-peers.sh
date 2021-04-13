@@ -30,8 +30,10 @@ fi
 
 echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
+TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
 ((docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json") | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
 sort -u $TMP_BOOK -o $TMP_BOOK
+shuf $TMP_BOOK > $TMP_BOOK_SHUFF
 
 if ($(isFileEmpty $TMP_BOOK)) ; then
     echoInfo "INFO: No unique addresses were found in the '$TMP_BOOK'"
@@ -44,18 +46,14 @@ if ($(isNullOrEmpty "$CHECKSUM")) ; then
     exit 0 
 fi
 
-HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
-if (! $(isNaturalNumber "$HEIGHT")) || [ $HEIGHT -le 0 ] ; then
-    echoInfo "INFO: Latest block height is not known yet"
-fi
-
 echoInfo "INFO: Processing address book entries..."
 TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
-rm -fv $TMP_BOOK_PUBLIC && touch $TMP_BOOK_PUBLIC
+rm -fv "$TMP_BOOK_PUBLIC" && touch $TMP_BOOK_PUBLIC
 i=0
 total=0
+HEIGHT=0
 while read ip; do
-    sleep 1
+    sleep 2
     total=$(($total + 1))
     ip=$(echo $ip | xargs || "")
     (! $(isPublicIp $ip)) && continue
@@ -64,8 +62,14 @@ while read ip; do
         echoWarn "WARNING: Address '$ip' is already present in the address book" && continue 
     fi
 
-    if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue  ; fi
-    if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue  ; fi
+    TMP_HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
+    if ($(isNaturalNumber "$TMP_HEIGHT")) && [ $TMP_HEIGHT -gt $HEIGHT ] ; then
+        echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
+        HEIGHT=$TMP_HEIGHT
+    fi
+
+    if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
@@ -99,7 +103,11 @@ while read ip; do
     echoInfo "INFO: Active peer found: '$peer'"
     echo "$peer" >> $TMP_BOOK_PUBLIC
     i=$(($i + 1))
-done < $TMP_BOOK 
+    if [ $i -ge 128 ] ; then
+        echoWarn "WARNING: Peer limit (128) reached"
+        break
+    fi
+done < $TMP_BOOK_SHUFF 
 
 if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [ $i -le 0 ] ; then
     echoInfo "INFO: No public addresses were found in the '$TMP_BOOK_PUBLIC'"

@@ -394,7 +394,7 @@ if ($(isPublicIp $NODE_ADDR)) ; then
             echo "$peer" >> $PUBLIC_SEEDS
             i=$(($i + 1))
 
-            [ $i -ge 128 ] && echoInfo "INFO: Peers discovery limit reached..." && break
+            [ $i -ge 16 ] && echoInfo "INFO: Peers discovery limit reached..." && break
         done < $TMP_SHUFFLED_PEERS
 
         echoInfo "INFO: Found total of $i new peers"

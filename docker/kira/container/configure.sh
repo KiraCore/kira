@@ -20,6 +20,7 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found"
+    set +x
     while read peer ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         [ -z "$peer" ] && echo "WARNING: peer not found" && continue
@@ -42,10 +43,12 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
+    set -x
 fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
     echoInfo "INFO: List of external seeds was found"
+    set +x
     while read seed ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         [ -z "$seed" ] && echo "WARNING: seed not found" && continue
@@ -62,6 +65,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
+    set -x
 fi
 
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG

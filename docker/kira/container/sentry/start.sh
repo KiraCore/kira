@@ -24,18 +24,18 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isDirEmpty "$SNAP_DIR_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
-  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
-  sleep 5
+    echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+    sleep 5
 done
 
 while ($(isFileEmpty "$LIP_FILE")) && [ "${NODE_TYPE,,}" == "priv_sentry" ] ; do
-  echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
-  sleep 5
+   echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
+   sleep 5
 done
 
 while ($(isFileEmpty "$PIP_FILE")) && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ); do
-  echoInfo "INFO: Waiting for Public IP to be provisioned... ($(date))"
-  sleep 5
+    echoInfo "INFO: Waiting for Public IP to be provisioned... ($(date))"
+    sleep 5
 done
 
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
@@ -51,41 +51,41 @@ echoInfo "INFO: Snap Height: $SNAP_HEIGHT"
 echoInfo "INFO:   Snap Name: $SNAP_NAME"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
-  rm -rfv $SEKAID_HOME
-  mkdir -p $SEKAID_HOME/config/
+    rm -rfv $SEKAID_HOME
+    mkdir -p $SEKAID_HOME/config/
+  
+    sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
+  
+    rm -fv $SEKAID_HOME/config/node_key.json
+    cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
-  sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
-
-  rm -fv $SEKAID_HOME/config/node_key.json
-  cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
-
-  if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
-    echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
-    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
-        zip -T -v $SNAP_FILE_INPUT
-        rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-        unzip $SNAP_FILE_INPUT -d $DATA_DIR
-    elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
-        cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+        echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+        if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
+            zip -T -v $SNAP_FILE_INPUT
+            rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
+            unzip $SNAP_FILE_INPUT -d $DATA_DIR
+        elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+            cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+        else
+            echoErr "ERROR: Snap file or directory was not found"
+            exit 1
+        fi
+    
+        if [ -f "$DATA_GENESIS" ] ; then
+            echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
+            SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
+                echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+                exit 1
+            else
+                echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+            fi
+        fi
     else
-        echoErr "ERROR: Snap file or directory was not found"
-        exit 1
+        echoInfo "INFO: Snap file is NOT present, starting new sync..."
     fi
-
-    if [ -f "$DATA_GENESIS" ] ; then
-      echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
-      if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
-          echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
-          exit 1
-      else
-          echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
-      fi
-    fi
-  else
-    echoInfo "INFO: Snap file is NOT present, starting new sync..."
-  fi
 fi
 
 if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
