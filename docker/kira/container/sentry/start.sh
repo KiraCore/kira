@@ -85,6 +85,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         fi
     else
         echoInfo "INFO: Snap file is NOT present, starting new sync..."
+        sekaid unsafe-reset-all --home=$SEKAID_HOME
     fi
 fi
 

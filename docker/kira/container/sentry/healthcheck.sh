@@ -43,7 +43,7 @@ if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
         exit 1
     fi
 else
-  echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
+    echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
 fi
 
 echoInfo "INFO: Latest Block Height: $HEIGHT"

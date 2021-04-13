@@ -10,6 +10,7 @@ HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
 EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
+EXECUTED_CHECK="$COMMON_DIR/executed"
 
 touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE"
 
@@ -34,6 +35,11 @@ fi
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate journal"
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
+
+if [ ! -f "$EXECUTED_CHECK" ] ; then
+    echoWarn "WARNING: Setup of the '$NODE_TYPE' node was not finalized yet, no health data available"
+    exit 0
+fi
 
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
