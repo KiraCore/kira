@@ -89,8 +89,50 @@ function isFileEmpty() {
 
 function isDirEmpty() {
     if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
-        echo false
+        echo "false"
     fi
+}
+
+function isSimpleJsonObjOrArr() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false"
+    else
+        HEADS=$(echo "$1" | head -c 8)
+        TAILS=$(echo "$1" | tail -c 8)
+        STR=$(echo "${HEADS}${TAILS}" | tr -d '\n' | tr -d '\r' | tr -d '\a' | tr -d '\t' | tr -d ' ')
+        if ($(isNullOrEmpty "$STR")) ; then echo "false"
+        elif [[ "$STR" =~ ^\{.*\}$ ]] ; then echo "true"
+        elif [[ "$STR" =~ ^\[.*\]$ ]] ; then echo "true"
+        else echo "false"; fi
+    fi
+}
+
+function isSimpleJsonObjOrArrFile() {
+    if [ ! -f "$1" ] ; then echo "false"
+    else
+        HEADS=$(head -c 8 $1)
+        TAILS=$(tail -c 8 $1)
+        echo $(isSimpleJsonObjOrArr "${HEADS}${TAILS}")
+    fi
+}
+
+function jsonMinify() {
+    cat | python -c 'import json, sys;json.dump(json.load(sys.stdin), sys.stdout)'
+}
+
+function jsonQuickParse() {
+    OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null)
+    [ -z "$OUT" ] && exit 1
+    TMP=${OUT%\}}
+    if [ "${TMP,,}" == "true" ] || [ "${TMP,,}" == "false" ] || ($(isNumber "$TMP")) ; then
+        echo $TMP
+    else
+        echo $OUT
+    fi
+}
+
+function pipe() {
+    VAL=$(cat)
+    ($(eval "$1 \"$VAL\"")) && echo "$VAL" || exit 1
 }
 
 displayAlign() {

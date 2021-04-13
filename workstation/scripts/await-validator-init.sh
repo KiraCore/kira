@@ -54,10 +54,9 @@ while [ $i -le 40 ]; do
     fi
 
     echoInfo "INFO: Awaiting node status..."
-    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo -n "")
-    NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo -n "")
-    ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo -n "")
-    if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
+    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonMinify 2> /dev/null || echo -n "")
+    NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
+    if (! $(isNodeId "$NODE_ID")); then
         sleep 12
         echoWarn "WARNING: Status and Node ID is not available"
         continue
@@ -66,8 +65,7 @@ while [ $i -le 40 ]; do
     fi
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
-    HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
-    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo -n "")
+    HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
     (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
     
     if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then

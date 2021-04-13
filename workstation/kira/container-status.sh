@@ -61,11 +61,11 @@ if [ "${EXISTS,,}" == "true" ] ; then
     (jq -rc '.[0].State' $DOCKER_INSPECT || echo -n "") > $DOCKER_STATE
     (jq -rc '.[0].NetworkSettings.Networks' $DOCKER_INSPECT || echo -n "") > $DOCKER_NETWORKS
 
-    STATUS=$(cat $DOCKER_STATE | grep -Eo '"Status"[^,]*' | grep -Eo '[^:]*$' | xargs | awk '{print $1;}' 2> /dev/null || echo -n "")
-    PAUSED=$(cat $DOCKER_STATE | grep -Eo '"Paused"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
-    RESTARTING=$(cat $DOCKER_STATE | grep -Eo '"Restarting"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
-    STARTED_AT=$(cat $DOCKER_STATE | grep -Eo '"StartedAt"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
-    FINISHED_AT=$(cat $DOCKER_STATE | grep -Eo '"FinishedAt"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+    STATUS=$(cat $DOCKER_STATE | jsonQuickParse "Status" 2> /dev/null || echo -n "")
+    PAUSED=$(cat $DOCKER_STATE | jsonQuickParse "Paused" 2> /dev/null || echo -n "")
+    RESTARTING=$(cat $DOCKER_STATE | jsonQuickParse "Restarting" 2> /dev/null || echo -n "")
+    STARTED_AT=$(cat $DOCKER_STATE | jsonQuickParse "StartedAt" 2> /dev/null || echo -n "")
+    FINISHED_AT=$(cat $DOCKER_STATE | jsonQuickParse "FinishedAt" 2> /dev/null || echo -n "")
     HOSTNAME=$(jq -r '.[0].Config.Hostname' $DOCKER_INSPECT 2> /dev/null || echo -n "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
     [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jq -r '.Health.Status' $DOCKER_STATE 2> /dev/null || echo -n "")

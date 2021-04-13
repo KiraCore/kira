@@ -14,8 +14,7 @@ CFG="$SEKAID_HOME/config/config.toml"
 
 touch $BLOCK_HEIGHT_FILE
 
-HEIGHT=$(sekaid status 2>&1 | jq -rc '.SyncInfo.latest_block_height' || echo -n "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(sekaid status 2>&1 | jq -rc '.sync_info.latest_block_height' || echo -n "")
+HEIGHT=$(sekaid status 2>&1 | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)

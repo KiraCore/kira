@@ -40,7 +40,7 @@ if ($(isFileEmpty $TMP_BOOK)) ; then
     exit 0
 fi
 
-CHECKSUM=$(timeout 30 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status | grep -Eo '"genesis_checksum"[^,]*' | grep -Eo '[^:]*$' | xargs || echo -n "")
+CHECKSUM=$(timeout 30 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status | jsonQuickParse "genesis_checksum" || echo -n "")
 if ($(isNullOrEmpty "$CHECKSUM")) ; then
     echoWarn "WARNING: Invalid local genesis checksum '$CHECKSUM'"
     exit 0 
@@ -79,23 +79,23 @@ while read ip; do
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
 
-    chain_id=$(echo "$STATUS" | grep -Eo '"chain_id"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+    chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
 
-    genesis_checksum=$(echo "$STATUS" | grep -Eo '"genesis_checksum"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+    genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum '$genesis_checksum' ($ip)" && continue 
     
-    node_id=$(echo "$KIRA_STATUS" | grep -Eo '"id"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+    node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
     (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
 
     if grep -q "$node_id" "$TMP_BOOK_PUBLIC"; then
         echoWarn "WARNING: Node id '$node_id' is already present in the address book ($ip)" && continue 
     fi
 
-    catching_up=$(echo "$KIRA_STATUS" | grep -Eo '"catching_up"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+    catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
     [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
 
-    latest_block_height=$(echo "$KIRA_STATUS" | grep -Eo '"latest_block_height"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+    latest_block_height=$(echo "$KIRA_STATUS" | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [ $latest_block_height -lt $HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
 

@@ -127,8 +127,8 @@ while : ; do
 
             seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
             sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
             priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 

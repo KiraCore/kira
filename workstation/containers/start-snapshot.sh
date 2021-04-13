@@ -33,14 +33,14 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/conf
 SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
 PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
 
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
-PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.catching_up' 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
+SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
+PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
 
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo -n "")
-PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jq -r '.node_info.network' 2>/dev/null || echo -n "")
+SENTRY_NETWORK=$(echo $SENTRY_STATUS | jsonQuickParse "network" 2>/dev/null || echo -n "")
+PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "network"  2>/dev/null || echo -n "")
 
-SENTRY_BLOCK=$(echo $SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
-PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
+SENTRY_BLOCK=$(echo $SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
+PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
 
 [ $MAX_HEIGHT -le 0 ] && MAX_HEIGHT=$LATETS_BLOCK
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
