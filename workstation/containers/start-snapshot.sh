@@ -80,8 +80,7 @@ cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
 SNAP_DESTINATION_DIR="$COMMON_PATH/snap"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
-rm -fv $SNAP_DESTINATION
-rm -rfv $SNAP_DESTINATION_DIR
+rm -rfv $SNAP_DESTINATION $SNAP_DESTINATION_DIR
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     # copy & repair
@@ -89,6 +88,7 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     mkdir -p "$SNAP_DESTINATION_DIR" && cd $SNAP_DESTINATION_DIR
     jar xvf $SNAP_DESTINATION
     cd $KIRA_HOME
+    rm -fv $SNAP_DESTINATION
 fi
 
 echo "INFO: Cleaning up snapshot container..."
