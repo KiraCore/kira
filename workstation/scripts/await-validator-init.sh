@@ -15,7 +15,7 @@ PREVIOUS_HEIGHT=0
 HEIGHT=0
 i=0
 
-while [ $i -le 40 ]; do
+while [[ $i -le 40 ]]; do
     i=$((i + 1))
 
     echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
@@ -68,7 +68,7 @@ while [ $i -le 40 ]; do
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
     (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
     
-    if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+    if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
         echoWarn "INFO: Please wait, new blocks are not beeing synced or produced yet!"
         sleep 10
         PREVIOUS_HEIGHT=$HEIGHT
@@ -105,7 +105,7 @@ else
     echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
 fi
 
-if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
     echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly."
     exit 1
 fi

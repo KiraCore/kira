@@ -13,7 +13,7 @@ SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want t
 while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
     (! $(isNaturalNumber "$NEW_MAX_SNAPS")) && NEW_MAX_SNAPS=$MAX_SNAPS
-    ([ $NEW_MAX_SNAPS -lt 1 ] || [ $NEW_MAX_SNAPS -gt 1024 ]) && echoWarn "WARNINIG: Max number of snapshots must be wihting range of 1 and 1024" && continue
+    ([[ $NEW_MAX_SNAPS -lt 1 ]] || [[ $NEW_MAX_SNAPS -gt 1024 ]]) && echoWarn "WARNINIG: Max number of snapshots must be wihting range of 1 and 1024" && continue
     MAX_SNAPS=$NEW_MAX_SNAPS
     CDHelper text lineswap --insert="MAX_SNAPS=$MAX_SNAPS" --prefix="MAX_SNAPS=" --path=$ETC_PROFILE --append-if-found-not=True
     break
@@ -29,7 +29,7 @@ if [ "${SELECT,,}" == "c" ]; then
         fi
         
         (! $(isInteger "$NEW_AUTO_BACKUP_INTERVAL")) && echoWarn "WARNING: Input must be a valid integer" && continue
-        [ $NEW_AUTO_BACKUP_INTERVAL -lt 0 ] && echoWarn "WARNING: Input must be an integer larger or equal to 0" && continue
+        [[ $NEW_AUTO_BACKUP_INTERVAL -lt 0 ]] && echoWarn "WARNING: Input must be an integer larger or equal to 0" && continue
         [ "$NEW_AUTO_BACKUP_INTERVAL" == "0" ] && echoInfo "INFO: Auto backup will be disabled" && AUTO_BACKUP_ENABLED="false" && break
         echoInfo "INFO: Auto backup is enabled and will be executed every ${NEW_AUTO_BACKUP_INTERVAL}h"
         AUTO_BACKUP_ENABLED="true"
@@ -63,7 +63,7 @@ if [ "${SELECT,,}" == "s" ]; then
     [ -z "$SNAPSHOTS" ] && SNAPSHOTS_COUNT="0"
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
           
-    if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ]; then
+    if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ]; then
         echoWarn "WARNING: No snapshots were found in the '$DEFAULT_SNAP_DIR' direcory"
         echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
         exit 0
@@ -84,7 +84,7 @@ if [ "${SELECT,,}" == "s" ]; then
             read -p "Input snapshot number 0-$i (Default: latest): " OPTION
             [ -z "$OPTION" ] && break
             [ "${OPTION,,}" == "latest" ] && break
-            [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -le $i ] && break
+            ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
         done
               
         if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ]; then

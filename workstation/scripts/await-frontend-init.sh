@@ -9,7 +9,7 @@ CONTAINER_NAME="frontend"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 
-while [ $i -le 40 ]; do
+while [[ $i -le 40 ]]; do
     i=$((i + 1))
 
     echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."

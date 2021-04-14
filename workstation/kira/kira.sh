@@ -69,7 +69,7 @@ while :; do
     SNAP_LATEST="$SNAP_STATUS/latest"
 
     VALADDR=$(cat $VALADDR_SCAN_PATH 2>/dev/null || echo -n "")
-    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(cat $VALSTATUS_SCAN_PATH 2>/dev/null | jsonParse "status" 2>/dev/null || echo -n "")
+    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(jsonParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
@@ -192,7 +192,7 @@ while :; do
 
     if [ "${LOADING,,}" == "true" ]; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
-    elif [ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]; then
+    elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
@@ -266,13 +266,13 @@ while :; do
         echo "|-----------------------------------------------|"
     fi
 
-    if ([ "${INFRA_MODE,,}" == "validator" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]) || [ "${INFRA_MODE,,}" == "sentry" ] && [ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]; then
+    if ([ "${INFRA_MODE,,}" == "validator" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]]) || [ "${INFRA_MODE,,}" == "sentry" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]]; then
         if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ]; then
             [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
             ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
             INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
             TIME_LEFT=$(($INTERVAL_AS_SECOND - $ELAPSED_TIME))
-            [ $TIME_LEFT -lt 0 ] && TIME_LEFT=0
+            [[ $TIME_LEFT -lt 0 ]] && TIME_LEFT=0
             AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"
         else
             AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
@@ -331,7 +331,7 @@ while :; do
             echoInfo "INFO: Re-starting $name container..."
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
                 touch $EXIT_FILE
-                cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+                cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
                 $KIRA_SCRIPTS/container-restart.sh $name
                 rm -fv "$HALT_FILE" "$EXIT_FILE"
             else
@@ -341,7 +341,7 @@ while :; do
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echoInfo "INFO: Stopping $name container..."
-                cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+                cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
                 $KIRA_SCRIPTS/container-stop.sh $name
                 rm -fv "$HALT_FILE" "$EXIT_FILE"
             else

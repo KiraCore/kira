@@ -89,7 +89,7 @@ while : ; do
     SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
     
-    if [ $SNAPSHOTS_COUNT -le 0 ] || [ -z "$SNAPSHOTS" ] ; then
+    if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
       echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
       exit 0
@@ -113,7 +113,7 @@ while : ; do
         read -p "Input snapshot number 0-$i (Default: latest): " OPTION
         [ -z "$OPTION" ] && break
         [ "${OPTION,,}" == "latest" ] && break
-        [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -le $i ] && break
+        ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
     done
     
     if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then

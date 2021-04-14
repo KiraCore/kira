@@ -104,7 +104,7 @@ CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_
 echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(cat $LOCAL_STATE | jsonQuickParse "height" || echo "0")
 
-if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ] ; then
+if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [[ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
     (jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
     cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE

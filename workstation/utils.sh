@@ -80,7 +80,7 @@ function isInteger() {
 
 function isNaturalNumber() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && ($(isInteger "$1")) && [ $1 -ge 0 ] && VTMP="true"
+        VTMP="false" && ($(isInteger "$1")) && [[ $1 -ge 0 ]] && VTMP="true"
         echo $VTMP
     fi
 }
@@ -125,6 +125,7 @@ function isSimpleJsonObjOrArrFile() {
 
 function jsonParse() {
     QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    FILE="" && [ ! -z "$2" ] && FILE=$(realpath $2 2> /dev/null || echo -n "")
     if [ ! -z "$INPUT" ] ; then
         for k in ${INPUT//./ } ; do
             k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
@@ -132,7 +133,11 @@ function jsonParse() {
             ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
         done
     fi
-    cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));"
+    if [ ! -z "$FILE" ] ; then
+        python3 -c "import json,sys;f=open('$FILE',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));f.close()"
+    else
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));"
+    fi
 }
 
 function jsonQuickParse() {
@@ -157,9 +162,9 @@ function urlExists() {
 # TODO: Investigate 0 output
 # urlContentLength 18.168.78.192:11000/download/snapshot.zip 
 function urlContentLength() {
-    CONTENT_LENGTH=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 | awk '{print $2}' 2> /dev/null | xargs 2> /dev/null || echo "")
-    (! $(isNaturalNumber $CONTENT_LENGTH)) && CONTENT_LENGTH=0
-    echo $CONTENT_LENGTH
+    VAL=$(curl --fail $url --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 2> /dev/null | awk '{print $2}' 2> /dev/null || echo -n "")
+    (! $(isNaturalNumber $VAL)) && VAL=0
+    echo $VAL
 }
 
 displayAlign() {

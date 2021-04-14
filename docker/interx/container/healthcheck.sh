@@ -44,14 +44,14 @@ PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" >$BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
-if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
+if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     echoWarn "WARNING: Blocks are not beeing produced or synced"
     echoWarn "WARNING: Current height: $HEIGHT"
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
     echoWarn "WARNING: Consensus Stopped: $CONSENSUS_STOPPED"
 
-    if [ $LATEST_BLOCK_HEIGHT -ge 1 ] && [ $LATEST_BLOCK_HEIGHT -le $HEIGHT ] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
+    if [[ $LATEST_BLOCK_HEIGHT -ge 1 ]] && [[ $LATEST_BLOCK_HEIGHT -le $HEIGHT ]] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
         echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
     else
         exit 1

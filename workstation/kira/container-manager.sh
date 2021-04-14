@@ -218,7 +218,7 @@ while : ; do
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
             touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh $NAME
             echo "INFO: Waiting for container to start..."
             sleep 3
@@ -237,7 +237,7 @@ while : ; do
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
         touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-restart.sh $NAME
         rm -fv "$HALT_FILE" "$EXIT_FILE"
         LOADING="true" && EXECUTED="true"
@@ -250,14 +250,14 @@ while : ; do
             touch "$HALT_FILE" "$EXIT_FILE"
         fi
 
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         echo "INFO: Restarting container..."
         $KIRA_SCRIPTS/container-restart.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
         touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-stop.sh $NAME
         rm -fv "$HALT_FILE" "$EXIT_FILE"
         LOADING="true" && EXECUTED="true"
@@ -292,9 +292,9 @@ while : ; do
             fi
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
-            ( [ $LOG_LINES -gt $LINES_MAX ] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
-            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
-            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
+            ( [[ $LOG_LINES -gt $LINES_MAX ]] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
+            [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
+            [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
@@ -312,7 +312,7 @@ while : ; do
             fi
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"
@@ -336,9 +336,9 @@ while : ; do
             docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
-            [ $LOG_LINES -gt $LINES_MAX ] && LOG_LINES=$LINES_MAX
-            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
-            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
+            [[ $LOG_LINES -gt $LINES_MAX ]] && LOG_LINES=$LINES_MAX
+            [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
+            [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
@@ -348,7 +348,7 @@ while : ; do
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"

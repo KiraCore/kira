@@ -21,7 +21,7 @@ while : ; do
     i=0
     NODE_ID=""
     IS_STARTED="false"
-    while [ $i -le 40 ]; do
+    while [[ $i -le 40 ]]; do
         i=$((i + 1))
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
@@ -59,7 +59,7 @@ while : ; do
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
-        if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+        if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
             echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
             [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
             sleep 10
@@ -92,7 +92,7 @@ while : ; do
         echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
     fi
 
-    if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+    if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
         echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
         FAILURE="true"
     fi
@@ -111,7 +111,7 @@ while : ; do
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
             touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+            cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
             $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
             rm -fv "$HALT_FILE" "$EXIT_FILE"
             sleep 5
@@ -142,7 +142,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [ $i -lt 3 ] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -lt 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
 
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
             set -x
@@ -157,10 +157,10 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [ $HEIGHT -gt $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+        [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
-        if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
+        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
@@ -177,7 +177,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
-    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
+    cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 10 ]] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
     echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
     $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
     rm -fv "$HALT_FILE" "$EXIT_FILE"
