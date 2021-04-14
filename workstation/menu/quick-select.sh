@@ -408,9 +408,9 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     fi
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 fi
 
-($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_PEERS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
+($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
 
 echoInfo "INFO: Finished quick select!"
