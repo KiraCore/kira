@@ -86,7 +86,7 @@ function isNaturalNumber() {
 }
 
 function isFileEmpty() {
-    if [ -z "$1" ] || [ ! -f "$1" ] || [ ! -s "$1" ] ; then echo "true" ; else
+    if [ -z "$1" ] || [ ! -f $1 ] || [ ! -s $1 ] ; then echo "true" ; else
         if [[ -z $(grep '[^[:space:]]' $1) ]] ; then
             echo "true"
         else
@@ -124,34 +124,42 @@ function isSimpleJsonObjOrArrFile() {
 }
 
 function jsonParse() {
-    INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
-    QUERY=""
+    QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
     if [ ! -z "$INPUT" ] ; then
         for k in ${INPUT//./ } ; do
-            k=$(echo $k | xargs 2> /dev/null || echo -n "")
-            [ -z "$k" ] && continue
+            k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
+            [[ "$k" =~ ^\[.*\]$ ]] && QUERY="${QUERY}${k}" && continue
             ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
         done
     fi
-    if [ -z "$QUERY" ] ; then
-        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj, separators=(',', ':')).strip(' \t\n\r\"'));"
-    else
-        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY, separators=(',', ':')).strip(' \t\n\r\"'));"
-    fi
+    cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));"
 }
 
 function jsonQuickParse() {
-    OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)
-    [ -z "$OUT" ] && exit 1
-    echo ${OUT%\}}
+    if [ -z "$2" ] ; then
+        OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)
+    else
+        ($(isFileEmpty $2)) && return 2
+        OUT=$(grep -Eo "\"$1\"[^,]*" $2 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)
+    fi
+    OUT=${OUT%\}}
+    ($(isNullOrEmpty "$OUT")) && return 1
+    echo "$OUT"
 }
 
 # e.g. urlExists "18.168.78.192:11000/download/peers.txt"
-# e.g. urlExists "18.168.78.192:11000/download/snapshot.zip"
 function urlExists() {
     if ($(isNullOrEmpty "$1")) ; then echo "false"
-    elif curl --output /dev/null --silent --head --fail "$1"; then echo "true"
+    elif curl -r0-0 --fail --silent "$1" >/dev/null; then echo "true"
     else echo "false" ; fi
+}
+
+# TODO: Investigate 0 output
+# urlContentLength 18.168.78.192:11000/download/snapshot.zip 
+function urlContentLength() {
+    CONTENT_LENGTH=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 | awk '{print $2}' 2> /dev/null | xargs 2> /dev/null || echo "")
+    (! $(isNaturalNumber $CONTENT_LENGTH)) && CONTENT_LENGTH=0
+    echo $CONTENT_LENGTH
 }
 
 displayAlign() {

@@ -33,7 +33,7 @@ echoInfo "INFO: Latest Block Height: $HEIGHT"
 
 # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
 echoInfo "INFO: Updating commit timeout..."
-ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jsonQuickParse "active_validators"|| echo "0")
+ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
 if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
     TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)

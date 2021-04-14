@@ -106,7 +106,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if $(isNodeId "$SEED_NODE_ID") ; then
                 SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
                 echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
-            else echoWarn "WARNING: Seed node ID was NOT found" ; fi
+            else echoWarn "WARNING: Seed node ID was NOT found" && SEED_NODE_ADDR="" ; fi
         else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
 
         SENTRY_NODE_ADDR=""
@@ -115,7 +115,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if $(isNodeId "$NODE_ID") ; then
                 SENTRY_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
-            else echoWarn "WARNING: Sentry node ID was NOT found" ; fi
+            else echoWarn "WARNING: Sentry node ID was NOT found" && SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
 
         PRIV_SENTRY_NODE_ADDR=""
@@ -124,17 +124,22 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
                 PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
-            else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
+            else echoWarn "WARNING: Private sentry node ID was NOT found" && PRIV_SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
         
         if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
+        elif (! $(isPublicIp $NODE_ADDR)) && [ -z "$PRIV_SENTRY_NODE_ADDR" ] ; then
+            echoWarn "WARNINIG: Node address '$NODE_ADDR' is a local IP but private sentry port is closed or node Id could not be found, choose diffrent public or private node to connect to"
+            continue
+        else
+            echoInfo "INFO: Success address '$NODE_ADDR' has at least one exposed node"
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-        if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
+        if ($(urlExists "$SNAP_URL")) ; then
             echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
@@ -187,8 +192,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if [ "${UNZIP_FAILED,,}" == "false" ] ; then
                 DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
                 SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-                SNAP_NETWORK=$(cat $DATA_GENESIS 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
-                SNAP_HEIGHT=$(cat $SNAP_INFO 2> /dev/null | jsonQuickParse "height" 2> /dev/null || echo -n "")
+                SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
+                SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
                 (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     
                 if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
@@ -223,12 +228,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
             cp -a -f -v "$TMP_GENESIS_PATH.tmp" "$TMP_GENESIS_PATH" || echo "WARNING: Genesis copy failed"
-            GENESIS_NETWORK=$(cat $TMP_GENESIS_PATH 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
+            GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                 rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
                 wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-                GENESIS_NETWORK=$(cat $TMP_GENESIS_PATH 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
+                GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
             fi
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
@@ -405,5 +410,7 @@ else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
 fi
+
+($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_PEERS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
 
 echoInfo "INFO: Finished quick select!"

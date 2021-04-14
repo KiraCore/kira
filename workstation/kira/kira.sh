@@ -83,7 +83,7 @@ while :; do
     PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2>/dev/null || echo "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo -n "")"
     KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
-    CONSENSUS_STOPPED="$(cat $CONSENSUS_COMM_RO_PATH 2>/dev/null | jsonQuickParse "consensus_stopped" 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
+    CONSENSUS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
     
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
@@ -111,7 +111,7 @@ while :; do
                 continue
             fi
 
-            SYNCING_TMP=$(cat $SEKAID_STATUS_FILE 2>/dev/null | jsonQuickParse "catching_up" 2>/dev/null || echo "false")
+            SYNCING_TMP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo "false")
 
             # if some other node then snapshot is syncig then infra is not ready
             [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
@@ -148,12 +148,12 @@ while :; do
         echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
     
     if [ "${LOADING,,}" == "false" ]; then
-        KIRA_NETWORK=$(cat $LATEST_STATUS_SCAN_PATH 2>/dev/null | jsonQuickParse "network" 2>/dev/null || echo -n "")
+        KIRA_NETWORK=$(jsonQuickParse "network" $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo -n "")
         ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK="???"
         if (! $(isNaturalNumber "$KIRA_BLOCK")) || [ "$KIRA_BLOCK" == "0" ]; then
             KIRA_BLOCK="???"
         else
-            SECONDS_PER_BLOCK="$(cat $CONSENSUS_COMM_RO_PATH 2>/dev/null | jsonQuickParse "average_block_time" 2>/dev/null || echo -n "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
+            SECONDS_PER_BLOCK="$(jsonQuickParse $CONSENSUS_COMM_RO_PATH "average_block_time" 2>/dev/null || echo -n "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
             ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
         fi
 
@@ -162,9 +162,9 @@ while :; do
         [ -z "$GENESIS_SHA256" ] && GENESIS_SHA256="????????????"
         echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
 
-        VALACTIVE="$(cat $VALOPERS_COMM_RO_PATH 2>/dev/null | jsonQuickParse "active_validators" 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALACTIVE")) && VALACTIVE="???"
-        VALTOTAL="$(cat $VALOPERS_COMM_RO_PATH 2>/dev/null | jsonQuickParse "total_validators" 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALTOTAL")) && VALTOTAL="???"
-        VALWAITING="$(cat $VALOPERS_COMM_RO_PATH 2>/dev/null | jsonQuickParse "waiting_validators" 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALWAITING")) && VALWAITING="???"
+        VALACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALACTIVE")) && VALACTIVE="???"
+        VALTOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALTOTAL")) && VALTOTAL="???"
+        VALWAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALWAITING")) && VALWAITING="???"
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
