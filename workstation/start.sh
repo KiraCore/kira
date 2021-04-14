@@ -167,6 +167,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
         $KIRA_MANAGER/containers/start-sentry.sh
     else
         echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+        exit 1
     fi
 
     $KIRA_MANAGER/containers/start-seed.sh
@@ -189,6 +190,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
             $KIRA_MANAGER/containers/start-sentry.sh
         else
             echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+            exit 1
         fi
         $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 

@@ -61,14 +61,14 @@ if [ "${EXISTS,,}" == "true" ] ; then
     (cat $DOCKER_INSPECT | jsonParse "0.State" || echo -n "") > $DOCKER_STATE
     (cat $DOCKER_INSPECT | jsonParse "0.NetworkSettings.Networks" || echo -n "") > $DOCKER_NETWORKS
 
-    STATUS=$(cat $DOCKER_STATE | jsonQuickParse "Status" 2> /dev/null || echo -n "")
-    PAUSED=$(cat $DOCKER_STATE | jsonQuickParse "Paused" 2> /dev/null || echo -n "")
-    RESTARTING=$(cat $DOCKER_STATE | jsonQuickParse "Restarting" 2> /dev/null || echo -n "")
-    STARTED_AT=$(cat $DOCKER_STATE | jsonQuickParse "StartedAt" 2> /dev/null || echo -n "")
-    FINISHED_AT=$(cat $DOCKER_STATE | jsonQuickParse "FinishedAt" 2> /dev/null || echo -n "")
+    STATUS=$(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "")
+    PAUSED=$(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")
+    RESTARTING=$(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "")
+    STARTED_AT=$(jsonQuickParse "StartedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
+    FINISHED_AT=$(jsonQuickParse "FinishedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
     HOSTNAME=$(cat $DOCKER_INSPECT | jsonParse "0.Config.Hostname" 2> /dev/null || echo -n "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
-    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jq -r '.Health.Status' $DOCKER_STATE 2> /dev/null || echo -n "")
+    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jsonParse "Health.Status" 2> /dev/null || echo -n "")
 
     for net in $NETWORKS; do
         sleep 0.1

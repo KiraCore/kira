@@ -71,12 +71,12 @@ for name in $CONTAINERS; do
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        CATCHING_UP=$(cat $STATUS_PATH | jsonQuickParse "catching_up" || echo "false")
+        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
-        LATEST_BLOCK=$(cat $STATUS_PATH | jsonQuickParse "latest_block_height" || echo "0")
+        LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
-            NODE_ID=$(car $STATUS_PATH | jsonQuickParse "id" 2> /dev/null  || echo "false")
+            NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 

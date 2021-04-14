@@ -80,7 +80,7 @@ while read ip; do
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
-    if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
+    if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
 
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
@@ -114,6 +114,7 @@ done < $TMP_BOOK_SHUFF
 
 if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [ $i -le 0 ] ; then
     echoInfo "INFO: No public addresses were found in the '$TMP_BOOK_PUBLIC'"
+    sleep 60
     exit 0
 fi
 

@@ -26,7 +26,7 @@ if [ -f "$SNAP_FINALIZYNG" ] ; then
 fi
 
 LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
-CONSENSUS_STOPPED=$(cat $COMMON_CONSENSUS | jsonQuickParse "consensus_stopped" || echo -n "")
+CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
 HEIGHT=$(sekaid status 2>&1 | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
