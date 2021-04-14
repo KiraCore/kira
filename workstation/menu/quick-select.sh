@@ -411,6 +411,9 @@ else
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 fi
 
-($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
+if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) ; then 
+    echoErr "ERROR: No public or private seeds were found"
+    exit 1
+fi
 
 echoInfo "INFO: Finished quick select!"
