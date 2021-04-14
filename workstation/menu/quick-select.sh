@@ -83,16 +83,16 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
 
         STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-            STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
+            STATUS=$(timeout 3 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         fi
-         
-        HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jq -rc '.node_info.network' 2>/dev/null || echo -n "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo -n "")
+        
+        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
+        NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" 2> /dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ -z "${NODE_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
             echo "INFO: Could NOT read status, block height, chian-id or node-id"
@@ -187,8 +187,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
             if [ "${UNZIP_FAILED,,}" == "false" ] ; then
                 DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
                 SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-                SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
-                SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo -n "")
+                SNAP_NETWORK=$(cat $DATA_GENESIS 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
+                SNAP_HEIGHT=$(cat $SNAP_INFO 2> /dev/null | jsonQuickParse "height" 2> /dev/null || echo -n "")
                 (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     
                 if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
@@ -223,12 +223,12 @@ elif [ "${SELECT,,}" == "j" ] ; then
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
             jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
             cp -a -f -v "$TMP_GENESIS_PATH.tmp" "$TMP_GENESIS_PATH" || echo "WARNING: Genesis copy failed"
-            GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+            GENESIS_NETWORK=$(cat $TMP_GENESIS_PATH 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                 rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
                 wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-                GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+                GENESIS_NETWORK=$(cat $TMP_GENESIS_PATH 2> /dev/null | jsonQuickParse "chain_id" 2> /dev/null || echo -n "")
             fi
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
@@ -251,7 +251,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 echo "INFO: Default minmum block height is $HEIGHT"
                 echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
                 [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
-                ( [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+                ( (! $(isNaturalNumber "$VALIDATOR_MIN_HEIGHT")) || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 set -x
                 break
             done
@@ -373,20 +373,20 @@ if ($(isPublicIp $NODE_ADDR)) ; then
             if ! timeout 0.1 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue  ; fi
 
             STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-            STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+            STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
             if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
             KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-            KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo -n "")
+            KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
             if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
 
-            chain_id=$(echo "$STATUS" | grep -Eo '"chain_id"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" 2> /dev/null || echo "")
             [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
 
-            catching_up=$(echo "$KIRA_STATUS" | grep -Eo '"catching_up"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" 2>/dev/null || echo "")
             [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
 
-            latest_block_height=$(echo "$KIRA_STATUS" | grep -Eo '"latest_block_height"[^,]*' | grep -Eo '[^:]*$' | xargs || echo "")
+            latest_block_height=$(echo "$KIRA_STATUS" | jsonQuickParse "latest_block_height" || echo "")
             (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
             [ $latest_block_height -lt $VALIDATOR_MIN_HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$VALIDATOR_MIN_HEIGHT' ($ip)" && continue 
 

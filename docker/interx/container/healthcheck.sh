@@ -34,11 +34,9 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || e
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate common logs"
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
-CONSENSUS_STOPPED=$(jq -rc '.consensus_stopped' $COMMON_CONSENSUS || echo -n "")
-HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
-
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl 127.0.0.1:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
+LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "") 
+CONSENSUS_STOPPED=$(cat $COMMON_CONSENSUS | jsonQuickParse "consensus_stopped" || echo -n "")
+HEIGHT=$(curl --fail 127.0.0.1:11000/api/kira/status | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 

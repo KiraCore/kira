@@ -50,7 +50,7 @@ while : ; do
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
-            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jq -r '.address' 2> /dev/null || echo -n "") > "$KADDR_PATH" &
+            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi
@@ -58,12 +58,12 @@ while : ; do
     if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         SEKAID_STATUS_FILE="${CONTAINER_STATUS}.sekaid.status"
         if [ "${NAME,,}" != "interx" ] ; then 
-            KIRA_NODE_ID=$(jq -r '.node_info.id' $SEKAID_STATUS_FILE 2> /dev/null || echo -n "")
+            KIRA_NODE_ID=$(cat $SEKAID_STATUS_FILE 2> /dev/null | jsonQuickParse "id" 2> /dev/null  | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
-        KIRA_NODE_CATCHING_UP=$(jq -r '.sync_info.catching_up' $SEKAID_STATUS_FILE 2> /dev/null || echo -n "")
+        KIRA_NODE_CATCHING_UP=$(cat $SEKAID_STATUS_FILE 2> /dev/null | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
-        KIRA_NODE_BLOCK=$(jq -r '.sync_info.latest_block_height' $SEKAID_STATUS_FILE 2> /dev/null || echo "0")
+        KIRA_NODE_BLOCK=$(cat $SEKAID_STATUS_FILE 2> /dev/null | jsonQuickParse "latest_block_height" 2> /dev/null || echo "0")
         (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
 
@@ -143,11 +143,11 @@ while : ; do
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
         if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
-            VSTATUS=$(jq -rc '.status' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
-            VTOP=$(jq -rc '.top' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
-            VRANK=$(jq -rc '.rank' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
-            VSTREAK=$(jq -rc '.streak' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
-            VMISSED=$(jq -rc '.missed_blocks_counter' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+            VSTATUS=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "status" 2> /dev/null || echo -n "")
+            VTOP=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "top" 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
+            VRANK=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "rank" 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(cat $VALINFO_SCAN_PATH  | jsonQuickParse "streak" 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "missed_blocks_counter" 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"

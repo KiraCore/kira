@@ -65,7 +65,7 @@ docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
-FAUCET_ADDR=$(curl 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' || echo -n "")
+FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
 
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
 $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
@@ -73,7 +73,7 @@ $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do
         echoInfo "INFO: Demo mode detected, attempting to transfer funds into INTERX account..."
-        FAILED="false" && docker exec -i validator sekaid tx bank send validator $FAUCET_ADDR 100000000ukex --keyring-backend=test --chain-id "$NETWORK_NAME" --home=$SEKAID_HOME --fees 100ukex --yes || FAILED="true"
+        FAILED="false" && docker exec -i validator sekaid tx bank send validator $FAUCET_ADDR 100000000ukex --gas=1000000000 --keyring-backend=test --chain-id "$NETWORK_NAME" --home=$SEKAID_HOME --fees 100ukex --yes || FAILED="true"
         [ "${FAILED,,}" == "false" ] && echoInfo "INFO: Success, funds were sent to faucet account ($FAUCET_ADDR)" && break
         echoWarn "WARNING: Failed to transfer funds into INTERX faucet account, retry in 10 seconds"
         sleep 10

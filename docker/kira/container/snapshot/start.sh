@@ -110,9 +110,8 @@ i=0
 PID1=""
 while :; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo -n "")
-  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo -n "")
-  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo -n "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
   if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then

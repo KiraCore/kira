@@ -10,5 +10,3 @@ if [ -z "$id" ] || [[ "$id" == *"sha256"* ]] ; then
 else
     echo "$id"
 fi 
-
-# STATUS=$(docker inspect $($KIRA_SCRIPTS/container-id.sh "frontend") | jq -rc '.[0].State.Status')

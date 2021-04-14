@@ -49,11 +49,11 @@ for name in $CONTAINERS; do
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo -n "") > $DESTINATION_STATUS_PATH
-        echo $(timeout 1 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null | jq -rc '.' 2> /dev/null || echo -n "") > $INTERX_STATUS_PATH
+        echo $(timeout 1 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 1 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") > $INTERX_STATUS_PATH
     fi
 done
 
@@ -71,13 +71,12 @@ for name in $CONTAINERS; do
     cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        CATCHING_UP=$(jq -rc '.sync_info.catching_up' $STATUS_PATH 2>/dev/null || echo "false")
+        CATCHING_UP=$(cat $STATUS_PATH | jsonQuickParse "catching_up" || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
-        LATEST_BLOCK=$(jq -rc '.sync_info.latest_block_height' $STATUS_PATH 2>/dev/null || echo "0")
+        LATEST_BLOCK=$(cat $STATUS_PATH | jsonQuickParse "latest_block_height" || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
-            NODE_ID=$(jq -rc '.NodeInfo.id' $STATUS_PATH 2>/dev/null || echo "false")
-            ( ! $(isNodeId "$NODE_ID")) && NODE_ID=$(jq -rc '.node_info.id' $STATUS_PATH 2>/dev/null || echo -n "")
+            NODE_ID=$(car $STATUS_PATH | jsonQuickParse "id" 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 

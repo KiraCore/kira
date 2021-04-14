@@ -7,15 +7,19 @@ set -x
 SCRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 VALIDATORS64_SCAN_PATH="$SCAN_DIR/validators64"
 VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
 VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
+
+VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
 CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
+VALIDATORS_SCAN_PATH="$SCAN_DIR/validators"
+VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
+CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|       STARTING KIRA VALIDATORS SCAN v0.2.2.4 |"
+echoWarn "|    STARTING KIRA VALIDATORS SCAN v0.2.3.2    |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
@@ -28,12 +32,12 @@ set -x
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echo "INFO: Saving valopers info..."
-(timeout 60 curl "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" | jq -rc '.' || echo -n "") > $VALOPERS_SCAN_PATH
-(timeout 60 curl "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" | jq -rc '.' || echo -n "") > $CONSENSUS_SCAN_PATH
+(timeout 60 curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
+(timeout 60 curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
 
 # let containers know the validators info
-cp -afv "$VALOPERS_SCAN_PATH" "$DOCKER_COMMON_RO/valopers"
-cp -afv "$CONSENSUS_SCAN_PATH" > "$DOCKER_COMMON_RO/consensus"
+($(isSimpleJsonObjOrArrFile "$VALOPERS_SCAN_PATH")) && cp -afv "$VALOPERS_SCAN_PATH" "$VALOPERS_COMM_RO_PATH" || echo -n "" > "$VALOPERS_COMM_RO_PATH"
+($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
     echo "INFO: Validator info will the scanned..."
@@ -45,7 +49,7 @@ else
 fi
 
 VALSTATUS=""
-VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test || echo -n "")
+VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test | xargs || echo -n "")
 if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
     echo "$VALADDR" > $VALADDR_SCAN_PATH
 else
@@ -53,14 +57,14 @@ else
 fi
 
 if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
-    VALSTATUS=$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json | jq -rc '.' || echo -n "")
+    VALSTATUS=$(timeout 10 echo "$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json)" | jsonParse "" || echo -n "")
 else
     VALSTATUS=""
 fi
 
 if [ -z "$VALSTATUS" ] ; then
     echoErr "ERROR: Validator address or status was not found"
-    WAITING=$(jq '.waiting' $VALOPERS_SCAN_PATH || echo -n "" )
+    WAITING=$(cat $VALOPERS_COMM_RO_PATH | jsonParse "waiting" || echo -n "" )
     if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
         echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
     else
@@ -71,7 +75,9 @@ else
 fi
 
 VALOPER_FOUND="false"
-(jq -rc '.validators | .[] | @base64' $VALOPERS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
+cat $VALOPERS_COMM_RO_PATH | jsonParse "validators" > $VALIDATORS_SCAN_PATH
+(jq -rc '.[] | @base64' $VALIDATORS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
+
 if ($(isFileEmpty "$VALIDATORS64_SCAN_PATH")) ; then
     echoWarn "WARNING: Failed to querry velopers info"
     echo -n "" > $VALINFO_SCAN_PATH
@@ -79,7 +85,7 @@ else
     while IFS="" read -r row || [ -n "$row" ] ; do
     sleep 0.1
         vobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        vaddr=$(echo "$vobj" | grep -Eo '"address"[^,]*' | grep -Eo '[^:]*$' | xargs 2> /dev/null || echo -n "")
+        vaddr=$(echo "$vobj" | jsonQuickParse "address" 2> /dev/null || echo -n "")
         if [ "$VALADDR" == "$vaddr" ] ; then
             echo "$vobj" > $VALINFO_SCAN_PATH
             VALOPER_FOUND="true"
@@ -94,7 +100,7 @@ if [ "${VALOPER_FOUND,,}" != "true" ] ; then
     exit 0
 fi
 
-sleep 5
+sleep 10
 
 set +x
 echoWarn "------------------------------------------------"

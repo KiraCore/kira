@@ -3,8 +3,16 @@
 REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
+REGEX_TXHASH="^[a-fA-F0-9]{64}$"
 REGEX_NUMBER="^[+-]?([0-9]*[.])?([0-9]+)?$"
 REGEX_PUBLIC_IP='^([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31))(?<!127)(?<!^10)(?<!^0)\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!192\.168)(?<!172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31))\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!\.255$)(?<!\b255.255.255.0\b)(?<!\b255.255.255.242\b)$'
+
+function isTxHash() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
+        VTMP="false" && [[ "$1" =~ $REGEX_TXHASH ]] && VTMP="true"
+        echo $VTMP
+    fi
+}
 
 function isNullOrEmpty() {
     if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "true" ; else echo "false" ; fi
@@ -89,8 +97,60 @@ function isFileEmpty() {
 
 function isDirEmpty() {
     if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
-        echo false
+        echo "false"
     fi
+}
+
+function isSimpleJsonObjOrArr() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false"
+    else
+        HEADS=$(echo "$1" | head -c 8)
+        TAILS=$(echo "$1" | tail -c 8)
+        STR=$(echo "${HEADS}${TAILS}" | tr -d '\n' | tr -d '\r' | tr -d '\a' | tr -d '\t' | tr -d ' ')
+        if ($(isNullOrEmpty "$STR")) ; then echo "false"
+        elif [[ "$STR" =~ ^\{.*\}$ ]] ; then echo "true"
+        elif [[ "$STR" =~ ^\[.*\]$ ]] ; then echo "true"
+        else echo "false"; fi
+    fi
+}
+
+function isSimpleJsonObjOrArrFile() {
+    if [ ! -f "$1" ] ; then echo "false"
+    else
+        HEADS=$(head -c 8 $1)
+        TAILS=$(tail -c 8 $1)
+        echo $(isSimpleJsonObjOrArr "${HEADS}${TAILS}")
+    fi
+}
+
+function jsonParse() {
+    INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    QUERY=""
+    if [ ! -z "$INPUT" ] ; then
+        for k in ${INPUT//./ } ; do
+            k=$(echo $k | xargs 2> /dev/null || echo -n "")
+            [ -z "$k" ] && continue
+            ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
+        done
+    fi
+    if [ -z "$QUERY" ] ; then
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj, separators=(',', ':')).strip(' \t\n\r\"'));"
+    else
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY, separators=(',', ':')).strip(' \t\n\r\"'));"
+    fi
+}
+
+function jsonQuickParse() {
+    OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)
+    [ -z "$OUT" ] && exit 1
+    echo ${OUT%\}}
+}
+
+# e.g. urlExists "18.168.78.192:11000/download/peers.txt"
+function urlExists() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false"
+    elif curl --output /dev/null --silent --head --fail "$1"; then echo "true"
+    else echo "false" ; fi
 }
 
 displayAlign() {

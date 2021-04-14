@@ -42,7 +42,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         exit 1
     fi
 
-    SNAP_HEIGHT=$(jq -rc '.height' $SNAP_INFO || echo "0")
+    SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
     echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"
 
     if [ -f "$DATA_GENESIS" ] ; then

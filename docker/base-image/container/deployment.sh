@@ -13,10 +13,12 @@ apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     file build-essential net-tools hashdeep make nodejs node-gyp tar unzip xz-utils yarn zip p7zip-full \
     protobuf-compiler golang-goprotobuf-dev golang-grpc-gateway golang-github-grpc-ecosystem-grpc-gateway-dev \
-    clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq 
+    clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq python python3 python3-pip
 
 apt update -y
-apt install -y bc dnsutils psmisc netcat default-jre default-jdk 
+apt install -y bc dnsutils psmisc netcat default-jre default-jdk
+
+pip3 install ECPy
 
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.6"

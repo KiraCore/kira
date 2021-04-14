@@ -27,7 +27,7 @@ for (( i=0; i<${len}; i++ )) ; do
     for container in $containers ; do
       echo "INFO: Checking $container network info"
       id=$($KIRA_SCRIPTS/container-id.sh "$container")
-      ip=$(timeout 4 docker inspect $id | jq -rc ".[0].NetworkSettings.Networks.${network}.IPAddress" || echo -n "")
+      ip=$(timeout 4 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${network}.IPAddress" || echo -n "")
       dns="${container,,}.${network,,}.local"
 
       currentDNS=$(getent hosts $dns | awk '{ print $1 }' || echo -n "")
