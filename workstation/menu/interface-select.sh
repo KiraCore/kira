@@ -1,6 +1,7 @@
 #!/bin/bash
 set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 
 echo -en "\e[31;1mPlease select your default internet connected network interface:\e[0m" && echo ""
 
@@ -18,7 +19,7 @@ OPTION=""
 while : ; do
     read -p "Input interface number 0-$i (Default: $IFACE): " OPTION
     [ -z "$OPTION" ] && break
-    [[ $OPTION == ?(-)+([0-9]) ]] && [ $OPTION -ge 0 ] && [ $OPTION -le $i ] && break
+    ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
 done
 
 if [ ! -z "$OPTION" ] ; then

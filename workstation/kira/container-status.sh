@@ -58,21 +58,21 @@ echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
 
 if [ "${EXISTS,,}" == "true" ] ; then
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
-    (cat $DOCKER_INSPECT | jsonParse "0.State" || echo -n "") > $DOCKER_STATE
-    (cat $DOCKER_INSPECT | jsonParse "0.NetworkSettings.Networks" || echo -n "") > $DOCKER_NETWORKS
+    (jsonParse "0.State" $DOCKER_INSPECT || echo -n "") > $DOCKER_STATE
+    (jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT || echo -n "") > $DOCKER_NETWORKS
 
     STATUS=$(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "")
     PAUSED=$(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")
     RESTARTING=$(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "")
     STARTED_AT=$(jsonQuickParse "StartedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
     FINISHED_AT=$(jsonQuickParse "FinishedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
-    HOSTNAME=$(cat $DOCKER_INSPECT | jsonParse "0.Config.Hostname" 2> /dev/null || echo -n "")
+    HOSTNAME=$(jsonParse "0.Config.Hostname" $DOCKER_INSPECT 2> /dev/null || echo -n "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
-    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(echo "$DOCKER_STATE" | jsonParse "Health.Status" 2> /dev/null || echo -n "")
+    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "")
 
     for net in $NETWORKS; do
         sleep 0.1
-        IP_TMP=$(cat $DOCKER_NETWORKS | jsonParse "$net.IPAddress" 2> /dev/null || echo -n "")
+        IP_TMP=$(jsonParse "$net.IPAddress" $DOCKER_NETWORKS 2> /dev/null || echo -n "")
         (! $(isNullOrEmpty "$IP_TMP")) && echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE || echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
     done
 else

@@ -131,7 +131,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         
         echoInfo "INFO: Re-starting $CONTAINER container..."
         touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
+        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$CONTAINER' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
         $KIRA_SCRIPTS/container-restart.sh $CONTAINER
         rm -fv "$HALT_FILE" "$EXIT_FILE"
     elif [ "${OPTION,,}" == "f" ]; then

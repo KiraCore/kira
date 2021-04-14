@@ -64,7 +64,7 @@ fi
 
 if [ -z "$VALSTATUS" ] ; then
     echoErr "ERROR: Validator address or status was not found"
-    WAITING=$(cat $VALOPERS_COMM_RO_PATH | jsonParse "waiting" || echo -n "" )
+    WAITING=$(jsonParse "waiting" $VALOPERS_COMM_RO_PATH || echo -n "" )
     if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
         echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
     else
@@ -75,7 +75,7 @@ else
 fi
 
 VALOPER_FOUND="false"
-cat $VALOPERS_COMM_RO_PATH | jsonParse "validators" > $VALIDATORS_SCAN_PATH
+jsonParse "validators" $VALOPERS_COMM_RO_PATH > $VALIDATORS_SCAN_PATH
 (jq -rc '.[] | @base64' $VALIDATORS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
 
 if ($(isFileEmpty "$VALIDATORS64_SCAN_PATH")) ; then

@@ -46,11 +46,11 @@ function txAwait() {
                 exit 1
             fi
         else
-            [ $TIMEOUT -le 0 ] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
+            [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
             echoWarn "WARNING: Transaction was not found, elapsed ${ELAPSED}/${MAX_TIME} s"
         fi
 
-        if [ $TIMEOUT -gt 0 ] && [ $ELAPSED -gt $TIMEOUT ] ; then
+        if [[ $TIMEOUT -gt 0 ]] && [[ $ELAPSED -gt $TIMEOUT ]] ; then
             echoInfo "INFO: Transaction query response was NOT received:"
             echo $RAW | jq 2> /dev/null || echoErr "$RAW"
             echoErr "ERROR: Timeout, failed to confirm tx hash '$TXHASH' within ${TIMEOUT} s limit"

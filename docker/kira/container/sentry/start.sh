@@ -110,7 +110,7 @@ set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 
 touch $EXECUTED_CHECK
 
-if ($(isNaturalNumber $SNAP_HEIGHT)) && [ $SNAP_HEIGHT -gt 0 ] && [ ! -z "$SNAP_NAME_FILE" ] ; then
+if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
     rm -frv $SNAP_OUTPUT
     sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"

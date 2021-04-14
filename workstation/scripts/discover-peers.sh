@@ -76,7 +76,7 @@ while FIS= read -r peer; do
     fi
 
     TMP_HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
-    if ($(isNaturalNumber "$TMP_HEIGHT")) && [ $TMP_HEIGHT -gt $HEIGHT ] ; then
+    if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT
     fi
@@ -109,7 +109,7 @@ while FIS= read -r peer; do
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-    [ $latest_block_height -lt $MIN_HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than minimum'$MIN_HEIGHT' ($ip)" && continue 
+    [[ $latest_block_height -lt $MIN_HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than minimum'$MIN_HEIGHT' ($ip)" && continue 
 
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if [ "${SNAP_ONLY,,}" == "true" ] && (! $(urlExists "$SNAP_URL")); then
@@ -128,7 +128,7 @@ while FIS= read -r peer; do
     i=$(($i + 1))
 done < $TMP_PEERS_SHUFF 
 
-if ($(isFileEmpty $OUTPUT)) || [ $i -le 0 ] ; then
+if ($(isFileEmpty $OUTPUT)) || [[ $i -le 0 ]] ; then
     echoInfo "INFO: No public peers were discovered"
     exit 0
 fi

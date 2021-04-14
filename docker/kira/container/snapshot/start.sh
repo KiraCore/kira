@@ -28,7 +28,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
-([ -z "$HALT_HEIGHT" ] || [ $HALT_HEIGHT -le 0 ]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
+([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
 echo "$SNAP_FILENAME" >$SNAP_LATEST
 
@@ -114,21 +114,21 @@ while :; do
   SNAP_BLOCK=$(echo $SNAP_STATUS | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
-  if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then
+  if [[ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]]; then
     TOP_SNAP_BLOCK=$SNAP_BLOCK
   fi
   echo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
 
-  if [ "${FINISHED_RUNNING,,}" == "true" ] && [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]; then
+  if [ "${FINISHED_RUNNING,,}" == "true" ] && [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]]; then
     echo "ERROR: Expected node to reach halt height $HALT_HEIGHT but got $TOP_SNAP_BLOCK"
     exit 1
   fi
 
   # save progress only if status is available or block is diffrent then 0
-  if [ $TOP_SNAP_BLOCK -gt 0 ]; then
+  if [[ $TOP_SNAP_BLOCK -gt 0 ]]; then
     echo "INFO: Updating progress bar..."
-    [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
-    [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] && PERCENTAGE="100"
+    [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
+    [[ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ]] && PERCENTAGE="100"
     echo "$PERCENTAGE" >$SNAP_PROGRESS
   fi
 
@@ -150,7 +150,7 @@ while :; do
     continue
   fi
 
-  if [ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]; then
+  if [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
     echo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
     LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
     i=0
@@ -160,7 +160,7 @@ while :; do
   echo "WARNING: Block did not changed! ($LAST_SNAP_BLOCK)"
 
   if [ "$TOP_SNAP_BLOCK" -lt "$HALT_HEIGHT" ]; then # restart process if block sync stopped
-    if [ $i -ge 4 ] || [ -z "$PID1" ]; then
+    if [[ $i -ge 4 ]] || [ -z "$PID1" ]; then
       if [ ! -z "$PID1" ]; then
         echo "WARNING: Block did not changed for the last 2 minutes!"
         echo "INFO: Printing current output log..."
@@ -183,7 +183,7 @@ while :; do
       i=$((i + 1))
       echo "INFO: Waiting for block update test $i/4"
     fi
-  elif [ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]; then
+  elif [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
     echo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
     break
   fi

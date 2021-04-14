@@ -21,7 +21,7 @@ PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
-if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
+if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
     sleep 10
     exit 1

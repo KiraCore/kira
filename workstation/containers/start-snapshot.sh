@@ -42,7 +42,7 @@ PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "network"  2>/de
 SENTRY_BLOCK=$(echo $SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
 PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
 
-[ $MAX_HEIGHT -le 0 ] && MAX_HEIGHT=$LATETS_BLOCK
+[[ $MAX_HEIGHT -le 0 ]] && MAX_HEIGHT=$LATETS_BLOCK
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
 

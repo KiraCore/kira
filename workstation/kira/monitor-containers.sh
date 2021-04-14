@@ -80,7 +80,7 @@ for name in $CONTAINERS; do
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 
-        if [ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ] ; then
+        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
             NEW_LATEST_STATUS="$(cat $STATUS_PATH)"
         fi
@@ -96,7 +96,7 @@ done
 
 # save latest known block height
 OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
-if [ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ] ; then
+if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
 fi

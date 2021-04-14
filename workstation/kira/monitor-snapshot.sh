@@ -86,7 +86,7 @@ if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
 elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
     ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
     INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-    if [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
+    if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]]; then
         rm -fv $SCAN_DONE
         [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
         $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"

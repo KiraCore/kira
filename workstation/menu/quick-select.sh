@@ -201,8 +201,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
                     [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
                     [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
                     [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
-                    [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
-                    [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                    [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
+                    [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
                     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                     rm -f -v -r $TMP_SNAP_DIR
                     if [ "${OPTION,,}" == "d" ] ; then
@@ -256,7 +256,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 echo "INFO: Default minmum block height is $HEIGHT"
                 echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
                 [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
-                ( (! $(isNaturalNumber "$VALIDATOR_MIN_HEIGHT")) || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+                ( (! $(isNaturalNumber "$VALIDATOR_MIN_HEIGHT")) || [[ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ]] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 set -x
                 break
             done
@@ -393,13 +393,13 @@ if ($(isPublicIp $NODE_ADDR)) ; then
 
             latest_block_height=$(echo "$KIRA_STATUS" | jsonQuickParse "latest_block_height" || echo "")
             (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-            [ $latest_block_height -lt $VALIDATOR_MIN_HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$VALIDATOR_MIN_HEIGHT' ($ip)" && continue 
+            [[ $latest_block_height -lt $VALIDATOR_MIN_HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$VALIDATOR_MIN_HEIGHT' ($ip)" && continue 
 
             echoInfo "INFO: Active peer found: '$peer' adding to public seeds list..."
             echo "$peer" >> $PUBLIC_SEEDS
             i=$(($i + 1))
 
-            [ $i -ge 16 ] && echoInfo "INFO: Peers discovery limit reached..." && break
+            [[ $i -ge 16 ]] && echoInfo "INFO: Peers discovery limit reached..." && break
         done < $TMP_SHUFFLED_PEERS
 
         echoInfo "INFO: Found total of $i new peers"
@@ -408,9 +408,9 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     fi
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 fi
 
-($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_PEERS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
+($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && echoErr "ERROR: No public or private seeds were found" && exit 1
 
 echoInfo "INFO: Finished quick select!"

@@ -66,7 +66,7 @@ while read ip; do
     fi
 
     TMP_HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
-    if ($(isNaturalNumber "$TMP_HEIGHT")) && [ $TMP_HEIGHT -gt $HEIGHT ] ; then
+    if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT
     fi
@@ -100,19 +100,19 @@ while read ip; do
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-    [ $latest_block_height -lt $HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
+    [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
 
     peer="$node_id@$ip:$KIRA_SENTRY_P2P_PORT"
     echoInfo "INFO: Active peer found: '$peer'"
     echo "$peer" >> $TMP_BOOK_PUBLIC
     i=$(($i + 1))
-    if [ $i -ge 128 ] ; then
+    if [[ $i -ge 128 ]] ; then
         echoWarn "WARNING: Peer limit (128) reached"
         break
     fi
 done < $TMP_BOOK_SHUFF 
 
-if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [ $i -le 0 ] ; then
+if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [[ $i -le 0 ]] ; then
     echoInfo "INFO: No public addresses were found in the '$TMP_BOOK_PUBLIC'"
     sleep 60
     exit 0

@@ -59,7 +59,7 @@ if [ "${FAILED,,}" == "true" ] ; then
     echo "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/2 times, total $EXCEPTION_TOTAL"
     echo "$EXCEPTION_TOTAL" > $EXCEPTION_TOTAL_FILE
 
-    if [ $EXCEPTION_COUNTER -ge 3 ] ; then
+    if [[ $EXCEPTION_COUNTER -ge 3 ]] ; then
         echo "WARNINIG: Unhealthy status, node will reboot"
         echo "0" > $EXCEPTION_COUNTER_FILE
         pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
