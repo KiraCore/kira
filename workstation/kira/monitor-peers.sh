@@ -26,7 +26,15 @@ set -x
 echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
 TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
-((docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json") | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+
+if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    echoInfo "INFO: Fetching address book file from seed node..."
+    (docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+else
+    echoInfo "INFO: Fetching address book file from sentry node..."
+    (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+fi
+
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF
 
@@ -35,7 +43,7 @@ if ($(isFileEmpty $TMP_BOOK)) ; then
     exit 0
 fi
 
-CHECKSUM=$(timeout 30 curl 0.0.0.0:$KIRA_INTERX_PORT/api/status | jsonQuickParse "genesis_checksum" || echo -n "")
+CHECKSUM=$(timeout 30 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status | jsonQuickParse "genesis_checksum" || echo -n "")
 if ($(isNullOrEmpty "$CHECKSUM")) ; then
     echoWarn "WARNING: Invalid local genesis checksum '$CHECKSUM'"
     exit 0 
@@ -90,7 +98,7 @@ while read ip; do
     catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
     [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
 
-    latest_block_height=$(echo "$KIRA_STATUS" | jsonQuickParse "latest_block_height" || echo "")
+    latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [ $latest_block_height -lt $HEIGHT ] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
 

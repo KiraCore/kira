@@ -147,6 +147,7 @@ function jsonQuickParse() {
 }
 
 # e.g. urlExists "18.168.78.192:11000/download/peers.txt"
+# e.g. urlExists "18.168.78.192:11000/download/snapshot.zip"
 function urlExists() {
     if ($(isNullOrEmpty "$1")) ; then echo "false"
     elif curl --output /dev/null --silent --head --fail "$1"; then echo "true"
