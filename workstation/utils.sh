@@ -146,6 +146,13 @@ function jsonQuickParse() {
     echo ${OUT%\}}
 }
 
+# e.g. urlExists "18.168.78.192:11000/download/peers.txt"
+function urlExists() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false"
+    elif curl --output /dev/null --silent --head --fail "$1"; then echo "true"
+    else echo "false" ; fi
+}
+
 displayAlign() {
   align=$1
   width=$2

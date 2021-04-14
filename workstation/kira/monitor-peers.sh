@@ -23,11 +23,6 @@ echoWarn "|      INTERX_PEERS_PATH: $INTERX_PEERS_PATH"
 echoWarn "------------------------------------------------"
 set -x
 
-if [ "${INFRA_MODE,,}" != "sentry" ] ; then
-    echoInfo "INFO: Infra must be deployed in the sentry mode, aborting"
-    exit 0
-fi
-
 echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
 TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
