@@ -45,7 +45,7 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonMinify 2> /dev/null || echo -n "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20
@@ -135,7 +135,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonMinify 2> /dev/null || echo -n "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"

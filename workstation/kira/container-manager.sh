@@ -143,11 +143,11 @@ while : ; do
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
         if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
-            VSTATUS=$(jq -rc '.status' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
-            VTOP=$(jq -rc '.top' $VALINFO_SCAN_PATH 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
-            VRANK=$(jq -rc '.rank' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
-            VSTREAK=$(jq -rc '.streak' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
-            VMISSED=$(jq -rc '.missed_blocks_counter' $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+            VSTATUS=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "status" 2> /dev/null || echo -n "")
+            VTOP=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "top" 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
+            VRANK=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "rank" 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(cat $VALINFO_SCAN_PATH  | jsonQuickParse "streak" 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(cat $VALINFO_SCAN_PATH | jsonQuickParse "missed_blocks_counter" 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"

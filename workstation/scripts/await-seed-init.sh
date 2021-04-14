@@ -41,7 +41,7 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonMinify 2> /dev/null || echo -n "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" 2> /dev/null || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20
@@ -130,7 +130,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonMinify 2> /dev/null || echo -n "")
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
             echoErr "ERROR: Node failed or status could not be fetched, your netwok connectivity might have been interrupted"

@@ -8,19 +8,23 @@ function txAwait() {
     START_TIME="$(date -u +%s)"
     (! $(isNaturalNumber)) && TIMEOUT=0
 
-    # INPUT example: {"height":"0","txhash":"DF8BFCC9730FDBD33AEA184EC3D6C37B4311BC1C0E2296893BC020E4638A0D6F","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":""}
-    VAL=$(echo $RAW | jsonMinify 2> /dev/null || echo "")
-    if [ -z "$VAL" ] ; then
-        echoErr "ERROR: Failed to propagate transaction:"
-        echoErr "$RAW"
-        exit 1
-    fi
+    if (! $(isTxHash "$RAW")) ; then
+        # INPUT example: {"height":"0","txhash":"DF8BFCC9730FDBD33AEA184EC3D6C37B4311BC1C0E2296893BC020E4638A0D6F","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":""}
+        VAL=$(echo $RAW | jsonParse "" 2> /dev/null || echo "")
+        if [ -z "$VAL" ] ; then
+            echoErr "ERROR: Failed to propagate transaction:"
+            echoErr "$RAW"
+            exit 1
+        fi
 
-    TXHASH=$(echo $VAL | jsonQuickParse "txhash" 2> /dev/null || echo "")
-    if [ -z "$VAL" ] ; then
-        echoErr "ERROR: Transaction hash 'txhash' was NOT found in the tx propagation response:"
-        echoErr "$RAW"
-        exit 1
+        TXHASH=$(echo $VAL | jsonQuickParse "txhash" 2> /dev/null || echo "")
+        if [ -z "$VAL" ] ; then
+            echoErr "ERROR: Transaction hash 'txhash' was NOT found in the tx propagation response:"
+            echoErr "$RAW"
+            exit 1
+        fi
+    else
+        TXHASH="${RAW^^}"
     fi
 
     echoInfo "INFO: Transaction hash '$TXHASH' was found!"
@@ -28,7 +32,7 @@ function txAwait() {
 
     while : ; do
         ELAPSED=$(($(date -u +%s) - $START_TIME))
-        OUT=$(sekaid query tx $TXHASH --output=json 2> /dev/null | jsonMinify 2> /dev/null || echo -n "")
+        OUT=$(sekaid query tx $TXHASH --output=json 2> /dev/null | jsonParse "" 2> /dev/null || echo -n "")
         if [ ! -z "$OUT" ] ; then
             echoInfo "INFO: Transaction query response received received:"
             echo $OUT | jq
@@ -47,6 +51,8 @@ function txAwait() {
         fi
 
         if [ $TIMEOUT -gt 0 ] && [ $ELAPSED -gt $TIMEOUT ] ; then
+            echoInfo "INFO: Transaction query response was NOT received:"
+            echo $RAW | jq 2> /dev/null || echoErr "$RAW"
             echoErr "ERROR: Timeout, failed to confirm tx hash '$TXHASH' within ${TIMEOUT} s limit"
             exit 1
         else

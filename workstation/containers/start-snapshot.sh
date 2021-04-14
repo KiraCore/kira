@@ -30,8 +30,8 @@ mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
 
 echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
 
-SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
-PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jq -rc '.result' 2>/dev/null || echo -n "")
+SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
 
 SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
 PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"

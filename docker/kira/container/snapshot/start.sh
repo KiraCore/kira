@@ -110,7 +110,7 @@ i=0
 PID1=""
 while :; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jsonMinify 2>/dev/null || echo -n "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
   SNAP_BLOCK=$(echo $SNAP_STATUS | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
