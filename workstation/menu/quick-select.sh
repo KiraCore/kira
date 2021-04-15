@@ -1,7 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/menu/chain-id-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/menu/quick-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 mkdir -p "$KIRA_CONFIGS"
@@ -143,9 +143,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
-            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing a snapshot file, it might take you a very long time to sync your node"
             set +x
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(d|c)$ ]]; do echoNErr "Attempt snapshot [D]iscovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(d|c)$ ]]; do echoNErr "Try automatic snapshot [D]iscovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
             if [ "${VSEL,,}" == "d" ] ; then
                 echoInfo "INFO: Downloading peers list & attempting public peers discovery..."

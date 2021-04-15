@@ -1,11 +1,12 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/menu/snapshot-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set +x
 
 while : ; do
     SNAPSHOT=""
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snapshot from [L]ocal directory [E]xternal URL or [S]ync new blockchain state: " && read -d'' -s -n1 SELECT && echo ""; done
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(l|e|s)$ ]] ; do echoNErr "Recover snap from [L]ocal storage, [E]xternal URL, [A]uto-disovery or choose [S]low sync: " && read -d'' -s -n1 SELECT && echo ""; done
     
     if [ "${SELECT,,}" == "s" ] ; then
         echo "INFO: Blockchain state will NOT be recovered from the snapshot"
@@ -14,26 +15,61 @@ while : ; do
     fi
 
     DEFAULT_SNAP_DIR=$KIRA_SNAP
-    echo "INFO: Default snapshot storage directory: $DEFAULT_SNAP_DIR"
+    set +x
+    echoInfo "INFO: Default snapshot storage directory: $DEFAULT_SNAP_DIR"
     echoNErr "Input new snapshot storage directory or press [ENTER] for default: " && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}"
+    set -x
     [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
     if [ ! -d "$DEFAULT_SNAP_DIR" ] ; then
-        echoWarn "WARNING: Directory '$DEFAULT_SNAP_DIR' does not exist!"
+        echoErr "ERROR: Directory '$DEFAULT_SNAP_DIR' does not exist!"
         continue
     else
         echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
         KIRA_SNAP=$DEFAULT_SNAP_DIR
     fi
 
-    if [ "${SELECT,,}" == "e" ] ; then
-        echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshot.zip' as your URL"
-        echoNErr "Input URL to download blockchain state from: " && read SNAP_URL
-        set -x
-        if curl -r0-0 --fail --silent "$url" >/dev/null ; then
-            echo "INFO: Resource was found, attempting download"
+    if [ "${SELECT,,}" == "e" ] || [ "${SELECT,,}" == "a" ] ; then
+        NODE_ADDR=""
+        if [ "${SELECT,,}" == "e" ] ; then
+            set +x
+            echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshot.zip' as your URL"
+            echoNErr "Input URL to download blockchain state from: " && read SNAP_URL && SNAP_URL=$(echo "$SNAP_URL" | xargs)
+            set -x
         else
-            echoErr "ERROR: It is NOT possible to access '$SNAP_URL'"
+            set +x
+            echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read NODE_ADDR && NODE_ADDR=$(echo "$NODE_ADDR" | xargs)
+            set -x
+            [ -z "$NODE_ADDR" ] && NODE_ADDR=$TRUSTED_NODE_ADDR
+
+            if (! $(isDnsOrIp "$NODE_ADDR")) ; then
+                echoErr "ERROR: Invalid IPv4 address or DNS name"
+                continue
+            fi
+
+            echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
+            SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
+            if [ ! -z "$SNAP_PEER" ]; then
+                echoInfo "INFO: Snapshot peer was found"
+                addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
+                addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+            else
+                echoWarn "INFO: No snapshot peers were found"
+                SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+            fi
         fi
+
+        if (! $(urlExists "$SNAP_URL")) ; then
+            echoErr "ERROR: URL link is not accessible or not exposing any snapshots '$SNAP_URL'"
+            continue
+        fi
+
+        [ ! -z $NODE_ADDR ] && CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+        
+        echoInfo "INFO: Resource was found, attempting download"
         TMP_SNAP_DIR="$KIRA_SNAP/tmp"
         TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
         rm -f -v -r $TMP_SNAP_DIR
@@ -65,7 +101,6 @@ while : ; do
         fi
 
         SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
-
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo ""; done
