@@ -143,8 +143,27 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
-            echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
-            SNAP_AVAILABLE="false"
+            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing a snapshot file, it might take you a very long time to sync your node"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(d|c)$ ]]; do echoNErr "Attempt snapshot [D]iscovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            if [ "${VSEL,,}" == "d" ] ; then
+                echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+                TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+                $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
+                SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
+                if [ ! -z "$SNAP_PEER" ]; then
+                    echoInfo "INFO: Snapshot peer was found"
+                    addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
+                    addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+                    SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                    SNAP_AVAILABLE="true"
+                else
+                    echoWarn "INFO: No snapshot peers were found"
+                    SNAP_AVAILABLE="false"
+                fi
+            else
+                echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
+                SNAP_AVAILABLE="false"
+            fi
         fi
 
         DOWNLOAD_SUCCESS="false"
@@ -158,7 +177,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
-                echoWarn "WARNING: Snapshot download failed or connection with the node '$NODE_ADDR' is not stable"
+                echoWarn "WARNING: Snapshot download failed or connection with the node is not stable ($SNAP_URL)"
                 OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
@@ -347,64 +366,13 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
 
     echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-    TMP_PEERS="/tmp/peers.txt"
-    TMP_SHUFFLED_PEERS="/tmp/peers-shuffled.txt"
-    DOWNLOAD_SUCCESS="true"
-    rm -fv "$TMP_PEERS" "$TMP_SHUFFLED_PEERS"
-    wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/peers.txt" -O $TMP_PEERS || DOWNLOAD_SUCCESS="false"
-
-    if (! $(isFileEmpty "$TMP_PEERS")) && [ ${DOWNLOAD_SUCCESS,,} == "true" ]; then
-        shuf $TMP_PEERS > $TMP_SHUFFLED_PEERS
-        i=0
-        while read peer; do
-            peer=$(echo $peer | xargs || echo "")
-            addrArr1=( $(echo $peer | tr "@" "\n") )
-            addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-            nodeId=${addrArr1[0],,}
-            ip=${addrArr2[0],,}
-            port=${addrArr2[1],,}
-
-            (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($ip)" && continue
-            (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue 
-
-            if grep -q "$nodeId" "$PUBLIC_SEEDS"; then
-                echoWarn "WARNING: Node id '$nodeId' is already present in the seeds list ($ip)" && continue 
-            fi
-
-            if grep -q "$ip" "$PUBLIC_SEEDS"; then
-                echoWarn "WARNING: Address '$ip' is already present in the seeds list" && continue 
-            fi
-
-            if ! timeout 0.1 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue  ; fi
-
-            STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-            STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-            if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
-
-            KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-            KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-            if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue  ; fi
-
-            chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" 2> /dev/null || echo "")
-            [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
-
-            catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" 2>/dev/null || echo "")
-            [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
-
-            latest_block_height=$(echo "$KIRA_STATUS" | jsonQuickParse "latest_block_height" || echo "")
-            (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-            [[ $latest_block_height -lt $VALIDATOR_MIN_HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$VALIDATOR_MIN_HEIGHT' ($ip)" && continue 
-
-            echoInfo "INFO: Active peer found: '$peer' adding to public seeds list..."
-            echo "$peer" >> $PUBLIC_SEEDS
-            i=$(($i + 1))
-
-            [[ $i -ge 16 ]] && echoInfo "INFO: Peers discovery limit reached..." && break
-        done < $TMP_SHUFFLED_PEERS
-
-        echoInfo "INFO: Found total of $i new peers"
+    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 16 || echoErr "ERROR: Peers discovery scan failed"
+    if (! $(isFileEmpty "$TMP_PEERS")) ; then
+        echoInfo "INFO: Saving extra peers..."
+        cat $TMP_PEERS >> $PUBLIC_SEEDS
     else
-        echoInfo "INFO: No extra public peers were found..."
+        echoInfo "INFO: No extra public peers were found!"
     fi
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
