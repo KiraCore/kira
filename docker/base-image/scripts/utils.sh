@@ -4,18 +4,19 @@ REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
 REGEX_TXHASH="^[a-fA-F0-9]{64}$"
+REGEX_INTEGER="^-?[0-9]+$"
 REGEX_NUMBER="^[+-]?([0-9]*[.])?([0-9]+)?$"
 REGEX_PUBLIC_IP='^([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31))(?<!127)(?<!^10)(?<!^0)\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!192\.168)(?<!172\.(16|17|18|19|20|21|22|23|24|25|26|27|28|29|30|31))\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])\.([0-9]|[1-9][0-9]|1[0-9]{2}|2[0-4][0-9]|25[0-5])(?<!\.255$)(?<!\b255.255.255.0\b)(?<!\b255.255.255.242\b)$'
+
+function isNullOrEmpty() {
+    if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "true" ; else echo "false" ; fi
+}
 
 function isTxHash() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
         VTMP="false" && [[ "$1" =~ $REGEX_TXHASH ]] && VTMP="true"
         echo $VTMP
     fi
-}
-
-function isNullOrEmpty() {
-    if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "true" ; else echo "false" ; fi
 }
 
 function isDns() {
@@ -50,9 +51,16 @@ function isDnsOrIp() {
     fi
 }
 
+function isInteger() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
+        VTMP="false" && [[ $1 =~ $REGEX_INTEGER ]] && VTMP="true"
+        echo $VTMP
+    fi
+}
+
 function isPort() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && ( [[ "$1" =~ ^[0-9]+$ ]] && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
+        VTMP="false" && ( ($(isInteger $1)) && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
         echo $VTMP
     fi
 }
@@ -67,13 +75,6 @@ function isNodeId() {
 function isNumber() {
      if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
         VTMP="false" && [[ "$1" =~ $REGEX_NUMBER ]] && VTMP="true"
-        echo $VTMP
-    fi
-}
-
-function isInteger() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ $1 =~ ^-?[0-9]+$ ]] && VTMP="true"
         echo $VTMP
     fi
 }
@@ -163,6 +164,8 @@ function urlExists() {
 # urlContentLength 18.168.78.192:11000/download/snapshot.zip 
 function urlContentLength() {
     VAL=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 2> /dev/null | awk '{print $2}' 2> /dev/null || echo -n "")
+    # remove invisible whitespace characters
+    VAL=$(echo ${VAL%$'\r'})
     (! $(isNaturalNumber $VAL)) && VAL=0
     echo $VAL
 }

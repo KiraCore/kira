@@ -144,7 +144,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
             SNAP_AVAILABLE="true"
         else
             echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing a snapshot file, it might take you a very long time to sync your node"
+            set +x
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(d|c)$ ]]; do echoNErr "Attempt snapshot [D]iscovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            set -x
             if [ "${VSEL,,}" == "d" ] ; then
                 echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
                 TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
