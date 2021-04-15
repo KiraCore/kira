@@ -58,10 +58,10 @@ NETWORK_NAME=$(echo "$BASE_STATUS" | jsonQuickParse "chain_id" || echo "")
 if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Network name not found ($ip)" && exit 1 ; fi
 
 CHECKSUM=$(echo "$BASE_STATUS" | jsonQuickParse "genesis_checksum" || echo "")
-if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Genesis checksum not found ($ip)" && exit 1 ; fi
+if ($(isNullOrEmpty "$CHECKSUM")) ; then echoWarn "WARNING: Genesis checksum not found ($ip)" && exit 1 ; fi
 
 MIN_HEIGHT=$(echo "$BASE_KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
-if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Latest block height not found ($ip)" && exit 1 ; fi
+if ($(isNaturalNumber "$MIN_HEIGHT")) ; then echoWarn "WARNING: Latest block height not found ($ip)" && exit 1 ; fi
 
 echoInfo "INFO: Processing peers list..."
 rm -fv "$TMP_PEERS_SHUFF" "$OUTPUT" "$TMP_OUTPUT"
@@ -125,7 +125,7 @@ while : ; do
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-    [[ $latest_block_height -lt $MIN_HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than minimum'$MIN_HEIGHT' ($ip)" && continue 
+    [[ $(($latest_block_height + 1)) -lt $MIN_HEIGHT ]] && echoWarn "WARNING: Expected minimum block height to be $MIN_HEIGHT but got $latest_block_height ($ip)" && continue
 
     PEERS_URL="$ip:$DEFAULT_INTERX_PORT/download/peers.txt"
     if [ "${PEERS_ONLY,,}" == "true" ] && (! $(urlExists "$PEERS_URL")); then
