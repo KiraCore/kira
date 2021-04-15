@@ -208,7 +208,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Snapshot archive download was sucessfull"
             UNZIP_FAILED="false"
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || UNZIP_FAILED="true"
-            [ "${UNZIP_FAILED,,}" == "false" ] && zip -T -v $TMP_SNAP_PATH || UNZIP_FAILED="true"
 
             if [ "${UNZIP_FAILED,,}" == "false" ] ; then
                 DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
