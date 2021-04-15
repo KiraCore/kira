@@ -49,19 +49,19 @@ if ($(isFileEmpty $TMP_PEERS)) || [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
 fi
 
 BASE_STATUS=$(timeout 10 curl $ADDR:$DEFAULT_INTERX_PORT/api/status 2>/dev/null || echo -n "")
-if ($(isNullOrEmpty "$BASE_STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && exit 1 ; fi
+if ($(isNullOrEmpty "$BASE_STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ADDR)" && exit 1 ; fi
 
 BASE_KIRA_STATUS=$(timeout 10 curl "$ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
-if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && exit 1 ; fi
+if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ADDR)" && exit 1 ; fi
 
 NETWORK_NAME=$(echo "$BASE_STATUS" | jsonQuickParse "chain_id" || echo "")
-if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Network name not found ($ip)" && exit 1 ; fi
+if ($(isNullOrEmpty "$BASE_KIRA_STATUS")) ; then echoWarn "WARNING: Network name not found ($ADDR)" && exit 1 ; fi
 
 CHECKSUM=$(echo "$BASE_STATUS" | jsonQuickParse "genesis_checksum" || echo "")
-if ($(isNullOrEmpty "$CHECKSUM")) ; then echoWarn "WARNING: Genesis checksum not found ($ip)" && exit 1 ; fi
+if ($(isNullOrEmpty "$CHECKSUM")) ; then echoWarn "WARNING: Genesis checksum not found ($ADDR)" && exit 1 ; fi
 
 MIN_HEIGHT=$(echo "$BASE_KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
-if ($(isNaturalNumber "$MIN_HEIGHT")) ; then echoWarn "WARNING: Latest block height not found ($ip)" && exit 1 ; fi
+if (! $(isNaturalNumber "$MIN_HEIGHT")) ; then echoWarn "WARNING: Latest block height not found ($ADDR)" && exit 1 ; fi
 
 echoInfo "INFO: Processing peers list..."
 rm -fv "$TMP_PEERS_SHUFF" "$OUTPUT" "$TMP_OUTPUT"
