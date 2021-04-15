@@ -90,7 +90,7 @@ while : ; do
         else
             unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
+            NETWORK=$(jsonParse "chain_id" $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
 
             if [ ! -f "$DATA_GENESIS" ] || [ -z "$NETWORK"] || [ "${NETWORK,,}" == "null" ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"

@@ -16,7 +16,11 @@ fi
 while : ; do
     set +x
     set +e && source $ETC_PROFILE &>/dev/null && set -e
-    echoWarn "WARNING: If you want to connect to external networks you have to specify at least one public seed or a private peer node"
+    echoInfo "INFO: Current list of private peers:"
+    (! $(isFileEmpty $PUBLIC_SEEDS )) && cat $PUBLIC_SEEDS || echo "none"
+    echoInfo "INFO: Current list of public peers:"
+    (! $(isFileEmpty $PRIVATE_SEEDS )) && cat $PRIVATE_SEEDS || echo "none"
+    echoWarn "WARNING: If you want to connect to external networks you have to specify at least one public seed or private seed node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the public and private seed & peer nodes list"
     TVAL="." && while ! [[ "${TVAL,,}" =~ ^(a|p|v|e|w)$ ]] ; do echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [P]ublic/Pri[V]ate Seed Nodes, [W]ipe all or [E]xit: " && read -d'' -s -n1 TVAL && echo ""; done
     [ "${TVAL,,}" == "e" ] && echoInfo "INFO: Seed editor was aborted by the user" && break
@@ -35,13 +39,9 @@ while : ; do
         echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
         echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read NODE_ADDR && NODE_ADDR=$(echo "$NODE_ADDR" | xargs)
         set -x
+
         [ -z "$NODE_ADDR" ] && NODE_ADDR=$TRUSTED_NODE_ADDR
-
-        if (! $(isDnsOrIp "$NODE_ADDR")) ; then
-            echoErr "ERROR: Invalid IPv4 address or DNS name"
-            continue
-        fi
-
+        (! $(isDnsOrIp "$NODE_ADDR")) && echoErr "ERROR: Invalid IPv4 address or DNS name" && continue
         CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
         echoInfo "INFO: Downloading seeds list & attempting discovery of active nodes..."
@@ -55,7 +55,7 @@ while : ; do
             echoWarn "INFO: List of active public seeds was NOT found"
         fi
     elif [ "${TVAL,,}" == "e" ] ; then
-        if ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
+        if ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PRIVATE_SEEDS )) ) ; then
             set +x
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "No public or private seed nodes were specified, are you sure you want to launch network locally? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Action was cancelled by the user" && continue

@@ -46,13 +46,13 @@ while :; do
         fi
 
         unzip -p $KIRA_SNAP_PATH genesis.json > "$TMP_GENESIS_PATH" || echo -n "" > "$TMP_GENESIS_PATH"
-        NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+        NEW_NETWORK_NAME=$(jsonParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
         [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         echo "INFO: Network genesis will be importend from the external resource"
         if [ -f "$LOCAL_GENESIS_PATH" ]; then
-            LOCAL_CHAIN_ID=$(jq -r .chain_id $LOCAL_GENESIS_PATH 2> /dev/null || echo -n "corrupted")
+            LOCAL_CHAIN_ID=$(jsonParse "chain_id" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n "corrupted")
             set +x
             echoInfo "INFO: Default genesis source: $LOCAL_GENESIS_PATH ($LOCAL_CHAIN_ID)"
             echoNErr "Provide file name, URL or click [ENTER] to choose default source: " && read NEW_GENESIS_SOURCE
@@ -71,8 +71,8 @@ while :; do
             echoInfo "INFO: Attempting to download new genesis from '$NEW_GENESIS_SOURCE'"
             rm -fv $TMP_GENESIS_PATH
             DNPASS="true" && wget "$NEW_GENESIS_SOURCE" -O $TMP_GENESIS_PATH || DNPASS="false"
-            GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
-            ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+            GENTEST=$(jsonParse "result.genesis.chain_id" $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+            ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jsonParse "result.genesis.chain_id" $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
             if [ "${DNPASS,,}" == "false" ] || [ -z "$GENTEST" ] ; then
                 echoWarn "WARNING: Download failed, attempting second discovery..."
                 rm -fv $TMP_GENESIS_PATH
@@ -83,12 +83,12 @@ while :; do
             continue
         fi
 
-        NEW_NETWORK_NAME=$(jq -r .result.genesis.chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+        NEW_NETWORK_NAME=$(jsonParse "result.genesis.chain_id" $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
         if [ ! -z "$NEW_NETWORK_NAME" ] && [ "$NEW_NETWORK_NAME" != "null" ] ; then
-            jq -r .result.genesis "$TMP_GENESIS_PATH" > "/tmp/genesis.buffer.json"
+            jsonParse "result.genesis" "$TMP_GENESIS_PATH" > "/tmp/genesis.buffer.json"
             cp -a -f -v "/tmp/genesis.buffer.json" "$TMP_GENESIS_PATH"
         else
-            NEW_NETWORK_NAME=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
+            NEW_NETWORK_NAME=$(jsonParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
         fi
 
         if [ -z "$NEW_NETWORK_NAME" ] || [ "${NEW_NETWORK_NAME,,}" == "null" ] ; then
