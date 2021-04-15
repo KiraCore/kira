@@ -38,15 +38,11 @@ while ($(isFileEmpty "$PIP_FILE")) && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "$
     sleep 5
 done
 
-LOCAL_IP=$(cat $LIP_FILE || echo -n "")
-PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 SNAP_HEIGHT=$(cat $SNAP_HEIGHT_FILE || echo -n "")
 SNAP_NAME=$(cat $SNAP_NAME_FILE || echo -n "")
 SNAP_OUTPUT="/snap/$SNAP_NAME"
 
 echoInfo "INFO: Sucess, genesis file was found!"
-echoInfo "INFO:    Local IP: $LOCAL_IP"
-echoInfo "INFO:   Public IP: $PUBLIC_IP"
 echoInfo "INFO: Snap Height: $SNAP_HEIGHT"
 echoInfo "INFO:   Snap Name: $SNAP_NAME"
 
@@ -86,25 +82,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     fi
 fi
 
-if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-    EXTERNAL_ADDR="$LOCAL_IP"
-elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
-    EXTERNAL_ADDR="$PUBLIC_IP"
-else
-    echoErr "ERROR: Unknown node type '$NODE_TYPE'"
-    exit 1
-fi
-
-CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
-echo "$CFG_external_address" > "$COMMON_DIR/external_address"
-CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
-
-rm -fv $LOCAL_GENESIS
-cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-
 touch $EXECUTED_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
@@ -124,4 +104,3 @@ fi
 
 echoInfo "INFO: Starting sekaid..."
 sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace 
-

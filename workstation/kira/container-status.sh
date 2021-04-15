@@ -11,7 +11,7 @@ SCRIPT_START_TIME="$(date -u +%s)"
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN v0.2.4.02 |"
+echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN v0.2.4.12 |"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"

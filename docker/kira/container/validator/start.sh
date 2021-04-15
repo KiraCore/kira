@@ -9,7 +9,6 @@ echoInfo "INFO: Staring validator setup v0.0.3 ..."
 EXECUTED_CHECK="$COMMON_DIR/executed"
 SNAP_DIR_INPUT="$COMMON_READ/snap"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
-VALOPERS_FILE="$COMMON_READ/valopers"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
@@ -101,45 +100,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
-TEST_ADDR=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME)
-SIGNER_ADDR=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME)
-FAUCET_ADDR=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME)
-VALOPER_ADDR=$(sekaid val-address $VALIDATOR_ADDR)
-CONSPUB_ADDR=$(sekaid tendermint show-validator)
-
-CDHelper text lineswap --insert="TEST_ADDR=$TEST_ADDR" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SIGNER_ADDR=$SIGNER_ADDR" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FAUCET_ADDR=$FAUCET_ADDR" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
-ACTIVE_VALIDATORS=$(jq -rc '.status.active_validators' $VALOPERS_FILE || echo "0")
-(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-
-if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-elif [ -z "$CFG_timeout_commit" ] ; then
-    TIMEOUT_COMMIT="5000ms"
-else
-    TIMEOUT_COMMIT=$CFG_timeout_commit
-fi
-
-if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-    CDHelper text lineswap --insert="CFG_timeout_commit=$TIMEOUT_COMMIT" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
+echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
-set +e && source "/etc/profile" &>/dev/null && set -e
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace  

@@ -4,20 +4,89 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "INFO: Starting node configuration..."
+CFG_CHECK="${COMMON_DIR}/configuring"
+touch $CFG_CHECK
+
+echoInfo "INFO: Starting $NODE_TYPE node configuration..."
 
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_PEERS_PATH="$COMMON_DIR/peers"
 COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
 LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
-COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 
+LIP_FILE="$COMMON_READ/local_ip"
+PIP_FILE="$COMMON_READ/public_ip"
+VALOPERS_FILE="$COMMON_READ/valopers"
+COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
+COMMON_GENESIS="$COMMON_READ/genesis.json"
+
+DATA_DIR="$SEKAID_HOME/data"
+DATA_GENESIS="$DATA_DIR/genesis.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
 [ -f "$COMMON_PEERS_PATH" ] && cp -a -v -f "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -a -v -f "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
+
+LOCAL_IP=$(cat $LIP_FILE || echo -n "")
+PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
+
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
+
+    if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
+        EXTERNAL_ADDR="$LOCAL_IP"
+    elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
+        EXTERNAL_ADDR="$PUBLIC_IP"
+    fi
+
+    CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
+    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
+    CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    rm -fv $LOCAL_GENESIS
+    cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+fi
+
+echoInfo "INFO: Local Addr: $LOCAL_IP"
+echoInfo "INFO: Public Addr: $PUBLIC_IP"
+echoInfo "INFO: External Addr: $CFG_external_address"
+
+validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
+testAddr=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME || echo "")
+signerAddr=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME || echo "")
+faucetAddr=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME || echo "")
+valoperAddr=$(sekaid val-address $validatorAddr || echo "")
+consPubAddr=$(sekaid tendermint show-validator || echo "")
+
+[ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=$validatorAddr" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=$testAddr" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=$signerAddr" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+
+# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
+ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
+(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
+
+if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
+    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
+    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
+    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
+elif [ -z "$CFG_timeout_commit" ] ; then
+    TIMEOUT_COMMIT="5000ms"
+else
+    TIMEOUT_COMMIT=$CFG_timeout_commit
+fi
+
+if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
+    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
+    CFG_timeout_commit=$TIMEOUT_COMMIT
+    CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+fi
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found"
@@ -133,3 +202,4 @@ echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."
+rm -fv $CFG_CHECK
