@@ -31,7 +31,7 @@ fi
 
 echoInfo "INFO: Latest Block Height: $HEIGHT"
 
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
+# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
 echoInfo "INFO: Updating commit timeout..."
 ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
 (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
