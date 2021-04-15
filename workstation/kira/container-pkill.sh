@@ -32,7 +32,7 @@ fi
 [ -z "$UNHALT" ] && UNHALT="true"
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA PROCESS TERMINATOR v0.2.4.1     |"
+echoWarn "|  STARTING KIRA PROCESS TERMINATOR v0.2.4.2     |"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|     AWAIT EXIT: $AWAIT"

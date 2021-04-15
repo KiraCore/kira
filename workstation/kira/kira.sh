@@ -139,7 +139,7 @@ while :; do
 
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
-    echo "|         KIRA NETWORK MANAGER v0.2.4.1         : $INFRA_MODE mode"
+    echo "|         KIRA NETWORK MANAGER v0.2.4.2         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
     CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
     RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -223,11 +223,11 @@ while :; do
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
     fi
 
-    [ "${PORTS_EXPOSURE,,}" == "enabled" ] &&
+    [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
         echo -e "|\e[0m\e[31;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS   \e[33;1m|"
-    [ "${PORTS_EXPOSURE,,}" == "custom" ] &&
+    [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
         echo -e "|\e[0m\e[32;1m      ALL PORTS USE CUSTOM CONFIGURATION       \e[33;1m|"
-    [ "${PORTS_EXPOSURE,,}" == "disabled" ] &&
+    [ "${PORTS_EXPOSURE,,}" == "disabled" ] && \
         echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED        \e[33;1m|"
 
     if [ "${LOADING,,}" == "false" ]; then

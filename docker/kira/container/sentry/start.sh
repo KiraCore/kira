@@ -7,6 +7,8 @@ set -x
 echoInfo "INFO: Staring sentry setup v0.0.4"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
 SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
 SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 
@@ -22,6 +24,7 @@ COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+rm -fv $CFG_CHECK
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isDirEmpty "$SNAP_DIR_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
@@ -91,15 +94,17 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
     rm -frv $SNAP_OUTPUT
     sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"
-  
+    
     echoInfo "INFO: Creating backup package '$SNAP_OUTPUT' ..."
+    # make sure healthcheck will not interrupt configuration
+    touch $CFG_CHECK
     cp -afv "$LOCAL_GENESIS" $SEKAID_HOME/data
     echo "{\"height\":$SNAP_HEIGHT}" > "$SNAP_INFO"
 
     # to prevent appending root path we must zip all from within the target data folder
     cp -rfv "$SEKAID_HOME/data/." "$SNAP_OUTPUT"
     [ ! -d "$SNAP_OUTPUT" ] && echo "INFO: Failed to create snapshot, directory $SNAP_OUTPUT was not found" && exit 1
-    rm -fv "$SNAP_HEIGHT_FILE" "$SNAP_NAME_FILE"
+    rm -fv "$SNAP_HEIGHT_FILE" "$SNAP_NAME_FILE" "$CFG_CHECK"
 fi
 
 echoInfo "INFO: Starting sekaid..."

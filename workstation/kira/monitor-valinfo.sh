@@ -19,7 +19,7 @@ CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|    STARTING KIRA VALIDATORS SCAN v0.2.4.1    |"
+echoWarn "|    STARTING KIRA VALIDATORS SCAN v0.2.4.2    |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"

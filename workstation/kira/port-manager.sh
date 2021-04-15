@@ -29,7 +29,7 @@ while : ; do
   
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.4.1  |"
+          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.4.2  |"
           echo "|------------- $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
         [ "${PORT_EXPOSURE,,}" == "enabled" ] && \
