@@ -50,6 +50,8 @@ while : ; do
                 continue
             fi
 
+            CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
             $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
@@ -69,8 +71,6 @@ while : ; do
             echoErr "ERROR: URL link is not accessible or not exposing any snapshots '$SNAP_URL'"
             continue
         fi
-
-        [ ! -z $NODE_ADDR ] && CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
         
         echoInfo "INFO: Resource was found, attempting download"
         TMP_SNAP_DIR="$KIRA_SNAP/tmp"

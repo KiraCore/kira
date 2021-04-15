@@ -15,6 +15,7 @@ fi
 
 while : ; do
     set +x
+    set +e && source $ETC_PROFILE &>/dev/null && set -e
     echoWarn "WARNING: If you want to connect to external networks you have to specify at least one public seed or a private peer node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the public and private seed & peer nodes list"
     TVAL="." && while ! [[ "${TVAL,,}" =~ ^(a|p|v|e|w)$ ]] ; do echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [P]ublic/Pri[V]ate Seed Nodes, [W]ipe all or [E]xit: " && read -d'' -s -n1 TVAL && echo ""; done
@@ -41,12 +42,13 @@ while : ; do
             continue
         fi
 
+        CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+
         echoInfo "INFO: Downloading seeds list & attempting discovery of active nodes..."
         TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
         $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 16 || echoErr "ERROR: Active seeds discovery scan failed"
         SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
         if [ ! -z "$SNAP_PEER" ]; then
-            [ ! -z $NODE_ADDR ] && CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
             echoInfo "INFO: List of active public seeds was found, saving changes to $PUBLIC_SEEDS"
             cat $TMP_PEERS > $PUBLIC_SEEDS
         else
