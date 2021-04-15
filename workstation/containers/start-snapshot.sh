@@ -47,32 +47,32 @@ SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|     NETWORK: $CONTAINER_NETWORK"
-echo "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
-echo "| SYNC HEIGHT: $MAX_HEIGHT"
-echo "|  SNAP DEST.: $SNAP_FILE"
-echo "| SNAP SOURCE: $SYNC_FROM_SNAP"
-echo "|     MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|     MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|     NETWORK: $CONTAINER_NETWORK"
+echoWarn "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
+echoWarn "| SYNC HEIGHT: $MAX_HEIGHT"
+echoWarn "|  SNAP DEST.: $SNAP_FILE"
+echoWarn "| SNAP SOURCE: $SYNC_FROM_SNAP"
+echoWarn "|     MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|     MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 
-echo "INFO: Loading secrets..."
+echoInfo "INFO: Loading secrets..."
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-echo "INFO: Checking peers info..."
+echoInfo "INFO: Checking peers info..."
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-    echo "INFO: Node will sync from the private sentry..."
+    echoInfo "INFO: Node will sync from the private sentry..."
     CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
 else
-    echo "INFO: Node will sync blocks from its own seed list..."
+    echoInfo "INFO: Node will sync blocks from its own seed list..."
     CFG_persistent_peers="tcp://$SENTRY_SEED"
 fi
 
@@ -87,7 +87,7 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
 fi
 
-echo "INFO: Cleaning up snapshot container..."
+echoInfo "INFO: Cleaning up snapshot container..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 # cleanup
@@ -129,15 +129,15 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest # use sentry image as base
 
-echo "INFO: Waiting for $CONTAINER_NAME node to start..."
+echoInfo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
 
 set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ]; then
-    echo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
+    echoInfo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
     $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
 else
-    echo "INFO: Success '$CONTAINER_NAME' container was started"
+    echoInfo "INFO: Success '$CONTAINER_NAME' container was started"
     rm -fv "$SNAP_DESTINATION"
     rm -rfv "$SNAP_DESTINATION_DIR"
 
@@ -149,7 +149,7 @@ else
         exit 1
     fi
 
-    echo -en "\e[31;1mINFO: Snapshot destination: $SNAP_FILE\e[0m" && echo ""
-    echo "INFO: Work in progress, await snapshot container to reach 100% sync status"
+    echoInfo "INFO: Snapshot destination: $SNAP_FILE"
+    echoInfo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
 set -x
