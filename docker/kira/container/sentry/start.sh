@@ -83,9 +83,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
                 echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
             fi
         fi
-    else
-        echoInfo "INFO: Snap file is NOT present, starting new sync..."
-        sekaid unsafe-reset-all --home=$SEKAID_HOME
     fi
 fi
 

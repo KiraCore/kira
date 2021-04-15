@@ -217,9 +217,7 @@ while : ; do
             [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
-            touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-            $KIRA_SCRIPTS/container-restart.sh $NAME
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
             echo "INFO: Waiting for container to start..."
             sleep 3
             echo "INFO: Entering container $NAME ($ID)..."
@@ -236,35 +234,24 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
-        touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        $KIRA_SCRIPTS/container-restart.sh $NAME
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "k" ] ; then
         if [ -f "$HALT_FILE" ] ; then
             echo "INFO: Removing halt file"
-            rm -fv $HALT_FILE
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "true"
         else
             echo "INFO: Creating halt file"
-            touch "$HALT_FILE" "$EXIT_FILE"
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
         fi
-
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        echo "INFO: Restarting container..."
-        $KIRA_SCRIPTS/container-restart.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
-        touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        $KIRA_SCRIPTS/container-stop.sh $NAME
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "stop"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" != "running" ] ; then
         echo "INFO: Starting container..."
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
-        $KIRA_SCRIPTS/container-start.sh $NAME
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "start"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."

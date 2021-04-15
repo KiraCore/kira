@@ -9,6 +9,7 @@ echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
 BUILD_SOURCE="${FRONTEND_SRC}/build/web"
@@ -16,8 +17,15 @@ BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
 
-while [ -f "$HALT_CHECK" ]; do
-  sleep 30
+while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
+    if [ -f "$EXIT_CHECK" ]; then
+        echoInfo "INFO: Ensuring nginx process is killed"
+        touch $HALT_CHECK
+        pkill -9 interxd || echoWarn "WARNING: Failed to kill nginx"
+        rm -fv $EXIT_CHECK
+    fi
+    echoInfo "INFO: Container halted (`date`)"
+    sleep 30
 done
 
 while ! ping -c1 interx &>/dev/null ; do

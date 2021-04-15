@@ -89,9 +89,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     
         rm -fv "$SNAP_FILE_INPUT"
         rm -rfv "$SNAP_DIR_INPUT"
-    else
-        echo "INFO: Snap file is NOT present, starting new sync..."
-        sekaid unsafe-reset-all --home=$SEKAID_HOME
     fi
 
   echo "INFO: Presering configuration file..."

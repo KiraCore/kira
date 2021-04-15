@@ -329,34 +329,24 @@ while :; do
             EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
-            if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-                touch $EXIT_FILE
-                cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-                $KIRA_SCRIPTS/container-restart.sh $name
-                rm -fv "$HALT_FILE" "$EXIT_FILE"
-            else
-                $KIRA_SCRIPTS/container-restart.sh $name
-            fi
+            $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart"
             EXECUTED="true" && LOADING="true"
         elif [ "${OPTION,,}" == "s" ]; then
             if [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ]; then
                 echoInfo "INFO: Stopping $name container..."
-                cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$name' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-                $KIRA_SCRIPTS/container-stop.sh $name
-                rm -fv "$HALT_FILE" "$EXIT_FILE"
+                $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "stop"
             else
                 echoInfo "INFO: Staring $name container..."
-                rm -fv "$HALT_FILE" "$EXIT_FILE"
-                $KIRA_SCRIPTS/container-start.sh $name
+                $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "start"
             fi
             LOADING="true" && EXECUTED="true"
         elif [ "${OPTION,,}" == "p" ]; then
             if [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ]; then
                 echoInfo "INFO: Pausing $name container..."
-                $KIRA_SCRIPTS/container-pause.sh $name
+                $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "pause"
             else
                 echoInfo "INFO: UnPausing $name container..."
-                $KIRA_SCRIPTS/container-unpause.sh $name
+                $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "unpause"
             fi
             LOADING="true" && EXECUTED="true"
         fi

@@ -11,6 +11,7 @@ COMMON_PEERS_PATH="$COMMON_DIR/peers"
 COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
 LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
+COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
@@ -102,16 +103,33 @@ GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
 echoInfo "INFO: Starting state file configuration..."
-STATE_HEIGHT=$(cat $LOCAL_STATE | jsonQuickParse "height" || echo "0")
+STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
+LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
+(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+(! $(isNaturalNumber $VALIDATOR_MIN_HEIGHT)) && VALIDATOR_MIN_HEIGHT=0
+(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
+[[ $VALIDATOR_MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+[[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
-if [ "${NODE_TYPE,,}" == "validator" ] && [ ! -z "$VALIDATOR_MIN_HEIGHT" ] && [[ $VALIDATOR_MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
-    echoWarn "WARNING: Updating minimum state height, expected no less than $VALIDATOR_MIN_HEIGHT but got $STATE_HEIGHT"
-    (jq ".height = \"$VALIDATOR_MIN_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
-    cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
-    rm -fv "$LOCAL_STATE.tmp"
+if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
+    echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
+    cat >$LOCAL_STATE <<EOL
+{
+  "height": "$LATEST_BLOCK_HEIGHT",
+  "round": 0,
+  "step": 0
+}
+EOL
+    #(jq ".height = \"$LATEST_BLOCK_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
+    #cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
+    #rm -fv "$LOCAL_STATE.tmp"
 fi
 
-STATE_HEIGHT=$(cat $LOCAL_STATE | jsonQuickParse "height" || echo "0")
+[[ $LATEST_BLOCK_HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] && \
+CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
+echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."

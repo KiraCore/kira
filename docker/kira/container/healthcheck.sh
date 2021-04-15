@@ -19,14 +19,16 @@ EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo -n "")
 (! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
 (! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
 
-if [ -f "$EXIT_CHECK" ]; then
-  echo "INFO: Ensuring sekaid process is killed"
-  touch $HALT_CHECK
-  pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
-  rm -fv $EXIT_CHECK
-fi
 
-if [ -f "$HALT_CHECK" ]; then
+
+if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] ; then
+  if [ -f "$EXIT_CHECK" ]; then
+    echo "INFO: Ensuring sekaid process is killed"
+    touch $HALT_CHECK
+    pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+    rm -fv $EXIT_CHECK
+  fi
+
   echo "INFO: health heck => STOP (halted)"
   echo "0" > $EXCEPTION_COUNTER_FILE
   exit 0

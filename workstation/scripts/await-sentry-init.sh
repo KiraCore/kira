@@ -110,10 +110,7 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
-            touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-            $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
-            rm -fv "$HALT_FILE" "$EXIT_FILE"
+            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
             sleep 5
             continue
         else
@@ -173,14 +170,10 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     done
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch "$EXIT_FILE"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
-    cntr=0 && while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 10 ]] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
-    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-    rm -fv "$HALT_FILE" "$EXIT_FILE"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 
     echoInfo "INFO: Creating new snapshot..."
     i=0
