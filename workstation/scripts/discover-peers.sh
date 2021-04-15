@@ -143,7 +143,7 @@ while : ; do
             if [[ $SIZE -gt 140737488355328 ]] ; then
                 echoWarn "WARNING: Peer exposed by the snapshot is out of the safe download range ($ip)"
                 continue
-            elif [[ $SIZE -lt 1048576 ]] ; then
+            elif [[ $SIZE -lt 524288 ]] ; then
                 echoWarn "WARNING: File exposed by the peer is not a valid snapshot package ($ip)"
                 continue
             fi

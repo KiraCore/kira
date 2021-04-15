@@ -5,8 +5,9 @@ source $KIRA_MANAGER/utils.sh
 set +x
 
 while : ; do
-    SNAPSHOT=""
     set +x
+    set +e && source $ETC_PROFILE &>/dev/null && set -e
+    SNAPSHOT=""
     SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|l|e|s)$ ]] ; do echoNErr "Recover snap from [L]ocal storage, [E]xternal URL, [A]uto-disovery or choose [S]low sync: " && read -d'' -s -n1 SELECT && echo ""; done
     set -x
     

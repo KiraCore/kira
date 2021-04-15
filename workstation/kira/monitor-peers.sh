@@ -49,6 +49,9 @@ if ($(isNullOrEmpty "$CHECKSUM")) ; then
     exit 0 
 fi
 
+# if public peers list is empty then quickly return list, otherwise scan all
+($(isFileEmpty $INTERX_PEERS_PATH)) && PEERS_LIMIT=128 || PEERS_LIMIT=0
+
 echoInfo "INFO: Processing address book entries..."
 TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
 rm -fv "$TMP_BOOK_PUBLIC" && touch $TMP_BOOK_PUBLIC
@@ -106,8 +109,8 @@ while read ip; do
     echoInfo "INFO: Active peer found: '$peer'"
     echo "$peer" >> $TMP_BOOK_PUBLIC
     i=$(($i + 1))
-    if [[ $i -ge 128 ]] ; then
-        echoWarn "WARNING: Peer limit (128) reached"
+    if [[ $PEERS_LIMIT -gt 0 ]] && [[ $i -ge $PEERS_LIMIT ]] ; then
+        echoWarn "WARNING: Peer limit ($PEERS_LIMIT) reached"
         break
     fi
 done < $TMP_BOOK_SHUFF 
