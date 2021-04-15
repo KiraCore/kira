@@ -6,7 +6,9 @@ set +x
 
 while : ; do
     SNAPSHOT=""
+    set +x
     SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|l|e|s)$ ]] ; do echoNErr "Recover snap from [L]ocal storage, [E]xternal URL, [A]uto-disovery or choose [S]low sync: " && read -d'' -s -n1 SELECT && echo ""; done
+    set -x
     
     if [ "${SELECT,,}" == "s" ] ; then
         echo "INFO: Blockchain state will NOT be recovered from the snapshot"
