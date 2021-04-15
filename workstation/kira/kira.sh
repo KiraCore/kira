@@ -61,6 +61,7 @@ systemctl daemon-reload
 systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
 LOADING="true"
+PREVIOUS_BLOCK=0
 while :; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     SNAP_STATUS="$KIRA_SNAP/status"
@@ -168,8 +169,12 @@ while :; do
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
-        [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
+
+        
+        [ "$PREVIOUS_BLOCK" == "$KIRA_BLOCK" ] && [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
         [ "${CONSENSUS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
+        
+        PREVIOUS_BLOCK="$KIRA_BLOCK"
     else
         KIRA_BLOCK="???"
     fi
@@ -391,37 +396,25 @@ while :; do
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
-            echoInfo "INFO: Attempting to changing validator status to PAUSED..."
-            tx=$(docker exec -i validator sekaid tx customslashing pause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | jsonQuickParse "txhash" || echo -n "")
-            if [ -z "$tx" ] ; then
-                echoErr "ERROR: Failed to enter maitenance mode, unpause tx could not be broadcasted"
-            else
-                echoInfo "INFO: Pause Tx '$tx' was broadcasted, please await couple of minutes for your validator to enter paused status"
-                docker exec -i validator bash -c " . /etc/profile && echo $tx | txAwait 60" || echoError "ERROR: Failed to confirm tx within defined time"
-            fi
+            echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing pause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            sleep 5
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
-            echoInfo "INFO: Attempting to change validator status to ACTIVE..."
-            tx=$(docker exec -i validator sekaid tx customslashing unpause --from validator --chain-id="$NETWORK_NAME" --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | jsonQuickParse "txhash" || echo -n "")
-            if [ -z "$tx" ] ; then
-                echoErr "ERROR: Failed to exit maitenance mode, unpause tx could not be broadcasted"
-            else
-                echoInfo "INFO: UnPause Tx '$tx' was broadcasted, please await couple of minutes for your validator to exit paused status"
-                docker exec -i validator bash -c " . /etc/profile && echo $tx | txAwait 60" || echoError "ERROR: Failed to confirm tx within defined time"
-            fi
+            echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing unpause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "a" ]; then
         if [ "${VALSTATUS,,}" == "inactive" ] ; then
-            echoInfo "INFO: Attempting to change jailed validator status to ACTIVE..."
-            tx=$(docker exec -i validator sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --gas=1000000000 --broadcast-mode=async --yes --log_format=json | jsonQuickParse "txhash" || echo -n "")
-            if [ -z "$tx" ] ; then
-                echoErr "ERROR: Failed to unjail validator, activate tx could not be broadcasted"
-            else
-                echoInfo "INFO: Validator activate Tx '$tx' was broadcasted, please await couple of minutes for your validator to exit paused status"
-                docker exec -i validator bash -c " . /etc/profile && echo $tx | txAwait 60" || echoError "ERROR: Failed to confirm tx within defined time"
-            fi
+            echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing activate --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 1000ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
