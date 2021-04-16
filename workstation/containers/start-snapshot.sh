@@ -123,6 +123,7 @@ docker run -d \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="10s" \
+    -e SETUP_VER="$SETUP_VER" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

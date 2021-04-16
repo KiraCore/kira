@@ -71,11 +71,17 @@ touch $OUTPUT $TMP_OUTPUT
 i=0
 total=0
 HEIGHT=0
+# 67108864
+# max_txs_bytes == MAX_BLOCK_SIZE
+MAX_BLOCK_SIZE="1073741824"
+MIN_SNAP_SIZE="524288"
+MAX_SNAP_SIZE=$((($HEIGHT * $MAX_BLOCK_SIZE) + $MIN_SNAP_SIZE))
+
 while : ; do
     total=$(($total + 1))
     peer=$(sed "${total}q;d" $TMP_PEERS_SHUFF | xargs || echo "")
-    [ -z "$peer" ] && break
-
+    [ -z "$peer" ] && echoWarn "WARNING: Peers list ended" && break
+    set +x
     addrArr1=( $(echo $peer | tr "@" "\n") )
     addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
     nodeId=${addrArr1[0],,}
@@ -102,14 +108,18 @@ while : ; do
     if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
     if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
+    set -x
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
+    set +x
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
+    set -x
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
+    set +x
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
-
+    
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
 
@@ -140,13 +150,16 @@ while : ; do
             continue 
         else
             SIZE=$(urlContentLength "$SNAP_URL")
-            if [[ $SIZE -gt 140737488355328 ]] ; then
+            if [[ $SIZE -gt $MAX_SNAP_SIZE ]] ; then
                 echoWarn "WARNING: Peer exposed by the snapshot is out of the safe download range ($ip)"
                 continue
-            elif [[ $SIZE -lt 524288 ]] ; then
+            elif [[ $SIZE -le $MIN_SNAP_SIZE ]] ; then
                 echoWarn "WARNING: File exposed by the peer is not a valid snapshot package ($ip)"
                 continue
             fi
+
+            # if large snapshot was already found do not record smaller ones
+            MIN_SNAP_SIZE=$SIZE
             peer="${peer} $SIZE"
         fi
     fi
@@ -172,7 +185,7 @@ if [ "${SNAP_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
     cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
 fi
 
-echoInfo "INFO: Printing results"
+echoInfo "INFO: Printing results:"
 cat $OUTPUT
 echoInfo "INFO: Sucessfully discovered $i public peers out of total $total from the list, results are saved to '$OUTPUT'"
 rm -fv $TMP_PEERS_SHUFF $TMP_OUTPUT

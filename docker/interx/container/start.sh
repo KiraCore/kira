@@ -4,7 +4,7 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "Staring INTERX..."
+echoInfo "Staring INTERX $SETUP_VER setup..."
 cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"

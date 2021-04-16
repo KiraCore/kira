@@ -4,7 +4,7 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "INFO: Staring frontend v0.0.1"
+echoInfo "INFO: Staring frontend $SETUP_VER setup..."
 echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"

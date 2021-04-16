@@ -3,7 +3,7 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-echoInfo "INFO: Staring $NODE_TYPE container..."
+echoInfo "INFO: Staring $NODE_TYPE container $SETUP_VER ..."
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"

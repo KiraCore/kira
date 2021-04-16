@@ -96,10 +96,13 @@ docker run -d \
     -e CFG_max_num_inbound_peers="256" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="10s" \
+    -e CFG_max_txs_bytes="131072000" \
+    -e CFG_max_tx_bytes="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
+    -e SETUP_VER="$SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

@@ -4,7 +4,7 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-echoInfo "INFO: Staring validator setup v0.0.3 ..."
+echoInfo "INFO: Staring validator setup ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 SNAP_DIR_INPUT="$COMMON_READ/snap"
