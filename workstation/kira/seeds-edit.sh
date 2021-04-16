@@ -11,7 +11,7 @@ FILE="/tmp/seeds.tmp"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: SEED EDITOR $SETUP_VER                |"
+echoWarn "| STARTED: SEED EDITOR $KIRA_SETUP_VER                |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|  TARGET FILE: $DESTINATION"
 echoWarn "| CONTENT TYPE: ${TARGET^^}"

@@ -6,7 +6,7 @@ set +x
 printf "\033c"
 printWidth=47
 echo -e "\e[31;1m-------------------------------------------------"
-displayAlign center $printWidth "KIRA DEPLOYMENT TOOL $SETUP_VER"
+displayAlign center $printWidth "KIRA DEPLOYMENT TOOL $KIRA_SETUP_VER"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
 displayAlign center $printWidth "Select Deployment Mode"
