@@ -145,7 +145,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         else
             set +x
             echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node!"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|d|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
             if [ "${VSEL,,}" == "a" ] ; then
                 echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
@@ -162,6 +162,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
                     echoWarn "INFO: No snapshot peers were found"
                     SNAP_AVAILABLE="false"
                 fi
+            elif [ "${VSEL,,}" == "d" ] ; then
+                echoInfo "INFO: Auto-discovery was cancelled, try connecting with diffrent node"
+                continue
             else
                 echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
                 SNAP_AVAILABLE="false"
@@ -171,11 +174,9 @@ elif [ "${SELECT,,}" == "j" ] ; then
         DOWNLOAD_SUCCESS="false"
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
             echoInfo "INFO: Please wait, downloading snapshot..."
-            DOWNLOAD_SUCCESS="true"
-
             rm -f -v -r $TMP_SNAP_DIR
             mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
-            wget "$SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
+            DOWNLOAD_SUCCESS="true" && wget "$SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
 
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
@@ -188,16 +189,6 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 fi
                 DOWNLOAD_SUCCESS="false"
             fi
-        else
-            set +x
-            echoWarn "WARNING: Snapshot is NOT available, node '$NODE_ADDR' is not exposing it publicly"
-            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
-            set -x
-            if [ "${OPTION,,}" == "d" ] ; then
-                echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
-                continue
-            fi
-            DOWNLOAD_SUCCESS="false"
         fi
          
         GENSUM="none"
