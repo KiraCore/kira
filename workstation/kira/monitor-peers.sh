@@ -62,7 +62,8 @@ while read ip; do
     sleep 2
     total=$(($total + 1))
     ip=$(echo $ip | xargs || "")
-    (! $(isPublicIp $ip)) && continue
+    set +x
+    (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public IPv4 ($ip)" && continue
 
     if grep -q "$ip" "$TMP_BOOK_PUBLIC"; then
         echoWarn "WARNING: Address '$ip' is already present in the address book" && continue 
@@ -77,6 +78,7 @@ while read ip; do
     if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
     if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
+    set -x
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
@@ -84,7 +86,8 @@ while read ip; do
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
-
+    set +x
+    
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
 

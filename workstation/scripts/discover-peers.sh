@@ -71,11 +71,16 @@ touch $OUTPUT $TMP_OUTPUT
 i=0
 total=0
 HEIGHT=0
+
+# max_txs_bytes == MAX_BLOCK_SIZE
+MAX_BLOCK_SIZE="131072000"
+MIN_SNAP_SIZE="524288"
+
 while : ; do
     total=$(($total + 1))
     peer=$(sed "${total}q;d" $TMP_PEERS_SHUFF | xargs || echo "")
-    [ -z "$peer" ] && break
-
+    [ -z "$peer" ] && echoWarn "WARNING: Peers list ended" && break
+    set +x
     addrArr1=( $(echo $peer | tr "@" "\n") )
     addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
     nodeId=${addrArr1[0],,}
@@ -109,7 +114,7 @@ while : ; do
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
-
+    
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
 
@@ -136,24 +141,28 @@ while : ; do
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if [ "${SNAP_ONLY,,}" == "true" ] ; then
         if (! $(urlExists "$SNAP_URL")) ; then
-            echoWarn "WARNING: Peer is not exposing a snapshot package ($ip)"
+            echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
             continue 
         else
             SIZE=$(urlContentLength "$SNAP_URL")
-            if [[ $SIZE -gt 140737488355328 ]] ; then
-                echoWarn "WARNING: Peer exposed by the snapshot is out of the safe download range ($ip)"
+            MAX_SNAP_SIZE=$((($latest_block_height * $MAX_BLOCK_SIZE) + 524288))
+            if [[ $SIZE -gt $MAX_SNAP_SIZE ]] ; then
+                echoWarn "WARNING: Snap size $SIZE is out of upper safe download range $MAX_SNAP_SIZE ($ip)"
                 continue
-            elif [[ $SIZE -lt 524288 ]] ; then
-                echoWarn "WARNING: File exposed by the peer is not a valid snapshot package ($ip)"
+            elif [[ $SIZE -lt $MIN_SNAP_SIZE ]] ; then
+                echoWarn "WARNING: Snap size $SIZE is out of lower safe download range $MIN_SNAP_SIZE ($ip)"
                 continue
             fi
+
+            # if large snapshot was already found do not record smaller ones
+            MIN_SNAP_SIZE=$SIZE
             peer="${peer} $SIZE"
         fi
     fi
 
     i=$(($i + 1))
     echo "$peer" >> $OUTPUT
-    echoInfo "INFO: Active peer found: '$peer'"
+    echoInfo "INFO: Active peer found: $peer"
 
     if [[ $LIMIT -gt 0 ]] && [[ $i -ge $LIMIT ]] ; then
         echoInfo "INFO: Peer discovery limit ($LIMIT) reached."
@@ -172,7 +181,7 @@ if [ "${SNAP_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
     cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
 fi
 
-echoInfo "INFO: Printing results"
+echoInfo "INFO: Printing results:"
 cat $OUTPUT
 echoInfo "INFO: Sucessfully discovered $i public peers out of total $total from the list, results are saved to '$OUTPUT'"
 rm -fv $TMP_PEERS_SHUFF $TMP_OUTPUT

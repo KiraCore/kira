@@ -4,7 +4,7 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "INFO: Staring sentry setup v0.0.4"
+echoInfo "INFO: Staring sentry setup..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"

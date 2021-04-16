@@ -113,13 +113,11 @@ done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
-SNAP_DESTINATION_DIR="$DOCKER_COMMON_RO/snap"
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-rm -rfv $SNAP_DESTINATION $SNAP_DESTINATION_DIR
+rm -rfv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    # copy & repair
-    zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
+    ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
 else
     echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi
@@ -199,10 +197,6 @@ else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
   exit 1
 fi
-
-echoInfo "INFO: Starting clenup..."
-rm -fv $SNAP_DESTINATION
-rm -rfv $SNAP_DESTINATION_DIR
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"
