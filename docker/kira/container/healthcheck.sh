@@ -8,6 +8,7 @@ sleep 30 # rate limit not to overextend the log files
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
+CFG_CHECK="${COMMON_DIR}/configuring"
 EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
 EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
 EXECUTED_CHECK="$COMMON_DIR/executed"
@@ -19,19 +20,19 @@ EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo -n "")
 (! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
 (! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
 
+if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
+    if [ -f "$EXIT_CHECK" ]; then
+        echo "INFO: Ensuring sekaid process is killed"
+        touch $HALT_CHECK
+        pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
+        rm -fv $EXIT_CHECK
+    elif [ -f "$CFG_CHECK" ] ; then
+        echo "INFO: Waiting for container configuration to be finalized..."
+    fi
 
-
-if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] ; then
-  if [ -f "$EXIT_CHECK" ]; then
-    echo "INFO: Ensuring sekaid process is killed"
-    touch $HALT_CHECK
-    pkill -15 sekaid || echo "WARNING: Failed to kill sekaid"
-    rm -fv $EXIT_CHECK
-  fi
-
-  echo "INFO: health heck => STOP (halted)"
-  echo "0" > $EXCEPTION_COUNTER_FILE
-  exit 0
+    echo "INFO: health heck => STOP (halted)"
+    echo "0" > $EXCEPTION_COUNTER_FILE
+    exit 0
 fi
 
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "INFO: Failed to truncate journal"

@@ -144,10 +144,10 @@ elif [ "${SELECT,,}" == "j" ] ; then
             SNAP_AVAILABLE="true"
         else
             set +x
-            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(d|c)$ ]]; do echoNErr "Try automatic snapshot [D]iscovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node!"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
-            if [ "${VSEL,,}" == "d" ] ; then
+            if [ "${VSEL,,}" == "a" ] ; then
                 echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
                 TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
                 $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
