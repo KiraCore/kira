@@ -71,12 +71,12 @@ touch $OUTPUT $TMP_OUTPUT
 i=0
 total=0
 HEIGHT=0
-# 67108864
-# max_txs_bytes == MAX_BLOCK_SIZE
-MAX_BLOCK_SIZE="1073741824"
-MIN_SNAP_SIZE="524288"
-MAX_SNAP_SIZE=$((($HEIGHT * $MAX_BLOCK_SIZE) + $MIN_SNAP_SIZE))
 
+# max_txs_bytes == MAX_BLOCK_SIZE
+MAX_BLOCK_SIZE="131072000"
+MIN_SNAP_SIZE="524288"
+
+set +X
 while : ; do
     total=$(($total + 1))
     peer=$(sed "${total}q;d" $TMP_PEERS_SHUFF | xargs || echo "")
@@ -108,16 +108,12 @@ while : ; do
     if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
     if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
-    set -x
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
-    set +x
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
-    set -x
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
-    set +x
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
     
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
@@ -150,11 +146,12 @@ while : ; do
             continue 
         else
             SIZE=$(urlContentLength "$SNAP_URL")
+            MAX_SNAP_SIZE=$((($latest_block_height * $MAX_BLOCK_SIZE) + 524288))
             if [[ $SIZE -gt $MAX_SNAP_SIZE ]] ; then
-                echoWarn "WARNING: Peer exposed by the snapshot is out of the safe download range ($ip)"
+                echoWarn "WARNING: Snap size $SIZE is out of upper safe download range $MAX_SNAP_SIZE ($ip)"
                 continue
-            elif [[ $SIZE -le $MIN_SNAP_SIZE ]] ; then
-                echoWarn "WARNING: File exposed by the peer is not a valid snapshot package ($ip)"
+            elif [[ $SIZE -lt $MIN_SNAP_SIZE ]] ; then
+                echoWarn "WARNING: Snap size $SIZE is out of lower safe download range $MIN_SNAP_SIZE ($ip)"
                 continue
             fi
 
