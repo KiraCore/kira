@@ -170,6 +170,22 @@ function urlContentLength() {
     echo $VAL
 }
 
+function prettyTime {
+  local T=$1
+  (! $(isNaturalNumber $T)) && T=0
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  (( $D > 0 )) && (( $D > 1 )) && printf '%d days ' $D
+  (( $D > 0 )) && (( $D < 2 )) && printf '%d day ' $D
+  (( $H > 0 )) && (( $H > 1 )) && printf '%d hours ' $H
+  (( $H > 0 )) && (( $H < 2 )) && printf '%d hour ' $H
+  (( $M > 0 )) && (( $M > 1 )) && printf '%d minutes ' $M
+  (( $M > 0 )) && (( $M < 2 )) && printf '%d minute ' $M
+  (( $S != 1 )) && printf '%d seconds\n' $S || printf '%d second\n' $S
+}
+
 displayAlign() {
   align=$1
   width=$2

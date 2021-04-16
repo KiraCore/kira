@@ -129,6 +129,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     i=0
     PREVIOUS_HEIGHT=0
+    START_TIME_HEIGHT="$(date -u +%s)"
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
@@ -154,6 +155,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
         [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
@@ -162,7 +164,12 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             break
         fi
 
+        BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
         set +x
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+            TIME_LEFT=$(($BLOCKS_LEFT / $DELTA_HEIGHT))
+            echoInfo "INFO: Approximate time left to finish catching up: $(prettyTime $TIME_LEFT)"
+        fi
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
