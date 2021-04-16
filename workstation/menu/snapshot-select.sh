@@ -54,7 +54,7 @@ while : ; do
 
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
+            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 32 || echoErr "ERROR: Peers discovery scan failed"
             SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
             if [ ! -z "$SNAP_PEER" ]; then
                 echoInfo "INFO: Snapshot peer was found"

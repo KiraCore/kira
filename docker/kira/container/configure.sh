@@ -33,7 +33,6 @@ LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
-
     if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
         EXTERNAL_ADDR="$LOCAL_IP"
     elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
@@ -47,46 +46,47 @@ if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
 
     rm -fv $LOCAL_GENESIS
     cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+elif [ "${NODE_TYPE,,}" == "validator" ] ; then
+
+    validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
+    testAddr=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME || echo "")
+    signerAddr=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME || echo "")
+    faucetAddr=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME || echo "")
+    valoperAddr=$(sekaid val-address $validatorAddr || echo "")
+    consPubAddr=$(sekaid tendermint show-validator || echo "")
+    
+    [ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=$validatorAddr" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=$testAddr" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=$signerAddr" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    
+    # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
+    ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
+    (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
+    
+    if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
+        TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
+        TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+        (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
+        TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
+    elif [ -z "$CFG_timeout_commit" ] ; then
+        TIMEOUT_COMMIT="5000ms"
+    else
+        TIMEOUT_COMMIT=$CFG_timeout_commit
+    fi
+    
+    if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
+        echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
+        CFG_timeout_commit=$TIMEOUT_COMMIT
+        CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
 fi
 
 echoInfo "INFO: Local Addr: $LOCAL_IP"
 echoInfo "INFO: Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $CFG_external_address"
-
-validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
-testAddr=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME || echo "")
-signerAddr=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME || echo "")
-faucetAddr=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME || echo "")
-valoperAddr=$(sekaid val-address $validatorAddr || echo "")
-consPubAddr=$(sekaid tendermint show-validator || echo "")
-
-[ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=$validatorAddr" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-[ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=$testAddr" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-[ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=$signerAddr" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-[ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-[ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-[ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
-ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
-(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-
-if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-elif [ -z "$CFG_timeout_commit" ] ; then
-    TIMEOUT_COMMIT="5000ms"
-else
-    TIMEOUT_COMMIT=$CFG_timeout_commit
-fi
-
-if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-    CFG_timeout_commit=$TIMEOUT_COMMIT
-    CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found"
