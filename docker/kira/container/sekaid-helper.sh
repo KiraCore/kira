@@ -54,8 +54,7 @@ function txAwait() {
                 return 1
             fi
         else
-            
-            echoWarn "WARNING: Transaction was not found, elapsed ${ELAPSED}/${MAX_TIME} s"
+            echoWarn "WAITING: Transaction is NOT confirmed yet, elapsed ${ELAPSED}/${MAX_TIME} s"
         fi
 
         if [[ $TIMEOUT -gt 0 ]] && [[ $ELAPSED -gt $TIMEOUT ]] ; then
@@ -64,7 +63,6 @@ function txAwait() {
             echoErr "ERROR: Timeout, failed to confirm tx hash '$TXHASH' within ${TIMEOUT} s limit"
             return 1
         else
-            echoInfo "INFO: Please wait for tx confirmation..."
             sleep 5
         fi
     done
