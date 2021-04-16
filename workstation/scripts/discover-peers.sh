@@ -141,7 +141,7 @@ while : ; do
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if [ "${SNAP_ONLY,,}" == "true" ] ; then
         if (! $(urlExists "$SNAP_URL")) ; then
-            echoWarn "WARNING: Peer is not exposing a snapshot package ($ip)"
+            echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
             continue 
         else
             SIZE=$(urlContentLength "$SNAP_URL")
@@ -162,7 +162,7 @@ while : ; do
 
     i=$(($i + 1))
     echo "$peer" >> $OUTPUT
-    echoInfo "INFO: Active peer found: '$peer'"
+    echoInfo "INFO: Active peer found: $peer"
 
     if [[ $LIMIT -gt 0 ]] && [[ $i -ge $LIMIT ]] ; then
         echoInfo "INFO: Peer discovery limit ($LIMIT) reached."
