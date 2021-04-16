@@ -7,8 +7,8 @@ set -x
 echoInfo "INFO: Staring validator setup v0.0.3 ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
-SNAP_FILE="$COMMON_READ/snap.zip"
-VALOPERS_FILE="$COMMON_READ/valopers"
+SNAP_DIR_INPUT="$COMMON_READ/snap"
+SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
@@ -28,19 +28,26 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp -v $COMMON_DIR/node_key.json $SEKAID_HOME/config/
   cp -v $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE" ] ; then
-    echoInfo "INFO: Snap file was found, attepting data recovery..."
-    
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d "$DATA_DIR"
+  if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+    echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
+        cd $DATA_DIR
+        jar xvf $SNAP_FILE_INPUT
+        cd $SEKAID_HOME/config
+    elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+        cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+    else
+        echoErr "ERROR: Snap file or directory was not found"
+        exit 1
+    fi
 
-    SNAP_HEIGHT=$(cat $SNAP_INFO | jq -rc '.height' || echo "0")
+    SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
     echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"
 
     if [ -f "$DATA_GENESIS" ] ; then
       echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
+      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
       if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
           echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
           exit 1
@@ -93,45 +100,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-VALIDATOR_ADDR=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME)
-TEST_ADDR=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME)
-SIGNER_ADDR=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME)
-FAUCET_ADDR=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME)
-VALOPER_ADDR=$(sekaid val-address $VALIDATOR_ADDR)
-CONSPUB_ADDR=$(sekaid tendermint show-validator)
-
-CDHelper text lineswap --insert="TEST_ADDR=$TEST_ADDR" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SIGNER_ADDR=$SIGNER_ADDR" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FAUCET_ADDR=$FAUCET_ADDR" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="VALIDATOR_ADDR=$VALIDATOR_ADDR" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="VALOPER_ADDR=$VALOPER_ADDR" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="CONSPUB_ADDR=$CONSPUB_ADDR" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256sum $LOCAL_GENESIS
 
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more vlaidators, the shorter the block time
-ACTIVE_VALIDATORS=$(cat $VALOPERS_FILE | jq -rc '.status.active_validators' || echo "0")
-(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-
-if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-elif [ -z "$CFG_timeout_commit" ] ; then
-    TIMEOUT_COMMIT="5000ms"
-else
-    TIMEOUT_COMMIT=$CFG_timeout_commit
-fi
-
-if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-    CDHelper text lineswap --insert="CFG_timeout_commit=$TIMEOUT_COMMIT" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
+echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
-set +e && source "/etc/profile" &>/dev/null && set -e
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace  

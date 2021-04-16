@@ -1,7 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/menu/chain-id-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/menu/quick-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 mkdir -p "$KIRA_CONFIGS"
@@ -83,16 +83,16 @@ elif [ "${SELECT,,}" == "j" ] ; then
         fi
 
         STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.' 2>/dev/null || echo "")
+        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-            STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jq -rc '.result' 2>/dev/null || echo "")
+            STATUS=$(timeout 3 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         fi
-         
-        HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
-        CHAIN_ID=$(echo "$STATUS" | jq -rc '.node_info.network' 2>/dev/null || echo "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null || echo "")
+        
+        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
+        NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" 2> /dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ -z "${NODE_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
             echo "INFO: Could NOT read status, block height, chian-id or node-id"
@@ -102,43 +102,70 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         SEED_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 16656 ; then
-            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
+            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
             if $(isNodeId "$SEED_NODE_ID") ; then
                 SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
                 echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
-            else echoWarn "WARNING: Seed node ID was NOT found" ; fi
+            else echoWarn "WARNING: Seed node ID was NOT found" && SEED_NODE_ADDR="" ; fi
         else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
 
         SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 26656 ; then
+            SENTRY_NODE_ID=$NODE_ID
             if $(isNodeId "$NODE_ID") ; then
                 SENTRY_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656"
                 echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
-            else echoWarn "WARNING: Sentry node ID was NOT found" ; fi
+            else echoWarn "WARNING: Sentry node ID was NOT found" && SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
 
         PRIV_SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 36656 ; then
-            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
             if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
                 PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
-            else echoWarn "WARNING: Private sentry node ID was NOT found" ; fi
+            else echoWarn "WARNING: Private sentry node ID was NOT found" && PRIV_SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
         
         if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
+        elif (! $(isPublicIp $NODE_ADDR)) && [ -z "$PRIV_SENTRY_NODE_ADDR" ] ; then
+            echoWarn "WARNINIG: Node address '$NODE_ADDR' is a local IP but private sentry port is closed or node Id could not be found, choose diffrent public or private node to connect to"
+            continue
+        else
+            echoInfo "INFO: Success address '$NODE_ADDR' has at least one exposed node"
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-        if curl -r0-0 --fail --silent "$SNAP_URL" >/dev/null ; then
+        if ($(urlExists "$SNAP_URL")) ; then
             echoInfo "INFO: Snapshot was found, download will be attempted shortly"
             SNAP_AVAILABLE="true"
         else
-            echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
-            SNAP_AVAILABLE="false"
+            set +x
+            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node!"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            set -x
+            if [ "${VSEL,,}" == "a" ] ; then
+                echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+                TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+                $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 32 || echoErr "ERROR: Peers discovery scan failed"
+                SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
+                if [ ! -z "$SNAP_PEER" ]; then
+                    echoInfo "INFO: Snapshot peer was found"
+                    addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
+                    addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+                    SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                    SNAP_AVAILABLE="true"
+                else
+                    echoWarn "INFO: No snapshot peers were found"
+                    SNAP_AVAILABLE="false"
+                fi
+            else
+                echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
+                SNAP_AVAILABLE="false"
+            fi
         fi
 
         DOWNLOAD_SUCCESS="false"
@@ -152,7 +179,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
-                echoWarn "WARNING: Snapshot download failed or connection with the node '$NODE_ADDR' is not stable"
+                echoWarn "WARNING: Snapshot download failed or connection with the node is not stable ($SNAP_URL)"
                 OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
@@ -179,48 +206,54 @@ elif [ "${SELECT,,}" == "j" ] ; then
          
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Snapshot archive download was sucessfull"
-            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
-            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-            SNAP_NETWORK=$(jq -r .chain_id $DATA_GENESIS 2> /dev/null 2> /dev/null || echo "")
-            SNAP_HEIGHT=$(jq -r .height $SNAP_INFO 2> /dev/null 2> /dev/null || echo "")
-            (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+            UNZIP_FAILED="false"
+            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || UNZIP_FAILED="true"
 
-            if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
-                echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
-                [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
-                [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
-                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
-                [ $SNAP_HEIGHT -le 0 ] && echoErr "ERROR: Snap height is 0"
-                [ $SNAP_HEIGHT -gt $HEIGHT ] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
-                rm -f -v -r $TMP_SNAP_DIR
-                if [ "${OPTION,,}" == "d" ] ; then
-                    echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
-                    continue
+            if [ "${UNZIP_FAILED,,}" == "false" ] ; then
+                DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
+                SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
+                SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
+                SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
+                (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+    
+                if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
+                    echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
+                    [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
+                    [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
+                    [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
+                    [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
+                    [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                    rm -f -v -r $TMP_SNAP_DIR
+                    if [ "${OPTION,,}" == "d" ] ; then
+                        echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
+                        continue
+                    fi
+                    DOWNLOAD_SUCCESS="false"
+                else
+                    echoInfo "INFO: Success, snapshot file integrity appears to be valid"
+                    cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
+                    SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
                 fi
-                DOWNLOAD_SUCCESS="false"
+                 
+                rm -f -v -r "$TMP_SNAP_DIR/test"
             else
-                echoInfo "INFO: Success, snapshot file integrity appears to be valid"
-                cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
-                SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo "")
+                echo "INFO: Unzip failed, archive might be corruped"
             fi
-             
-            rm -f -v -r "$TMP_SNAP_DIR/test"
         fi
              
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
             echoWarn "INFO: Genesis file was not found, downloading..."
             rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
             wget "$NODE_ADDR:$DEFAULT_RPC_PORT/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-            jq -r .result.genesis $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
+            jsonParse "result.genesis" $TMP_GENESIS_PATH > "$TMP_GENESIS_PATH.tmp" || echo "WARNING: Genesis extraction from response failed"
             cp -a -f -v "$TMP_GENESIS_PATH.tmp" "$TMP_GENESIS_PATH" || echo "WARNING: Genesis copy failed"
-            GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+            GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                 rm -fv "$TMP_GENESIS_PATH" "$TMP_GENESIS_PATH.tmp"
                 wget "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
-                GENESIS_NETWORK=$(jq -r .chain_id $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo "")
+                GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
             fi
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
@@ -231,7 +264,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Genesis file verification suceeded"
         fi
          
-        GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo "")
+        GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo -n "")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
             set +x
@@ -243,7 +276,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 echo "INFO: Default minmum block height is $HEIGHT"
                 echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
                 [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
-                ( [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+                ( (! $(isNaturalNumber "$VALIDATOR_MIN_HEIGHT")) || [[ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ]] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 set -x
                 break
             done
@@ -293,7 +326,8 @@ if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-    cp -f -v -a "$TMP_SNAP_PATH" "$SNAPSHOT"
+    # repair & safe copy
+    rm -fv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
     rm -fv $TMP_SNAP_PATH
 else
     SNAPSHOT=""
@@ -315,6 +349,7 @@ if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
 fi
 
 rm -f -v -r $TMP_SNAP_DIR
+NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -327,11 +362,27 @@ touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
 SAVED="false"
 if ($(isPublicIp $NODE_ADDR)) ; then
     echoInfo "INFO: Node address '$NODE_ADDR' is a public IP address, public seeds will be added..."
-    [ ! -z "$SEED_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+
+    echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 16 || echoErr "ERROR: Peers discovery scan failed"
+    if (! $(isFileEmpty "$TMP_PEERS")) ; then
+        echoInfo "INFO: Saving extra peers..."
+        cat $TMP_PEERS >> $PUBLIC_SEEDS
+    else
+        echoInfo "INFO: No extra public peers were found!"
+    fi
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && [ "$SAVED" != "true" ] && SAVED="true" && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_PEERS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+fi
+
+if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) ; then 
+    echoErr "ERROR: No public or private seeds were found"
+    exit 1
 fi
 
 echoInfo "INFO: Finished quick select!"

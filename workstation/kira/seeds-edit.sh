@@ -11,7 +11,7 @@ FILE="/tmp/seeds.tmp"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: SEED EDITOR v0.2.2.3                |"
+echoWarn "| STARTED: SEED EDITOR v0.2.4.4                |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|  TARGET FILE: $DESTINATION"
 echoWarn "| CONTENT TYPE: ${TARGET^^}"
@@ -60,8 +60,8 @@ while : ; do
     [ "${SELECT,,}" == "e" ] && exit 0
 
     if [ "${SELECT,,}" == "s" ] ; then
-        FILE_HASH=$(sha256sum "$FILE" | awk '{ print $1 }' || echo "")
-        DESTINATION_HASH=$(sha256sum "$DESTINATION" | awk '{ print $1 }' || echo "")
+        FILE_HASH=$(sha256sum "$FILE" | awk '{ print $1 }' || echo -n "")
+        DESTINATION_HASH=$(sha256sum "$DESTINATION" | awk '{ print $1 }' || echo -n "")
 
         if [ "$FILE_HASH" != "$DESTINATION_HASH" ] ; then
             echoInfo "INFO: Saving unique changes to $DESTINATION..."
@@ -74,7 +74,7 @@ while : ; do
         continue
     fi
              
-    [ "${SELECT,,}" == "w" ] && echoInfo "INFO: All ${TARGET^^} were removed" && echo "" > $FILE && continue
+    [ "${SELECT,,}" == "w" ] && echoInfo "INFO: All ${TARGET^^} were removed" && echo -n "" > $FILE && continue
     echoInfo "INFO: ${TARGET^^} should have a format of <node-id>@<dns>:<port> but you can also input standalone DNS or IP addresses"
     echoNErr "Input comma separated list of ${TARGET^^}: " && read ADDR_LIST
     [ -z "$ADDR_LIST" ] && echoWarn "WARNING: No addresses were specified, try again" && continue
@@ -125,11 +125,11 @@ while : ; do
                 port=""
             fi
 
-            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo "")
-            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jq -r '.node_info.id' 2>/dev/null || echo "")
-            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo "")
+            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
+            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
+            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
+            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"

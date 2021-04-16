@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f
+# systemctl restart kirascan && journalctl -u kirascan -f --output cat
 
 set -x
 
@@ -52,8 +52,8 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
 fi
 
 if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ; then
-    echo "INFO: Generting sha256 of the snapshoot file..."
-    KIRA_SNAP_SHA256=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo "")
+    echo "INFO: Generting sha256 of the snapshot file..."
+    KIRA_SNAP_SHA256=$(sha256sum "$KIRA_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
@@ -86,7 +86,7 @@ if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
 elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
     ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
     INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-    if [ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]; then
+    if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]]; then
         rm -fv $SCAN_DONE
         [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
         $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"

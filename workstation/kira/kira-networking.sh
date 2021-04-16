@@ -21,7 +21,7 @@ while : ; do
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-           echo "|         KIRA NETWORKING MANAGER v0.2.2.3       |"
+           echo "|         KIRA NETWORKING MANAGER v0.2.4.4       |"
            [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
            [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
@@ -70,7 +70,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
 
     i=-1
@@ -119,9 +119,6 @@ echo -e "\e[37;1m--------------------------------------------------"
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
 
         COMMON_PATH="$DOCKER_COMMON/$DOCKER_COMMON"
-        EXIT_FILE="$COMMON_PATH/exit"
-        HALT_FILE="$COMMON_PATH/halt"
-
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
@@ -130,10 +127,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${SELECT,,}" == "c" ] && continue
         
         echoInfo "INFO: Re-starting $CONTAINER container..."
-        touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        $KIRA_SCRIPTS/container-restart.sh $CONTAINER
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER" "true" "restart"
     elif [ "${OPTION,,}" == "f" ]; then
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh

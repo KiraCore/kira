@@ -29,7 +29,7 @@ while : ; do
   
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
-          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.2.3  |"
+          echo "|   ${TYPE_TMP:0:4} PORT ${PORT_TMP:0:5} CONFIGURATION MENU v0.2.4.4  |"
           echo "|------------- $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
         [ "${PORT_EXPOSURE,,}" == "enabled" ] && \
@@ -69,7 +69,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     if [ "${OPTION,,}" != "x" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
         [ "${ACCEPT,,}" == "n" ] && echoWarn "WARINIG: Operation was cancelled" && sleep 1 && continue
-        echo ""
+        echo -n ""
     fi
     
     REINITALIZE="false"

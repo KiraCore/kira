@@ -9,10 +9,18 @@ cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
 CONFIG_PATH="$SEKAI/INTERX/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
 
-while [ -f "$HALT_CHECK" ]; do
+while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
+    if [ -f "$EXIT_CHECK" ]; then
+        echoInfo "INFO: Ensuring interxd process is killed"
+        touch $HALT_CHECK
+        pkill -9 interxd || echoWarn "WARNING: Failed to kill interx"
+        rm -fv $EXIT_CHECK
+    fi
+    echoInfo "INFO: Container halted (`date`)"
     sleep 30
 done
 
@@ -32,7 +40,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean,1lol" \
       --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex"
 
-  touch $EXECUTED_CHECK
+    touch $EXECUTED_CHECK
 fi
 
 interxd start --config="$CONFIG_PATH"

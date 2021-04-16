@@ -8,8 +8,11 @@ echo "INFO: Staring snapshot v0.0.3"
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
-SNAP_FILE="$COMMON_DIR/snap.zip"
+SNAP_DIR_INPUT="$COMMON_DIR/snap"
+SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
+
 DATA_DIR="$SEKAID_HOME/data"
+DATA_GENESIS="$DATA_DIR/genesis.json"
 
 CFG="$SEKAID_HOME/config/config.toml"
 COMMON_CFG="$COMMON_DIR/config.toml"
@@ -25,7 +28,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
-([ -z "$HALT_HEIGHT" ] || [ $HALT_HEIGHT -le 0 ]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
+([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
 echo "$SNAP_FILENAME" >$SNAP_LATEST
 
@@ -40,8 +43,8 @@ while ! ping -c1 sentry &>/dev/null; do
 done
 echo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
 
-while [ ! -f "$SNAP_FILE" ] && [ ! -f "$COMMON_GENESIS" ]; do
-  echo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isDirEmpty "$SNAP_DIR_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
+  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
   sleep 5
 done
 
@@ -59,29 +62,34 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   rm -fv $SEKAID_HOME/config/node_key.json
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
-  if [ -f "$SNAP_FILE" ]; then
-    echo "INFO: Snap file was found, attepting data recovery..."
-
-    rm -rfv "$DATA_DIR" && mkdir -p "$DATA_DIR"
-    unzip $SNAP_FILE -d $DATA_DIR
-    DATA_GENESIS="$DATA_DIR/genesis.json"
-
-    if [ -f "$DATA_GENESIS" ]; then
-      echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
-      SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo "")
-      if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ]; then
-        echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
-        exit 1
-      else
-        echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
-      fi
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+        echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+        if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
+            cd $DATA_DIR
+            jar xvf $SNAP_FILE_INPUT
+            cd $SEKAID_HOME
+        elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+            cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
+        else
+            echoErr "ERROR: Snap file or directory was not found"
+            exit 1
+        fi
+    
+        if [ -f "$DATA_GENESIS" ]; then
+            echo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
+            SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ]; then
+              echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
+              exit 1
+            else
+              echo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
+            fi
+        fi
+    
+        rm -fv "$SNAP_FILE_INPUT"
+        rm -rfv "$SNAP_DIR_INPUT"
     fi
-
-    rm -fv "$SNAP_FILE"
-  else
-    echo "INFO: Snap file is NOT present, starting new sync..."
-  fi
 
   echo "INFO: Presering configuration file..."
   cp -f -v -a "$CFG" "$COMMON_CFG"
@@ -99,26 +107,25 @@ i=0
 PID1=""
 while :; do
   echo "INFO: Checking node status..."
-  SNAP_STATUS=$(sekaid status 2>&1 | jq -rc '.' 2>/dev/null || echo "")
-  SNAP_BLOCK=$(echo $SNAP_STATUS | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-  (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK=$(echo $SNAP_STATUS | jq -r '.sync_info.latest_block_height' 2>/dev/null || echo "")
+  SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
+  SNAP_BLOCK=$(echo $SNAP_STATUS | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
   (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
 
-  if [ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]; then
+  if [[ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]]; then
     TOP_SNAP_BLOCK=$SNAP_BLOCK
   fi
   echo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
 
-  if [ "${FINISHED_RUNNING,,}" == "true" ] && [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]; then
+  if [ "${FINISHED_RUNNING,,}" == "true" ] && [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]]; then
     echo "ERROR: Expected node to reach halt height $HALT_HEIGHT but got $TOP_SNAP_BLOCK"
     exit 1
   fi
 
   # save progress only if status is available or block is diffrent then 0
-  if [ $TOP_SNAP_BLOCK -gt 0 ]; then
+  if [[ $TOP_SNAP_BLOCK -gt 0 ]]; then
     echo "INFO: Updating progress bar..."
-    [ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
-    [ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ] && PERCENTAGE="100"
+    [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
+    [[ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ]] && PERCENTAGE="100"
     echo "$PERCENTAGE" >$SNAP_PROGRESS
   fi
 
@@ -140,7 +147,7 @@ while :; do
     continue
   fi
 
-  if [ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]; then
+  if [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
     echo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
     LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
     i=0
@@ -150,7 +157,7 @@ while :; do
   echo "WARNING: Block did not changed! ($LAST_SNAP_BLOCK)"
 
   if [ "$TOP_SNAP_BLOCK" -lt "$HALT_HEIGHT" ]; then # restart process if block sync stopped
-    if [ $i -ge 4 ] || [ -z "$PID1" ]; then
+    if [[ $i -ge 4 ]] || [ -z "$PID1" ]; then
       if [ ! -z "$PID1" ]; then
         echo "WARNING: Block did not changed for the last 2 minutes!"
         echo "INFO: Printing current output log..."
@@ -173,7 +180,7 @@ while :; do
       i=$((i + 1))
       echo "INFO: Waiting for block update test $i/4"
     fi
-  elif [ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]; then
+  elif [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
     echo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
     break
   fi
@@ -195,7 +202,7 @@ cp "$COMMON_GENESIS" $SEKAID_HOME/data
 echo "{\"height\":$HALT_HEIGHT}" >"$SNAP_INFO"
 
 # to prevent appending root path we must zip all from within the target data folder
-cd $SEKAID_HOME/data && zip -r "$DESTINATION_FILE" . *
+cd $SEKAID_HOME/data && zip -9 -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] && echo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 

@@ -11,7 +11,7 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 
 i=0
-while [ $i -le 40 ]; do
+while [[ $i -le 40 ]]; do
     i=$((i + 1))
 
     echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
@@ -35,7 +35,7 @@ while [ $i -le 40 ]; do
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."
-    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo "")
+    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo -n "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
@@ -44,7 +44,7 @@ while [ $i -le 40 ]; do
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME faucet to initalize..."
-    FAUCET_ADDR=$(docker exec -t "$CONTAINER_NAME" curl 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jq -rc '.address' | xargs || echo "")
+    FAUCET_ADDR=$(docker exec -t "$CONTAINER_NAME" curl --fail 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
 
     if [ -z "${FAUCET_ADDR}" ] || [ "$FAUCET_ADDR" == "null" ] ; then
         sleep 30

@@ -4,6 +4,9 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: Starting healthcheck $START_TIME"
+
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
@@ -53,20 +56,22 @@ if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
   exit 1
 fi
 
-HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.SyncInfo.latest_block_height' 2>/dev/null || echo "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(curl http://interx:11000/api/kira/status 2>/dev/null | jq -rc '.sync_info.latest_block_height' 2>/dev/null || echo "")
+HEIGHT=$(curl --fail http://interx:11000/api/kira/status | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
-if [ $PREVIOUS_HEIGHT -ge $HEIGHT ]; then
-  echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
-  exit 1
+if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]] ; then
+    echoWarn "WARNING: Blocks are not beeing produced or synced, current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
+    exit 1
 else
-  echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
+    echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echoInfo "INFO: Latest Block Height: $HEIGHT"
+echo "------------------------------------------------"
+echo "| FINISHED: HEALTHCHECK                        |"
+echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echo "------------------------------------------------"
 exit 0
