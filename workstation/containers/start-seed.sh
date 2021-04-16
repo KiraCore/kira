@@ -95,6 +95,8 @@ docker run -d \
     -e CFG_allow_duplicate_ip="false" \
     -e CFG_max_num_outbound_peers="512" \
     -e CFG_max_num_inbound_peers="512" \
+    -e CFG_handshake_timeout="30s" \
+    -e CFG_dial_timeout="10s" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \

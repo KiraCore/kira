@@ -165,6 +165,9 @@ fi
 [ ! -z "$CFG_allow_duplicate_ip" ] && CDHelper text lineswap --insert="allow_duplicate_ip = \"$CFG_allow_duplicate_ip\"" --prefix="allow_duplicate_ip =" --path=$CFG
 # How long we wait after commiting a block before starting on the new height
 [ ! -z "$CFG_timeout_commit" ] && CDHelper text lineswap --insert="timeout_commit = \"$CFG_timeout_commit\"" --prefix="timeout_commit =" --path=$CFG
+# Peer connection configuration.
+[ ! -z "$CFG_handshake_timeout" ] && CDHelper text lineswap --insert="handshake_timeout = \"$CFG_handshake_timeout\"" --prefix="handshake_timeout =" --path=$CFG
+[ ! -z "$CFG_dial_timeout" ] && CDHelper text lineswap --insert="dial_timeout = \"$CFG_dial_timeout\"" --prefix="dial_timeout =" --path=$CFG
 
 [ ! -z "$CFG_create_empty_blocks_interval" ] && CDHelper text lineswap --insert="create_empty_blocks_interval = \"$CFG_create_empty_blocks_interval\"" --prefix="create_empty_blocks_interval =" --path=$CFG
 

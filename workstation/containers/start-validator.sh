@@ -94,6 +94,8 @@ docker run -d \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="false" \
     -e CFG_allow_duplicate_ip="true" \
+    -e CFG_handshake_timeout="30s" \
+    -e CFG_dial_timeout="10s" \
     -e CFG_pex="false" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \
