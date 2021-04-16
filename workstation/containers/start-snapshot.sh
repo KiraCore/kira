@@ -78,13 +78,11 @@ fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
-SNAP_DESTINATION_DIR="$COMMON_PATH/snap"
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
-rm -rfv $SNAP_DESTINATION $SNAP_DESTINATION_DIR
+rm -rfv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    # copy & repair
-    zip -FF $KIRA_SNAP_PATH --out $SNAP_DESTINATION -fz
+    ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
 fi
 
 echoInfo "INFO: Cleaning up snapshot container..."
@@ -141,7 +139,6 @@ if [ "${CONTAINER_CREATED,,}" != "true" ]; then
 else
     echoInfo "INFO: Success '$CONTAINER_NAME' container was started"
     rm -fv "$SNAP_DESTINATION"
-    rm -rfv "$SNAP_DESTINATION_DIR"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
     TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")

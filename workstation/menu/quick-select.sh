@@ -205,18 +205,21 @@ elif [ "${SELECT,,}" == "j" ] ; then
         rm -fv $TMP_GENESIS_PATH
          
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshot archive download was sucessfull"
-            UNZIP_FAILED="false"
-            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || UNZIP_FAILED="true"
+            echoInfo "INFO: Snapshot archive download was sucessfull, testing integrity..."
+            UNZIP_FAILED="false" && unzip -t $TMP_SNAP_PATH || UNZIP_FAILED="true"
 
             if [ "${UNZIP_FAILED,,}" == "false" ] ; then
                 DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
                 SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
+                unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
+                unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
+                
                 SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
                 SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
                 (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     
                 if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
+                    set +x
                     echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
                     [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
                     [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
@@ -224,6 +227,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                     [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
                     [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
                     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                    set -x
                     rm -f -v -r $TMP_SNAP_DIR
                     if [ "${OPTION,,}" == "d" ] ; then
                         echoInfo "INFO: Operation cancelled, try connecting with diffrent node"

@@ -79,7 +79,8 @@ while : ; do
         mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
         SUCCESS="true"
         wget "$SNAP_URL" -O $TMP_SNAP_PATH || SUCCESS="false"
-        NETWORK=""
+        SNAP_NETWORK=""
+        SNAP_HEIGHT=""
         GENSUM=""
         set +x
 
@@ -88,11 +89,17 @@ while : ; do
             rm -f -v -r $TMP_SNAP_DIR
             continue
         else
-            unzip $TMP_SNAP_PATH -d "$TMP_SNAP_DIR/test" || echo "INFO: Unzip failed, archive might be corruped"
+            UNZIP_FAILED="false" && unzip -t $TMP_SNAP_PATH || UNZIP_FAILED="true"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            NETWORK=$(jsonParse "chain_id" $DATA_GENESIS 2> /dev/null 2> /dev/null || echo -n "")
-
-            if [ ! -f "$DATA_GENESIS" ] || [ -z "$NETWORK"] || [ "${NETWORK,,}" == "null" ] ; then
+            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
+            unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
+            unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
+                
+            SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
+            SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
+            (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+            
+            if [ "${UNZIP_FAILED,,}" == "true" ] || ($(isNullOrEmpty "$SNAP_NETWORK")) || [ $SNAP_HEIGHT -le 0 ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"
                 rm -f -v -r $TMP_SNAP_DIR
                 continue
@@ -104,6 +111,7 @@ while : ; do
         fi
 
         SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
+        echoWarn "WARNING: Snapshot height: '$SNAP_HEIGHT'"
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(y|n)$ ]] ; do echoNErr "Is the checksum valid? (y/n): " && read -d'' -s -n1 OPTION && echo ""; done
@@ -115,9 +123,9 @@ while : ; do
         fi
 
         echoInfo "INFO: User apprived checksum, snapshot will be added to the archive directory '$KIRA_SNAP'"
-        SNAP_FILENAME="${NETWORK}-latest-$(date -u +%s).zip"
+        SNAP_FILENAME="${SNAP_NETWORK}-${SNAP_HEIGHT}-$(date -u +%s).zip"
         SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-        cp -a -v -f "$TMP_SNAP_PATH" "$SNAPSHOT"
+        rm -fv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
         rm -fv $TMP_SNAP_PATH
         break
     fi
