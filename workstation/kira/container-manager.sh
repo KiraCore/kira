@@ -163,7 +163,7 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
+    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
         EX_ADDR=$(tryCat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
         EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
         EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
@@ -320,19 +320,19 @@ while : ; do
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
 
-            LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
+            LINES_MAX=$(tryCat $TMP_DUMP | wc -l 2> /dev/null || echo "0")
             [[ $LOG_LINES -gt $LINES_MAX ]] && LOG_LINES=$LINES_MAX
             [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
             [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
-            echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
+            echoInfo "INFO: Found $LINES_MAX log lines, printing $LOG_LINES..."
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
             ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
-            [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
+            [ "${ACCEPT,,}" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
             [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
