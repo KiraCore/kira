@@ -98,6 +98,8 @@ docker run -d \
     -e CFG_dial_timeout="10s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \

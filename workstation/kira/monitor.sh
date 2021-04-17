@@ -42,29 +42,29 @@ while : ; do
     echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || "") >$CONTAINERS_SCAN_PATH &
     PID2="$!"
     
-    touch "${HOSTS_SCAN_PATH}.pid" && if ! kill -0 $(cat "${HOSTS_SCAN_PATH}.pid") 2>/dev/null; then
+    touch "${HOSTS_SCAN_PATH}.pid" && if ! kill -0 $(tryCat "${HOSTS_SCAN_PATH}.pid") 2>/dev/null; then
         $KIRA_MANAGER/scripts/update-hosts.sh >"$HOSTS_SCAN_PATH.log" &
         echo "$!" >"${HOSTS_SCAN_PATH}.pid"
     fi
     
-    touch "${HARDWARE_SCAN_PATH}.pid" && if ! kill -0 $(cat "${HARDWARE_SCAN_PATH}.pid") 2>/dev/null; then
+    touch "${HARDWARE_SCAN_PATH}.pid" && if ! kill -0 $(tryCat "${HARDWARE_SCAN_PATH}.pid") 2>/dev/null; then
         echo "INFO: Starting hardware monitor..."
         $KIRA_MANAGER/kira/monitor-hardware.sh &>"${HARDWARE_SCAN_PATH}.logs" &
         echo "$!" >"${HARDWARE_SCAN_PATH}.pid"
     fi
     
-    touch "${VALINFO_SCAN_PATH}.pid" && if ! kill -0 $(cat "${VALINFO_SCAN_PATH}.pid") 2>/dev/null; then
+    touch "${VALINFO_SCAN_PATH}.pid" && if ! kill -0 $(tryCat "${VALINFO_SCAN_PATH}.pid") 2>/dev/null; then
         $KIRA_MANAGER/kira/monitor-valinfo.sh &>"${VALINFO_SCAN_PATH}.logs" &
         echo "$!" >"${VALINFO_SCAN_PATH}.pid"
     fi
     
-    touch "${SNAPSHOT_SCAN_PATH}.pid" && if ! kill -0 $(cat "${SNAPSHOT_SCAN_PATH}.pid") 2>/dev/null; then
+    touch "${SNAPSHOT_SCAN_PATH}.pid" && if ! kill -0 $(tryCat "${SNAPSHOT_SCAN_PATH}.pid") 2>/dev/null; then
         echo "INFO: Starting snapshot monitor..."
         $KIRA_MANAGER/kira/monitor-snapshot.sh &>"${SNAPSHOT_SCAN_PATH}.logs" &
         echo "$!" >"${SNAPSHOT_SCAN_PATH}.pid"
     fi
 
-    touch "${PEERS_SCAN_PATH}.pid" && if ! kill -0 $(cat "${PEERS_SCAN_PATH}.pid") 2>/dev/null; then
+    touch "${PEERS_SCAN_PATH}.pid" && if ! kill -0 $(tryCat "${PEERS_SCAN_PATH}.pid") 2>/dev/null; then
         echo "INFO: Starting peers monitor..."
         $KIRA_MANAGER/kira/monitor-peers.sh &>"${PEERS_SCAN_PATH}.logs" &
         echo "$!" >"${PEERS_SCAN_PATH}.pid"

@@ -25,7 +25,7 @@ fi
 
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
-LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0")
+LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 
 set +x
@@ -43,7 +43,7 @@ set -x
 
 CHECKSUM_TEST="false"
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
-    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST)"
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True

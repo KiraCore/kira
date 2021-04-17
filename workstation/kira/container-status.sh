@@ -107,7 +107,7 @@ echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE
 echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE
 
 echoInfo "INFO: Printing scan results: "
-cat $VARS_FILE
+tryCat $VARS_FILE
 
 set +x
 echoWarn "------------------------------------------------"

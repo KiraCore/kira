@@ -32,7 +32,7 @@ fi
 [ -z "$UNHALT" ] && UNHALT="true"
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA PROCESS TERMINATOR $KIRA_SETUP_VER     |"
+echoWarn "| STARTING KIRA PROCESS TERMINATOR $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|     AWAIT EXIT: $AWAIT"
@@ -48,11 +48,11 @@ set -x
 
 mkdir -p "$COMMON_PATH"
 if [ ! -z "$NAME" ] && [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || [ "${TASK,,}" == "stop" ] ) ; then
-    RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
     touch $EXIT_FILE
     echoInfo "INFO: Sending pkill command to container..."
     docker exec -i $NAME /bin/bash -c "pkill -$CODE $PROCESS || echo 'WARNING: Failed to pkill $PROCESS ($CODE)'" || echoWarn "WARNING: Failed to pkill $PROCESS ($CODE)"
-
+    
+    RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
     if [ "${AWAIT,,}" == "true" ] && [ "${RUNNING,,}" == "true" ] ; then
         cntr=0
         while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do

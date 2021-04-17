@@ -69,7 +69,7 @@ while read ip; do
         echoWarn "WARNING: Address '$ip' is already present in the address book" && continue 
     fi
 
-    TMP_HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
+    TMP_HEIGHT=$(tryCat $LATEST_BLOCK_SCAN_PATH "")
     if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT

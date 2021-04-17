@@ -44,11 +44,11 @@ KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo -n "")
-    KADDR=$(cat $KADDR_PATH 2> /dev/null || echo -n "")
-    [ "${NAME,,}" == "validator" ] && VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo -n "")
+    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+    KADDR=$(tryCat $KADDR_PATH "")
+    [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
-    touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
+    touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
             echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
@@ -156,16 +156,16 @@ while : ; do
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
     elif [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
-        LAST_SNAP_FILE="$(cat $SNAP_LATEST)${WHITESPACE}"
-        LAST_SNAP_PROGRESS="$(cat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
+        LAST_SNAP_FILE="$(tryCat $SNAP_LATEST)${WHITESPACE}"
+        LAST_SNAP_PROGRESS="$(tryCat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
         echo "|     Snap: ${LAST_SNAP_FILE:0:43} : $LAST_SNAP_PROGRESS"
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
     if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
-        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
-        EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
+        EX_ADDR=$(tryCat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
+        EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
         EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"

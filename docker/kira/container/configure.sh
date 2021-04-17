@@ -181,10 +181,10 @@ fi
 [ ! -z "$CFG_max_tx_bytes" ] && CDHelper text lineswap --insert="max_tx_bytes = $CFG_max_tx_bytes" --prefix="max_tx_bytes =" --path=$CFG
 
 # Rate at which packets can be sent, in bytes/second
-# default 5120000, kira def. 
+# default 5120000, kira def. 65536000
 [ ! -z "$CFG_send_rate" ] && CDHelper text lineswap --insert="send_rate = $CFG_send_rate" --prefix="send_rate =" --path=$CFG
 # Rate at which packets can be received, in bytes/second
-# default 5120000, kira def. 
+# default 5120000, kira def. 65536000
 [ ! -z "$CFG_recv_rate" ] && CDHelper text lineswap --insert="recv_rate = $CFG_recv_rate" --prefix="recv_rate =" --path=$CFG
 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')

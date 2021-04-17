@@ -94,6 +94,8 @@ docker run -d \
     -e CFG_max_num_inbound_peers="256" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
@@ -105,6 +107,8 @@ docker run -d \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
+
+
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 
