@@ -10,6 +10,7 @@ CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
+IFACES_RESTARTED="false"
 NODE_ID=""
 PREVIOUS_HEIGHT=0
 HEIGHT=0
@@ -26,6 +27,11 @@ while [[ $i -le 40 ]]; do
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME container was found"
+        if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+            echoInfo "INFO: Restarting network interfaces..."
+            $KIRA_MANAGER/scripts/update-ifaces.sh
+            IFACES_RESTARTED="true"
+        fi
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."

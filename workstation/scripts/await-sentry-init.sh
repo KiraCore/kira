@@ -13,6 +13,7 @@ HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
+IFACES_RESTARTED="false"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -32,6 +33,11 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
+            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+                echoInfo "INFO: Restarting network interfaces..."
+                $KIRA_MANAGER/scripts/update-ifaces.sh
+                IFACES_RESTARTED="true"
+            fi
         fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
@@ -135,6 +141,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+            echoInfo "INFO: Updating network interfaces..."
+            $KIRA_MANAGER/scripts/update-ifaces.sh
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
