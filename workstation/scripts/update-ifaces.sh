@@ -10,7 +10,6 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING v0.0.7                   |"
 echoWarn "------------------------------------------------"
-set -x
 
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
@@ -18,11 +17,15 @@ echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
 systemctl stop docker || echoWarn "WARNINIG: Failed to stop docker service"
 ifaces=( $ifaces_iterate )
+
 for f in $ifaces_iterate ; do
     if [ "$f" == "docker0" ] || [[ "$f" =~ ^br-.*$ ]]; then
         echoInfo "INFO: Found docker network interface $f, removing..."
-        ip link set $f || echoWarn "WARNINIG: Failed ip link set interface $f"
+        set -x
+        ip link set $f down || echoWarn "WARNINIG: Failed ip link set down interface $f"
         brctl delbr $f || echoWarn "WARNINIG: Failed brctl delbr interface $f"
+        set +x
+       
     else
         echoInfo "INFO: Network interface $f does not belong to docker"
     fi
@@ -34,9 +37,7 @@ systemctl start docker || echoWarn "WARNINIG: Failed to start docker service"
 echoInfo "INFO: Interfaces after restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
-set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORK INTERFACES FIX SCRIPT      |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME_SCRIPT)) seconds"
 echoWarn "------------------------------------------------"
-set -x

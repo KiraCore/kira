@@ -9,6 +9,7 @@ INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+IFACES_RESTARTED="false"
 
 i=0
 while [[ $i -le 40 ]]; do
@@ -32,6 +33,12 @@ while [[ $i -le 40 ]]; do
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
+        if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+            echoInfo "INFO: Restarting network interfaces..."
+            $KIRA_MANAGER/scripts/update-ifaces.sh
+            IFACES_RESTARTED="true"
+            continue
+        fi
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."

@@ -29,7 +29,9 @@ while [[ $i -le 40 ]]; do
         echoInfo "INFO: Success, $CONTAINER_NAME container was found"
         if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
             echoInfo "INFO: Restarting network interfaces..."
+            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "stop"
             $KIRA_MANAGER/scripts/update-ifaces.sh
+            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
             IFACES_RESTARTED="true"
             continue
         fi

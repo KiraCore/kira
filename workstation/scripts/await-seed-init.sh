@@ -7,8 +7,7 @@ CONTAINER_NAME=$1
 SEED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-HALT_FILE="$COMMON_PATH/halt"
-EXIT_FILE="$COMMON_PATH/exit"
+IFACES_RESTARTED="false"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -38,6 +37,14 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container was initialized"
+            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+                echoInfo "INFO: Restarting network interfaces..."
+                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "stop"
+                $KIRA_MANAGER/scripts/update-ifaces.sh
+                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+                IFACES_RESTARTED="true"
+                continue
+            fi
         fi
 
         echoInfo "INFO: Awaiting node status..."

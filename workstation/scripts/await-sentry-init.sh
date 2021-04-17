@@ -35,7 +35,9 @@ while : ; do
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
             if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
                 echoInfo "INFO: Restarting network interfaces..."
+                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "stop"
                 $KIRA_MANAGER/scripts/update-ifaces.sh
+                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
                 IFACES_RESTARTED="true"
                 continue
             fi
@@ -182,7 +184,6 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
         set +x
         if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
-            
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
             echoInfo "INFO: Estimated time left until catching up with min. height: $(prettyTime $TIME_LEFT)"
         fi
