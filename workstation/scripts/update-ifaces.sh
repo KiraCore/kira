@@ -9,10 +9,11 @@ ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING v0.0.7                   |"
-echoWarn "|-----------------------------------------------"
-echoWarn "| NETWORK INTERFACES: $ifaces_iterate"
 echoWarn "------------------------------------------------"
 set -x
+
+echoInfo "INFO: Interfaces before cleanup:"
+echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
 systemctl stop docker || echoWarn "WARNINIG: Failed to stop docker service"
@@ -26,7 +27,12 @@ for f in $ifaces_iterate ; do
         echoInfo "INFO: Network interface $f does not belong to docker"
     fi
 done
+
+echoInfo "INFO: Interfaces before restart:"
+echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 systemctl start docker || echoWarn "WARNINIG: Failed to start docker service"
+echoInfo "INFO: Interfaces after restart:"
+echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 set +x
 echoWarn "------------------------------------------------"

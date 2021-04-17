@@ -31,6 +31,7 @@ while [[ $i -le 40 ]]; do
             echoInfo "INFO: Restarting network interfaces..."
             $KIRA_MANAGER/scripts/update-ifaces.sh
             IFACES_RESTARTED="true"
+            continue
         fi
     fi
 
