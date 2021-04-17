@@ -124,11 +124,12 @@ docker run -d \
     -e CFG_max_num_outbound_peers="0" \
     -e CFG_max_num_inbound_peers="0" \
     -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="10s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \

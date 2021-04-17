@@ -186,6 +186,10 @@ fi
 # Rate at which packets can be received, in bytes/second
 # default 5120000, kira def. 65536000
 [ ! -z "$CFG_recv_rate" ] && CDHelper text lineswap --insert="recv_rate = $CFG_recv_rate" --prefix="recv_rate =" --path=$CFG
+# Maximum size of a message packet payload, in bytes
+# default 1024, kira def. 131072
+[ ! -z "$CFG_max_packet_msg_payload_size" ] && CDHelper text lineswap --insert="max_packet_msg_payload_size = $CFG_max_packet_msg_payload_size" --prefix="max_packet_msg_payload_size =" --path=$CFG
+
 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True

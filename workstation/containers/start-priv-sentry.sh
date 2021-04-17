@@ -98,10 +98,13 @@ docker run -d \
     -e CFG_allow_duplicate_ip="true" \
     -e CFG_max_num_outbound_peers="64" \
     -e CFG_max_num_inbound_peers="64" \
+    -e CFG_handshake_timeout="30s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
@@ -113,8 +116,6 @@ docker run -d \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
-
-
 
 docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 

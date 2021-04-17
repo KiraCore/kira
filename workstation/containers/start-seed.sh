@@ -37,7 +37,6 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 mkdir -p "$COMMON_LOGS"
 cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
@@ -98,11 +97,12 @@ docker run -d \
     -e CFG_max_num_outbound_peers="128" \
     -e CFG_max_num_inbound_peers="128" \
     -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="10s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \

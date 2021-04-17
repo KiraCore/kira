@@ -184,7 +184,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         set +x
         if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
-            echoInfo "INFO: Estimated time left until catching up with min. height: $(prettyTime $TIME_LEFT)"
+            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."

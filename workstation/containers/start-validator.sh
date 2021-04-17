@@ -102,9 +102,10 @@ docker run -d \
     -e CFG_skip_timeout_commit="false" \
     -e CFG_allow_duplicate_ip="true" \
     -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="10s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
     -e CFG_pex="false" \
     -e NEW_NETWORK="$NEW_NETWORK" \
