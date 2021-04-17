@@ -37,6 +37,7 @@ while : ; do
                 echoInfo "INFO: Restarting network interfaces..."
                 $KIRA_MANAGER/scripts/update-ifaces.sh
                 IFACES_RESTARTED="true"
+                i=0
                 continue
             fi
         fi
@@ -141,7 +142,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
-        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+        if ($(isNullOrEmpty $STATUS)) ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"

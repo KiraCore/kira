@@ -38,6 +38,7 @@ while [[ $i -le 40 ]]; do
             $KIRA_MANAGER/scripts/update-ifaces.sh
             IFACES_RESTARTED="true"
             continue
+            i=0
         fi
     fi
 

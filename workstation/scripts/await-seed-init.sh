@@ -41,6 +41,7 @@ while : ; do
                 echoInfo "INFO: Restarting network interfaces..."
                 $KIRA_MANAGER/scripts/update-ifaces.sh
                 IFACES_RESTARTED="true"
+                i=0
                 continue
             fi
         fi
@@ -133,15 +134,18 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
-        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+        if ($(isNullOrEmpty $STATUS)) ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
-            echoErr "ERROR: Node failed or status could not be fetched, your netwok connectivity might have been interrupted"
-            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 ACCEPT && echo ""; done
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
+
+            [[ $i -lt 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+
+            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
             set -x
-            [ "${SELECT,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
-            continue
+            [ "${SVAL,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
+            i=0 && continue
         else
             i=0
         fi
