@@ -162,8 +162,16 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+
+        END_TIME_HEIGHT="$(date -u +%s)"
         DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
-        [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+        DELTA_TIME=$(($END_TIME_HEIGHT - $START_TIME_HEIGHT))
+        
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
+            PREVIOUS_HEIGHT=$HEIGHT
+            START_TIME_HEIGHT=$END_TIME_HEIGHT
+            SYNCING="true"
+        fi
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
@@ -173,9 +181,10 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
         BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
         set +x
-        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
-            TIME_LEFT=$(($BLOCKS_LEFT / $DELTA_HEIGHT))
-            echoInfo "INFO: Approximate time left to finish catching up: $(prettyTime $TIME_LEFT)"
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+            
+            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
+            echoInfo "INFO: Estimated time left until catching up with min. height: $(prettyTime $TIME_LEFT)"
         fi
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
