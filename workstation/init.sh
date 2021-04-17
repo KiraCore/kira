@@ -52,7 +52,7 @@ KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.51"
-SETUP_VER="v0.2.4.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.2.5.6" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -104,6 +104,7 @@ fi
 
 echo -n ""
 set -x
+rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")

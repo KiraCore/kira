@@ -34,7 +34,6 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
 {
   "iptables": false,
   "storage-driver": "overlay2",
-  "mtu": 1420
 }
 EOL
 

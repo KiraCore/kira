@@ -16,7 +16,7 @@ EXECUTED_CHECK="$COMMON_DIR/executed"
 
 touch "$BLOCK_HEIGHT_FILE"
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
+LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
 HEIGHT=$(sekaid status 2>&1 | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
@@ -48,7 +48,7 @@ echoInfo "INFO: Latest Block Height: $HEIGHT"
 
 if [ ! -z "$EXTERNAL_ADDR" ] ; then
     echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
-    if timeout 3 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
+    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
         echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
         echo "ONLINE" > "$COMMON_DIR/external_address_status"
     else

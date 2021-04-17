@@ -68,13 +68,15 @@ echoInfo "INFO: Checking peers info..."
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-    echoInfo "INFO: Node will sync from the private sentry..."
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-else
-    echoInfo "INFO: Node will sync blocks from its own seed list..."
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-fi
+#if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+#    echoInfo "INFO: Node will sync from the private sentry..."
+#    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+#else
+#    echoInfo "INFO: Node will sync blocks from its own seed list..."
+#    CFG_persistent_peers="tcp://$SENTRY_SEED"
+#fi
+
+CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
@@ -119,11 +121,16 @@ docker run -d \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="4" \
-    -e CFG_max_num_inbound_peers="4" \
+    -e CFG_max_num_outbound_peers="0" \
+    -e CFG_max_num_inbound_peers="0" \
     -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="10s" \
-    -e SETUP_VER="$SETUP_VER" \
+    -e CFG_dial_timeout="15s" \
+    -e CFG_max_txs_bytes="131072000" \
+    -e CFG_max_tx_bytes="131072" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
+    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

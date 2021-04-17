@@ -44,24 +44,25 @@ cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$EXIT_FILE"
 
-PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" | xargs || echo -n "")
-if ($(isPublicIp $PUBLIC_IP)) && timeout 3 nc -z $PUBLIC_IP $KIRA_SENTRY_P2P_PORT ; then
-    PUB_SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$PUBLIC_IP:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    CFG_seeds="tcp://$PUB_SENTRY_SEED"
-else
-    CFG_seeds=""
-fi
+#PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" | xargs || echo -n "")
+#if ($(isPublicIp $PUBLIC_IP)) && timeout 3 nc -z $PUBLIC_IP $KIRA_SENTRY_P2P_PORT ; then
+#    PUB_SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$PUBLIC_IP:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+#    CFG_seeds="tcp://$PUB_SENTRY_SEED"
+#else
+#    CFG_seeds=""
+#fi
+#if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+#    echo "INFO: Node will sync from the public sentry..."
+#    CFG_persistent_peers="tcp://$SENTRY_SEED"
+#fi
+#
+#if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+#    echo "INFO: Node will sync from the private sentry..."
+#    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
+#    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
+#fi
 
-if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-    echo "INFO: Node will sync from the public sentry..."
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-fi
-
-if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-    echo "INFO: Node will sync from the private sentry..."
-    [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
-    CFG_persistent_peers="${CFG_persistent_peers}tcp://$PRIV_SENTRY_SEED"
-fi
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
 echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -93,17 +94,20 @@ docker run -d \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="256" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_outbound_peers="128" \
+    -e CFG_max_num_inbound_peers="128" \
     -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="10s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -e SETUP_VER="$SETUP_VER" \
+    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

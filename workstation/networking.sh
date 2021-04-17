@@ -84,9 +84,8 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.0.0.0/8 masquerade"
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.0.0.0/8 masquerade"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.168.0.0/16 masquerade"
 #firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
-#firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.168.0.0/16 masquerade"
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"22\" protocol=\"tcp\" accept"
 
@@ -159,11 +158,10 @@ done
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"10.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"0.0.0.0\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"127.0.0.1\" port port=\"1-65535\" protocol=\"tcp\" accept"
 # firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
-# firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"
 
 firewall-cmd --get-zones
 firewall-cmd --zone=$FIREWALL_ZONE --list-all || echoInfo "INFO: Failed to list '$FIREWALL_ZONE' zone"
@@ -188,20 +186,7 @@ firewall-cmd --get-active-zones
 firewall-cmd --zone=$FIREWALL_ZONE --list-all
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
-systemctl stop docker || echoWarn "WARNINIG: Failed to stop docker service"
-
-ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
-ifaces=( $ifaces_iterate )
-for f in $ifaces_iterate ; do
-    if [ "$f" == "docker0" ] || [[ "$f" =~ ^br-.*$ ]]; then
-        echoInfo "INFO: Found docker network interface $f, removing..."
-        ip link set $f || echoWarn "WARNINIG: Failed ip link set interface $f"
-        brctl delbr $f || echoWarn "WARNINIG: Failed brctl delbr interface $f"
-    else
-        echoInfo "INFO: Network interface $f does not belong to docker"
-    fi
-done
-systemctl start docker || echoWarn "WARNINIG: Failed to start docker service"
+$KIRA_MANAGER/scripts/update-ifaces.sh
 
 set +x
 echoWarn "------------------------------------------------"

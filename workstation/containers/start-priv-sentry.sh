@@ -49,14 +49,20 @@ cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-        echo "INFO: Node will sync from the public sentry..."
-        CFG_persistent_peers="tcp://$SENTRY_SEED"
-    else
-        echo "INFO: Node will sync blocks from its own seed list..."
-        CFG_persistent_peers=""
-    fi
+#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+#    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+#        echo "INFO: Node will sync from the public sentry..."
+#        CFG_persistent_peers="tcp://$SENTRY_SEED"
+#    else
+#        echo "INFO: Node will sync blocks from its own seed list..."
+#        CFG_persistent_peers=""
+#    fi
+#else
+#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+#fi
+
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
@@ -90,16 +96,21 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_outbound_peers="128" \
+    -e CFG_max_num_inbound_peers="128" \
+    -e CFG_handshake_timeout="30s" \
+    -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
-    -e SETUP_VER="$SETUP_VER" \
+    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

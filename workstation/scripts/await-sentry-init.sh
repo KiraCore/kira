@@ -13,6 +13,7 @@ HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
+IFACES_RESTARTED="false"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -32,6 +33,13 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
+            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+                echoInfo "INFO: Restarting network interfaces..."
+                $KIRA_MANAGER/scripts/update-ifaces.sh
+                IFACES_RESTARTED="true"
+                i=0
+                continue
+            fi
         fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
@@ -129,11 +137,12 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     i=0
     PREVIOUS_HEIGHT=0
+    START_TIME_HEIGHT="$(date -u +%s)"
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
-        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+        if ($(isNullOrEmpty $STATUS)) ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
@@ -154,7 +163,16 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+
+        END_TIME_HEIGHT="$(date -u +%s)"
+        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
+        DELTA_TIME=$(($END_TIME_HEIGHT - $START_TIME_HEIGHT))
+        
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
+            PREVIOUS_HEIGHT=$HEIGHT
+            START_TIME_HEIGHT=$END_TIME_HEIGHT
+            SYNCING="true"
+        fi
         set -x
 
         if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
@@ -162,7 +180,12 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             break
         fi
 
+        BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
         set +x
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
+            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
+        fi
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x

@@ -54,6 +54,9 @@ done
 wait
 set -e
 
+echoInfo "INFO: Restarting firewall..."
+$KIRA_MANAGER/networking.sh
+
 [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found!" && exit 1
 
 echoInfo "INFO: Building images..."

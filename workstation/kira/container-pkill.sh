@@ -32,7 +32,7 @@ fi
 [ -z "$UNHALT" ] && UNHALT="true"
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA PROCESS TERMINATOR $SETUP_VER     |"
+echoWarn "| STARTING KIRA PROCESS TERMINATOR $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|     AWAIT EXIT: $AWAIT"
@@ -47,22 +47,23 @@ echoWarn "|-------------------------------------------------"
 set -x
 
 mkdir -p "$COMMON_PATH"
-
-if [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || [ "${TASK,,}" == "stop" ] ) ; then
+if [ ! -z "$NAME" ] && [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || [ "${TASK,,}" == "stop" ] ) ; then
     touch $EXIT_FILE
     echoInfo "INFO: Sending pkill command to container..."
     docker exec -i $NAME /bin/bash -c "pkill -$CODE $PROCESS || echo 'WARNING: Failed to pkill $PROCESS ($CODE)'" || echoWarn "WARNING: Failed to pkill $PROCESS ($CODE)"
-
-    if [ "${AWAIT,,}" == "true" ] ; then
+    
+    RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
+    if [ "${AWAIT,,}" == "true" ] && [ "${RUNNING,,}" == "true" ] ; then
         cntr=0
         while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do
             cntr=$(($cntr + 1))
             echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..."
             sleep 5 
         done
-        [ ! -f "$EXIT_FILE" ] && echoInfo "INFO: Container '$NAME' stopped sucessfully" || \
-        echoWarn "WARNING: Failed to gracefully stop container '$NAME'"
+        [ ! -f "$EXIT_FILE" ] && echoInfo "INFO: Container '$NAME' stopped sucessfully" || echoWarn "WARNING: Failed to gracefully stop container '$NAME'"
     fi
+else
+    echoWarn "WARNING: pkill signall was NOT sent to $NAME container "
 fi
 
 if [ "${TASK,,}" == "pause" ] ; then

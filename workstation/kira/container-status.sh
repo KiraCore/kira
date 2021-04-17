@@ -11,7 +11,7 @@ SCRIPT_START_TIME="$(date -u +%s)"
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $SETUP_VER  |"
+echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER  |"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"
@@ -107,7 +107,7 @@ echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE
 echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE
 
 echoInfo "INFO: Printing scan results: "
-cat $VARS_FILE
+tryCat $VARS_FILE
 
 set +x
 echoWarn "------------------------------------------------"

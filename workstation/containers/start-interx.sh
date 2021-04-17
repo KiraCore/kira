@@ -56,7 +56,7 @@ docker run -d \
     -e CFG_grpc="dns:///sentry:9090" \
     -e CFG_rpc="http://sentry:26657" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
-    -e SETUP_VER="$SETUP_VER" \
+    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest

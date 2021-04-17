@@ -62,8 +62,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "true" ]] || [
 {
   "insecure-registries" : ["http://$ADDR1","http://$ADDR2","$ADDR1","$ADDR2"],
   "iptables": false,
-  "storage-driver": "overlay2",
-  "mtu": 1420
+  "storage-driver": "overlay2"
 }
 EOL
 

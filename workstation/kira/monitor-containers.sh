@@ -15,8 +15,8 @@ STATUS_SCAN_PATH="$SCAN_DIR/status"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
-NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo -n "")
-CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2> /dev/null || echo -n "")
+NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
 
 set +x
 echoWarn "------------------------------------------------"
@@ -64,7 +64,7 @@ for name in $CONTAINERS; do
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     touch "${DESTINATION_PATH}.pid" "$STATUS_PATH"
-    PIDX=$(cat "${DESTINATION_PATH}.pid" || echo -n "")
+    PIDX=$(tryCat "${DESTINATION_PATH}.pid" "")
     
     [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
@@ -82,7 +82,7 @@ for name in $CONTAINERS; do
 
         if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
-            NEW_LATEST_STATUS="$(cat $STATUS_PATH)"
+            NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"
         fi
     else
         LATEST_BLOCK="0"
@@ -95,7 +95,7 @@ for name in $CONTAINERS; do
 done
 
 # save latest known block height
-OLD_LATEST_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
+OLD_LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
