@@ -25,7 +25,6 @@ for f in $ifaces_iterate ; do
         ip link set $f down || echoWarn "WARNINIG: Failed ip link set down interface $f"
         brctl delbr $f || echoWarn "WARNINIG: Failed brctl delbr interface $f"
         set +x
-       
     else
         echoInfo "INFO: Network interface $f does not belong to docker"
     fi

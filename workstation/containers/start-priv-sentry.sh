@@ -49,14 +49,20 @@ cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-        echo "INFO: Node will sync from the public sentry..."
-        CFG_persistent_peers="tcp://$SENTRY_SEED"
-    else
-        echo "INFO: Node will sync blocks from its own seed list..."
-        CFG_persistent_peers=""
-    fi
+#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+#    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+#        echo "INFO: Node will sync from the public sentry..."
+#        CFG_persistent_peers="tcp://$SENTRY_SEED"
+#    else
+#        echo "INFO: Node will sync blocks from its own seed list..."
+#        CFG_persistent_peers=""
+#    fi
+#else
+#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+#fi
+
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
 else
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
 fi
@@ -90,8 +96,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_max_num_outbound_peers="64" \
+    -e CFG_max_num_inbound_peers="64" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
