@@ -32,8 +32,8 @@ set -x
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echo "INFO: Saving valopers info..."
-(timeout 60 curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
-(timeout 60 curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
+(curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
+(curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
 
 # let containers know the validators info
 ($(isSimpleJsonObjOrArrFile "$VALOPERS_SCAN_PATH")) && cp -afv "$VALOPERS_SCAN_PATH" "$VALOPERS_COMM_RO_PATH" || echo -n "" > "$VALOPERS_COMM_RO_PATH"
@@ -53,11 +53,11 @@ VALADDR=$(docker exec -i validator sekaid keys show validator -a --keyring-backe
 if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
     echo "$VALADDR" > $VALADDR_SCAN_PATH
 else
-    VALADDR=$(cat $VALADDR_SCAN_PATH || echo -n "")
+    VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 fi
 
 if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
-    VALSTATUS=$(timeout 10 echo "$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json)" | jsonParse "" || echo -n "")
+    VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json)" | jsonParse "" || echo -n "")
 else
     VALSTATUS=""
 fi

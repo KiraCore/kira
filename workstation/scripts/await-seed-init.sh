@@ -39,9 +39,7 @@ while : ; do
             echoInfo "INFO: Success, container was initialized"
             if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
                 echoInfo "INFO: Restarting network interfaces..."
-                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "stop"
                 $KIRA_MANAGER/scripts/update-ifaces.sh
-                $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
                 IFACES_RESTARTED="true"
                 continue
             fi

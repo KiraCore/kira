@@ -96,6 +96,14 @@ function isFileEmpty() {
     fi
 }
 
+function tryCat {
+    if ($(isFileEmpty $1)) ; then
+        echo -ne "$2"
+    else
+        cat $1 2>/dev/null || echo -ne "$2"
+    fi
+}
+
 function isDirEmpty() {
     if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
         echo "false"
@@ -118,8 +126,8 @@ function isSimpleJsonObjOrArr() {
 function isSimpleJsonObjOrArrFile() {
     if [ ! -f "$1" ] ; then echo "false"
     else
-        HEADS=$(head -c 8 $1)
-        TAILS=$(tail -c 8 $1)
+        HEADS=$(head -c 8 $1 2>/dev/null || echo -ne "")
+        TAILS=$(tail -c 8 $1 2>/dev/null || echo -ne "")
         echo $(isSimpleJsonObjOrArr "${HEADS}${TAILS}")
     fi
 }
@@ -168,6 +176,22 @@ function urlContentLength() {
     VAL=$(echo ${VAL%$'\r'})
     (! $(isNaturalNumber $VAL)) && VAL=0
     echo $VAL
+}
+
+function prettyTime {
+  local T=$1
+  (! $(isNaturalNumber $T)) && T=0
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  (( $D > 0 )) && (( $D > 1 )) && printf '%d days ' $D
+  (( $D > 0 )) && (( $D < 2 )) && printf '%d day ' $D
+  (( $H > 0 )) && (( $H > 1 )) && printf '%d hours ' $H
+  (( $H > 0 )) && (( $H < 2 )) && printf '%d hour ' $H
+  (( $M > 0 )) && (( $M > 1 )) && printf '%d minutes ' $M
+  (( $M > 0 )) && (( $M < 2 )) && printf '%d minute ' $M
+  (( $S != 1 )) && printf '%d seconds\n' $S || printf '%d second\n' $S
 }
 
 displayAlign() {

@@ -69,21 +69,21 @@ while :; do
     SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
 
-    VALADDR=$(cat $VALADDR_SCAN_PATH 2>/dev/null || echo -n "")
+    VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
     (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(jsonParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2>/dev/null || echo -n "")
-    CONTAINERS=$(cat $CONTAINERS_SCAN_PATH 2>/dev/null || echo -n "")
-    CPU_UTIL=$(cat $CPU_SCAN_PATH 2>/dev/null || echo -n "")
-    RAM_UTIL=$(cat $RAM_SCAN_PATH 2>/dev/null || echo -n "")
-    DISK_UTIL=$(cat $DISK_SCAN_PATH 2>/dev/null || echo -n "")
-    LOCAL_IP=$(cat $DOCKER_COMMON_RO/local_ip 2>/dev/null || echo "0.0.0.0")
-    PUBLIC_IP=$(cat $DOCKER_COMMON_RO/public_ip 2>/dev/null || echo -n "")
-    PROGRESS_SNAP="$(cat $SNAP_PROGRESS 2>/dev/null || echo "0") %"
-    SNAP_LATEST_FILE="$KIRA_SNAP/$(cat $SNAP_LATEST 2>/dev/null || echo -n "")"
-    KIRA_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH 2>/dev/null || echo "0")
+    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+    CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
+    CPU_UTIL=$(tryCat $CPU_SCAN_PATH "")
+    RAM_UTIL=$(tryCat $RAM_SCAN_PATH "")
+    DISK_UTIL=$(tryCat $DISK_SCAN_PATH "")
+    LOCAL_IP=$(tryCat $DOCKER_COMMON_RO/local_ip "0.0.0.0")
+    PUBLIC_IP=$(tryCat $DOCKER_COMMON_RO/public_ip "")
+    PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
+    SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
+    KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
     CONSENSUS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
     
     if [ -f "$SNAP_DONE" ]; then
@@ -240,8 +240,8 @@ while :; do
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
-                LATEST_BLOCK=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
-                CATCHING_UP=$(cat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" 2>/dev/null || echo "false")
+                LATEST_BLOCK=$(tryCat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" "") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+                CATCHING_UP=$(tryCat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" "false")
                 [ "${CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
 
@@ -397,12 +397,12 @@ while :; do
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing pause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing pause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
             echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing unpause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing unpause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
             echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else
@@ -412,7 +412,7 @@ while :; do
     elif [ "${OPTION,,}" == "a" ]; then
         if [ "${VALSTATUS,,}" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing activate --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 1000ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 60" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing activate --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 1000ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
             echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else

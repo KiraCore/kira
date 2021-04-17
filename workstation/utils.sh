@@ -96,6 +96,14 @@ function isFileEmpty() {
     fi
 }
 
+function tryCat {
+    if ($(isFileEmpty $1)) ; then
+        echo -ne "$2"
+    else
+        cat $1 2>/dev/null || echo -ne "$2"
+    fi
+}
+
 function isDirEmpty() {
     if [ -z "$1" ] || [ ! -d "$1" ] || [ -z "$(ls -A "$1")" ] ; then echo "true" ; else
         echo "false"
@@ -118,8 +126,8 @@ function isSimpleJsonObjOrArr() {
 function isSimpleJsonObjOrArrFile() {
     if [ ! -f "$1" ] ; then echo "false"
     else
-        HEADS=$(head -c 8 $1)
-        TAILS=$(tail -c 8 $1)
+        HEADS=$(head -c 8 $1 2>/dev/null || echo -ne "")
+        TAILS=$(tail -c 8 $1 2>/dev/null || echo -ne "")
         echo $(isSimpleJsonObjOrArr "${HEADS}${TAILS}")
     fi
 }
