@@ -8,6 +8,7 @@ set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 
 CONTAINER_NAME="validator"
+CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -31,7 +32,7 @@ set -e
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
-echo "|   NETWORK: $KIRA_VALIDATOR_NETWORK"
+echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|   NODE ID: $VALIDATOR_NODE_ID"
 echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -47,22 +48,31 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2
 GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
+#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+#    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
+#    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+#        echo "INFO: Node will sync from the private sentry..."
+#        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+#    else
+#        echo "INFO: Node will sync blocks from its own seed list..."
+#        CFG_persistent_peers="tcp://$SENTRY_SEED"
+#    fi
+#else
+#    CFG_seeds=""
+#    CFG_persistent_peers=""
+#fi
+
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-        echo "INFO: Node will sync from the private sentry..."
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-    else
-        echo "INFO: Node will sync blocks from its own seed list..."
-        CFG_persistent_peers="tcp://$SENTRY_SEED"
-    fi
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 else
     CFG_seeds=""
     CFG_persistent_peers=""
 fi
 
-echoInfo "INFO: Starting $CONTAINER_NAME node..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -71,7 +81,7 @@ docker run -d \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
-    --net="$KIRA_VALIDATOR_NETWORK" \
+    --net="$CONTAINER_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
@@ -83,14 +93,20 @@ docker run -d \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
-    -e CFG_max_num_outbound_peers="4" \
-    -e CFG_max_num_inbound_peers="4" \
+    -e CFG_max_num_outbound_peers="0" \
+    -e CFG_max_num_inbound_peers="0" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="false" \
     -e CFG_allow_duplicate_ip="true" \
+    -e CFG_handshake_timeout="30s" \
+    -e CFG_dial_timeout="15s" \
+    -e CFG_send_rate="65536000" \
+    -e CFG_recv_rate="65536000" \
+    -e CFG_max_packet_msg_payload_size="131072" \
+    -e SETUP_VER="$KIRA_SETUP_VER" \
     -e CFG_pex="false" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \
@@ -104,8 +120,8 @@ echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genes
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo "")
-GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
+GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
@@ -114,4 +130,4 @@ else
 fi
 
 CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"

@@ -32,9 +32,9 @@ CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP
 CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
 [ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"false\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
     set +x
     source $MNEMONICS
@@ -55,8 +55,6 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
         echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"
     fi
     set -x
-else
-    [ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 set +x
@@ -67,7 +65,12 @@ echo -e "\e[31;1m-------------------------------------------------"
 displayAlign center $printWidth "$title"
 displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
 echo -e "|-----------------------------------------------|"
-echo -e "| Network Interface: $IFACE (default)"
+echo -e "|       Network Interface: $IFACE (default)"
+echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
+echo -e "|     Current kira Branch: $INFRA_BRANCH"
+echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
+echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
+echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
 echo -e "|-----------------------------------------------|"
 displayAlign left $printWidth " [1] | Quick Setup $setupHintQuick"
 displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"

@@ -23,13 +23,19 @@ echoWarn "------------------------------------------------"
 set -x
 
 if [ -z "$TARGET" ] && [ "${RECONNECT,,}" != "true" ] ; then
-    echo "INFO: Pruning dangling networks..."
+    echoInfo "INFO: Pruning dangling networks..."
     docker network prune --force || echo "WARNING: Failed to prune dangling networks"
 fi
 
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
+
+echoInfo "INFO: MTU Value Discovery..."
+MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+(! $(isNaturalNumber $MTU)) && MTU=1500
+MTU=$(($MTU - 100))
+(($MTU < 100)) && MTU=1400
 
 for (( i=0; i<${len}; i++ )) ; do
   network=${networks[$i]}
@@ -39,7 +45,7 @@ for (( i=0; i<${len}; i++ )) ; do
     continue
   fi
   echo "INFO: Restarting $network ($subnet)"
-  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo "")
+  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
 
   if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
       for container in $containers ; do
@@ -51,8 +57,8 @@ for (( i=0; i<${len}; i++ )) ; do
   fi
 
   sleep 1 && docker network rm $network || echo "INFO: Failed to remove $network network"
-  sleep 1 && docker network create --subnet=$subnet $network || echo "INFO: Failed to create $network network"
-
+  sleep 1 && docker network create --opt com.docker.network.driver.mtu=$MTU  --subnet=$subnet $network || echo "INFO: Failed to create $network network"
+  
   if [ "${RECONNECT,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
       echo "INFO: Connecting container $container to $network"

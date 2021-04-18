@@ -11,7 +11,7 @@ EXIT_FILE="$COMMON_PATH/exit"
 START_LOGS="$COMMON_LOGS/start.log"
 
 set +x
-echo "INFO: Launching KIRA Container Manager..."
+echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
@@ -31,7 +31,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
-echo "INFO: Cleanup, getting container manager ready..."
+echoInfo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$KADDR_PATH"
@@ -44,40 +44,33 @@ KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(cat $NETWORKS_SCAN_PATH 2> /dev/null || echo "")
-    KADDR=$(cat $KADDR_PATH 2> /dev/null || echo "")
-    
-    if [ "${NAME,,}" == "validator" ] ; then
-        VALADDR=$(cat $VALADDR_SCAN_PATH 2> /dev/null || echo "")
-        [ ! -z "$VALADDR" ] && VALINFO=$(cat $VALINFO_SCAN_PATH 2> /dev/null | jq -rc '.' 2> /dev/null || echo "") || VALINFO=""
-    fi
+    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+    KADDR=$(tryCat $KADDR_PATH "")
+    [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
-    touch "${KADDR_PATH}.pid" && if ! kill -0 $(cat "${KADDR_PATH}.pid") 2> /dev/null ; then
+    touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
-            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jq -r '.address' 2> /dev/null || echo "") > "$KADDR_PATH" &
+            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi
 
     if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-        SEKAID_STATUS=$(cat "${CONTAINER_STATUS}.sekaid.status" 2> /dev/null | jq -r '.' 2>/dev/null || echo "")
+        SEKAID_STATUS_FILE="${CONTAINER_STATUS}.sekaid.status"
         if [ "${NAME,,}" != "interx" ] ; then 
-            KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.NodeInfo.id' 2> /dev/null || echo "")
-            (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.node_info.id' 2> /dev/null || echo "")
+            KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
-        KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
-        ($(isNullOrEmpty "$KIRA_NODE_CATCHING_UP")) && KIRA_NODE_CATCHING_UP=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        KIRA_NODE_CATCHING_UP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo -n "")
         [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
-        KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.SyncInfo.latest_block_height' 2> /dev/null || echo "0")
-        (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK=$(echo "$SEKAID_STATUS" 2> /dev/null | jq -r '.sync_info.latest_block_height' 2> /dev/null || echo "0")
+        KIRA_NODE_BLOCK=$(jsonQuickParse "latest_block_height" $SEKAID_STATUS_FILE 2> /dev/null || echo "0")
         (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
 
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER v0.2.2.3            |"
+    echo "|            KIRA CONTAINER MANAGER $KIRA_SETUP_VER            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
@@ -102,7 +95,6 @@ while : ; do
     FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
     HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!HOSTNAME}"
     PORTS="PORTS_$NAME" && PORTS="${!PORTS}"
-    EXPOSED_PORTS="EXPOSED_PORTS_$NAME" && EXPOSED_PORTS="${!EXPOSED_PORTS}"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -150,12 +142,12 @@ while : ; do
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
-        if [ ! -z "$VALINFO" ] ; then
-            VSTATUS=$(echo $VALINFO | jq -rc '.status' 2> /dev/null || echo "")
-            VTOP=$(echo $VALINFO | jq -rc '.top' 2> /dev/null || echo "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
-            VRANK=$(echo $VALINFO | jq -rc '.rank' 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
-            VSTREAK=$(echo $VALINFO | jq -rc '.streak' 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
-            VMISSED=$(echo $VALINFO | jq -rc '.missed_blocks_counter' 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
+        if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
+            VSTATUS=$(jsonQuickParse "status" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+            VTOP=$(jsonQuickParse "top" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
+            VRANK=$(jsonQuickParse "rank" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
+            VSTREAK=$(jsonQuickParse "streak" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSED=$(jsonQuickParse "missed_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
@@ -164,16 +156,16 @@ while : ; do
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
     elif [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
-        LAST_SNAP_FILE="$(cat $SNAP_LATEST)${WHITESPACE}"
-        LAST_SNAP_PROGRESS="$(cat $SNAP_PROGRESS 2> /dev/null || echo "") %"
+        LAST_SNAP_FILE="$(tryCat $SNAP_LATEST)${WHITESPACE}"
+        LAST_SNAP_PROGRESS="$(tryCat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
         [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
         echo "|     Snap: ${LAST_SNAP_FILE:0:43} : $LAST_SNAP_PROGRESS"
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed)$ ]] ; then
-        EX_ADDR=$(cat "$COMMON_PATH/external_address" 2> /dev/null || echo "")
-        EX_ADDR_STATUS=$(cat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
+    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
+        EX_ADDR=$(tryCat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
+        EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
         EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
@@ -225,9 +217,7 @@ while : ; do
             [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $NAME container"
             echo "INFO: Attempting to start & prevent node from restarting..."
-            touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-            $KIRA_SCRIPTS/container-restart.sh $NAME
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
             echo "INFO: Waiting for container to start..."
             sleep 3
             echo "INFO: Entering container $NAME ($ID)..."
@@ -244,35 +234,24 @@ while : ; do
         EXECUTED="true"
     elif [ "${OPTION,,}" == "r" ] ; then
         echo "INFO: Restarting container..."
-        touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        $KIRA_SCRIPTS/container-restart.sh $NAME
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "k" ] ; then
         if [ -f "$HALT_FILE" ] ; then
             echo "INFO: Removing halt file"
-            rm -fv $HALT_FILE
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "true"
         else
             echo "INFO: Creating halt file"
-            touch "$HALT_FILE" "$EXIT_FILE"
+            $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
         fi
-
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        echo "INFO: Restarting container..."
-        $KIRA_SCRIPTS/container-restart.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
-        touch "$EXIT_FILE"
-        cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-        $KIRA_SCRIPTS/container-stop.sh $NAME
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "stop"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" != "running" ] ; then
         echo "INFO: Starting container..."
-        rm -fv "$HALT_FILE" "$EXIT_FILE"
-        $KIRA_SCRIPTS/container-start.sh $NAME
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "start"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
@@ -300,9 +279,9 @@ while : ; do
             fi
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
-            ( [ $LOG_LINES -gt $LINES_MAX ] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
-            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
-            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
+            ( [[ $LOG_LINES -gt $LINES_MAX ]] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
+            [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
+            [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
@@ -313,14 +292,14 @@ while : ; do
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             if [ "${ACCEPT,,}" == "d" ] ; then
                 rm -fv "$START_LOGS"
-                echo "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
+                echo -n "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
             fi
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"
@@ -341,22 +320,22 @@ while : ; do
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echo "WARNING: Failed to dump $NAME container healthcheck logs"
+            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
 
-            LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
-            [ $LOG_LINES -gt $LINES_MAX ] && LOG_LINES=$LINES_MAX
-            [ $LOG_LINES -gt 10000 ] && LOG_LINES=10000
-            [ $LOG_LINES -lt 10 ] && LOG_LINES=10
-            echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
+            LINES_MAX=$(tryCat $TMP_DUMP | wc -l 2> /dev/null || echo "0")
+            [[ $LOG_LINES -gt $LINES_MAX ]] && LOG_LINES=$LINES_MAX
+            [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
+            [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
+            echoInfo "INFO: Found $LINES_MAX log lines, printing $LOG_LINES..."
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $TMP_LOG_LINES lines\e[0m"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $TMP_LOG_LINES lines\e[0m"
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
             ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
-            [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
+            [ "${ACCEPT,,}" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [ $LOG_LINES -gt 5 ] && LOG_LINES=$(($LOG_LINES - 10))
+            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
             if [ "${ACCEPT,,}" == "s" ] ; then
                 if [ "${READ_HEAD,,}" == "true" ] ; then
                     READ_HEAD="false"

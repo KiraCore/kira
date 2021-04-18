@@ -54,6 +54,9 @@ done
 wait
 set -e
 
+echoInfo "INFO: Restarting firewall..."
+$KIRA_MANAGER/networking.sh
+
 [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found!" && exit 1
 
 echoInfo "INFO: Building images..."
@@ -104,8 +107,8 @@ rm -fv "$DOCKER_COMMON_RO/public_ip" "$DOCKER_COMMON_RO/local_ip"
 i=0 && LOCAL_IP="" && PUBLIC_IP=""
 while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
     i=$((i + 1))
-    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo "")
-    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo "")
+    PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+    LOCAL_IP=$(cat "$DOCKER_COMMON_RO/local_ip" || echo -n "")
     [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
     echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
     sleep 30
@@ -114,9 +117,12 @@ done
 echoInfo "INFO: Setting up snapshots and geesis file..."
 
 SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+rm -rfv $SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    cp -a -v -f $KIRA_SNAP_PATH "$SNAP_DESTINATION"
+    ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
+else
+    echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
@@ -124,8 +130,8 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] || ( [[ -z $(grep '[^[:space:]]' $PUBLIC_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_SEEDS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] && [[ -z $(grep '[^[:space:]]' $PRIVATE_PEERS) ]] ) ; then
-        EXTERNAL_SYNC="false"
+    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) && ($(isFileEmpty $PRIVATE_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
+        EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"
     fi
@@ -162,6 +168,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
         $KIRA_MANAGER/containers/start-sentry.sh
     else
         echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+        exit 1
     fi
 
     $KIRA_MANAGER/containers/start-seed.sh
@@ -184,6 +191,7 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
             $KIRA_MANAGER/containers/start-sentry.sh
         else
             echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+            exit 1
         fi
         $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 
@@ -192,9 +200,6 @@ else
   echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
   exit 1
 fi
-
-echoInfo "INFO: Starting clenup..."
-# rm -fv $SNAP_DESTINATION
 
 # setup was compleated
 touch "$KIRA_SETUP/setup_complete"

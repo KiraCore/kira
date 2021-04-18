@@ -13,6 +13,7 @@ HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
+IFACES_RESTARTED="false"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -21,7 +22,7 @@ while : ; do
     i=0
     NODE_ID=""
     IS_STARTED="false"
-    while [ $i -le 40 ]; do
+    while [[ $i -le 40 ]]; do
         i=$((i + 1))
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
@@ -32,6 +33,13 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
+            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+                echoInfo "INFO: Restarting network interfaces..."
+                $KIRA_MANAGER/scripts/update-ifaces.sh
+                IFACES_RESTARTED="true"
+                i=0
+                continue
+            fi
         fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
@@ -45,10 +53,9 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-        NODE_ID=$(echo "$STATUS" | jq -rc '.NodeInfo.id' 2>/dev/null | xargs || echo "")
-        ( [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ) && NODE_ID=$(echo "$STATUS" | jq -rc '.node_info.id' 2>/dev/null | xargs || echo "")
-        if [ -z "$NODE_ID" ] || [ "$NODE_ID" == "null" ] ; then
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+        NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
+        if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20
             echoWarn "WARNING: Status and Node ID is not available"
             continue
@@ -57,11 +64,10 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
-        if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+        if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
             echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
             [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
             sleep 10
@@ -94,13 +100,12 @@ while : ; do
         echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
     fi
 
-    if [ $HEIGHT -le $PREVIOUS_HEIGHT ] ; then
+    if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
         echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
         FAILURE="true"
     fi
 
-    NETWORK=$(echo $STATUS | jq -rc '.NodeInfo.network' 2> /dev/null || echo "")
-    ( [ -z "${NETWORK}" ] || [ "${NETWORK,,}" == "null" ] ) && NETWORK=$(echo "$STATUS" | jq -rc '.node_info.network' || echo "")
+    NETWORK=$(echo "$STATUS" | jsonQuickParse "network" || echo -n "")
     if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
         echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'"
         FAILURE="true"
@@ -113,10 +118,7 @@ while : ; do
         set -x
         if [ "${ACCEPT,,}" == "r" ] ; then 
             echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
-            touch "$EXIT_FILE"
-            cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 20 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/20) ..." && cntr=$(($cntr + 1)) && sleep 5 ; done
-            $KIRA_SCRIPTS/container-restart.sh "$CONTAINER_NAME"
-            rm -fv "$HALT_FILE" "$EXIT_FILE"
+            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
             sleep 5
             continue
         else
@@ -135,17 +137,18 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     i=0
     PREVIOUS_HEIGHT=0
+    START_TIME_HEIGHT="$(date -u +%s)"
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jq -rc '.' 2> /dev/null || echo "")
-        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
+        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+        if ($(isNullOrEmpty $STATUS)) ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [ $i -lt 3 ] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -lt 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
 
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
             set -x
@@ -155,22 +158,34 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             i=0
         fi
 
-        set +x
-        SYNCING=$(echo $STATUS | jq -r '.SyncInfo.catching_up' 2> /dev/null || echo "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING=$(echo $STATUS | jq -r '.sync_info.catching_up' 2> /dev/null || echo "")
+        set +x 
+        SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jq -rc '.SyncInfo.latest_block_height' 2> /dev/null || echo "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=$(echo "$STATUS" | jq -rc '.sync_info.latest_block_height' || echo "")
+        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [ $HEIGHT -gt $PREVIOUS_HEIGHT ] && [ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+
+        END_TIME_HEIGHT="$(date -u +%s)"
+        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
+        DELTA_TIME=$(($END_TIME_HEIGHT - $START_TIME_HEIGHT))
+        
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
+            PREVIOUS_HEIGHT=$HEIGHT
+            START_TIME_HEIGHT=$END_TIME_HEIGHT
+            SYNCING="true"
+        fi
         set -x
 
-        if [ "${SYNCING,,}" == "false" ] && [ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ] ; then
+        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
 
+        BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
         set +x
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
+            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
+        fi
         echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
@@ -178,33 +193,34 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     done
 
     echoInfo "INFO: Halting $CONTAINER_NAME container"
-    touch "$EXIT_FILE"
-    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s).zip"
+    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
     echo "$SNAP_NAME" >  $SNAP_NAME_FILE
-    cntr=0 && while [ -f "$EXIT_FILE" ] && [ $cntr -lt 10 ] ; do echoInfo "INFO: Waiting for container '$CONTAINER_NAME' to halt ($cntr/10) ..." && cntr=$(($cntr + 1)) && sleep 15 ; done
-    echoInfo "INFO: Re-starting $CONTAINER_NAME container..."
-    $KIRA_SCRIPTS/container-restart.sh $CONTAINER_NAME
-    rm -fv "$HALT_FILE" "$EXIT_FILE"
-    
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+
     echoInfo "INFO: Creating new snapshot..."
     i=0
-    DESTINATION_FILE="$KIRA_SNAP/$SNAP_NAME"
-    while [ ! -f "$DESTINATION_FILE" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
+    DESTINATION_DIR="$KIRA_SNAP/$SNAP_NAME"
+    DESTINATION_FILE="${DESTINATION_DIR}.zip"
+    while [ ! -d "$DESTINATION_DIR" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
         i=$((i + 1))
         cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
         sleep 30
     done
 
+    echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
+    cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
+    rm -rf "$DESTINATION_DIR"
+    
+    ls -1 "$KIRA_SNAP"
+    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
+    echoInfo "INFO: New snapshot was created!"
+
     SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    ls -1 "$KIRA_SNAP"
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
-    echoInfo "INFO: New snapshot was created!"
 
     SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
     rm -fv "$SNAP_DESTINATION"

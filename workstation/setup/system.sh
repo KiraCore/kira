@@ -4,7 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 
-SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo "")" 
+SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo -n "")" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
