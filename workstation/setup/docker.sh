@@ -33,7 +33,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     cat >$DOCKER_DAEMON_JSON <<EOL
 {
   "iptables": false,
-  "storage-driver": "overlay2",
+  "storage-driver": "overlay2"
 }
 EOL
 

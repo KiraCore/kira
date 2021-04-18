@@ -6,6 +6,8 @@ set -x
 
 echo "INFO: Staring snapshot setup..."
 
+HALT_CHECK="${COMMON_DIR}/halt"
+EXIT_CHECK="${COMMON_DIR}/exit"
 EXECUTED_CHECK="$COMMON_DIR/executed"
 
 SNAP_DIR_INPUT="$COMMON_DIR/snap"
