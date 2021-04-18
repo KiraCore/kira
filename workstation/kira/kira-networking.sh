@@ -118,7 +118,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
 
-        COMMON_PATH="$DOCKER_COMMON/$DOCKER_COMMON"
+        COMMON_PATH="$DOCKER_COMMON/$CONTAINER" && mkdir -p "$COMMON_PATH"
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
