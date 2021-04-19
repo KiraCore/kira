@@ -14,10 +14,17 @@ CFG="$SEKAID_HOME/config/config.toml"
 
 touch $BLOCK_HEIGHT_FILE
 
-HEIGHT=$(sekaid status 2>&1 | jsonQuickParse "latest_block_height" || echo -n "")
+SEKAID_STATUS=$(sekaid status 2>&1 || echo -n "")
+CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
+HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
-PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
+if [ "${CATCHING_UP,,}" == "true" ]; then
+    echoInfo "INFO: Success, node is catching up! ($HEIGHT)"
+    exit 0
+fi
+
+PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 

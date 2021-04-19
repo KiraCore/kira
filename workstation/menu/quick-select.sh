@@ -139,36 +139,43 @@ elif [ "${SELECT,,}" == "j" ] ; then
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-        if ($(urlExists "$SNAP_URL")) ; then
-            echoInfo "INFO: Snapshot was found, download will be attempted shortly"
-            SNAP_AVAILABLE="true"
+        SNAP_SIZE=$(urlContentLength "$SNAP_URL")
+        if ($(urlExists "$SNAP_URL")) && [[ $SNAP_SIZE -gt 0 ]]; then
+            set +x
+            echoInfo "INFO: Node '$NODE_ADDR' is exposing snapshots, file size $SNAP_SIZE Bytes"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(s|a|d|c)$ ]]; do echoNErr "Try to [S]ync from exposed snap, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            set -x
         else
             set +x
-            echoWarn "WARNINIG: Node '$NODE_ADDR' is not exposing snapshot files! It might take you a VERY long time to sync your node!"
+            echoWarn "WARNINIG: Node '$NODE_ADDR' is NOT exposing snapshot files! It might take you a VERY long time to sync your node!"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|d|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
-            if [ "${VSEL,,}" == "a" ] ; then
-                echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-                TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-                $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 16 || echoErr "ERROR: Peers discovery scan failed"
-                SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
-                if [ ! -z "$SNAP_PEER" ]; then
-                    echoInfo "INFO: Snapshot peer was found"
-                    addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
-                    addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                    SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-                    SNAP_AVAILABLE="true"
-                else
-                    echoWarn "INFO: No snapshot peers were found"
-                    SNAP_AVAILABLE="false"
-                fi
-            elif [ "${VSEL,,}" == "d" ] ; then
-                echoInfo "INFO: Auto-discovery was cancelled, try connecting with diffrent node"
-                continue
+        fi
+
+        if [ "${VSEL,,}" == "s" ] ; then
+            echoInfo "INFO: Snapshot exposed by $NODE_ADDR peer will be used to bootstrap blockchain state"
+            SNAP_AVAILABLE="true"
+        elif [ "${VSEL,,}" == "a" ] ; then
+            echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 0 || echoErr "ERROR: Peers discovery scan failed"
+            SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
+            if [ ! -z "$SNAP_PEER" ]; then
+                echoInfo "INFO: Snapshot peer was found"
+                addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
+                addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                SNAP_AVAILABLE="true"
             else
-                echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
+                echoWarn "INFO: No snapshot peers were found"
                 SNAP_AVAILABLE="false"
             fi
+        elif [ "${VSEL,,}" == "d" ] ; then
+            echoInfo "INFO: Auto-discovery was cancelled, try connecting with diffrent node"
+            continue
+        else
+            echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
+            SNAP_AVAILABLE="false"
         fi
 
         DOWNLOAD_SUCCESS="false"
