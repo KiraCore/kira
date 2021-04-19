@@ -139,7 +139,19 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     PREVIOUS_HEIGHT=0
     START_TIME_HEIGHT="$(date -u +%s)"
     while : ; do
+        if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then
+            echoInfo "INFO: Awaiting trusted node status..."
+            TRUSTED_KIRA_STATUS=$(timeout 10 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
+            TRUSTED_HEIGHT=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
+            if ($(isNaturalNumber "$TRUSTED_HEIGHT")) && [[ "$TRUSTED_HEIGHT" -gt "$VALIDATOR_MIN_HEIGHT" ]] ; then 
+                echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
+                VALIDATOR_MIN_HEIGHT=$TRUSTED_HEIGHT
+            fi
+        fi
+
         echoInfo "INFO: Awaiting node status..."
+        sleep 10
+
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         if ($(isNullOrEmpty $STATUS)) ; then
@@ -178,6 +190,9 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
+        elif [[ $HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] ; then
+            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
+            VALIDATOR_MIN_HEIGHT=$HEIGHT
         fi
 
         BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))

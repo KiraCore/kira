@@ -79,12 +79,10 @@ while read ip; do
     if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
     set -x
-    STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-    STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
+    STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
-    KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-    KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
+    KIRA_STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
     set +x
     
@@ -107,6 +105,8 @@ while read ip; do
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
+
+    (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
 
     peer="$node_id@$ip:$KIRA_SENTRY_P2P_PORT"
     echoInfo "INFO: Active peer found: '$peer'"
