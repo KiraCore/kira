@@ -141,8 +141,10 @@ while :; do
     kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
     sleep 10
     kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
-    rm -fv $CFG # invalidate all possible connections
-    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output2.log &# launch sekai in state observer mode
+    # invalidate all possible connections
+    rm -fv $CFG 
+    # launch sekai in state observer mode
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output2.log &
     PID1=$!
     sleep 10
     FINISHED_RUNNING="true"

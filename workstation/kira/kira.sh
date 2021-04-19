@@ -55,6 +55,10 @@ CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 STATUS_SCAN_PATH="$SCAN_DIR/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
+INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+
+mkdir -p "$INTERX_REFERENCE_DIR"
 
 echoInfo "INFO: Restarting network scanner..."
 systemctl daemon-reload
@@ -70,7 +74,7 @@ while :; do
     SNAP_LATEST="$SNAP_STATUS/latest"
 
     VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
-    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(jsonParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
+    VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
@@ -169,7 +173,6 @@ while :; do
         VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
         VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
-
         
         [ "$PREVIOUS_BLOCK" == "$KIRA_BLOCK" ] && [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
         [ "${CONSENSUS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
@@ -285,7 +288,7 @@ while :; do
         echo "| [B] | BACKUP Chain State ${AUTO_BACKUP_TMP:0:21}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     fi
 
-    if [ ! -z "$KIRA_SNAP_PATH" ]; then
+    if [ ! -z "$KIRA_SNAP_PATH" ] && [ -f "$KIRA_SNAP_PATH" ]; then
         [ "${SNAP_EXPOSE,,}" == "false" ] &&
             echo "| [E] | EXPOSE Snapshot                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" ||
             echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
@@ -387,11 +390,15 @@ while :; do
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip"
+            ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
+                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip" || \
+                echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshot will become unavailable"
+            rm -fv "$INTERX_SNAPSHOT_PATH" && \
+                echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
+                echoErr "ERROR: Failed to remove snapshot symlink"
         fi
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then

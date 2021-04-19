@@ -7,10 +7,16 @@ set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
+SCAN_DONE="$SCAN_DIR/done"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
 PEERS_SCAN_PATH="$SCAN_DIR/peers"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
+
+while [ ! -f $SCAN_DONE ] ; do
+    echo "INFO: Waiting for monitor scan to finalize run..."
+    sleep 10
+done
 
 set +x
 echoWarn "------------------------------------------------"

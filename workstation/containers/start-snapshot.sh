@@ -68,14 +68,6 @@ echoInfo "INFO: Checking peers info..."
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-#if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-#    echoInfo "INFO: Node will sync from the private sentry..."
-#    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-#else
-#    echoInfo "INFO: Node will sync blocks from its own seed list..."
-#    CFG_persistent_peers="tcp://$SENTRY_SEED"
-#fi
-
 CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json

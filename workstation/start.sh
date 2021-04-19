@@ -115,12 +115,11 @@ while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
 done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
-
-SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-rm -rfv $SNAP_DESTINATION
+DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+rm -rfv $DOCKER_SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
+    ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 else
     echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi

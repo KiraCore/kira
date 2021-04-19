@@ -14,6 +14,7 @@ EXIT_FILE="$COMMON_PATH/exit"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 IFACES_RESTARTED="false"
+DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -236,11 +237,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-    rm -fv "$SNAP_DESTINATION"
-    cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
-    
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi
 

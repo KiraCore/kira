@@ -3,7 +3,8 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-echo "INFO: Health check => START"
+START_TIME="$(date -u +%s)"
+echoInfo "INFO: [$NODE_TYPE] Started $NODE_TYPE health check"
 sleep 30 # rate limit not to overextend the log files
 
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -12,6 +13,9 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
 EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
 EXECUTED_CHECK="$COMMON_DIR/executed"
+
+COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
+COMMON_CONSENSUS="$COMMON_READ/consensus"
 
 touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE"
 
@@ -44,13 +48,18 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
     exit 0
 fi
 
+LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
+CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+echoInfo "INFO: Latest known block height: $LATEST_BLOCK_HEIGHT"
+
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
-  $SELF_CONTAINER/sentry/healthcheck.sh || FAILED="true"
+  $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$CONSENSUS_STOPPED" || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
-  $SELF_CONTAINER/snapshot/healthcheck.sh || FAILED="true"
+  $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$CONSENSUS_STOPPED" || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
-  $SELF_CONTAINER/validator/healthcheck.sh || FAILED="true"
+  $SELF_CONTAINER/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$CONSENSUS_STOPPED" || FAILED="true"
 else
   echo "ERROR: Unknown node type '$NODE_TYPE'"
   FAILED="true"
@@ -74,5 +83,13 @@ if [ "${FAILED,,}" == "true" ] ; then
     
 else
     echo "0" > $EXCEPTION_COUNTER_FILE
-    exit 0
+    
 fi
+
+set +x
+echoInfo "------------------------------------------------"
+echoInfo "| FINISHED: HEALTHCHECK                        |"
+echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "------------------------------------------------"
+set -x
+exit 0

@@ -58,6 +58,13 @@ function isInteger() {
     fi
 }
 
+function isBoolean() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
+        if [ "${1,,}" == "false" ] || [ "${1,,}" == "true" ] ; then echo "true"
+        else echo "false" ; fi
+    fi
+}
+
 function isPort() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
         VTMP="false" && ( ($(isInteger $1)) && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
