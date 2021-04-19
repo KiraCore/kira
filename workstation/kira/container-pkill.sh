@@ -75,6 +75,9 @@ elif [ "${TASK,,}" == "unpause" ] ; then
 elif [ "${TASK,,}" == "start" ] ; then
     [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"
     $KIRA_SCRIPTS/container-start.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+elif [ "${TASK,,}" == "stop" ] ; then
+    $KIRA_SCRIPTS/container-stop.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"
 elif [ "${TASK,,}" == "restart" ] ; then
     $KIRA_SCRIPTS/container-restart.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
     [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"
