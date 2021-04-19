@@ -88,7 +88,7 @@ fi
 
 [ -z "$STATUS" ] && STATUS="stopped"
 [ -z "$PAUSED" ] && PAUSED="false"
-[ -z "$HEALTH" ] && HEALTH="undefined"
+[ -z "$HEALTH" ] && HEALTH="null"
 [ -z "$RESTARTING" ] && RESTARTING="false"
 [ -z "$STARTED_AT" ] && STARTED_AT="0"
 [ -z "$FINISHED_AT" ] && FINISHED_AT="0"
