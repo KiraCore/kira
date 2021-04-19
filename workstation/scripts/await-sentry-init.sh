@@ -191,7 +191,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             echoInfo "INFO: Node finished catching up."
             break
         elif [[ $HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] ; then
-            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
+            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $HEIGHT"
             VALIDATOR_MIN_HEIGHT=$HEIGHT
         fi
 
