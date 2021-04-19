@@ -8,10 +8,10 @@ set -x
 
 ADDR=$1
 OUTPUT=$2
-SNAP_ONLY=$3
+SNAPS_ONLY=$3
 PEERS_ONLY=$4
 LIMIT=$5
-[ -z "$SNAP_ONLY" ] && SNAP_ONLY="false"
+[ -z "$SNAPS_ONLY" ] && SNAPS_ONLY="false"
 [ -z "$PEERS_ONLY" ] && PEERS_ONLY="false"
 (! $(isNaturalNumber "$LIMIT")) && LIMIT="0"
 
@@ -20,7 +20,8 @@ SCRIPT_START_TIME="$(date -u +%s)"
 TMP_OUTPUT="${OUTPUT}.tmp" 
 TMP_PEERS="/tmp/$ADDR.peers"
 TMP_PEERS_SHUFF="/tmp/$ADDR.peers.shuff"
-URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt" 
+URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt"
+URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
 
 SCAN_DIR="$KIRA_HOME/kirascan"
 LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
@@ -31,10 +32,11 @@ echoWarn "|   STARTING KIRA PUBLIC PEERS SCAN v0.2.2.3   |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|       SEED ADDRESS: $ADDR"
 echoWarn "|        OUTPUT PATH: $OUTPUT"
-echoWarn "|  EXPOSED SNAP ONLY: $SNAP_ONLY"
-echoWarn "| EXPOSED PEERS ONLY: $SNAP_ONLY"
+echoWarn "|  EXPOSED SNAP ONLY: $SNAPS_ONLY"
+echoWarn "| EXPOSED PEERS ONLY: $PEERS_ONLY"
 echoWarn "|       OUTPUT LIMIT: $LIMIT"
 echoWarn "|          PEERS URL: $URL_PEERS"
+echoWarn "|          SNAPS URL: $URL_SNAPS"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -132,14 +134,18 @@ while : ; do
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [[ $(($latest_block_height + 1)) -lt $MIN_HEIGHT ]] && echoWarn "WARNING: Expected minimum block height to be $MIN_HEIGHT but got $latest_block_height ($ip)" && continue
 
-    PEERS_URL="$ip:$DEFAULT_INTERX_PORT/download/peers.txt"
-    if [ "${PEERS_ONLY,,}" == "true" ] && (! $(urlExists "$PEERS_URL")); then
+    if [ "${PEERS_ONLY,,}" == "true" ] && (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")); then
         echoWarn "WARNING: Peer is not exposing peers list ($ip)"
         continue 
     fi
 
+    if [ "${SNAPS_ONLY,,}" == "true" ] && (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/snaps.txt")); then
+        echoWarn "WARNING: Peer is not exposing snaps list ($ip)"
+        continue 
+    fi
+
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-    if [ "${SNAP_ONLY,,}" == "true" ] ; then
+    if [ "${SNAPS_ONLY,,}" == "true" ] ; then
         if (! $(urlExists "$SNAP_URL")) ; then
             echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
             continue 
@@ -175,7 +181,7 @@ if ($(isFileEmpty $OUTPUT)) || [[ $i -le 0 ]] ; then
     exit 0
 fi
 
-if [ "${SNAP_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
+if [ "${SNAPS_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
     echoInfo "INFO: Sorting peers by snapshot size"
     sort -nrk2 -n $OUTPUT > $TMP_OUTPUT
     cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
