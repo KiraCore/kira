@@ -25,9 +25,11 @@ if [ -f "$SNAP_FINALIZYNG" ] ; then
   exit 0
 fi
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
+LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-HEIGHT=$(sekaid status 2>&1 | jsonQuickParse "latest_block_height" || echo -n "")
+SEKAID_STATUS=$(sekaid status 2>&1 || echo -n "")
+CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
+HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 
@@ -36,7 +38,12 @@ if [ ! -z "$HALT_HEIGHT" ] && [[ $HALT_HEIGHT -le $HEIGHT ]] ; then
     exit 0
 fi
 
-PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
+if [ "${CATCHING_UP,,}" == "true" ]; then
+    echoInfo "INFO: Success, node is catching up! ($HEIGHT)"
+    exit 0
+fi
+
+PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
 echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
