@@ -236,7 +236,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    KIRA_SNAP_PATH=$DESTINATION_FILE
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"

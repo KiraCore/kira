@@ -52,7 +52,7 @@ KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.51"
-SETUP_VER="v0.2.5.7" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.2.5.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
@@ -150,6 +150,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     KIRA_INTERX="$KIRA_REPOS/interx"
 
     KIRA_SETUP=/kira/setup
+    KIRA_UPDATE=/kira/update
     KIRA_MANAGER="/kira/manager"
 
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
@@ -242,6 +243,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP=$KIRA_SETUP" --prefix="KIRA_SETUP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_UPDATE=$KIRA_UPDATE" --prefix="KIRA_UPDATE=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_INFRA=$KIRA_INFRA" --prefix="KIRA_INFRA=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEKAI=$KIRA_SEKAI" --prefix="KIRA_SEKAI=" --path=$ETC_PROFILE --append-if-found-not=True
