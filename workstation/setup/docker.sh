@@ -7,7 +7,9 @@ source $KIRA_MANAGER/utils.sh
 RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
-SETUP_CHECK="$KIRA_SETUP/docker-v0.0.11" 
+
+ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5sum | awk '{ print $1 }' || echo -n "")
+SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echoInfo "INFO: Attempting to remove old docker..."
     

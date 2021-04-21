@@ -2,7 +2,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
 GO_VERSION="1.15.11"
 GOROOT="/usr/local/go"
@@ -11,8 +10,8 @@ GOCACHE="/home/go/cache"
 GOBIN="${GOROOT}/bin"
 ARCHITECTURE=$(uname -m)
 
-SETUP_CHECK="$KIRA_SETUP/go-setup-1-v${GO_VERSION}-$ARCHITECTURE"
-
+ESSENTIALS_HASH=$(echo "$KIRA_HOME-$ARCHITECTURE-$GO_VERSION-1" | md5sum | awk '{ print $1 }' || echo -n "")
+SETUP_CHECK="$KIRA_SETUP/go-setup-1-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Ensuring golang is removed ..."
     apt-get remove golang-go -y

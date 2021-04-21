@@ -1,8 +1,8 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/scripts/update-ifaces.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-
+# quick edit: FILE="$KIRA_MANAGER/scripts/update-ifaces.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+set -x
 START_TIME_SCRIPT="$(date -u +%s)"
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 

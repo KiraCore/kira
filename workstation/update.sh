@@ -54,6 +54,7 @@ Description=KIRA Update And Setup Service
 After=network.target
 [Service]
 Type=simple
+User=$KIRA_USER
 WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
@@ -112,7 +113,8 @@ fi
 if [ ! -f "$KIRA_UPDATE/reboot" ] ; then
     echoWarn "WARNING: To apply all changes your machine must be rebooted!"
     echoWarn "WARNING: After restart is compleated type 'kira' in your console terminal to continue"
-    echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine..."
+    echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine"
+    echoErr "Log back in and type 'kira' in terminal then select [V]iew progress option to continue..."
     sleep 3
     set -x
     touch "$KIRA_UPDATE/reboot"
