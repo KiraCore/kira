@@ -40,9 +40,12 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
 }
 EOL
 
+    DOCKER_SERVICE="/lib/systemd/system/docker.service"
+    sed -i "s/fd:/unix:/" $DOCKER_SERVICE  || echoWarn "WARNING: Failed to substitute fd with unix in $DOCKER_SERVICE"
+
     systemctl enable --now docker
     sleep 5
-    service docker restart || echoWarn "WARNING: Failed to restart docker"
+    service docker restart || echoWarn "WARNING: Failed to restart docker ($USER)"
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v
