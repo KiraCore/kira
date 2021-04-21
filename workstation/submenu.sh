@@ -141,7 +141,7 @@ Description=KIRA Update And Setup Service
 After=network.target
 [Service]
 Type=simple
-User=$KIRA_USER
+User=root
 WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh

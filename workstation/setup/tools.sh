@@ -84,7 +84,7 @@ Description=Kira Console UI Monitoring Service
 After=network.target
 [Service]
 Type=simple
-User=$KIRA_USER
+User=root
 WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
