@@ -5,10 +5,6 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/update.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kiraup && journalctl -u kiraup -f | ccze -A
 
-set -x
-sleep 60
-exit 0
-
 UPDATE_LOGS_DIR="$KIRA_UPDATE/logs"
 mkdir -p $UPDATE_LOGS_DIR
 UPDATE_DONE="true"
