@@ -21,7 +21,7 @@ apt install -y bc dnsutils psmisc netcat default-jre default-jdk
 pip3 install ECPy
 
 ARCHITECTURE=$(uname -m)
-GO_VERSION="1.15.6"
+GO_VERSION="1.15.11"
 CDHELPER_VERSION="v0.6.51"
 FLUTTER_CHANNEL="dev"
 FLUTTER_VERSION="1.27.0-8.0.pre-$FLUTTER_CHANNEL"

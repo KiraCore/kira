@@ -12,31 +12,47 @@ if [ "${USER,,}" != root ]; then
     exit 1
 fi
 
-if [ ! -f "$KIRA_SETUP/rebooted" ]; then
-    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
-    systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped, starting new setup..."
-    sleep 1
-    $KIRA_MANAGER/start.sh "true"
-    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-fi
+UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 
-if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
-    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
-    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(i|r|k)$ ]]; do echoNErr "Choose to continue [I]nstalation process, fully [R]initalize new node or open [K]ira Manager and investigate issues: " && read -d'' -s -n1 VSEL && echo ""; done
-    
-    if [ "${VSEL,,}" != "k" ] ; then
-        systemctl stop kirascan
-        if [ "${VSEL,,}" == "i" ] ; then
-            sleep 1
-            $KIRA_MANAGER/start.sh "false"
-            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-        else
-            cd $HOME
-            source $KIRA_MANAGER/kira/kira-reinitalize.sh
-            source $KIRA_MANAGER/kira/kira.sh
-        fi
+while [ ! -f "$UPDATE_DONE_FILE" ] ; then
+    echoWarn "WARNING: Your node setup is not compleated yet"
+    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k)$ ]]; do echoNErr "Choose to [V]iew installation progress, fully [R]initalize new node or open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    if [ "${VSEL,,}" == "r" ] ; then
+        source $KIRA_MANAGER/kira/kira-reinitalize.sh
+    elif [ "${VSEL,,}" == "v" ] ; then
+        echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
+        sleep 2
+        journalctl -u kiraup -f
+    else
+        break
     fi
 fi
+
+#if [ ! -f "$KIRA_SETUP/rebooted" ]; then
+#    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
+#    systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped, starting new setup..."
+#    sleep 1
+#    $KIRA_MANAGER/start.sh "true"
+#    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+#fi
+#
+#if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
+#    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
+#    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(i|r|k)$ ]]; do echoNErr "Choose to continue [I]nstalation process, fully [R]initalize new node or open [K]ira Manager and investigate issues: " && read -d'' -s -n1 VSEL && echo ""; done
+#    
+#    if [ "${VSEL,,}" != "k" ] ; then
+#        systemctl stop kirascan
+#        if [ "${VSEL,,}" == "i" ] ; then
+#            sleep 1
+#            $KIRA_MANAGER/start.sh "false"
+#            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
+#        else
+#            cd $HOME
+#            source $KIRA_MANAGER/kira/kira-reinitalize.sh
+#            source $KIRA_MANAGER/kira/kira.sh
+#        fi
+#    fi
+#fi
 
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"

@@ -143,7 +143,7 @@ After=network.target
 Type=simple
 WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/environment
-ExecStart=/bin/bash $KIRA_MANAGER/kira/update.sh
+ExecStart=/bin/bash $KIRA_MANAGER/update.sh
 Restart=always
 RestartSec=2
 LimitNOFILE=4096
@@ -155,10 +155,15 @@ systemctl daemon-reload
 systemctl enable kiraup
 systemctl restart kiraup
 
-$KIRA_MANAGER/start.sh "False" || FAILED="true"
-[ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-set -x
+echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
+sleep 2
+journalctl -u kiraup -f
+
+#$KIRA_MANAGER/start.sh "False" || FAILED="true"
+#set +x
+#[ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
+#echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+#set -x
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0

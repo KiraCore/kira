@@ -347,7 +347,7 @@ while : ; do
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ] ; then
-        echo -e "INFO: Stopping Container Manager...\n"
+        echoInfo "INFO: Stopping Container Manager..."
         OPTION=""
         EXECUTED="true"
         sleep 1
@@ -355,10 +355,7 @@ while : ; do
     fi
 
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
-    
-    if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
-        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
-    fi
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 
-echo "INFO: Container Manager Stopped"
+echoInfo "INFO: Container Manager Stopped"

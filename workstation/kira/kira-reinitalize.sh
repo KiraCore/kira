@@ -77,11 +77,10 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
 fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
-    echo -e "\nINFO: Re-initialization failed or was aborted\n"
+    echoInfo "INFO: Re-initialization failed or was aborted"
     echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 else
-    echo -e "\nINFO: Hash verification was sucessfull, ready to re-initalize environment\n"
-
+    echoInfo "INFO: Hash verification was sucessfull, ready to re-initalize environment"
     ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo ""; done
     if [ "${ACCEPT,,}" == "r" ] ; then # wipe setup lock files
         rm -fvr $KIRA_SETUP

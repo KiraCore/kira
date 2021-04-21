@@ -3,7 +3,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 
-GO_VERSION="1.15.6"
+GO_VERSION="1.15.11"
 GOROOT="/usr/local/go"
 GOPATH="/home/go"
 GOBIN="${GOROOT}/bin"

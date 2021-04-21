@@ -50,7 +50,7 @@ while :; do
         [ -z "$NEW_NETWORK_NAME" ] && echoWarn "WARNING: Snapshot file was not selected or does not contain a genesis file" && continue
     elif [ "${SELECT,,}" == "i" ] ; then # import from file or URL
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        echo "INFO: Network genesis will be importend from the external resource"
+        echoInfo "INFO: Network genesis will be importend from the external resource"
         if [ -f "$LOCAL_GENESIS_PATH" ]; then
             LOCAL_CHAIN_ID=$(jsonParse "chain_id" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n "corrupted")
             set +x
@@ -97,28 +97,28 @@ while :; do
         fi
           
         set +x
-        echo "INFO: Success, genesis file was found and has a valid format"
-        echo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256sum $TMP_GENESIS_PATH)"
-        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echo -en "\e[31;1mChoose to [A]ccep or [R]eject the checksum: \e[0m\c" && read -d'' -s -n1 SELECT && echo ""; done
+        echoInfo "INFO: Success, genesis file was found and has a valid format"
+        echoInfo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256sum $TMP_GENESIS_PATH)"
+        SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echoNErr "Choose to [A]ccep or [R]eject the checksum: " && read -d'' -s -n1 SELECT && echo ""; done
         set -x
 
         if [ "${SELECT}" == "r" ] ; then
-            echo "INFO: Genesis checksum was rejected, try diffrent source"
+            echoInfo "INFO: Genesis checksum was rejected, try diffrent source"
             continue
         fi
     else
-        echo -en "\e[33;1mWARNING: Network name is not defined \e[0m\c" && echo -n ""
+        echoWarn -en "WARNING: Network name is not defined"
         continue
     fi
 
     set +x
-    echo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echoInfo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
+    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
     set -x
     
     rm -fv "$LOCAL_GENESIS_PATH"
     if [ -f "$TMP_GENESIS_PATH" ] ; then # if genesis was imported then replace locally
-        echo "INFO: Backing up new genesis file..."
+        echoInfo "INFO: Backing up new genesis file..."
         cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
         rm -fv "$TMP_GENESIS_PATH"
     fi
@@ -151,7 +151,8 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
     echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $VALIDATOR_MIN_HEIGHT"
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
     echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    set -x
 else
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
-set -x
+

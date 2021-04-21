@@ -97,8 +97,10 @@ if [ "${SELECT,,}" == "s" ]; then
               
         echoInfo "INFO: Snapshot '$SNAPSHOT' ($OPTION) was selected"
     fi
-         
+
+    set +x
     echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    set -x
 fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -22,6 +22,9 @@ echoWarn "| SEKAI BRANCH: $SEKAI_BRANCH"
 echoWarn "------------------------------------------------"
 set -x
 
+echoErr "ERROR: Code depreciated..."
+exit 1
+
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
 echoInfo "INFO: Updating kira repository and fetching changes..."

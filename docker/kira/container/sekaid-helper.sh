@@ -68,6 +68,8 @@ function txAwait() {
     done
 }
 
+# e.g. tryGetValidator kiraXXXXXXXXXXX
+# e.g. tryGetValidator kiravaloperXXXXXXXXXXX
 function tryGetValidator() {
     VAL_ADDR="${1,,}"
     if [[ $VAL_ADDR == kiravaloper* ]] ; then
@@ -80,29 +82,34 @@ function tryGetValidator() {
     echo $VAL_STATUS
 }
 
+# e.g. whitelistValidator validator kiraXXXXXXXXXXX
 function whitelistValidator() {
-    ADDR="$1"
+    ACC="$1"
+    ADDR="$2"
+    ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Validator address was not defined " && return 1
     VAL_STATUS=$(tryGetValidator $ADDR)
     if [ ! -z "$VAL_STATUS" ] ; then
         echoInfo "INFO: Validator $ADDR was already added to the set"
         return 1
     fi
 
-    echoInfo "INFO: Adding validator $ADDR to the validator set"
-    echoInfo "INFO: Fueling address $ADDR with funds"
-    sekaid tx bank send validator $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+    echoInfo "INFO: Adding $ADDR to the validator set"
+    echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
+    sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
 
     echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-    sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait 
+    sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait 
 
     echoInfo "INFO: Searching for the last proposal submitted on-chain"
     LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') 
 
     echoInfo "INFO: Voting YES (1) on proposal $LAST_PROPOSAL"
-    sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+    sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=$ACC --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
 
     echoInfo "INFO: Listing proposal $LAST_PROPOSAL status"
     sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq
     echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
     echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
+    return 0
 }

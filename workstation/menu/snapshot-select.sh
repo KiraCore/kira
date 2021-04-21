@@ -12,7 +12,7 @@ while : ; do
     set -x
     
     if [ "${SELECT,,}" == "s" ] ; then
-        echo "INFO: Blockchain state will NOT be recovered from the snapshot"
+        echoInfo "INFO: Blockchain state will NOT be recovered from the snapshot"
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         exit 0 
     fi
@@ -40,7 +40,7 @@ while : ; do
             set -x
         else
             set +x
-            echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoInfo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
             echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read NODE_ADDR && NODE_ADDR=$(echo "$NODE_ADDR" | xargs)
             set -x
             [ -z "$NODE_ADDR" ] && NODE_ADDR=$TRUSTED_NODE_ADDR
@@ -136,12 +136,14 @@ while : ; do
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
     
     if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
+      set +x
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
       echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+      set -x
       exit 0
     fi
     
-    echo -en "\e[31;1mPlease select snapshot to recover from:\e[0m" && echo ""
+    echoErr "Select snapshot to recover from:"
     
     i=-1
     LAST_SNAP=""
@@ -152,7 +154,7 @@ while : ; do
     done
     
     [ ! -f "$SNAP_LATEST_PATH" ] && SNAP_LATEST_PATH=$LAST_SNAP
-    echo "INFO: Latest snapshot: '$SNAP_LATEST_PATH'"
+    echoInfo "INFO: Latest snapshot: '$SNAP_LATEST_PATH'"
     
     OPTION=""
     while : ; do
@@ -174,10 +176,10 @@ while : ; do
 done
 
 SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo -n "")
+set +x
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to ensure following snapshot checksum is valid: $SNAPSUM"
 echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-
 set -x
 
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True

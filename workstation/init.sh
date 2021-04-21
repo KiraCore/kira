@@ -102,6 +102,8 @@ else
     echo "INFO: Initalizing setup script..."
 fi
 
+systemctl stop kiraup || echo "WARNING: KIRA update service could NOT be stopped, service might not exist yet!"
+
 echo -n ""
 set -x
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
@@ -207,11 +209,13 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+                set +x
                 echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
                 SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
                 [ "${SELECT,,}" == "x" ] && exit
                 echo "DANGER: You decided to disregard a potential vulnerability !!!"
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+                set -x
             fi
         else
             echo "INFO: CDHelper tool was already downloaded"

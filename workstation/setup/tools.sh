@@ -29,9 +29,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
   EXPECTED_HASH="078da5d02f80e96fae851db9d2891d626437378dd43d1d647658526b9c807fcd"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-    echo "DANGER: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
-    echo -e "\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-    echo -en "\e[31;1mPress any key to exit or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echoWarn "WARNING: Failed to check integrity hash of the hd-wallet derivaiton tool !!!"
+    echoErr "ERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH"
     exit 1
   fi
 
@@ -51,11 +50,9 @@ if [ ! -f "$SETUP_CHECK" ]; then
   EXPECTED_HASH="0a03a0d0b760c80c14bef5f0c1ac2c7290361370b394697f4c7ad711ca5c998c"
 
   if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-    echo -e "\nDANGER: Failed to check integrity hash of the kira tools !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-    SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-    [ "${SELECT,,}" == "x" ] && exit
-    echo "DANGER: You decided to disregard a potential vulnerability !!!"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    echoWarn "WARNING: Failed to check integrity hash of the kira tools !!!"
+    echoErr "ERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH"
+    exit 1
   fi
 
   cd $KMS_KEYIMPORT_DIR
