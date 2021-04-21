@@ -9,7 +9,7 @@ RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
 
-ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5sum | awk '{ print $1 }' || echo -n "")
+ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5sum | awk '{ print $1 }' || echo -n "")
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echoInfo "INFO: Attempting to remove old docker..."
@@ -49,6 +49,9 @@ EOL
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v
+
+    $KIRA_MANAGER/setup/registry.sh
+
     touch $SETUP_CHECK
 else
     echoInfo "INFO: Docker $(docker -v) was already installed"

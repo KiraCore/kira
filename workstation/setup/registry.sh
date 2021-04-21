@@ -13,8 +13,10 @@ ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
 IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "")
 
 # ensure docker registry exists 
-SETUP_CHECK="$KIRA_SETUP/registry-v0.0.40-$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK"
-if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "true" ]] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
+ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5sum | awk '{ print $1 }' || echo -n "")
+SETUP_CHECK="$KIRA_SETUP/registry-1-$ESSENTIALS_HASH" 
+
+if [ "$(${KIRA_SCRIPTS}/container-exists.sh $CONTAINER_NAME)" != "true" ] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
     echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -68,6 +70,7 @@ if [[ $(${KIRA_SCRIPTS}/container-exists.sh "$CONTAINER_NAME") != "true" ]] || [
 EOL
 
     $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
+    $KIRA_MANAGER/scripts/update-ifaces.sh
     touch $SETUP_CHECK
 else
     echo "Container 'registry' already exists."

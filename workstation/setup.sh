@@ -52,7 +52,7 @@ $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
-$KIRA_MANAGER/setup/nginx.sh
+#$KIRA_MANAGER/setup/nginx.sh
 $KIRA_MANAGER/setup/registry.sh
 
 touch /tmp/rs_manager
