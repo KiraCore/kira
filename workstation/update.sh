@@ -55,7 +55,7 @@ After=network.target
 [Service]
 Type=simple
 WorkingDirectory=$KIRA_HOME
-EnvironmentFile=/etc/environment
+EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
 Restart=always
 RestartSec=2
