@@ -5,29 +5,33 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/update.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kiraup && journalctl -u kiraup -f | ccze -A
 
+SCRIPT_START_TIME="$(date -u +%s)"
 UPDATE_LOGS_DIR="$KIRA_UPDATE/logs"
 mkdir -p $UPDATE_LOGS_DIR
 UPDATE_DONE="true"
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 
-UPDATE_CHECK_TOOLS="tools-setup-1-$SETUP_VER"
-UPDATE_CHECK_CLEANUP="system-cleanup-1-$SETUP_VER"
-UPDATE_CHECK_IMAGES="images-build-1-$SETUP_VER"
-UPDATE_CHECK_CONTAINERS="containers-build-1-$SETUP_VER"
+UPDATE_CHECK_TOOLS="tools-setup-1-$KIRA_SETUP_VER"
+UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
+UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
+UPDATE_CHECK_CONTAINERS="containers-build-1-$KIRA_SETUP_VER"
 
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE         |"
+echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| UPDATE LOGS DIR: $UPDATE_LOGS_DIR"
 echoWarn "------------------------------------------------"
 
-[ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found! ($LOCAL_GENESIS_PATH)" && exit 1
+[ ! -f "$UPDATE_CHECK" ] && rm -fv $UPDATE_DONE_FILE
+[ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found! ($LOCAL_GENESIS_PATH)" && sleep 60 && exit 1
 
 UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
 if [ ! -f "$UPDATE_CHECK" ]; then
     echoInfo "INFO: Installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
     set -x
-    UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
+    UPDATE_DONE="false"
+    rm -rfv $UPDATE_LOGS_DIR 
+    mkdir -p $UPDATE_LOGS_DIR
     if [ ! -f "${UPDATE_CHECK}-skip" ]; then
         echoInfo "INFO: Starting reinitalization process..."
         UPDATE_CHECK_TOOLS="$UPDATE_CHECK_TOOLS-skip"
@@ -171,9 +175,11 @@ fi
 
 [ "${UPDATE_DONE,,}" == "false" ] && sleep 10
 
+echoInfo "INFO: To preview logs type 'cd $UPDATE_LOGS_DIR'"
+
 echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: LAUNCH SCRIPT                      |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME_LAUNCH)) seconds"
+echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
+echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
-[ "${UPDATE_DONE,,}" == "true" ] && sleep 60
+[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press Ctrl+c to exit" && sleep 60

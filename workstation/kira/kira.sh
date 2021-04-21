@@ -14,7 +14,7 @@ fi
 
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 
-while [ ! -f "$UPDATE_DONE_FILE" ] ; then
+while [ ! -f "$UPDATE_DONE_FILE" ] ; do
     echoWarn "WARNING: Your node setup is not compleated yet"
     VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k)$ ]]; do echoNErr "Choose to [V]iew installation progress, fully [R]initalize new node or open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
     if [ "${VSEL,,}" == "r" ] ; then
@@ -22,11 +22,11 @@ while [ ! -f "$UPDATE_DONE_FILE" ] ; then
     elif [ "${VSEL,,}" == "v" ] ; then
         echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
         sleep 2
-        journalctl -u kiraup -f
+        journalctl -u kiraup -f --output cat
     else
         break
     fi
-fi
+done
 
 #if [ ! -f "$KIRA_SETUP/rebooted" ]; then
 #    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."

@@ -157,7 +157,7 @@ systemctl restart kiraup
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
-journalctl -u kiraup -f
+journalctl -u kiraup -f --output cat
 
 #$KIRA_MANAGER/start.sh "False" || FAILED="true"
 #set +x
