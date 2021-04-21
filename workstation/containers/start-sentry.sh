@@ -37,10 +37,6 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
-SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$KIRA_SEED_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
 mkdir -p "$COMMON_LOGS"
 touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
@@ -50,28 +46,21 @@ cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-#    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-#        echo "INFO: Node will sync from the private sentry..."
-#        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-#    else
-#        echo "INFO: Node will sync blocks from its own seed list..."
-#        CFG_persistent_peers=""
-#    fi
-#else
-#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-#fi
+if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$KIRA_SEED_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-else
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-fi
+    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    else
+        CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    fi
 
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -118,7 +107,11 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
-docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+else
+    echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1

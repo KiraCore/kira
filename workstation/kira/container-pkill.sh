@@ -55,10 +55,12 @@ if [ ! -z "$NAME" ] && [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || 
     RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
     if [ "${AWAIT,,}" == "true" ] && [ "${RUNNING,,}" == "true" ] ; then
         cntr=0
-        while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do
+        while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 30 ]] ; do
             cntr=$(($cntr + 1))
             echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..."
-            sleep 5 
+            sleep 5
+            RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
+            [ "${RUNNING,,}" == "false" ] && break
         done
         [ ! -f "$EXIT_FILE" ] && echoInfo "INFO: Container '$NAME' stopped sucessfully" || echoWarn "WARNING: Failed to gracefully stop container '$NAME'"
     fi

@@ -37,7 +37,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         UPDATE_CHECK_TOOLS="$UPDATE_CHECK_TOOLS-skip"
         UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
+        set -o pipefail
         SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE || SUCCESS="false"
+        set +o pipefail
         echoInfo "INFO: Logs were saved to $LOG_FILE"
         if [ "${SUCCESS,,}" == "true" ] ; then
             touch $UPDATE_CHECK
@@ -66,7 +68,9 @@ EOL
     else
         echoInfo "INFO: Starting setup process..."
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
+        set -o pipefail
         SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE || SUCCESS="false"
+        set +o pipefail
         set +x
         echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -91,7 +95,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting clenup process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CLEANUP}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
+    set -o pipefail
     SUCCESS="true" && $KIRA_MANAGER/clenup.sh "true" | tee $LOG_FILE || SUCCESS="false"
+    set +o pipefail
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -127,7 +133,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
+    set -o pipefail
     SUCCESS="true" && $KIRA_MANAGER/images.sh "true" | tee $LOG_FILE || SUCCESS="false"
+    set +o pipefail
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -151,7 +159,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
+    set -o pipefail
     SUCCESS="true" && $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE || SUCCESS="false"
+    set +o pipefail
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
