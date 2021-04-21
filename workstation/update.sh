@@ -3,7 +3,7 @@ set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/update.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kiraup && journalctl -u kiraup -f | ccze -A
+# systemctl restart kiraup && journalctl -u kiraup -f --output cat
 
 SCRIPT_START_TIME="$(date -u +%s)"
 UPDATE_LOGS_DIR="$KIRA_UPDATE/logs"
@@ -19,6 +19,7 @@ UPDATE_CHECK_CONTAINERS="containers-build-1-$KIRA_SETUP_VER"
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
+echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "| UPDATE LOGS DIR: $UPDATE_LOGS_DIR"
 echoWarn "------------------------------------------------"
 
@@ -37,14 +38,13 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         UPDATE_CHECK_TOOLS="$UPDATE_CHECK_TOOLS-skip"
         UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
-        set -o pipefail
-        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE || SUCCESS="false"
-        set +o pipefail
+        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
         echoInfo "INFO: Logs were saved to $LOG_FILE"
         if [ "${SUCCESS,,}" == "true" ] ; then
             touch $UPDATE_CHECK
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
+            sleep 60 
             exit 1
         fi
         
@@ -68,9 +68,7 @@ EOL
     else
         echoInfo "INFO: Starting setup process..."
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
-        set -o pipefail
-        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE || SUCCESS="false"
-        set +o pipefail
+        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
         set +x
         echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -78,6 +76,7 @@ EOL
             touch $UPDATE_CHECK
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
+            sleep 60 
             exit 1
         fi
     fi
@@ -93,11 +92,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     set -x
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
 
-    echoInfo "INFO: Starting clenup process..."
+    echoInfo "INFO: Starting cleanup process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CLEANUP}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
-    set -o pipefail
-    SUCCESS="true" && $KIRA_MANAGER/clenup.sh "true" | tee $LOG_FILE || SUCCESS="false"
-    set +o pipefail
+    SUCCESS="true" && $KIRA_MANAGER/cleanup.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -105,6 +102,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         touch $UPDATE_CHECK
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
+        sleep 60 
         exit 1
     fi
 else
@@ -133,9 +131,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
-    set -o pipefail
-    SUCCESS="true" && $KIRA_MANAGER/images.sh "true" | tee $LOG_FILE || SUCCESS="false"
-    set +o pipefail
+    SUCCESS="true" && $KIRA_MANAGER/images.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -144,6 +140,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
         echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
+        sleep 60 
         exit 1
     fi
 else
@@ -159,9 +156,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log" && rm -fv $LOG_FILE && touch $LOG_FILE
-    set -o pipefail
-    SUCCESS="true" && $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE || SUCCESS="false"
-    set +o pipefail
+    SUCCESS="true" && $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE"
 
@@ -170,6 +165,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
+        sleep 60 
         exit 1
     fi
 else
@@ -192,4 +188,4 @@ echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
-[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press Ctrl+c to exit" && sleep 60
+[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press Ctrl+c to exit" && sleep 120
