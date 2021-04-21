@@ -11,7 +11,7 @@ GOCACHE="/home/go/cache"
 GOBIN="${GOROOT}/bin"
 ARCHITECTURE=$(uname -m)
 
-SETUP_CHECK="$KIRA_SETUP/go-v${GO_VERSION}-0-$ARCHITECTURE"
+SETUP_CHECK="$KIRA_SETUP/go-setup-1-v${GO_VERSION}-$ARCHITECTURE"
 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Ensuring golang is removed ..."
