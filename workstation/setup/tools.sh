@@ -64,6 +64,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
   ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echoErr "WARNING: tmkms-key-import symlink already exists"
 
   cd $PRIV_KEYGEN_DIR
+  export HOME="$HOME";
   go build
   make install
 
