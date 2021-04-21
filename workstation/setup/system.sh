@@ -3,7 +3,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
-
+set -x
 
 SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo -n "")" 
 if [ ! -f "$SETUP_CHECK" ] ; then

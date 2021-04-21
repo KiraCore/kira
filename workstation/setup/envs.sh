@@ -2,6 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+set -x
 
 BASHRC=~/.bashrc
 ETC_PROFILE="/etc/profile"
@@ -55,7 +56,7 @@ mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SO
 
 SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.68-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
-    echo "INFO: Setting up kira environment variables"
+    echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
 
     # remove & disable system crash notifications
@@ -118,5 +119,5 @@ if [ ! -f "$SETUP_CHECK" ]; then
 
     touch $SETUP_CHECK
 else
-    echo "INFO: Kira environment variables were already set"
+    echoInfo "INFO: Kira environment variables were already set"
 fi
