@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f | ccze -A
+# systemctl restart kirascan && journalctl -u kirascan -f --output cat | ccze -A
 set -x
 
 START_TIME="$(date -u +%s)"

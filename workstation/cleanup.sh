@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 SRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
-cd $HOME
+cd $KIRA_HOME
 
 set +x
 echoWarn "------------------------------------------------"

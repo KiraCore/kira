@@ -44,7 +44,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
             touch $UPDATE_CHECK
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
-            sleep 60 
+            sleep 120 
             exit 1
         fi
         
@@ -76,7 +76,7 @@ EOL
             touch $UPDATE_CHECK
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
-            sleep 60 
+            sleep 120 
             exit 1
         fi
     fi
@@ -102,7 +102,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         touch $UPDATE_CHECK
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
-        sleep 60 
+        sleep 120 
         exit 1
     fi
 else
@@ -140,7 +140,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
         echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
-        sleep 60 
+        sleep 120 
         exit 1
     fi
 else
@@ -165,7 +165,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
-        sleep 60 
+        sleep 120 
         exit 1
     fi
 else
@@ -188,4 +188,4 @@ echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
-[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press Ctrl+c to exit" && sleep 120
+[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press Ctrl+c to exit" && sleep 180

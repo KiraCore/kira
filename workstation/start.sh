@@ -11,7 +11,7 @@ START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 
-cd $HOME
+cd $KIRA_HOME
 
 set +x
 echoWarn "------------------------------------------------"

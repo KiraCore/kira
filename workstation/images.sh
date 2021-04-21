@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/images.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SRIPT_START_TIME="$(date -u +%s)"
-cd $HOME
+cd $KIRA_HOME
 
 set +x
 echoWarn "------------------------------------------------"

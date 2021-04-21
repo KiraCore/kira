@@ -28,32 +28,6 @@ while [ ! -f "$UPDATE_DONE_FILE" ] ; do
     fi
 done
 
-#if [ ! -f "$KIRA_SETUP/rebooted" ]; then
-#    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
-#    systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped, starting new setup..."
-#    sleep 1
-#    $KIRA_MANAGER/start.sh "true"
-#    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-#fi
-#
-#if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
-#    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
-#    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(i|r|k)$ ]]; do echoNErr "Choose to continue [I]nstalation process, fully [R]initalize new node or open [K]ira Manager and investigate issues: " && read -d'' -s -n1 VSEL && echo ""; done
-#    
-#    if [ "${VSEL,,}" != "k" ] ; then
-#        systemctl stop kirascan
-#        if [ "${VSEL,,}" == "i" ] ; then
-#            sleep 1
-#            $KIRA_MANAGER/start.sh "false"
-#            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-#        else
-#            cd $HOME
-#            source $KIRA_MANAGER/kira/kira-reinitalize.sh
-#            source $KIRA_MANAGER/kira/kira.sh
-#        fi
-#    fi
-#fi
-
 cd $KIRA_HOME
 SCAN_DIR="$KIRA_HOME/kirascan"
 SCAN_DONE="$SCAN_DIR/done"
@@ -453,7 +427,7 @@ while :; do
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then
-        cd $HOME
+        cd $KIRA_HOME
         systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
