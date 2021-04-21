@@ -19,6 +19,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
   apt install -y default-jre default-jdk 
 
   cd $KIRA_HOME
+  export COMPOSER_HOME="$HOME/.config/composer";
+  echoInfo "INFO: Composer home: $COMPOSER_HOME"
   curl -sS https://getcomposer.org/installer -o composer-setup.php
   php composer-setup.php --install-dir=/usr/local/bin --filename=composer
 
