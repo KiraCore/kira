@@ -5,11 +5,16 @@ source $KIRA_MANAGER/utils.sh
 
 SRIPT_START_TIME="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
+TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CLEANUP SCRIPT                       |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|         SCAN DIR: $SCAN_DIR"
+echoWarn "|    DOCKER COMMON: $DOCKER_COMMON"
+echoWarn "| DOCKER COMMON RO: $DOCKER_COMMON_RO"
 echoWarn "------------------------------------------------"
 set -x
 
