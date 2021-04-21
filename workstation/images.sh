@@ -14,6 +14,8 @@ set -x
 
 echoInfo "INFO: Starting images build..."
 
+$KIRA_MANAGER/scripts/update-ifaces.sh
+
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
