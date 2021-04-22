@@ -9,16 +9,17 @@ CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="true"
 curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
-ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
-IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "")
-CONTAINER_EXISTS=$(${KIRA_SCRIPTS}/container-exists.sh $CONTAINER_NAME || echo -n "")
+if [ "${CONTAINER_REACHABLE,,}" == "true" ] ; then
+    ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
+    ( ! $(isNullOrEmpty $IP)) && IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "") || IP=""
+fi
 
 # ensure docker registry exists 
 ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5sum | awk '{ print $1 }' || echo -n "")
 SETUP_CHECK="$KIRA_SETUP/registry-2-$ESSENTIALS_HASH" 
 
-if [ "$CONTAINER_EXISTS" != "true" ] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" == "false" ] || [ -z "$IP" ]  ; then
-    echo "Container '$CONTAINER_NAME' does NOT exist or update is required, creating..."
+if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
+    echoInfo "INFO: Container '$CONTAINER_NAME' does NOT exist or is not reachable, update is required recreating registry..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
     $KIRAMGR_SCRIPTS/restart-networks.sh "false" "$KIRA_REGISTRY_NETWORK"
@@ -47,14 +48,20 @@ if [ "$CONTAINER_EXISTS" != "true" ] || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINE
 
     sleep 1
     ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
-    IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "")
 
-    if [ -z "$IP" ] || [ "${IP,,}" == "null" ] ; then
-        echo "ERROR: Failed to get IP address of the $CONTAINER_NAME container"
+    if ($(isNullOrEmpty $ID)) ; then
+        echoErr "ERROR: Failed to get ID of the $CONTAINER_NAME container"
         exit 1
     fi
 
-    echo "INFO: IP Address $IP found, binding host..."
+    IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "")
+
+    if ($(isNullOrEmpty $IP)) ; then
+        echoErr "ERROR: Failed to get IP address of the $CONTAINER_NAME container"
+        exit 1
+    fi
+
+    echoInfo "INFO: IP Address $IP found, binding host..."
     CDHelper text lineswap --insert="$IP $KIRA_REGISTRY_DNS" --regex="$KIRA_REGISTRY_DNS" --path=$HOSTS_PATH --prepend-if-found-not=True
 
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
@@ -73,7 +80,7 @@ EOL
     $KIRA_MANAGER/scripts/update-ifaces.sh
     touch $SETUP_CHECK
 else
-    echo "Container 'registry' already exists."
+    echoInfo "INFO: Container 'registry' already exists."
     docker exec -i registry bin/registry --version
 fi
 
