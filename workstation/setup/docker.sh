@@ -29,11 +29,13 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
         fi
     done
 
+    dpkg --configure -a || echoWarn "WARNING: Failed dpkg configuration"
     apt remove --purge docker -y || echoWarn "WARNING: Failed to remove docker"
     apt remove --purge containerd -y || echoWarn "WARNING: Failed to remove containerd"
     apt remove --purge docker.io -y || echoWarn "WARNING: Failed to remove docker.io"
     apt remove --purge bridge-utils -y || echoWarn "WARNING: Failed to remove bridge-utils"
 
+    dpkg --configure -a || echoWarn "WARNING: Failed dpkg configuration"
     apt autoremove -y docker.io || echoWarn "WARNING: Failed docker.io autoremove"
     apt autoremove -y bridge-utils || echoWarn "WARNING: Failed bridge-utils autoremove"
     apt autoremove -y containerd || echoWarn "WARNING: Failed containerd autoremove"
@@ -66,6 +68,9 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     dpkg --configure -a || echoWarn "WARNING: Failed dpkg configuration"
     apt install -y bridge-utils containerd docker.io 
 
+    DOCKER_SERVICE="/lib/systemd/system/docker.service"
+    sed -i "s/fd:/unix:/" $DOCKER_SERVICE  || echoWarn "WARNING: Failed to substitute fd with unix in $DOCKER_SERVICE"
+
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
@@ -74,9 +79,6 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
   "storage-driver": "overlay2"
 }
 EOL
-
-    DOCKER_SERVICE="/lib/systemd/system/docker.service"
-    sed -i "s/fd:/unix:/" $DOCKER_SERVICE  || echoWarn "WARNING: Failed to substitute fd with unix in $DOCKER_SERVICE"
 
     systemctl enable --now docker
     sleep 5
