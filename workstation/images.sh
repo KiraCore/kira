@@ -12,9 +12,11 @@ echoWarn "| STARTED: IMAGES BUILD SCRIPT                 |"
 echoWarn "------------------------------------------------"
 set -x
 
-echoInfo "INFO: Starting images build..."
+echoInfo "INFO: Ensuring docker registry is updated and operational..."
 
-$KIRA_MANAGER/scripts/update-ifaces.sh
+$KIRA_MANAGER/setup/registry.sh
+
+echoInfo "INFO: Starting images build..."
 
 $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 

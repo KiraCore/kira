@@ -2,10 +2,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# quick edit: FILE="$KIRA_MANAGER/setup/system.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo -n "")" 
+ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5sum | awk '{ print $1 }' || echo -n "")
+SETUP_CHECK="$KIRA_SETUP/system-1-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -25,15 +26,12 @@ case \"\$1\" in
     resume)
         rm -fv $SCAN_DONE || echo \"ERROR: Failed to remove scaner finalization flaf\"
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
-        echo \"INFO: Reloading daemon...\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
-        echo \"INFO: Restarting firewall...\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
         firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
-        echo \"INFO: Restarting docker...\"
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
-        echo \"INFO: Restarting docker network manager...\"
-        systemctl restart NetworkManager docker || echo \"WARNING: Could NOT restart docker network manager\"
+        systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
+        systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
         $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"

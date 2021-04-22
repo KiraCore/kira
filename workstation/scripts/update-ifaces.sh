@@ -9,12 +9,15 @@ ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING v0.0.7                   |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "------------------------------------------------"
 
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
+systemctl daemon-reload || echoWarn "WARNINIG: Failed systemctl daemon-reload"
 systemctl stop docker || echoWarn "WARNINIG: Failed to stop docker service"
 ifaces=( $ifaces_iterate )
 
