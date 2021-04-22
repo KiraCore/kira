@@ -90,7 +90,7 @@ WorkingDirectory=$KIRA_HOME
 EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
 Restart=always
-RestartSec=2
+RestartSec=5
 LimitNOFILE=4096
 [Install]
 WantedBy=default.target

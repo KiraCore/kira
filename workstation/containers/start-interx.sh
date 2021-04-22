@@ -55,8 +55,8 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e CFG_grpc="dns:///sentry:9090" \
-    -e CFG_rpc="http://sentry:26657" \
+    -e CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc="http://sentry:$DEFAULT_RPC_PORT" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \

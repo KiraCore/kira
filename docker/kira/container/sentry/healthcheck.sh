@@ -4,29 +4,13 @@ source $SELF_SCRIPTS/utils.sh
 set -x
 
 LATEST_BLOCK_HEIGHT=$1
-CONSENSUS_STOPPED=$2
+PREVIOUS_HEIGHT=$2
+HEIGHT=$3
+CATCHING_UP=$4
+CONSENSUS_STOPPED=$5
 
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
-
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
-EXECUTED_CHECK="$COMMON_DIR/executed"
-
-touch "$BLOCK_HEIGHT_FILE"
-
-SEKAID_STATUS=$(sekaid status 2>&1 || echo -n "")
-CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
-HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-
-if [ "${CATCHING_UP,,}" == "true" ]; then
-    echoInfo "INFO: Success, node is catching up! ($HEIGHT)"
-    exit 0
-fi
-
-PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
-echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x

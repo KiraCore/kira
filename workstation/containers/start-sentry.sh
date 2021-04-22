@@ -47,9 +47,9 @@ cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$KIRA_SEED_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
     if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
         CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"

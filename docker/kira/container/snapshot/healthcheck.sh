@@ -4,43 +4,24 @@ source $SELF_SCRIPTS/utils.sh
 set -x
 
 LATEST_BLOCK_HEIGHT=$1
-CONSENSUS_STOPPED=$2
+PREVIOUS_HEIGHT=$2
+HEIGHT=$3
+CATCHING_UP=$4
+CONSENSUS_STOPPED=$5
 
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 
-touch $BLOCK_HEIGHT_FILE
-
-if [ -f "$SNAP_DONE" ] ; then
-  echoInfo "INFO: Success, snapshot done!"
-  exit 0
+if [ -f "$SNAP_DONE" ] || [ -f "$SNAP_FINALIZYNG" ]; then
+    echoInfo "INFO: Success, snapshot done or finalizing!"
+    exit 0
 fi
-
-if [ -f "$SNAP_FINALIZYNG" ] ; then
-  echoInfo "INFO: Success, snapshot is finalizing!"
-  exit 0
-fi
-
-SEKAID_STATUS=$(sekaid status 2>&1 || echo -n "")
-CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
-HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
 if [ ! -z "$HALT_HEIGHT" ] && [[ $HALT_HEIGHT -le $HEIGHT ]] ; then
     echoInfo "INFO: Success, target height reached!"
     exit 0
 fi
-
-if [ "${CATCHING_UP,,}" == "true" ]; then
-    echoInfo "INFO: Success, node is catching up! ($HEIGHT)"
-    exit 0
-fi
-
-PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
-echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x
