@@ -62,6 +62,8 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     echoInfo "INFO: Installing Docker..."
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | apt-key add -
     apt-get update
+
+    dpkg --configure -a || echoWarn "WARNING: Failed dpkg configuration"
     apt install -y bridge-utils containerd docker.io 
 
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
