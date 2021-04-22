@@ -8,6 +8,8 @@ SCAN_DIR="$KIRA_HOME/kirascan"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
+# find top largest files: find / -xdev -type f -size +100M -exec ls -la {} \; | sort -nk 5
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CLEANUP SCRIPT                       |"
