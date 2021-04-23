@@ -9,6 +9,7 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IFACES_RESTARTED="false"
 
+retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
     HEIGHT=0
@@ -106,19 +107,15 @@ while : ; do
     fi
 
     if [ "${FAILURE,,}" == "true" ] ; then
-        set +x
-        echoWarn "WARNING: If this issue persists 'reboot' your machine and try setup again!"
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|a)$ ]] ; do echoNErr "Attempt $CONTAINER_NAME container [R]estart or [A]bort: " && read -d'' -s -n1 ACCEPT && echo ""; done
-        set -x
-        if [ "${ACCEPT,,}" == "r" ] ; then 
-            echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+        echoErr "ERROR: $CONTAINER_NAME node setup failed"
+        retry=$((retry + 1))
+        if [[ $retry -le 2 ]] ; then
+            echoInfo "INFO: Attempting $CONTAINER_NAME restart ${retry}/2"
             $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
-            sleep 5
             continue
-        else
-            echoWarn "ERROR: Deployment failed!" && sleep 1
-            exit 1
         fi
+        sleep 30
+        exit 1
     else
         echoInfo "INFO: $CONTAINER_NAME launched sucessfully"
         break
@@ -140,12 +137,11 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [[ $i -lt 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
 
-            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
-            set -x
-            [ "${SVAL,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
-            i=0 && continue
+            echoErr "ERROR: $CONTAINER_NAME status check failed"
+            sleep 30
+            exit 1
         else
             i=0
         fi

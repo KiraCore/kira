@@ -55,7 +55,7 @@ fi
 
 LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-SEKAID_STATUS=$(timeout 3 sekaid status 2>&1 || echo -n "")
+SEKAID_STATUS=$(timeout 3 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "")
 CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
 HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
 PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)

@@ -88,6 +88,7 @@ docker run -d \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
+    -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
