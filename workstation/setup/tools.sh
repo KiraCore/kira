@@ -87,7 +87,6 @@ After=network.target
 Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
-EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
 Restart=always
 RestartSec=5

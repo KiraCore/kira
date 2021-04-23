@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-peers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f --output cat
+# cat $KIRA_HOME/kirascan/peers.logs
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
@@ -38,6 +39,8 @@ echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
 TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
 
+touch $TMP_BOOK
+
 if [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Fetching address book file from seed node..."
     (docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
@@ -45,6 +48,9 @@ else
     echoInfo "INFO: Fetching address book file from sentry node..."
     (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
 fi
+
+PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+(! $(isNullOrEmpty $PUBLIC_IP)) && echo $PUBLIC_IP > $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF
@@ -121,7 +127,9 @@ while read ip; do
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
 
-    (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
+    # do not reject self otherwise nothing can be exposed in the peers list
+    [ "$PUBLIC_IP" != "$ip" ] && \
+        (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
 
     peer="$node_id@$ip:$KIRA_SENTRY_P2P_PORT"
     echoInfo "INFO: Active peer found: '$peer'"

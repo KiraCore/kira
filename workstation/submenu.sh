@@ -140,10 +140,11 @@ cat > /etc/systemd/system/kiraup.service << EOL
 Description=KIRA Update And Setup Service
 After=network.target
 [Service]
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=99
 Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
-EnvironmentFile=/etc/profile
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
 Restart=always
 RestartSec=5
