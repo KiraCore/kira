@@ -5,11 +5,18 @@ set -x
 
 START_TIME="$(date -u +%s)"
 echoInfo "INFO: [$NODE_TYPE] Started $NODE_TYPE health check"
-sleep 30 # rate limit not to overextend the log files
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: GENERIC HEALTHCHECK"
+echoWarn "------------------------------------------------"
+set -x
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 CFG_CHECK="${COMMON_DIR}/configuring"
+HEALTHCHECK_LOG="${COMMON_DIR}/healthcheck.log.txt"
+STATUS_SCAN="${COMMON_DIR}/status"
 EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
 EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
 EXECUTED_CHECK="$COMMON_DIR/executed"
@@ -20,6 +27,8 @@ COMMON_CONSENSUS="$COMMON_READ/consensus"
 VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
 
+sleep 30 # rate limit not to overextend the log files
+rm -rfv $STATUS_SCAN
 touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE" "$BLOCK_HEIGHT_FILE"
 
 EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo -n "")
@@ -55,26 +64,22 @@ fi
 
 LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-SEKAID_STATUS=$(timeout 3 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "")
-CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
-HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
+echo $(timeout 3 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
+CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_SCAN || echo -n "")
+HEIGHT=$(jsonQuickParse "latest_block_height" $STATUS_SCAN || echo -n "")
 PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 [[ $HEIGHT -ge 1 ]] && echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 
-echoInfo "INFO: Latest known block height: $LATEST_BLOCK_HEIGHT"
-echoInfo "INFO: Current Node block height: $HEIGHT"
-echoInfo "INFO: Previous Node block height: $PREVIOUS_HEIGHT"
-
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
-    $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
+    $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
-    $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
+    $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
-    $SELF_CONTAINER/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
+    $SELF_CONTAINER/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
 else
     echoErr "ERROR: Unknown node type '$NODE_TYPE'"
     FAILED="true"
@@ -122,7 +127,7 @@ fi
 
 set +x
 echoInfo "------------------------------------------------"
-echoInfo "| FINISHED: HEALTHCHECK                        |"
+echoInfo "| FINISHED: GENERIC HEALTHCHECK                |"
 echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
 echoInfo "------------------------------------------------"
 set -x

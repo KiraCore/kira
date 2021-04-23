@@ -13,6 +13,20 @@ SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
 
+START_TIME="$(date -u +%s)"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
+echoWarn "|-----------------------------------------------"
+echoWarn "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
+echoWarn "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
+echoWarn "|              HEIGHT: $HEIGHT"
+echoWarn "|         CATCHING UP: $CATCHING_UP"
+echoWarn "|   CONSENSUS STOPPED: $CONSENSUS_STOPPED"
+echoWarn "------------------------------------------------"
+set -x
+
 if [ -f "$SNAP_DONE" ] || [ -f "$SNAP_FINALIZYNG" ]; then
     echoInfo "INFO: Success, snapshot done or finalizing!"
     exit 0
@@ -42,4 +56,10 @@ else
     echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
+set +x
+echoInfo "------------------------------------------------"
+echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
+echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "------------------------------------------------"
+set -x
 exit 0

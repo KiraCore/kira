@@ -135,8 +135,12 @@ set -x
 
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
 
-CDHelper text lineswap --insert="SETUP_START_DT=\"$(date +'%Y-%m-%d %H:%M:%S')\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SETUP_END_DT=\"\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
+SETUP_END_DT=""
+
+CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+
 rm -rfv $KIRA_UPDATE
 
 cat > /etc/systemd/system/kiraup.service << EOL

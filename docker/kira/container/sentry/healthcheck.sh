@@ -9,8 +9,20 @@ HEIGHT=$3
 CATCHING_UP=$4
 CONSENSUS_STOPPED=$5
 
-LIP_FILE="$COMMON_READ/local_ip"
-PIP_FILE="$COMMON_READ/public_ip"
+START_TIME="$(date -u +%s)"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
+echoWarn "|-----------------------------------------------"
+echoWarn "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
+echoWarn "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
+echoWarn "|              HEIGHT: $HEIGHT"
+echoWarn "|         CATCHING UP: $CATCHING_UP"
+echoWarn "|   CONSENSUS STOPPED: $CONSENSUS_STOPPED"
+echoWarn "------------------------------------------------"
+set -x
+
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x
@@ -48,4 +60,10 @@ else
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 fi
 
+set +x
+echoInfo "------------------------------------------------"
+echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
+echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "------------------------------------------------"
+set -x
 exit 0

@@ -52,12 +52,12 @@ KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 CDHELPER_VERSION="v0.6.51"
-SETUP_VER="v0.2.6.7" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
+SETUP_VER="v0.2.6.8" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
 echo "------------------------------------------------"
-echo "| STARTED: INIT $SETUP_VER"
+echo "|      STARTED: INIT $SETUP_VER"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
