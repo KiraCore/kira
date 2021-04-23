@@ -5,9 +5,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
-CONTAINER_DUMP="$KIRA_DUMP/infra/${NAME,,}"
-HALT_FILE="$DOCKER_COMMON/$NAME/halt"
-mkdir -p "$CONTAINER_DUMP" "$DOCKER_COMMON/$NAME"
+CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
+COMMON_PATH="$DOCKER_COMMON/$NAME"
+COMMON_LOGS="$COMMON_PATH/logs"
+HALT_FILE="$COMMON_PATH/halt"
+EXIT_FILE="$COMMON_PATH/exit"
+START_LOGS="$COMMON_LOGS/start.log"
+mkdir -p "$CONTAINER_DUMP" "$COMMON_PATH"
 
 [ -z "$DUMP_ZIP" ] && DUMP_ZIP="false"
 HALT_FILE_EXISTED="true" && [ ! -f "$HALT_FILE" ] && HALT_FILE_EXISTED="false" && touch $HALT_FILE
@@ -34,7 +38,7 @@ fi
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echo "WARNING: Failed to fetch environment variables"
 echo $(docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echo "WARNING: Failed to inspect container $NAME"
 
-if [ "$NAME" == "validator" ] || [ "$NAME" == "sentry" ] ; then
+if [[ "${NAME,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
     DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"
     DUMP_DATA="$CONTAINER_DUMP/.sekaid/data"
     mkdir -p $DUMP_CONFIG
@@ -44,13 +48,19 @@ if [ "$NAME" == "validator" ] || [ "$NAME" == "sentry" ] ; then
     docker cp $NAME:$SEKAID_HOME/config/addrbook.json $DUMP_CONFIG/addrbook.json || echo "WARNING: Failed to dump address book file"
     docker cp $NAME:$SEKAID_HOME/config/app.toml $DUMP_CONFIG/app.toml || echo "WARNING: Failed to dump app toml file"
     docker cp $NAME:$SEKAID_HOME/config/config.toml $DUMP_CONFIG/config.toml || echo "WARNING: Failed to dump config toml file"
-    docker cp $NAME:$SEKAID_HOME/config/genesis.json $DUMP_CONFIG/genesis.json || echo "WARNING: Failed to dump genesis file"
 
     echo "INFO: Dumping data files..."
     docker cp $NAME:$SEKAID_HOME/data/priv_validator_state.json $DUMP_DATA/priv_validator_state.json || echo "WARNING: Failed to dump address book file"
 fi
 
-docker container logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echo "WARNING: Failed to dump $NAME container logs"
+docker logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echoWarn "WARNING: Failed to dump $NAME container logs"
+docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $CONTAINER_DUMP/healthcheck.txt || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
+
+if (! $(isFileEmpty $START_LOGS)) ; then
+    cp -afv > $CONTAINER_DUMP/start.txt || echoWarn "WARNING: Failed to dump $NAME start logs"
+else
+    echoInfo "INFO: No start logs were found"
+fi
 
 [ "${HALT_FILE_EXISTED,,}" == "false" ] && rm -fv touch $HALT_FILE
 

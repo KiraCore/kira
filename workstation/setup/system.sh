@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5sum | awk '{ print $1 }' || echo -n "")
-SETUP_CHECK="$KIRA_SETUP/system-1-$ESSENTIALS_HASH" 
+SETUP_CHECK="$KIRA_SETUP/system-2-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -17,10 +17,9 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
     CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
 
-    SCAN_DIR="$KIRA_HOME/kirascan"
-    SCAN_DONE="$SCAN_DIR/done"
-    STATUS_SCAN_PATH="$SCAN_DIR/status"
-    
+    SCAN_DONE="$KIRA_SCAN/done"
+    STATUS_SCAN_PATH="$KIRA_SCAN/status"
+
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
@@ -35,6 +34,10 @@ case \"\$1\" in
         $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"
+
+    JOURNAL_CFG="/etc/systemd/journald.conf"
+    CDHelper text lineswap --insert="SystemMaxUse=512M" --contains="SystemMaxUse=" --path=$JOURNAL_CFG --append-if-found-not=True
+    CDHelper text lineswap --insert="SystemMaxFileSize=8M" --contains="SystemMaxFileSize=" --path=$JOURNAL_CFG --append-if-found-not=True
 
     mkdir -p "/usr/lib/pm-utils/sleep.d"
     WAKEUP_SCRIPT="/usr/lib/pm-utils/sleep.d/99ZZZ_KiraWakeup.sh"

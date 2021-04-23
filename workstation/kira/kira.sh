@@ -16,33 +16,34 @@ UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 
 while [ ! -f "$UPDATE_DONE_FILE" ] ; do
     echoWarn "WARNING: Your node setup is not compleated yet"
-    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k)$ ]]; do echoNErr "Choose to [V]iew installation progress, fully [R]initalize new node or open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
     if [ "${VSEL,,}" == "r" ] ; then
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
     elif [ "${VSEL,,}" == "v" ] ; then
         echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
         sleep 2
         journalctl -u kiraup -f --output cat
+    elif [ "${VSEL,,}" == "d" ] ; then
+        $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
     else
         break
     fi
 done
 
 cd $KIRA_HOME
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
-NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-DISK_SCAN_PATH="$SCAN_DIR/disk"
-CPU_SCAN_PATH="$SCAN_DIR/cpu"
-RAM_SCAN_PATH="$SCAN_DIR/ram"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
-VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
+SCAN_DONE="$KIRA_SCAN/done"
+CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
+NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
+DISK_SCAN_PATH="$KIRA_SCAN/disk"
+CPU_SCAN_PATH="$KIRA_SCAN/cpu"
+RAM_SCAN_PATH="$KIRA_SCAN/ram"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
+VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
-STATUS_SCAN_PATH="$SCAN_DIR/status"
+STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
@@ -321,10 +322,6 @@ while :; do
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
             OPTION="" && EXECUTED="true" && break
-        elif [ "${OPTION,,}" == "d" ]; then
-            echoInfo "INFO: Dumping all loggs from $name container..."
-            $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
-            EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
             $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart"
@@ -356,13 +353,8 @@ while :; do
     fi
 
     if [ "${OPTION,,}" == "d" ]; then
-        echoInfo "INFO: Dumping firewal info..."
-        ufw status verbose >"$KIRA_DUMP/ufw-status.txt" || echoErr "ERROR: Failed to get firewal status"
-        echoInfo "INFO: Compresing all dumped files..."
-        ZIP_FILE="$KIRA_DUMP/kira.zip"
-        rm -fv $ZIP_FILE
-        zip -9 -r -v $ZIP_FILE $KIRA_DUMP
-        echoInfo "INFO: All dump files were exported into $ZIP_FILE"
+        $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
+        LOADING="false" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
         echoInfo "INFO: Reconnecting all networks..."
         $KIRAMGR_SCRIPTS/restart-networks.sh "true"

@@ -5,15 +5,14 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALIDATORS64_SCAN_PATH="$SCAN_DIR/validators64"
-VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
-VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
+VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+VALIDATORS64_SCAN_PATH="$KIRA_SCAN/validators64"
+VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
+VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 
-VALOPERS_SCAN_PATH="$SCAN_DIR/valopers"
-CONSENSUS_SCAN_PATH="$SCAN_DIR/consensus"
-VALIDATORS_SCAN_PATH="$SCAN_DIR/validators"
+VALOPERS_SCAN_PATH="$KIRA_SCAN/valopers"
+CONSENSUS_SCAN_PATH="$KIRA_SCAN/consensus"
+VALIDATORS_SCAN_PATH="$KIRA_SCAN/validators"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 
@@ -29,6 +28,7 @@ echoWarn "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
 echoWarn "------------------------------------------------"
 set -x
 
+sleep 1
 touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echo "INFO: Saving valopers info..."
@@ -40,7 +40,7 @@ echo "INFO: Saving valopers info..."
 ($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
-    echo "INFO: Validator info will the scanned..."
+    echo "INFO: Validator info will NOT be scanned..."
 else
     echo -n "" > $VALINFO_SCAN_PATH
     echo -n "" > $VALADDR_SCAN_PATH
@@ -62,45 +62,48 @@ else
     VALSTATUS=""
 fi
 
-if [ -z "$VALSTATUS" ] ; then
-    echoErr "ERROR: Validator address or status was not found"
-    WAITING=$(jsonParse "waiting" $VALOPERS_COMM_RO_PATH || echo -n "" )
-    if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
-        echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
-    else
-        echo -n "" > $VALSTATUS_SCAN_PATH
-    fi
-else
+if ($(isFileEmpty $VALOPERS_COMM_RO_PATH)) ; then
+    echoWarn "WARNING: List of validators was NOT found, aborting info discovery"
     echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
-fi
-
-VALOPER_FOUND="false"
-jsonParse "validators" $VALOPERS_COMM_RO_PATH > $VALIDATORS_SCAN_PATH
-(jq -rc '.[] | @base64' $VALIDATORS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
-
-if ($(isFileEmpty "$VALIDATORS64_SCAN_PATH")) ; then
-    echoWarn "WARNING: Failed to querry velopers info"
     echo -n "" > $VALINFO_SCAN_PATH
 else
-    while IFS="" read -r row || [ -n "$row" ] ; do
-    sleep 0.1
-        vobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        vaddr=$(echo "$vobj" | jsonQuickParse "address" 2> /dev/null || echo -n "")
-        if [ "$VALADDR" == "$vaddr" ] ; then
-            echo "$vobj" > $VALINFO_SCAN_PATH
-            VALOPER_FOUND="true"
-            break
+    if [ -z "$VALSTATUS" ] ; then
+        echoErr "ERROR: Validator address or status was not found"
+        WAITING=$(jsonParse "waiting" $VALOPERS_COMM_RO_PATH || echo -n "" )
+        if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
+            echo "{ \"status\": \"WAITING\" }" > $VALSTATUS_SCAN_PATH
+        else
+            echo -n "" > $VALSTATUS_SCAN_PATH
         fi
-    done < $VALIDATORS64_SCAN_PATH
-fi
+    else
+        echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
+    fi
 
-if [ "${VALOPER_FOUND,,}" != "true" ] ; then
-    echoInfo "INFO: Validator '$VALADDR' was not found in the valopers querry"
-    echo -n "" > $VALINFO_SCAN_PATH
-    exit 0
-fi
+    VALOPER_FOUND="false"
+    jsonParse "validators" $VALOPERS_COMM_RO_PATH > $VALIDATORS_SCAN_PATH
+    (jq -rc '.[] | @base64' $VALIDATORS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
 
-sleep 10
+    if ($(isFileEmpty "$VALIDATORS64_SCAN_PATH")) ; then
+        echoWarn "WARNING: Failed to querry velopers info"
+        echo -n "" > $VALINFO_SCAN_PATH
+    else
+        while IFS="" read -r row || [ -n "$row" ] ; do
+        sleep 0.1
+            vobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
+            vaddr=$(echo "$vobj" | jsonQuickParse "address" 2> /dev/null || echo -n "")
+            if [ "$VALADDR" == "$vaddr" ] ; then
+                echo "$vobj" > $VALINFO_SCAN_PATH
+                VALOPER_FOUND="true"
+                break
+            fi
+        done < $VALIDATORS64_SCAN_PATH
+    fi
+
+    if [ "${VALOPER_FOUND,,}" != "true" ] ; then
+        echoInfo "INFO: Validator '$VALADDR' was not found in the valopers querry"
+        echo -n "" > $VALINFO_SCAN_PATH
+    fi
+fi
 
 set +x
 echoWarn "------------------------------------------------"

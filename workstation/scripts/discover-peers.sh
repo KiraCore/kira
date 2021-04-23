@@ -23,8 +23,7 @@ TMP_PEERS_SHUFF="/tmp/$ADDR.peers.shuff"
 URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt"
 URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
 
-SCAN_DIR="$KIRA_HOME/kirascan"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 
 set +x
 echoWarn "------------------------------------------------"

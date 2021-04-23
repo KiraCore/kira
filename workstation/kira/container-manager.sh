@@ -14,14 +14,13 @@ set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
-NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
-VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
-CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+SCAN_DONE="$KIRA_SCAN/done"
+CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
+NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
+VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
+VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
+CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
 
 SNAP_STATUS="$KIRA_SNAP/status"
@@ -266,7 +265,7 @@ while : ; do
         LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
-        TMP_DUMP=$CONTAINER_DUMP/tmp.log
+        TMP_DUMP=$CONTAINER_DUMP/logs.txt.tmp
         while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container log..."
@@ -314,7 +313,7 @@ while : ; do
         LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
-        TMP_DUMP=$CONTAINER_DUMP/tmp.log
+        TMP_DUMP=$CONTAINER_DUMP/healthcheck.txt.tmp
         while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."

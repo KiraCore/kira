@@ -4,7 +4,6 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/cleanup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
@@ -14,7 +13,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CLEANUP SCRIPT                       |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|         SCAN DIR: $SCAN_DIR"
+echoWarn "|         SCAN DIR: $KIRA_SCAN"
 echoWarn "|    DOCKER COMMON: $DOCKER_COMMON"
 echoWarn "| DOCKER COMMON RO: $DOCKER_COMMON_RO"
 echoWarn "------------------------------------------------"
@@ -36,7 +35,7 @@ for name in $CONTAINERS; do
 done
 
 echoInfo "INFO: KIRA Scan service cleanup..."
-rm -frv "$SCAN_DIR" && mkdir -p "$SCAN_DIR"
+rm -frv "$KIRA_SCAN" && mkdir -p "$KIRA_SCAN"
 
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
 

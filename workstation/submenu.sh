@@ -135,6 +135,10 @@ set -x
 
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
 
+CDHelper text lineswap --insert="SETUP_START_DT=\"$(date +'%Y-%m-%d %H:%M:%S')\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SETUP_END_DT=\"\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+rm -rfv $KIRA_UPDATE
+
 cat > /etc/systemd/system/kiraup.service << EOL
 [Unit]
 Description=KIRA Update And Setup Service
@@ -159,13 +163,8 @@ systemctl restart kiraup
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
-journalctl -u kiraup -f --output cat
+journalctl --since "$SETUP_START_DT" -u kiraup -f --no-pager --output cat
 
-#$KIRA_MANAGER/start.sh "False" || FAILED="true"
-#set +x
-#[ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-#echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-#set -x
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0

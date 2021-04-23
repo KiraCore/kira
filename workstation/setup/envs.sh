@@ -54,7 +54,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-v0.0.68-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
+SETUP_CHECK="$KIRA_SETUP/kira-env-1-$(cat $ETC_PROFILE | md5sum | awk '{print $1}')"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -104,6 +104,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="BREWBIN=$BREWBIN" --prefix="BREWBIN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    CDHelper text lineswap --insert="KIRA_SCAN=$KIRA_HOME/kirascan" --prefix="KIRA_SCAN=" --path=$ETC_PROFILE --append-if-found-not=True
 
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$DARTBIN" --prefix="PATH=" --and-contains-not=":$DARTBIN" --path=$ETC_PROFILE

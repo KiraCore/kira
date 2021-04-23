@@ -20,7 +20,6 @@ COMMON_CONSENSUS="$COMMON_READ/consensus"
 VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
 
-
 touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE" "$BLOCK_HEIGHT_FILE"
 
 EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo -n "")
@@ -40,6 +39,7 @@ if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
 
     echoInfo "INFO: health heck => STOP (halted)"
     echo "0" > $EXCEPTION_COUNTER_FILE
+    sleep 10
     exit 0
 fi
 
@@ -49,6 +49,7 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoW
 
 if [ ! -f "$EXECUTED_CHECK" ] ; then
     echoWarn "WARNING: Setup of the '$NODE_TYPE' node was not finalized yet, no health data available"
+    sleep 10
     exit 0
 fi
 
@@ -125,4 +126,6 @@ echoInfo "| FINISHED: HEALTHCHECK                        |"
 echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
 echoInfo "------------------------------------------------"
 set -x
+
+sleep 10
 exit 0

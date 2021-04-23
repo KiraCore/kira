@@ -93,7 +93,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       echoInfo "INFO: Network will be stared from a predefined genesis file..."
       [ ! -f "$COMMON_GENESIS" ] && echoErr "ERROR: Genesis file '$COMMON_GENESIS' was not found" && exit 1
       rm -fv $LOCAL_GENESIS
-      cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS
+      cp -afv $COMMON_GENESIS $LOCAL_GENESIS
+  fi
+
+  if [ "${NEW_NETWORK,,}" == "true" ] ; then
+      echoInfo "INFO: New network was created, saving genesis to local directory..."
+      cp -afv $LOCAL_GENESIS $COMMON_DIR
   fi
 
   rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $TEST_KEY

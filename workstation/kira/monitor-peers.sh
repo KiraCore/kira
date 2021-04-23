@@ -3,15 +3,14 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-peers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f --output cat
-# cat $KIRA_HOME/kirascan/peers.logs
+# cat $KIRA_SCAN/peers.logs
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-PEERS_SCAN_PATH="$SCAN_DIR/peers"
-SNAPS_SCAN_PATH="$SCAN_DIR/snaps"
+SCAN_DONE="$KIRA_SCAN/done"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+PEERS_SCAN_PATH="$KIRA_SCAN/peers"
+SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
 INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"
