@@ -75,11 +75,11 @@ PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
 
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
-    $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
+    $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" &> $HEALTHCHECK_LOG || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
-    $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
+    $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" &> $HEALTHCHECK_LOG || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
-    $SELF_CONTAINER/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" 2> $HEALTHCHECK_LOG || FAILED="true"
+    $SELF_CONTAINER/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" &> $HEALTHCHECK_LOG || FAILED="true"
 else
     echoErr "ERROR: Unknown node type '$NODE_TYPE'"
     FAILED="true"
