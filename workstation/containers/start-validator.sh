@@ -49,11 +49,13 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-    else
-        CFG_persistent_peers=""
-    fi
+    #if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    #    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
+    #else
+    #    CFG_persistent_peers=""
+    #fi
+
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -93,7 +95,7 @@ docker run -d \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="false" \
+    -e CFG_pex="true" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \

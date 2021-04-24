@@ -11,6 +11,8 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
+RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
+
 NODE_ID=""
 PREVIOUS_HEIGHT=0
 HEIGHT=0
@@ -62,7 +64,7 @@ while [[ $i -le 40 ]]; do
     fi
 
     echoInfo "INFO: Awaiting node status..."
-    STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+    STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
     NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
     if (! $(isNodeId "$NODE_ID")); then
         sleep 12

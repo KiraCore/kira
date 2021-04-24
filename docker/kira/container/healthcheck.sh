@@ -64,7 +64,7 @@ fi
 
 LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-echo $(timeout 3 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
+echo $(timeout 6 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
 CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_SCAN || echo -n "")
 HEIGHT=$(jsonQuickParse "latest_block_height" $STATUS_SCAN || echo -n "")
 PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
@@ -72,6 +72,12 @@ PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 [[ $HEIGHT -ge 1 ]] && echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
+
+if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] || [ "${CATCHING_UP,,}" == "true" ]; then
+    echoInfo "INFO: Success, node is catching up ($CATCHING_UP), previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
+    echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
+    [ "${FAILED,,}" == "true" ] && exit 0
+fi
 
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
@@ -83,12 +89,6 @@ elif [ "${NODE_TYPE,,}" == "validator" ]; then
 else
     echoErr "ERROR: Unknown node type '$NODE_TYPE'"
     FAILED="true"
-fi
-
-if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ]; then
-    echoInfo "INFO: Success, node is catching up, previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
-    echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-    [ "${FAILED,,}" == "true" ] && exit 0
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then

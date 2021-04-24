@@ -15,6 +15,7 @@ SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 IFACES_RESTARTED="false"
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
 retry=0
 while : ; do
@@ -55,7 +56,7 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+        STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20
