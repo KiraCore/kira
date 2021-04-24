@@ -72,9 +72,13 @@ for (( i=0; i<${len}; i++ )) ; do
   fi
 done
 
-echoInfo "INFO: Restarting docker & networking..."
-$KIRA_MANAGER/scripts/update-ifaces.sh
-$KIRA_MANAGER/scripts/update-hosts.sh
+if [ "${RESTART,,}" == "true" ] ; then
+    echoInfo "INFO: Restarting docker & networking..."
+    $KIRA_MANAGER/scripts/update-ifaces.sh
+    $KIRA_MANAGER/scripts/update-hosts.sh
+else
+    echoInfo "INFO: Network interfaces and hosts will NOT be restarted"
+fi
 
 set +x
 echoWarn "------------------------------------------------"

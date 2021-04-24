@@ -23,8 +23,22 @@ if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
     #$KIRAMGR_SCRIPTS/restart-networks.sh "false" "$KIRA_REGISTRY_NETWORK"
+
+    echoInfo "INFO: MTU Value Discovery..."
+    MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+    (! $(isNaturalNumber $MTU)) && MTU=1500
+    MTU=$(($MTU - 100))
+    (($MTU < 100)) && MTU=1400
+
+    network="regnet"
+    subnet=$KIRA_REGISTRY_SUBNET
+    echoInfo "INFO: Recreating $network network and $subnet subnet..."
+    docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
+
     $KIRA_MANAGER/scripts/update-ifaces.sh
 
+    echoInfo "INFO: Starting registry container..."
     CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
     RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
     CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
@@ -44,8 +58,6 @@ if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE
         -e REGISTRY_STORAGE_DELETE_ENABLED=true \
         -e REGISTRY_LOG_LEVEL=debug \
         registry:$REGISTRY_VERSION
-
-    $KIRA_MANAGER/scripts/update-ifaces.sh
 
     sleep 1
     ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")

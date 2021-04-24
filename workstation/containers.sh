@@ -15,7 +15,6 @@ echoWarn "| EXTERNAL SYNC: $EXTERNAL_SYNC"
 echoWarn "------------------------------------------------"
 set -x
 
-
 if [ "${NEW_NETWORK,,}" != "true" ] ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1

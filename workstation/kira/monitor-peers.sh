@@ -52,7 +52,7 @@ else
 fi
 
 PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
-(! $(isNullOrEmpty $PUBLIC_IP)) && echo $PUBLIC_IP >> $TMP_BOOK
+(! $(isNullOrEmpty $PUBLIC_IP)) && echo "\"$PUBLIC_IP\"" >> $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF

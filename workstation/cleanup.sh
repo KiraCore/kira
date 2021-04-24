@@ -54,6 +54,25 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
 
+echoInfo "INFO: Recreating docker networks..."
+declare -a networks=("kiranet" "sentrynet" "servicenet")
+declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET")
+len=${#networks[@]}
+
+echoInfo "INFO: MTU Value Discovery..."
+MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+(! $(isNaturalNumber $MTU)) && MTU=1500
+MTU=$(($MTU - 100))
+(($MTU < 100)) && MTU=1400
+
+for (( i=0; i<${len}; i++ )) ; do
+    network=${networks[$i]}
+    subnet=${subnets[$i]}
+    echoInfo "INFO: Recreating $network network and $subnet subnet..."
+    docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
+done
+
 # $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 $KIRA_MANAGER/scripts/update-ifaces.sh
 
