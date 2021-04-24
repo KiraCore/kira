@@ -31,10 +31,12 @@ case \"\$1\" in
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
         systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
         systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
-        $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
+        $KIRA_MANAGER/scripts/update-ifaces.sh || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"
 
+    #$KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
+    #esac
     JOURNAL_CFG="/etc/systemd/journald.conf"
     CDHelper text lineswap --insert="SystemMaxUse=512M" --contains="SystemMaxUse=" --path=$JOURNAL_CFG --append-if-found-not=True
     CDHelper text lineswap --insert="SystemMaxFileSize=8M" --contains="SystemMaxFileSize=" --path=$JOURNAL_CFG --append-if-found-not=True

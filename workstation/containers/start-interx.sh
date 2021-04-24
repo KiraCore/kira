@@ -74,8 +74,9 @@ $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
 FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do

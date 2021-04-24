@@ -61,6 +61,6 @@ fi
 echo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh

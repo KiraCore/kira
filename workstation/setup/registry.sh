@@ -22,7 +22,8 @@ if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE
     echoInfo "INFO: Container '$CONTAINER_NAME' does NOT exist or is not reachable, update is required recreating registry..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    $KIRAMGR_SCRIPTS/restart-networks.sh "false" "$KIRA_REGISTRY_NETWORK"
+    #$KIRAMGR_SCRIPTS/restart-networks.sh "false" "$KIRA_REGISTRY_NETWORK"
+    $KIRA_MANAGER/scripts/update-ifaces.sh
 
     CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
     RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -76,7 +77,7 @@ if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE
 }
 EOL
 
-    $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
+    #$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
     $KIRA_MANAGER/scripts/update-ifaces.sh
     touch $SETUP_CHECK
 else

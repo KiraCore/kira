@@ -54,7 +54,8 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
+# $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
+$KIRA_MANAGER/scripts/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )

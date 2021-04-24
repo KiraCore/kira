@@ -48,15 +48,17 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    
 
     if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
         #CFG_persistent_peers="tcp://$SENTRY_SEED"
-        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED"
+        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
     else
         #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED"
+        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
     fi
 
 
@@ -131,6 +133,7 @@ else
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh
