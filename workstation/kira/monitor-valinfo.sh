@@ -80,7 +80,7 @@ else
     fi
 
     VALOPER_FOUND="false"
-    jsonParse "validators" $VALOPERS_COMM_RO_PATH > $VALIDATORS_SCAN_PATH
+    jsonParse "validators" $VALOPERS_COMM_RO_PATH $VALIDATORS_SCAN_PATH
     (jq -rc '.[] | @base64' $VALIDATORS_SCAN_PATH 2> /dev/null || echo -n "") > $VALIDATORS64_SCAN_PATH
 
     if ($(isFileEmpty "$VALIDATORS64_SCAN_PATH")) ; then

@@ -142,8 +142,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
         SNAP_SIZE=$(urlContentLength "$SNAP_URL")
         if ($(urlExists "$SNAP_URL")) && [[ $SNAP_SIZE -gt 0 ]]; then
             set +x
-            echoInfo "INFO: Node '$NODE_ADDR' is exposing snapshots, file size $SNAP_SIZE Bytes"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(s|a|d|c)$ ]]; do echoNErr "Try to [S]ync from exposed snap, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(s|a|d|c)$ ]]; do echoNErr "Choose to [S]ync from exposed snap, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
         else
             set +x

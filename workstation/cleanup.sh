@@ -71,7 +71,7 @@ done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-rm -rfv $DOCKER_SNAP_DESTINATION
+rm -fv $DOCKER_SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
@@ -98,13 +98,6 @@ fi
 [ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$INFRA_MODE' mode"
 [ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$INFRA_MODE' mode"
 CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
-
-if [ "${NEW_NETWORK,,}" != "true" ] ; then 
-    echoInfo "INFO: Attempting to access genesis file from local configuration..."
-    [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
-else
-    [ -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was present before network was instantiated!" && exit 1
-fi
 
 set +x
 echoWarn "------------------------------------------------"

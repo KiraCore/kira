@@ -14,9 +14,11 @@ SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
+UPDATE_DONE_FILE="$KIRA_UPDATE/done"
+UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 
 while [ ! -f $SCAN_DONE ] ; do
-    echo "INFO: Waiting for monitor scan to finalize run..."
+    echoInfo "INFO: Waiting for monitor scan to finalize run..."
     sleep 10
 done
 
@@ -80,22 +82,26 @@ if [ -d $KIRA_SNAP ]; then
     echoInfo "INFO: Success, all excessive snaps were removed"
 fi
 
-[ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
-if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
-    echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
-    CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
-    ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-    INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-    if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
-        rm -fv $SCAN_DONE "${SNAPSHOT_SCAN_PATH}-start.log"
-        [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
-        $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
+if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
+    echoInfo "INFO: Snap can't be executed, update is not compleated"
 else
-    echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
+    [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
+    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
+        echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+    elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
+        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+        INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
+        if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
+            rm -fv $SCAN_DONE "${SNAPSHOT_SCAN_PATH}-start.log"
+            [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
+            $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
+            CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
+        fi
+    else
+        echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
+    fi
 fi
 
 sleep 30

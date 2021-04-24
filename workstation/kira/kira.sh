@@ -13,16 +13,28 @@ if [ "${USER,,}" != root ]; then
 fi
 
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
+UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 
-while [ ! -f "$UPDATE_DONE_FILE" ] ; do
-    echoWarn "WARNING: Your node setup is not compleated yet"
-    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
+    if [ -f $UPDATE_FAIL_FILE ] ; then
+        echoErr "ERROR: Your node setup FAILED"
+        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    else
+        echoWarn "WARNING: Your node setup is NOT compleated yet"
+        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    fi
+    
     if [ "${VSEL,,}" == "r" ] ; then
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
     elif [ "${VSEL,,}" == "v" ] ; then
-        echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
-        sleep 2
-        journalctl -u kiraup -f --output cat
+        if [ -f $UPDATE_FAIL_FILE ] ; then
+            echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
+            sleep 2
+            journalctl -u kiraup -f --output cat
+        else
+            echoInfo "INFO: Printing setup logs:"
+            journalctl --since "$SETUP_START_DT" -u kiraup -f --no-pager --output cat
+        fi
     elif [ "${VSEL,,}" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
     else
