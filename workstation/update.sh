@@ -48,7 +48,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         UPDATE_CHECK_TOOLS="$UPDATE_CHECK_TOOLS-skip"
         UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
-        if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] $ ; then
+        if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] ; then
             echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'"
             sleep 120 && systemctl stop kiraup && exit 1
         fi
@@ -87,7 +87,7 @@ EOL
     else
         echoInfo "INFO: Starting setup process..."
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
-        if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] $ ; then
+        if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] ; then
             echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'"
             sleep 120 && systemctl stop kiraup && exit 1
         fi
@@ -119,7 +119,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting cleanup process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CLEANUP}.log"
-    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] $ ; then
+    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] ; then
         echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'"
         sleep 120 && systemctl stop kiraup && exit 1
     fi
@@ -163,7 +163,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log"
-    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] $ ; then
+    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] ; then
         echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'"
         sleep 120 && systemctl stop kiraup && exit 1
     fi
@@ -193,7 +193,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log"
-    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] $ ; then
+    if [[ $UPDATE_FAILS -gt $MAX_FAILS ]] ; then
         echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'"
         sleep 120 && systemctl stop kiraup && exit 1
     fi
