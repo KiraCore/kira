@@ -43,13 +43,16 @@ touch $TMP_BOOK
 if [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Fetching address book file from seed node..."
     (docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+    (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
+    (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 else
     echoInfo "INFO: Fetching address book file from sentry node..."
     (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+    (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 fi
 
 PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
-(! $(isNullOrEmpty $PUBLIC_IP)) && echo $PUBLIC_IP > $TMP_BOOK
+(! $(isNullOrEmpty $PUBLIC_IP)) && echo $PUBLIC_IP >> $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF
