@@ -27,13 +27,12 @@ while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
     if [ "${VSEL,,}" == "r" ] ; then
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
     elif [ "${VSEL,,}" == "v" ] ; then
-        if [ -f $UPDATE_FAIL_FILE ] ; then
+        if [ -z "$SETUP_END_DT" ] ; then
             echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
-            sleep 2
-            journalctl -u kiraup -f --output cat
+            sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
         else
             echoInfo "INFO: Printing setup logs:"
-            journalctl --since "$SETUP_START_DT" -u kiraup -f --no-pager --output cat
+            sleep 2 && journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
         fi
     elif [ "${VSEL,,}" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
