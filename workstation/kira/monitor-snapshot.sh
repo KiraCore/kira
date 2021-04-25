@@ -16,6 +16,7 @@ SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
+CONAINER_NAME="snapshot"
 
 while [ ! -f $SCAN_DONE ] ; do
     echoInfo "INFO: Waiting for monitor scan to finalize run..."
@@ -35,6 +36,7 @@ echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
 echoWarn "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
 echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
+echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -46,7 +48,11 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        $KIRA_SCRIPTS/container-delete.sh "snapshot" || echoErrr "ERROR: Failed to delete snapshot container"
+        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+        if [ "${CONTAINER_EXISTS,,}" == "true"  ] ; then
+            $KIRA_MANAGER/scripts/dump-logs.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to dump $CONAINER_NAME container logs"
+            $KIRA_SCRIPTS/container-delete.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to delete $CONAINER_NAME container"
+        fi
         CHECKSUM_TEST="true"
     fi
 fi

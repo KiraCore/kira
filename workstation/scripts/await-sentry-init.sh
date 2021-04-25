@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/scripts/await-sentry-init.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 CONTAINER_NAME=$1
@@ -36,7 +37,7 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+            if [ "${CONTAINER_NAME,,}" != "snapshot" ] && [ "${IFACES_RESTARTED,,}" == "false" ] ; then
                 echoInfo "INFO: Restarting network interfaces..."
                 $KIRA_MANAGER/scripts/update-ifaces.sh
                 IFACES_RESTARTED="true"

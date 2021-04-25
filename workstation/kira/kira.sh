@@ -376,7 +376,7 @@ while :; do
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ]; then
         echoInfo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echoErr "ERROR: Snapshot failed"
+        $KIRA_MANAGER/kira/kira-backup.sh || echoErr "ERROR: Snapshot failed"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ]; then
         echoInfo "INFO: Staring networking manager..."

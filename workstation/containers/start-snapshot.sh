@@ -17,6 +17,8 @@ LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
+SNAP_DONE="$SNAP_STATUS/done"
+SNAP_PROGRESS="$SNAP_STATUS/progress"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -79,14 +81,11 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
 fi
 
-echoInfo "INFO: Cleaning up snapshot container..."
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 # cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
-
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$SNAP_DONE" "$SNAP_PROGRESS"
 
 echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
