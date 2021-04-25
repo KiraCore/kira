@@ -226,4 +226,4 @@ echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
-[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager" && sleep 180 && systemctl stop kiraup && exit 0
+[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager" && systemctl stop kiraup && sleep 5 && exit 0

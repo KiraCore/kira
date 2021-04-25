@@ -113,3 +113,29 @@ function whitelistValidator() {
     echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
     return 0
 }
+
+function lastProposal() {
+    PROPOSALS=$(sekaid query customgov proposals --output json 2> /dev/null || echo "")
+    [ -z "$PROPOSALS" ] && echo 0 && return 1
+    LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
+    (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
+    [[ $LAST_PROPOSAL -le 0 ]] && echo 0 && return 3
+    echo $LAST_PROPOSAL
+    return 0
+}
+
+# voteYes $(lastProposal) validator
+function voteYes() {
+    PROPOSAL=$1
+    ACCOUNT=$2
+    YES=1
+    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
+    sekaid tx customgov proposal vote $PROPOSAL $YES --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+}
+
+function networkProperties() {
+    NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
+    [ -z "$NETWORK_PROPERTIES" ] && echo -n "" && return 1
+    echo $NETWORK_PROPERTIES
+    return 0
+}
