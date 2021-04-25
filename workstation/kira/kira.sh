@@ -17,7 +17,8 @@ UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 
 while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
     if [ -f $UPDATE_FAIL_FILE ] ; then
-        echoErr "ERROR: Your node setup FAILED"
+        echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
+        echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
         VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
     else
         echoWarn "WARNING: Your node setup is NOT compleated yet"
