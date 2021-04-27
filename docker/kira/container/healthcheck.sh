@@ -62,6 +62,7 @@ if [ ! -f "$EXECUTED_CHECK" ] ; then
     exit 0
 fi
 
+echoInfo "INFO: Checking node status..."
 LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
 echo $(timeout 6 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
@@ -79,6 +80,7 @@ if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] || [ "${CATCHING_UP,,}" == "true" ]; then
     [ "${FAILED,,}" == "true" ] && exit 0
 fi
 
+echoInfo "INFO: Starting healthcheck..."
 FAILED="false"
 if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
     $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" &> $HEALTHCHECK_LOG || FAILED="true"
@@ -94,10 +96,10 @@ fi
 if [ "${FAILED,,}" == "true" ] ; then
     EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
     EXCEPTION_TOTAL=$(($EXCEPTION_TOTAL + 1))
-    echoErr "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/2 times, total $EXCEPTION_TOTAL"
+    echoErr "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/6 times, total $EXCEPTION_TOTAL"
     echo "$EXCEPTION_TOTAL" > $EXCEPTION_TOTAL_FILE
 
-    if [[ $EXCEPTION_COUNTER -ge 3 ]] ; then
+    if [[ $EXCEPTION_COUNTER -ge 6 ]] ; then
         echoWarn "WARNINIG: Unhealthy status, node will reboot"
         echo "0" > $EXCEPTION_COUNTER_FILE
         pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
