@@ -54,7 +54,7 @@ KIRA_SECRETS="$KIRA_HOME/.secrets"
 KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.51"
+CDHELPER_VERSION="v0.6.52"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 

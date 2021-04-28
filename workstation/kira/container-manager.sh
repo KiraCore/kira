@@ -149,11 +149,12 @@ while : ; do
             VTOP=$(jsonQuickParse "top" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "???") && VTOP="${VTOP}${WHITESPACE}"
             VRANK=$(jsonQuickParse "rank" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
             VSTREAK=$(jsonQuickParse "streak" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
-            VMISSED=$(jsonQuickParse "missed_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             VMISSCHANCE=$(jsonQuickParse "mischance" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSCHANCE="${VMISSCHANCE}${WHITESPACE}"
+            VMISS_CONF=$(jsonQuickParse "mischance_confidence" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISS_CONF="${VMISS_CONF}${WHITESPACE}"
+            VMISSED=$(jsonQuickParse "missed_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
             VPRODUCED=$(jsonQuickParse "produced_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VPRODUCED="${VPRODUCED}${WHITESPACE}"
-            echo "|    Streak: ${VSTREAK:0:8}     Rank: ${VRANK:0:11} TOP: ${VTOP:0:6} |"  
-            echo "| Mischance: ${VMISSCHANCE:0:8} Produced: ${VPRODUCED:0:23} |"  
+            echo "|   Streak: ${VSTREAK:0:12}Rank: ${VRANK:0:10}Mischance: ${VMISSCHANCE:0:5}: TOP: ${VTOP:0:6}"  
+            echo "| Produced: ${VPRODUCED:0:10}Missed: ${VMISSED:0:10}Miss.Conf: ${VMISS_CONF:0:5}|"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
@@ -176,7 +177,7 @@ while : ; do
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
     
-    [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
+    [ ! -z "$KIRA_NODE_ID" ] && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
         KIRA_BLOCK_TMP="${KIRA_BLOCK}${WHITESPACE}"
