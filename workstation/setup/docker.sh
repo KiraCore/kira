@@ -15,7 +15,7 @@ SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
     echoInfo "INFO: Attempting to remove old docker..."
     docker system prune -f || echoWarn "WARNING: failed to prune docker system"
-    service docker stop || echoWarn "WARNING: Failed to stop docker servce"
+    $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
 
     echoInfo "INFO: Removing hanging docker-network interfaces..."
     ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)

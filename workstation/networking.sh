@@ -29,9 +29,9 @@ echoWarn "|        LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
-echoInfo "INFO: Stopping docker & restaring firewall"
-systemctl stop docker
-systemctl restart firewalld
+echoInfo "INFO: Stopping docker & restaring firewall..."
+$KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
+timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld service"
 
 echoInfo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 firewall-cmd --get-zones
