@@ -20,6 +20,7 @@ CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
 NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
@@ -46,6 +47,7 @@ while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
     KADDR=$(tryCat $KADDR_PATH "")
+    KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -151,7 +153,7 @@ while : ; do
             VMISSCHANCE=$(jsonQuickParse "mischance" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSCHANCE="${VMISSCHANCE}${WHITESPACE}"
             VPRODUCED=$(jsonQuickParse "produced_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VPRODUCED="${VPRODUCED}${WHITESPACE}"
             echo "|    Streak: ${VSTREAK:0:8}     Rank: ${VRANK:0:11} TOP: ${VTOP:0:6} |"  
-            echo "| Mischance: ${VMISSCHANCE:0:8} Produced: ${VRANK:0:23} |"  
+            echo "| Mischance: ${VMISSCHANCE:0:8} Produced: ${VPRODUCED:0:23} |"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
@@ -176,9 +178,10 @@ while : ; do
     
     [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
-        TMP_VAR="${KIRA_NODE_BLOCK}${WHITESPACE}"
-        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
-        echo "|    Block: ${TMP_VAR:0:43} |"
+        KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
+        KIRA_BLOCK_TMP="${KIRA_BLOCK}${WHITESPACE}"
+        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && KIRA_NODE_BLOCK_TMP="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
+        echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${KIRA_NODE_BLOCK_TMP:0:23} |"
     fi
 
     ALLOWED_OPTIONS="x"

@@ -89,8 +89,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         # default chain properties
         jq '.app_state.customgov.network_properties.proposal_end_time = "360"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
         jq '.app_state.customgov.network_properties.proposal_enactment_time = "300"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.mischance_confidence = "50"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.max_mischance = "100"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+        jq '.app_state.customgov.network_properties.mischance_confidence = "25"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+        jq '.app_state.customgov.network_properties.max_mischance = "50"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
         # do not allow to unjail after 2 weeks of inactivity
         jq '.app_state.customgov.network_properties.jail_max_time = "1209600"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
         jq '.app_state.customgov.network_properties.mischance_rank_decrease_amount = "1"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
