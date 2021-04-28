@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.2.8.2" 
+SETUP_VER="v0.2.8.3" 
 
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
