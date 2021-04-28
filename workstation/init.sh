@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.2.8.3" 
+SETUP_VER="v0.2.8.4" 
 
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
@@ -54,7 +54,7 @@ KIRA_SECRETS="$KIRA_HOME/.secrets"
 KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.52"
+CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
 
