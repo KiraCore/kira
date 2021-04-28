@@ -9,10 +9,9 @@ HEIGHT=$3
 CATCHING_UP=$4
 CONSENSUS_STOPPED=$5
 
+START_TIME="$(date -u +%s)"
 VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
-
-START_TIME="$(date -u +%s)"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -28,7 +27,7 @@ set -x
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x
-    echoWarn "WARNING: Blocks are not beeing produced or synced"
+    echoWarn "WARNING: Blocks are not beeing produced or synced by $NODE_TYPE"
     echoWarn "WARNING: Current height: $HEIGHT"
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"

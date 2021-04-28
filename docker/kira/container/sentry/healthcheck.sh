@@ -39,7 +39,7 @@ fi
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x
-    echoWarn "WARNING: Blocks are not beeing produced or synced"
+    echoWarn "WARNING: Blocks are not beeing synced by $NODE_TYPE"
     echoWarn "WARNING: Current height: $HEIGHT"
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"

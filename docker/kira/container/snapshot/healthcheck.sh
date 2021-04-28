@@ -9,11 +9,10 @@ HEIGHT=$3
 CATCHING_UP=$4
 CONSENSUS_STOPPED=$5
 
+START_TIME="$(date -u +%s)"
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
-
-START_TIME="$(date -u +%s)"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -39,7 +38,7 @@ fi
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     set +x
-    echoWarn "WARNING: Blocks are not beeing produced or synced"
+    echoWarn "WARNING: Blocks are not beeing synced by $NODE_TYPE"
     echoWarn "WARNING: Current height: $HEIGHT"
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"

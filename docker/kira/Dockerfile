@@ -5,7 +5,7 @@ ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
-RUN echo "Build hash: ${BUILD_HASH}"
+RUN echo "Build hash: ${BUILD_HASH}, branch: ${BRANCH}, repo: $REPO"
 
 RUN git clone ${REPO} ${SEKAI} && cd ${SEKAI} && git checkout ${BRANCH}
 RUN cd ${SEKAI} && go install ./cmd/sekaid
@@ -21,8 +21,7 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-# HEALTHCHECK --interval=30s --timeout=600s --start-period=600s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
-HEALTHCHECK --interval=30s --timeout=600s --start-period=600s --retries=2 CMD "/bin/sh -c \"/bin/bash ${HEALTHCHECK_SCRIPT} | tee -a ${COMMON_LOGS}/health.log ; test ${PIPESTATUS[0]} = 0\""
+HEALTHCHECK --interval=30s --timeout=600s --start-period=600s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
 
 CMD ["sh", "-c", "/bin/bash ${START_SCRIPT} | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]
 
