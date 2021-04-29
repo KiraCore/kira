@@ -65,7 +65,7 @@ else
     (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
     [[ $HEIGHT -ge 1 ]] && echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
 
-    if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] || [ "${CATCHING_UP,,}" == "true" ]; then
+    if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ; then
         echoInfo "INFO: Success, node is catching up ($CATCHING_UP), previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
         echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
     else
@@ -96,8 +96,13 @@ if [ "${FAILED,,}" == "true" ] ; then
         sleep 5
     else
         echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
+        [ "${CATCHING_UP,,}" == "true" ] && echoInfo "INFO: Node is still attempting to catch up..." && sleep 30
     fi
 else
+    echoInfo "INFO: Node is healthy, reseting exception counter..."
+    echo "0" > $EXCEPTION_COUNTER_FILE
+    sleep 30
+
     echoInfo "INFO: Updating commit timeout..."
     ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
     (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
@@ -113,7 +118,6 @@ else
             CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}\"" --prefix="timeout_commit =" --path=$CFG
         fi
     fi
-    echo "0" > $EXCEPTION_COUNTER_FILE  
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then

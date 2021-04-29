@@ -47,7 +47,7 @@ while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
     KADDR=$(tryCat $KADDR_PATH "")
-    KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+    LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -180,9 +180,9 @@ while : ; do
     [ ! -z "$KIRA_NODE_ID" ] && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
-        KIRA_BLOCK_TMP="${KIRA_BLOCK}${WHITESPACE}"
-        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && KIRA_NODE_BLOCK_TMP="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
-        echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${KIRA_NODE_BLOCK_TMP:0:23} |"
+        LATEST_BLOCK_TMP="${LATEST_BLOCK}${WHITESPACE}"
+        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && CATCHUP_TMP="catching up" || CATCHUP_TMP=""
+        echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${LATEST_BLOCK_TMP:0:23} : $CATCHUP_TMP"
     fi
 
     ALLOWED_OPTIONS="x"
