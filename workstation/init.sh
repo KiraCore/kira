@@ -20,6 +20,12 @@ if [ "${USER,,}" != root ]; then
     exit 1
 fi
 
+# Used To Initialize essential dependencies, MUST be iterated if essentials require updating
+SETUP_VER="v0.3.0.0"
+CDHELPER_VERSION="v0.6.51"
+INFRA_REPO="https://github.com/KiraCore/kira"
+ARCHITECTURE=$(uname -m)
+
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
@@ -51,13 +57,8 @@ KIRA_SECRETS="$KIRA_HOME/.secrets"
 KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
-CDHELPER_VERSION="v0.6.51"
-SETUP_VER="v0.2.5.6" # Used To Initialize Essential, Needs to be iterated if essentials must be updated
-INFRA_REPO="https://github.com/KiraCore/kira"
-ARCHITECTURE=$(uname -m)
-
 echo "------------------------------------------------"
-echo "| STARTED: INIT $SETUP_VER"
+echo "|      STARTED: INIT $SETUP_VER"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
@@ -101,6 +102,8 @@ if [ -z "$SKIP_UPDATE" ]; then
 else
     echo "INFO: Initalizing setup script..."
 fi
+
+systemctl stop kiraup || echo "WARNING: KIRA update service could NOT be stopped, service might not exist yet!"
 
 echo -n ""
 set -x
@@ -150,6 +153,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     KIRA_INTERX="$KIRA_REPOS/interx"
 
     KIRA_SETUP=/kira/setup
+    KIRA_UPDATE=/kira/update
     KIRA_MANAGER="/kira/manager"
 
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
@@ -206,11 +210,13 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
 
             if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+                set +x
                 echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
                 SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
                 [ "${SELECT,,}" == "x" ] && exit
                 echo "DANGER: You decided to disregard a potential vulnerability !!!"
                 echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+                set -x
             fi
         else
             echo "INFO: CDHelper tool was already downloaded"
@@ -242,6 +248,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SETUP=$KIRA_SETUP" --prefix="KIRA_SETUP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_UPDATE=$KIRA_UPDATE" --prefix="KIRA_UPDATE=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_INFRA=$KIRA_INFRA" --prefix="KIRA_INFRA=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEKAI=$KIRA_SEKAI" --prefix="KIRA_SEKAI=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -329,7 +336,7 @@ CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO
 
 set +x
 echo "INFO: Your host environment was initialized"
-echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vurnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
+echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
 set -x

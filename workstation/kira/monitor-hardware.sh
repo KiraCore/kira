@@ -6,16 +6,15 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-DISK_SCAN_PATH="$SCAN_DIR/disk"
-CPU_SCAN_PATH="$SCAN_DIR/cpu"
-RAM_SCAN_PATH="$SCAN_DIR/ram"
+DISK_SCAN_PATH="$KIRA_SCAN/disk"
+CPU_SCAN_PATH="$KIRA_SCAN/cpu"
+RAM_SCAN_PATH="$KIRA_SCAN/ram"
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "|       STARTING KIRA HARDWARE SCAN            |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|       SCAN_DIR: $SCAN_DIR"
+echoWarn "|  KIRA_SCAN: $KIRA_SCAN"
 echoWarn "| DISK_SCAN_PATH: $DISK_SCAN_PATH"
 echoWarn "|  CPU_SCAN_PATH: $CPU_SCAN_PATH"
 echoWarn "|  RAM_SCAN_PATH: $RAM_SCAN_PATH"

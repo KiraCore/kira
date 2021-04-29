@@ -55,10 +55,12 @@ if [ ! -z "$NAME" ] && [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || 
     RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
     if [ "${AWAIT,,}" == "true" ] && [ "${RUNNING,,}" == "true" ] ; then
         cntr=0
-        while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 20 ]] ; do
+        while [ -f "$EXIT_FILE" ] && [[ $cntr -lt 30 ]] ; do
             cntr=$(($cntr + 1))
             echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/20) ..."
-            sleep 5 
+            sleep 5
+            RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
+            [ "${RUNNING,,}" == "false" ] && break
         done
         [ ! -f "$EXIT_FILE" ] && echoInfo "INFO: Container '$NAME' stopped sucessfully" || echoWarn "WARNING: Failed to gracefully stop container '$NAME'"
     fi
@@ -75,6 +77,9 @@ elif [ "${TASK,,}" == "unpause" ] ; then
 elif [ "${TASK,,}" == "start" ] ; then
     [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"
     $KIRA_SCRIPTS/container-start.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+elif [ "${TASK,,}" == "stop" ] ; then
+    $KIRA_SCRIPTS/container-stop.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"
 elif [ "${TASK,,}" == "restart" ] ; then
     $KIRA_SCRIPTS/container-restart.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
     [ "${UNHALT,,}" == "true" ] && rm -fv "$HALT_FILE" "$EXIT_FILE" && echoInfo "INFO: Container $NAME unhalted"

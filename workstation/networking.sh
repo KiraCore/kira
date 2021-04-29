@@ -29,9 +29,9 @@ echoWarn "|        LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
-echoInfo "INFO: Stopping docker & restaring firewall"
-systemctl stop docker
-systemctl restart firewalld
+echoInfo "INFO: Stopping docker & restaring firewall..."
+$KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
+timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld service"
 
 echoInfo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 firewall-cmd --get-zones
@@ -52,12 +52,11 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
 
-if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] ; then
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
-else
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --remove-port=$KIRA_SEED_P2P_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --remove-source-port=$KIRA_SEED_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 fi
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_INTERX_PORT/tcp
@@ -65,7 +64,6 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_P2P_PORT/
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
 # required for DNS service
@@ -76,16 +74,20 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
 # required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.0.0.0/8 masquerade"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=192.168.0.0/16 masquerade"
-#firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
+
+# required for docker registry
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.16.0.0/12 masquerade"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.17.0.0/16 masquerade"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.18.0.0/16 masquerade"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=172.27.0.0/16 masquerade"
+
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"22\" protocol=\"tcp\" accept"
 
@@ -157,11 +159,10 @@ for PORT in "${PORTS[@]}" ; do
 done
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"10.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"0.0.0.0\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"127.0.0.1\" port port=\"1-65535\" protocol=\"tcp\" accept"
-# firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
 
 firewall-cmd --get-zones
 firewall-cmd --zone=$FIREWALL_ZONE --list-all || echoInfo "INFO: Failed to list '$FIREWALL_ZONE' zone"

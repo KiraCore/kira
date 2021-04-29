@@ -132,8 +132,9 @@ echo -e "\e[37;1m--------------------------------------------------"
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "r" ]; then
-        echoInfo "INFO: Restarting networks..."
-        $KIRA_MANAGER/scripts/restart-networks.sh
+        echoInfo "INFO: Restarting network interfaces..."
+        # $KIRA_MANAGER/scripts/restart-networks.sh
+        $KIRA_MANAGER/scripts/update-ifaces.sh
     elif [ "${OPTION,,}" == "x" ]; then
         echoInfo "INFO: Stopping kira networking manager..."
         break
@@ -151,6 +152,6 @@ echo -e "\e[37;1m--------------------------------------------------"
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 

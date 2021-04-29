@@ -28,10 +28,11 @@ mkdir -p $COMMON_LOGS
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --cap-add=SYS_PTRACE \
@@ -51,11 +52,15 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
 
-docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+    docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+else
+    echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+fi
 
 echo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh

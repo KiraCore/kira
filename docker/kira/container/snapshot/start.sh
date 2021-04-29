@@ -65,7 +65,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
-        echoInfo "INFO: Snap file or directory was found, attepting integrity verification adn data recovery..."
+        echoInfo "INFO: Snap file or directory was found, attepting integrity verification and data recovery..."
         if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
             cd $DATA_DIR
             jar xvf $SNAP_FILE_INPUT
@@ -141,8 +141,10 @@ while :; do
     kill -9 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
     sleep 10
     kill -2 "$PID1" || echo "INFO: Failed to kill sekai PID $PID1"
-    rm -fv $CFG # invalidate all possible connections
-    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output2.log &# launch sekai in state observer mode
+    # invalidate all possible connections
+    rm -fv $CFG 
+    # launch sekai in state observer mode
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output2.log &
     PID1=$!
     sleep 10
     FINISHED_RUNNING="true"

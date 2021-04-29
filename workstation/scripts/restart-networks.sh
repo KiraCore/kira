@@ -17,8 +17,10 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: RESTART-NETWORKS SCRIPT             |"
 echoWarn "|-----------------------------------------------"
-echoWarn "| RECONNECT: $RECONNECT"
-echoWarn "|    TARGET: $TARGET"
+echoWarn "| BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|   RECONNECT: $RECONNECT"
+echoWarn "|     RESTART: $RESTART"
+echoWarn "|      TARGET: $TARGET"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -41,42 +43,42 @@ for (( i=0; i<${len}; i++ )) ; do
   network=${networks[$i]}
   subnet=${subnets[$i]}
   if [ ! -z "$TARGET" ] && [ "$network" != "$TARGET" ] ; then
-    echo "INFO: Target network is '$TARGET' the '$network' network will not be reconnected"
+    echoInfo "INFO: Target network is '$TARGET' the '$network' network will not be reconnected"
     continue
   fi
-  echo "INFO: Restarting $network ($subnet)"
-  containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
+  echoInfo "INFO: Restarting $network ($subnet)"
+  containers=$(timeout 8 docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
 
   if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
       for container in $containers ; do
-         echo "INFO: Disconnecting container '$container'"
-         docker network disconnect -f $network $container || echo "INFO: Failed to disconnect container '$container' from network '$network'"
+         echoInfo "INFO: Disconnecting container '$container'"
+         docker network disconnect -f $network $container || echoWarn "WARNING: Failed to disconnect container '$container' from network '$network'"
       done
   else
-    echo "INFO: No containers were found to be attached to $network network"
+    echoInfo "INFO: No containers were found to be attached to $network network"
   fi
 
-  sleep 1 && docker network rm $network || echo "INFO: Failed to remove $network network"
-  sleep 1 && docker network create --opt com.docker.network.driver.mtu=$MTU  --subnet=$subnet $network || echo "INFO: Failed to create $network network"
+  sleep 1 && docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
+  sleep 1 && docker network create --opt com.docker.network.driver.mtu=$MTU  --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
   
   if [ "${RECONNECT,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
     for container in $containers ; do
-      echo "INFO: Connecting container $container to $network"
+      echoInfo "INFO: Connecting container $container to $network"
       docker network connect $network $container
       sleep 1
     done
   else
-    echo "INFO: Containers will NOT be recconected to the '$network' network"
+    echoInfo "INFO: Containers will NOT be recconected to the '$network' network"
   fi
 done
 
-echo "INFO: Restarting docker networking..."
-
-systemctl daemon-reload
-systemctl restart docker || ( journalctl -u docker | tail -n 10 && systemctl restart docker )
-systemctl restart NetworkManager docker || echo "WARNING: Coudn NOT restart network manager"
-
-$KIRA_MANAGER/scripts/update-hosts.sh
+if [ "${RESTART,,}" == "true" ] ; then
+    echoInfo "INFO: Restarting docker & networking..."
+    $KIRA_MANAGER/scripts/update-ifaces.sh
+    $KIRA_MANAGER/scripts/update-hosts.sh
+else
+    echoInfo "INFO: Network interfaces and hosts will NOT be restarted"
+fi
 
 set +x
 echoWarn "------------------------------------------------"

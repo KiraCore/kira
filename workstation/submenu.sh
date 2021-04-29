@@ -103,13 +103,7 @@ while :; do
       CDHelper text lineswap --insert="NEW_NETWORK=\"true\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
       rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
     fi
-
-    $KIRA_MANAGER/start.sh "False" || FAILED="true"
-    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-    set -x
-    $KIRA_MANAGER/kira/kira.sh
-    exit 0
+    break
     ;;
   2*)
     echo "INFO: Starting Advanced Setup..."
@@ -124,13 +118,7 @@ while :; do
 
     $KIRA_MANAGER/menu/seeds-select.sh
     $KIRA_MANAGER/menu/interface-select.sh
-
-    $KIRA_MANAGER/start.sh "False" || FAILED="true"
-    [ "${FAILED,,}" == "true" ] && echo "ERROR: Failed to launch the infrastructure, try to 'reboot' your machine first"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-    set -x
-    $KIRA_MANAGER/kira/kira.sh
-    exit 0
+    break
     ;;
 
   x*)
@@ -144,3 +132,43 @@ while :; do
   esac
 done
 set -x
+
+systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
+
+SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
+SETUP_END_DT=""
+
+CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+rm -rfv $KIRA_UPDATE
+
+cat > /etc/systemd/system/kiraup.service << EOL
+[Unit]
+Description=KIRA Update And Setup Service
+After=network.target
+[Service]
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=99
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/update.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
+systemctl daemon-reload
+systemctl enable kiraup
+systemctl restart kiraup
+
+echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
+sleep 2
+journalctl --since "$SETUP_START_DT" -u kiraup -f --no-pager --output cat
+
+$KIRA_MANAGER/kira/kira.sh
+
+exit 0

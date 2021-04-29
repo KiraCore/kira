@@ -58,8 +58,8 @@ echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
 
 if [ "${EXISTS,,}" == "true" ] ; then
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
-    (jsonParse "0.State" $DOCKER_INSPECT || echo -n "") > $DOCKER_STATE
-    (jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT || echo -n "") > $DOCKER_NETWORKS
+    jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
+    jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "" > $DOCKER_NETWORKS
 
     STATUS=$(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "")
     PAUSED=$(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")

@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/scripts/await-sentry-init.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 CONTAINER_NAME=$1
@@ -14,7 +15,10 @@ EXIT_FILE="$COMMON_PATH/exit"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 IFACES_RESTARTED="false"
+DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
+retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
     HEIGHT=0
@@ -33,7 +37,7 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-            if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+            if [ "${CONTAINER_NAME,,}" != "snapshot" ] && [ "${IFACES_RESTARTED,,}" == "false" ] ; then
                 echoInfo "INFO: Restarting network interfaces..."
                 $KIRA_MANAGER/scripts/update-ifaces.sh
                 IFACES_RESTARTED="true"
@@ -53,7 +57,7 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+        STATUS=$(timeout 6 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20
@@ -112,19 +116,15 @@ while : ; do
     fi
 
     if [ "${FAILURE,,}" == "true" ] ; then
-        set +x
-        echoWarn "WARNING: If this issue persists 'reboot' your machine and try setup again!"
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|a)$ ]] ; do echoNErr "Attempt $CONTAINER_NAME container [R]estart or [A]bort: " && read -d'' -s -n1 ACCEPT && echo ""; done
-        set -x
-        if [ "${ACCEPT,,}" == "r" ] ; then 
-            echoWarn "WARINIG: Container sync operation will be attempted again, please wait..." && sleep 5
+        echoErr "ERROR: $CONTAINER_NAME node setup failed"
+        retry=$((retry + 1))
+        if [[ $retry -le 1 ]] ; then
+            echoInfo "INFO: Attempting $CONTAINER_NAME restart ${retry}/1"
             $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
-            sleep 5
             continue
-        else
-            echoWarn "ERROR: Deployment failed!" && sleep 1
-            exit 1
         fi
+        sleep 30
+        exit 1
     else
         echoInfo "INFO: $CONTAINER_NAME launched sucessfully"
         break
@@ -141,11 +141,12 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then
             echoInfo "INFO: Awaiting trusted node status..."
-            TRUSTED_KIRA_STATUS=$(timeout 10 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
+            TRUSTED_KIRA_STATUS=$(timeout 16 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
             TRUSTED_HEIGHT=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
             if ($(isNaturalNumber "$TRUSTED_HEIGHT")) && [[ "$TRUSTED_HEIGHT" -gt "$VALIDATOR_MIN_HEIGHT" ]] ; then 
                 echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
                 VALIDATOR_MIN_HEIGHT=$TRUSTED_HEIGHT
+                CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$TRUSTED_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
             fi
         fi
 
@@ -153,19 +154,18 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         sleep 10
 
         i=$((i + 1))
-        STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
+        STATUS=$(timeout 8 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
         if ($(isNullOrEmpty $STATUS)) ; then
             set +x
             echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [[ $i -lt 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
 
-            SVAL="." && while ! [[ "${SVAL,,}" =~ ^(a|c)$ ]] ; do echoNErr "Do you want to [A]bort or [C]ontinue setup?: " && read -d'' -s -n1 SVAL && echo "" ; done
-            set -x
-            [ "${SVAL,,}" == "a" ] && echoWarn "WARINIG: Operation was aborted" && sleep 1 && exit 1
-            i=0 && continue
+            echoErr "ERROR: $CONTAINER_NAME status check failed"
+            sleep 30
+            exit 1
         else
             i=0
         fi
@@ -191,7 +191,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             echoInfo "INFO: Node finished catching up."
             break
         elif [[ $HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] ; then
-            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
+            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $HEIGHT"
             VALIDATOR_MIN_HEIGHT=$HEIGHT
         fi
 
@@ -235,12 +235,10 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     SNAP_STATUS="$KIRA_SNAP/status"
     mkdir -p $SNAP_STATUS
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$DESTINATION_FILE\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-    rm -fv "$SNAP_DESTINATION"
-    cp -a -v -f $DESTINATION_FILE "$SNAP_DESTINATION"
-    
+    KIRA_SNAP_PATH=$DESTINATION_FILE
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi
 

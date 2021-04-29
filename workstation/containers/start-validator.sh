@@ -42,37 +42,25 @@ set -x
 
 echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
 
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$KIRA_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$KIRA_PRIV_SENTRY_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
 GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
-#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-#    echoInfo "INFO: Synchronisation using external genesis file ($LOCAL_GENESIS_PATH) will be performed"
-#    if (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-#        echo "INFO: Node will sync from the private sentry..."
-#        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-#    else
-#        echo "INFO: Node will sync blocks from its own seed list..."
-#        CFG_persistent_peers="tcp://$SENTRY_SEED"
-#    fi
-#else
-#    CFG_seeds=""
-#    CFG_persistent_peers=""
-#fi
+if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    #if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+    #    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
+    #else
+    #    CFG_persistent_peers=""
+    #fi
+
     CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-else
-    CFG_seeds=""
-    CFG_persistent_peers=""
-fi
 
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -90,11 +78,11 @@ docker run -d \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID" \
-    -e CFG_seeds="$CFG_seeds" \
+    -e CFG_seeds="" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID,$SNAPSHOT_NODE_ID" \
-    -e CFG_max_num_outbound_peers="0" \
-    -e CFG_max_num_inbound_peers="0" \
+    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
     -e CFG_addr_book_strict="false" \
@@ -108,6 +96,8 @@ docker run -d \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
     -e CFG_pex="false" \
+    -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
+    -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
@@ -115,9 +105,18 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
+else
+    echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+fi
 
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" || exit 1
+
+if [ "${NEW_NETWORK,,}" == true ] ; then
+    echoInfo "INFO: New network was created, saving genesis to common read only directory..."
+    cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" 
+fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")

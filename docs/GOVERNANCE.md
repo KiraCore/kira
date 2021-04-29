@@ -67,6 +67,11 @@ LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.propos
 sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 ```
 
+## Macro for Adding Validators
+```
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
+```
+
 ## Change Proposals Speed
 
 LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && NEXT_PROPOSAL=$((LAST_PROPOSAL + 1)) 
@@ -75,5 +80,15 @@ sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 60 --descrip
 
 sekaid tx customgov proposal vote $NEXT_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes
 
+## Change Network Property
+
+```
+sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes | txAwait
+
+sekaid tx customgov proposal set-network-property MAX_MISCHANCE 500 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes | txAwait
 
 
+LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+
+```
+:

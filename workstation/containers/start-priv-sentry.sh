@@ -37,9 +37,6 @@ set -e
 echo "INFO: Setting up $CONTAINER_NAME config vars..."
 # * Config sentry/configs/config.toml
 
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
 mkdir -p "$COMMON_LOGS"
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
 cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
@@ -49,28 +46,26 @@ cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-#    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-#        echo "INFO: Node will sync from the public sentry..."
-#        CFG_persistent_peers="tcp://$SENTRY_SEED"
-#    else
-#        echo "INFO: Node will sync blocks from its own seed list..."
-#        CFG_persistent_peers=""
-#    fi
-#else
-#    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-#fi
+if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-else
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
-fi
+    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
+        #CFG_persistent_peers="tcp://$SENTRY_SEED"
+        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
+    else
+        #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
+    fi
 
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -96,8 +91,8 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="128" \
-    -e CFG_max_num_inbound_peers="128" \
+    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_inbound_peers="4" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
@@ -109,6 +104,7 @@ docker run -d \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
+    -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
@@ -117,7 +113,11 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
-docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+else
+    echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
@@ -133,6 +133,7 @@ else
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh

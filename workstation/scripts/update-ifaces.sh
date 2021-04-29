@@ -1,21 +1,24 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/scripts/update-ifaces.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-
+# quick edit: FILE="$KIRA_MANAGER/scripts/update-ifaces.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+set -x
 START_TIME_SCRIPT="$(date -u +%s)"
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING v0.0.7                   |"
+echoWarn "|-----------------------------------------------"
+echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "------------------------------------------------"
 
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
-systemctl stop docker || echoWarn "WARNINIG: Failed to stop docker service"
+systemctl daemon-reload || echoWarn "WARNINIG: Failed systemctl daemon-reload"
+$KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNINIG: Failed to stop docker service"
 ifaces=( $ifaces_iterate )
 
 for f in $ifaces_iterate ; do

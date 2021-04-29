@@ -58,6 +58,13 @@ function isInteger() {
     fi
 }
 
+function isBoolean() {
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
+        if [ "${1,,}" == "false" ] || [ "${1,,}" == "true" ] ; then echo "true"
+        else echo "false" ; fi
+    fi
+}
+
 function isPort() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
         VTMP="false" && ( ($(isInteger $1)) && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
@@ -134,7 +141,8 @@ function isSimpleJsonObjOrArrFile() {
 
 function jsonParse() {
     QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
-    FILE="" && [ ! -z "$2" ] && FILE=$(realpath $2 2> /dev/null || echo -n "")
+    FIN="" && [ ! -z "$2" ] && FIN=$(realpath $2 2> /dev/null || echo -n "")
+    FOUT="" && [ ! -z "$3" ] && FOUT=$(realpath $3 2> /dev/null || echo -n "")
     if [ ! -z "$INPUT" ] ; then
         for k in ${INPUT//./ } ; do
             k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
@@ -142,10 +150,15 @@ function jsonParse() {
             ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
         done
     fi
-    if [ ! -z "$FILE" ] ; then
-        python3 -c "import json,sys;f=open('$FILE',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));f.close()"
+    if [ ! -z "$FIN" ] ; then
+        if [ ! -z "$FOUT" ] ; then
+            rm -f "$FOUT"
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()"
+        else
+            python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
+        fi
     else
-        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY,separators=(',', ':')).strip(' \t\n\r\"'));"
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));"
     fi
 }
 

@@ -12,49 +12,56 @@ if [ "${USER,,}" != root ]; then
     exit 1
 fi
 
-if [ ! -f "$KIRA_SETUP/rebooted" ]; then
-    echoInfo "INFO: Your machine recently rebooted, continuing setup process..."
-    systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped, starting new setup..."
-    sleep 1
-    $KIRA_MANAGER/start.sh "true"
-    echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-fi
+UPDATE_DONE_FILE="$KIRA_UPDATE/done"
+UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 
-if [ ! -f "$KIRA_SETUP/setup_complete" ]; then
-    echoWarn "WARNING: Your node setup failed, do not worry, this can happen due to issues with network connectivity."
-    VSEL="" && while ! [[ "${VSEL,,}" =~ ^(i|r|k)$ ]]; do echoNErr "Choose to continue [I]nstalation process, fully [R]initalize new node or open [K]ira Manager and investigate issues: " && read -d'' -s -n1 VSEL && echo ""; done
-    
-    if [ "${VSEL,,}" != "k" ] ; then
-        systemctl stop kirascan
-        if [ "${VSEL,,}" == "i" ] ; then
-            sleep 1
-            $KIRA_MANAGER/start.sh "false"
-            echoNErr "Press any key to open KIRA Network Manager or Ctrl+C to abort." && read -n 1 -s && echo ""
-        else
-            cd $HOME
-            source $KIRA_MANAGER/kira/kira-reinitalize.sh
-            source $KIRA_MANAGER/kira/kira.sh
-        fi
+while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
+    if [ -f $UPDATE_FAIL_FILE ] ; then
+        echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
+        echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
+        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+    else
+        echoWarn "WARNING: Your node setup is NOT compleated yet"
+        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
     fi
-fi
+    
+    if [ "${VSEL,,}" == "r" ] ; then
+        source $KIRA_MANAGER/kira/kira-reinitalize.sh
+    elif [ "${VSEL,,}" == "v" ] ; then
+        if [ -z "$SETUP_END_DT" ] ; then
+            echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
+            sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
+        else
+            echoInfo "INFO: Printing setup logs:"
+            sleep 2 && journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
+        fi
+    elif [ "${VSEL,,}" == "d" ] ; then
+        $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
+    else
+        break
+    fi
+done
 
 cd $KIRA_HOME
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
-NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-DISK_SCAN_PATH="$SCAN_DIR/disk"
-CPU_SCAN_PATH="$SCAN_DIR/cpu"
-RAM_SCAN_PATH="$SCAN_DIR/ram"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
-VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-VALSTATUS_SCAN_PATH="$SCAN_DIR/valstatus"
+SCAN_DONE="$KIRA_SCAN/done"
+CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
+NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
+DISK_SCAN_PATH="$KIRA_SCAN/disk"
+CPU_SCAN_PATH="$KIRA_SCAN/cpu"
+RAM_SCAN_PATH="$KIRA_SCAN/ram"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
+VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
-STATUS_SCAN_PATH="$SCAN_DIR/status"
+STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
+INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+
+mkdir -p "$INTERX_REFERENCE_DIR"
 
 echoInfo "INFO: Restarting network scanner..."
 systemctl daemon-reload
@@ -70,7 +77,7 @@ while :; do
     SNAP_LATEST="$SNAP_STATUS/latest"
 
     VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
-    (! $(isNullOrEmpty "$VALADDR")) && VALSTATUS=$(jsonParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
+    VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
@@ -155,21 +162,20 @@ while :; do
             KIRA_BLOCK="???"
         else
             SECONDS_PER_BLOCK="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK="???"
-            ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK (${SECONDS_PER_BLOCK}s)"
+            ($(isNumber "$SECONDS_PER_BLOCK")) && SECONDS_PER_BLOCK=$(echo "scale=1; ( $SECONDS_PER_BLOCK / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK ~${SECONDS_PER_BLOCK}s"
         fi
 
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
         KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
         [ -z "$GENESIS_SHA256" ] && GENESIS_SHA256="????????????"
-        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:22}${KIRA_BLOCK_TMP:0:23} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
+        echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:24}${KIRA_BLOCK_TMP:0:21} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
 
         VALACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALACTIVE")) && VALACTIVE="???"
         VALTOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALTOTAL")) && VALTOTAL="???"
         VALWAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VALWAITING")) && VALWAITING="???"
-        VALACTIVE="VAL.ACTIVE: ${VALACTIVE}${WHITESPACE}"
-        VALTOTAL="VAL.TOTAL: ${VALTOTAL}${WHITESPACE}"
+        VALACTIVE="V.ACTIVE: ${VALACTIVE}${WHITESPACE}"
+        VALTOTAL="V.TOTAL: ${VALTOTAL}${WHITESPACE}"
         VALWAITING="WAITING: ${VALWAITING}${WHITESPACE}"
-
         
         [ "$PREVIOUS_BLOCK" == "$KIRA_BLOCK" ] && [ "${CONSENSUS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
         [ "${CONSENSUS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
@@ -181,10 +187,10 @@ while :; do
 
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
-        echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
     else
         PUBLIC_IP="$PUBLIC_IP                          "
-        echo -e "|\e[35;1m ${LOCAL_IP:0:22}PUB.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
     fi
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
@@ -285,7 +291,7 @@ while :; do
         echo "| [B] | BACKUP Chain State ${AUTO_BACKUP_TMP:0:21}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
     fi
 
-    if [ ! -z "$KIRA_SNAP_PATH" ]; then
+    if [ ! -z "$KIRA_SNAP_PATH" ] && [ -f "$KIRA_SNAP_PATH" ]; then
         [ "${SNAP_EXPOSE,,}" == "false" ] &&
             echo "| [E] | EXPOSE Snapshot                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e" ||
             echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
@@ -328,10 +334,6 @@ while :; do
         if [ "$OPTION" == "$i" ]; then
             source $KIRA_MANAGER/kira/container-manager.sh $name
             OPTION="" && EXECUTED="true" && break
-        elif [ "${OPTION,,}" == "d" ]; then
-            echoInfo "INFO: Dumping all loggs from $name container..."
-            $KIRAMGR_SCRIPTS/dump-logs.sh $name "false"
-            EXECUTED="true"
         elif [ "${OPTION,,}" == "r" ]; then
             echoInfo "INFO: Re-starting $name container..."
             $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart"
@@ -359,25 +361,22 @@ while :; do
 
     if [ "${OPTION,,}" == "r" ]; then
         echoInfo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        $KIRA_MANAGER/scripts/update-ifaces.sh
     fi
 
     if [ "${OPTION,,}" == "d" ]; then
-        echoInfo "INFO: Dumping firewal info..."
-        ufw status verbose >"$KIRA_DUMP/ufw-status.txt" || echoErr "ERROR: Failed to get firewal status"
-        echoInfo "INFO: Compresing all dumped files..."
-        ZIP_FILE="$KIRA_DUMP/kira.zip"
-        rm -fv $ZIP_FILE
-        zip -9 -r -v $ZIP_FILE $KIRA_DUMP
-        echoInfo "INFO: All dump files were exported into $ZIP_FILE"
+        $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
+        LOADING="false" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
         echoInfo "INFO: Reconnecting all networks..."
-        $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+        $KIRA_MANAGER/scripts/update-ifaces.sh
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ]; then
         echoInfo "INFO: Backing up blockchain state..."
-        $KIRA_MANAGER/kira/kira-backup.sh "$KIRA_BLOCK" || echoErr "ERROR: Snapshot failed"
+        $KIRA_MANAGER/kira/kira-backup.sh || echoErr "ERROR: Snapshot failed"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "n" ]; then
         echoInfo "INFO: Staring networking manager..."
@@ -387,11 +386,15 @@ while :; do
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip"
+            ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
+                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip" || \
+                echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."
             CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-            echoInfo "INFO: Await few minutes and your snapshot will become unavailable"
+            rm -fv "$INTERX_SNAPSHOT_PATH" && \
+                echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
+                echoErr "ERROR: Failed to remove snapshot symlink"
         fi
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
@@ -430,7 +433,7 @@ while :; do
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then
-        cd $HOME
+        cd $KIRA_HOME
         systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh

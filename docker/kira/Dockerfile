@@ -5,7 +5,7 @@ ARG BUILD_HASH
 ARG BRANCH
 ARG REPO
 
-RUN echo "Build hash: ${BUILD_HASH}"
+RUN echo "Build hash: ${BUILD_HASH}, branch: ${BRANCH}, repo: $REPO"
 
 RUN git clone ${REPO} ${SEKAI} && cd ${SEKAI} && git checkout ${BRANCH}
 RUN cd ${SEKAI} && go install ./cmd/sekaid

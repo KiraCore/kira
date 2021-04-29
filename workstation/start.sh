@@ -11,7 +11,7 @@ START_TIME_LAUNCH="$(date -u +%s)"
 SCAN_DIR="$KIRA_HOME/kirascan"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 
-cd $HOME
+cd $KIRA_HOME
 
 set +x
 echoWarn "------------------------------------------------"
@@ -21,6 +21,9 @@ echoWarn "|  SKIP UPDATE: $SKIP_UPDATE"
 echoWarn "| SEKAI BRANCH: $SEKAI_BRANCH"
 echoWarn "------------------------------------------------"
 set -x
+
+echoErr "ERROR: Code depreciated..."
+exit 1
 
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
@@ -99,7 +102,8 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
+# $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
+$KIRA_MANAGER/scripts/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
@@ -115,12 +119,11 @@ while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
 done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
-
-SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
-rm -rfv $SNAP_DESTINATION
+DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
+rm -rfv $DOCKER_SNAP_DESTINATION
 if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
-    ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
+    ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 else
     echoWarn "WARNING: Snapshot file '$KIRA_SNAP_PATH' was NOT found, slow sync will be performed!"
 fi

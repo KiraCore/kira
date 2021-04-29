@@ -8,26 +8,29 @@ set -x
 echo "INFO: Started kira network contianers monitor..."
 
 SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
-NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-STATUS_SCAN_PATH="$SCAN_DIR/status"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-LATEST_STATUS_SCAN_PATH="$SCAN_DIR/latest_status"
+CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
+NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
+STATUS_SCAN_PATH="$KIRA_SCAN/status"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
 CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
+SCAN_DONE="$KIRA_SCAN/done"
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "|     STARTING KIRA CONTAINER SCAN v0.2.2.3    |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|             SCAN_DIR: $SCAN_DIR"
+echoWarn "|        KIRA_SCAN: $KIRA_SCAN"
 echoWarn "|           CONTAINERS: $CONTAINERS"
 echoWarn "|             NETWORKS: $NETWORKS"
-echoWarn "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
+echoWarn "| INTERX REFERENCE DIR: $INTERX_REFERENCE_DIR"
+echoWarn "|    SCAN DONE MISSING: $SCAN_DONE_MISSING"
 echoWarn "------------------------------------------------"
 set -x
+
+SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
 
 [ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
 [ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
@@ -52,8 +55,8 @@ for name in $CONTAINERS; do
         echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
     elif [ "${name,,}" == "interx" ] ; then 
         INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 1 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
-        echo $(timeout 1 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") > $INTERX_STATUS_PATH
+        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") > $INTERX_STATUS_PATH
     fi
 done
 
@@ -102,6 +105,8 @@ if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
+
+[ "${SCAN_DONE_MISSING,,}" == "true" ] && touch $SCAN_DONE
 
 set +x
 echoWarn "------------------------------------------------"

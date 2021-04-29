@@ -3,52 +3,42 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-START_TIME="$(date -u +%s)"
-echoInfo "INFO: Starting healthcheck $START_TIME"
+LATEST_BLOCK_HEIGHT=$1
+PREVIOUS_HEIGHT=$2
+HEIGHT=$3
+CATCHING_UP=$4
+CONSENSUS_STOPPED=$5
 
+START_TIME="$(date -u +%s)"
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
-COMMON_CONSENSUS="$COMMON_READ/consensus"
-COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 
-touch $BLOCK_HEIGHT_FILE
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
+echoWarn "|-----------------------------------------------"
+echoWarn "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
+echoWarn "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
+echoWarn "|              HEIGHT: $HEIGHT"
+echoWarn "|         CATCHING UP: $CATCHING_UP"
+echoWarn "|   CONSENSUS STOPPED: $CONSENSUS_STOPPED"
+echoWarn "------------------------------------------------"
+set -x
 
-if [ -f "$SNAP_DONE" ] ; then
-  echoInfo "INFO: Success, snapshot done!"
-  exit 0
+if [ -f "$SNAP_DONE" ] || [ -f "$SNAP_FINALIZYNG" ]; then
+    echoInfo "INFO: Success, snapshot done or finalizing!"
+    exit 0
 fi
-
-if [ -f "$SNAP_FINALIZYNG" ] ; then
-  echoInfo "INFO: Success, snapshot is finalizing!"
-  exit 0
-fi
-
-LATEST_BLOCK_HEIGHT=$(tryCat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "")
-CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-SEKAID_STATUS=$(sekaid status 2>&1 || echo -n "")
-CATCHING_UP=$(echo $SEKAID_STATUS | jsonQuickParse "catching_up" || echo -n "")
-HEIGHT=$(echo $SEKAID_STATUS | jsonQuickParse "latest_block_height" || echo -n "")
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 
 if [ ! -z "$HALT_HEIGHT" ] && [[ $HALT_HEIGHT -le $HEIGHT ]] ; then
     echoInfo "INFO: Success, target height reached!"
     exit 0
 fi
 
-if [ "${CATCHING_UP,,}" == "true" ]; then
-    echoInfo "INFO: Success, node is catching up! ($HEIGHT)"
-    exit 0
-fi
-
-PREVIOUS_HEIGHT=$(tryCat $BLOCK_HEIGHT_FILE)
-echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
-(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
-
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
-    echoWarn "WARNING: Blocks are not beeing produced or synced"
+    set +x
+    echoWarn "WARNING: Blocks are not beeing synced by $NODE_TYPE"
     echoWarn "WARNING: Current height: $HEIGHT"
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
@@ -58,15 +48,17 @@ if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
         echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
     else
         echoErr "ERROR: Block production stopped"
-        sleep 3
+        sleep 10
         exit 1
     fi
 else
-  echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
+    echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echo "------------------------------------------------"
-echo "| FINISHED: HEALTHCHECK                        |"
-echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
-echo "------------------------------------------------"
+set +x
+echoInfo "------------------------------------------------"
+echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
+echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "------------------------------------------------"
+set -x
 exit 0

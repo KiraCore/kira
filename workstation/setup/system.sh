@@ -1,10 +1,12 @@
 
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/setup/system.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+set -x
 
-
-SETUP_CHECK="$KIRA_SETUP/system-v0.0.6-$(echo "$KIRAMGR_SCRIPTS" | md5sum | awk '{ print $1 }' || echo -n "")" 
+ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5sum | awk '{ print $1 }' || echo -n "")
+SETUP_CHECK="$KIRA_SETUP/system-2-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -15,27 +17,29 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
     CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
 
-    SCAN_DIR="$KIRA_HOME/kirascan"
-    SCAN_DONE="$SCAN_DIR/done"
-    STATUS_SCAN_PATH="$SCAN_DIR/status"
-    
+    SCAN_DONE="$KIRA_SCAN/done"
+    STATUS_SCAN_PATH="$KIRA_SCAN/status"
+
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
         rm -fv $SCAN_DONE || echo \"ERROR: Failed to remove scaner finalization flaf\"
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
-        echo \"INFO: Reloading daemon...\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
-        echo \"INFO: Restarting firewall...\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
         firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
-        echo \"INFO: Restarting docker...\"
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
-        echo \"INFO: Restarting docker network manager...\"
-        systemctl restart NetworkManager docker || echo \"WARNING: Could NOT restart docker network manager\"
-        $KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
+        systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
+        systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
+        $KIRA_MANAGER/scripts/update-ifaces.sh || echo \"ERROR: Failed to reinitalize networking\"
 esac
 exit 0"
+
+    #$KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
+    #esac
+    JOURNAL_CFG="/etc/systemd/journald.conf"
+    CDHelper text lineswap --insert="SystemMaxUse=512M" --contains="SystemMaxUse=" --path=$JOURNAL_CFG --append-if-found-not=True
+    CDHelper text lineswap --insert="SystemMaxFileSize=8M" --contains="SystemMaxFileSize=" --path=$JOURNAL_CFG --append-if-found-not=True
 
     mkdir -p "/usr/lib/pm-utils/sleep.d"
     WAKEUP_SCRIPT="/usr/lib/pm-utils/sleep.d/99ZZZ_KiraWakeup.sh"

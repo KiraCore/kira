@@ -9,19 +9,20 @@ COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
 START_LOGS="$COMMON_LOGS/start.log"
+HEALTH_LOGS="$COMMON_LOGS/health.log"
 
 set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-CONTAINERS_SCAN_PATH="$SCAN_DIR/containers"
-NETWORKS_SCAN_PATH="$SCAN_DIR/networks"
-VALINFO_SCAN_PATH="$SCAN_DIR/valinfo"
-VALADDR_SCAN_PATH="$SCAN_DIR/valaddr"
-CONTAINER_STATUS="$SCAN_DIR/status/$NAME"
-CONTAINER_DUMP="$KIRA_DUMP/kira/${NAME,,}"
+SCAN_DONE="$KIRA_SCAN/done"
+CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
+NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
+VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
+VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
+CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
 
 SNAP_STATUS="$KIRA_SNAP/status"
@@ -46,6 +47,7 @@ while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
     KADDR=$(tryCat $KADDR_PATH "")
+    LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -141,14 +143,18 @@ while : ; do
     echo "|-------------------------------------------------------|"
 
     if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
-        VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED=""
+        VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED="" && VPRODUCED=""
         if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
             VSTATUS=$(jsonQuickParse "status" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
-            VTOP=$(jsonQuickParse "top" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "") && ($(isNullOrEmpty "$VTOP")) && VTOP="???"
+            VTOP=$(jsonQuickParse "top" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "???") && VTOP="${VTOP}${WHITESPACE}"
             VRANK=$(jsonQuickParse "rank" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VRANK="${VRANK}${WHITESPACE}"
             VSTREAK=$(jsonQuickParse "streak" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VSTREAK="${VSTREAK}${WHITESPACE}"
+            VMISSCHANCE=$(jsonQuickParse "mischance" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSCHANCE="${VMISSCHANCE}${WHITESPACE}"
+            VMISS_CONF=$(jsonQuickParse "mischance_confidence" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISS_CONF="${VMISS_CONF}${WHITESPACE}"
             VMISSED=$(jsonQuickParse "missed_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VMISSED="${VMISSED}${WHITESPACE}"
-            echo "|   Streak: ${VSTREAK:0:10} Rank: ${VRANK:0:10} Missed: ${VMISSED:0:7} : TOP${VTOP}"  
+            VPRODUCED=$(jsonQuickParse "produced_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo "???") && VPRODUCED="${VPRODUCED}${WHITESPACE}"
+            echo "|   Streak: ${VSTREAK:0:12}Rank: ${VRANK:0:10}Mischance: ${VMISSCHANCE:0:5}: TOP: ${VTOP:0:6}"  
+            echo "| Produced: ${VPRODUCED:0:10}Missed: ${VMISSED:0:10}Miss.Conf: ${VMISS_CONF:0:5}|"  
         fi
         VALADDR_TMP="${VALADDR}${WHITESPACE}"
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
@@ -171,11 +177,12 @@ while : ; do
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
     
-    [ ! -z "$KIRA_NODE_ID" ]  && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
+    [ ! -z "$KIRA_NODE_ID" ] && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
-        TMP_VAR="${KIRA_NODE_BLOCK}${WHITESPACE}"
-        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && TMP_VAR="$KIRA_NODE_BLOCK (catching up) ${WHITESPACE}"
-        echo "|    Block: ${TMP_VAR:0:43} |"
+        KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
+        LATEST_BLOCK_TMP="${LATEST_BLOCK}${WHITESPACE}"
+        [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && CATCHUP_TMP="catching up" || CATCHUP_TMP=""
+        echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${LATEST_BLOCK_TMP:0:23} : $CATCHUP_TMP"
     fi
 
     ALLOWED_OPTIONS="x"
@@ -266,7 +273,7 @@ while : ; do
         LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
-        TMP_DUMP=$CONTAINER_DUMP/tmp.log
+        TMP_DUMP=$CONTAINER_DUMP/logs.txt.tmp
         while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container log..."
@@ -314,13 +321,17 @@ while : ; do
         LOG_LINES=10
         READ_HEAD=true
         SHOW_ALL=false
-        TMP_DUMP=$CONTAINER_DUMP/tmp.log
+        TMP_DUMP=$CONTAINER_DUMP/healthcheck.txt.tmp
         while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
+            if [ ! -f "$HEALTH_LOGS" ] ; then
+                docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
+            else
+                cat $HEALTH_LOGS > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to read $NAME container logs"
+            fi
 
             LINES_MAX=$(tryCat $TMP_DUMP | wc -l 2> /dev/null || echo "0")
             [[ $LOG_LINES -gt $LINES_MAX ]] && LOG_LINES=$LINES_MAX
@@ -328,11 +339,17 @@ while : ; do
             [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echoInfo "INFO: Found $LINES_MAX log lines, printing $LOG_LINES..."
             TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES | ccze -A && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
+            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break
+            if [ "${ACCEPT,,}" == "d" ] ; then
+                rm -fv "$HEALTH_LOGS"
+                SHOW_ALL="false"
+                LOG_LINES=10
+                continue
+            fi
             [ "${ACCEPT,,}" == "r" ] && continue
             [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
             [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
@@ -347,7 +364,7 @@ while : ; do
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "x" ] ; then
-        echo -e "INFO: Stopping Container Manager...\n"
+        echoInfo "INFO: Stopping Container Manager..."
         OPTION=""
         EXECUTED="true"
         sleep 1
@@ -355,10 +372,7 @@ while : ; do
     fi
 
     [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
-    
-    if [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] ; then
-        echo -en "\e[31;1mINFO: Option ($OPTION) was executed, press any key to continue...\e[0m" && read -n 1 -s && echo ""
-    fi
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 
-echo "INFO: Container Manager Stopped"
+echoInfo "INFO: Container Manager Stopped"

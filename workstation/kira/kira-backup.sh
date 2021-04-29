@@ -3,9 +3,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
-MIN_BLOCK_HEIGHT=$1
-(! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
-(! $(isNaturalNumber "$MIN_BLOCK_HEIGHT")) && MIN_BLOCK_HEIGHT=0
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+LATEST_BLOCK_HEIGHT=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
@@ -42,9 +43,9 @@ if [ "${SELECT,,}" == "c" ]; then
     exit 0
 fi
 
-
-echoNErr "Input halt height or press [ENTER] to snapshot latest state: " && read HALT_HEIGHT
+echoNErr "Input halt height or press [ENTER] for default ($LATEST_BLOCK_HEIGHT): " && read HALT_HEIGHT
 echoInfo "INFO: Default snapshot directory: $KIRA_SNAP"
+[ -z "$HALT_HEIGHT" ] && HALT_HEIGHT=$LATEST_BLOCK_HEIGHT
 
 echoNErr "Input new snapshot directory or press [ENTER] to continue: " && read DEFAULT_SNAP_DIR
 [ ! -z "$DEFAULT_SNAP_DIR" ] && [ ! -d "$DEFAULT_SNAP_DIR" ] && echoWarn "WARNING: Directory '$DEFAULT_SNAP_DIR' was not found" && DEFAULT_SNAP_DIR=""
@@ -97,8 +98,10 @@ if [ "${SELECT,,}" == "s" ]; then
               
         echoInfo "INFO: Snapshot '$SNAPSHOT' ($OPTION) was selected"
     fi
-         
+
+    set +x
     echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    set -x
 fi
 
 CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

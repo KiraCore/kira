@@ -3,23 +3,34 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-peers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f --output cat
+# cat $KIRA_SCAN/peers.logs
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-PEERS_SCAN_PATH="$SCAN_DIR/peers"
+SCAN_DONE="$KIRA_SCAN/done"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+PEERS_SCAN_PATH="$KIRA_SCAN/peers"
+SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
+INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"
+MIN_SNAP_SIZE="524288"
+
+while [ ! -f $SCAN_DONE ] ; do
+    echo "INFO: Waiting for monitor scan to finalize run..."
+    sleep 10
+done
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|     STARTING KIRA PEERS SCAN v0.2.2.3        |"
+echoWarn "|     STARTING KIRA PEERS SCAN $KIRA_SETUP_VER        |"
 echoWarn "|-----------------------------------------------"
 echoWarn "| LATEST_BLOCK_SCAN_PATH: $LATEST_BLOCK_SCAN_PATH"
 echoWarn "|        PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
+echoWarn "|        SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
 echoWarn "|   INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
 echoWarn "|      INTERX_PEERS_PATH: $INTERX_PEERS_PATH"
+echoWarn "|      INTERX_SNAPS_PATH: $INTERX_SNAPS_PATH"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -27,13 +38,21 @@ echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
 TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
 
+touch $TMP_BOOK
+
 if [ "${INFRA_MODE,,}" == "sentry" ] ; then
     echoInfo "INFO: Fetching address book file from seed node..."
     (docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+    (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
+    (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 else
     echoInfo "INFO: Fetching address book file from sentry node..."
     (docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") > $TMP_BOOK
+    (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 fi
+
+PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+(! $(isNullOrEmpty $PUBLIC_IP)) && echo "\"$PUBLIC_IP\"" >> $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF
@@ -50,12 +69,16 @@ if ($(isNullOrEmpty "$CHECKSUM")) ; then
 fi
 
 # if public peers list is empty then quickly return list, otherwise scan all
-($(isFileEmpty $INTERX_PEERS_PATH)) && PEERS_LIMIT=128 || PEERS_LIMIT=0
+($(isFileEmpty $INTERX_PEERS_PATH)) && PEERS_LIMIT=64 || PEERS_LIMIT=0
 
 echoInfo "INFO: Processing address book entries..."
 TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
-rm -fv "$TMP_BOOK_PUBLIC" && touch $TMP_BOOK_PUBLIC
+TMP_BOOK_PUBLIC_SNAPS="/tmp/addrbook.public-snaps.txt"
+rm -fv "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
+touch "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
+
 i=0
+i_snaps=0
 total=0
 HEIGHT=0
 while read ip; do
@@ -106,7 +129,9 @@ while read ip; do
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
 
-    (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
+    # do not reject self otherwise nothing can be exposed in the peers list
+    [ "$PUBLIC_IP" != "$ip" ] && \
+        (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
 
     peer="$node_id@$ip:$KIRA_SENTRY_P2P_PORT"
     echoInfo "INFO: Active peer found: '$peer'"
@@ -116,12 +141,35 @@ while read ip; do
         echoWarn "WARNING: Peer limit ($PEERS_LIMIT) reached"
         break
     fi
+
+    SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+    if (! $(urlExists "$SNAP_URL")) ; then
+        echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
+        continue 
+    else
+        SIZE=$(urlContentLength "$SNAP_URL")
+        if [[ $SIZE -gt $MIN_SNAP_SIZE ]] ; then
+            i_snaps=$(($i_snaps + 1))
+            echoInfo "INFO: Peer $ip is exposing $SIZE Bytes snpashot"
+            echo "${peer} $SIZE" >> $TMP_BOOK_PUBLIC_SNAPS
+        fi
+    fi
 done < $TMP_BOOK_SHUFF 
 
 if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [[ $i -le 0 ]] ; then
     echoInfo "INFO: No public addresses were found in the '$TMP_BOOK_PUBLIC'"
     sleep 60
     exit 0
+fi
+
+if (! $(isFileEmpty $TMP_BOOK_PUBLIC_SNAPS)) ; then
+    echoInfo "INFO: Sorting peers by snapshot size"
+    sort -nrk2 -n $TMP_BOOK_PUBLIC_SNAPS > "${TMP_BOOK_PUBLIC_SNAPS}.tmp"
+    cat "${TMP_BOOK_PUBLIC_SNAPS}.tmp" | cut -d ' ' -f1 > $TMP_BOOK_PUBLIC_SNAPS
+    
+    echoInfo "INFO: Sucessfully discovered '$i_snaps' public peers exposing snaps out of total '$total' in the address book, saving results to '$SNAPS_SCAN_PATH' and '$INTERX_SNAPS_PATH'"
+    cp -afv $TMP_BOOK_PUBLIC_SNAPS $SNAPS_SCAN_PATH
+    cp -afv $TMP_BOOK_PUBLIC_SNAPS $INTERX_SNAPS_PATH
 fi
 
 echoInfo "INFO: Sucessfully discovered '$i' public peers out of total '$total' in the address book, saving results to '$PEERS_SCAN_PATH' and '$INTERX_PEERS_PATH'"

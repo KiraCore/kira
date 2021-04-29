@@ -7,26 +7,26 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DIR="$KIRA_HOME/kirascan"
-SCAN_DONE="$SCAN_DIR/done"
-LATEST_BLOCK_SCAN_PATH="$SCAN_DIR/latest_block"
-SNAPSHOT_SCAN_PATH="$SCAN_DIR/snapshot"
+SCAN_DONE="$KIRA_SCAN/done"
+LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
+UPDATE_DONE_FILE="$KIRA_UPDATE/done"
+UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
+CONAINER_NAME="snapshot"
 
+while [ ! -f $SCAN_DONE ] ; do
+    echoInfo "INFO: Waiting for monitor scan to finalize run..."
+    sleep 10
+done
 
-if [ ! -f $SCAN_DONE ]; then
-    echo "INFO: Scan is not done yet, aborting snapshot monitor"
-    sleep 60
-    exit 0
-fi
+LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
 
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
-LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
-DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -36,6 +36,7 @@ echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
 echoWarn "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
 echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
+echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -47,6 +48,11 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+        if [ "${CONTAINER_EXISTS,,}" == "true"  ] ; then
+            $KIRA_MANAGER/scripts/dump-logs.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to dump $CONAINER_NAME container logs"
+            $KIRA_SCRIPTS/container-delete.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to delete $CONAINER_NAME container"
+        fi
         CHECKSUM_TEST="true"
     fi
 fi
@@ -57,20 +63,18 @@ if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KI
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
-if [ -f "$KIRA_SNAP_PATH" ] && [ "${SNAP_EXPOSE,,}" == "true" ] && [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ] ; then
-    if [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ]; then
-        echoInfo "INFO: Latest snapshot is NOT exposed yet"
-        mkdir -p $INTERX_REFERENCE_DIR
-        SUCCESS="true" && ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" || SUCCESS="false"
-        [ "${SUCCESS,,}" == "true" ] && ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION" || SUCCESS="false"
-        if [ "${SUCCESS,,}" == "true" ] ; then
-            CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-        else
-            rm -fv "$INTERX_SNAPSHOT_PATH" "$DOCKER_SNAP_DESTINATION" || echoErr "ERROR: Failed to cleanup symlinks"
-            echoErr "ERROR: Failed to create one of the symlinks $KIRA_SNAP_PATH => $INTERX_SNAPSHOT_PATH, $KIRA_SNAP_PATH => $DOCKER_SNAP_DESTINATION"
-        fi
-    else
-        echoInfo "INFO: Latest snapshot was already exposed, no need for updates"
+if [ -f "$KIRA_SNAP_PATH" ] && [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ] ; then
+    echoInfo "INFO: Latest snapshot is NOT exposed yet"
+    mkdir -p $INTERX_REFERENCE_DIR
+
+    if [ "${SNAP_EXPOSE,,}" == "true" ]; then
+        ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
+        echoInfo "INFO: Symlink $KIRA_SNAP_PATH => $INTERX_SNAPSHOT_PATH was created"
+        CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    elif [ "${SNAP_EXPOSE,,}" == "false" ] && [ -f "$INTERX_SNAPSHOT_PATH" ] ; then
+        rm -fv "$INTERX_SNAPSHOT_PATH"
+        CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+        echoInfo "INFO: Symlink $KIRA_SNAP_PATH => $INTERX_SNAPSHOT_PATH was removed"
     fi
 elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ([ "${SNAP_EXPOSE,,}" == "false" ] || [ -z "$KIRA_SNAP_PATH" ]); then
     echoInfo "INFO: Removing publicly exposed snapshot..."
@@ -84,22 +88,26 @@ if [ -d $KIRA_SNAP ]; then
     echoInfo "INFO: Success, all excessive snaps were removed"
 fi
 
-[ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
-if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
-    echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
-    CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ]; then
-    ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-    INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-    if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]]; then
-        rm -fv $SCAN_DONE
-        [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
-        $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
+if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
+    echoInfo "INFO: Snap can't be executed, update is not compleated"
 else
-    echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
+    [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
+    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
+        echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
+        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+    elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
+        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
+        INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
+        if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
+            rm -fv $SCAN_DONE "${SNAPSHOT_SCAN_PATH}-start.log"
+            [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
+            $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
+            CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
+        fi
+    else
+        echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
+    fi
 fi
 
 sleep 30

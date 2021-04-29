@@ -39,12 +39,13 @@ else
     exit 1
 fi
 
+echoInfo "INFO: Please wait, starting setup..."
 ls -l /bin/kira || echoWarn "WARNING: KIRA Manager symlink not found"
 rm /bin/kira || echoWarn "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
-systemctl stop docker || echoErr "ERROR: Failed to stop docker service"
-systemctl stop kirascan  || echoErr "ERROR: Failed to stop kirascan service"
+$KIRA_SCRIPTS/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
+timeout 60 systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
 
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/network.sh
@@ -52,7 +53,7 @@ $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
-$KIRA_MANAGER/setup/nginx.sh
+#$KIRA_MANAGER/setup/nginx.sh
 $KIRA_MANAGER/setup/registry.sh
 
 touch /tmp/rs_manager

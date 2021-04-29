@@ -37,10 +37,12 @@ set -x
 # cleanup
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
-echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -53,23 +55,28 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e CFG_grpc="dns:///sentry:9090" \
-    -e CFG_rpc="http://sentry:26657" \
+    -e CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT" \
+    -e CFG_rpc="http://sentry:$DEFAULT_RPC_PORT" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
 
-docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+    docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+else
+    echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+fi
 
 echo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
 
 FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
 
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
+# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
+$KIRA_MANAGER/scripts/update-ifaces.sh
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do

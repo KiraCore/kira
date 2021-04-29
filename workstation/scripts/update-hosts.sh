@@ -21,13 +21,13 @@ len=${#networks[@]}
 echo "INFO: Updating DNS names of all containers in the local hosts file"
 for (( i=0; i<${len}; i++ )) ; do
     network=${networks[$i]}
-    containers=$(docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
+    containers=$(timeout 8 docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
     ( [ -z "$containers" ] || [ "${containers,,}" == "null" ] ) && continue
       
     for container in $containers ; do
       echo "INFO: Checking $container network info"
       id=$($KIRA_SCRIPTS/container-id.sh "$container")
-      ip=$(timeout 4 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${network}.IPAddress" || echo -n "")
+      ip=$(timeout 8 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${network}.IPAddress" || echo -n "")
       dns="${container,,}.${network,,}.local"
 
       currentDNS=$(getent hosts $dns | awk '{ print $1 }' || echo -n "")
