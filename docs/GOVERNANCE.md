@@ -69,6 +69,10 @@ sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query c
 
 ## Macro for Adding Validators
 ```
+kira1hgltwu3sv9glc6m6l4v8mdaadxsfr4swtsfz0a
+kira1ulr2pwu5aeghp8dsh2t9r9zu9y82h9emgq4mmk
+kira10j5e4lf8w4vrmqnue4w6f8zvd34va8gcjgqgxg
+
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
 ```
 

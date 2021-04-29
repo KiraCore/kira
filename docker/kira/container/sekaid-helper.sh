@@ -153,3 +153,24 @@ function whitelistValidator() {
     echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
     return 0
 }
+
+# whitelistValidators <account> <file-name>
+# e.g.: whitelistValidators validator ./whitelist
+function whitelistValidators() {
+    ACCOUNT=$1
+    WHITELIST=$2
+    if [ -f "$WHITELIST" ] ; then 
+        echoInfo "INFO: List of validators was found ($WHITELIST)"
+        while read key ; do
+            key=$(echo "$key" | xargs || echo -n "")
+            if [ -z "$key" ] ; then
+                echoWarn "INFO: Invalid key $key"
+                continue
+            fi
+            echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
+            whitelistValidator validator $key || echoErr "ERROR: Failed to whitelist $key"
+        done < $WHITELIST
+    else
+        echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
+    fi
+}
