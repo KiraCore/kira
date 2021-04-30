@@ -46,7 +46,8 @@ if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
         pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
         rm -fv $EXIT_CHECK
     elif [ -f "$CFG_CHECK" ] ; then
-        echo "INFO: Waiting for container configuration to be finalized..."
+        echoInfo "INFO: Waiting for container configuration to be finalized..."
+        sleep 30
     fi
     echoInfo "INFO: health heck => STOP (halted)"
     echo "0" > $EXCEPTION_COUNTER_FILE
