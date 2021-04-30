@@ -17,7 +17,7 @@ echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
+$KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
 systemctl daemon-reload || echoWarn "WARNINIG: Failed systemctl daemon-reload"
 $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNINIG: Failed to stop docker service"
 ifaces=( $ifaces_iterate )
@@ -41,7 +41,8 @@ echoInfo "INFO: Interfaces after restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 
 echoInfo "INFO: Starting containers..."
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
+$KIRA_MANAGER/kira/containers-pkill.sh "true" "unpause"
+sleep 15
 
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORK INTERFACES FIX SCRIPT      |"
