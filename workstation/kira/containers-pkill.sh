@@ -12,7 +12,13 @@ UNHALT=$3
 
 [ -z "$AWAIT" ] && AWAIT="false"
 [ -z "$UNHALT" ] && UNHALT="true"
-CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "")
+
+if command -v docker ; then
+    CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "")
+else
+    echoErr "ERROR: Docker command not found!"
+    CONTAINERS=""
+fi
 
 set +x
 echoWarn "--------------------------------------------------"
