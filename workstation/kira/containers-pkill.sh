@@ -37,7 +37,7 @@ if [ ! -z "$CONTAINERS" ] ; then
         $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "$TASK" "$UNHALT"
     done
 else
-    echoWran "WARNING: NO containers found"
+    echoWarn "WARNING: NO containers found"
 fi
 
 set +x
