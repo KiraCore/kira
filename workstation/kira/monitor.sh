@@ -27,6 +27,12 @@ SCAN_DUMP="$KIRA_DUMP/kirascan"
 
 while : ; do
     START_TIME="$(date -u +%s)"
+
+    if ! command -v docker ; then
+        echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
+        sleep 10
+        continue
+    fi
     
     mkdir -p $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
     touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH" "$CONTAINERS_SCAN_PATH"
