@@ -84,6 +84,20 @@ else
     fi
 fi
 
+if [ ! -z "$EXTERNAL_ADDR" ] && [ ! -z "$EXTERNAL_P2P_PORT" ] ; then
+    echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
+    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
+        echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
+        echo "ONLINE" > "$COMMON_DIR/external_address_status"
+    else
+        echoErr "ERROR: Your node external address is NOT visible to other nodes"
+        echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    fi
+else
+    echoWarn "WARNING: This node is NOT advertising its public or local external address to other nodes in the network!"
+    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+fi
+
 if [ "${FAILED,,}" == "true" ] ; then
     EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
     EXCEPTION_TOTAL=$(($EXCEPTION_TOTAL + 1))

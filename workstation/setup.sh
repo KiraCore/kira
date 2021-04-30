@@ -57,6 +57,8 @@ $KIRA_MANAGER/setup/docker.sh
 #$KIRA_MANAGER/setup/nginx.sh
 
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
+echoInfo "INFO: Waiting for all containers to start..."
+sleep 180
 $KIRA_MANAGER/setup/registry.sh
 
 touch /tmp/rs_manager
@@ -69,3 +71,4 @@ echoWarn "| FINISHED: SETUP SCRIPT                       |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
+#
