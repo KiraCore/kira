@@ -68,6 +68,37 @@ function txAwait() {
     done
 }
 
+function tryGetPermissions() {
+    ADDR=$1
+    [[ $ADDR == kira* ]] && echo $(sekaid query customgov permissions $ADDR --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+function isPermBlacklisted() {
+    ADDR=$1
+    PERM=$2
+    if (! $(isNaturalNumber $PERM)) || [[ $ADDR != kira* ]] ; then
+        echo "false"
+    else
+        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
+        ($(isNaturalNumber $INDEX)) && echo "true" || echo "false"
+    fi
+}
+
+function isPermWhitelisted() {
+    ADDR=$1
+    PERM=$2
+    if (! $(isNaturalNumber $PERM)) || [[ $ADDR != kira* ]] ; then
+        echo "false"
+    else
+        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
+        if ($(isNaturalNumber $INDEX)) && (! $(isPermBlacklisted $ADDR $PERM)) ; then
+            echo "true" 
+        else
+            echo "false"
+        fi
+    fi
+}
+
 # e.g. tryGetValidator kiraXXXXXXXXXXX
 # e.g. tryGetValidator kiravaloperXXXXXXXXXXX
 function tryGetValidator() {
@@ -110,14 +141,48 @@ function networkProperties() {
 
 # showVotes $(lastProposal) 
 function showVotes() {
-    PROPOSAL=$1
-    sekaid query customgov votes $LAST_PROPOSAL --output json | jsonParse
+    sekaid query customgov votes $1 --output json | jsonParse
 }
 
 # showProposal $(lastProposal) 
 function showProposal() {
-    PROPOSAL=$1
-    sekaid query customgov proposal $LAST_PROPOSAL --output json | jsonParse
+    sekaid query customgov proposal $1 --output json | jsonParse
+}
+
+function showProposals() {
+    sekaid query customgov proposals --output json | jsonParse
+}
+
+# propAwait $(lastProposal) 
+function propAwait() {
+    START_TIME="$(date -u +%s)"
+    if (! $(isNaturalNumber "$1")) ; then
+        ID=$(cat) && STATUS=$1 && TIMEOUT=$2
+    else
+        ID=$1 && STATUS=$2 && TIMEOUT=$3
+    fi
+    
+    PROP=$(showProposal $ID 2> /dev/null || echo -n "")
+    if [ -z "$PROP" ] ; then
+        echoErr "ERROR: Proposal $ID was NOT found"
+    else
+        echoInfo "INFO: Waiting for proposal $ID to be finalized"
+        (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=0
+        [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
+        while : ; do
+            ELAPSED=$(($(date -u +%s) - $START_TIME))
+            RESULT=$(showProposal $ID 2> /dev/null | jq ".result" 2> /dev/null | xargs 2> /dev/null || echo -n "")
+            [ -z "$STATUS" ] && ( [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ) && break
+            [ ! -z "$STATUS" ] && [ "${RESULT,,}" == "${STATUS,,}" ] && break
+            if [[ $TIMEOUT -gt 0 ]] && [[ $ELAPSED -gt $TIMEOUT ]] ; then
+                echoErr "ERROR: Timeout, failed to finalize proposal '$ID' within ${TIMEOUT} s limit"
+                return 1
+            else
+                sleep 1
+            fi
+        done
+        echoInfo "INFO: Proposal was finalized ($RESULT)"
+    fi
 }
 
 # e.g. whitelistValidator validator kiraXXXXXXXXXXX
@@ -126,30 +191,49 @@ function whitelistValidator() {
     ADDR="$2"
     ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
     ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Validator address was not defined " && return 1
-    VAL_STATUS=$(tryGetValidator $ADDR)
-    if [ ! -z "$VAL_STATUS" ] ; then
-        echoInfo "INFO: Validator $ADDR was already added to the set"
-        return 1
+    if ($(isPermWhitelisted $ADDR $PermClaimValidator)) ; then
+        echoWarn "WARNING: Address $ADDR was already whitelisted as validator"
+    else
+        echoInfo "INFO: Adding $ADDR to the validator set"
+        echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
+        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+
+        echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
+        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait 
+
+        echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
+        LAST_PROPOSAL=$(lastProposal) 
+        voteYes $LAST_PROPOSAL validator
+
+        echoInfo "INFO: Showing proposal $LAST_PROPOSAL votes"
+        showVotes $LAST_PROPOSAL | jq
+
+        echoInfo "INFO: Showing proposal $LAST_PROPOSAL status"
+        showProposal $LAST_PROPOSAL | jq
+
+        echoErr "Date Time Now: $(date '+%Y-%m-%dT%H:%M:%S')"
+        echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
+        #proposalAwait $(lastProposal)
     fi
+}
 
-    echoInfo "INFO: Adding $ADDR to the validator set"
-    echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
-    sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
-
-    echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-    sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait 
-
-    echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
-    LAST_PROPOSAL=$(lastProposal) 
-    voteYes $LAST_PROPOSAL validator
-
-    echoInfo "INFO: Showing proposal $LAST_PROPOSAL votes"
-    showVotes $LAST_PROPOSAL | jq
-
-    echoInfo "INFO: Showing proposal $LAST_PROPOSAL status"
-    showProposal $LAST_PROPOSAL | jq
-
-    echoErr "Date Time Now: $(date '+%Y-%m-%dT%H:%M:%S')"
-    echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
-    return 0
+# whitelistValidators <account> <file-name>
+# e.g.: whitelistValidators validator ./whitelist
+function whitelistValidators() {
+    ACCOUNT=$1
+    WHITELIST=$2
+    if [ -f "$WHITELIST" ] ; then 
+        echoInfo "INFO: List of validators was found ($WHITELIST)"
+        while read key ; do
+            key=$(echo "$key" | xargs || echo -n "")
+            if [ -z "$key" ] ; then
+                echoWarn "INFO: Invalid key $key"
+                continue
+            fi
+            echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
+            whitelistValidator validator $key || echoErr "ERROR: Failed to whitelist $key"
+        done < $WHITELIST
+    else
+        echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
+    fi
 }

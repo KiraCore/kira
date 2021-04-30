@@ -69,16 +69,22 @@ sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query c
 
 ## Macro for Adding Validators
 ```
+kira1hgltwu3sv9glc6m6l4v8mdaadxsfr4swtsfz0a
+kira1ulr2pwu5aeghp8dsh2t9r9zu9y82h9emgq4mmk
+kira10j5e4lf8w4vrmqnue4w6f8zvd34va8gcjgqgxg
+
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
 ```
 
+
+sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 30 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
+
 ## Change Proposals Speed
+```
+sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --description="Proposal End Time set to 15 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
 
-LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && NEXT_PROPOSAL=$((LAST_PROPOSAL + 1)) 
-
-sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 60 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
-
-sekaid tx customgov proposal vote $NEXT_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes
+sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --description="Proposal Enactment Time set to 16 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
+```
 
 ## Change Network Property
 
