@@ -30,7 +30,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 echoInfo "INFO: Stopping docker & restaring firewall..."
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
+$KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
 $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
 timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld service"
 

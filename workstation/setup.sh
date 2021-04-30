@@ -44,7 +44,7 @@ ls -l /bin/kira || echoWarn "WARNING: KIRA Manager symlink not found"
 rm /bin/kira || echoWarn "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
+$KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
 $KIRA_SCRIPTS/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
 timeout 60 systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
 
@@ -56,8 +56,9 @@ $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
 #$KIRA_MANAGER/setup/nginx.sh
 
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "unpause"
-sleep 15
+$KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
+echoInfo "INFO: Waiting for all containers to start..."
+sleep 180
 $KIRA_MANAGER/setup/registry.sh
 
 touch /tmp/rs_manager
@@ -70,3 +71,4 @@ echoWarn "| FINISHED: SETUP SCRIPT                       |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
+#
