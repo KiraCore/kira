@@ -100,7 +100,6 @@ EOL
         echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
         if [ "${SUCCESS,,}" == "true" ] ; then
             touch $UPDATE_CHECK
-            UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
             UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
@@ -128,7 +127,6 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
         touch $UPDATE_CHECK
-        UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
         UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
@@ -167,10 +165,10 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
-        UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
     else
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
+        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
         UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         sleep 5 && exit 1
@@ -194,9 +192,8 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
         touch $UPDATE_CHECK
-        UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
     else
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP"
+        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
         UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         sleep 5 && exit 1
