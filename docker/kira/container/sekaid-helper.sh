@@ -153,17 +153,33 @@ function showProposals() {
     sekaid query customgov proposals --output json | jsonParse
 }
 
-# proposalAwait $(lastProposal) 
-function proposalAwait() {
-    PROP=$(showProposal $1 2> /dev/null || echo -n "")
-    if [ -z "$PROP" ] ; then
-        echoErr "ERROR: Proposal $1 was NOT found"
+# propAwait $(lastProposal) 
+function propAwait() {
+    START_TIME="$(date -u +%s)"
+    if (! $(isNaturalNumber "$1")) ; then
+        ID=$(cat) && STATUS=$1 && TIMEOUT=$2
     else
-        echoInfo "INFO: Waiting for proposal $1 to be finalized"
-        RESULT="vote_pending"
-        while [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ; do
-            RESULT=$(showProposal $1 2> /dev/null | jq ".result" 2> /dev/null | xargs 2> /dev/null || echo -n "")
-            sleep 1
+        ID=$1 && STATUS=$2 && TIMEOUT=$3
+    fi
+    
+    PROP=$(showProposal $ID 2> /dev/null || echo -n "")
+    if [ -z "$PROP" ] ; then
+        echoErr "ERROR: Proposal $ID was NOT found"
+    else
+        echoInfo "INFO: Waiting for proposal $ID to be finalized"
+        (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=0
+        [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
+        while : ; do
+            ELAPSED=$(($(date -u +%s) - $START_TIME))
+            RESULT=$(showProposal $ID 2> /dev/null | jq ".result" 2> /dev/null | xargs 2> /dev/null || echo -n "")
+            [ -z "$STATUS" ] && ( [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ) && break
+            [ ! -z "$STATUS" ] && [ "${RESULT,,}" == "${STATUS,,}" ] && break
+            if [[ $TIMEOUT -gt 0 ]] && [[ $ELAPSED -gt $TIMEOUT ]] ; then
+                echoErr "ERROR: Timeout, failed to finalize proposal '$ID' within ${TIMEOUT} s limit"
+                return 1
+            else
+                sleep 1
+            fi
         done
         echoInfo "INFO: Proposal was finalized ($RESULT)"
     fi
@@ -197,7 +213,6 @@ function whitelistValidator() {
 
         echoErr "Date Time Now: $(date '+%Y-%m-%dT%H:%M:%S')"
         echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
-
         #proposalAwait $(lastProposal)
     fi
 }
