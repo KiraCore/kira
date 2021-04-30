@@ -197,6 +197,8 @@ function whitelistValidator() {
 
         echoErr "Date Time Now: $(date '+%Y-%m-%dT%H:%M:%S')"
         echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
+
+        #proposalAwait $(lastProposal)
     fi
 }
 
@@ -215,7 +217,6 @@ function whitelistValidators() {
             fi
             echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
             whitelistValidator validator $key || echoErr "ERROR: Failed to whitelist $key"
-            # whitelistValidator validator $key && proposalAwait $(lastProposal) || echoErr "ERROR: Failed to whitelist $key"
         done < $WHITELIST
     else
         echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
