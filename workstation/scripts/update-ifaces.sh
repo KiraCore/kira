@@ -7,11 +7,11 @@ START_TIME_SCRIPT="$(date -u +%s)"
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTED: NETWORKING v0.0.7                   |"
-echoWarn "|-----------------------------------------------"
+echoWarn "---------------------------------------------------"
+echoWarn "| STARTED: NETWORK INTERFACES FIX SCRIPT $KIRA_SETUP_VER"
+echoWarn "|--------------------------------------------------"
 echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "------------------------------------------------"
+echoWarn "---------------------------------------------------"
 
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
@@ -36,12 +36,9 @@ done
 
 echoInfo "INFO: Interfaces before restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
-systemctl start docker || echoWarn "WARNINIG: Failed to start docker service"
+systemctl restart docker || echoWarn "WARNINIG: Failed to restart docker service"
 echoInfo "INFO: Interfaces after restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
-
-echoInfo "INFO: Starting containers..."
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
 
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORK INTERFACES FIX SCRIPT      |"

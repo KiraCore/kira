@@ -11,9 +11,9 @@ mkdir -p $UPDATE_LOGS_DIR
 UPDATE_DONE="true"
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
+UPDATE_FAIL_COUNTER="$KIRA_UPDATE/fail_counter"
 UPDATE_DUMP="$KIRA_DUMP/kiraup"
-UPDATE_FAIL_COUNTER="$KIRA_DUMP/fail_counter"
-MAX_FAILS=2
+MAX_FAILS=3
 
 UPDATE_CHECK_TOOLS="tools-setup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
@@ -53,60 +53,25 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     rm -rfv $UPDATE_LOGS_DIR 
     mkdir -p $UPDATE_LOGS_DIR
-    if [ ! -f "${UPDATE_CHECK}-skip" ]; then
-        echoInfo "INFO: Starting reinitalization process..."
-        UPDATE_CHECK_TOOLS="$UPDATE_CHECK_TOOLS-skip"
-        UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
-        LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
-        [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
-        rm -fv $LOG_FILE && touch $LOG_FILE
-        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-        echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-        if [ "${SUCCESS,,}" == "true" ] ; then
-            touch $UPDATE_CHECK
-            UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
-        else
-            echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
-            UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
-            sleep 5 && exit 1
-        fi
-        
-        cat > /etc/systemd/system/kiraup.service << EOL
-[Unit]
-Description=KIRA Update And Setup Service
-After=network.target
-[Service]
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=99
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-Restart=always
-RestartSec=5
-LimitNOFILE=4096
-[Install]
-WantedBy=default.target
-EOL
+
+    echoInfo "INFO: Starting reinitalization process..."
+    UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
+    LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
+
+    rm -fv $LOG_FILE && touch $LOG_FILE
+    SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
+    if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_TOOLS"
+        touch $UPDATE_CHECK
         systemctl daemon-reload
-        systemctl restart kiraup || echoErr "ERROR: Failed to reinit "
+        systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
+        exit 0
     else
-        echoInfo "INFO: Starting setup process..."
-        LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
-        [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
-        rm -fv $LOG_FILE && touch $LOG_FILE
-        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-        set +x
-        echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-        if [ "${SUCCESS,,}" == "true" ] ; then
-            touch $UPDATE_CHECK
-        else
-            echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
-            UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
-            sleep 5 && exit 1
-        fi
+        echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
+        UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
+        sleep 5 && exit 1
     fi
-    exit 0
 else
     echoInfo "INFO: Essential tools and dependecies were already installed ($UPDATE_CHECK_TOOLS)"
 fi
@@ -120,12 +85,12 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     echoInfo "INFO: Starting cleanup process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CLEANUP}.log"
-    [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
+
     rm -fv $LOG_FILE && touch $LOG_FILE
     SUCCESS="true" && $KIRA_MANAGER/cleanup.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-    set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_CLEANUP"
         touch $UPDATE_CHECK
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
@@ -159,17 +124,17 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log"
-    [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
+
     rm -fv $LOG_FILE && touch $LOG_FILE
     SUCCESS="true" && $KIRA_MANAGER/images.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-    set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_IMAGES"
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
     else
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
+        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         sleep 5 && exit 1
     fi
@@ -185,16 +150,16 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log"
-    [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
+
     rm -fv $LOG_FILE && touch $LOG_FILE
     SUCCESS="true" && $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-    set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
     else
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
+        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         sleep 5 && exit 1
     fi

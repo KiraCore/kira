@@ -86,9 +86,7 @@ EOL
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v
-
-    $KIRA_MANAGER/setup/registry.sh
-
+    
     touch $SETUP_CHECK
 else
     echoInfo "INFO: Docker $(docker -v) was already installed"

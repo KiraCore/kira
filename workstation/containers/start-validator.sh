@@ -80,7 +80,7 @@ docker run -d \
     -e CFG_private_peer_ids="" \
     -e CFG_seeds="" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_max_num_outbound_peers="4" \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
@@ -95,11 +95,12 @@ docker run -d \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="false" \
+    -e CFG_pex="true" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e NODE_TYPE="$CONTAINER_NAME" \
+    -e NODE_ID="$VALIDATOR_NODE_ID" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \

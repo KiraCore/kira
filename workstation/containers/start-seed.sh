@@ -74,7 +74,7 @@ docker run -d \
     -e CFG_seeds="" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
@@ -88,6 +88,7 @@ docker run -d \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
+    -e NODE_ID="$SEED_NODE_ID" \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
@@ -118,4 +119,4 @@ fi
 
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 
-$KIRA_MANAGER/scripts/update-ifaces.sh
+# $KIRA_MANAGER/scripts/update-ifaces.sh

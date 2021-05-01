@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e && set -x
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/containers-pkill.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# e.g. $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
+# e.g. $KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
 
 SCRIPT_START_TIME="$(date -u +%s)"
 
@@ -34,10 +34,10 @@ set -x
 if [ ! -z "$CONTAINERS" ] ; then
     for NAME in $CONTAINERS; do
         echoInfo "INFO: Attempting to pkill container $NAME"
-        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "$TASK" "$UNHALT"
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "$AWAIT" "$TASK" "$UNHALT"
     done
 else
-    echoWran "WARNING: NO containers found"
+    echoWarn "WARNING: NO containers found"
 fi
 
 set +x
