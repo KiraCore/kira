@@ -62,23 +62,6 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
-        cat > /etc/systemd/system/kiraup.service << EOL
-[Unit]
-Description=KIRA Update And Setup Service
-After=network.target
-[Service]
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=99
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-Restart=always
-RestartSec=5
-LimitNOFILE=4096
-[Install]
-WantedBy=default.target
-EOL
         echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_TOOLS"
         touch $UPDATE_CHECK
         systemctl daemon-reload
