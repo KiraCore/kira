@@ -19,7 +19,7 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || 
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: NETWORKING v0.0.7                   |"
+echoWarn "| STARTED: NETWORKING $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| DEPLOYMENT MODE: $INFRA_MODE"
 echoWarn "|   FIREWALL ZONE: $FIREWALL_ZONE"

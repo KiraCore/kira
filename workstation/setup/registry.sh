@@ -10,16 +10,11 @@ CONTAINER_REACHABLE="true"
 UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
 curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
-if [ "${CONTAINER_REACHABLE,,}" == "true" ] ; then
-    ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
-    ( ! $(isNullOrEmpty $IP)) && IP=$(docker inspect $ID | jsonParse "[0].NetworkSettings.Networks.$KIRA_REGISTRY_NETWORK.IPAddress" || echo -n "") || IP=""
-fi
-
 # ensure docker registry exists 
 ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5sum | awk '{ print $1 }' || echo -n "")
 SETUP_CHECK="$KIRA_SETUP/registry-2-$ESSENTIALS_HASH" 
 
-if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
+if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     echoInfo "INFO: Container '$CONTAINER_NAME' does NOT exist or is not reachable, update is required recreating registry..."
 
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -60,7 +55,9 @@ if ($(isNullOrEmpty $IP)) || [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE
         -e REGISTRY_LOG_LEVEL=debug \
         registry:$REGISTRY_VERSION
 
-    sleep 1
+    echoInfo "INFO: Waiting for registry container to start..."
+    sleep 30
+    
     ID=$($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME" || echo -n "")
 
     if ($(isNullOrEmpty $ID)) ; then

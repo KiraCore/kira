@@ -31,7 +31,9 @@ if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     cp -rfv "$KIRA_WORKSTATION/." "$KIRA_MANAGER"
     chmod -R 555 $KIRA_MANAGER
 
-    source $KIRA_MANAGER/setup.sh "true" "$START_TIME"
+    echoInfo "INFO: Restarting setup and skipping update..."
+    $KIRA_MANAGER/setup.sh "true" "$START_TIME"
+    exit 0
 elif [ "${SKIP_UPDATE,,}" == "true" ]; then
     echoInfo "INFO: Skipping kira Update..."
 else
@@ -54,10 +56,30 @@ $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
-#$KIRA_MANAGER/setup/nginx.sh
 
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
+service docker restart || echoWarn "WARNING: Failed to restart docker"
+echoInfo "INFO: Waiting for all containers to start..."
+sleep 120
 $KIRA_MANAGER/setup/registry.sh
+
+echoInfo "INFO: Updating kira update service..."
+cat > /etc/systemd/system/kiraup.service << EOL
+[Unit]
+Description=KIRA Update And Setup Service
+After=network.target
+[Service]
+CPUSchedulingPolicy=fifo
+CPUSchedulingPriority=99
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/update.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
 
 touch /tmp/rs_manager
 touch /tmp/rs_git_manager
@@ -69,3 +91,4 @@ echoWarn "| FINISHED: SETUP SCRIPT                       |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
+#
