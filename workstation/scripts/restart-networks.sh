@@ -75,6 +75,8 @@ done
 if [ "${RESTART,,}" == "true" ] ; then
     echoInfo "INFO: Restarting docker & networking..."
     $KIRA_MANAGER/scripts/update-ifaces.sh
+    echoInfo "INFO: Waiting for containers to start..."
+    sleep 120
     $KIRA_MANAGER/scripts/update-hosts.sh
 else
     echoInfo "INFO: Network interfaces and hosts will NOT be restarted"

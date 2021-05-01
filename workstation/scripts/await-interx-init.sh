@@ -33,13 +33,13 @@ while [[ $i -le 40 ]]; do
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
-        if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-            echoInfo "INFO: Restarting network interfaces..."
-            $KIRA_MANAGER/scripts/update-ifaces.sh
-            IFACES_RESTARTED="true"
-            continue
-            i=0
-        fi
+        #if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+        #    echoInfo "INFO: Restarting network interfaces..."
+        #    $KIRA_MANAGER/scripts/update-ifaces.sh
+        #    IFACES_RESTARTED="true"
+        #    continue
+        #    i=0
+        #fi
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."

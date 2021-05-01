@@ -359,11 +359,11 @@ while :; do
         fi
     done
 
-    if [ "${OPTION,,}" == "r" ]; then
-        echoInfo "INFO: Reconnecting all networks..."
-        # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
-        $KIRA_MANAGER/scripts/update-ifaces.sh
-    fi
+    # if [ "${OPTION,,}" == "r" ]; then
+    #     echoInfo "INFO: Reconnecting all networks..."
+    #     # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
+    #     $KIRA_MANAGER/scripts/update-ifaces.sh
+    # fi
 
     if [ "${OPTION,,}" == "d" ]; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
@@ -371,7 +371,7 @@ while :; do
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
         echoInfo "INFO: Reconnecting all networks..."
         # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
-        $KIRA_MANAGER/scripts/update-ifaces.sh
+        # $KIRA_MANAGER/scripts/update-ifaces.sh
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ]; then

@@ -30,9 +30,8 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     subnet=$KIRA_REGISTRY_SUBNET
     echoInfo "INFO: Recreating $network network and $subnet subnet..."
     docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
-
     $KIRA_MANAGER/scripts/update-ifaces.sh
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
 
     echoInfo "INFO: Starting registry container..."
     CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
