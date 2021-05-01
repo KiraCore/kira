@@ -43,7 +43,7 @@ echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 echoInfo "INFO: Starting containers..."
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
 echoInfo "INFO: Waiting for all containers to start..."
-sleep 180
+sleep 15
 
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORK INTERFACES FIX SCRIPT      |"
