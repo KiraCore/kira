@@ -117,22 +117,21 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" 
 if [ "${NEW_NETWORK,,}" == true ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
     cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" 
+    rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
+    mkdir -p $INTERX_REFERENCE_DIR
+    ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+    cp -afv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
+    GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
+    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
-GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
+
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
-
-CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-
-echoInfo "INFO: Saving gensis file into interx downloads..."
-mkdir -p $INTERX_REFERENCE_DIR
-cp -afv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
-
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"

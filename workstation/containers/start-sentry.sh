@@ -122,19 +122,13 @@ echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo -n "")
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
-    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
-
-echoInfo "INFO: Saving gensis file into interx downloads..."
-mkdir -p $INTERX_REFERENCE_DIR
-cp -afv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
 
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
