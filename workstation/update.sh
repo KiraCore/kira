@@ -11,9 +11,9 @@ mkdir -p $UPDATE_LOGS_DIR
 UPDATE_DONE="true"
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
+UPDATE_FAIL_COUNTER="$KIRA_UPDATE/fail_counter"
 UPDATE_DUMP="$KIRA_DUMP/kiraup"
-UPDATE_FAIL_COUNTER="$KIRA_DUMP/fail_counter"
-MAX_FAILS=2
+MAX_FAILS=3
 
 UPDATE_CHECK_TOOLS="tools-setup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
@@ -63,8 +63,8 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
         echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
         if [ "${SUCCESS,,}" == "true" ] ; then
+            echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_TOOLS"
             touch $UPDATE_CHECK
-            UPDATE_FAILS=0 && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
             UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
@@ -95,10 +95,11 @@ EOL
         LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_TOOLS}.log"
         [[ $UPDATE_FAILS -gt $MAX_FAILS ]] && echoErr "ERROR: Setup aborted, max nr. of re-tries reached, to see details type 'cat $LOG_FILE'" && exit 1
         rm -fv $LOG_FILE && touch $LOG_FILE
-        SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+        SUCCESS="true" && $KIRA_MANAGER/setup.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
         set +x
         echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
         if [ "${SUCCESS,,}" == "true" ] ; then
+            echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_TOOLS"
             touch $UPDATE_CHECK
         else
             echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
@@ -126,6 +127,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_CLEANUP"
         touch $UPDATE_CHECK
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
@@ -165,6 +167,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_IMAGES"
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
     else
@@ -191,6 +194,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     set +x
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
     else
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
