@@ -32,18 +32,21 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
+if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
+    EXTERNAL_ADDR="$LOCAL_IP"
+elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
+    EXTERNAL_ADDR="$PUBLIC_IP"
+else
+    EXTERNAL_ADDR="$NODE_TYPE"
+    EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
+fi
+
+CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
+echo "$CFG_external_address" > "$COMMON_DIR/external_address"
+CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
+
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
-    if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-        EXTERNAL_ADDR="$LOCAL_IP"
-    elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
-        EXTERNAL_ADDR="$PUBLIC_IP"
-    fi
-
-    CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
-    echo "$CFG_external_address" > "$COMMON_DIR/external_address"
-    CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
-
     rm -fv $LOCAL_GENESIS
     cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then

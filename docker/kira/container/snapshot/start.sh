@@ -30,6 +30,8 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
+echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+
 ([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
 echo "$SNAP_FILENAME" >$SNAP_LATEST
