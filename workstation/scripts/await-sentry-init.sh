@@ -37,13 +37,13 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-            if [ "${CONTAINER_NAME,,}" != "snapshot" ] && [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-                echoInfo "INFO: Restarting network interfaces..."
-                $KIRA_MANAGER/scripts/update-ifaces.sh
-                IFACES_RESTARTED="true"
-                i=0
-                continue
-            fi
+            #if [ "${CONTAINER_NAME,,}" != "snapshot" ] && [ "${IFACES_RESTARTED,,}" == "false" ] ; then
+            #    echoInfo "INFO: Restarting network interfaces..."
+            #    $KIRA_MANAGER/scripts/update-ifaces.sh
+            #    IFACES_RESTARTED="true"
+            #    i=0
+            #    continue
+            #fi
         fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."

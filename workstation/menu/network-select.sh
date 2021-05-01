@@ -75,8 +75,8 @@ while :; do
             ( [ -z "$GENTEST" ] || [ "${GENTEST,,}" == "null" ] ) && GENTEST=$(jsonParse "result.genesis.chain_id" $TMP_GENESIS_PATH 2> /dev/null 2> /dev/null || echo -n "")
             if [ "${DNPASS,,}" == "false" ] || [ -z "$GENTEST" ] ; then
                 echoWarn "WARNING: Download failed, attempting second discovery..."
-                rm -fv $TMP_GENESIS_PATH
-                wget "$NEW_GENESIS_SOURCE:$DEFAULT_INTERX_PORT/api/genesis" -O $TMP_GENESIS_PATH || echo "WARNING: Second download attempt failed"
+                rm -fv "$TMP_GENESIS_PATH" 
+                wget "$NEW_GENESIS_SOURCE:$DEFAULT_INTERX_PORT/download/genesis.json" -O $TMP_GENESIS_PATH || echo "WARNING: Second download failed"
             fi
         else
             echoWarn "WARNING: Genesis source was not provided"
