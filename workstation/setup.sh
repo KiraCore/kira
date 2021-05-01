@@ -31,7 +31,9 @@ if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     cp -rfv "$KIRA_WORKSTATION/." "$KIRA_MANAGER"
     chmod -R 555 $KIRA_MANAGER
 
-    source $KIRA_MANAGER/setup.sh "true" "$START_TIME"
+    echoInfo "INFO: Restarting setup and skipping update..."
+    $KIRA_MANAGER/setup.sh "true" "$START_TIME"
+    exit 0
 elif [ "${SKIP_UPDATE,,}" == "true" ]; then
     echoInfo "INFO: Skipping kira Update..."
 else
