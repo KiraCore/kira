@@ -58,7 +58,6 @@ CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS_COUNT="0"
-INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 mkdir -p "$INTERX_REFERENCE_DIR"

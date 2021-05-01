@@ -24,8 +24,6 @@ while [ ! -f $SCAN_DONE ] ; do
 done
 
 LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
-
-INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
