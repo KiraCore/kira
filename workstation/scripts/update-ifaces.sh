@@ -7,11 +7,11 @@ START_TIME_SCRIPT="$(date -u +%s)"
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTED: NETWORKING v0.0.7                   |"
-echoWarn "|-----------------------------------------------"
+echoWarn "---------------------------------------------------"
+echoWarn "| STARTED: NETWORK INTERFACES FIX SCRIPT $KIRA_SETUP_VER"
+echoWarn "|--------------------------------------------------"
 echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "------------------------------------------------"
+echoWarn "---------------------------------------------------"
 
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
