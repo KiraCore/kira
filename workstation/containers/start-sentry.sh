@@ -132,6 +132,10 @@ else
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
+echoInfo "INFO: Saving gensis file into interx downloads..."
+mkdir -p $INTERX_REFERENCE_DIR
+cp -afv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
+
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
 # $KIRA_MANAGER/scripts/update-ifaces.sh
