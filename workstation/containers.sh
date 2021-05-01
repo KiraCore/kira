@@ -22,7 +22,6 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-    cp -afv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256sum "$LOCAL_GENESIS_PATH" | awk '{ print $1 }' | xargs || echo -n "")
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 else
