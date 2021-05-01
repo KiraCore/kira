@@ -36,14 +36,9 @@ done
 
 echoInfo "INFO: Interfaces before restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
-systemctl start docker || echoWarn "WARNINIG: Failed to start docker service"
+systemctl restart docker || echoWarn "WARNINIG: Failed to restart docker service"
 echoInfo "INFO: Interfaces after restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
-
-echoInfo "INFO: Starting containers..."
-$KIRA_MANAGER/kira/containers-pkill.sh "true" "start"
-echoInfo "INFO: Waiting for all containers to start..."
-sleep 15
 
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORK INTERFACES FIX SCRIPT      |"

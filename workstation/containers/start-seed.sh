@@ -118,4 +118,4 @@ fi
 
 # $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
 
-$KIRA_MANAGER/scripts/update-ifaces.sh
+# $KIRA_MANAGER/scripts/update-ifaces.sh
