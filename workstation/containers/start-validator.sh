@@ -40,26 +40,19 @@ echo "|   MAX RAM: $RAM_RESERVED"
 echo "------------------------------------------------"
 set -x
 
-echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
-
-GENESIS_SOURCE="$SEKAID_HOME/config/genesis.json"
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    #if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-    #    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-    #else
-    #    CFG_persistent_peers=""
-    #fi
-
+    echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
     CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-
+    [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
+    
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -111,25 +104,26 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
+[ "${NEW_NETWORK,,}" == true ] && rm -fv $LOCAL_GENESIS_PATH
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
-$KIRAMGR_SCRIPTS/await-validator-init.sh "$GENESIS_SOURCE" "$VALIDATOR_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
+
+[ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
 
 if [ "${NEW_NETWORK,,}" == true ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
-    cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" 
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
     mkdir -p $INTERX_REFERENCE_DIR
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-    GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
+    GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"

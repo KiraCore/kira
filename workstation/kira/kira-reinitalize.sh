@@ -49,7 +49,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     else
         SUCCESS_DOWNLOAD="true"
         chmod 555 $INIT_SCRIPT_OUT
-        FILE_HASH=$(echo $(sha256sum $INIT_SCRIPT_OUT) | awk '{print $1;}')
+        FILE_HASH=$(sha256 $INIT_SCRIPT_OUT)
         break
     fi
 done
@@ -61,7 +61,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(v|c)$ ]] ; do echoNErr "Proceed to [V]erify checksum or [C]ontinue to downloaded script: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
         if [ "${ACCEPT,,}" == "v" ] ; then
-            read -p "Input sha256sum hash of the file: " INTEGRITY_HASH
+            read -p "Input SHA256 hash of the file: " INTEGRITY_HASH
         else
             echoInfo "INFO: Hash verification was skipped"
             echoWarn "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"

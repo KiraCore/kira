@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup/system.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5sum | awk '{ print $1 }' || echo -n "")
+ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5)
 SETUP_CHECK="$KIRA_SETUP/system-2-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echoInfo "INFO: Update and Intall system tools and dependencies..."

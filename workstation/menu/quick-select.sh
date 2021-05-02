@@ -235,7 +235,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 else
                     echoInfo "INFO: Success, snapshot file integrity appears to be valid"
                     cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
-                    SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
+                    SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
                 fi
                  
                 rm -f -v -r "$TMP_SNAP_DIR/test"
@@ -258,7 +258,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echoInfo "INFO: Genesis file verification suceeded"
         fi
          
-        GENSUM=$(sha256sum "$TMP_GENESIS_PATH" | awk '{ print $1 }' || echo -n "")
+        GENSUM=$(sha256 "$TMP_GENESIS_PATH")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
             set +x

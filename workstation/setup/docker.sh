@@ -9,7 +9,7 @@ RESTART=$(service docker restart || echo "error")
 ACTIVE=$(systemctl is-active docker || echo "inactive")
 VERSION=$(docker -v || echo "error")
 
-ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5sum | awk '{ print $1 }' || echo -n "")
+ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
