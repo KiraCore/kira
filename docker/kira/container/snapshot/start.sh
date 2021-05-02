@@ -105,7 +105,8 @@ fi
 touch ./output.log
 LAST_SNAP_BLOCK=0
 TOP_SNAP_BLOCK=0
-PID1=""
+sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
+PID1=$!
 while :; do
     echoInfo "INFO: Checking node status..."
     SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
@@ -123,9 +124,19 @@ while :; do
         echo "$PERCENTAGE" >$SNAP_PROGRESS
     fi
 
+    if [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
+        echoInfo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
+        break
+    elif [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
+        echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
+        LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
+    else
+        echoWarn "WARNING: Blocks are not changing..."
+    fi
+
     if ps -p "$PID1" >/dev/null; then
         echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$HALT_HEIGHT ($PERCENTAGE %)"
-    elif [ ! -z "$PID1" ]; then
+    else
         echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
         kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
         sleep 5
@@ -138,18 +149,8 @@ while :; do
         cp -afv "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
         sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
         PID1=$!
-        sleep 30
     fi
-
-    if [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
-        echoInfo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
-        break
-    elif [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
-        echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
-        LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
-    else
-        echoWarn "WARNING: Blocks are not changing..."
-    fi
+    
     sleep 30
 done
 
