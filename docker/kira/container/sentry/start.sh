@@ -93,8 +93,59 @@ touch $EXECUTED_CHECK
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
     rm -frv $SNAP_OUTPUT
-    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace --halt-height="$SNAP_HEIGHT" || echoWarn "WARNING: Snapshot done"
-    
+
+    touch ./output.log
+    LAST_SNAP_BLOCK=0
+    TOP_SNAP_BLOCK=0
+    PID1=""
+    while :; do
+        echoInfo "INFO: Checking node status..."
+        SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
+        SNAP_BLOCK=$(echo $SNAP_STATUS | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
+        (! $(isNaturalNumber "$SNAP_BLOCK")) && SNAP_BLOCK="0"
+
+        [[ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]] && TOP_SNAP_BLOCK=$SNAP_BLOCK
+        echoInfo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
+
+        if ps -p "$PID1" >/dev/null; then
+            echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$SNAP_HEIGHT"
+        elif [ ! -z "$PID1" ]; then
+            echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
+            kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+            sleep 5
+            kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+            sleep 10
+            kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
+            # invalidate all possible connections
+            echoInfo "INFO: Cloning genesis and strarting block sync..."
+            cp -afv "$COMMON_CFG" "$CFG"               # recover config from common folder
+            cp -afv "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
+            sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
+            PID1=$!
+            sleep 30
+        fi
+
+        if [[ "$TOP_SNAP_BLOCK" -ge "$SNAP_HEIGHT" ]]; then
+            echoInfo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
+            break
+        elif [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
+            echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
+            LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
+        else
+            echoWarn "WARNING: Blocks are not changing..."
+        fi
+        sleep 30
+    done
+
+    kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+    sleep 5
+    kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+    sleep 10
+    kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
+
+    echoInfo "INFO: Printing latest output log..."
+    cat ./output.log | tail -n 100
+
     echoInfo "INFO: Creating backup package '$SNAP_OUTPUT' ..."
     # make sure healthcheck will not interrupt configuration
     touch $CFG_CHECK
