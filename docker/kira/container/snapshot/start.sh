@@ -16,8 +16,6 @@ SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
-CFG="$SEKAID_HOME/config/config.toml"
-COMMON_CFG="$COMMON_DIR/config.toml"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
@@ -95,10 +93,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         rm -rfv "$SNAP_DIR_INPUT"
     fi
 
-  echo "INFO: Presering configuration file..."
-  cp -f -v -a "$CFG" "$COMMON_CFG"
-
-  echo "0" >$SNAP_PROGRESS
+  echo "0" > $SNAP_PROGRESS
   touch $EXECUTED_CHECK
 fi
 
@@ -138,19 +133,18 @@ while :; do
         echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$HALT_HEIGHT ($PERCENTAGE %)"
     else
         echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
+        cat ./output.log | tail -n 100
         kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
         sleep 5
         kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
         sleep 10
         kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
         # invalidate all possible connections
-        echoInfo "INFO: Cloning genesis and strarting block sync..."
-        cp -afv "$COMMON_CFG" "$CFG"               # recover config from common folder
-        cp -afv "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
+        echoInfo "INFO: Starting block sync..."
         sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
         PID1=$!
     fi
-    
+
     sleep 30
 done
 

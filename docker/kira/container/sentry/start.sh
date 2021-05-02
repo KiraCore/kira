@@ -123,6 +123,7 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
             echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$SNAP_HEIGHT"
         else
             echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
+            cat ./output.log | tail -n 100
             kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
             sleep 5
             kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
