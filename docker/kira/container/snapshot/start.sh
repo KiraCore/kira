@@ -80,14 +80,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
                 echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
             fi
         fi
-    
-        rm -fv "$SNAP_FILE_INPUT"
     else
         echoWarn "WARNINIG: Node will launch in the slow sync mode"
-        rm -rfv $LOCAL_GENESIS
-        ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     fi
 
+    rm -rfv $LOCAL_GENESIS
+    ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     echo "0" > $SNAP_PROGRESS
 fi
 
@@ -163,7 +161,8 @@ cp -afv "$COMMON_GENESIS" $DATA_DIR/genesis.json
 echo "{\"height\":$TOP_SNAP_BLOCK}" >"$SNAP_INFO"
 
 # to prevent appending root path we must zip all from within the target data folder
-cd $SDATA_DIR && zip -9 -r "$DESTINATION_FILE" . *
+cd $DATA_DIR
+zip -9 -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 

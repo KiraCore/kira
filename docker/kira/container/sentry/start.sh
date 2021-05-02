@@ -71,9 +71,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         fi
     else
         echoWarn "WARNINIG: Node will launch in the slow sync mode"
-        rm -rfv $LOCAL_GENESIS
-        ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     fi
+
+    rm -rfv $LOCAL_GENESIS
+    ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
 fi
 
 echoInfo "INFO: Loading configuration..."
