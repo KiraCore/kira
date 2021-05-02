@@ -97,7 +97,9 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
     touch ./output.log
     LAST_SNAP_BLOCK=0
     TOP_SNAP_BLOCK=0
-    PID1=""
+    sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
+    PID1=$!
+    sleep 30
     while :; do
         echoInfo "INFO: Checking node status..."
         SNAP_STATUS=$(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
@@ -106,22 +108,6 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
 
         [[ $TOP_SNAP_BLOCK -lt $SNAP_BLOCK ]] && TOP_SNAP_BLOCK=$SNAP_BLOCK
         echoInfo "INFO: Latest Block Height: $TOP_SNAP_BLOCK"
-
-        if ps -p "$PID1" >/dev/null; then
-            echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$SNAP_HEIGHT"
-        elif [ ! -z "$PID1" ]; then
-            echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
-            kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
-            sleep 5
-            kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
-            sleep 10
-            kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
-            # invalidate all possible connections
-            echoInfo "INFO: Starting block sync..."
-            sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
-            PID1=$!
-            sleep 30
-        fi
 
         if [[ "$TOP_SNAP_BLOCK" -ge "$SNAP_HEIGHT" ]]; then
             echoInfo "INFO: Snap was compleated, height $TOP_SNAP_BLOCK was reached!"
@@ -132,6 +118,22 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
         else
             echoWarn "WARNING: Blocks are not changing..."
         fi
+
+        if ps -p "$PID1" >/dev/null; then
+            echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$SNAP_HEIGHT"
+        else
+            echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
+            kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
+            sleep 5
+            kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
+            sleep 10
+            kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
+            # invalidate all possible connections
+            echoInfo "INFO: Starting block sync..."
+            sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
+            PID1=$!
+        fi
+
         sleep 30
     done
 
