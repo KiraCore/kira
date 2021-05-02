@@ -60,8 +60,8 @@ while : ; do
     [ "${SELECT,,}" == "e" ] && exit 0
 
     if [ "${SELECT,,}" == "s" ] ; then
-        FILE_HASH=$(sha256sum "$FILE" | awk '{ print $1 }' || echo -n "")
-        DESTINATION_HASH=$(sha256sum "$DESTINATION" | awk '{ print $1 }' || echo -n "")
+        FILE_HASH=$(md5 "$FILE")
+        DESTINATION_HASH=$(md5 "$DESTINATION")
 
         if [ "$FILE_HASH" != "$DESTINATION_HASH" ] ; then
             echoInfo "INFO: Saving unique changes to $DESTINATION..."

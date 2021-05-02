@@ -98,7 +98,7 @@ while :; do
           
         set +x
         echoInfo "INFO: Success, genesis file was found and has a valid format"
-        echoInfo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256sum $TMP_GENESIS_PATH)"
+        echoInfo "INFO: $NEW_NETWORK_NAME network genesis checksum: $(sha256 $TMP_GENESIS_PATH)"
         SELECT="." && while [ "${SELECT,,}" != "a" ] && [ "${SELECT,,}" != "r" ] && [ "${SELECT,,}" != "s" ] ; do echoNErr "Choose to [A]ccep or [R]eject the checksum: " && read -d'' -s -n1 SELECT && echo ""; done
         set -x
 

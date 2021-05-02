@@ -11,7 +11,7 @@ GOCACHE="/home/go/cache"
 GOBIN="${GOROOT}/bin"
 ARCHITECTURE=$(uname -m)
 
-ESSENTIALS_HASH=$(echo "$KIRA_HOME-$ARCHITECTURE-$GO_VERSION-1" | md5sum | awk '{ print $1 }' || echo -n "")
+ESSENTIALS_HASH=$(echo "$KIRA_HOME-$ARCHITECTURE-$GO_VERSION-1" | md5)
 SETUP_CHECK="$KIRA_SETUP/go-setup-1-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ] ; then
     echoInfo "INFO: Ensuring golang is removed ..."
