@@ -54,7 +54,8 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
-SETUP_CHECK="$KIRA_SETUP/kira-env-2-$(cat $ETC_PROFILE | md5)"
+ESSENTIALS_HASH=$(echo "$KIRA_USER-$KIRA_INFRA-$KIRA_MANAGER-$FLUTTERROOT-" | md5)
+SETUP_CHECK="$KIRA_SETUP/kira-env-2-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV

@@ -117,7 +117,7 @@ function sha256() {
     fi
 }
 
-function sha256() {
+function md5() {
     if [ -z "$1" ] ; then
         echo $(cat | md5sum | awk '{ print $1 }' | xargs || echo -n "") || echo -n ""
     else
