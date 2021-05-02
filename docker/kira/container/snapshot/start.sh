@@ -126,7 +126,7 @@ while :; do
 
     if ps -p "$PID1" >/dev/null; then
         echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$HALT_HEIGHT ($PERCENTAGE %)"
-    else [ ! -z "$PID1" ]; then
+    elif [ ! -z "$PID1" ]; then
         echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
         kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
         sleep 5
