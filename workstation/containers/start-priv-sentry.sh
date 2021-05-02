@@ -52,12 +52,9 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     
-
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then 
-        #CFG_persistent_peers="tcp://$SENTRY_SEED"
+    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
         CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
     else
-        #CFG_persistent_peers="tcp://$VALIDATOR_SEED"
         CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
     fi
 
@@ -124,14 +121,10 @@ echo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
-TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256 $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
+TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
-
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_VALIDATOR_NETWORK"
-# $KIRA_MANAGER/scripts/update-ifaces.sh
