@@ -105,12 +105,12 @@ while : ; do
                 continue
             else
                 echoInfo "INFO: Success, snapshot was downloaded"
-                GENSUM=$(sha256sum "$DATA_GENESIS" | awk '{ print $1 }' || echo -n "")
+                GENSUM=$(sha256 "$DATA_GENESIS")
                 rm -f -v -r "$TMP_SNAP_DIR/test"
             fi
         fi
 
-        SNAPSUM=$(sha256sum "$TMP_SNAP_PATH" | awk '{ print $1 }' || echo -n "")
+        SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
         echoWarn "WARNING: Snapshot height: '$SNAP_HEIGHT'"
         echoWarn "WARNING: Snapshot checksum: '$SNAPSUM'"
         echoWarn "WARNING: Genesis file checksum: '$GENSUM'"
@@ -175,7 +175,7 @@ while : ; do
     break
 done
 
-SNAPSUM=$(sha256sum "$SNAPSHOT" | awk '{ print $1 }' || echo -n "")
+SNAPSUM=$(sha256 "$SNAPSHOT")
 set +x
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to ensure following snapshot checksum is valid: $SNAPSUM"

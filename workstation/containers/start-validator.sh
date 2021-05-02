@@ -120,7 +120,7 @@ if [ "${NEW_NETWORK,,}" == true ] ; then
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
     mkdir -p $INTERX_REFERENCE_DIR
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-    GENESIS_SHA256=$(sha256sum $LOCAL_GENESIS_PATH | awk '{ print $1 }' | xargs || echo -n "")
+    GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 

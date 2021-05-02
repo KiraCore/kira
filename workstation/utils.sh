@@ -93,13 +93,35 @@ function isNaturalNumber() {
     fi
 }
 
+function fileSize() {
+    BYTES=$(stat -c%s $1 2> /dev/null || echo -n "")
+    ($(isNaturalNumber "$BYTES")) && echo "$BYTES" || echo -n "0"
+}
+
 function isFileEmpty() {
     if [ -z "$1" ] || [ ! -f $1 ] || [ ! -s $1 ] ; then echo "true" ; else
-        if [[ -z $(grep '[^[:space:]]' $1) ]] ; then
-            echo "true"
-        else
+        if [[ $(fileSize $1) -ge 64 ]] ; then
             echo "false"
+        else
+            TEXT=$(cat $1 | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+            [ -z "$TEXT" ] && echo "true" || echo "false"
         fi
+    fi
+}
+
+function sha256() {
+    if [ -z "$1" ] ; then
+        echo $(cat | sha256sum | awk '{ print $1 }' | xargs || echo -n "") || echo -n ""
+    else
+        [ -f $1 ] && echo $(sha256sum $1 | awk '{ print $1 }' | xargs || echo -n "") || echo -n ""
+    fi
+}
+
+function sha256() {
+    if [ -z "$1" ] ; then
+        echo $(cat | md5sum | awk '{ print $1 }' | xargs || echo -n "") || echo -n ""
+    else
+        [ -f $1 ] && echo $(md5sum $1 | awk '{ print $1 }' | xargs || echo -n "") || echo -n ""
     fi
 }
 

@@ -11,8 +11,6 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 
 SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
 SNAP_NAME_FILE="$COMMON_DIR/snap_name"
-
-SNAP_DIR_INPUT="$COMMON_READ/snap"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
@@ -26,7 +24,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 rm -fv $CFG_CHECK
 
-while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isDirEmpty "$SNAP_DIR_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
+while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
     sleep 5
 done
@@ -51,30 +49,19 @@ echoInfo "INFO:   Snap Name: $SNAP_NAME"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rfv $SEKAID_HOME
-    mkdir -p $SEKAID_HOME/config/
-  
+    mkdir -p $SEKAID_HOME/config/  
     sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
-  
-    rm -fv $SEKAID_HOME/config/node_key.json
-    cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
 
-    if (! $(isFileEmpty "$SNAP_FILE_INPUT")) || (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
+    if (! $(isFileEmpty "$SNAP_FILE_INPUT")); then
         echoInfo "INFO: Snap file was found, attepting integrity verification and data recovery..."
-        if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then 
-            cd $DATA_DIR
-            jar xvf $SNAP_FILE_INPUT
-            cd $SEKAID_HOME
-        elif (! $(isDirEmpty "$SNAP_DIR_INPUT")) ; then
-            cp -rfv "$SNAP_DIR_INPUT/." "$DATA_DIR"
-        else
-            echoErr "ERROR: Snap file or directory was not found"
-            exit 1
-        fi
+        cd $DATA_DIR
+        jar xvf $SNAP_FILE_INPUT
+        cd $SEKAID_HOME
     
         if [ -f "$DATA_GENESIS" ] ; then
             echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-            SHA256_DATA_GENESIS=$(sha256sum $DATA_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
-            SHA256_COMMON_GENESIS=$(sha256sum $COMMON_GENESIS | awk '{ print $1 }' | xargs || echo -n "")
+            SHA256_DATA_GENESIS=$(sha256 $DATA_GENESIS)
+            SHA256_COMMON_GENESIS=$(sha256 $COMMON_GENESIS)
             if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
                 echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
                 exit 1
@@ -82,6 +69,10 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
                 echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
             fi
         fi
+    else
+        echoWarn "WARNINIG: Node will launch in the slow sync mode"
+        rm -rfv $LOCAL_GENESIS
+        ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     fi
 fi
 
