@@ -80,14 +80,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
                 echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
             fi
         fi
-    
-        rm -fv "$SNAP_FILE_INPUT"
     else
         echoWarn "WARNINIG: Node will launch in the slow sync mode"
-        rm -rfv $LOCAL_GENESIS
-        ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     fi
 
+    rm -rfv $LOCAL_GENESIS
+    ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     echo "0" > $SNAP_PROGRESS
 fi
 
