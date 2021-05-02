@@ -102,8 +102,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   touch $EXECUTED_CHECK
 fi
 
-touch ./output.log ./output2.log # make sure log files are present so we can cut them
-
+touch ./output.log
 LAST_SNAP_BLOCK=0
 TOP_SNAP_BLOCK=0
 PID1=""
@@ -140,11 +139,6 @@ while :; do
         sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
         PID1=$!
         sleep 30
-    fi
-
-    if [[ "$TOP_SNAP_BLOCK" -gt "$LAST_SNAP_BLOCK" ]]; then
-        echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
-        LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
     fi
 
     if [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
