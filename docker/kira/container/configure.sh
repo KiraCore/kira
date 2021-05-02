@@ -227,5 +227,13 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 
+echoInfo "INFO: Setting up node key..."
+cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
+
+if [ "${NODE_TYPE,,}" == "validator" ] ; then
+    echoInfo "INFO: Setting up priv validator key..."
+    cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+fi
+
 echoInfo "INFO: Finished node configuration."
 rm -fv $CFG_CHECK

@@ -3,8 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 set -x
 
-GENESIS_SOURCE=$1
-VALIDATOR_NODE_ID=$2
+VALIDATOR_NODE_ID=$1
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -29,13 +28,6 @@ while [[ $i -le 40 ]]; do
         continue
     else
         echoInfo "INFO: Success, $CONTAINER_NAME container was found"
-        #if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-        #    echoInfo "INFO: Restarting network interfaces..."
-        #    $KIRA_MANAGER/scripts/update-ifaces.sh
-        #    IFACES_RESTARTED="true"
-        #    i=0
-        #    continue
-        #fi
     fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
@@ -51,7 +43,8 @@ while [[ $i -le 40 ]]; do
     # copy genesis from validator only if internal node syncing takes place
     if [ "${NEW_NETWORK,,}" == "true" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
-        docker cp -a $CONTAINER_NAME:$GENESIS_SOURCE $LOCAL_GENESIS_PATH || rm -fv $LOCAL_GENESIS_PATH
+        rm -fv $LOCAL_GENESIS_PATH
+        cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
     fi
 
     # make sure genesis is present in the destination path

@@ -15,8 +15,7 @@ echo $(curl 0.0.0.0:$KIRA_INTERX_PORT/api/faucet | jq -rc '.address')
 ## Quick Faucet Fuel
 
 ```
-account="faucet" && read -p "INPUT ADDRESS: " ADDR && sekaid tx bank send $account $ADDR "100000000ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq && sleep 10 && sekaid tx bank send $account $ADDR "10000000000test" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq && sleep 10 && sekaid tx bank send $account $ADDR "100000000000000000000samolean" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | jq
-```
+account="validator" && read -p "INPUT ADDRESS: " ADDR && sekaid tx bank send $account $ADDR "1000000000000ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --broadcast-mode=async | txAwait && sekaid tx bank send $account $ADDR "10000000000test" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --broadcast-mode=async | txAwait && sleep 10 && sekaid tx bank send $account $ADDR "100000000000000000000samolean" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --broadcast-mode=async | txAwait
 
 
 

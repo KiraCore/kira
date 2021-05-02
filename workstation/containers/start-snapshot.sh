@@ -135,16 +135,15 @@ docker run -d \
 echoInfo "INFO: Waiting for $CONTAINER_NAME node to start..."
 CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
 
-set +x
 if [ "${CONTAINER_CREATED,,}" != "true" ]; then
-    echoInfo "INFO: Snapshot failed, '$CONTAINER_NAME' container did not start"
+    echoErr "ERROR: Snapshot failed, '$CONTAINER_NAME' container did not start"
     $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
 else
     echoInfo "INFO: Success '$CONTAINER_NAME' container was started"
     rm -fv "$SNAP_DESTINATION"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
-    TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" sha256sum $SEKAID_HOME/config/genesis.json | awk '{ print $1 }' | xargs || echo -n "")
+    TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
     if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ]; then
         echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
         $KIRA_SCRIPTS/container-pause.sh $CONTAINER_NAME || echoErr "ERROR: Failed to pause container"
@@ -154,4 +153,3 @@ else
     echoInfo "INFO: Snapshot destination: $SNAP_FILE"
     echoInfo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
-set -x
