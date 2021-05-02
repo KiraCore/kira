@@ -117,9 +117,7 @@ if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNA
             sleep 10
             kill -2 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1"
             # invalidate all possible connections
-            echoInfo "INFO: Cloning genesis and strarting block sync..."
-            cp -afv "$COMMON_CFG" "$CFG"               # recover config from common folder
-            cp -afv "$COMMON_GENESIS" "$LOCAL_GENESIS" # recover genesis from common folder
+            echoInfo "INFO: Starting block sync..."
             sekaid start --home="$SEKAID_HOME" --grpc.address="$GRPC_ADDRESS" --trace  &>./output.log &
             PID1=$!
             sleep 30
