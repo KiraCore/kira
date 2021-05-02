@@ -66,7 +66,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file was found, attepting data recovery..."
         cd $DATA_DIR
-        jar xvf $c
+        jar xvf $SNAP_FILE_INPUT
         cd $SEKAID_HOME
 
         if [ -f "$DATA_GENESIS" ]; then
