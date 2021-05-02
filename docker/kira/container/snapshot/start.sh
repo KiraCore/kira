@@ -161,7 +161,8 @@ cp -afv "$COMMON_GENESIS" $DATA_DIR/genesis.json
 echo "{\"height\":$TOP_SNAP_BLOCK}" >"$SNAP_INFO"
 
 # to prevent appending root path we must zip all from within the target data folder
-cd $SDATA_DIR && zip -9 -r "$DESTINATION_FILE" . *
+cd $DATA_DIR
+zip -9 -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 
