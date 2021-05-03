@@ -50,7 +50,7 @@ else
     (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 fi
 
-PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+PUBLIC_IP=$(globGet "PUBLIC_IP")
 (! $(isNullOrEmpty $PUBLIC_IP)) && echo "\"$PUBLIC_IP\"" >> $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK

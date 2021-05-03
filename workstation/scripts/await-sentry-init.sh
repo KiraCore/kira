@@ -18,6 +18,8 @@ IFACES_RESTARTED="false"
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
+timersClear "BLOCK_HEIGHT_SPAN"
+
 retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -37,13 +39,6 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-            #if [ "${CONTAINER_NAME,,}" != "snapshot" ] && [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-            #    echoInfo "INFO: Restarting network interfaces..."
-            #    $KIRA_MANAGER/scripts/update-ifaces.sh
-            #    IFACES_RESTARTED="true"
-            #    i=0
-            #    continue
-            #fi
         fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
@@ -176,13 +171,11 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
-        END_TIME_HEIGHT="$(date -u +%s)"
         DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
-        DELTA_TIME=$(($END_TIME_HEIGHT - $START_TIME_HEIGHT))
-        
-        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
+        DELTA_TIME=$(timerSpan "BLOCK_HEIGHT_SPAN")
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]]  && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
             PREVIOUS_HEIGHT=$HEIGHT
-            START_TIME_HEIGHT=$END_TIME_HEIGHT
+            timerStart "BLOCK_HEIGHT_SPAN"
             SYNCING="true"
         fi
         set -x

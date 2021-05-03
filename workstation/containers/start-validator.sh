@@ -104,7 +104,12 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-[ "${NEW_NETWORK,,}" == true ] && rm -fv $LOCAL_GENESIS_PATH
+mkdir -p $INTERX_REFERENCE_DIR
+if [ "${NEW_NETWORK,,}" == true ] ; then
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
+    rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
 
@@ -113,8 +118,8 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
 if [ "${NEW_NETWORK,,}" == true ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
-    mkdir -p $INTERX_REFERENCE_DIR
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi

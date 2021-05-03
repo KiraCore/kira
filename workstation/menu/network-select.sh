@@ -116,6 +116,7 @@ while :; do
     echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
     set -x
     
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
     rm -fv "$LOCAL_GENESIS_PATH"
     if [ -f "$TMP_GENESIS_PATH" ] ; then # if genesis was imported then replace locally
         echoInfo "INFO: Backing up new genesis file..."

@@ -148,8 +148,10 @@ cat > /etc/systemd/system/kiraup.service << EOL
 Description=KIRA Update And Setup Service
 After=network.target
 [Service]
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=99
+CPUWeight=20
+CPUQuota=85%
+IOWeight=20
+MemorySwapMax=0
 Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME

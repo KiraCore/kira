@@ -46,9 +46,6 @@ cd $KIRA_HOME
 SCAN_DONE="$KIRA_SCAN/done"
 CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
 NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
-DISK_SCAN_PATH="$KIRA_SCAN/disk"
-CPU_SCAN_PATH="$KIRA_SCAN/cpu"
-RAM_SCAN_PATH="$KIRA_SCAN/ram"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
@@ -82,11 +79,6 @@ while :; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
     CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
-    CPU_UTIL=$(tryCat $CPU_SCAN_PATH "")
-    RAM_UTIL=$(tryCat $RAM_SCAN_PATH "")
-    DISK_UTIL=$(tryCat $DISK_SCAN_PATH "")
-    LOCAL_IP=$(tryCat $DOCKER_COMMON_RO/local_ip "0.0.0.0")
-    PUBLIC_IP=$(tryCat $DOCKER_COMMON_RO/public_ip "")
     PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
     KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
@@ -147,12 +139,13 @@ while :; do
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
-    CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
-    RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
-    DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
+
+    RAM_UTIL=$(globGet RAM_UTIL) && RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
+    CPU_UTIL=$(globGet CPU_UTIL) && CPU_TMP="CPU: ${CPU_UTIL}${WHITESPACE}"
+    DISK_UTIL=$(globGet DISK_UTIL) && DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
 
     [ ! -z "$CPU_UTIL" ] && [ ! -z "$RAM_UTIL" ] && [ ! -z "$DISK_UTIL" ] &&
-        echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m|"
+        echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m: $(globGet DISK_CONS)"
     
     if [ "${LOADING,,}" == "false" ]; then
         KIRA_NETWORK=$(jsonQuickParse "network" $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo -n "")
@@ -184,6 +177,7 @@ while :; do
         KIRA_BLOCK="???"
     fi
 
+    LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
         echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
