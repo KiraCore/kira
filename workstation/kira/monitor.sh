@@ -25,16 +25,17 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
-while : ; do
-    START_TIME="$(date -u +%s)"
+globDel "DISK_AVAIL" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL"
 
+while : ; do
+    timerStart -v
     if ! command -v docker ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
         sleep 10
         continue
     fi
     
-    mkdir -p $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
+    tryMkDir $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
     touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH" "$CONTAINERS_SCAN_PATH"
 
     set +e && source "/etc/profile" &>/dev/null && set -e
@@ -102,5 +103,5 @@ while : ; do
     (! $(isFileEmpty $CONTAINERS_SCAN_PATH)) && cp -afv $CONTAINERS_SCAN_PATH $SCAN_DUMP || echoWarn "WARNING: Failed to dump networks info"
     
     timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh
-    echoInfo "INFO: Scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
+    echoInfo "INFO: Scan was finalized, elapsed $(timerSpan) seconds"
 done

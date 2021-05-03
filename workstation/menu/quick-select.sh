@@ -328,6 +328,7 @@ else
 fi
 
 rm -fvr "$KIRA_SNAP/status"
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
 rm -fv "$LOCAL_GENESIS_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then

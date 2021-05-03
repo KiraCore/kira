@@ -125,6 +125,31 @@ function md5() {
     fi
 }
 
+function tryMkDir {
+    [ "${1,,}" == "-v" ] && VERBOSE="true" || VERBOSE="false"
+    for var in "$@" ; do
+        var=$(echo "$var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+        [ -z "$var" ] && continue
+        [ "${VERBOSE,,}" == "true" ] && [ "${var,,}" == "-v" ] && continue
+        
+        if [ -f "$var" ] ; then
+            if [ "${VERBOSE,,}" == "true" ] ; then
+                rm -f "$var" 2> /dev/null || : 
+                [ ! -f "$var" ] && echo "removed file '$var'" || echo "failed to remove file '$var'"
+            else
+                rm -f 2> /dev/null || :
+            fi
+        fi
+
+        if [ "${VERBOSE,,}" == "true" ] ; then
+            [ ! -d "$var" ] && mkdir -p "$var" 2> /dev/null || :
+            [ -d "$var" ] && echo "created directory '$var'" || echo "failed to create direcotry '$var'"
+        elif [ ! -d "$var" ] ; then
+            mkdir -p "$var" 2> /dev/null || :
+        fi
+    done
+}
+
 function tryCat {
     if ($(isFileEmpty $1)) ; then
         echo -ne "$2"

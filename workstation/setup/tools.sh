@@ -84,6 +84,10 @@ if [ ! -f "$SETUP_CHECK" ]; then
 Description=Kira Console UI Monitoring Service
 After=network.target
 [Service]
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
 Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME

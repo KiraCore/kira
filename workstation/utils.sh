@@ -125,6 +125,30 @@ function md5() {
     fi
 }
 
+function tryMkDir {
+    for var in "$@" ; do
+        var=$(echo "$var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+        [ -z "$var" ] && continue
+        [ "${var,,}" == "-v" ] && continue
+        
+        if [ -f "$var" ] ; then
+            if [ "${1,,}" == "-v" ] ; then
+                rm -f "$var" 2> /dev/null || : 
+                [ ! -f "$var" ] && echo "removed file '$var'" || echo "failed to remove file '$var'"
+            else
+                rm -f 2> /dev/null || :
+            fi
+        fi
+
+        if [ "${1,,}" == "-v" ]  ; then
+            [ ! -d "$var" ] && mkdir -p "$var" 2> /dev/null || :
+            [ -d "$var" ] && echo "created directory '$var'" || echo "failed to create direcotry '$var'"
+        elif [ ! -d "$var" ] ; then
+            mkdir -p "$var" 2> /dev/null || :
+        fi
+    done
+}
+
 function tryCat {
     if ($(isFileEmpty $1)) ; then
         echo -ne "$2"
@@ -211,6 +235,89 @@ function urlContentLength() {
     VAL=$(echo ${VAL%$'\r'})
     (! $(isNaturalNumber $VAL)) && VAL=0
     echo $VAL
+}
+
+GLOB_STORE_DIR="/var/kira/glob"
+function globName() {
+    echo "${1,,}" | tr -d '\011\012\013\014\015\040' 2>/dev/null | base64 2>/dev/null | tr '/+' '_-' 2>/dev/null | tr -d '=' 2>/dev/null || echo -n ""
+}
+
+function globGet() {
+    FNAME=$(globName "$1")
+    if [ ! -z "$FNAME" ] ; then
+        tryMkDir $GLOB_STORE_DIR
+        tryCat "${GLOB_STORE_DIR}/$FNAME"
+    fi
+}
+
+function globSet() {
+    FNAME=$(globName "$1")
+    if [ ! -z "$FNAME" ] ; then
+        tryMkDir $GLOB_STORE_DIR
+        if [ ! -z ${2+x} ] ; then
+            echo "$2" > "${GLOB_STORE_DIR}/$FNAME"
+        else
+            cat > "${GLOB_STORE_DIR}/$FNAME"
+        fi
+    fi
+}
+
+function globEmpty() {
+    FNAME=$(globName "$1")
+    ($(isFileEmpty "${GLOB_STORE_DIR}/$FNAME")) && echo "true" || echo "false"
+}
+
+function globDel {
+    for var in "$@" ; do
+        [ -z "$var" ] && continue
+        globSet "$var" ""
+    done
+}
+
+function timerStart() {
+    [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
+    [ -z "$NAME" ] && NAME="${$}"
+    TIME="$(date -u +%s)"
+    globSet "timer_start_${NAME}" "$TIME"
+    globSet "timer_end_${NAME}" ""
+    [ "${1,,}" == "-v" ] && echo "$TIME"
+    return 0
+}
+
+function timerEnd() {
+    [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
+    [ -z "$NAME" ] && NAME="${$}"
+    NAME="timer_end_${NAME}"
+    ($(globEmpty "$NAME")) && globSet "$NAME" "$(date -u +%s)"
+    [ "${1,,}" == "-v" ] && globGet "$NAME"
+    return 0
+}
+
+function timerSpan() {
+    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
+    START_TIME=$(globGet "timer_start_${NAME}")
+    END_TIME=$(globGet "timer_end_${NAME}")
+    if (! $(isNaturalNumber "$START_TIME")) ; then
+        echo "0"
+    elif (! $(isNaturalNumber "$END_TIME")) ; then 
+        echo "$(($(date -u +%s) - $START_TIME))"
+    else
+        echo "$(($END_TIME - $START_TIME))"
+    fi
+    return 0
+}
+
+function timerClear() {
+    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
+    globSet "timer_start_${NAME}" ""
+    globSet "timer_end_${NAME}" ""
+    return 0
+}
+
+function timersClear() {
+    for var in "$@" ; do
+        timerClear "$var"
+    done
 }
 
 function prettyTime {
