@@ -114,7 +114,7 @@ docker run -d \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_outbound_peers="2" \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_allow_duplicate_ip="true" \

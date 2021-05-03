@@ -76,7 +76,7 @@ docker run -d \
     -e CFG_seeds="" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_outbound_peers="2" \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \

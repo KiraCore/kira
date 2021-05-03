@@ -3,7 +3,7 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $SELF_SCRIPTS/utils.sh
 set -x
 
-START_TIME="$(date -u +%s)"
+timerStart
 
 set +x
 echoWarn "------------------------------------------------"
@@ -68,6 +68,7 @@ else
 
     if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ; then
         echoInfo "INFO: Success, node is catching up ($CATCHING_UP), previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
+        timerStart "catching_up"
         echo "$HEIGHT" > $BLOCK_HEIGHT_FILE
     else
         echoInfo "INFO: Starting healthcheck..."
@@ -139,14 +140,14 @@ if [ "${FAILED,,}" == "true" ] ; then
     set +x
     echoErr "------------------------------------------------"
     echoErr "|  FAILURE: DEFAULT SEKAI HEALTHCHECK          |"
-    echoErr "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+    echoErr "|  ELAPSED: $(timerSpan) seconds"
     echoErr "------------------------------------------------"
     set -x
 else
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "|  SUCCESS: DEFAULT SEKAI HEALTHCHECK          |"
-    echoWarn "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+    echoWarn "|  ELAPSED: $(timerSpan) seconds"
     echoWarn "------------------------------------------------"
     set -x
 fi

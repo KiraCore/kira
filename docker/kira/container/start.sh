@@ -7,6 +7,7 @@ echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
+timerStart "catching_up"
 
 while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
     if [ -f "$EXIT_CHECK" ]; then

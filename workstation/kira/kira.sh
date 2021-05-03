@@ -196,12 +196,12 @@ while :; do
 
     if [ "${LOADING,,}" == "true" ]; then
         echo -e "|\e[0m\e[31;1m PLEASE WAIT, LOADING INFRASTRUCTURE STATUS... \e[33;1m|"
+    elif [ "${CATCHING_UP,,}" == "true" ]; then
+        echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
     elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
     elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
         echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
-    elif [ "${CATCHING_UP,,}" == "true" ]; then
-        echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
     elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
         if [ ! -z "$VALADDR" ]; then
             if [ "${VALSTATUS,,}" == "active" ] ; then
