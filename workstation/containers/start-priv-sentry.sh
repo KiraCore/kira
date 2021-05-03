@@ -53,11 +53,12 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     
     if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
+        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED"
     else
-        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
+        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED"
     fi
 
+    CFG_seeds="tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -82,7 +83,7 @@ docker run -d \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_seeds="" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \

@@ -46,12 +46,14 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
+    if [ "${NEW_NETWORK,,}" == true ] ; then
+        rm -fv "$COMMON_PATH/genesis.json"
+        CFG_persistent_peers=""
+    else
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
+    fi
     
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -88,7 +90,7 @@ docker run -d \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \

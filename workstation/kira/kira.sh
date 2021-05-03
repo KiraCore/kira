@@ -394,12 +394,12 @@ while :; do
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing pause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
-            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing unpause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
-            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
@@ -409,7 +409,7 @@ while :; do
         if [ "${VALSTATUS,,}" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing activate --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 1000ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
-            echoErr "ERROR: Failed to confirm puse tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"

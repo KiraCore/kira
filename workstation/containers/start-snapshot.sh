@@ -70,7 +70,8 @@ SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' |
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED"
+CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
+CFG_seeds="tcp://$SEED_SEED"
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
@@ -103,13 +104,14 @@ docker run -d \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="4" \

@@ -46,7 +46,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED,tcp://$SNAPSHOT_SEED"
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
