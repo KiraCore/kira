@@ -336,6 +336,11 @@ function prettyTime {
   (( $S != 1 )) && printf '%d seconds\n' $S || printf '%d second\n' $S
 }
 
+function resolveDNS {
+    DNS=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
+    ($(isIp $DNS)) && echo $DNS || echo -e ""
+}
+
 displayAlign() {
   align=$1
   width=$2

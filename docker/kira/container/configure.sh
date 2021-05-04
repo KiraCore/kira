@@ -37,7 +37,8 @@ if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
 elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 else
-    EXTERNAL_ADDR="$NODE_TYPE"
+    EXTERNAL_ADDR=$(resolveDNS $NODE_TYPE)
+    [ -z "$EXTERNAL_ADDR" ] && EXTERNAL_ADDR="$NODE_TYPE"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
 fi
 
@@ -100,12 +101,15 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
-        addr=${addrArr2[0],,}
+        dns=${addrArr2[0],,}
         port=${addrArr2[1],,}
-
+        addr=$(resolveDNS $dns)
+        
+        (! $(isIp "$addr")) && "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+        (! $(isIp "$port")) && "WARNINIG: Peer '$peer' PORT is invalid!" && continue
 
-        peer="tcp://$peer"
+        peer="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra peer '$peer'"
 
         #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
@@ -128,12 +132,15 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
-        addr=${addrArr2[0],,}
+        dns=${addrArr2[0],,}
         port=${addrArr2[1],,}
+        addr=$(resolveDNS $dns)
 
+        (! $(isIp "$addr")) && "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isIp "$port")) && "WARNINIG: Seed '$seed' PORT is invalid!" && continue
 
-        seed="tcp://$seed"
+        seed="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra seed '$seed'"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
