@@ -93,6 +93,7 @@ docker run -d \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \

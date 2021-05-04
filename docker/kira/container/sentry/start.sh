@@ -77,6 +77,33 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
 fi
 
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        SENTRY_IP=$(resolveDNS sentry)
+        PRIV_SENTRY_IP=$(resolveDNS priv_sentry)
+        if [ ! -z "$SENTRY_IP" ] || [ ! -z "$PRIV_SENTRY_IP" ] ; then
+            echoInfo "INFO: Sentry ($SENTRY_IP) or Private Sentry ($PRIV_SENTRY_IP) container was found"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for sentry or private sentry to start..."
+            sleep 15
+        fi
+    done
+elif [ "${NEW_NETWORK,,}" == "true" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|priv_sentry)$ ]] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        VALIDATOR_IP=$(resolveDNS validator)
+        if [ ! -z "$VALIDATOR_IP" ] ; then
+            echoInfo "INFO: Validator ($VALIDATOR_IP) container was found"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for validator to start..."
+            sleep 15
+        fi
+    done
+fi
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e

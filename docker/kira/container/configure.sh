@@ -96,6 +96,7 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
     echoInfo "INFO: List of external peers was found, adding to peers config"
     set +x
     while read peer ; do
+        echoInfo "INFO: Adding extra peer '$peer' from the list"
         [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
     done < $LOCAL_PEERS_PATH
@@ -106,7 +107,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
     echoInfo "INFO: List of external seeds was found, adding to seeds config"
     set +x
     while read seed ; do
-        echoInfo "INFO: Adding extra seed '$seed'"
+        echoInfo "INFO: Adding extra seed '$seed' from the list"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
@@ -114,11 +115,12 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
 fi
 
 if [ ! -z "$CFG_seeds" ] ; then
+    set +x
     echoInfo "INFO: Seed configuration is available, testing..."
     TMP_CFG_seeds=""
     for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
-        [ -z "$seed" ] && echo "WARNING: seed not found" && continue
+        [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
@@ -126,26 +128,29 @@ if [ ! -z "$CFG_seeds" ] ; then
         port=${addrArr2[1],,}
         addr=$(resolveDNS $dns)
 
-        (! $(isIp "$addr")) && "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
-        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
-        (! $(isIp "$port")) && "WARNINIG: Seed '$seed' PORT is invalid!" && continue
+        (! $(isIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
+        (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
+        ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
 
         seed="tcp://${nodeId}@${addr}:${port}"
-        echoInfo "INFO: Adding extra seed '$seed'"
+        echoInfo "INFO: Adding extra seed '$seed' to new config"
         [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
     done
     CFG_seeds=$TMP_CFG_seeds
+    set -x
 else
     echoWarn "WARNING: Seeds configuration is available, testing..."
 fi
 
 if [ ! -z "$CFG_persistent_peers" ] ; then
     echoInfo "INFO: Peers configuration is available, testing..."
+    set +x
     TMP_CFG_persistent_peers=""
     for peer in $(echo $CFG_persistent_peers | sed "s/,/ /g") ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
-        [ -z "$peer" ] && echo "WARNING: peer not found" && continue
+        [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
@@ -153,22 +158,24 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         port=${addrArr2[1],,}
         addr=$(resolveDNS $dns)
         
-        (! $(isIp "$addr")) && "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
-        (! $(isNodeId "$nodeId")) && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
-        (! $(isIp "$port")) && "WARNINIG: Peer '$peer' PORT is invalid!" && continue
+        (! $(isIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
+        (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+        (! $(isPort "$port")) && echoWarn "WARNINIG: Peer '$peer' PORT is invalid!" && continue
+        ($(isSubStr "$TMP_CFG_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the config." && continue
 
         peer="tcp://${nodeId}@${addr}:${port}"
-        echoInfo "INFO: Adding extra peer '$peer'"
+        echoInfo "INFO: Adding extra peer '$peer' to new config"
 
-        #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
         [ ! -z "$TMP_CFG_persistent_peers" ] && TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers},"
-        [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
-        
-        #CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
         TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers}${peer}"
-        CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
+
+        if (! $(isSubStr "$CFG_unconditional_peer_ids" "$nodeId")) ; then
+            [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
+            CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
+        fi
     done
     CFG_persistent_peers=$TMP_CFG_persistent_peers
+    set -x
 else
     echoWarn "WARNING: Peers configuration is available, testing..."
 fi

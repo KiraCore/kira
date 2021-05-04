@@ -101,6 +101,7 @@ docker run -d \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SENTRY_NODE_ID" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \

@@ -9,6 +9,7 @@ echo "INFO: Staring snapshot setup..."
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 EXECUTED_CHECK="$COMMON_DIR/executed"
+CFG_CHECK="${COMMON_DIR}/configuring"
 
 SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
 
@@ -28,6 +29,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+rm -fv $CFG_CHECK
 
 ([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
@@ -89,10 +91,23 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "0" > $SNAP_PROGRESS
 fi
 
+echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+while : ; do
+    SENTRY_IP=$(resolveDNS sentry)
+    PRIV_SENTRY_IP=$(resolveDNS priv_sentry)
+    if [ ! -z "$SENTRY_IP" ] || [ ! -z "$PRIV_SENTRY_IP" ] ; then
+        echoInfo "INFO: Sentry ($SENTRY_IP) or Private Sentry ($PRIV_SENTRY_IP) container was found"
+        break
+    else
+        echoWarn "WARNINIG: Waiting for sentry or private sentry to start..."
+        sleep 15
+    fi
+done
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-touch $EXECUTED_CHECK
+touch $EXECUTED_CHECK $CFG_CHECK
 
 touch ./output.log
 LAST_SNAP_BLOCK=0

@@ -50,10 +50,9 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
     if [ "${NEW_NETWORK,,}" == true ] ; then
         rm -fv "$COMMON_PATH/genesis.json"
-        CFG_persistent_peers=""
-    else
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
     fi
+    
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
     
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -94,6 +93,7 @@ docker run -d \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \
+    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
     -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \

@@ -8,13 +8,11 @@ set -x
 echo "INFO: Started kira network contianers monitor..."
 
 SCRIPT_START_TIME="$(date -u +%s)"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
-NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
-NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
-CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
+NETWORKS=$(globGet "NETWORKS")
+CONTAINERS=$(globGet "CONTAINERS")
 SCAN_DONE="$KIRA_SCAN/done"
 
 set +x

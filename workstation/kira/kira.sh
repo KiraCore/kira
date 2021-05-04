@@ -44,8 +44,6 @@ done
 
 cd $KIRA_HOME
 SCAN_DONE="$KIRA_SCAN/done"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
-NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
@@ -77,8 +75,7 @@ while :; do
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
-    CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
+    CONTAINERS=$(globGet "CONTAINERS")
     PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
     KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
@@ -352,19 +349,10 @@ while :; do
         fi
     done
 
-    # if [ "${OPTION,,}" == "r" ]; then
-    #     echoInfo "INFO: Reconnecting all networks..."
-    #     # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
-    #     $KIRA_MANAGER/scripts/update-ifaces.sh
-    # fi
-
     if [ "${OPTION,,}" == "d" ]; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
         LOADING="false" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
-        echoInfo "INFO: Reconnecting all networks..."
-        # $KIRAMGR_SCRIPTS/restart-networks.sh "true"
-        # $KIRA_MANAGER/scripts/update-ifaces.sh
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "b" ]; then

@@ -341,6 +341,12 @@ function resolveDNS {
     ($(isIp $DNS)) && echo $DNS || echo -e ""
 }
 
+function isSubStr {
+    STR=$1
+    SUB=$2
+    [[ $STR == *"$SUB"* ]] && echo "true" || echo "false"
+}
+
 displayAlign() {
   align=$1
   width=$2

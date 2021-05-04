@@ -7,6 +7,8 @@ set -x
 echoInfo "INFO: Staring validator setup ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
@@ -15,6 +17,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+rm -fv $CFG_CHECK
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rf $SEKAID_HOME
@@ -99,8 +102,24 @@ fi
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256 $LOCAL_GENESIS
 
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        SENTRY_IP=$(resolveDNS sentry)
+        PRIV_SENTRY_IP=$(resolveDNS priv_sentry)
+        if [ ! -z "$SENTRY_IP" ] || [ ! -z "$PRIV_SENTRY_IP" ] ; then
+            echoInfo "INFO: Sentry ($SENTRY_IP) or Private Sentry ($PRIV_SENTRY_IP) container was found"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for sentry or private sentry to start..."
+            sleep 15
+        fi
+    done
+fi
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
+touch $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace  

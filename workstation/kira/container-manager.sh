@@ -16,8 +16,6 @@ echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
 SCAN_DONE="$KIRA_SCAN/done"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
-NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
@@ -45,7 +43,7 @@ KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+    NETWORKS=$(globGet "NETWORKS")
     KADDR=$(tryCat $KADDR_PATH "")
     LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
