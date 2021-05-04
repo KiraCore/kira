@@ -41,7 +41,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
 
     if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
         echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found within the private key store '$MNEMONICS'"
-        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
         VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
         [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
         echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
@@ -49,7 +49,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
 
     if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
         echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found within the private key store '$MNEMONICS'"
-        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
+        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
         VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
         [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
         echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"

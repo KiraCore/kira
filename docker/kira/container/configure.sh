@@ -93,9 +93,57 @@ echoInfo "INFO: Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $CFG_external_address"
 
 if [ -f "$LOCAL_PEERS_PATH" ] ; then 
-    echoInfo "INFO: List of external peers was found"
+    echoInfo "INFO: List of external peers was found, adding to peers config"
     set +x
     while read peer ; do
+        [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
+        CFG_persistent_peers="${CFG_persistent_peers}${peer}"
+    done < $LOCAL_PEERS_PATH
+    set -x
+fi
+
+if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
+    echoInfo "INFO: List of external seeds was found, adding to seeds config"
+    set +x
+    while read seed ; do
+        echoInfo "INFO: Adding extra seed '$seed'"
+        [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
+        CFG_seeds="${CFG_seeds}${seed}"
+    done < $LOCAL_SEEDS_PATH
+    set -x
+fi
+
+if [ ! -z "$CFG_seeds" ] ; then
+    echoInfo "INFO: Seed configuration is available, testing..."
+    TMP_CFG_seeds=""
+    for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
+        seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
+        [ -z "$seed" ] && echo "WARNING: seed not found" && continue
+        addrArr1=( $(echo $seed | tr "@" "\n") )
+        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+        nodeId=${addrArr1[0],,}
+        dns=${addrArr2[0],,}
+        port=${addrArr2[1],,}
+        addr=$(resolveDNS $dns)
+
+        (! $(isIp "$addr")) && "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
+        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isIp "$port")) && "WARNINIG: Seed '$seed' PORT is invalid!" && continue
+
+        seed="tcp://${nodeId}@${addr}:${port}"
+        echoInfo "INFO: Adding extra seed '$seed'"
+        [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
+        TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
+    done
+    CFG_seeds=$TMP_CFG_seeds
+else
+    echoWarn "WARNING: Seeds configuration is available, testing..."
+fi
+
+if [ ! -z "$CFG_persistent_peers" ] ; then
+    echoInfo "INFO: Peers configuration is available, testing..."
+    TMP_CFG_persistent_peers=""
+    for peer in $(echo $CFG_persistent_peers | sed "s/,/ /g") ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         [ -z "$peer" ] && echo "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
@@ -113,39 +161,16 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         echoInfo "INFO: Adding extra peer '$peer'"
 
         #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
-        [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
+        [ ! -z "$TMP_CFG_persistent_peers" ] && TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers},"
         [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
         
         #CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
-        CFG_persistent_peers="${CFG_persistent_peers}${peer}"
+        TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers}${peer}"
         CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
-    done < $LOCAL_PEERS_PATH
-    set -x
-fi
-
-if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
-    echoInfo "INFO: List of external seeds was found"
-    set +x
-    while read seed ; do
-        seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
-        [ -z "$seed" ] && echo "WARNING: seed not found" && continue
-        addrArr1=( $(echo $seed | tr "@" "\n") )
-        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=${addrArr1[0],,}
-        dns=${addrArr2[0],,}
-        port=${addrArr2[1],,}
-        addr=$(resolveDNS $dns)
-
-        (! $(isIp "$addr")) && "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
-        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
-        (! $(isIp "$port")) && "WARNINIG: Seed '$seed' PORT is invalid!" && continue
-
-        seed="tcp://${nodeId}@${addr}:${port}"
-        echoInfo "INFO: Adding extra seed '$seed'"
-        [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
-        CFG_seeds="${CFG_seeds}${seed}"
-    done < $LOCAL_SEEDS_PATH
-    set -x
+    done
+    CFG_persistent_peers=$TMP_CFG_persistent_peers
+else
+    echoWarn "WARNING: Peers configuration is available, testing..."
 fi
 
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
