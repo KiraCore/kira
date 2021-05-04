@@ -53,12 +53,12 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     
     if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$VALIDATOR_SEED"
+        CFG_persistent_peers="tcp://$SENTRY_SEED"
     else
         CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$SENTRY_SEED"
     fi
 
-    CFG_seeds="tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
+    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"

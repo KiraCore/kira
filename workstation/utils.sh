@@ -250,6 +250,13 @@ function globGet() {
     fi
 }
 
+function globGetFile() {
+    FNAME=$(globName "$1")
+    if [ ! -z "$FNAME" ] ; then
+        echo "${GLOB_STORE_DIR}/$FNAME"
+    fi
+}
+
 function globSet() {
     FNAME=$(globName "$1")
     if [ ! -z "$FNAME" ] ; then

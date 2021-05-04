@@ -7,13 +7,12 @@ set -x
 
 echo "INFO: Started kira network contianers monitor..."
 
-SCRIPT_START_TIME="$(date -u +%s)"
+timerStart
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 NETWORKS=$(globGet "NETWORKS")
 CONTAINERS=$(globGet "CONTAINERS")
-SCAN_DONE="$KIRA_SCAN/done"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -23,11 +22,8 @@ echoWarn "|        KIRA_SCAN: $KIRA_SCAN"
 echoWarn "|           CONTAINERS: $CONTAINERS"
 echoWarn "|             NETWORKS: $NETWORKS"
 echoWarn "| INTERX REFERENCE DIR: $INTERX_REFERENCE_DIR"
-echoWarn "|    SCAN DONE MISSING: $SCAN_DONE_MISSING"
 echoWarn "------------------------------------------------"
 set -x
-
-SCAN_DONE_MISSING="false" && [ ! -f $SCAN_DONE ] && SCAN_DONE_MISSING="true"
 
 [ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
 [ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
@@ -97,17 +93,18 @@ done
 # save latest known block height
 OLD_LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
+    globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
 
-[ "${SCAN_DONE_MISSING,,}" == "true" ] && touch $SCAN_DONE
+globSet SCAN_DONE true
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

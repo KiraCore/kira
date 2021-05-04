@@ -8,7 +8,6 @@ set -x
 echoInfo "INFO: Started kira network scan $KIRA_SETUP_VER"
 
 SCAN_LOGS="$KIRA_SCAN/logs"
-SCAN_DONE="$KIRA_SCAN/done"
 HOSTS_SCAN_PATH="$KIRA_SCAN/hosts"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
@@ -23,7 +22,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
-globDel "DISK_AVAIL" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS"
+globDel "DISK_AVAIL" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE"
 
 while : ; do
     timerStart -v

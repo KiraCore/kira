@@ -6,8 +6,7 @@ source $KIRA_MANAGER/utils.sh
 # cat $KIRA_SCAN/peers.logs
 set -x
 
-SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DONE="$KIRA_SCAN/done"
+timerStart
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
@@ -15,7 +14,8 @@ INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
 INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"
 MIN_SNAP_SIZE="524288"
 
-while [ ! -f $SCAN_DONE ] ; do
+
+while [ "$(globGet SCAN_DONE)" != "true" ] ; do
     echo "INFO: Waiting for monitor scan to finalize run..."
     sleep 10
 done
@@ -178,7 +178,7 @@ cp -afv $TMP_BOOK_PUBLIC $INTERX_PEERS_PATH
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: PEERS MONITOR                      |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
 

@@ -17,13 +17,13 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
     CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
 
-    SCAN_DONE="$KIRA_SCAN/done"
     STATUS_SCAN_PATH="$KIRA_SCAN/status"
 
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
-        rm -fv $SCAN_DONE || echo \"ERROR: Failed to remove scaner finalization flaf\"
+        . $KIRA_MANAGER/utils.sh || echo \"ERROR: Failed to load utils\"
+        globSet SCAN_DONE false || echo \"ERROR: Failed to remove scaner finalization flaf\"
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"

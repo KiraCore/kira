@@ -6,6 +6,7 @@ source $KIRA_MANAGER/utils.sh
 set +x
 echoInfo "INFO: Launching KIRA Network Manager..."
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
+globSet SCAN_DONE false
 
 if [ "${USER,,}" != root ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
@@ -43,7 +44,6 @@ while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
 done
 
 cd $KIRA_HOME
-SCAN_DONE="$KIRA_SCAN/done"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
@@ -247,7 +247,7 @@ while :; do
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     else
-        while [ ! -f $SCAN_DONE ]; do
+        while [ "$(globGet SCAN_DONE)" != "true" ]; do
             sleep 1
         done
         LOADING="false"
@@ -410,7 +410,8 @@ while :; do
         exit 0
     fi
 
-    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
+    # trigger re-scan if loading requested
+    [ "${LOADING,,}" == "true" ] && globSet SCAN_DONE false
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then

@@ -15,7 +15,6 @@ set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
-SCAN_DONE="$KIRA_SCAN/done"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
@@ -75,7 +74,7 @@ while : ; do
 
     if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
         echo -e "|\e[0m\e[31;1m      PLEASE WAIT, LOADING CONTAINER STATUS ...        \e[36;1m|"
-        while [ ! -f $SCAN_DONE ] || [ ! -f "$CONTAINER_STATUS" ] ; do
+        while [ "$(globGet SCAN_DONE)" != "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; do
             sleep 1
         done
         LOADING="false"
@@ -369,7 +368,8 @@ while : ; do
         break
     fi
 
-    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
+    # trigger re-scan if loading requested
+    [ "${LOADING,,}" == "true" ] && globSet SCAN_DONE false
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 
