@@ -37,9 +37,10 @@ if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
 elif [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 else
+    #("kiranet" "sentrynet" "servicenet" "regnet")
     #EXTERNAL_ADDR=$(resolveDNS $NODE_TYPE)
     #[ -z "$EXTERNAL_ADDR" ] && EXTERNAL_ADDR="$NODE_TYPE"
-    EXTERNAL_ADDR=$NODE_TYPE
+    EXTERNAL_ADDR="${NODE_TYPE}.${CONTAINER_NETWORK}.local"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
 fi
 
@@ -129,7 +130,7 @@ if [ ! -z "$CFG_seeds" ] ; then
         port=${addrArr2[1],,}
         #addr=$(resolveDNS $dns)
 
-        (! $(isIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
+        (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
@@ -159,7 +160,7 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         port=${addrArr2[1],,}
         #addr=$(resolveDNS $dns)
         
-        (! $(isIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
+        (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Peer '$peer' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the peers config." && continue
