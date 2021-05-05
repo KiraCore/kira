@@ -105,10 +105,8 @@ sha256 $LOCAL_GENESIS
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_IP=$(resolveDNS sentry)
-        PRIV_SENTRY_IP=$(resolveDNS priv_sentry)
-        if [ ! -z "$SENTRY_IP" ] || [ ! -z "$PRIV_SENTRY_IP" ] ; then
-            echoInfo "INFO: Sentry ($SENTRY_IP) or Private Sentry ($PRIV_SENTRY_IP) container was found"
+        if (! $(isPortOpen sentry.sentrynet.local 26656)) && (! $(isPortOpen priv-sentry.sentrynet.local 26656)) ; then
+            echoInfo "INFO: Sentry or Private Sentry container is NOT running"
             break
         else
             echoWarn "WARNINIG: Waiting for sentry or private sentry to start..."

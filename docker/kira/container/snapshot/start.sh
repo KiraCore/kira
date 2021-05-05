@@ -93,10 +93,8 @@ fi
 
 echoInfo "INFO: External sync is expected from sentry or priv_sentry"
 while : ; do
-    SENTRY_IP=$(resolveDNS sentry)
-    PRIV_SENTRY_IP=$(resolveDNS priv_sentry)
-    if [ ! -z "$SENTRY_IP" ] || [ ! -z "$PRIV_SENTRY_IP" ] ; then
-        echoInfo "INFO: Sentry ($SENTRY_IP) or Private Sentry ($PRIV_SENTRY_IP) container was found"
+    if (! $(isPortOpen sentry.sentrynet.local 26656)) && (! $(isPortOpen sentry.sentrynet.local 26656)) ; then
+        echoInfo "INFO: Sentry or Private Sentry node is NOT started"
         break
     else
         echoWarn "WARNINIG: Waiting for sentry or private sentry to start..."

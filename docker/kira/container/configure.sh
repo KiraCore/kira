@@ -37,10 +37,7 @@ if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
 elif [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 else
-    #("kiranet" "sentrynet" "servicenet" "regnet")
-    #EXTERNAL_ADDR=$(resolveDNS $NODE_TYPE)
-    #[ -z "$EXTERNAL_ADDR" ] && EXTERNAL_ADDR="$NODE_TYPE"
-    EXTERNAL_ADDR="${NODE_TYPE}.${CONTAINER_NETWORK}.local"
+    EXTERNAL_ADDR="$HOSTNAME"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
 fi
 

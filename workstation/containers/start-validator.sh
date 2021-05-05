@@ -43,8 +43,8 @@ set -x
 rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry.${CONTAINER_NETWORK}.local:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry.${CONTAINER_NETWORK}.local:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -68,6 +68,7 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
