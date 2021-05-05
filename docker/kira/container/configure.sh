@@ -126,9 +126,9 @@ if [ ! -z "$CFG_seeds" ] ; then
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
-        dns=${addrArr2[0],,}
+        addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
-        #addr=$(resolveDNS $dns)
+        #addr=$(resolveDNS $addr)
 
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
@@ -156,9 +156,9 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
-        dns=${addrArr2[0],,}
+        addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
-        #addr=$(resolveDNS $dns)
+        #addr=$(resolveDNS $addr)
         
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
