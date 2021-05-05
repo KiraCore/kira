@@ -29,7 +29,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-rm -fv $CFG_CHECK
+touch $CFG_CHECK
 
 ([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
@@ -107,7 +107,8 @@ done
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-touch $EXECUTED_CHECK $CFG_CHECK
+touch $EXECUTED_CHECK
+rm -fv $CFG_CHECK
 
 touch ./output.log
 LAST_SNAP_BLOCK=0

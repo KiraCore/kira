@@ -52,6 +52,7 @@ VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
+CONTAINERS=""
 CONTAINERS_COUNT="0"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
@@ -75,7 +76,6 @@ while :; do
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    CONTAINERS=$(globGet "CONTAINERS")
     PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
     KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
@@ -94,6 +94,7 @@ while :; do
         CATCHING_UP="false"
         ESSENTIAL_CONTAINERS_COUNT=0
         VALIDATOR_RUNNING="false"
+        CONTAINERS=$(globGet "CONTAINERS")
 
         i=-1
         for name in $CONTAINERS; do
@@ -231,8 +232,16 @@ while :; do
         i=-1
         for name in $CONTAINERS; do
             i=$((i + 1))
+            COMMON_PATH="$DOCKER_COMMON/$name"
+            HALT_FILE="$COMMON_PATH/halt"
+            CONFIG_FILE="$COMMON_PATH/configuring"
+
             STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
             HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}" && ($(isNullOrEmpty "$HEALTH_TMP")) && HEALTH_TMP=""
+
+            [ -f "$HALT_FILE" ] && STATUS_TMP="halted"
+            [ -f "$CONFIG_FILE" ] && STATUS_TMP="configuring..."
+
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then

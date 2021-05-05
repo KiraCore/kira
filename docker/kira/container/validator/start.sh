@@ -17,7 +17,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-rm -fv $CFG_CHECK
+touch $CFG_CHECK
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rf $SEKAID_HOME
@@ -105,8 +105,8 @@ sha256 $LOCAL_GENESIS
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
+        SENTRY_OPEN=$(isPortOpen sentry.kiranet.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.kiranet.local 26656)
         if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break
@@ -119,7 +119,7 @@ fi
 
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
-touch $CFG_CHECK
+rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace  

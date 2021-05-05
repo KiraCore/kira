@@ -22,7 +22,7 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
-globDel "DISK_AVAIL" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE"
+globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE"
 
 while : ; do
     timerStart -v
