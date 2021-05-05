@@ -93,6 +93,14 @@ function isNaturalNumber() {
     fi
 }
 
+function isPortOpen() {
+    ADDR=$1 && PORT=$2 && TIMEOUT=$3
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=1
+    if (! $(isDnsOrIp $ADDR)) || (! $(isPort $PORT)) ; then echo "false"
+    elif timeout $TIMEOUT nc -z $ADDR $PORT ; then echo "true"
+    else echo "false" ; fi
+}
+
 function fileSize() {
     BYTES=$(stat -c%s $1 2> /dev/null || echo -n "")
     ($(isNaturalNumber "$BYTES")) && echo "$BYTES" || echo -n "0"

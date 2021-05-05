@@ -52,10 +52,10 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    if [ "${NEW_NETWORK,,}" == true ] ; then
+        CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     else
-        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$PRIV_SENTRY_SEED"
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
     fi
 
     [ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
@@ -98,7 +98,7 @@ docker run -d \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
-    -e CFG_max_packet_msg_payload_size="131072" \
+    -e CFG_max_packet_msg_payload_size="$(globGet MTU)" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SENTRY_NODE_ID" \
     -e NEW_NETWORK="$NEW_NETWORK" \

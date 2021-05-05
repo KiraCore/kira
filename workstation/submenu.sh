@@ -14,6 +14,7 @@ else
 fi
 
 systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped or does NOT exist yet"
+systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
 globSet LATEST_BLOCK 0
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
@@ -134,13 +135,18 @@ while :; do
 done
 set -x
 
-systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
-
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
-
 CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+set +e && source $ETC_PROFILE &>/dev/null && set -e
+
+echoInfo "INFO: MTU Value Discovery..."
+MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+(! $(isNaturalNumber $MTU)) && MTU=1500
+MTU=$(($MTU - 100)) && (($MTU < 100)) && MTU=9000
+globSet MTU $MTU
 
 rm -rfv $KIRA_UPDATE
 

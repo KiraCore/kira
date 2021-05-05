@@ -70,8 +70,8 @@ SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' |
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-CFG_seeds="tcp://$SEED_SEED"
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+[ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
@@ -123,7 +123,7 @@ docker run -d \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
-    -e CFG_max_packet_msg_payload_size="131072" \
+    -e CFG_max_packet_msg_payload_size="$(globGet MTU)" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \

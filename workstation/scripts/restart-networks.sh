@@ -13,6 +13,8 @@ RESTART=$3
 ( [ "$TARGET" == "null" ] || [ "$TARGET" == "*" ] ) && TARGET=""
 
 START_TIME="$(date -u +%s)"
+MTU=$(globGet MTU)
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: RESTART-NETWORKS SCRIPT             |"
@@ -21,6 +23,7 @@ echoWarn "| BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|   RECONNECT: $RECONNECT"
 echoWarn "|     RESTART: $RESTART"
 echoWarn "|      TARGET: $TARGET"
+echoWarn "|         MTU: $MTU"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -32,12 +35,6 @@ fi
 declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
-
-echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
-(! $(isNaturalNumber $MTU)) && MTU=1500
-MTU=$(($MTU - 100))
-(($MTU < 100)) && MTU=1400
 
 for (( i=0; i<${len}; i++ )) ; do
   network=${networks[$i]}
