@@ -88,7 +88,7 @@ docker run -d \
     -e CFG_dial_timeout="15s" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
-    -e CFG_max_packet_msg_payload_size="$(globGet MTU)" \
+    -e CFG_max_packet_msg_payload_size="$(($(globGet MTU) * 256))" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
     -e CFG_pex="false" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
