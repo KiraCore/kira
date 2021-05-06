@@ -23,12 +23,13 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
 timerDel "DISK_CONS" "NET_CONS"
-globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE" "DISK_CONS" "NET_RECEIVED" "NET_TRANSMITTED" "NET_OUT" "NET_IN" "NET_PRIOR"
+globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "CONTAINERS" "SCAN_DONE" "DISK_CONS" "NET_RECEIVED" "NET_TRANSMITTED" "NET_OUT" "NET_IN" "NET_PRIOR"
 
 while : ; do
     timerStart -v
     if (! $(isCommand "docker"))  ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
+        globSet SCAN_DONE true
         sleep 10
         continue
     fi
