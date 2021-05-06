@@ -23,8 +23,6 @@ TMP_PEERS_SHUFF="/tmp/$ADDR.peers.shuff"
 URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt"
 URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
 
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
-
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "|   STARTING KIRA PUBLIC PEERS SCAN v0.2.2.3   |"
@@ -99,7 +97,7 @@ while : ; do
         echoWarn "WARNING: Address '$ip' is already present in the seeds list" && continue 
     fi
 
-    TMP_HEIGHT=$(cat $LATEST_BLOCK_SCAN_PATH || echo "")
+    TMP_HEIGHT=$(globGet LATEST_BLOCK)
     if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT

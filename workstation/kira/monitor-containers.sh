@@ -9,10 +9,9 @@ echo "INFO: Started kira network contianers monitor..."
 
 timerStart
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
-NETWORKS=$(globGet "NETWORKS")
-CONTAINERS=$(globGet "CONTAINERS")
+NETWORKS=$(globGet NETWORKS)
+CONTAINERS=$(globGet CONTAINERS)
 
 set +x
 echoWarn "------------------------------------------------"
@@ -25,7 +24,7 @@ echoWarn "| INTERX REFERENCE DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 set -x
 
-[ ! -f "$LATEST_BLOCK_SCAN_PATH" ] && echo "0" > $LATEST_BLOCK_SCAN_PATH
+[ -z "$(globGet LATEST_BLOCK)" ] && globSet LATEST_BLOCK "0"
 [ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
 
 mkdir -p "$INTERX_REFERENCE_DIR"
@@ -91,10 +90,9 @@ for name in $CONTAINERS; do
 done
 
 # save latest known block height
-OLD_LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0") && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
+OLD_LATEST_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
-    echo "$NEW_LATEST_BLOCK" > $LATEST_BLOCK_SCAN_PATH
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
 fi
 # save latest known status

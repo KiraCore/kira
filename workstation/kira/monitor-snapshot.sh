@@ -7,7 +7,6 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 timerStart
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -22,7 +21,7 @@ while [ "$(globGet SCAN_DONE)" != "true" ] ; do
     sleep 10
 done
 
-LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+LATEST_BLOCK=$(globGet LATEST_BLOCK)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x

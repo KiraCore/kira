@@ -13,7 +13,6 @@ SYNC_FROM_SNAP=$2
 CONTAINER_NAME="snapshot"
 CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 SNAP_STATUS="$KIRA_SNAP/status"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -24,7 +23,7 @@ CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
-LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
+LATETS_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"

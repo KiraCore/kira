@@ -44,7 +44,6 @@ while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
 done
 
 cd $KIRA_HOME
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
@@ -78,7 +77,7 @@ while :; do
     START_TIME="$(date -u +%s)"
     PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
-    KIRA_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+    KIRA_BLOCK=$(globGet LATEST_BLOCK)
     CONSENSUS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="???"
     
     if [ -f "$SNAP_DONE" ]; then

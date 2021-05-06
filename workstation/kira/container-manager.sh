@@ -17,7 +17,6 @@ echoInfo "INFO: Launching KIRA Container Manager..."
 cd $KIRA_HOME
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
@@ -44,7 +43,7 @@ while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(globGet "NETWORKS")
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+    LATEST_BLOCK=$(globGet LATEST_BLOCK)
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then

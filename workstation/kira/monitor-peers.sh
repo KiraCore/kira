@@ -7,7 +7,6 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 timerStart
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
@@ -24,7 +23,6 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "|     STARTING KIRA PEERS SCAN $KIRA_SETUP_VER        |"
 echoWarn "|-----------------------------------------------"
-echoWarn "| LATEST_BLOCK_SCAN_PATH: $LATEST_BLOCK_SCAN_PATH"
 echoWarn "|        PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
 echoWarn "|        SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
 echoWarn "|   INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
@@ -91,7 +89,7 @@ while read ip; do
         echoWarn "WARNING: Address '$ip' is already present in the address book" && continue 
     fi
 
-    TMP_HEIGHT=$(tryCat $LATEST_BLOCK_SCAN_PATH "")
+    TMP_HEIGHT=$(globGet LATEST_BLOCK)
     if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT
