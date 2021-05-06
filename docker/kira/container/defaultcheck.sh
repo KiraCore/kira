@@ -34,9 +34,10 @@ EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo -n "")
 (! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
 
 echoInfo "INFO: Logs cleanup..."
-find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate common logs"
+find "/val/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
+find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
 
 FAILED="false"
 if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then

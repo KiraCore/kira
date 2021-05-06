@@ -27,7 +27,7 @@ globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE" "DI
 
 while : ; do
     timerStart -v
-    if ! command -v docker ; then
+    if (! $(isCommand "docker"))  ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
         sleep 10
         continue

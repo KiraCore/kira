@@ -364,6 +364,10 @@ function isSubStr {
     [[ $STR == *"$SUB"* ]] && echo "true" || echo "false"
 }
 
+function isCommand {
+    if command -v docker ; then echo "true" ; else echo "false" ; fi
+}
+
 displayAlign() {
   align=$1
   width=$2

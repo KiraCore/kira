@@ -6,6 +6,8 @@ source $KIRA_MANAGER/utils.sh
 # cat "$KIRA_SCAN/hardware.log"
 set -x
 
+# Largest File Discovery: find / -type f -printf '%s %p\n' | sort -nr | head -10
+
 timerStart
 
 set +x

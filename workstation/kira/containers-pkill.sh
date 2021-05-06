@@ -13,7 +13,7 @@ UNHALT=$3
 [ -z "$AWAIT" ] && AWAIT="false"
 [ -z "$UNHALT" ] && UNHALT="true"
 
-if command -v docker ; then
+if ($(isCommand "docker")) ; then
     CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "")
 else
     echoErr "ERROR: Docker command not found!"
@@ -22,13 +22,13 @@ fi
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "| STARTING KIRA MULTI-CONTAINER TERMINATOR $KIRA_SETUP_VER"
+echoWarn "|   STARTING: KIRA MULTI-CONTAINER TERMINATOR $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
-echoWarn "|     CONTAINERS: $CONTAINERS"
-echoWarn "|     AWAIT EXIT: $AWAIT"
-echoWarn "|           TASK: $TASK"
-echoWarn "|         UNHALT: $UNHALT"
-echoWarn "|-------------------------------------------------"
+echoWarn "| CONTAINERS: $CONTAINERS"
+echoWarn "| AWAIT EXIT: $AWAIT"
+echoWarn "|       TASK: $TASK"
+echoWarn "|     UNHALT: $UNHALT"
+echoWarn "--------------------------------------------------"
 set -x
 
 if [ ! -z "$CONTAINERS" ] ; then

@@ -13,7 +13,7 @@ echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"
 echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|             ID: $ID"
-echoWarn "|-------------------------------------------------"
+echoWarn "--------------------------------------------------"
 set -x
 
 CONTAINERS=$(globGet "CONTAINERS")

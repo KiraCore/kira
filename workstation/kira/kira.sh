@@ -112,8 +112,8 @@ while :; do
             # if some other node then snapshot is syncig then infra is not ready
             [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
 
-            STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
-            HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}"
+            STATUS_TMP=$(globGet "${name}_STATUS")
+            HEALTH_TMP=$(globGet "${name}_HEALTH")
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
@@ -235,8 +235,8 @@ while :; do
             HALT_FILE="$COMMON_PATH/halt"
             CONFIG_FILE="$COMMON_PATH/configuring"
 
-            STATUS_TMP="STATUS_$name" && STATUS_TMP="${!STATUS_TMP}"
-            HEALTH_TMP="HEALTH_$name" && HEALTH_TMP="${!HEALTH_TMP}" && ($(isNullOrEmpty "$HEALTH_TMP")) && HEALTH_TMP=""
+            STATUS_TMP=$(globGet "${name}_STATUS")
+            HEALTH_TMP=$(globGet "${name}_HEALTH")
 
             [ -f "$HALT_FILE" ] && STATUS_TMP="halted"
             [ -f "$CONFIG_FILE" ] && STATUS_TMP="configuring..."

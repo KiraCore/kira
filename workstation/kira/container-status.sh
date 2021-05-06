@@ -63,14 +63,16 @@ if [ "${EXISTS,,}" == "true" ] ; then
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
     jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "" > $DOCKER_NETWORKS
 
-    STATUS=$(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "")
+    echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
+    echo $(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_HEALTH"
+
     PAUSED=$(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")
     RESTARTING=$(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "")
     STARTED_AT=$(jsonQuickParse "StartedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
     FINISHED_AT=$(jsonQuickParse "FinishedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
     HOSTNAME=$(jsonParse "0.Config.Hostname" $DOCKER_INSPECT 2> /dev/null || echo -n "")
     PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
-    [ -f "$HALT_FILE" ] && HEALTH="halted" || HEALTH=$(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "")
+    
 
     for net in $NETWORKS; do
         sleep 0.1
@@ -79,27 +81,23 @@ if [ "${EXISTS,,}" == "true" ] ; then
     done
 else
     echoErr "ERROR: Could not inspect '$NAME' container '$ID'"
-    STATUS=""
+    globSet "${NAME}_STATUS" "stopped"
+    globSet "${NAME}_HEALTH" ""
     PAUSED=""
-    HEALTH=""
     RESTARTING=""
     STARTED_AT=""
     FINISHED_AT=""
     rm -fv $DOCKER_STATE $DOCKER_CONFIG $DOCKER_NETWORKS
 fi
 
-[ -z "$STATUS" ] && STATUS="stopped"
 [ -z "$PAUSED" ] && PAUSED="false"
-[ -z "$HEALTH" ] && HEALTH="null"
 [ -z "$RESTARTING" ] && RESTARTING="false"
 [ -z "$STARTED_AT" ] && STARTED_AT="0"
 [ -z "$FINISHED_AT" ] && FINISHED_AT="0"
 
 echoInfo "INFO: Dumpiung data into '$VARS_FILE'"
 
-echo "STATUS_$NAME=\"$STATUS\"" >> $VARS_FILE
 echo "PAUSED_$NAME=\"$PAUSED\"" >> $VARS_FILE
-echo "HEALTH_$NAME=\"$HEALTH\"" >> $VARS_FILE
 echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE
 echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE
 echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE

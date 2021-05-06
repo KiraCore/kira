@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.1.4"
+SETUP_VER="v0.3.1.5"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -311,15 +311,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
     echo "INFO: Init script restart finished."
     exit 0
-else
-    echo "INFO: Skipping init update and cleaning up..."
-    apt-get autoclean || echo "WARNING: autoclean failed"
-    apt-get clean || echo "WARNING: clean failed"
-    apt-get autoremove || echo "WARNING: autoremove failed"
-    journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
-
-    # NUCLEAR OPTION (USE ONLY IF YOU ENTIRELY RUN OUT OF SPACE) MAKE SURE YOU RESTART MACHINE BEFORE APPLYING
-    # apt-get remove -y --purge $(dpkg -l 'linux-*' | sed '/^ii/!d;/'"$(uname -r | sed "s/\(.*\)-\([^0-9]\+\)/\1/")"'/d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d')
 fi
 
 CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -334,6 +325,15 @@ CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" 
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+
+echo "INFO: Startting cleanup..."
+apt-get autoclean || echo "WARNING: autoclean failed"
+apt-get clean || echo "WARNING: clean failed"
+apt-get autoremove || echo "WARNING: autoremove failed"
+journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
+
+find "/val/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
+find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
 
 set +x
 echo "INFO: Your host environment was initialized"
