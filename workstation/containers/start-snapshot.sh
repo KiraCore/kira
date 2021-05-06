@@ -125,6 +125,7 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \

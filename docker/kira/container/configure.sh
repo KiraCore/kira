@@ -240,9 +240,9 @@ echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
 (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
-(! $(isNaturalNumber $VALIDATOR_MIN_HEIGHT)) && VALIDATOR_MIN_HEIGHT=0
+(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
 (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
-[[ $VALIDATOR_MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+[[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
 [[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
 if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
@@ -259,8 +259,8 @@ EOL
     #rm -fv "$LOCAL_STATE.tmp"
 fi
 
-[[ $LATEST_BLOCK_HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] && \
-CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+[[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGHT ]] && \
+CDHelper text lineswap --insert="MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"

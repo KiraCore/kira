@@ -322,17 +322,19 @@ function timerSpan() {
     return 0
 }
 
-function timerClear() {
-    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
-    globSet "timer_start_${NAME}" ""
-    globSet "timer_end_${NAME}" ""
+function timerDel() {
+    if [ -z "$@" ] ; then
+        var="${$}"
+        globSet "timer_start_${var}" ""
+        globSet "timer_end_${var}" ""
+    else
+        for var in "$@" ; do
+            [ -z "$var" ] && var="${$}"
+            globSet "timer_start_${var}" ""
+            globSet "timer_end_${var}" ""
+        done
+    fi
     return 0
-}
-
-function timersClear() {
-    for var in "$@" ; do
-        timerClear "$var"
-    done
 }
 
 function prettyTime {

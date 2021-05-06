@@ -36,7 +36,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         cd $SEKAID_HOME/config
   
         SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
-        echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"
+        echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $MIN_HEIGHT"
   
         if [ -f "$DATA_GENESIS" ] ; then
             echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."

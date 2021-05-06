@@ -23,7 +23,17 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     network="regnet"
     subnet=$KIRA_REGISTRY_SUBNET
     echoInfo "INFO: Recreating $network network and $subnet subnet..."
-    docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
+    
+    FAILED="false"
+    timeout 30 docker network rm $network || FAILED="true"
+    
+    if [ "${FAILED,,}" == "true" ] ; then
+        echoWarn "WARNING: Failed to remove $network network"
+        $KIRA_MANAGER/scripts/update-ifaces.sh
+        $KIRA_SCRIPTS/docker-restart.sh
+        timeout 30 docker network rm $network || echoWarn "WARNING: Failed to remove $network network after service restart"
+    fi
+    
     $KIRA_MANAGER/scripts/update-ifaces.sh
     docker network create --opt com.docker.network.driver.mtu=$(globGet MTU) --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
 

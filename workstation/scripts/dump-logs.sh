@@ -6,6 +6,7 @@ set -x
 
 NAME=$1
 DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
+ID=$(globGet "${NAME}_ID")
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -18,6 +19,7 @@ echoWarn "------------------------------------------------"
 echoWarn "|          STARTED: DUMP LOGS v0.0.2           |"
 echoWarn "------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
+echoWarn "|   CONTAINER ID: $ID"
 echoWarn "|    ZIP RESULTS: $DUMP_ZIP"
 echoWarn "| CONTAINER DUMP: $CONTAINER_DUMP"
 echoWarn "------------------------------------------------"
@@ -26,7 +28,6 @@ set -x
 rm -rfv $CONTAINER_DUMP
 mkdir -p $CONTAINER_DUMP
 
-ID=$($KIRA_SCRIPTS/container-id.sh "$NAME")
 if [ -z $ID ] ; then
     echo "WARNING: Can't dump files from $NAME container because it does not exists"
     exit 0

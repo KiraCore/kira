@@ -81,11 +81,11 @@ while : ; do
     fi
 
     source "$CONTAINER_STATUS"
-
-    ID="ID_$NAME" && ID="${!ID}"
-    EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
-    REPO="REPO_$NAME" && REPO="${!REPO}"
-    BRANCH="BRANCH_$NAME" && BRANCH="${!BRANCH}"
+    
+    ID=$(globGet "${NAME}_ID")
+    EXISTS=$(globGet "${NAME}_EXISTS")
+    REPO=$(globGet "${NAME}_REPO")
+    BRANCH=$(globGet "${NAME}_BRANCH")
     STATUS="STATUS_$NAME" && STATUS="${!STATUS}"
     HEALTH="HEALTH_$NAME" && HEALTH="${!HEALTH}"
     RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"

@@ -53,8 +53,10 @@ else
     EXISTS="false"
 fi
 
-echo "ID_$NAME=\"$ID\"" > $VARS_FILE
-echo "EXISTS_$NAME=\"$EXISTS\"" >> $VARS_FILE
+globSet "${NAME}_ID" $ID
+globSet "${NAME}_EXISTS" $EXISTS
+globSet "${NAME}_REPO" $REPO
+globSet "${NAME}_BRANCH" $BRANCH
 
 if [ "${EXISTS,,}" == "true" ] ; then
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
@@ -101,8 +103,6 @@ echo "HEALTH_$NAME=\"$HEALTH\"" >> $VARS_FILE
 echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE
 echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE
 echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE
-echo "BRANCH_$NAME=\"$BRANCH\"" >> $VARS_FILE
-echo "REPO_$NAME=\"$REPO\"">> $VARS_FILE
 echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE
 echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE
 

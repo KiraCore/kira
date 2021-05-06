@@ -39,13 +39,6 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container was initialized"
-            #if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-            #    echoInfo "INFO: Restarting network interfaces..."
-            #    $KIRA_MANAGER/scripts/update-ifaces.sh
-            #    IFACES_RESTARTED="true"
-            #    i=0
-            #    continue
-            #fi
         fi
 
         echoInfo "INFO: Awaiting node status..."
@@ -152,16 +145,17 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
         ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [[ $HEIGHT -ge $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
+        [[ $HEIGHT -ge $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $MIN_HEIGH ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
 
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
+        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
 
         set +x
-        echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30

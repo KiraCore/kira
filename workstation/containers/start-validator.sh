@@ -101,7 +101,7 @@ docker run -d \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
-    -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \

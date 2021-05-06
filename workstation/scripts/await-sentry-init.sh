@@ -18,8 +18,6 @@ IFACES_RESTARTED="false"
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
-timersClear "BLOCK_HEIGHT_SPAN"
-
 retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
@@ -132,16 +130,15 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     i=0
     PREVIOUS_HEIGHT=0
-    START_TIME_HEIGHT="$(date -u +%s)"
+    timerDel "BLOCK_HEIGHT_SPAN"
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then
             echoInfo "INFO: Awaiting trusted node status..."
-            TRUSTED_KIRA_STATUS=$(timeout 16 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
-            TRUSTED_HEIGHT=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
-            if ($(isNaturalNumber "$TRUSTED_HEIGHT")) && [[ "$TRUSTED_HEIGHT" -gt "$VALIDATOR_MIN_HEIGHT" ]] ; then 
-                echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
-                VALIDATOR_MIN_HEIGHT=$TRUSTED_HEIGHT
-                CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$TRUSTED_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+            LATEST_BLOCK=$(globGet LATEST_BLOCK)
+            MIN_HEIGH=$(globGet MIN_HEIGHT)
+            if ($(isNaturalNumber "$LATEST_BLOCK")) && [[ "$LATEST_BLOCK" -gt "$MIN_HEIGH" ]] ; then 
+                echoInfo "INFO: Minimum expected block height increased from $MIN_HEIGH to $LATEST_BLOCK"
+                MIN_HEIGH=$LATEST_BLOCK && globSet MIN_HEIGHT $MIN_HEIGH
             fi
         fi
 
@@ -173,28 +170,30 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
         DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
         DELTA_TIME=$(timerSpan "BLOCK_HEIGHT_SPAN")
-        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]]  && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]]  && [[ $HEIGHT -le $MIN_HEIGH ]] ; then
             PREVIOUS_HEIGHT=$HEIGHT
             timerStart "BLOCK_HEIGHT_SPAN"
             SYNCING="true"
         fi
         set -x
 
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
+        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
-        elif [[ $HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] ; then
-            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $HEIGHT"
-            VALIDATOR_MIN_HEIGHT=$HEIGHT
+        elif [[ $HEIGHT -gt $MIN_HEIGH ]] ; then
+            echoInfo "INFO: Minimum expected block height increased from $MIN_HEIGH to $HEIGHT"
+            globSet MIN_HEIGHT $HEIGHT
+            MIN_HEIGHT=$HEIGHT
         fi
 
-        BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
+        BLOCKS_LEFT=$(($MIN_HEIGHT - $HEIGHT))
         set +x
         if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
-        echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        echoInfo "INFO: Minimum height: $MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
@@ -230,7 +229,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     KIRA_SNAP_PATH=$DESTINATION_FILE
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet MIN_HEIGHT $HEIGHT
 
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi

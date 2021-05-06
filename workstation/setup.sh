@@ -57,7 +57,7 @@ $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
 
-service docker restart || echoWarn "WARNING: Failed to restart docker"
+$KIRA_SCRIPTS/docker-restart.sh
 echoInfo "INFO: Waiting for all containers to start..."
 sleep 120
 $KIRA_MANAGER/setup/registry.sh

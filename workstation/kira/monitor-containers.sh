@@ -15,12 +15,12 @@ CONTAINERS=$(globGet CONTAINERS)
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|     STARTING KIRA CONTAINER SCAN v0.2.2.3    |"
+echoWarn "|        STARTING: KIRA CONTAINER SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|        KIRA_SCAN: $KIRA_SCAN"
-echoWarn "|           CONTAINERS: $CONTAINERS"
-echoWarn "|             NETWORKS: $NETWORKS"
-echoWarn "| INTERX REFERENCE DIR: $INTERX_REFERENCE_DIR"
+echoWarn "|       KIRA_SCAN: $KIRA_SCAN"
+echoWarn "|      CONTAINERS: $CONTAINERS"
+echoWarn "|        NETWORKS: $NETWORKS"
+echoWarn "| INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -92,8 +92,21 @@ done
 # save latest known block height
 OLD_LATEST_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
+    TRUSTED_KIRA_STATUS=$(timeout 16 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
+    TRUSTED_HEIGHT=$(echo "$TRUSTED_KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
+    (! $(isNaturalNumber $TRUSTED_HEIGHT)) && TRUSTED_HEIGHT=0
+
+    globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
+    if [[ $TRUSTED_HEIGHT -gt $NEW_LATEST_BLOCK ]] ; then
+        echoInfo "INFO: Block heigher then internal $NEW_LATEST_BLOCK was found ($TRUSTED_HEIGHT)"
+        NEW_LATEST_BLOCK=$TRUSTED_HEIGHT
+    fi
+
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
+
+    MIN_HEIGHT="$(globGet MIN_HEIGHT)"
+    [[ $MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] && globSet MIN_HEIGHT $NEW_LATEST_BLOCK
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH

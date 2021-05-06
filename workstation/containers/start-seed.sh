@@ -89,6 +89,7 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SEED_NODE_ID" \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
