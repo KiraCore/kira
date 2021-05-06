@@ -178,10 +178,10 @@ while :; do
     LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE $(globGet NET_PRIOR)"
     else
         PUBLIC_IP="$PUBLIC_IP                          "
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE $(globGet NET_PRIOR)"
     fi
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present

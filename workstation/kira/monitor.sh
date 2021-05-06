@@ -22,7 +22,8 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
-globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE"
+timersClear "DISK_CONS" "NET_CONS"
+globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "SCAN_DONE" "DISK_CONS" "NET_RECEIVED" "NET_TRANSMITTED" "NET_OUT" "NET_IN" "NET_PRIOR"
 
 while : ; do
     timerStart -v
@@ -37,10 +38,10 @@ while : ; do
 
     set +e && source "/etc/profile" &>/dev/null && set -e
 
-    echo $(docker network ls --format="{{.Name}}" || echo -n "") | globSet "NETWORKS" &
+    echo $(docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "") | globSet "NETWORKS" &
     PID1="$!"
 
-    echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "") | globSet "CONTAINERS" &
+    echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "") | globSet "CONTAINERS" &
     PID2="$!"
 
     if ! kill -0 $(tryCat "${HOSTS_SCAN_PATH}.pid") 2>/dev/null; then
