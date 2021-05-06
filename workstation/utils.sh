@@ -365,7 +365,7 @@ function isSubStr {
 }
 
 function isCommand {
-    if command -v docker ; then echo "true" ; else echo "false" ; fi
+    if command -v "$1" ; then echo "true" ; else echo "false" ; fi
 }
 
 displayAlign() {
