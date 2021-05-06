@@ -120,7 +120,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")

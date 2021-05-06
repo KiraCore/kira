@@ -119,7 +119,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
 
 
 echoInfo "INFO: Checking genesis SHA256 hash"

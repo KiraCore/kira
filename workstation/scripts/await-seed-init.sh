@@ -116,11 +116,12 @@ while : ; do
     fi
 done
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-    echoInfo "INFO: Local snapshot must be created before network can be started"
 
     PREVIOUS_HEIGHT=0
+    timerDel BLOCK_HEIGHT_SPAN
+
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))
@@ -140,21 +141,38 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
             i=0
         fi
 
-        set +x
-        SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        MIN_HEIGH=$(globGet MIN_HEIGHT)
-        [[ $HEIGHT -ge $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $MIN_HEIGH ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
         set -x
+        #SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
+        #($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
+        #HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
+        #(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
+        SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
+        LATEST_BLOCK=$(globGet LATEST_BLOCK)
+        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
 
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
+        [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
+
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] ; then
+            PREVIOUS_HEIGHT=$HEIGHT
+            timerStart BLOCK_HEIGHT_SPAN
+        fi
+
+        if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
 
+        [[ $DELTA_TIME -gt 600 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 10 minutes!" && exit 1
+
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
         set +x
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
+            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
+            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
+        fi
         echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x

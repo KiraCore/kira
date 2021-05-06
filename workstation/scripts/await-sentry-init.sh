@@ -7,7 +7,9 @@ set -x
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
 SAVE_SNAPSHOT=$3
+SYNC_AWAIT=$4
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
+[ -z "$SYNC_AWAIT" ] && SYNC_AWAIT="$SAVE_SNAPSHOT"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -124,24 +126,13 @@ while : ; do
     fi
 done
 
-if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
-    echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-    echoInfo "INFO: Local snapshot must be created before network can be started"
-
+if [ "${SYNC_AWAIT,,}" == "true" ] ; then
+    echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed"
     i=0
     PREVIOUS_HEIGHT=0
-    timerDel "BLOCK_HEIGHT_SPAN"
+    timerDel BLOCK_HEIGHT_SPAN
+     
     while : ; do
-        if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then
-            echoInfo "INFO: Awaiting trusted node status..."
-            LATEST_BLOCK=$(globGet LATEST_BLOCK)
-            MIN_HEIGH=$(globGet MIN_HEIGHT)
-            if ($(isNaturalNumber "$LATEST_BLOCK")) && [[ "$LATEST_BLOCK" -gt "$MIN_HEIGH" ]] ; then 
-                echoInfo "INFO: Minimum expected block height increased from $MIN_HEIGH to $LATEST_BLOCK"
-                MIN_HEIGH=$LATEST_BLOCK && globSet MIN_HEIGHT $MIN_HEIGH
-            fi
-        fi
-
         echoInfo "INFO: Awaiting node status..."
         sleep 10
 
@@ -162,43 +153,47 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             i=0
         fi
 
-        set +x 
-        SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-
-        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
-        DELTA_TIME=$(timerSpan "BLOCK_HEIGHT_SPAN")
-        MIN_HEIGH=$(globGet MIN_HEIGHT)
-        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]]  && [[ $HEIGHT -le $MIN_HEIGH ]] ; then
-            PREVIOUS_HEIGHT=$HEIGHT
-            timerStart "BLOCK_HEIGHT_SPAN"
-            SYNCING="true"
-        fi
         set -x
-
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
+        #SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
+        #($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
+        #HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
+        #(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
+        SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
+        LATEST_BLOCK=$(globGet LATEST_BLOCK)
+        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
+        
+        [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
+        
+        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]] ; then
+            PREVIOUS_HEIGHT=$HEIGHT
+            timerStart BLOCK_HEIGHT_SPAN
+        fi
+        
+        if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
-        elif [[ $HEIGHT -gt $MIN_HEIGH ]] ; then
-            echoInfo "INFO: Minimum expected block height increased from $MIN_HEIGH to $HEIGHT"
-            globSet MIN_HEIGHT $HEIGHT
-            MIN_HEIGHT=$HEIGHT
         fi
 
-        BLOCKS_LEFT=$(($MIN_HEIGHT - $HEIGHT))
+        [[ $DELTA_TIME -gt 600 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 10 minutes!" && exit 1
+
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
         set +x
-        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
-        echoInfo "INFO: Minimum height: $MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        echoInfo "INFO: Minimum height: $LATEST_BLOCK, current height: $HEIGHT, catching up: $SYNCING"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
     done
+fi
 
+if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
+    echoInfo "INFO: Local snapshot must be created before network can be started"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
@@ -229,7 +224,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     KIRA_SNAP_PATH=$DESTINATION_FILE
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    globSet MIN_HEIGHT $HEIGHT
+    [[ $HEIGHT -gt $MIN_HEIGH ]] && globSet MIN_HEIGHT $HEIGHT
 
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi

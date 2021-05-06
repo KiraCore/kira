@@ -63,11 +63,10 @@ for name in $CONTAINERS; do
     
     [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
-    cp -f -a -v "$DESTINATION_PATH.tmp" "$DESTINATION_PATH"
 
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
-        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
+        #CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
+        #($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
@@ -85,6 +84,10 @@ for name in $CONTAINERS; do
     fi
     
     echoInfo "INFO: Saving status props..."
+    PREVIOUS_BLOCK=$(globGet "${name}_BLOCK")
+    [ "$LATEST_BLOCK" != "$PREVIOUS_BLOCK" ] && CATCHING_UP="true"
+    globSet "${name}_BLOCK" "$LATEST_BLOCK"
+    globSet "${name}_SYNCING" "$CATCHING_UP"
     echo "$LATEST_BLOCK" > "${DESTINATION_PATH}.sekaid.latest_block_height"
     echo "$CATCHING_UP" > "${DESTINATION_PATH}.sekaid.catching_up"
 done
@@ -97,6 +100,7 @@ if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     (! $(isNaturalNumber $TRUSTED_HEIGHT)) && TRUSTED_HEIGHT=0
 
     globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
+    
     if [[ $TRUSTED_HEIGHT -gt $NEW_LATEST_BLOCK ]] ; then
         echoInfo "INFO: Block heigher then internal $NEW_LATEST_BLOCK was found ($TRUSTED_HEIGHT)"
         NEW_LATEST_BLOCK=$TRUSTED_HEIGHT
@@ -106,7 +110,9 @@ if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
 
     MIN_HEIGHT="$(globGet MIN_HEIGHT)"
-    [[ $MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] && globSet MIN_HEIGHT $NEW_LATEST_BLOCK
+    if (! $(isNaturalNumber $MIN_HEIGHT)) || [[ $MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
+        globSet MIN_HEIGHT $NEW_LATEST_BLOCK
+    fi
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH

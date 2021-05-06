@@ -65,47 +65,31 @@ if [ "${EXISTS,,}" == "true" ] ; then
 
     echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
     echo $(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_HEALTH"
-
-    PAUSED=$(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")
-    RESTARTING=$(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "")
-    STARTED_AT=$(jsonQuickParse "StartedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
-    FINISHED_AT=$(jsonQuickParse "FinishedAt" $DOCKER_STATE 2> /dev/null || echo -n "")
-    HOSTNAME=$(jsonParse "0.Config.Hostname" $DOCKER_INSPECT 2> /dev/null || echo -n "")
-    PORTS=$(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "")
+    echo $(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")  | globSet "${NAME}_PAUSED"
+    echo $(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_RESTARTING"
+    echo $(jsonQuickParse "StartedAt" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STARTED_AT"
+    echo $(jsonQuickParse "FinishedAt" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_FINISHED_AT"
+    echo $(jsonParse "0.Config.Hostname" $DOCKER_INSPECT 2> /dev/null || echo -n "") | globSet "${NAME}_HOSTNAME"
+    echo $(docker ps --format "{{.Ports}}" -aqf "id=$ID" 2> /dev/null || echo -n "") | globSet "${NAME}_PORTS"
     
-
     for net in $NETWORKS; do
         sleep 0.1
         IP_TMP=$(jsonParse "$net.IPAddress" $DOCKER_NETWORKS 2> /dev/null || echo -n "")
-        (! $(isNullOrEmpty "$IP_TMP")) && echo "IP_${NAME}_$net=\"$IP_TMP\"" >> $VARS_FILE || echo "IP_${NAME}_$net=\"\"" >> $VARS_FILE
+        ($(isNullOrEmpty "$IP_TMP")) && globSet "${NAME}_IP_${net}" "" && continue
+        echo "$IP_TMP" | globSet "${NAME}_IP_${net}"
     done
 else
     echoErr "ERROR: Could not inspect '$NAME' container '$ID'"
     globSet "${NAME}_STATUS" "stopped"
     globSet "${NAME}_HEALTH" ""
-    PAUSED=""
-    RESTARTING=""
-    STARTED_AT=""
-    FINISHED_AT=""
+    globSet "${NAME}_PAUSED" "false"
+    globSet "${NAME}_RESTARTING" "false"
+    globSet "${NAME}_STARTED_AT" "0"
+    globSet "${NAME}_FINISHED_AT" "0"
+    globSet "${NAME}_HOSTNAME" ""
+    globSet "${NAME}_PORTS" ""
     rm -fv $DOCKER_STATE $DOCKER_CONFIG $DOCKER_NETWORKS
 fi
-
-[ -z "$PAUSED" ] && PAUSED="false"
-[ -z "$RESTARTING" ] && RESTARTING="false"
-[ -z "$STARTED_AT" ] && STARTED_AT="0"
-[ -z "$FINISHED_AT" ] && FINISHED_AT="0"
-
-echoInfo "INFO: Dumpiung data into '$VARS_FILE'"
-
-echo "PAUSED_$NAME=\"$PAUSED\"" >> $VARS_FILE
-echo "RESTARTING_$NAME=\"$RESTARTING\"" >> $VARS_FILE
-echo "STARTED_AT_$NAME=\"$STARTED_AT\"" >> $VARS_FILE
-echo "FINISHED_AT_$NAME=\"$FINISHED_AT\"" >> $VARS_FILE
-echo "HOSTNAME_$NAME=\"$HOSTNAME\"" >> $VARS_FILE
-echo "PORTS_$NAME=\"$PORTS\"" >> $VARS_FILE
-
-echoInfo "INFO: Printing scan results: "
-tryCat $VARS_FILE
 
 set +x
 echoWarn "------------------------------------------------"

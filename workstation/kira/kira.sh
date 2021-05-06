@@ -97,17 +97,11 @@ while :; do
 
         i=-1
         for name in $CONTAINERS; do
-            SCAN_PATH_VARS="$STATUS_SCAN_PATH/$name"
-            SEKAID_STATUS_FILE="${SCAN_PATH_VARS}.sekaid.status"
+            EXISTS_TMP=$(globGet "${name}_EXISTS")
 
-            if [ -f "$SCAN_PATH_VARS" ]; then
-                source "$SCAN_PATH_VARS"
-                i=$((i + 1))
-            else
-                continue
-            fi
+            [ "${EXISTS_TMP,,}" == "true" ] && i=$((i + 1)) || continue
 
-            SYNCING_TMP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo "false")
+            SYNCING_TMP=$(globSet "${name}_SYNCING")
 
             # if some other node then snapshot is syncig then infra is not ready
             [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"

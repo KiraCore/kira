@@ -71,16 +71,14 @@ while : ; do
     echo "|            KIRA CONTAINER MANAGER $KIRA_SETUP_VER            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
-    if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
+    if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m      PLEASE WAIT, LOADING CONTAINER STATUS ...        \e[36;1m|"
-        while [ "$(globGet SCAN_DONE)" != "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; do
+        while [ "$(globGet SCAN_DONE)" != "true" ] ; do
             sleep 1
         done
         LOADING="false"
         continue
     fi
-
-    source "$CONTAINER_STATUS"
     
     ID=$(globGet "${NAME}_ID")
     EXISTS=$(globGet "${NAME}_EXISTS")
@@ -88,11 +86,11 @@ while : ; do
     BRANCH=$(globGet "${NAME}_BRANCH")
     STATUS=$(globGet "${NAME}_STATUS")
     HEALTH=$(globGet "${NAME}_HEALTH")
-    RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"
-    STARTED_AT="STARTED_AT_$NAME" && STARTED_AT="${!STARTED_AT}"
-    FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
-    HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!HOSTNAME}"
-    PORTS="PORTS_$NAME" && PORTS="${!PORTS}"
+    RESTARTING=$(globGet "${NAME}_RESTARTING")
+    STARTED_AT=$(globGet "${NAME}_STARTED_AT")
+    FINISHED_AT=$(globGet "${NAME}_FINISHED_AT")
+    HOSTNAME=$(globGet "${NAME}_HOSTNAME")
+    PORTS=$(globGet "${NAME}_PORTS")
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -114,7 +112,7 @@ while : ; do
         echo "|     Host: ${v:0:43} |"
 
     i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-        TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
+        TMP_IP=$(globGet "${NAME}_IP_${net}")
         if (! $(isNullOrEmpty "$TMP_IP")) ; then
             IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
             echo "| Local IP: ${IP_TMP:0:43} |"
