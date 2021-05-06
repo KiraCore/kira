@@ -80,13 +80,13 @@ docker run -d \
     -e HOSTNAME="$KIRA_PRIV_SENTRY_DNS" \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_seeds="$CFG_seeds" \
-    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID" \
+    -e CFG_private_peer_ids="$VALIDATOR_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
