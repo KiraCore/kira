@@ -332,7 +332,7 @@ apt-get clean || echo "WARNING: clean failed"
 apt-get autoremove || echo "WARNING: autoremove failed"
 journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
 
-find "/val/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
+find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
 
 set +x
