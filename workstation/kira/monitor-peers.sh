@@ -14,7 +14,7 @@ INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"
 MIN_SNAP_SIZE="524288"
 
 
-while [ "$(globGet SCAN_DONE)" != "true" ] ; do
+while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     echo "INFO: Waiting for monitor scan to finalize run..."
     sleep 10
 done

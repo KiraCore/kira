@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5)
-SETUP_CHECK="$KIRA_SETUP/system-2-$ESSENTIALS_HASH" 
+SETUP_CHECK="$KIRA_SETUP/system-4-$ESSENTIALS_HASH" 
 if [ ! -f "$SETUP_CHECK" ] ; then
     echoInfo "INFO: Update and Intall system tools and dependencies..."
     apt-get update -y --fix-missing
@@ -22,8 +22,6 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
-        source $KIRA_MANAGER/utils.sh || echo \"ERROR: Failed to load utils\"
-        globSet SCAN_DONE \"false\" || echo \"ERROR: Failed to remove scaner finalization flaf\"
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
@@ -31,6 +29,7 @@ case \"\$1\" in
         systemctl restart docker || echo \"ERROR: Failed to restart docker\"
         systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
         systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
+        systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"
 esac
 exit 0"
 

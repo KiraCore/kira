@@ -73,7 +73,7 @@ while : ; do
 
     if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m      PLEASE WAIT, LOADING CONTAINER STATUS ...        \e[36;1m|"
-        while [ "$(globGet SCAN_DONE)" != "true" ] ; do
+        while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
             sleep 1
         done
         LOADING="false"
@@ -366,7 +366,7 @@ while : ; do
     fi
 
     # trigger re-scan if loading requested
-    [ "${LOADING,,}" == "true" ] && globSet SCAN_DONE "false"
+    [ "${LOADING,,}" == "true" ] && globSet IS_SCAN_DONE "false"
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 

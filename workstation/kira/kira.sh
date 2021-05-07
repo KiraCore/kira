@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 set +x
 echoInfo "INFO: Launching KIRA Network Manager..."
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
-globSet SCAN_DONE "false"
+globSet IS_SCAN_DONE "false"
 
 if [ "${USER,,}" != root ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
@@ -249,12 +249,7 @@ while :; do
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     else
-        while : ; do
-            # set -x
-            SCAN_DONE=$(globGet SCAN_DONE)
-            # set +x
-            # echo "R: '$SCAN_DONE' F: '$(globGetFile SCAN_DONE)'"
-            [ "${SCAN_DONE,,}" == "true" ] && break
+        while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
             sleep 1
         done
         LOADING="false"
@@ -418,7 +413,7 @@ while :; do
     fi
 
     # trigger re-scan if loading requested
-    [ "${LOADING,,}" == "true" ] && globSet SCAN_DONE false
+    [ "${LOADING,,}" == "true" ] && globSet IS_SCAN_DONE "false"
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 
     if [ "${OPTION,,}" == "i" ]; then

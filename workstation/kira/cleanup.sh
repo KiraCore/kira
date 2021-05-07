@@ -1,9 +1,11 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
-# quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f --output cat
+# quick edit: FILE="$KIRA_MANAGER/kira/cleanup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# systemctl restart kiraclean && journalctl -u kiraclean -f --output cat
 set -x
+
+# find largest file: du -a / 2>/dev/null | sort -n -r | head -n 20
 
 timerStart
 echoInfo "INFO: Started kira cleanup service $KIRA_SETUP_VER"

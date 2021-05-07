@@ -1,5 +1,6 @@
 #!/bin/bash
 # QUICK EDIT: FILE="$KIRA_MANAGER/utils.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+GLOB_STORE_DIR="/var/kiraglob"
 REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
@@ -245,14 +246,17 @@ function urlContentLength() {
     echo $VAL
 }
 
-GLOB_STORE_DIR="/var/kira/glob"
 function globName() {
-    echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
+    #echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
+    echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | md5sum | awk '{ print $1 }')
     return 0
 }
 
 function globGet() {
-    cat "${GLOB_STORE_DIR}/$(globName $1)" 2>/dev/null || echo -ne ""
+    GNAM="$(globName $1)"
+    GFIL="${GLOB_STORE_DIR}/$GNAM"
+    #[[ -s "$GFIL" ]] && sem --id $GNAM "cat $GFIL" || echo ""
+    [[ -s $GFIL ]] && cat $GFIL || echo ""
     return 0
 }
 
@@ -261,11 +265,14 @@ function globGetFile() {
 }
 
 function globSet() {
-    tryMkDir $GLOB_STORE_DIR
+    GNAME="$(globName $1)"
+    GFILE="${GLOB_STORE_DIR}/$GNAME"
     if [ ! -z ${2+x} ] ; then
-        echo "$2" > "${GLOB_STORE_DIR}/$(globName $1)"
+        #sem --id $GNAME "echo $2 > $GFILE"
+        echo "$2" > $GFILE
     else
-        cat > "${GLOB_STORE_DIR}/$(globName $1)"
+        #sem --id $GNAME --pipe "cat > $GFILE"
+        cat > $GFILE
     fi
 }
 
@@ -282,7 +289,7 @@ function globDel {
 
 function timerStart() {
     [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="${$}"
+    [ -z "$NAME" ] && NAME="${BASH_SOURCE}"
     TIME="$(date -u +%s)"
     globSet "timer_start_${NAME}" "$TIME"
     globSet "timer_end_${NAME}" ""
@@ -292,7 +299,7 @@ function timerStart() {
 
 function timerEnd() {
     [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="${$}"
+    [ -z "$NAME" ] && NAME="$BASH_SOURCE"
     NAME="timer_end_${NAME}"
     ($(globEmpty "$NAME")) && globSet "$NAME" "$(date -u +%s)"
     [ "${1,,}" == "-v" ] && globGet "$NAME"
@@ -300,7 +307,7 @@ function timerEnd() {
 }
 
 function timerSpan() {
-    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
+    NAME=$1 && [ -z "$NAME" ] && NAME="$BASH_SOURCE"
     START_TIME=$(globGet "timer_start_${NAME}")
     END_TIME=$(globGet "timer_end_${NAME}")
     if (! $(isNaturalNumber "$START_TIME")) ; then
@@ -315,12 +322,12 @@ function timerSpan() {
 
 function timerDel() {
     if [ -z "$@" ] ; then
-        var="${$}"
+        var="$BASH_SOURCE"
         globSet "timer_start_${var}" ""
         globSet "timer_end_${var}" ""
     else
         for var in "$@" ; do
-            [ -z "$var" ] && var="${$}"
+            [ -z "$var" ] && var="$BASH_SOURCE"
             globSet "timer_start_${var}" ""
             globSet "timer_end_${var}" ""
         done
