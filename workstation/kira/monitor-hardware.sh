@@ -100,8 +100,8 @@ else
     echoWarn "WARNING: Could not determine link speed"
 fi
 
-[ ! -z "$(globGet NET_PRIOR)" ] && sleep 45
-[ ! -z "$(globGet DISK_CONS)" ] && sleep 45
+#[ ! -z "$(globGet NET_PRIOR)" ] && sleep 45
+#[ ! -z "$(globGet DISK_CONS)" ] && sleep 45
 
 set +x
 echoWarn "------------------------------------------------"

@@ -108,8 +108,6 @@ while : ; do
     if [ "${SUCCESS,,}" != "true" ] ; then
         echoErr "ERROR: Containers monitor failed!"
         sleep 5
-    else
-        chmod -R 777 $GLOB_STORE_DIR
     fi
     echoInfo "INFO: Scan was finalized, elapsed $(timerSpan) seconds"
 done

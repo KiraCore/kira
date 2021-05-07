@@ -255,8 +255,15 @@ function globName() {
 function globGet() {
     GNAM="$(globName $1)"
     GFIL="${GLOB_STORE_DIR}/$GNAM"
-    #[[ -s "$GFIL" ]] && sem --id $GNAM "cat $GFIL" || echo ""
     [[ -s $GFIL ]] && cat $GFIL || echo ""
+    return 0
+}
+
+# threadsafe global get
+function globGetTS() {
+    GNAM="$(globName $1)"
+    GFIL="${GLOB_STORE_DIR}/$GNAM"
+    [[ -s "$GFIL" ]] && sem --id $GNAM "cat $GFIL" || echo ""
     return 0
 }
 
@@ -267,12 +274,23 @@ function globGetFile() {
 function globSet() {
     GNAME="$(globName $1)"
     GFILE="${GLOB_STORE_DIR}/$GNAME"
+    touch $GFILE
     if [ ! -z ${2+x} ] ; then
-        #sem --id $GNAME "echo $2 > $GFILE"
-        echo "$2" > $GFILE
+        echo "$2" > "$GFILE.tmp"
     else
-        #sem --id $GNAME --pipe "cat > $GFILE"
-        cat > $GFILE
+        cat > "$GFILE.tmp"
+    fi
+    mv -f "$GFILE.tmp" $GFILE
+}
+
+# threadsafe global set
+function globSetTS() {
+    GNAME="$(globName $1)"
+    GFILE="${GLOB_STORE_DIR}/$GNAME"
+    if [ ! -z ${2+x} ] ; then
+        sem --id $GNAME "echo $2 > $GFILE"
+    else
+        sem --id $GNAME --pipe "cat > $GFILE"
     fi
 }
 
