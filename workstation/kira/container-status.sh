@@ -20,9 +20,6 @@ echoWarn "|             ID: $ID"
 echoWarn "|-------------------------------------------------"
 set -x
 
-COMMON_PATH="$DOCKER_COMMON/$NAME"
-HALT_FILE="$COMMON_PATH/halt"
-
 # define global variables
 if [ "${NAME,,}" == "interx" ]; then
     BRANCH="$INTERX_BRANCH"
@@ -59,11 +56,22 @@ globSet "${NAME}_REPO" $REPO
 globSet "${NAME}_BRANCH" $BRANCH
 
 if [ "${EXISTS,,}" == "true" ] ; then
+    COMMON_PATH="$DOCKER_COMMON/$NAME"
+    HALT_FILE="$COMMON_PATH/halt"
+    CONFIG_FILE="$COMMON_PATH/configuring"
+
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
     jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "" > $DOCKER_NETWORKS
 
-    echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
+    if [ -f "$HALT_FILE" ] ; then
+        globSet "${NAME}_STATUS" "halted"
+    elif [ -f "$CONFIG_FILE" ] ; then 
+        globSet "${NAME}_STATUS" "configuring"
+    else
+        echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
+    fi
+
     echo $(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_HEALTH"
     echo $(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")  | globSet "${NAME}_PAUSED"
     echo $(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_RESTARTING"

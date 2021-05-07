@@ -66,6 +66,8 @@ for name in $CONTAINERS; do
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
+        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=false
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
@@ -82,7 +84,6 @@ for name in $CONTAINERS; do
     
     echoInfo "INFO: Saving status props..."
     PREVIOUS_BLOCK=$(globGet "${name}_BLOCK")
-    [ "$LATEST_BLOCK" != "$PREVIOUS_BLOCK" ] && CATCHING_UP="true"
     globSet "${name}_BLOCK" "$LATEST_BLOCK"
     globSet "${name}_SYNCING" "$CATCHING_UP"
 done

@@ -52,6 +52,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         rm -fv "$COMMON_PATH/genesis.json"
     fi
 
+    CFG_seeds=""
     CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
     
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
@@ -74,11 +75,11 @@ docker run -d \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_seeds="" \
-    -e CFG_persistent_peers="" \
+    -e CFG_seeds="$CFG_seeds" \
+    -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_max_num_outbound_peers="4" \
-    -e CFG_max_num_inbound_peers="8" \
+    -e CFG_max_num_outbound_peers="2" \
+    -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
     -e CFG_addr_book_strict="false" \

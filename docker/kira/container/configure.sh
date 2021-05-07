@@ -91,7 +91,7 @@ echoInfo "INFO: Local Addr: $LOCAL_IP"
 echoInfo "INFO: Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $CFG_external_address"
 
-if [ -f "$LOCAL_PEERS_PATH" ] ; then 
+if [ ! -s "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found, adding to peers config"
     set +x
     while read peer ; do
@@ -100,6 +100,8 @@ if [ -f "$LOCAL_PEERS_PATH" ] ; then
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
     done < $LOCAL_PEERS_PATH
     set -x
+else
+    echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)"
 fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
@@ -111,14 +113,16 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
     set -x
+else
+    echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)"
 fi
 
 if [ ! -z "$CFG_seeds" ] ; then
-    set +x
     echoInfo "INFO: Seed configuration is available, testing..."
     TMP_CFG_seeds=""
     for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
+        set +x
         [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
@@ -136,19 +140,22 @@ if [ ! -z "$CFG_seeds" ] ; then
         echoInfo "INFO: Adding extra seed '$seed' to new config"
         [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
+        set -x
     done
-    CFG_seeds=$TMP_CFG_seeds
-    set -x
 else
-    echoWarn "WARNING: Seeds configuration is available, testing..."
+    echoWarn "WARNING: Seeds configuration is NOT available!"
 fi
+
+echoInfo "INFO: Final Seeds List:"
+echoInfo "$CFG_seeds"
 
 if [ ! -z "$CFG_persistent_peers" ] ; then
     echoInfo "INFO: Peers configuration is available, testing..."
-    set +x
+    
     TMP_CFG_persistent_peers=""
     for peer in $(echo $CFG_persistent_peers | sed "s/,/ /g") ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
+        set +x
         [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
@@ -173,12 +180,15 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
             [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
             CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
         fi
+        set -x
     done
     CFG_persistent_peers=$TMP_CFG_persistent_peers
-    set -x
 else
-    echoWarn "WARNING: Peers configuration is available, testing..."
+    echoWarn "WARNING: Peers configuration is NOT available!"
 fi
+
+echoInfo "INFO: Final Peers List:"
+echoInfo "$CFG_persistent_peers"
 
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
 [ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG

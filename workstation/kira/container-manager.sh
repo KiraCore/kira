@@ -128,9 +128,11 @@ while : ; do
     fi
 
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" && \
+    [ ! -z "$STARTED_AT" ] && STARTED_AT="$(echo $STARTED_AT | head -c 19)"
+    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ${STARTED_AT}${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
-    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" && \
+    [ ! -z "$FINISHED_AT" ] && FINISHED_AT="$(echo $FINISHED_AT | head -c 19)"
+    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ${FINISHED_AT}${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
     (! $(isNullOrEmpty "$HEALTH")) && TMPVAR="${HEALTH}${WHITESPACE}" && \
     echo "|   Health: ${TMPVAR:0:43} |"
