@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 set +x
 echoInfo "INFO: Launching KIRA Network Manager..."
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
-globSet SCAN_DONE false
+globSet SCAN_DONE "false"
 
 if [ "${USER,,}" != root ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
@@ -93,7 +93,7 @@ while :; do
         CATCHING_UP="false"
         ESSENTIAL_CONTAINERS_COUNT=0
         VALIDATOR_RUNNING="false"
-        CONTAINERS=$(globGet "CONTAINERS")
+        CONTAINERS=$(globGet CONTAINERS)
 
         i=-1
         for name in $CONTAINERS; do
@@ -238,8 +238,8 @@ while :; do
             [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
-                LATEST_BLOCK=$(tryCat "$STATUS_SCAN_PATH/${name}.sekaid.latest_block_height" "") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
-                CATCHING_UP=$(tryCat "$STATUS_SCAN_PATH/${name}.sekaid.catching_up" "false")
+                LATEST_BLOCK=$(globGet "${name}_BLOCK") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+                CATCHING_UP=$(globSet "${name}_SYNCING") && ($(isNullOrEmpty $CATCHING_UP)) && CATCHING_UP="false"
                 [ "${CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
 
@@ -249,7 +249,12 @@ while :; do
             echo "${LABEL:0:47} : $HEALTH_TMP" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
         done
     else
-        while [ "$(globGet SCAN_DONE)" != "true" ]; do
+        while : ; do
+            # set -x
+            SCAN_DONE=$(globGet SCAN_DONE)
+            # set +x
+            # echo "R: '$SCAN_DONE' F: '$(globGetFile SCAN_DONE)'"
+            [ "${SCAN_DONE,,}" == "true" ] && break
             sleep 1
         done
         LOADING="false"

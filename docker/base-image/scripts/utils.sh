@@ -247,39 +247,30 @@ function urlContentLength() {
 
 GLOB_STORE_DIR="/var/kira/glob"
 function globName() {
-    echo "${1,,}" | tr -d '\011\012\013\014\015\040' 2>/dev/null | base64 2>/dev/null | tr '/+' '_-' 2>/dev/null | tr -d '=' 2>/dev/null || echo -n ""
+    echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
+    return 0
 }
 
 function globGet() {
-    FNAME=$(globName "$1")
-    if [ ! -z "$FNAME" ] ; then
-        tryMkDir $GLOB_STORE_DIR
-        tryCat "${GLOB_STORE_DIR}/$FNAME"
-    fi
+    cat "${GLOB_STORE_DIR}/$(globName $1)" 2>/dev/null || echo -ne ""
+    return 0
 }
 
 function globGetFile() {
-    FNAME=$(globName "$1")
-    if [ ! -z "$FNAME" ] ; then
-        echo "${GLOB_STORE_DIR}/$FNAME"
-    fi
+    echo "${GLOB_STORE_DIR}/$(globName $1)"
 }
 
 function globSet() {
-    FNAME=$(globName "$1")
-    if [ ! -z "$FNAME" ] ; then
-        tryMkDir $GLOB_STORE_DIR
-        if [ ! -z ${2+x} ] ; then
-            echo "$2" > "${GLOB_STORE_DIR}/$FNAME"
-        else
-            cat > "${GLOB_STORE_DIR}/$FNAME"
-        fi
+    tryMkDir $GLOB_STORE_DIR
+    if [ ! -z ${2+x} ] ; then
+        echo "$2" > "${GLOB_STORE_DIR}/$(globName $1)"
+    else
+        cat > "${GLOB_STORE_DIR}/$(globName $1)"
     fi
 }
 
 function globEmpty() {
-    FNAME=$(globName "$1")
-    ($(isFileEmpty "${GLOB_STORE_DIR}/$FNAME")) && echo "true" || echo "false"
+    ($(isFileEmpty "${GLOB_STORE_DIR}/$(globName $1)")) && echo "true" || echo "false"
 }
 
 function globDel {

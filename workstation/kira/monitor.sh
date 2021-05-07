@@ -29,7 +29,7 @@ while : ; do
     timerStart -v
     if (! $(isCommand "docker"))  ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
-        globSet SCAN_DONE true
+        globSet SCAN_DONE "true"
         sleep 10
         continue
     fi
@@ -101,6 +101,13 @@ while : ; do
     wait $PID2
     globGet "CONTAINERS" > $SCAN_DUMP/containers || echoWarn "WARNING: Failed to dump containers info"
     
-    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh
+    SUCCESS="true"
+    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh || SUCCESS="false"
+    globSet SCAN_DONE "true"
+
+    if [ "${SUCCESS,,}" != "true" ] ; then
+        echoErr "ERROR: Containers monitor failed!"
+        sleep 5
+    fi
     echoInfo "INFO: Scan was finalized, elapsed $(timerSpan) seconds"
 done

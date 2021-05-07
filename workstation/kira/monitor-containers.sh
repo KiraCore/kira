@@ -32,9 +32,8 @@ mkdir -p "$INTERX_REFERENCE_DIR"
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
-    DESTINATION_STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
     mkdir -p "$DOCKER_COMMON/$name"
-    touch "$DESTINATION_PATH" "$DESTINATION_STATUS_PATH"
+    touch "$DESTINATION_PATH"
 
     rm -fv "$DESTINATION_PATH.tmp"
 
@@ -44,11 +43,10 @@ for name in $CONTAINERS; do
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
+        echo $(timeout 2 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
     elif [ "${name,,}" == "interx" ] ; then 
-        INTERX_STATUS_PATH="${DESTINATION_PATH}.interx.status"
-        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") > $DESTINATION_STATUS_PATH
-        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") > $INTERX_STATUS_PATH
+        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
+        echo $(timeout 2 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
     fi
 done
 
@@ -57,16 +55,15 @@ NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
-    STATUS_PATH="${DESTINATION_PATH}.sekaid.status"
-    touch "${DESTINATION_PATH}.pid" "$STATUS_PATH"
+    touch "${DESTINATION_PATH}.pid"
     PIDX=$(tryCat "${DESTINATION_PATH}.pid" "")
     
     [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
 
+    STATUS_PATH=$(globGetFile "${name}_SEKAID_STATUS")
+
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        #CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
-        #($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP="false"
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
@@ -88,14 +85,12 @@ for name in $CONTAINERS; do
     [ "$LATEST_BLOCK" != "$PREVIOUS_BLOCK" ] && CATCHING_UP="true"
     globSet "${name}_BLOCK" "$LATEST_BLOCK"
     globSet "${name}_SYNCING" "$CATCHING_UP"
-    echo "$LATEST_BLOCK" > "${DESTINATION_PATH}.sekaid.latest_block_height"
-    echo "$CATCHING_UP" > "${DESTINATION_PATH}.sekaid.catching_up"
 done
 
 # save latest known block height
 OLD_LATEST_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
-    TRUSTED_KIRA_STATUS=$(timeout 16 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
+    TRUSTED_KIRA_STATUS=$(timeout 8 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
     TRUSTED_HEIGHT=$(echo "$TRUSTED_KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber $TRUSTED_HEIGHT)) && TRUSTED_HEIGHT=0
 
@@ -116,8 +111,6 @@ if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
-
-globSet SCAN_DONE true
 
 set +x
 echoWarn "------------------------------------------------"

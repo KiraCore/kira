@@ -22,8 +22,8 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     WAKEUP_ENTRY="#!/bin/sh
 case \"\$1\" in
     resume)
-        . $KIRA_MANAGER/utils.sh || echo \"ERROR: Failed to load utils\"
-        globSet SCAN_DONE false || echo \"ERROR: Failed to remove scaner finalization flaf\"
+        source $KIRA_MANAGER/utils.sh || echo \"ERROR: Failed to load utils\"
+        globSet SCAN_DONE \"false\" || echo \"ERROR: Failed to remove scaner finalization flaf\"
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
