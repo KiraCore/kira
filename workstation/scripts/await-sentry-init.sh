@@ -168,20 +168,19 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
         LATEST_BLOCK=$(globGet LATEST_BLOCK)
         MIN_HEIGH=$(globGet MIN_HEIGHT)
-        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
 
-        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
-        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
-        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
-
-        ( [[ $DELTA_HEIGHT -gt 0 ]] || [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ) && timerStart BLOCK_HEIGHT_SPAN
-        
+        [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
         
         if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
+
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
+        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
+        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
         [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
 
@@ -190,7 +189,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
-        echoInfo "INFO: Minimum height: $LATEST_BLOCK, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
+        echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30

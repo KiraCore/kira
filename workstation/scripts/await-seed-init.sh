@@ -120,6 +120,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
 
     i=0
+    PREVIOUS_HEIGHT=0
     BLOCKS_LEFT_OLD=0
     timerStart BLOCK_HEIGHT_SPAN
     while : ; do
@@ -129,7 +130,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
         set +x
         while : ; do
             CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
-            [ "${CSTATUS,,}" == "running" ] && break
+            [ "${CSTATUS,,}" == "running" ] && sleep 5 && break
             echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
             sleep 5
         done
@@ -152,24 +153,24 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
 
         i=0
         set -x
+        PREVIOUS_HEIGHT=$HEIGHT
         HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
         LATEST_BLOCK=$(globGet LATEST_BLOCK)
         MIN_HEIGH=$(globGet MIN_HEIGHT)
-        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
-
-        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
-        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
-        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
-
-        [[ $DELTA_HEIGHT -gt 0 ]] && timerStart BLOCK_HEIGHT_SPAN
-
+        
+        [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
 
         if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
+
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
+        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
+        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
         [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
 
