@@ -119,9 +119,17 @@ done
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
 
+    globDel "${CONTAINER_NAME}_STATUS"
+    while : ; do
+        STATUS=$(globGet "${CONTAINER_NAME}_STATUS")
+        [ ! -z "$STATUS" ] && [ "${STATUS,,}" != "configuring" ] && break
+        echoInfo "INFO: Waiting for $CONTAINER_NAME node configuration to be finalized..."
+        sleep 5
+    done
+     
+    i=0
     BLOCKS_LEFT_OLD=0
-    timerDel BLOCK_HEIGHT_SPAN
-
+    timerStart BLOCK_HEIGHT_SPAN
     while : ; do
         echoInfo "INFO: Awaiting node status..."
         i=$((i + 1))

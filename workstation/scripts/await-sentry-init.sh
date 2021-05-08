@@ -127,14 +127,21 @@ while : ; do
 done
 
 if [ "${SYNC_AWAIT,,}" == "true" ] ; then
-    echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed"
+    echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed..."
+
+    globDel "${CONTAINER_NAME}_STATUS"
+    while : ; do
+        STATUS=$(globGet "${CONTAINER_NAME}_STATUS")
+        [ ! -z "$STATUS" ] && [ "${STATUS,,}" != "configuring" ] && break
+        echoInfo "INFO: Waiting for $CONTAINER_NAME node configuration to be finalized..."
+        sleep 5
+    done
+
     i=0
     BLOCKS_LEFT_OLD=0
-    timerDel BLOCK_HEIGHT_SPAN
-     
+    timerStart BLOCK_HEIGHT_SPAN
     while : ; do
         echoInfo "INFO: Awaiting node status..."
-        sleep 10
 
         i=$((i + 1))
         STATUS=$(timeout 8 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
@@ -144,7 +151,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && sleep 10 && continue
 
             echoErr "ERROR: $CONTAINER_NAME status check failed"
             sleep 30
