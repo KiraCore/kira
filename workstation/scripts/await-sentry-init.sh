@@ -168,6 +168,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
         LATEST_BLOCK=$(globGet LATEST_BLOCK)
         MIN_HEIGH=$(globGet MIN_HEIGHT)
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
 
         [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
@@ -177,7 +178,6 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             break
         fi
 
-        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
         BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
