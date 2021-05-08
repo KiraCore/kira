@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5)
-SETUP_CHECK="$KIRA_SETUP/base-tools-1-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/base-tools-2-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Update and Intall basic tools and dependencies..."
     apt-get update -y --fix-missing
@@ -81,7 +81,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
 
     cat > /etc/systemd/system/kirascan.service << EOL
 [Unit]
-Description=Kira Console UI Monitoring Service
+Description=KIRA Console UI Monitoring Service
 After=network.target
 [Service]
 CPUWeight=100
@@ -99,9 +99,31 @@ LimitNOFILE=4096
 WantedBy=default.target
 EOL
 
+    cat > /etc/systemd/system/kiraclean.service << EOL
+[Unit]
+Description=KIRA Cleanup Service
+After=network.target
+[Service]
+CPUWeight=5
+CPUQuota=5%
+IOWeight=5
+MemorySwapMax=0
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/kira/cleanup.sh
+Restart=always
+RestartSec=30
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
     systemctl daemon-reload
     systemctl enable kirascan
+    systemctl enable kiraclean
     systemctl restart kirascan
+    systemctl restart kiraclean
   
     cd $KIRA_HOME
     touch $SETUP_CHECK

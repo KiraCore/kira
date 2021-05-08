@@ -7,7 +7,9 @@ set -x
 CONTAINER_NAME=$1
 SENTRY_NODE_ID=$2
 SAVE_SNAPSHOT=$3
+SYNC_AWAIT=$4
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
+[ -z "$SYNC_AWAIT" ] && SYNC_AWAIT="$SAVE_SNAPSHOT"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -17,8 +19,6 @@ SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 IFACES_RESTARTED="false"
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-
-timersClear "BLOCK_HEIGHT_SPAN"
 
 retry=0
 while : ; do
@@ -126,27 +126,25 @@ while : ; do
     fi
 done
 
-if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
-    echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-    echoInfo "INFO: Local snapshot must be created before network can be started"
+if [ "${SYNC_AWAIT,,}" == "true" ] ; then
+    echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed..."
 
     i=0
-    PREVIOUS_HEIGHT=0
-    START_TIME_HEIGHT="$(date -u +%s)"
+    HEIGHT=0
+    BLOCKS_LEFT_OLD=0
+    timerStart BLOCK_HEIGHT_SPAN
     while : ; do
-        if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then
-            echoInfo "INFO: Awaiting trusted node status..."
-            TRUSTED_KIRA_STATUS=$(timeout 16 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
-            TRUSTED_HEIGHT=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
-            if ($(isNaturalNumber "$TRUSTED_HEIGHT")) && [[ "$TRUSTED_HEIGHT" -gt "$VALIDATOR_MIN_HEIGHT" ]] ; then 
-                echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $TRUSTED_HEIGHT"
-                VALIDATOR_MIN_HEIGHT=$TRUSTED_HEIGHT
-                CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$TRUSTED_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-            fi
-        fi
-
         echoInfo "INFO: Awaiting node status..."
-        sleep 10
+
+        globDel "${CONTAINER_NAME}_STATUS"
+        set +x
+        while : ; do
+            CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
+            [ "${CSTATUS,,}" == "running" ] && break
+            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
+            sleep 5
+        done
+        set -x
 
         i=$((i + 1))
         STATUS=$(timeout 8 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
@@ -156,50 +154,50 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
 
-            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && continue
+            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && sleep 10 && continue
 
             echoErr "ERROR: $CONTAINER_NAME status check failed"
             sleep 30
             exit 1
-        else
-            i=0
         fi
+        i=0
 
-        set +x 
-        SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2>/dev/null || echo -n "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-
-        DELTA_HEIGHT=$(($HEIGHT - $PREVIOUS_HEIGHT))
-        DELTA_TIME=$(timerSpan "BLOCK_HEIGHT_SPAN")
-        if [[ $HEIGHT -gt $PREVIOUS_HEIGHT ]]  && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] ; then
-            PREVIOUS_HEIGHT=$HEIGHT
-            timerStart "BLOCK_HEIGHT_SPAN"
-            SYNCING="true"
-        fi
         set -x
+        PREVIOUS_HEIGHT=$HEIGHT
+        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
+        SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
+        LATEST_BLOCK=$(globGet LATEST_BLOCK)
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
 
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
+        [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
+        [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
+        
+        if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
-        elif [[ $HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] ; then
-            echoInfo "INFO: Minimum expected block height increased from $VALIDATOR_MIN_HEIGHT to $HEIGHT"
-            VALIDATOR_MIN_HEIGHT=$HEIGHT
         fi
 
-        BLOCKS_LEFT=$(($VALIDATOR_MIN_HEIGHT - $HEIGHT))
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
+        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
+        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
+
+        [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
+
         set +x
-        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] && [ "${SYNCING,,}" == true ] ; then
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
             TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
-        echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30
     done
+fi
 
+if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
+    echoInfo "INFO: Local snapshot must be created before network can be started"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
     echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
@@ -230,7 +228,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     KIRA_SNAP_PATH=$DESTINATION_FILE
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+    [[ $HEIGHT -gt $MIN_HEIGH ]] && globSet MIN_HEIGHT $HEIGHT
 
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi

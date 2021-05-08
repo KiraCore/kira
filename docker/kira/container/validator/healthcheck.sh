@@ -9,7 +9,7 @@ HEIGHT=$3
 CATCHING_UP=$4
 CONSENSUS_STOPPED=$5
 
-START_TIME="$(date -u +%s)"
+timerStart "healthcheck"
 VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
 
@@ -33,13 +33,9 @@ if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
     echoWarn "WARNING: Consensus Stopped: $CONSENSUS_STOPPED"
      
-    if [[ $LATEST_BLOCK_HEIGHT -ge 1 ]] && [[ $LATEST_BLOCK_HEIGHT -le $HEIGHT ]] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
-        echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
-    else
-        echoErr "ERROR: Block production stopped"
-        sleep 10
-        exit 1
-    fi
+    echoErr "ERROR: Block production or sync stopped more than $(timerSpan catching_up) seconds ago"
+    sleep 10
+    exit 1
 else
     echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
@@ -47,7 +43,7 @@ fi
 set +x
 echoInfo "------------------------------------------------"
 echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
-echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "|  ELAPSED: $(timerSpan healthcheck) seconds"
 echoInfo "------------------------------------------------"
 set -x
 exit 0

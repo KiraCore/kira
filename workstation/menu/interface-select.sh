@@ -31,3 +31,8 @@ echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && ec
 set -x
 CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
 
+echoInfo "INFO: MTU Value Discovery..."
+MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+(! $(isNaturalNumber $MTU)) && MTU=1500
+(($MTU < 100)) && MTU=9000
+globSet MTU $MTU

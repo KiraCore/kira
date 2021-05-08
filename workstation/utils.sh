@@ -1,5 +1,6 @@
 #!/bin/bash
 # QUICK EDIT: FILE="$KIRA_MANAGER/utils.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+GLOB_STORE_DIR="/var/kiraglob"
 REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
@@ -91,6 +92,21 @@ function isNaturalNumber() {
         VTMP="false" && ($(isInteger "$1")) && [[ $1 -ge 0 ]] && VTMP="true"
         echo $VTMP
     fi
+}
+
+function isMnemonic() {
+    MNEMON=$(echo "$1" | xargs 2> /dev/null || echo -n "")
+    WCOUNT=$(echo "$MNEMON" | wc -w 2> /dev/null || echo -n "")
+    (! $(isNaturalNumber $WCOUNT)) && WCOUNT=0
+    if (( $WCOUNT % 4 == 0 )) && [ $WCOUNT -ge 12 ] ; then echo "true" ; else echo "false" ; fi
+}
+
+function isPortOpen() {
+    ADDR=$1 && PORT=$2 && TIMEOUT=$3
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=1
+    if (! $(isDnsOrIp $ADDR)) || (! $(isPort $PORT)) ; then echo "false"
+    elif timeout $TIMEOUT nc -z $ADDR $PORT ; then echo "true"
+    else echo "false" ; fi
 }
 
 function fileSize() {
@@ -237,34 +253,56 @@ function urlContentLength() {
     echo $VAL
 }
 
-GLOB_STORE_DIR="/var/kira/glob"
 function globName() {
-    echo "${1,,}" | tr -d '\011\012\013\014\015\040' 2>/dev/null | base64 2>/dev/null | tr '/+' '_-' 2>/dev/null | tr -d '=' 2>/dev/null || echo -n ""
+    #echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
+    echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | md5sum | awk '{ print $1 }')
+    return 0
 }
 
 function globGet() {
-    FNAME=$(globName "$1")
-    if [ ! -z "$FNAME" ] ; then
-        tryMkDir $GLOB_STORE_DIR
-        tryCat "${GLOB_STORE_DIR}/$FNAME"
-    fi
+    GNAM="$(globName $1)"
+    GFIL="${GLOB_STORE_DIR}/$GNAM"
+    [[ -s $GFIL ]] && cat $GFIL || echo ""
+    return 0
+}
+
+# threadsafe global get
+function globGetTS() {
+    GNAM="$(globName $1)"
+    GFIL="${GLOB_STORE_DIR}/$GNAM"
+    [[ -s "$GFIL" ]] && sem --id $GNAM "cat $GFIL" || echo ""
+    return 0
+}
+
+function globGetFile() {
+    echo "${GLOB_STORE_DIR}/$(globName $1)"
 }
 
 function globSet() {
-    FNAME=$(globName "$1")
-    if [ ! -z "$FNAME" ] ; then
-        tryMkDir $GLOB_STORE_DIR
-        if [ ! -z ${2+x} ] ; then
-            echo "$2" > "${GLOB_STORE_DIR}/$FNAME"
-        else
-            cat > "${GLOB_STORE_DIR}/$FNAME"
-        fi
+    GNAME="$(globName $1)"
+    GFILE="${GLOB_STORE_DIR}/$GNAME"
+    touch $GFILE
+    if [ ! -z ${2+x} ] ; then
+        echo "$2" > "$GFILE.tmp"
+    else
+        cat > "$GFILE.tmp"
+    fi
+    mv -f "$GFILE.tmp" $GFILE
+}
+
+# threadsafe global set
+function globSetTS() {
+    GNAME="$(globName $1)"
+    GFILE="${GLOB_STORE_DIR}/$GNAME"
+    if [ ! -z ${2+x} ] ; then
+        sem --id $GNAME "echo $2 > $GFILE"
+    else
+        sem --id $GNAME --pipe "cat > $GFILE"
     fi
 }
 
 function globEmpty() {
-    FNAME=$(globName "$1")
-    ($(isFileEmpty "${GLOB_STORE_DIR}/$FNAME")) && echo "true" || echo "false"
+    ($(isFileEmpty "${GLOB_STORE_DIR}/$(globName $1)")) && echo "true" || echo "false"
 }
 
 function globDel {
@@ -276,7 +314,7 @@ function globDel {
 
 function timerStart() {
     [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="${$}"
+    [ -z "$NAME" ] && NAME="${BASH_SOURCE}"
     TIME="$(date -u +%s)"
     globSet "timer_start_${NAME}" "$TIME"
     globSet "timer_end_${NAME}" ""
@@ -286,7 +324,7 @@ function timerStart() {
 
 function timerEnd() {
     [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="${$}"
+    [ -z "$NAME" ] && NAME="$BASH_SOURCE"
     NAME="timer_end_${NAME}"
     ($(globEmpty "$NAME")) && globSet "$NAME" "$(date -u +%s)"
     [ "${1,,}" == "-v" ] && globGet "$NAME"
@@ -294,7 +332,7 @@ function timerEnd() {
 }
 
 function timerSpan() {
-    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
+    NAME=$1 && [ -z "$NAME" ] && NAME="$BASH_SOURCE"
     START_TIME=$(globGet "timer_start_${NAME}")
     END_TIME=$(globGet "timer_end_${NAME}")
     if (! $(isNaturalNumber "$START_TIME")) ; then
@@ -307,17 +345,19 @@ function timerSpan() {
     return 0
 }
 
-function timerClear() {
-    NAME=$1 && [ -z "$NAME" ] && NAME="${$}"
-    globSet "timer_start_${NAME}" ""
-    globSet "timer_end_${NAME}" ""
+function timerDel() {
+    if [ -z "$@" ] ; then
+        var="$BASH_SOURCE"
+        globSet "timer_start_${var}" ""
+        globSet "timer_end_${var}" ""
+    else
+        for var in "$@" ; do
+            [ -z "$var" ] && var="$BASH_SOURCE"
+            globSet "timer_start_${var}" ""
+            globSet "timer_end_${var}" ""
+        done
+    fi
     return 0
-}
-
-function timersClear() {
-    for var in "$@" ; do
-        timerClear "$var"
-    done
 }
 
 function prettyTime {
@@ -334,6 +374,21 @@ function prettyTime {
   (( $M > 0 )) && (( $M > 1 )) && printf '%d minutes ' $M
   (( $M > 0 )) && (( $M < 2 )) && printf '%d minute ' $M
   (( $S != 1 )) && printf '%d seconds\n' $S || printf '%d second\n' $S
+}
+
+function resolveDNS {
+    DNS=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
+    ($(isIp $DNS)) && echo $DNS || echo -e ""
+}
+
+function isSubStr {
+    STR=$1
+    SUB=$2
+    [[ $STR == *"$SUB"* ]] && echo "true" || echo "false"
+}
+
+function isCommand {
+    if command "$1" 2> /dev/null ; then echo "true" ; else echo "false" ; fi
 }
 
 displayAlign() {

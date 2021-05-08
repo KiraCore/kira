@@ -15,12 +15,8 @@ set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
-SCAN_DONE="$KIRA_SCAN/done"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
-NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
@@ -45,9 +41,9 @@ KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
-    NETWORKS=$(tryCat $NETWORKS_SCAN_PATH "")
+    NETWORKS=$(globGet "NETWORKS")
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+    LATEST_BLOCK=$(globGet LATEST_BLOCK)
     [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -58,7 +54,7 @@ while : ; do
     fi
 
     if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-        SEKAID_STATUS_FILE="${CONTAINER_STATUS}.sekaid.status"
+        SEKAID_STATUS_FILE=$(globGetFile "${name}_SEKAID_STATUS")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
@@ -75,28 +71,26 @@ while : ; do
     echo "|            KIRA CONTAINER MANAGER $KIRA_SETUP_VER            |"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
-    if [ "${LOADING,,}" == "true" ] || [ ! -f "$CONTAINER_STATUS" ] ; then
+    if [ "${LOADING,,}" == "true" ] ; then
         echo -e "|\e[0m\e[31;1m      PLEASE WAIT, LOADING CONTAINER STATUS ...        \e[36;1m|"
-        while [ ! -f $SCAN_DONE ] || [ ! -f "$CONTAINER_STATUS" ] ; do
+        while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
             sleep 1
         done
         LOADING="false"
         continue
     fi
-
-    source "$CONTAINER_STATUS"
-
-    ID="ID_$NAME" && ID="${!ID}"
-    EXISTS="EXISTS_$NAME" && EXISTS="${!EXISTS}"
-    REPO="REPO_$NAME" && REPO="${!REPO}"
-    BRANCH="BRANCH_$NAME" && BRANCH="${!BRANCH}"
-    STATUS="STATUS_$NAME" && STATUS="${!STATUS}"
-    HEALTH="HEALTH_$NAME" && HEALTH="${!HEALTH}"
-    RESTARTING="RESTARTING_$NAME" && RESTARTING="${!RESTARTING}"
-    STARTED_AT="STARTED_AT_$NAME" && STARTED_AT="${!STARTED_AT}"
-    FINISHED_AT="FINISHED_AT_$NAME" && FINISHED_AT="${!FINISHED_AT}"
-    HOSTNAME="HOSTNAME_$NAME" && HOSTNAME="${!HOSTNAME}"
-    PORTS="PORTS_$NAME" && PORTS="${!PORTS}"
+    
+    ID=$(globGet "${NAME}_ID")
+    EXISTS=$(globGet "${NAME}_EXISTS")
+    REPO=$(globGet "${NAME}_REPO")
+    BRANCH=$(globGet "${NAME}_BRANCH")
+    STATUS=$(globGet "${NAME}_STATUS")
+    HEALTH=$(globGet "${NAME}_HEALTH")
+    RESTARTING=$(globGet "${NAME}_RESTARTING")
+    STARTED_AT=$(globGet "${NAME}_STARTED_AT")
+    FINISHED_AT=$(globGet "${NAME}_FINISHED_AT")
+    HOSTNAME=$(globGet "${NAME}_HOSTNAME")
+    PORTS=$(globGet "${NAME}_PORTS")
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -118,7 +112,7 @@ while : ; do
         echo "|     Host: ${v:0:43} |"
 
     i=-1 ; for net in $NETWORKS ; do i=$((i+1))
-        TMP_IP="IP_${NAME}_${net}" && TMP_IP="${!TMP_IP}"
+        TMP_IP=$(globGet "${NAME}_IP_${net}")
         if (! $(isNullOrEmpty "$TMP_IP")) ; then
             IP_TMP="${TMP_IP} ($net) ${WHITESPACE}"
             echo "| Local IP: ${IP_TMP:0:43} |"
@@ -134,9 +128,11 @@ while : ; do
     fi
 
     [ "${RESTARTING,,}" == "true" ] && STATUS="restart"
-    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ($(echo $STARTED_AT | head -c 19))${WHITESPACE}" && \
+    [ ! -z "$STARTED_AT" ] && STARTED_AT="$(echo $STARTED_AT | head -c 19)"
+    [ "$STATUS" != "exited" ] && TMPVAR="$STATUS ${STARTED_AT}${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
-    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ($(echo $FINISHED_AT | head -c 19))${WHITESPACE}" && \
+    [ ! -z "$FINISHED_AT" ] && FINISHED_AT="$(echo $FINISHED_AT | head -c 19)"
+    [ "$STATUS" == "exited" ] && TMPVAR="$STATUS ${FINISHED_AT}${WHITESPACE}" && \
     echo "|   Status: ${TMPVAR:0:43} |"
     (! $(isNullOrEmpty "$HEALTH")) && TMPVAR="${HEALTH}${WHITESPACE}" && \
     echo "|   Health: ${TMPVAR:0:43} |"
@@ -371,7 +367,8 @@ while : ; do
         break
     fi
 
-    [ "${LOADING,,}" == "true" ] && rm -fv $SCAN_DONE # trigger re-scan
+    # trigger re-scan if loading requested
+    [ "${LOADING,,}" == "true" ] && globSet IS_SCAN_DONE "false"
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
 done
 

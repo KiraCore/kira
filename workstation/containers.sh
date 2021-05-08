@@ -32,6 +32,7 @@ else
 fi
 
 echoInfo "INFO: Starting containers build..."
+globSet PRIV_CONN_PRIORITY "null"
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh 
@@ -41,10 +42,12 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
         # save snapshot from sentry first
+        globSet PRIV_CONN_PRIORITY false
         $KIRA_MANAGER/containers/start-sentry.sh "true"
         $KIRA_MANAGER/containers/start-priv-sentry.sh
     elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
         # save snapshot from private sentry first
+        globSet PRIV_CONN_PRIORITY true
         $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
         $KIRA_MANAGER/containers/start-sentry.sh
     else
@@ -64,10 +67,12 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     else 
         if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
             # save snapshot from sentry first
+            globSet PRIV_CONN_PRIORITY false
             $KIRA_MANAGER/containers/start-sentry.sh "true"
             $KIRA_MANAGER/containers/start-priv-sentry.sh
         elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
             # save snapshot from private sentry first
+            globSet PRIV_CONN_PRIORITY true
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
         else

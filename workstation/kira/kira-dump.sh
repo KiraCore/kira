@@ -4,7 +4,6 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-dump.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SCRIPT_START_TIME="$(date -u +%s)"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -14,10 +13,10 @@ echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"
 echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|             ID: $ID"
-echoWarn "|-------------------------------------------------"
+echoWarn "--------------------------------------------------"
 set -x
 
-CONTAINERS=$(tryCat $CONTAINERS_SCAN_PATH "")
+CONTAINERS=$(globGet "CONTAINERS")
 
 i=0
 total=0

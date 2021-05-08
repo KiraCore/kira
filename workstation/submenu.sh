@@ -14,6 +14,9 @@ else
 fi
 
 systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped or does NOT exist yet"
+systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
+globSet LATEST_BLOCK 0
+globSet MIN_HEIGHT 0
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
@@ -39,21 +42,37 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     set +x
     source $MNEMONICS
 
-    if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
-        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found within the private key store '$MNEMONICS'"
-        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
-        VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
-        [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-        echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
-    fi
+    while (! $(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; do
+        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) is invalid or was NOT found within the private key store '$MNEMONICS'"
+        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+        VALIDATOR_ADDR_MNEMONIC=$(echo "$VALIDATOR_ADDR_MNEMONIC" | xargs)
+        if [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && (! $(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; then
+            echoErr "ERROR: Invalid Bip39 seed words sequence"
+            continue
+        elif [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
+            echoInfo "INFO: New validator account controller key will be generated"
+            CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        else 
+            CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+            echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
+        fi
+    done
 
-    if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
-        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found within the private key store '$MNEMONICS'"
-        echoNErr "Input minimum of 24 comma separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
-        VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
-        [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-        echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"
-    fi
+    while (! $(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; do
+        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) is invalid or was NOT found within the private key store '$MNEMONICS'"
+        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
+        VALIDATOR_VAL_MNEMONIC=$(echo "$VALIDATOR_VAL_MNEMONIC" | xargs)
+        if [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && (! $(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; then
+            echoErr "ERROR: Invalid Bip39 seed words sequence"
+            continue
+        elif [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
+            echoInfo "INFO: New validator signing key will be generated"
+            CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        else 
+            CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+            echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) will be saved to $MNEMONICS"
+        fi
+    done
     set -x
 fi
 
@@ -96,12 +115,11 @@ while :; do
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
-      $KIRA_MANAGER/menu/quick-select.sh
+        $KIRA_MANAGER/menu/quick-select.sh
     else
-      CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-      CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-      CDHelper text lineswap --insert="NEW_NETWORK=\"true\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-      rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
+        CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="NEW_NETWORK=\"true\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+        rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
     fi
     break
     ;;
@@ -110,10 +128,9 @@ while :; do
     $KIRA_MANAGER/menu/branch-select.sh "false"
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
-      $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
+        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
     else
-      CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
-      $KIRA_MANAGER/menu/snapshot-select.sh
+        $KIRA_MANAGER/menu/snapshot-select.sh
     fi
 
     $KIRA_MANAGER/menu/seeds-select.sh
@@ -133,13 +150,18 @@ while :; do
 done
 set -x
 
-systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
-
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
-
 CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+set +e && source $ETC_PROFILE &>/dev/null && set -e
+
+echoInfo "INFO: MTU Value Discovery..."
+MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+(! $(isNaturalNumber $MTU)) && MTU=1500
+(($MTU < 100)) && MTU=9000
+globSet MTU $MTU
 
 rm -rfv $KIRA_UPDATE
 

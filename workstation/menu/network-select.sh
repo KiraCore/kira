@@ -141,19 +141,19 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
     set +x
     echoInfo "INFO: Validator mode detected, last parameter to setup..."
     echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
-    echoWarn "INFO: Set minimum block height to the latest block height that the network reached. If you do not set this parameter the latest height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused and in production environment a spacial care should be taken while setting this property!"
+    echoWarn "IMORTANT: Set minimum block height to the latest block height that the network reached. If you input 0 and do NOT set this parameter to the latest height then the block height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused (because node might be behind latest block height) and in production environment a spacial care should be taken while setting this property!"
     
     while : ; do
-        echoNErr "Define minimum block height: " && read VALIDATOR_MIN_HEIGHT
-        ( [ -z "$VALIDATOR_MIN_HEIGHT" ] || [ -z "${VALIDATOR_MIN_HEIGHT##*[!0-9]*}" ] || [ $VALIDATOR_MIN_HEIGHT -lt 0 ] ) && continue
+        echoNErr "Define minimum block height: " && read MIN_HEIGHT
+        (! $(isNaturalNumber $MIN_HEIGHT)) && continue
         break
     done
 
-    echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $VALIDATOR_MIN_HEIGHT"
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+    echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $MIN_HEIGHT"
+    globSet MIN_HEIGHT $MIN_HEIGHT
     echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
     set -x
 else
-    CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"0\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet MIN_HEIGHT 0
 fi
 

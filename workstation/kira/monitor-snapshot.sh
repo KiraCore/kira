@@ -6,9 +6,7 @@ source $KIRA_MANAGER/utils.sh
 
 set -x
 
-SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DONE="$KIRA_SCAN/done"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+timerStart
 SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -18,12 +16,12 @@ UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 CONAINER_NAME="snapshot"
 
-while [ ! -f $SCAN_DONE ] ; do
+while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     echoInfo "INFO: Waiting for monitor scan to finalize run..."
     sleep 10
 done
 
-LATEST_BLOCK=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
+LATEST_BLOCK=$(globGet LATEST_BLOCK)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
@@ -93,11 +91,12 @@ else
     if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
         echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
         CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-    elif [ -f $SCAN_DONE ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
+    elif [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
         ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
         INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
         if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
-            rm -fv $SCAN_DONE "${SNAPSHOT_SCAN_PATH}-start.log"
+            globSet "IS_SCAN_DONE" "false"
+            rm -fv "${SNAPSHOT_SCAN_PATH}-start.log"
             [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
             $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
             CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -113,6 +112,6 @@ sleep 30
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: SNAPSHOT MONITOR                   |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

@@ -42,15 +42,15 @@ cp -a -v -f $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$EXIT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED,tcp://$SNAPSHOT_SEED"
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-
+    
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -65,6 +65,8 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e HOSTNAME="$KIRA_SEED_DNS" \
+    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
@@ -73,12 +75,12 @@ docker run -d \
     -e CFG_external_address="" \
     -e CFG_seeds="" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_private_peer_ids="" \
+    -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="128" \
+    -e CFG_max_num_outbound_peers="64" \
     -e CFG_max_num_inbound_peers="128" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="15s" \
@@ -87,12 +89,14 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SEED_NODE_ID" \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \

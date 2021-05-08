@@ -60,11 +60,7 @@ declare -a networks=("kiranet" "sentrynet" "servicenet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET")
 len=${#networks[@]}
 
-echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
-(! $(isNaturalNumber $MTU)) && MTU=1500
-MTU=$(($MTU - 100))
-(($MTU < 100)) && MTU=1400
+MTU=$(globGet MTU)
 
 for (( i=0; i<${len}; i++ )) ; do
     network=${networks[$i]}

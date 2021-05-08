@@ -7,6 +7,8 @@ set -x
 echoInfo "INFO: Staring validator setup ..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 DATA_DIR="$SEKAID_HOME/data"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
@@ -33,7 +35,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         cd $SEKAID_HOME/config
   
         SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
-        echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $VALIDATOR_MIN_HEIGHT"
+        echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $MIN_HEIGHT"
   
         if [ -f "$DATA_GENESIS" ] ; then
             echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."
@@ -99,8 +101,24 @@ fi
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256 $LOCAL_GENESIS
 
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        SENTRY_OPEN=$(isPortOpen sentry.kiranet.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.kiranet.local 26656)
+        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+            echoInfo "INFO: Sentry or Private Sentry container is running!"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+            sleep 15
+        fi
+    done
+fi
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
+rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace  
