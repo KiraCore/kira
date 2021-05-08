@@ -194,7 +194,9 @@ while : ; do
                 if [ "${VALSTATUS,,}" == "active" ] ; then
                     echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
                 elif [ "${VALSTATUS,,}" == "inactive" ] ; then
-                    echo -e "|\e[0m\e[31;1m    VALIDATOR IS JAILED, ACTIVATE YOUR NODE    \e[33;1m: $VALSTATUS"
+                    echo -e "|\e[0m\e[31;1m   VALIDATOR WAS STOPPED, ACTIVATE YOUR NODE   \e[33;1m: $VALSTATUS"
+                elif [ "${VALSTATUS,,}" == "jailed" ] ; then
+                    echo -e "|\e[0m\e[31;1m    VALIDATOR COMMITED DOUBLE-SIGNING FAULT    \e[33;1m: $VALSTATUS"
                 elif [ "${VALSTATUS,,}" == "paused" ] ; then
                     echo -e "|\e[0m\e[36;1m      VALIDATOR ENTERED MAINTENANCE MODE       \e[33;1m: $VALSTATUS"
                 elif [ "${VALSTATUS,,}" == "waiting" ] ; then
