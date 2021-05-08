@@ -34,10 +34,10 @@ PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
 if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     EXTERNAL_ADDR="$LOCAL_IP"
-elif [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ; then
+elif [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 else
-    EXTERNAL_ADDR="$NODE_TYPE"
+    EXTERNAL_ADDR="$HOSTNAME"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
 fi
 
@@ -91,55 +91,104 @@ echoInfo "INFO: Local Addr: $LOCAL_IP"
 echoInfo "INFO: Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $CFG_external_address"
 
-if [ -f "$LOCAL_PEERS_PATH" ] ; then 
-    echoInfo "INFO: List of external peers was found"
+if [ ! -s "$LOCAL_PEERS_PATH" ] ; then 
+    echoInfo "INFO: List of external peers was found, adding to peers config"
     set +x
     while read peer ; do
-        peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
-        [ -z "$peer" ] && echo "WARNING: peer not found" && continue
-        addrArr1=( $(echo $peer | tr "@" "\n") )
-        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=${addrArr1[0],,}
-        addr=${addrArr2[0],,}
-        port=${addrArr2[1],,}
-
-        (! $(isNodeId "$nodeId")) && "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
-
-        peer="tcp://$peer"
-        echoInfo "INFO: Adding extra peer '$peer'"
-
-        #[ ! -z "$CFG_private_peer_ids" ] && CFG_private_peer_ids="${CFG_private_peer_ids},"
+        echoInfo "INFO: Adding extra peer '$peer' from the list"
         [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
-        [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
-        
-        #CFG_private_peer_ids="${CFG_private_peer_ids}${nodeId}"
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
-        CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
     done < $LOCAL_PEERS_PATH
     set -x
+else
+    echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)"
 fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
-    echoInfo "INFO: List of external seeds was found"
+    echoInfo "INFO: List of external seeds was found, adding to seeds config"
     set +x
     while read seed ; do
+        echoInfo "INFO: Adding extra seed '$seed' from the list"
+        [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
+        CFG_seeds="${CFG_seeds}${seed}"
+    done < $LOCAL_SEEDS_PATH
+    set -x
+else
+    echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)"
+fi
+
+if [ ! -z "$CFG_seeds" ] ; then
+    echoInfo "INFO: Seed configuration is available, testing..."
+    TMP_CFG_seeds=""
+    for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
-        [ -z "$seed" ] && echo "WARNING: seed not found" && continue
+        set +x
+        [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
         nodeId=${addrArr1[0],,}
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
+        #addr=$(resolveDNS $addr)
 
-        (! $(isNodeId "$nodeId")) && "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
+        (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
+        (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
+        ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
 
-        seed="tcp://$seed"
-        echoInfo "INFO: Adding extra seed '$seed'"
-        [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
-        CFG_seeds="${CFG_seeds}${seed}"
-    done < $LOCAL_SEEDS_PATH
-    set -x
+        seed="tcp://${nodeId}@${addr}:${port}"
+        echoInfo "INFO: Adding extra seed '$seed' to new config"
+        [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
+        TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
+        set -x
+    done
+else
+    echoWarn "WARNING: Seeds configuration is NOT available!"
 fi
+
+echoInfo "INFO: Final Seeds List:"
+echoInfo "$CFG_seeds"
+
+if [ ! -z "$CFG_persistent_peers" ] ; then
+    echoInfo "INFO: Peers configuration is available, testing..."
+    
+    TMP_CFG_persistent_peers=""
+    for peer in $(echo $CFG_persistent_peers | sed "s/,/ /g") ; do
+        peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
+        set +x
+        [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
+        addrArr1=( $(echo $peer | tr "@" "\n") )
+        addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
+        nodeId=${addrArr1[0],,}
+        addr=${addrArr2[0],,}
+        port=${addrArr2[1],,}
+        #addr=$(resolveDNS $addr)
+        
+        (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
+        (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
+        (! $(isPort "$port")) && echoWarn "WARNINIG: Peer '$peer' PORT is invalid!" && continue
+        ($(isSubStr "$TMP_CFG_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the peers config." && continue
+        ($(isSubStr "$CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the seeds config." && continue
+
+        peer="tcp://${nodeId}@${addr}:${port}"
+        echoInfo "INFO: Adding extra peer '$peer' to new config"
+
+        [ ! -z "$TMP_CFG_persistent_peers" ] && TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers},"
+        TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers}${peer}"
+
+        if (! $(isSubStr "$CFG_unconditional_peer_ids" "$nodeId")) ; then
+            [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
+            CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
+        fi
+        set -x
+    done
+    CFG_persistent_peers=$TMP_CFG_persistent_peers
+else
+    echoWarn "WARNING: Peers configuration is NOT available!"
+fi
+
+echoInfo "INFO: Final Peers List:"
+echoInfo "$CFG_persistent_peers"
 
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
 [ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG
@@ -201,9 +250,9 @@ echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
 (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
-(! $(isNaturalNumber $VALIDATOR_MIN_HEIGHT)) && VALIDATOR_MIN_HEIGHT=0
+(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
 (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
-[[ $VALIDATOR_MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+[[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
 [[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
 if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
@@ -220,8 +269,8 @@ EOL
     #rm -fv "$LOCAL_STATE.tmp"
 fi
 
-[[ $LATEST_BLOCK_HEIGHT -gt $VALIDATOR_MIN_HEIGHT ]] && \
-CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+[[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGHT ]] && \
+CDHelper text lineswap --insert="MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"

@@ -6,16 +6,15 @@ source $KIRA_MANAGER/utils.sh
 # cat $KIRA_SCAN/peers.logs
 set -x
 
-SCRIPT_START_TIME="$(date -u +%s)"
-SCAN_DONE="$KIRA_SCAN/done"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
+timerStart
 PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
 INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"
 MIN_SNAP_SIZE="524288"
 
-while [ ! -f $SCAN_DONE ] ; do
+
+while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     echo "INFO: Waiting for monitor scan to finalize run..."
     sleep 10
 done
@@ -24,7 +23,6 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "|     STARTING KIRA PEERS SCAN $KIRA_SETUP_VER        |"
 echoWarn "|-----------------------------------------------"
-echoWarn "| LATEST_BLOCK_SCAN_PATH: $LATEST_BLOCK_SCAN_PATH"
 echoWarn "|        PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
 echoWarn "|        SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
 echoWarn "|   INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
@@ -50,7 +48,7 @@ else
     (docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 fi
 
-PUBLIC_IP=$(cat "$DOCKER_COMMON_RO/public_ip" || echo -n "")
+PUBLIC_IP=$(globGet "PUBLIC_IP")
 (! $(isNullOrEmpty $PUBLIC_IP)) && echo "\"$PUBLIC_IP\"" >> $TMP_BOOK
 
 sort -u $TMP_BOOK -o $TMP_BOOK
@@ -91,7 +89,7 @@ while read ip; do
         echoWarn "WARNING: Address '$ip' is already present in the address book" && continue 
     fi
 
-    TMP_HEIGHT=$(tryCat $LATEST_BLOCK_SCAN_PATH "")
+    TMP_HEIGHT=$(globGet LATEST_BLOCK)
     if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT
@@ -178,7 +176,7 @@ cp -afv $TMP_BOOK_PUBLIC $INTERX_PEERS_PATH
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: PEERS MONITOR                      |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
 

@@ -57,7 +57,7 @@ $KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
 
-service docker restart || echoWarn "WARNING: Failed to restart docker"
+$KIRA_SCRIPTS/docker-restart.sh
 echoInfo "INFO: Waiting for all containers to start..."
 sleep 120
 $KIRA_MANAGER/setup/registry.sh
@@ -68,8 +68,10 @@ cat > /etc/systemd/system/kiraup.service << EOL
 Description=KIRA Update And Setup Service
 After=network.target
 [Service]
-CPUSchedulingPolicy=fifo
-CPUSchedulingPriority=99
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
 Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME

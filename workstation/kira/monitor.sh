@@ -8,9 +8,6 @@ set -x
 echoInfo "INFO: Started kira network scan $KIRA_SETUP_VER"
 
 SCAN_LOGS="$KIRA_SCAN/logs"
-SCAN_DONE="$KIRA_SCAN/done"
-CONTAINERS_SCAN_PATH="$KIRA_SCAN/containers"
-NETWORKS_SCAN_PATH="$KIRA_SCAN/networks"
 HOSTS_SCAN_PATH="$KIRA_SCAN/hosts"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
@@ -25,24 +22,27 @@ SNAP_LATEST="$SNAP_STATUS/latest"
 
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
-while : ; do
-    START_TIME="$(date -u +%s)"
+timerDel "DISK_CONS" "NET_CONS"
+globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "CONTAINERS" "IS_SCAN_DONE" "DISK_CONS" "NET_RECEIVED" "NET_TRANSMITTED" "NET_OUT" "NET_IN" "NET_PRIOR"
 
-    if ! command -v docker ; then
+while : ; do
+    timerStart -v
+    if (! $(isCommand "docker"))  ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
+        globSet IS_SCAN_DONE "true"
         sleep 10
         continue
     fi
     
-    mkdir -p $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
-    touch $CONTAINERS_SCAN_PATH "$NETWORKS_SCAN_PATH" "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH" "$CONTAINERS_SCAN_PATH"
+    tryMkDir $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
+    touch "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH"
 
     set +e && source "/etc/profile" &>/dev/null && set -e
 
-    echo $(docker network ls --format="{{.Name}}" || echo -n "") > $NETWORKS_SCAN_PATH &
+    echo $(docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "") | globSet "NETWORKS" &
     PID1="$!"
 
-    echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "") > $CONTAINERS_SCAN_PATH &
+    echo $(docker ps -a | awk '{if(NR>1) print $NF}' | tac || docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo -n "") | globSet "CONTAINERS" &
     PID2="$!"
 
     if ! kill -0 $(tryCat "${HOSTS_SCAN_PATH}.pid") 2>/dev/null; then
@@ -97,10 +97,17 @@ while : ; do
 
     echoInfo "INFO: Waiting for network and docker processes querry to finalize..."
     wait $PID1
-    (! $(isFileEmpty $NETWORKS_SCAN_PATH)) && cp -afv $NETWORKS_SCAN_PATH $SCAN_DUMP || echoWarn "WARNING: Failed to dump networks info"
+    globGet "NETWORKS" > $SCAN_DUMP/networks || echoWarn "WARNING: Failed to dump networks info"
     wait $PID2
-    (! $(isFileEmpty $CONTAINERS_SCAN_PATH)) && cp -afv $CONTAINERS_SCAN_PATH $SCAN_DUMP || echoWarn "WARNING: Failed to dump networks info"
+    globGet "CONTAINERS" > $SCAN_DUMP/containers || echoWarn "WARNING: Failed to dump containers info"
     
-    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh
-    echoInfo "INFO: Scan was finalized, elapsed $(($(date -u +%s) - $START_TIME)) seconds"
+    SUCCESS="true"
+    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh || SUCCESS="false"
+    globSet IS_SCAN_DONE "true"
+
+    if [ "${SUCCESS,,}" != "true" ] ; then
+        echoErr "ERROR: Containers monitor failed!"
+        sleep 5
+    fi
+    echoInfo "INFO: Scan was finalized, elapsed $(timerSpan) seconds"
 done

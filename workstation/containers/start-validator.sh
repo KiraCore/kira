@@ -43,15 +43,17 @@ set -x
 rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED"
-
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
+    if [ "${NEW_NETWORK,,}" == true ] ; then
+        rm -fv "$COMMON_PATH/genesis.json"
+    fi
+
+    CFG_seeds=""
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
     
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -66,15 +68,17 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
+    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="" \
-    -e CFG_seeds="" \
+    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_outbound_peers="2" \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
@@ -84,17 +88,20 @@ docker run -d \
     -e CFG_allow_duplicate_ip="true" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="15s" \
+    -e CFG_max_txs_bytes="131072000" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_max_tx_bytes="131072" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \
+    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
-    -e VALIDATOR_MIN_HEIGHT="$VALIDATOR_MIN_HEIGHT" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
@@ -104,7 +111,12 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-[ "${NEW_NETWORK,,}" == true ] && rm -fv $LOCAL_GENESIS_PATH
+mkdir -p $INTERX_REFERENCE_DIR
+if [ "${NEW_NETWORK,,}" == true ] ; then
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
+    rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
 
@@ -113,8 +125,8 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
 if [ "${NEW_NETWORK,,}" == true ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
-    mkdir -p $INTERX_REFERENCE_DIR
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi

@@ -33,13 +33,13 @@ if [ "${SELECT,,}" == "n" ]; then
     NEW_NETWORK="true"
     TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
-    VALIDATOR_MIN_HEIGHT="0"
+    MIN_HEIGHT="0"
 
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-    echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
+    echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
     echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
     echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
     echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
@@ -58,7 +58,7 @@ if [ "${SELECT,,}" == "n" ]; then
     fi
 elif [ "${SELECT,,}" == "j" ] ; then
     NEW_NETWORK="false"
-    VALIDATOR_MIN_HEIGHT="0"
+    MIN_HEIGHT="0"
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
             set +x
@@ -268,21 +268,21 @@ elif [ "${SELECT,,}" == "j" ] ; then
             while : ; do
                 set +x
                 echo "INFO: Default minmum block height is $HEIGHT"
-                echoNErr "Input minimum block height or press [ENTER] for (default): " && read VALIDATOR_MIN_HEIGHT
-                [ -z "$VALIDATOR_MIN_HEIGHT" ] && VALIDATOR_MIN_HEIGHT=$HEIGHT
-                ( (! $(isNaturalNumber "$VALIDATOR_MIN_HEIGHT")) || [[ $VALIDATOR_MIN_HEIGHT -lt $HEIGHT ]] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+                echoNErr "Input minimum block height or press [ENTER] for (default): " && read MIN_HEIGHT
+                [ -z "$MIN_HEIGHT" ] && MIN_HEIGHT=$HEIGHT
+                ( (! $(isNaturalNumber "$MIN_HEIGHT")) || [[ $MIN_HEIGHT -lt $HEIGHT ]] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
                 set -x
                 break
             done
         else
-            VALIDATOR_MIN_HEIGHT=$HEIGHT
+            MIN_HEIGHT=$HEIGHT
         fi
 
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $VALIDATOR_MIN_HEIGHT
+        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:      Public Internet Exposure: " && echoErr $(isPublicIp $NODE_ADDR) 
@@ -328,6 +328,7 @@ else
 fi
 
 rm -fvr "$KIRA_SNAP/status"
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
 rm -fv "$LOCAL_GENESIS_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
@@ -345,7 +346,7 @@ fi
 rm -f -v -r $TMP_SNAP_DIR
 NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="VALIDATOR_MIN_HEIGHT=\"$VALIDATOR_MIN_HEIGHT\"" --prefix="VALIDATOR_MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet MIN_HEIGHT $MIN_HEIGHT
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True

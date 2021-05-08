@@ -13,6 +13,8 @@ RESTART=$3
 ( [ "$TARGET" == "null" ] || [ "$TARGET" == "*" ] ) && TARGET=""
 
 START_TIME="$(date -u +%s)"
+MTU=$(globGet MTU)
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: RESTART-NETWORKS SCRIPT             |"
@@ -21,6 +23,7 @@ echoWarn "| BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|   RECONNECT: $RECONNECT"
 echoWarn "|     RESTART: $RESTART"
 echoWarn "|      TARGET: $TARGET"
+echoWarn "|         MTU: $MTU"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -33,43 +36,37 @@ declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
-echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
-(! $(isNaturalNumber $MTU)) && MTU=1500
-MTU=$(($MTU - 100))
-(($MTU < 100)) && MTU=1400
-
 for (( i=0; i<${len}; i++ )) ; do
-  network=${networks[$i]}
-  subnet=${subnets[$i]}
-  if [ ! -z "$TARGET" ] && [ "$network" != "$TARGET" ] ; then
-    echoInfo "INFO: Target network is '$TARGET' the '$network' network will not be reconnected"
-    continue
-  fi
-  echoInfo "INFO: Restarting $network ($subnet)"
-  containers=$(timeout 8 docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
-
-  if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
-      for container in $containers ; do
-         echoInfo "INFO: Disconnecting container '$container'"
-         docker network disconnect -f $network $container || echoWarn "WARNING: Failed to disconnect container '$container' from network '$network'"
-      done
-  else
-    echoInfo "INFO: No containers were found to be attached to $network network"
-  fi
-
-  sleep 1 && docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
-  sleep 1 && docker network create --opt com.docker.network.driver.mtu=$MTU  --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
+    network=${networks[$i]}
+    subnet=${subnets[$i]}
+    if [ ! -z "$TARGET" ] && [ "$network" != "$TARGET" ] ; then
+        echoInfo "INFO: Target network is '$TARGET' the '$network' network will not be reconnected"
+        continue
+    fi
+    echoInfo "INFO: Restarting $network ($subnet)"
+    containers=$(timeout 8 docker network inspect -f '{{range .Containers}}{{.Name}} {{end}}' $network 2> /dev/null || echo -n "")
   
-  if [ "${RECONNECT,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
-    for container in $containers ; do
-      echoInfo "INFO: Connecting container $container to $network"
-      docker network connect $network $container
-      sleep 1
-    done
-  else
-    echoInfo "INFO: Containers will NOT be recconected to the '$network' network"
-  fi
+    if [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
+        for container in $containers ; do
+            echoInfo "INFO: Disconnecting container '$container'"
+            docker network disconnect -f $network $container || echoWarn "WARNING: Failed to disconnect container '$container' from network '$network'"
+        done
+    else
+        echoInfo "INFO: No containers were found to be attached to $network network"
+    fi
+  
+    sleep 1 && docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
+    sleep 1 && docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to re-create $network network"
+    
+    if [ "${RECONNECT,,}" == "true" ] && [ ! -z "$containers" ] && [ "${containers,,}" != "null" ] ; then
+        for container in $containers ; do
+            echoInfo "INFO: Connecting container $container to $network"
+            docker network connect $network $container
+            sleep 1
+        done
+    else
+        echoInfo "INFO: Containers will NOT be recconected to the '$network' network"
+    fi
 done
 
 if [ "${RESTART,,}" == "true" ] ; then
@@ -88,5 +85,3 @@ echoWarn "| FINISHED: RESTART-NETWORKS SCRIPT            |"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 set -x
-
-# 

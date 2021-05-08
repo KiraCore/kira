@@ -106,7 +106,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    CDHelper text lineswap --insert="KIRA_SCAN=$KIRA_HOME/kirascan" --prefix="KIRA_SCAN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INTERX_REFERENCE_DIR=$DOCKER_COMMON/interx/cache/reference" --prefix="INTERX_REFERENCE_DIR=" --path=$ETC_PROFILE --append-if-found-not=True
 
     set +e && source "/etc/profile" &>/dev/null && set -e

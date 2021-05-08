@@ -13,7 +13,6 @@ SYNC_FROM_SNAP=$2
 CONTAINER_NAME="snapshot"
 CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 SNAP_STATUS="$KIRA_SNAP/status"
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -24,7 +23,7 @@ CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
-LATETS_BLOCK=$(cat $LATEST_BLOCK_SCAN_PATH || echo "0") && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
+LATETS_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
 mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
@@ -66,11 +65,12 @@ set -x
 set -e
 
 echoInfo "INFO: Checking peers info..."
-SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SENTRY_SEED,tcp://$SEED_SEED"
+CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+[ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
@@ -102,17 +102,20 @@ docker run -d \
     -e HALT_HEIGHT="$MAX_HEIGHT" \
     -e SNAP_FILENAME="$SNAP_FILENAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e HOSTNAME="$KIRA_SNAPSHOT_DNS" \
+    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_pex="true" \
+    -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="4" \
+    -e CFG_max_num_outbound_peers="2" \
     -e CFG_max_num_inbound_peers="4" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_allow_duplicate_ip="true" \
@@ -122,6 +125,9 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
+    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \

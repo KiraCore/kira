@@ -16,19 +16,23 @@ echoWarn "------------------------------------------------"
 set -x
 
 mkdir -p $INTERX_REFERENCE_DIR
+chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
 rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
 
 if [ "${NEW_NETWORK,,}" != "true" ] ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 "$LOCAL_GENESIS_PATH")
     CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 else
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
     rm -fv "$LOCAL_GENESIS_PATH"
 fi
 
 echoInfo "INFO: Starting containers build..."
+globSet PRIV_CONN_PRIORITY "null"
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh 
@@ -38,10 +42,12 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
         # save snapshot from sentry first
+        globSet PRIV_CONN_PRIORITY false
         $KIRA_MANAGER/containers/start-sentry.sh "true"
         $KIRA_MANAGER/containers/start-priv-sentry.sh
     elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
         # save snapshot from private sentry first
+        globSet PRIV_CONN_PRIORITY true
         $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
         $KIRA_MANAGER/containers/start-sentry.sh
     else
@@ -61,10 +67,12 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     else 
         if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
             # save snapshot from sentry first
+            globSet PRIV_CONN_PRIORITY false
             $KIRA_MANAGER/containers/start-sentry.sh "true"
             $KIRA_MANAGER/containers/start-priv-sentry.sh
         elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
             # save snapshot from private sentry first
+            globSet PRIV_CONN_PRIORITY true
             $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
             $KIRA_MANAGER/containers/start-sentry.sh
         else
