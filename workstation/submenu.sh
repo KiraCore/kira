@@ -42,21 +42,37 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     set +x
     source $MNEMONICS
 
-    if [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
-        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) was not found within the private key store '$MNEMONICS'"
+    while (! $(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; do
+        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) is invalid or was NOT found within the private key store '$MNEMONICS'"
         echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
-        VALIDATOR_ADDR_MNEMONIC=$(echo $VALIDATOR_ADDR_MNEMONIC | xargs)
-        [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-        echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
-    fi
+        VALIDATOR_ADDR_MNEMONIC=$(echo "$VALIDATOR_ADDR_MNEMONIC" | xargs)
+        if [ ! -z "$VALIDATOR_ADDR_MNEMONIC" ] && (! $(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; then
+            echoErr "ERROR: Invalid Bip39 seed words sequence"
+            continue
+        elif [ -z "$VALIDATOR_ADDR_MNEMONIC" ] ; then
+            echoInfo "INFO: New validator account controller key will be generated"
+            CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        else 
+            CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+            echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) will be saved to $MNEMONICS"
+        fi
+    done
 
-    if [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
-        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) was not found within the private key store '$MNEMONICS'"
+    while (! $(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; do
+        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) is invalid or was NOT found within the private key store '$MNEMONICS'"
         echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
-        VALIDATOR_VAL_MNEMONIC=$(echo $VALIDATOR_VAL_MNEMONIC | xargs)
-        [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
-        echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) was saved to $MNEMONICS"
-    fi
+        VALIDATOR_VAL_MNEMONIC=$(echo "$VALIDATOR_VAL_MNEMONIC" | xargs)
+        if [ ! -z "$VALIDATOR_VAL_MNEMONIC" ] && (! $(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; then
+            echoErr "ERROR: Invalid Bip39 seed words sequence"
+            continue
+        elif [ -z "$VALIDATOR_VAL_MNEMONIC" ] ; then
+            echoInfo "INFO: New validator signing key will be generated"
+            CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        else 
+            CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+            echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC) will be saved to $MNEMONICS"
+        fi
+    done
     set -x
 fi
 

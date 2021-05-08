@@ -94,6 +94,13 @@ function isNaturalNumber() {
     fi
 }
 
+function isMnemonic() {
+    MNEMON=$(echo "$1" | xargs 2> /dev/null || echo -n "")
+    WCOUNT=$(echo "$MNEMON" | wc -w 2> /dev/null || echo -n "")
+    (! $(isNaturalNumber $WCOUNT)) && WCOUNT=0
+    if (( $WCOUNT % 4 == 0 )) && [ $WCOUNT -ge 12 ] ; then echo "true" ; else echo "false" ; fi
+}
+
 function isPortOpen() {
     ADDR=$1 && PORT=$2 && TIMEOUT=$3
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=1
