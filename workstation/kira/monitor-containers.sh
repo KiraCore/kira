@@ -35,10 +35,8 @@ for name in $CONTAINERS; do
     mkdir -p "$DOCKER_COMMON/$name"
     touch "$DESTINATION_PATH"
 
-    rm -fv "$DESTINATION_PATH.tmp"
-
     ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo -n "")
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$DESTINATION_PATH.tmp" "$NETWORKS" "$ID" &> "$SCAN_LOGS/${name}-status.error.log" &
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" "$ID" &> "$SCAN_LOGS/${name}-status.error.log" &
     echo "$!" > "$DESTINATION_PATH.pid"
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then

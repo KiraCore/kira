@@ -30,14 +30,10 @@ if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
     echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
     echoWarn "WARNING: Consensus Stopped: $CONSENSUS_STOPPED"
-  
-      if [[ $LATEST_BLOCK_HEIGHT -ge 1 ]] && [[ $LATEST_BLOCK_HEIGHT -le $HEIGHT ]] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
-          echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
-      else
-          echoErr "ERROR: Block production or sync stopped more than $(timerSpan catching_up) seconds ago"
-          sleep 10
-          exit 1
-      fi
+      
+    echoErr "ERROR: Block production or sync stopped more than $(timerSpan catching_up) seconds ago"
+    sleep 10
+    exit 1
 else
     echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
 fi

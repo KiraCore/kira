@@ -103,15 +103,15 @@ while : ; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.05 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.05 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
 
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-    STATUS=$(timeout 1 curl $STATUS_URL 2>/dev/null || echo -n "")
+    STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-    KIRA_STATUS=$(timeout 1 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
+    KIRA_STATUS=$(timeout 0.25 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
     
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")

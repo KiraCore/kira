@@ -4,9 +4,8 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/container-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 NAME=$1
-VARS_FILE=$2
-NETWORKS=$3
-ID=$4
+NETWORKS=$2
+ID=$3
 SCRIPT_START_TIME="$(date -u +%s)"
 
 set +x
@@ -14,7 +13,6 @@ echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER  |"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
-echoWarn "|      VARS_FILE: $VARS_FILE"
 echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|             ID: $ID"
 echoWarn "|-------------------------------------------------"
@@ -38,10 +36,7 @@ elif [ "${NAME,,}" == "registry" ]; then
     REPO="master"
 fi
 
-DOCKER_INSPECT="$VARS_FILE.inspect"
-DOCKER_STATE="$DOCKER_INSPECT.state"
-DOCKER_CONFIG="$DOCKER_INSPECT.config"
-DOCKER_NETWORKS="$DOCKER_INSPECT.networks"
+DOCKER_INSPECT=$(globGetFile "${NAME}_DOCKER_INSPECT")
 
 if (! $(isNullOrEmpty "$ID")) ; then
     EXISTS="true"
@@ -59,6 +54,9 @@ if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"
     HALT_FILE="$COMMON_PATH/halt"
     CONFIG_FILE="$COMMON_PATH/configuring"
+    
+    DOCKER_STATE=$(globGetFile "${NAME}_DOCKER_STATE")
+    DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
@@ -96,7 +94,6 @@ else
     globSet "${NAME}_FINISHED_AT" "0"
     globSet "${NAME}_HOSTNAME" ""
     globSet "${NAME}_PORTS" ""
-    rm -fv $DOCKER_STATE $DOCKER_CONFIG $DOCKER_NETWORKS
 fi
 
 set +x
@@ -107,5 +104,4 @@ echoWarn "------------------------------------------------"
 set -x
 
 # Examples:
-# VARS_FILE=/home/ubuntu/kirascan/status/sentry.tmp
 # cat "$SCAN_LOGS/sentry-status.error.log"

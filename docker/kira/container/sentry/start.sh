@@ -22,7 +22,6 @@ COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-touch $CFG_CHECK
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"

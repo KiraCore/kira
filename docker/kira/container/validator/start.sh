@@ -17,7 +17,6 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-touch $CFG_CHECK
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rf $SEKAID_HOME

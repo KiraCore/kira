@@ -15,8 +15,6 @@ HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 CFG_CHECK="${COMMON_DIR}/configuring"
 STATUS_SCAN="${COMMON_DIR}/status"
-EXCEPTION_COUNTER_FILE="$COMMON_DIR/exception_counter"
-EXCEPTION_TOTAL_FILE="$COMMON_DIR/exception_total"
 EXECUTED_CHECK="$COMMON_DIR/executed"
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height"
 COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
@@ -26,12 +24,7 @@ VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
 
 rm -rfv $STATUS_SCAN
-touch "$EXCEPTION_COUNTER_FILE" "$EXCEPTION_TOTAL_FILE" "$BLOCK_HEIGHT_FILE"
-
-EXCEPTION_COUNTER=$(cat $EXCEPTION_COUNTER_FILE || echo -n "")
-EXCEPTION_TOTAL=$(cat $EXCEPTION_TOTAL_FILE || echo -n "")
-(! $(isNaturalNumber "$EXCEPTION_COUNTER")) && EXCEPTION_COUNTER=0
-(! $(isNaturalNumber "$EXCEPTION_TOTAL")) && EXCEPTION_TOTAL=0
+touch "$BLOCK_HEIGHT_FILE"
 
 echoInfo "INFO: Logs cleanup..."
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate self logs"
@@ -48,10 +41,9 @@ if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
         rm -fv $EXIT_CHECK
     elif [ -f "$CFG_CHECK" ] ; then
         echoInfo "INFO: Waiting for container configuration to be finalized..."
-        sleep 30
+    else
+        echoInfo "INFO: health heck => STOP (halted)"
     fi
-    echoInfo "INFO: health heck => STOP (halted)"
-    echo "0" > $EXCEPTION_COUNTER_FILE
 elif [ ! -f "$EXECUTED_CHECK" ] ; then
     echoWarn "WARNING: Setup of the '$NODE_TYPE' node was not finalized yet, no health data available"
 else
@@ -101,25 +93,14 @@ else
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then
-    EXCEPTION_COUNTER=$(($EXCEPTION_COUNTER + 1))
-    EXCEPTION_TOTAL=$(($EXCEPTION_TOTAL + 1))
-    echoErr "ERROR: $NODE_TYPE healthcheck failed ${EXCEPTION_COUNTER}/6 times, total $EXCEPTION_TOTAL"
-    echo "$EXCEPTION_TOTAL" > $EXCEPTION_TOTAL_FILE
-
-    if [[ $EXCEPTION_COUNTER -ge 6 ]] ; then
-        echoWarn "WARNINIG: Unhealthy status, node will reboot"
-        echo "0" > $EXCEPTION_COUNTER_FILE
+    SUCCESS_ELAPSED=$(timerSpan "success")
+    echoErr "ERROR: $NODE_TYPE healthcheck failed for over ${SUCCESS_ELAPSED} out of max 300 seconds"
+    if [ $SUCCESS_ELAPSED -gt 300 ] ; then
+        echoErr "ERROR: Unhealthy status, node will reboot"
         pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
         sleep 5
-    else
-        echo "$EXCEPTION_COUNTER" > $EXCEPTION_COUNTER_FILE
-        [ "${CATCHING_UP,,}" == "true" ] && echoInfo "INFO: Node is still attempting to catch up..." && sleep 30
     fi
 else
-    echoInfo "INFO: Node is healthy, reseting exception counter..."
-    echo "0" > $EXCEPTION_COUNTER_FILE
-    sleep 30
-
     echoInfo "INFO: Updating commit timeout..."
     ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
     (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
@@ -145,6 +126,7 @@ if [ "${FAILED,,}" == "true" ] ; then
     echoErr "------------------------------------------------"
     set -x
 else
+    timerStart "success"
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "|  SUCCESS: DEFAULT SEKAI HEALTHCHECK          |"
@@ -154,4 +136,3 @@ else
 fi
 
 sleep 10
-[ "${FAILED,,}" == "true" ] && exit 1 || exit 0
