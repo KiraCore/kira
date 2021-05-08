@@ -129,19 +129,22 @@ done
 if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed..."
 
-    globDel "${CONTAINER_NAME}_STATUS"
-    while : ; do
-        STATUS=$(globGet "${CONTAINER_NAME}_STATUS")
-        [ ! -z "$STATUS" ] && [ "${STATUS,,}" != "configuring" ] && break
-        echoInfo "INFO: Waiting for $CONTAINER_NAME node configuration to be finalized..."
-        sleep 5
-    done
-
     i=0
+    HEIGHT=0
     BLOCKS_LEFT_OLD=0
     timerStart BLOCK_HEIGHT_SPAN
     while : ; do
         echoInfo "INFO: Awaiting node status..."
+
+        globDel "${CONTAINER_NAME}_STATUS"
+        set +x
+        while : ; do
+            CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
+            [ "${CSTATUS,,}" == "running" ] && break
+            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
+            sleep 5
+        done
+        set -x
 
         i=$((i + 1))
         STATUS=$(timeout 8 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
@@ -156,11 +159,11 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             echoErr "ERROR: $CONTAINER_NAME status check failed"
             sleep 30
             exit 1
-        else
-            i=0
         fi
+        i=0
 
         set -x
+        PREVIOUS_HEIGHT=$HEIGHT
         HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
         LATEST_BLOCK=$(globGet LATEST_BLOCK)
@@ -171,7 +174,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        [[ $DELTA_HEIGHT -gt 0 ]] && timerStart BLOCK_HEIGHT_SPAN
+        ( [[ $DELTA_HEIGHT -gt 0 ]] || [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ) && timerStart BLOCK_HEIGHT_SPAN
         
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
         
@@ -180,7 +183,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             break
         fi
 
-        [[ $DELTA_TIME -gt 600 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 10 minutes!" && exit 1
+        [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
 
         set +x
         if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
