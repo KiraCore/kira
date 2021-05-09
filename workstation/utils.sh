@@ -399,6 +399,11 @@ function isCommand {
     if command "$1" 2> /dev/null ; then echo "true" ; else echo "false" ; fi
 }
 
+function isServiceActive {
+    ISACT=$(systemctl is-active "$1" 2> /dev/null || echo "inactive")
+    [ "${ISACT,,}" == "active" ] && echo "true" || echo "false"
+}
+
 displayAlign() {
   align=$1
   width=$2
