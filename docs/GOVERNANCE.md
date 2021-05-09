@@ -89,12 +89,13 @@ sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --d
 ## Change Network Property
 
 ```
-sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes | txAwait
+sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 50 --description="50 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
 
-sekaid tx customgov proposal set-network-property MAX_MISCHANCE 500 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes | txAwait
+voteYes $(lastProposal) validator
 
+sekaid tx customgov proposal set-network-property MAX_MISCHANCE 100 --description="100 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
 
-LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+voteYes $(lastProposal) validator
 
+networkProperties | jq
 ```
-:

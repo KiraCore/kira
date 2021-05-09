@@ -53,7 +53,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     CFG_persistent_peers="tcp://$SENTRY_SEED"
     [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
-    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
+    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$SEED_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
