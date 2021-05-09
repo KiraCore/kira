@@ -142,7 +142,11 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
             [ "${CSTATUS,,}" == "running" ] && break
             echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
-            sleep 5
+            sleep 10
+            if (! $(isServiceActive "kirascan")) ; then
+                echoErr "ERROR: Your 'kirascan' monitoring service is NOT running. Can NOT read contianer status!"
+                exit 1
+            fi
         done
         set -x
 

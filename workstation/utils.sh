@@ -13,6 +13,14 @@ function isNullOrEmpty() {
     if [ -z "$1" ] || [ "${1,,}" == "null" ] ; then echo "true" ; else echo "false" ; fi
 }
 
+function delWhitespaces() {
+    echo "$1" | tr -d '\011\012\013\014\015\040'
+}
+
+function isNullOrWhitespaces() {
+    isNullOrEmpty $(delWhitespaces "$1")
+}
+
 function isTxHash() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
         VTMP="false" && [[ "$1" =~ $REGEX_TXHASH ]] && VTMP="true"
@@ -389,6 +397,11 @@ function isSubStr {
 
 function isCommand {
     if command "$1" 2> /dev/null ; then echo "true" ; else echo "false" ; fi
+}
+
+function isServiceActive {
+    ISACT=$(systemctl is-active "$1" 2> /dev/null || echo "inactive")
+    [ "${ISACT,,}" == "active" ] && echo "true" || echo "false"
 }
 
 displayAlign() {

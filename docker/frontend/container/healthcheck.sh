@@ -18,7 +18,7 @@ EXIT_CHECK="${COMMON_DIR}/exit"
 if [ -f "$EXIT_CHECK" ]; then
     echoInfo "INFO: Ensuring nginx process is killed"
     touch $HALT_CHECK
-    pkill -15 nginx || echo "WARNING: Failed to kill nginx"
+    pkill -15 nginx || echoWarn "WARNING: Failed to kill nginx"
     rm -fv $EXIT_CHECK
 fi
 
@@ -34,10 +34,8 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoW
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
 
-STATUS_NGINX="$(service nginx status)"
-SUB_STR="nginx is running"
-if [[ "$STATUS_NGINX" != *"$SUB_STR"* ]]; then
-  echoInfo "Nginx is not running."
+if (! $(isServiceActive "nginx")) ; then
+  echoErr "ERROR: NGINX service is NOT active"
   nginx -t
   service nginx restart
   exit 1
@@ -48,14 +46,14 @@ INDEX_HTML="$(curl --fail http://127.0.0.1:80 || echo -n '')"
 EX_CHAR="!"
 SUB_STR="<${EX_CHAR}DOCTYPE html>"
 if [[ "$INDEX_HTML" != *"$SUB_STR"* ]]; then
-  echoInfo "HTML page is not rendering."
+  echoInfo "INFO: HTML page is not rendering."
   exit 1
 fi
 
 INDEX_STATUS_CODE="$(curl -s -o /dev/null -I -w '%{http_code}' 127.0.0.1:80)"
 
 if [ "$INDEX_STATUS_CODE" -ne "200" ]; then
-  echoInfo "Index page returns ${INDEX_STATUS_CODE}"
+  echoInfo "INFO: Index page returns ${INDEX_STATUS_CODE}"
   exit 1
 fi
 

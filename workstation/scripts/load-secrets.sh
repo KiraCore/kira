@@ -30,10 +30,12 @@ function MnemonicGenerator() {
     keyidPath="$KIRA_SECRETS/${1,,}_node_id.key"
 
     mnemonic="${!mnemonicVariableName}"
+    mnemonic=$(echo "$mnemonic" | xargs || echo -n "")
 
-    if [ -z "$mnemonic" ] ; then # if mnemonic is not present then generate new one
+    if (! $(isMnemonic "$mnemonic")) ; then # if mnemonic is not present then generate new one
         echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
-        mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jsonParse '[0].mnemonic')"
+        mnemonic=$(echo ${mnemonic//,/ } | xargs || echo -n "")
+        (! $(isMnemonic "$mnemonic")) && mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jsonParse '[0].mnemonic')"
         CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
     fi
 
