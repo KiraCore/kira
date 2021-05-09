@@ -27,7 +27,9 @@ FLUTTER_CHANNEL="dev"
 FLUTTER_VERSION="1.27.0-8.0.pre-$FLUTTER_CHANNEL"
 DART_CHANNEL_PATH="dev/release"
 DART_VERSION="2.13.0-59.0.dev"
+GLOB_STORE_DIR="/var/kiraglob"
 
+mkdir -p $GLOB_STORE_DIR
 
 if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
     GOLANG_ARCH="arm64"

@@ -43,6 +43,7 @@ while [[ $i -le 40 ]]; do
     # copy genesis from validator only if internal node syncing takes place
     if [ "${NEW_NETWORK,,}" == "true" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
         rm -fv $LOCAL_GENESIS_PATH
         cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
     fi
@@ -53,6 +54,7 @@ while [[ $i -le 40 ]]; do
         echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME"
         continue
     else
+        chattr +i "$LOCAL_GENESIS_PATH"
         echoInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
     fi
 

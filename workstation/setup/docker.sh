@@ -5,9 +5,10 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup/docker.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-RESTART=$(service docker restart || echo "error")
-ACTIVE=$(systemctl is-active docker || echo "inactive")
+$KIRA_SCRIPTS/docker-restart.sh
+sleep 5
 VERSION=$(docker -v || echo "error")
+ACTIVE=$(systemctl is-active docker || echo "inactive")
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
@@ -82,7 +83,7 @@ EOL
 
     systemctl enable --now docker
     sleep 5
-    service docker restart || echoWarn "WARNING: Failed to restart docker ($USER)"
+    $KIRA_SCRIPTS/docker-restart.sh
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v

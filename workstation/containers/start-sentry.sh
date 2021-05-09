@@ -47,16 +47,13 @@ cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SEED_SEED=$(echo "${SEED_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@seed:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@validator:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@priv_sentry:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$VALIDATOR_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
-    else
-        CFG_persistent_peers="tcp://$VALIDATOR_SEED,tcp://$PRIV_SENTRY_SEED,tcp://$SEED_SEED,tcp://$SNAPSHOT_SEED"
-    fi
+    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+    [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
+    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$SEED_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -76,19 +73,21 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
+    -e HOSTNAME="$KIRA_SENTRY_DNS" \
+    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_seeds="" \
+    -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID" \
     -e CFG_addr_book_strict="true" \
     -e CFG_seed_mode="false" \
-    -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="128" \
+    -e CFG_allow_duplicate_ip="true" \
+    -e CFG_max_num_outbound_peers="64" \
     -e CFG_max_num_inbound_peers="128" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="15s" \
@@ -97,8 +96,10 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
+    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SENTRY_NODE_ID" \
+    -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
@@ -110,6 +111,8 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
+    echo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
+    sleep 10
     docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
@@ -117,7 +120,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")

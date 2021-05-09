@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.0.0"
+SETUP_VER="v0.3.2.3"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -69,7 +69,7 @@ echo "| ARCHITECTURE: $ARCHITECTURE"
 echo "------------------------------------------------"
 
 rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS"
+mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 
 set +x
 if [ -z "$SKIP_UPDATE" ]; then
@@ -169,7 +169,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager"
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-12" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-15" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -181,7 +181,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
             zip unzip p7zip-full 
         
         apt update -y
-        apt install -y bc dnsutils psmisc netcat nmap
+        apt install -y bc dnsutils psmisc netcat nmap parallel
 
         ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
         git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
@@ -238,6 +238,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SNAP=$KIRA_SNAP" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SCAN=$KIRA_HOME/kirascan" --prefix="KIRA_SCAN=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_CONFIGS=$KIRA_CONFIGS" --prefix="KIRA_CONFIGS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PUBLIC_PEERS=$KIRA_CONFIGS/public_peers" --prefix="PUBLIC_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -310,15 +311,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
     echo "INFO: Init script restart finished."
     exit 0
-else
-    echo "INFO: Skipping init update and cleaning up..."
-    apt-get autoclean || echo "WARNING: autoclean failed"
-    apt-get clean || echo "WARNING: clean failed"
-    apt-get autoremove || echo "WARNING: autoremove failed"
-    journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
-
-    # NUCLEAR OPTION (USE ONLY IF YOU ENTIRELY RUN OUT OF SPACE) MAKE SURE YOU RESTART MACHINE BEFORE APPLYING
-    # apt-get remove -y --purge $(dpkg -l 'linux-*' | sed '/^ii/!d;/'"$(uname -r | sed "s/\(.*\)-\([^0-9]\+\)/\1/")"'/d;s/^[^ ]* [^ ]* \([^ ]*\).*/\1/;/[0-9]/!d')
 fi
 
 CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -333,6 +325,15 @@ CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" 
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+
+echo "INFO: Startting cleanup..."
+apt-get autoclean || echo "WARNING: autoclean failed"
+apt-get clean || echo "WARNING: clean failed"
+apt-get autoremove || echo "WARNING: autoremove failed"
+journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
+
+find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
+find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
 
 set +x
 echo "INFO: Your host environment was initialized"

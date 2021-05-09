@@ -9,6 +9,7 @@ echo "INFO: Staring snapshot setup..."
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 EXECUTED_CHECK="$COMMON_DIR/executed"
+CFG_CHECK="${COMMON_DIR}/configuring"
 
 SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
 
@@ -89,10 +90,24 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echo "0" > $SNAP_PROGRESS
 fi
 
+echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+while : ; do
+    SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
+    PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
+    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+        echoInfo "INFO: Sentry or Private Sentry container is running!"
+        break
+    else
+        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+        sleep 15
+    fi
+done
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 touch $EXECUTED_CHECK
+rm -fv $CFG_CHECK
 
 touch ./output.log
 LAST_SNAP_BLOCK=0

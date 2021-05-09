@@ -237,3 +237,20 @@ function whitelistValidators() {
         echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
     fi
 }
+
+# e.g. showAddress validator
+function showAddress() {
+    echo $(sekaid keys show "$1" --keyring-backend=test --output json 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
+}
+
+# e.g. showBalance validator
+function showBalance() {
+    ADDR=$1
+    if [[ $ADDR != kira* ]] ; then
+        ADDR=$(showAddress $ADDR)
+    fi
+
+    if [ ! -z "$ADDR" ] ; then
+        echo $(sekaid query bank balances "$ADDR" --output json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+    fi
+}

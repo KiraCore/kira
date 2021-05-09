@@ -181,11 +181,17 @@ fi
 
 [ "${UPDATE_DONE,,}" == "false" ] && sleep 10
 
+set +x
 echoInfo "INFO: To preview logs type 'cd $UPDATE_LOGS_DIR'"
-
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
-[ "${UPDATE_DONE,,}" == "true" ] && echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager" && systemctl stop kiraup && sleep 5 && exit 0
+if [ "${UPDATE_DONE,,}" == "true" ] ; then
+    echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
+    sleep 5
+    set -x
+    systemctl stop kiraup 
+    exit 0
+fi

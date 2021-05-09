@@ -39,13 +39,6 @@ while : ; do
             continue
         else
             echoInfo "INFO: Success, container was initialized"
-            #if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-            #    echoInfo "INFO: Restarting network interfaces..."
-            #    $KIRA_MANAGER/scripts/update-ifaces.sh
-            #    IFACES_RESTARTED="true"
-            #    i=0
-            #    continue
-            #fi
         fi
 
         echoInfo "INFO: Awaiting node status..."
@@ -123,13 +116,26 @@ while : ; do
     fi
 done
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-    echoInfo "INFO: Local snapshot must be created before network can be started"
 
+    i=0
     PREVIOUS_HEIGHT=0
+    BLOCKS_LEFT_OLD=0
+    timerStart BLOCK_HEIGHT_SPAN
     while : ; do
         echoInfo "INFO: Awaiting node status..."
+
+        globDel "${CONTAINER_NAME}_STATUS"
+        set +x
+        while : ; do
+            CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
+            [ "${CSTATUS,,}" == "running" ] && sleep 5 && break
+            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
+            sleep 5
+        done
+        set -x
+
         i=$((i + 1))
         STATUS=$(docker exec -i "$CONTAINER_NAME" sekaid status 2>&1 | jsonParse "" 2> /dev/null || echo -n "")
         if ($(isNullOrEmpty $STATUS)) ; then
@@ -143,25 +149,37 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${CONTAINER_NAME,,}" == "seed" ] ; t
             echoErr "ERROR: $CONTAINER_NAME status check failed"
             sleep 30
             exit 1
-        else
-            i=0
         fi
 
-        set +x
-        SYNCING=$(echo $STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "")
-        ($(isNullOrEmpty "$SYNCING")) && SYNCING="false"
-        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
-        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-        [[ $HEIGHT -ge $PREVIOUS_HEIGHT ]] && [[ $HEIGHT -le $VALIDATOR_MIN_HEIGHT ]] && PREVIOUS_HEIGHT=$HEIGHT && SYNCING="true"
+        i=0
         set -x
+        PREVIOUS_HEIGHT=$HEIGHT
+        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
+        SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
+        LATEST_BLOCK=$(globGet LATEST_BLOCK)
+        MIN_HEIGH=$(globGet MIN_HEIGHT)
+        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
+        
+        [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
+        [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
 
-        if [ "${SYNCING,,}" == "false" ] && [[ $HEIGHT -ge $VALIDATOR_MIN_HEIGHT ]] ; then
+        if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."
             break
         fi
+        
+        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
+        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
+        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
+
+        [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
 
         set +x
-        echoInfo "INFO: Minimum height: $VALIDATOR_MIN_HEIGHT, current height: $HEIGHT, catching up: $SYNCING"
+        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
+            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
+            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
+        fi
+        echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
         echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
         set -x
         sleep 30

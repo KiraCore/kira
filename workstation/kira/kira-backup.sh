@@ -3,9 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
-LATEST_BLOCK_SCAN_PATH="$KIRA_SCAN/latest_block"
-LATEST_BLOCK_HEIGHT=$(tryCat $LATEST_BLOCK_SCAN_PATH "0")
-(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=$VALIDATOR_MIN_HEIGHT
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK)
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=$(globGet MIN_HEIGHT)
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
 

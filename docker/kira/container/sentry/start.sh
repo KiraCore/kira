@@ -22,7 +22,6 @@ COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-rm -fv $CFG_CHECK
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
@@ -77,10 +76,38 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
 fi
 
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
+        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+            echoInfo "INFO: Sentry or Private Sentry container is running!"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+            sleep 15
+        fi
+    done
+elif [ "${NEW_NETWORK,,}" == "true" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|priv_sentry)$ ]] ; then
+    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+    while : ; do
+        VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+        if [ "$VALIDATOR_OPEN" == "true" ] ; then
+            echoInfo "INFO: Validator node is started"
+            break
+        else
+            echoWarn "WARNINIG: Waiting for validator ($VALIDATOR_OPEN) to start..."
+            sleep 15
+        fi
+    done
+fi
+
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 touch $EXECUTED_CHECK
+rm -fv $CFG_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."

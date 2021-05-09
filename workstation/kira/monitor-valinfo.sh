@@ -49,10 +49,8 @@ else
     exit 0
 fi
 
-
-
 echoInfo "INFO: Fetching validator address.."
-VALADDR=$(timeout 30 echo "$(docker exec -i validator sekaid keys show validator -a --keyring-backend=test)" | xargs || echo -n "")
+VALADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
 if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
     echo "$VALADDR" > $VALADDR_SCAN_PATH
 else
