@@ -129,12 +129,14 @@ if [ ! -z "$CFG_seeds" ] ; then
         nodeId=${addrArr1[0],,}
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
-        #addr=$(resolveDNS $addr)
+        ip=$(resolveDNS $addr)
 
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
+        (! $(isIp "$ip")) && echoWarn "WARNINIG: Seed '$seed' IP could NOT be resolved" && continue
+        (! $(isPortOpen "$addr" "$port" "0.5")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
 
         seed="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra seed '$seed' to new config"
