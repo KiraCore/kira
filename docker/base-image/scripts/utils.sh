@@ -385,8 +385,12 @@ function prettyTime {
 }
 
 function resolveDNS {
-    DNS=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
-    ($(isIp $DNS)) && echo $DNS || echo -e ""
+    if ($(isIp "$1")) ; then
+        echo "$1"
+    else
+        DNS=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
+        ($(isIp $DNS)) && echo $DNS || echo -e ""
+    fi
 }
 
 function isSubStr {
@@ -402,6 +406,18 @@ function isCommand {
 function isServiceActive {
     ISACT=$(systemctl is-active "$1" 2> /dev/null || echo "inactive")
     [ "${ISACT,,}" == "active" ] && echo "true" || echo "false"
+}
+
+# returns 0 if failure, otherwise natural number in microseconds
+function pingTime() {
+    if ($(isDnsOrIp "$1")) ; then
+        PAVG=$(ping -qc1 "$1" 2>&1 | awk -F'/' 'END{ print (/^rtt/? $5:"FAIL") }' 2> /dev/null || echo -n "")
+        if ($(isNumber $PAVG)) ; then
+            PAVGUS=$(echo "scale=3; ( $PAVG * 1000 )" | bc 2> /dev/null || echo -n "")
+            PAVGUS=$(echo "scale=0; ( $PAVGUS / 1 ) " | bc 2> /dev/null || echo -n "")
+            ($(isNaturalNumber $PAVGUS)) && echo "$PAVGUS" || echo "0"
+        else echo "0" ; fi
+    else echo "0" ; fi
 }
 
 displayAlign() {

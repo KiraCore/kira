@@ -5,6 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 # e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump true false 16
+# e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump false false 16
 
 ADDR=$1
 OUTPUT=$2
@@ -75,6 +76,9 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
+PUBLIC_IP=$(globGet "PUBLIC_IP")
+LOCAL_IP=$(globGet "LOCAL_IP")
+
 while : ; do
     total=$(($total + 1))
     peer=$(sed "${total}q;d" $TMP_PEERS_SHUFF | xargs || echo "")
@@ -85,9 +89,13 @@ while : ; do
     nodeId=${addrArr1[0],,}
     ip=${addrArr2[0],,}
     port=${addrArr2[1],,}
+    ip=$(resolveDNS "$ip")
 
-    (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($ip)" && continue
-    (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue 
+    (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($peer)" && continue
+    (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue
+
+    [ "$ip" == "$PUBLIC_IP" ] && echoWarn "WARNING: Peer ip overlaps with the public host address ($ip)" && continue
+    [ "$ip" == "$LOCAL_IP" ] && echoWarn "WARNING: Peer ip overlaps with the local host address ($ip)" && continue
 
     if grep -q "$nodeId" "$OUTPUT"; then
         echoWarn "WARNING: Node id '$nodeId' is already present in the seeds list ($ip)" && continue 
@@ -141,6 +149,12 @@ while : ; do
         continue 
     fi
 
+    PING=$(pingTime $ip)
+    if [[ $PING -le 0 ]] ; then
+        echoWarn "WARNING: Failed to ping peer ($ip)"
+        continue 
+    fi
+
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if [ "${SNAPS_ONLY,,}" == "true" ] ; then
         if (! $(urlExists "$SNAP_URL")) ; then
@@ -161,6 +175,8 @@ while : ; do
             MIN_SNAP_SIZE=$SIZE
             peer="${peer} $SIZE"
         fi
+    else
+        peer="${peer} $PING"
     fi
 
     i=$(($i + 1))
@@ -181,8 +197,12 @@ fi
 if [ "${SNAPS_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
     echoInfo "INFO: Sorting peers by snapshot size"
     sort -nrk2 -n $OUTPUT > $TMP_OUTPUT
-    cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
+else
+    echoInfo "INFO: Sorting peers by ping response"
+    sort -nk2 -n $OUTPUT > $TMP_OUTPUT
 fi
+
+cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
 
 echoInfo "INFO: Printing results:"
 cat $OUTPUT

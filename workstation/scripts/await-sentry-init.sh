@@ -137,44 +137,30 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         echoInfo "INFO: Awaiting node status..."
 
         globDel "${CONTAINER_NAME}_STATUS"
+        timerStart STATUS_AWAIT
         set +x
         while : ; do
-            CSTATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$CSTATUS" ] && CSTATUS="undefined"
-            [ "${CSTATUS,,}" == "running" ] && break
-            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $CSTATUS to running..."
+            STATUS_SPAN=$(timerSpan STATUS_AWAIT)
+            STATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$STATUS" ] && STATUS="undefined"
+            [ "${STATUS,,}" == "running" ] && break
+            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $STATUS to running, elapsed $STATUS_SPAN/900 seconds..."
             sleep 10
-            if (! $(isServiceActive "kirascan")) ; then
-                echoErr "ERROR: Your 'kirascan' monitoring service is NOT running. Can NOT read contianer status!"
+            if (! $(isServiceActive "kirascan")) || [[ $STATUS_SPAN -gt 900 ]] ; then
+                echoErr "ERROR: Your 'kirascan' monitoring service is NOT running or timed out $STATUS_SPAN/900 seconds when awaiting status change."
                 exit 1
             fi
         done
         set -x
 
-        i=$((i + 1))
-        STATUS=$(timeout 8 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
-        if ($(isNullOrEmpty $STATUS)) ; then
-            set +x
-            echoInfo "INFO: Printing '$CONTAINER_NAME' start logs:"
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: Node failed or status could not be fetched ($i/3), your netwok connectivity might have been interrupted"
-
-            [[ $i -le 3 ]] && sleep 10 && echoInfo "INFO: Next status check attempt in 10 seconds..." && sleep 10 && continue
-
-            echoErr "ERROR: $CONTAINER_NAME status check failed"
-            sleep 30
-            exit 1
-        fi
-        i=0
-
         set -x
         PREVIOUS_HEIGHT=$HEIGHT
-        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK")
+        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
         LATEST_BLOCK=$(globGet LATEST_BLOCK)
         MIN_HEIGH=$(globGet MIN_HEIGHT)
         DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
 
-        [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] && timerStart BLOCK_HEIGHT_SPAN
+        [[ $PREVIOUS_HEIGHT -lt $HEIGHT ]] && timerStart BLOCK_HEIGHT_SPAN
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
         
         if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
@@ -186,7 +172,11 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        [[ $DELTA_TIME -gt 900 ]] && echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!" && exit 1
+        if [[ $DELTA_TIME -gt 900 ]] ; then
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!"
+            exit 1
+        fi
 
         set +x
         if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
