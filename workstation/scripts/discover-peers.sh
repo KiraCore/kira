@@ -178,12 +178,12 @@ while : ; do
             peer="${peer} $SIZE"
         fi
     else
-        # MAX_PING_TIME
-        if [[ $PING -gt $MAX_PING_TIME ]] ; then
+        if [[ $PING -ge $MAX_PING_TIME ]] ; then
             echoWarn "WARNING: Ping time $PING is out of upper safe range $MAX_PING_TIME us ($ip)"
             continue
         fi
         peer="${peer} $PING"
+        [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$PING
     fi
 
     i=$(($i + 1))
