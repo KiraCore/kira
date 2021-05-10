@@ -36,7 +36,7 @@ echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
 echoWarn "------------------------------------------------"
 set -x
 
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 
 CHECKSUM_TEST="false"
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then

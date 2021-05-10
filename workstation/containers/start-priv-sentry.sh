@@ -53,7 +53,6 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     CFG_persistent_peers="tcp://$SENTRY_SEED"
     [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
-    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$SEED_SEED"
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -82,14 +81,14 @@ docker run -d \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_private_peer_ids="" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
+    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="64" \
-    -e CFG_max_num_inbound_peers="128" \
-    -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="15s" \
+    -e CFG_max_num_outbound_peers="16" \
+    -e CFG_max_num_inbound_peers="0" \
+    -e CFG_handshake_timeout="60s" \
+    -e CFG_dial_timeout="30s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \

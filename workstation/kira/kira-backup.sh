@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK)
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=$(globGet MIN_HEIGHT)
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
 
