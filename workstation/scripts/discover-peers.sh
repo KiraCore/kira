@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 # e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump true false 16
-# e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump false false 16
+# e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump false false 8
 
 ADDR=$1
 OUTPUT=$2
@@ -75,6 +75,8 @@ HEIGHT=0
 # max_txs_bytes == MAX_BLOCK_SIZE
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
+
+MAX_PING_TIME="1000000"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
@@ -176,6 +178,11 @@ while : ; do
             peer="${peer} $SIZE"
         fi
     else
+        # MAX_PING_TIME
+        if [[ $PING -gt $MAX_PING_TIME ]] ; then
+            echoWarn "WARNING: Ping time $PING is out of upper safe range $MAX_PING_TIME us ($ip)"
+            continue
+        fi
         peer="${peer} $PING"
     fi
 

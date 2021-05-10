@@ -213,7 +213,9 @@ while : ; do
         echo "INFO: Entering container $NAME ($ID)..."
         echo "INFO: To exit the container type 'exit'"
         FAILURE="false"
-        docker exec -it $ID bash || docker exec -it $ID sh || FAILURE="true"
+        if [ "${NAME,,}" == "registry" ] ; then
+            docker exec -it $ID sh || FAILURE="true" ; else
+            docker exec -it $ID bash || FAILURE="true" ; fi
         
         if [ "${FAILURE,,}" == "true" ] ; then
             ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
@@ -225,7 +227,11 @@ while : ; do
             sleep 3
             echo "INFO: Entering container $NAME ($ID)..."
             echo "INFO: To exit the container type 'exit'"
-            docker exec -it $ID bash || docker exec -it $ID sh || echo "WARNING: Failed to inspect $NAME container"
+            FAILURE="false"
+            if [ "${NAME,,}" == "registry" ] ; then
+                docker exec -it $ID sh || FAILURE="true" ; else
+                docker exec -it $ID bash || FAILURE="true" ; fi
+            [ "${FAILURE,,}" == "true" ] && echo "WARNING: Failed to inspect $NAME container"
         fi
         
         [ -f "$HALT_FILE" ] && echo "INFO: Applications running within your container were halted, you will have to choose Un-HALT option to start them again!"
