@@ -8,7 +8,6 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"
-CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_GLOBAL_PATH="$DOCKER_COMMON/global"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -27,7 +26,6 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_INTERX_DNS"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echo "|   MAX RAM: $RAM_RESERVED"
@@ -39,8 +37,20 @@ rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
+        CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT"
+        CFG_rpc="http://sentry:$DEFAULT_RPC_PORT"
+        CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
+    else
+        if [ "${INFRA_MODE,,}" == "validator" ] ; then
+            CFG_grpc="dns:///validator:$DEFAULT_GRPC_PORT"
+            CFG_rpc="http://validator:$DEFAULT_RPC_PORT"
+            CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+        fi
+    fi
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -55,15 +65,17 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc="http://sentry:$DEFAULT_RPC_PORT" \
+    -e CFG_grpc="$CFG_grpc" \
+    -e CFG_rpc="$CFG_rpc" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
 
-    docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+    if [ "${DEPLOYMENT_MODE,,}" != "minimal" ] && [ "${INFRA_MODE,,}" != "validator" ] ; then
+        docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
+    fi
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"

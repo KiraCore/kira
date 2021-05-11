@@ -95,8 +95,24 @@ while read ip; do
         HEIGHT=$TMP_HEIGHT
     fi
 
+    NODE_TYPE="undefined"
     if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if ! timeout 0.1 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
+    if timeout 0.1 nc -z $ip 16656 ; then
+        port="16656"
+        NODE_TYPE="seed"
+    elif timeout 0.1 nc -z $ip 26656 ; then
+        port="26656"
+        NODE_TYPE="sentry"
+    elif timeout 0.1 nc -z $ip 36656 ; then
+        port="36656"
+        NODE_TYPE="priv_sentry"
+    elif timeout 0.1 nc -z $ip 56656 ; then
+        port="56656"
+        NODE_TYPE="validator"
+    else
+        echoWarn "WARNING: No open P2P ports were found ($ip)"
+        continue
+    fi
 
     set -x
     STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
@@ -112,8 +128,9 @@ while read ip; do
     genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum '$genesis_checksum' ($ip)" && continue 
     
-    node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
-    (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
+    node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/${NODE_TYPE}_node_id" 2>/dev/null || echo -n "")
+    [ "${NODE_TYPE,,}" == "sentry" ] && (! $(isNodeId "$node_id")) && node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
+    (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid $NODE_TYPE node id '$node_id' ($ip)" && continue
 
     if grep -q "$node_id" "$TMP_BOOK_PUBLIC"; then
         echoWarn "WARNING: Node id '$node_id' is already present in the address book ($ip)" && continue 
@@ -130,7 +147,7 @@ while read ip; do
     [ "$PUBLIC_IP" != "$ip" ] && \
         (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
 
-    peer="$node_id@$ip:$KIRA_SENTRY_P2P_PORT"
+    peer="$node_id@$ip:$port"
     echoInfo "INFO: Active peer found: '$peer'"
     echo "$peer" >> $TMP_BOOK_PUBLIC
     i=$(($i + 1))

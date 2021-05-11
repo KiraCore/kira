@@ -98,6 +98,7 @@ docker run -d \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

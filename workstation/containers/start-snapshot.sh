@@ -133,6 +133,7 @@ docker run -d \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SNAPSHOT_NODE_ID" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \

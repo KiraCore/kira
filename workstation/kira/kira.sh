@@ -90,7 +90,6 @@ while : ; do
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
         CATCHING_UP="false"
-        ESSENTIAL_CONTAINERS_COUNT=0
         VALIDATOR_RUNNING="false"
         CONTAINERS=$(globGet CONTAINERS)
 
@@ -115,10 +114,6 @@ while : ; do
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
-
-            if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]]; then
-                ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
-            fi
         done
         CONTAINERS_COUNT=$((i + 1))
     fi
@@ -257,7 +252,7 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
 
-    if ([ "${INFRA_MODE,,}" == "validator" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]]) || [ "${INFRA_MODE,,}" == "sentry" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]]; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
         if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ]; then
             [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
             ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))

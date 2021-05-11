@@ -95,6 +95,7 @@ while : ; do
 
     (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($peer)" && continue
     (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue
+    (! $(isPort "$port")) && echoWarn "WARNING: Invalid port '$port' ($ip)" && continue
 
     [ "$ip" == "$PUBLIC_IP" ] && echoWarn "WARNING: Peer ip overlaps with the public host address ($ip)" && continue
     [ "$ip" == "$LOCAL_IP" ] && echoWarn "WARNING: Peer ip overlaps with the local host address ($ip)" && continue
@@ -114,7 +115,7 @@ while : ; do
     fi
 
     if ! timeout 0.05 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if ! timeout 0.05 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.05 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
 
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")

@@ -32,10 +32,11 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
-if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-    EXTERNAL_ADDR="$LOCAL_IP"
-elif [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
+
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|validator)$ ]] ) ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
+elif [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
+    EXTERNAL_ADDR="$LOCAL_IP"
 else
     EXTERNAL_ADDR="$HOSTNAME"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT

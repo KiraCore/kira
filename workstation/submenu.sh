@@ -143,6 +143,7 @@ while :; do
 
     $KIRA_MANAGER/menu/seeds-select.sh
     $KIRA_MANAGER/menu/interface-select.sh
+    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"full\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
 

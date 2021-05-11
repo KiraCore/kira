@@ -27,6 +27,10 @@ echo "$VALIDATOR_ADDR_MNEMONIC" > $COMMON_PATH/validator_addr_mnemonic.key
 echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
 cp -a $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
 cp -a $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
+
+touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 set -e
 
 echo "------------------------------------------------"
@@ -46,21 +50,39 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    if [ "${NEW_NETWORK,,}" == true ] ; then
-        rm -fv "$COMMON_PATH/genesis.json"
+    CFG_seeds=""
+
+    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
+        [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
+        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+        CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID"
+        CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID"
+        CFG_max_num_outbound_peers="2"
+        CFG_max_num_inbound_peers="4"
+        CFG_pex="false"
+        CFG_allow_duplicate_ip="true"
+        EXTERNAL_P2P_PORT=""
+    else
+        CFG_private_peer_ids=""
+        CFG_unconditional_peer_ids=""
+        CFG_max_num_outbound_peers="34"
+        CFG_max_num_inbound_peers="64"
+        CFG_persistent_peers=""
+        CFG_pex="true"
+        CFG_allow_duplicate_ip="true"
+        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
     fi
 
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-    
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
+    -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_VALIDATOR_GRPC_PORT:$DEFAULT_GRPC_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
@@ -74,18 +96,18 @@ docker run -d \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
+    -e CFG_private_peer_ids="$CFG_private_peer_ids" \
     -e CFG_seeds="$CFG_seeds" \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_max_num_outbound_peers="2" \
-    -e CFG_max_num_inbound_peers="4" \
+    -e CFG_unconditional_peer_ids="$CFG_unconditional_peer_ids" \
+    -e CFG_max_num_outbound_peers="$CFG_max_num_outbound_peers" \
+    -e CFG_max_num_inbound_peers="$CFG_max_num_inbound_peers" \
     -e CFG_timeout_commit="5s" \
     -e CFG_create_empty_blocks_interval="10s" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="false" \
-    -e CFG_allow_duplicate_ip="true" \
+    -e CFG_allow_duplicate_ip="$CFG_allow_duplicate_ip" \
     -e CFG_handshake_timeout="30s" \
     -e CFG_dial_timeout="15s" \
     -e CFG_max_txs_bytes="131072000" \
@@ -94,7 +116,8 @@ docker run -d \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="false" \
+    -e CFG_pex="$CFG_pex" \
+    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e NEW_NETWORK="$NEW_NETWORK" \
@@ -102,6 +125,7 @@ docker run -d \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \

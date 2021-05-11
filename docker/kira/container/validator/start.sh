@@ -9,9 +9,12 @@ echoInfo "INFO: Staring validator setup ..."
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
 
+SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
+SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
+SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
+
 DATA_DIR="$SEKAID_HOME/data"
-SNAP_INFO="$DATA_DIR/snapinfo.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
@@ -101,7 +104,7 @@ fi
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256 $LOCAL_GENESIS
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${DEPLOYMENT_MODE}" != "minimal" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
         SENTRY_OPEN=$(isPortOpen sentry.kiranet.local 26656)
@@ -121,4 +124,4 @@ $SELF_CONTAINER/configure.sh
 rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
-sekaid start --home=$SEKAID_HOME --trace  
+sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace  

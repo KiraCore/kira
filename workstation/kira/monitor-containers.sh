@@ -66,7 +66,7 @@ for name in $CONTAINERS; do
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=false
-        if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed)$ ]] ; then
+        if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi

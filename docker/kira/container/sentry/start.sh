@@ -74,6 +74,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     rm -rfv $LOCAL_GENESIS
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
+    touch $EXECUTED_CHECK
 fi
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
@@ -106,7 +107,6 @@ fi
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-touch $EXECUTED_CHECK
 rm -fv $CFG_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then

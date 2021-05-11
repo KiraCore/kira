@@ -104,6 +104,7 @@ docker run -d \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \

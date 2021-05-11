@@ -19,6 +19,14 @@ else
     set -x
 fi
 
+if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
+    set +x
+    DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
+    [ "${DEPLOYMENT_MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
+    [ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
+    set -x
+fi
+
 if [ "${SELECT,,}" == "n" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
     set +x
@@ -47,6 +55,7 @@ if [ "${SELECT,,}" == "n" ]; then
     echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
     echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
+    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $DEPLOYMENT_MODE
     
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
@@ -65,7 +74,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
             echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
             echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
             set -x
-            [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR
+            [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR || v1=$(resolveDNS "$v1")
         else
             set +x
             echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
@@ -126,8 +135,17 @@ elif [ "${SELECT,,}" == "j" ] ; then
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
             else echoWarn "WARNING: Private sentry node ID was NOT found" && PRIV_SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
-        
-        if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}" ] ; then
+
+        VALIDATOR_NODE_ADDR=""
+        if timeout 3 nc -z $NODE_ADDR 36656 ; then
+            VALIDATOR_NODE_ADDR=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/validator_node_id" || echo -n "")
+            if $(isNodeId "$VALIDATOR_NODE_ADDR") ; then
+                VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656"
+                echoInfo "INFO: Validator node ID '$VALIDATOR_NODE_ADDR' was found"
+            else echoWarn "WARNING: Validator node ID was NOT found" && VALIDATOR_NODE_ADDR="" ; fi
+        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 56656 is not exposed by node '$NODE_ADDR'" ; fi
+
+        if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}${VALIDATOR_NODE_ADDR}" ] ; then
             echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
             continue
         elif (! $(isPublicIp $NODE_ADDR)) && [ -z "$PRIV_SENTRY_NODE_ADDR" ] ; then
@@ -292,6 +310,8 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:    Public Sentry node address: " && echoErr $SENTRY_NODE_ADDR
         [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
         echoNInfo "CONFIG:   Private Sentry node address: " && echoErr $PRIV_SENTRY_NODE_ADDR
+        [ ! -z "$VALIDATOR_NODE_ADDR" ] && \
+        echoNInfo "CONFIG:        Validator node address: " && echoErr $PRIV_SENTRY_NODE_ADDR
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
         echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
@@ -299,6 +319,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
         echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
+        echoNInfo "CONFIG:               Deployment Mode: " && echoErr $DEPLOYMENT_MODE
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
 
@@ -350,17 +371,16 @@ globSet MIN_HEIGHT $MIN_HEIGHT
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && \
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
 
 SAVED="false"
 if ($(isPublicIp $NODE_ADDR)) ; then
-    echoInfo "INFO: Node address '$NODE_ADDR' is a public IP address, public seeds will be added..."
-    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-
     echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
     TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
     $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 8 || echoErr "ERROR: Peers discovery scan failed"
@@ -370,6 +390,11 @@ if ($(isPublicIp $NODE_ADDR)) ; then
     else
         echoInfo "INFO: No extra public peers were found!"
     fi
+
+    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
