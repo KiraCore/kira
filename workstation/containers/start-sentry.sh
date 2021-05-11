@@ -117,7 +117,7 @@ docker run -d \
 
     echo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
     sleep 10
-    docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    [ "${DEPLOYMENT_MODE,,}" == "full" ] && docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"

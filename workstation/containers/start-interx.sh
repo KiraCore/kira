@@ -72,10 +72,6 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
-
-    if [ "${DEPLOYMENT_MODE,,}" != "minimal" ] && [ "${INFRA_MODE,,}" != "validator" ] ; then
-        docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
-    fi
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
