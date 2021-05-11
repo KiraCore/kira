@@ -123,7 +123,7 @@ while : ; do
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
-    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
+    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------: $DEPLOYMENT_MODE deployment"
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
         RAM_UTIL=$(globGet RAM_UTIL) && [ -z "$RAM_UTIL" ] && RAM_UTIL="???" ; RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
