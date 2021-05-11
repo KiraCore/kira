@@ -68,6 +68,8 @@ docker run -d \
     -e CFG_grpc="$CFG_grpc" \
     -e CFG_rpc="$CFG_rpc" \
     -e CFG_port="$DEFAULT_INTERX_PORT" \
+    -e INFRA_MODE="$INFRA_MODE" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
