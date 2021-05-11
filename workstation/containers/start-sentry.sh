@@ -7,22 +7,21 @@ SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 
 CONTAINER_NAME="sentry"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=3 || UTIL_DIV=6
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
 set +x
 echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
 echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -51,9 +50,14 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-    [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
-
+    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+        CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+    else
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+        [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
+        CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+    fi
+    
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 

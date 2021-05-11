@@ -11,7 +11,6 @@ SYNC_FROM_SNAP=$2
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
 # ensure to create parent directory for shared status info
 CONTAINER_NAME="snapshot"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -21,8 +20,9 @@ SNAP_PROGRESS="$SNAP_STATUS/progress"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=3 || UTIL_DIV=6
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 LATETS_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
 rm -fvr "$SNAP_STATUS"
@@ -50,7 +50,6 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
-echoWarn "|     NETWORK: $CONTAINER_NETWORK"
 echoWarn "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
 echoWarn "| SYNC HEIGHT: $MAX_HEIGHT"
 echoWarn "|  SNAP DEST.: $SNAP_FILE"
@@ -67,10 +66,16 @@ set -e
 echoInfo "INFO: Checking peers info..."
 SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-CFG_persistent_peers="tcp://$SENTRY_SEED"
-[ "${INFRA_MODE,,}" == "sentry" ] && CFG_seeds="tcp://$SEED_SEED" || CFG_seeds=""
+if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+else
+    CFG_persistent_peers="tcp://$SENTRY_SEED"
+    CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+fi
 
 cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 

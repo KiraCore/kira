@@ -59,28 +59,36 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh 
     $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${EXTERNAL_SYNC,,}" == "false" ] || [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-        $KIRA_MANAGER/containers/start-validator.sh 
+    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+        if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
+            # save snapshot from sentry first
+            globSet PRIV_CONN_PRIORITY false
+            $KIRA_MANAGER/containers/start-sentry.sh "true"
+            [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-priv-sentry.sh
+        elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
+            # save snapshot from private sentry first
+            globSet PRIV_CONN_PRIORITY true
+            $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
+            [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-sentry.sh
+        else
+            echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
+            exit 1
+        fi
+    fi
+
+    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+        $KIRA_SCRIPTS/container-delete.sh "sentry"
+        $KIRA_SCRIPTS/container-delete.sh "priv_sentry"
+        $KIRA_MANAGER/containers/start-validator.sh
+        $KIRA_MANAGER/containers/start-interx.sh
+    elif [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
+        $KIRA_MANAGER/containers/start-validator.sh
         if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
             $KIRA_MANAGER/containers/start-sentry.sh 
             $KIRA_MANAGER/containers/start-priv-sentry.sh
         fi
         $KIRA_MANAGER/containers/start-interx.sh
     else 
-        if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-            # save snapshot from sentry first
-            globSet PRIV_CONN_PRIORITY false
-            $KIRA_MANAGER/containers/start-sentry.sh "true"
-            $KIRA_MANAGER/containers/start-priv-sentry.sh
-        elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-            # save snapshot from private sentry first
-            globSet PRIV_CONN_PRIORITY true
-            $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
-            $KIRA_MANAGER/containers/start-sentry.sh
-        else
-            echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
-            exit 1
-        fi
         $KIRA_MANAGER/containers/start-interx.sh
         $KIRA_MANAGER/containers/start-validator.sh 
     fi
