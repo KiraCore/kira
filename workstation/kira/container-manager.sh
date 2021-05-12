@@ -16,7 +16,6 @@ echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd $KIRA_HOME
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
-VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
@@ -34,7 +33,7 @@ mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$KADDR_PATH"
 touch $KADDR_PATH
 
-VALADDR=""
+VALIDATOR_ADDR=""
 VALINFO=""
 HOSTNAME=""
 KIRA_NODE_BLOCK=""
@@ -44,7 +43,7 @@ while : ; do
     NETWORKS=$(globGet "NETWORKS")
     KADDR=$(tryCat $KADDR_PATH "")
     LATEST_BLOCK=$(globGet LATEST_BLOCK)
-    [ "${NAME,,}" == "validator" ] && VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
+    [ "${NAME,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
@@ -138,7 +137,7 @@ while : ; do
     echo "|   Health: ${TMPVAR:0:43} |"
     echo "|-------------------------------------------------------|"
 
-    if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALADDR" ] ; then
+    if [ "${NAME,,}" == "validator" ] && [ ! -z "$VALIDATOR_ADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED="" && VPRODUCED=""
         if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
             VSTATUS=$(jsonQuickParse "status" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
@@ -152,7 +151,7 @@ while : ; do
             echo "|   Streak: ${VSTREAK:0:12}Rank: ${VRANK:0:10}Mischance: ${VMISSCHANCE:0:5}: TOP: ${VTOP:0:6}"  
             echo "| Produced: ${VPRODUCED:0:10}Missed: ${VMISSED:0:10}Miss.Conf: ${VMISS_CONF:0:5}|"  
         fi
-        VALADDR_TMP="${VALADDR}${WHITESPACE}"
+        VALADDR_TMP="${VALIDATOR_ADDR}${WHITESPACE}"
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"

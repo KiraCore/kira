@@ -62,8 +62,8 @@ while : ; do
         [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m${TR}${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR ${PING_TMP} $TR $addr\e[0m"
     done < $FILE
     echo -e "\e[0m\e[33;1m------------------------------------------------------------------\e[0m\n"
-    echo "INFO: All $i ${TARGET^^} were displayed"
-         
+    echoInfo "INFO: All $i ${TARGET^^} were displayed"
+    echoInfo "INFO: Remeber to [S]ave changes after you finish!"
     SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|d|w|r|s|e)$ ]] ; do echoNErr "Choose to [A]dd, [D]elete, [W]ipe, [R]efresh, [S]ave changes to the $TARGET list or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
     [ "${SELECT,,}" == "r" ] && continue
     [ "${SELECT,,}" == "e" ] && exit 0

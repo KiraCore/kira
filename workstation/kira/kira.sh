@@ -43,7 +43,6 @@ done
 
 cd $KIRA_HOME
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
-VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
@@ -69,8 +68,8 @@ while : ; do
     SNAP_LATEST="$SNAP_STATUS/latest"
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
+    VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
-    VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
@@ -179,7 +178,7 @@ while : ; do
     fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
-        if [ ! -z "$VALADDR" ]; then
+        if [ ! -z "$VALIDATOR_ADDR" ]; then
             if [ "${VALSTATUS,,}" == "active" ] ; then
                 echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
             elif [ "${VALSTATUS,,}" == "inactive" ] ; then
@@ -202,7 +201,7 @@ while : ; do
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
         elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
-            echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
+            [ -z "$VALIDATOR_ADDR" ] && echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
         else
             echo -e "|\e[0m\e[31;1m      INFINFRA IS NOT FULLY OPERATIONAL        \e[33;1m|"
         fi

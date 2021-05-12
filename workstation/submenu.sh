@@ -33,6 +33,7 @@ CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA2
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
 timerDel AUTO_BACKUP
+globDel VALIDATOR_ADDR
 globSet SNAP_EXPOSE "true"
 
 if (! $(isBoolean "$(globGet AUTO_BACKUP)")) ; then
@@ -102,8 +103,9 @@ echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
 echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
 echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
 echo -e "|-----------------------------------------------|"
-displayAlign left $printWidth " [1] | Quick Setup $setupHintQuick"
-displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
+displayAlign left $printWidth " [1] | Quick Node Setup $setupHintQuick"
+displayAlign left $printWidth " [2] | Advanced Node Setup $setupHintAdvanced"
+displayAlign left $printWidth " [3] | Change Default Network Interface"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c\n"
@@ -149,7 +151,10 @@ while :; do
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"full\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
+  2*)
 
+    continue
+    ;;
   x*)
     exit 0
     ;;

@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 NAME=$1
 NETWORKS=$2
 ID=$3
-SCRIPT_START_TIME="$(date -u +%s)"
+timerStart
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -99,7 +99,7 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER '$NAME' STATUS SCAN"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
 

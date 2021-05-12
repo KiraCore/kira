@@ -10,7 +10,8 @@ UNHALT=$4
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
-SCRIPT_START_TIME="$(date -u +%s)"
+
+timerStart
 
 [ -z "$NAME" ] && echoErr "ERROR: Missing 'NAME' parameter (1)" && exit 1
 
@@ -91,6 +92,6 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER PROCESS TERMINATOR"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
