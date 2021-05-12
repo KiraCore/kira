@@ -76,7 +76,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         CFG_max_num_inbound_peers="64"
         CFG_persistent_peers=""
         CFG_pex="true"
-        CFG_allow_duplicate_ip="true"
+        CFG_allow_duplicate_ip="false"
         EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
     fi
 
