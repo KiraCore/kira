@@ -8,6 +8,12 @@ WHITESPACE="                                                     "
 
 if [ "${INFRA_MODE,,}" == "sentry" ] ; then
     PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
+elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+        PORTS=($KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT $KIRA_VALIDATOR_P2P_PORT)
+    else
+        PORTS=($KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
+    fi
 else
     PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
 fi
@@ -39,6 +45,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
+        [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P"
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
         [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
         PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
@@ -109,11 +116,21 @@ echo -e "\e[37;1m--------------------------------------------------"
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo ""; done
-        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
-        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
-        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
-        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
+
+        if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
+            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo ""; done
+            [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
+            [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
+            [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
+            [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
+        else
+            [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
+            [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
+            EXPOSURE="public"
+            [ "${INFRA_MODE,,}" == "validator" ] && CONTAINER="validator"
+            [ "${INFRA_MODE,,}" == "sentry" ] && CONTAINER="sentry"
+            [ "${INFRA_MODE,,}" == "seed" ] && CONTAINER="seed"
+        fi
 
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
@@ -122,10 +139,10 @@ echo -e "\e[37;1m--------------------------------------------------"
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
-        echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
+        echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
         SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
         [ "${SELECT,,}" == "c" ] && continue
-        
+
         echoInfo "INFO: Re-starting $CONTAINER container..."
         $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER" "true" "restart"
     elif [ "${OPTION,,}" == "f" ]; then

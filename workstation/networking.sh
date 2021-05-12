@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 START_TIME_NETWORKING="$(date -u +%s)"
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT)
+PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_VALIDATOR_P2P_PORT)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
 PRIORITY_MIN="-31000"
@@ -61,20 +61,30 @@ if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] ; then
 fi
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_INTERX_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
+
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_P2P_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2P_PORT/tcp
+
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
+
+if [ "${INFRA_MODE,,}" == "validator" ] && [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_P2P_PORT/tcp
+else
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
+
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
+fi
+
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
 # required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=53/udp
 
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
 # required for DNS service

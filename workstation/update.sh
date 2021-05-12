@@ -189,6 +189,7 @@ echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 
 if [ "${UPDATE_DONE,,}" == "true" ] ; then
+    timerStart AUTO_BACKUP
     echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
     sleep 5
     set -x

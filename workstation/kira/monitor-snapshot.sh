@@ -21,7 +21,9 @@ while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     sleep 10
 done
 
+MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 LATEST_BLOCK=$(globGet LATEST_BLOCK)
+SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
@@ -33,10 +35,10 @@ echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
 echoWarn "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
 echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
 echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
+echoWarn "|            MAX SNAPS: $MAX_SNAPS"
 echoWarn "------------------------------------------------"
 set -x
 
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 
 CHECKSUM_TEST="false"
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
@@ -88,18 +90,14 @@ if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
     echoInfo "INFO: Snap can't be executed, update is not compleated"
 else
     [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
-    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
-        echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-    elif [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
-        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-        INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-        if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
-            globSet "IS_SCAN_DONE" "false"
+    if [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "$(globGet AUTO_BACKUP)" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
+        TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
+        if [[ $TIME_LEFT -le 0 ]] ; then
+            globSet IS_SCAN_DONE "false"
             rm -fv "${SNAPSHOT_SCAN_PATH}-start.log"
             [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
             $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
-            CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
+            timerStart AUTO_BACKUP
             CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
         fi
     else

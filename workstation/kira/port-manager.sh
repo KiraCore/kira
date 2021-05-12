@@ -17,6 +17,7 @@ while : ; do
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
     [ "$PORT" == "$KIRA_SENTRY_GRPC_PORT" ] && TYPE="GRPC"
     [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
+    [ "$PORT" == "$KIRA_VALIDATOR_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && TYPE="P2P"

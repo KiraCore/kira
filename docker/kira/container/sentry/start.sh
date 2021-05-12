@@ -82,11 +82,12 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
     while : ; do
         SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
         PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
-        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+        VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break
         else
-            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN) or validator ($VALIDATOR_OPEN) to start..."
             sleep 15
         fi
     done

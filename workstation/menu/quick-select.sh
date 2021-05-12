@@ -19,13 +19,20 @@ else
     set -x
 fi
 
+DEPLOYMENT_MODE="f"
 if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
     set +x
+    echoWarn "WARNING: Deploying your node in minimal mode will disable creation of automated snapshots!"
     DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
-    [ "${DEPLOYMENT_MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
-    [ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
     set -x
 fi
+
+if [ "${DEPLOYMENT_MODE,,}" == "m" ] ; then
+    DEPLOYMENT_MODE="minimal"
+    globSet AUTO_BACKUP "false"
+fi
+
+[ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
 
 if [ "${SELECT,,}" == "n" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh

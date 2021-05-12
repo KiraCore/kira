@@ -325,30 +325,41 @@ function timerStart() {
     [ -z "$NAME" ] && NAME="${BASH_SOURCE}"
     TIME="$(date -u +%s)"
     globSet "timer_start_${NAME}" "$TIME"
-    globSet "timer_end_${NAME}" ""
+    globSet "timer_stop_${NAME}" ""
     [ "${1,,}" == "-v" ] && echo "$TIME"
     return 0
 }
 
-function timerEnd() {
+function timerStop() {
     [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
     [ -z "$NAME" ] && NAME="$BASH_SOURCE"
-    NAME="timer_end_${NAME}"
+    NAME="timer_stop_${NAME}"
     ($(globEmpty "$NAME")) && globSet "$NAME" "$(date -u +%s)"
     [ "${1,,}" == "-v" ] && globGet "$NAME"
     return 0
 }
 
+# if VMAX is set then time left until VMAX is calculated
 function timerSpan() {
     NAME=$1 && [ -z "$NAME" ] && NAME="$BASH_SOURCE"
+    VMAX=$2
+    ($(isNaturalNumber $VMAX)) && CALC_TIME_LEFT="true" || CALC_TIME_LEFT="false"
     START_TIME=$(globGet "timer_start_${NAME}")
-    END_TIME=$(globGet "timer_end_${NAME}")
+    END_TIME=$(globGet "timer_stop_${NAME}")
     if (! $(isNaturalNumber "$START_TIME")) ; then
-        echo "0"
+        ELAPSED=0
     elif (! $(isNaturalNumber "$END_TIME")) ; then 
-        echo "$(($(date -u +%s) - $START_TIME))"
+        ELAPSED="$(($(date -u +%s) - $START_TIME))"
     else
-        echo "$(($END_TIME - $START_TIME))"
+        ELAPSED="$(($END_TIME - $START_TIME))"
+    fi
+
+    if ($(isNaturalNumber $VMAX)) ; then
+        TDELTA=$(($VMAX - $ELAPSED))
+        [[ $TDELTA -lt 0 ]] && TDELTA=0
+        echo $TDELTA
+    else
+        echo $ELAPSED
     fi
     return 0
 }
@@ -357,12 +368,12 @@ function timerDel() {
     if [ -z "$@" ] ; then
         var="$BASH_SOURCE"
         globSet "timer_start_${var}" ""
-        globSet "timer_end_${var}" ""
+        globSet "timer_stop_${var}" ""
     else
         for var in "$@" ; do
             [ -z "$var" ] && var="$BASH_SOURCE"
             globSet "timer_start_${var}" ""
-            globSet "timer_end_${var}" ""
+            globSet "timer_stop_${var}" ""
         done
     fi
     return 0

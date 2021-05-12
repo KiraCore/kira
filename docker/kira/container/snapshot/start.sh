@@ -39,7 +39,13 @@ while [ -f "$SNAP_DONE" ]; do
   sleep 600
 done
 
-while ! ping -c1 sentry &>/dev/null; do
+if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+    PING_TARGET="validator"
+else
+    PING_TARGET="sentry"
+fi
+
+while ! ping -c1 $PING_TARGET &>/dev/null; do
   echoInfo "INFO: Waiting for ping response form sentry node... ($(date))"
   sleep 5
 done
@@ -94,11 +100,12 @@ echoInfo "INFO: External sync is expected from sentry or priv_sentry"
 while : ; do
     SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
     PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
-    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+    VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
         echoInfo "INFO: Sentry or Private Sentry container is running!"
         break
     else
-        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN) or validator ($VALIDATOR_OPEN) to start..."
         sleep 15
     fi
 done

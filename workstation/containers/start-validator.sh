@@ -15,7 +15,7 @@ HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=3 || UTIL_DIV=6
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
@@ -29,9 +29,6 @@ echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
 cp -a $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
 cp -a $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
 
-touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 set -e
 
 echo "------------------------------------------------"
@@ -66,6 +63,13 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         CFG_allow_duplicate_ip="true"
         EXTERNAL_P2P_PORT=""
     else
+        touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
+        cat $PRIVATE_SEEDS >> $PUBLIC_SEEDS
+        cat $PRIVATE_PEERS >> $PUBLIC_PEERS
+
+        cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+        cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+
         CFG_private_peer_ids=""
         CFG_unconditional_peer_ids=""
         CFG_max_num_outbound_peers="34"

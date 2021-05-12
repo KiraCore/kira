@@ -68,6 +68,7 @@ while : ; do
     SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
     SCAN_DONE=$(globGet IS_SCAN_DONE)
+    SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 
     VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
@@ -178,6 +179,22 @@ while : ; do
     fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
+        if [ ! -z "$VALADDR" ]; then
+            if [ "${VALSTATUS,,}" == "active" ] ; then
+                echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "inactive" ] ; then
+                echo -e "|\e[0m\e[31;1m   VALIDATOR WAS STOPPED, ACTIVATE YOUR NODE   \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "jailed" ] ; then
+                echo -e "|\e[0m\e[31;1m    VALIDATOR COMMITED DOUBLE-SIGNING FAULT    \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "paused" ] ; then
+                echo -e "|\e[0m\e[36;1m      VALIDATOR ENTERED MAINTENANCE MODE       \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "waiting" ] ; then
+                echo -e "|\e[0m\e[33;1m  WHITELISTED, READY TO CLAIM VALIDATOR SEAT   \e[33;1m: $VALSTATUS"
+            else
+                echo -e "|\e[0m\e[31;1m    VALIDATOR NODE IS NOT PRODUCING BLOCKS     \e[33;1m: $VALSTATUS"
+            fi
+        fi
+
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
         elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]]; then
@@ -185,25 +202,9 @@ while : ; do
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
         elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
-            if [ ! -z "$VALADDR" ]; then
-                if [ "${VALSTATUS,,}" == "active" ] ; then
-                    echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "inactive" ] ; then
-                    echo -e "|\e[0m\e[31;1m   VALIDATOR WAS STOPPED, ACTIVATE YOUR NODE   \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "jailed" ] ; then
-                    echo -e "|\e[0m\e[31;1m    VALIDATOR COMMITED DOUBLE-SIGNING FAULT    \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "paused" ] ; then
-                    echo -e "|\e[0m\e[36;1m      VALIDATOR ENTERED MAINTENANCE MODE       \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "waiting" ] ; then
-                    echo -e "|\e[0m\e[33;1m  WHITELISTED, READY TO CLAIM VALIDATOR SEAT   \e[33;1m: $VALSTATUS"
-                else
-                    echo -e "|\e[0m\e[31;1m    VALIDATOR NODE IS NOT PRODUCING BLOCKS     \e[33;1m: $VALSTATUS"
-                fi
-            else
-                echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
-            fi
+            echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
         else
-            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
+            echo -e "|\e[0m\e[31;1m      INFINFRA IS NOT FULLY OPERATIONAL        \e[33;1m|"
         fi
     fi
 
@@ -253,12 +254,8 @@ while : ; do
     fi
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
-        if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ]; then
-            [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
-            ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-            INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-            TIME_LEFT=$(($INTERVAL_AS_SECOND - $ELAPSED_TIME))
-            [[ $TIME_LEFT -lt 0 ]] && TIME_LEFT=0
+        if [ "$(globGet AUTO_BACKUP)" == "true" ]; then
+            TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
             AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"
         else
             AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
@@ -348,13 +345,13 @@ while : ; do
     elif [ "${OPTION,,}" == "e" ]; then
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
-            CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            globSet SNAP_EXPOSE "true"
             ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
                 echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip" || \
                 echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."
-            CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            globSet SNAP_EXPOSE "false"
             rm -fv "$INTERX_SNAPSHOT_PATH" && \
                 echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
                 echoErr "ERROR: Failed to remove snapshot symlink"
