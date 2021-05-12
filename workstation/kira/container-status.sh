@@ -39,8 +39,8 @@ DOCKER_INSPECT=$(globGetFile "${NAME}_DOCKER_INSPECT")
 ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
 if (! $(isNullOrEmpty "$ID")) ; then
-    EXISTS="true"
     echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") | globSet "${NAME}_DOCKER_INSPECT"
+    (! $(isFileEmpty $DOCKER_INSPECT)) && EXISTS="true" || EXISTS="false"
 else
     EXISTS="false"
 fi
@@ -59,8 +59,8 @@ if [ "${EXISTS,,}" == "true" ] ; then
     DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
-    echo $(jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "") | globSet "${NAME}_DOCKER_STATE"
-    echo $(jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "") | globSet "${NAME}_DOCKER_NETWORKS"
+    jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"
+    jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echoErr "ERROR: Failed to parsing docker networks"
 
     if [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
