@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/images.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SRIPT_START_TIME="$(date -u +%s)"
+timerStart
 cd $KIRA_HOME
 
 set +x
@@ -102,6 +102,6 @@ echoInfo "INFO: Containers build was finalized.."
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINERS BUILD SCRIPT            |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

@@ -88,34 +88,37 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     set -x
 fi
 
-set +x
-printf "\033c"
-
-printWidth=47
-echo -e "\e[31;1m-------------------------------------------------"
-displayAlign center $printWidth "$title"
-displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
-echo -e "|-----------------------------------------------|"
-echo -e "|       Network Interface: $IFACE (default)"
-echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
-echo -e "|     Current kira Branch: $INFRA_BRANCH"
-echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
-echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
-echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
-echo -e "|-----------------------------------------------|"
-displayAlign left $printWidth " [1] | Quick Node Setup $setupHintQuick"
-displayAlign left $printWidth " [2] | Advanced Node Setup $setupHintAdvanced"
-displayAlign left $printWidth " [3] | Change Default Network Interface"
-echo "|-----------------------------------------------|"
-displayAlign left $printWidth " [X] | Exit"
-echo -e "-------------------------------------------------\e[0m\c\n"
-echo ""
-
-FAILED="false"
-
 while :; do
-  read -n1 -p "Input option: " KEY
-  echo ""
+    set +e && source $ETC_PROFILE &>/dev/null && set -e
+    set +x
+    printf "\033c"
+
+    printWidth=47
+    echo -e "\e[31;1m-------------------------------------------------"
+    displayAlign center $printWidth "$title"
+    displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
+    echo -e "|-----------------------------------------------|"
+    echo -e "|       Network Interface: $IFACE (default)"
+    echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
+    echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
+    echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
+    echo -e "|     Current kira Branch: $INFRA_BRANCH"
+    echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
+    echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
+    echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
+    echo -e "|-----------------------------------------------|"
+    displayAlign left $printWidth " [1] | Quick Node Setup $setupHintQuick"
+    displayAlign left $printWidth " [2] | Advanced Node Setup $setupHintAdvanced"
+    displayAlign left $printWidth " [3] | Change Default Network Interface"
+    displayAlign left $printWidth " [4] | Change SSH Port to Expose"
+    echo "|-----------------------------------------------|"
+    displayAlign left $printWidth " [X] | Exit"
+    echo -e "-------------------------------------------------\e[0m\c\n"
+    echo ""
+    FAILED="false"
+  
+    read -n1 -p "Input option: " KEY
+    echo ""
 
   case ${KEY,,} in
   1*)
@@ -147,12 +150,17 @@ while :; do
     fi
 
     $KIRA_MANAGER/menu/seeds-select.sh
-    $KIRA_MANAGER/menu/interface-select.sh
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"full\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
-  2*)
-
+  3*)
+    $KIRA_MANAGER/menu/interface-select.sh
+    continue
+    ;;
+  4*)
+    DEFAULT_SSH_PORT="." && while (! $(isPort "$DEFAULT_SSH_PORT")); do echoNErr "Input SSH port number to expose: " && read DEFAULT_SSH_PORT ; done
+    set -x
+    CDHelper text lineswap --insert="DEFAULT_SSH_PORT=\"$DEFAULT_SSH_PORT\"" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     continue
     ;;
   x*)

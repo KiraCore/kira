@@ -5,16 +5,15 @@ source $KIRA_MANAGER/utils.sh
 
 NAME=$1
 NETWORKS=$2
-ID=$3
+
 timerStart
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER  |"
+echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|       NETWORKS: $NETWORKS"
-echoWarn "|             ID: $ID"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -37,10 +36,11 @@ elif [ "${NAME,,}" == "registry" ]; then
 fi
 
 DOCKER_INSPECT=$(globGetFile "${NAME}_DOCKER_INSPECT")
+ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
 if (! $(isNullOrEmpty "$ID")) ; then
     EXISTS="true"
-    echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") > $DOCKER_INSPECT
+    echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") | globSet "${NAME}_DOCKER_INSPECT"
 else
     EXISTS="false"
 fi
@@ -59,8 +59,8 @@ if [ "${EXISTS,,}" == "true" ] ; then
     DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
-    jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
-    jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "" > $DOCKER_NETWORKS
+    echo $(jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "") | globSet "${NAME}_DOCKER_STATE"
+    echo $(jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "") | globSet "${NAME}_DOCKER_NETWORKS"
 
     if [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"

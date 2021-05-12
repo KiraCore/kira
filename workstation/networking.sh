@@ -82,12 +82,15 @@ fi
 
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
+
+if [ "$DEFAULT_SSH_PORT" != "22" ] && ($(isPort "$DEFAULT_SSH_PORT")) ; then
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_SSH_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_SSH_PORT/tcp
+fi
+
 # required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=53/udp
-
-# required for SSH
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
-# required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"

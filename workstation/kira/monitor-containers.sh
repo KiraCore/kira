@@ -31,13 +31,10 @@ mkdir -p "$INTERX_REFERENCE_DIR"
 
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
-    DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
     mkdir -p "$DOCKER_COMMON/$name"
-    touch "$DESTINATION_PATH"
 
-    ID=$($KIRA_SCRIPTS/container-id.sh "$name" 2> /dev/null || echo -n "")
-    $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" "$ID" &> "$SCAN_LOGS/${name}-status.error.log" &
-    echo "$!" > "$DESTINATION_PATH.pid"
+    $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" &> "$SCAN_LOGS/${name}-status.error.log" &
+    echo "$!" | globSet "${name}_STATUS_PID"
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
@@ -52,11 +49,8 @@ NEW_LATEST_BLOCK=0
 NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
-    DESTINATION_PATH="$STATUS_SCAN_PATH/$name"
-    touch "${DESTINATION_PATH}.pid"
-    PIDX=$(tryCat "${DESTINATION_PATH}.pid" "")
-    
-    [ -z "$PIDX" ] && echoInfo "INFO: Process X not found" && continue
+    PIDX=$(globGet "${name}_STATUS_PID")
+    [ -z "$PIDX" ] && echoInfo "INFO: Status process '$PIDX' NOT found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
 
     STATUS_PATH=$(globGetFile "${name}_SEKAID_STATUS")
