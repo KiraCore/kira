@@ -136,7 +136,8 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     while : ; do
         echoInfo "INFO: Awaiting node status..."
 
-        globDel "${CONTAINER_NAME}_STATUS"
+        STATUS_SPAN=$(timerSpan STATUS_AWAIT)
+        [ "${STATUS,,}" != "running" ] && globDel "${CONTAINER_NAME}_STATUS"
         timerStart STATUS_AWAIT
         set +x
         while : ; do

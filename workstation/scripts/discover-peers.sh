@@ -76,7 +76,7 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
-MAX_PING_TIME="500000"
+MAX_PING_TIME="250000"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
@@ -114,12 +114,22 @@ while : ; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    if ! timeout 0.05 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if ! timeout 0.05 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
-
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
+
+    seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
+    sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
+    priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
+    validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
+
+    if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
+    if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
+    if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
+    if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+
+    if ! timeout 0.25 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.25 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 0.25 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
@@ -130,10 +140,10 @@ while : ; do
 
     genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum, expected '', but got '$genesis_checksum' ($ip)" && continue 
-    
-    node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
-    (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
-    [ "$node_id" != "$nodeId" ] && echoWarn "WARNING: Diffrent node id was advertised, got '$node_id' but expected '$nodeId' ($ip)" && continue
+
+    # node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
+    # (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
+    # [ "$node_id" != "$nodeId" ] && echoWarn "WARNING: Diffrent node id was advertised, got '$node_id' but expected '$nodeId' ($ip)" && continue
 
     catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
     [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
@@ -184,7 +194,7 @@ while : ; do
             continue
         fi
         peer="${peer} $PING"
-        [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$(( $PING + $MAX_PING_TIME / 2 ))
+        [ "$LIMIT" != "0" ] && [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$(( $PING + $MAX_PING_TIME / 2 ))
     fi
 
     i=$(($i + 1))

@@ -74,7 +74,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         CFG_private_peer_ids=""
         CFG_unconditional_peer_ids=""
         CFG_max_num_outbound_peers="64"
-        CFG_max_num_inbound_peers="128"
+        CFG_max_num_inbound_peers="256"
         CFG_persistent_peers=""
         CFG_pex="true"
         CFG_allow_duplicate_ip="true"
