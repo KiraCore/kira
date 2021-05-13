@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 CONTAINER_NAME=$1
-SENTRY_NODE_ID=$2
+EXPECTED_NODE_ID=$2
 SAVE_SNAPSHOT=$3
 SYNC_AWAIT=$4
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
@@ -91,9 +91,9 @@ while : ; do
         echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
     fi
 
-    if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
+    if [ "$NODE_ID" != "$EXPECTED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
-        echoErr "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
+        echoErr "ERROR: Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
     else
         echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"

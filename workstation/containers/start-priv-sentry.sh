@@ -13,8 +13,9 @@ HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
 set +x
 echo "------------------------------------------------"
@@ -52,16 +53,17 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
-        # fake that pivate sentry node is a validator to ensure that previously accepted connections remain valid
+        # fake that priv sentry node is a validator to ensure that previously accepted connections remain valid
         cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
+        NODE_ID="$VALIDATOR_NODE_ID"
     else
         CFG_persistent_peers="tcp://$SENTRY_SEED"
         [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT"
-        PRIV_SENTRY_NODE_ID="$VALIDATOR_NODE_ID"
-
+        
         cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
+        NODE_ID="$PRIV_SENTRY_NODE_ID"
     fi
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
@@ -105,7 +107,7 @@ docker run -d \
     -e CFG_recv_rate="65536000" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e NODE_TYPE=$CONTAINER_NAME \
-    -e NODE_ID="$PRIV_SENTRY_NODE_ID" \
+    -e NODE_ID="$NODE_ID" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT" \
@@ -128,7 +130,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$PRIV_SENTRY_NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
 
 
 echoInfo "INFO: Checking genesis SHA256 hash"
