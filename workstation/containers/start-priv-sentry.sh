@@ -50,6 +50,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
     if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+        CFG_persistent_peers=""
         CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
@@ -97,7 +98,7 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="32" \
+    -e CFG_max_num_outbound_peers="64" \
     -e CFG_max_num_inbound_peers="0" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \
