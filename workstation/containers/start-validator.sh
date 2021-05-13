@@ -67,16 +67,17 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         cat $PRIVATE_SEEDS >> $PUBLIC_SEEDS
         cat $PRIVATE_PEERS >> $PUBLIC_PEERS
 
-        cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-        cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+        cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+        cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+        cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
 
         CFG_private_peer_ids=""
         CFG_unconditional_peer_ids=""
         CFG_max_num_outbound_peers="34"
-        CFG_max_num_inbound_peers="512"
+        CFG_max_num_inbound_peers="256"
         CFG_persistent_peers=""
         CFG_pex="true"
-        CFG_allow_duplicate_ip="true"
+        CFG_allow_duplicate_ip="false"
         EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
     fi
 

@@ -104,8 +104,8 @@ while : ; do
         echoWarn "WARNING: Node id '$nodeId' is already present in the seeds list ($ip)" && continue 
     fi
 
-    if grep -q "$ip" "$OUTPUT"; then
-        echoWarn "WARNING: Address '$ip' is already present in the seeds list" && continue 
+    if grep -q "$ip:$port" "$OUTPUT"; then
+        echoWarn "WARNING: Address '$ip:$port' is already present in the seeds list" && continue 
     fi
 
     TMP_HEIGHT=$(globGet LATEST_BLOCK)

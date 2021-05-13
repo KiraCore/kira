@@ -77,6 +77,9 @@ elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     fi
 
     if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+        ADDRBOOK_DST="$DOCKER_COMMON_RO/addrbook.json"
+        (timeout 8 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
+        ($(isFileEmpty $ADDRBOOK_DST)) && (timeout 8 docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
         $KIRA_SCRIPTS/container-delete.sh "sentry"
         $KIRA_SCRIPTS/container-delete.sh "priv_sentry"
         $KIRA_MANAGER/containers/start-validator.sh

@@ -38,7 +38,6 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 mkdir -p "$COMMON_LOGS"
 touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
 cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
 cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 
@@ -52,10 +51,17 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
         CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
+
+        # fake that sentry node is a validator to ensure that previously accepted connections remain valid
+        cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
     else
         CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
         [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
+
+        cp -afv $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
     fi
     
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
@@ -91,7 +97,7 @@ docker run -d \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="false" \
     -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="512" \
+    -e CFG_max_num_inbound_peers="256" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \
     -e CFG_max_txs_bytes="131072000" \
@@ -104,7 +110,7 @@ docker run -d \
     -e NODE_ID="$SENTRY_NODE_ID" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
+    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
