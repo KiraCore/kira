@@ -7,7 +7,6 @@ SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 
 CONTAINER_NAME="priv_sentry"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -22,7 +21,6 @@ echo "------------------------------------------------"
 echo "| STARTING $CONTAINER_NAME NODE"
 echo "|-----------------------------------------------"
 echo "|   NODE ID: $PRIV_SENTRY_NODE_ID"
-echo "|   NETWORK: $CONTAINER_NETWORK"
 echo "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
 echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -39,7 +37,6 @@ echo "INFO: Setting up $CONTAINER_NAME config vars..."
 
 mkdir -p "$COMMON_LOGS"
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
-cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
 cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
 cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 
@@ -51,8 +48,21 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
-    [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
+    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+        CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
+
+        # fake that pivate sentry node is a validator to ensure that previously accepted connections remain valid
+        cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
+    else
+        CFG_persistent_peers="tcp://$SENTRY_SEED"
+        [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
+        CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT"
+        PRIV_SENTRY_NODE_ID="$VALIDATOR_NODE_ID"
+
+        cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
+    fi
 
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"

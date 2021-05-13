@@ -60,6 +60,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
+        SENTRY_NODE_ID="$VALIDATOR_NODE_ID"
 
         cp -afv $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
     fi
