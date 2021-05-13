@@ -85,7 +85,7 @@ docker run -d \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
-    -e CFG_max_num_outbound_peers="16" \
+    -e CFG_max_num_outbound_peers="32" \
     -e CFG_max_num_inbound_peers="0" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \

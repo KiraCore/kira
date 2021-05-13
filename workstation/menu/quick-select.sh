@@ -390,7 +390,7 @@ SAVED="false"
 if ($(isPublicIp $NODE_ADDR)) ; then
     echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
     TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 8 || echoErr "ERROR: Peers discovery scan failed"
+    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 32 || echoErr "ERROR: Peers discovery scan failed"
     if (! $(isFileEmpty "$TMP_PEERS")) ; then
         echoInfo "INFO: Saving extra peers..."
         cat $TMP_PEERS >> $PUBLIC_SEEDS

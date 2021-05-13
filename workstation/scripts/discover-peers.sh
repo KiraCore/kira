@@ -76,7 +76,7 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
-MAX_PING_TIME="1000000"
+MAX_PING_TIME="500000"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
@@ -153,7 +153,7 @@ while : ; do
     fi
 
     PING=$(pingTime $ip)
-    if [[ $PING -le 0 ]] ; then
+    if [[ $PING -le 1 ]] ; then
         echoWarn "WARNING: Failed to ping peer ($ip)"
         continue 
     fi
@@ -184,7 +184,7 @@ while : ; do
             continue
         fi
         peer="${peer} $PING"
-        [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$PING
+        [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$(( $PING + $MAX_PING_TIME / 2 ))
     fi
 
     i=$(($i + 1))

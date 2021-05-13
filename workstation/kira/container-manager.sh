@@ -164,8 +164,8 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
-        EX_ADDR=$(tryCat "$COMMON_PATH/external_address" 2> /dev/null || echo -n "")
+    EX_ADDR=$(tryCat "$COMMON_PATH/external_address")
+    if [ ! -z "$EX_ADDR" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] ; then
         EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
         EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
