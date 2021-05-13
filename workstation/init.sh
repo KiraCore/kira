@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.3.2"
+SETUP_VER="v0.3.3.3"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -173,9 +173,8 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     # read only common directory
     DOCKER_COMMON_RO="/docker/shared/common_ro"
 
-    mkdir -p $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
     rm -rfv $KIRA_DUMP
-    mkdir -p "$KIRA_DUMP/INFRA/manager"
+    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
 
     ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-17" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"

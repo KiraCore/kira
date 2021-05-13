@@ -32,7 +32,12 @@ while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
             sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
         else
             echoInfo "INFO: Printing setup logs:"
-            sleep 2 && journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
+            sleep 2
+            if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
+                journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
+            else
+                tryCat "$KIRA_DUMP/kiraup-done.log.txt"
+            fi
         fi
     elif [ "${VSEL,,}" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"

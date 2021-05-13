@@ -27,8 +27,14 @@ if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
     touch $UPDATE_FAIL_FILE
     CDHelper text lineswap --insert="SETUP_END_DT=\"$(date +'%Y-%m-%d %H:%M:%S')\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-    systemctl stop kiraup
+    echoInfo "INFO: Dumping service logs..."
+    if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
+        journalctl --since "$SETUP_START_DT" -u kiraup -b --no-pager --output cat > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
+        journalctl --since "$SETUP_START_DT" -u kirascan -b --no-pager --output cat > "$KIRA_DUMP/kirascan-done.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
+    fi
+    echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
     sleep 5
+    systemctl stop kiraup
     exit 1
 fi
 
@@ -190,7 +196,11 @@ echoWarn "------------------------------------------------"
 
 if [ "${UPDATE_DONE,,}" == "true" ] ; then
     timerStart AUTO_BACKUP
-    echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
+    if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
+        journalctl --since "$SETUP_START_DT" -u kiraup -b --no-pager --output cat > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
+        journalctl --since "$SETUP_START_DT" -u kirascan -b --no-pager --output cat > "$KIRA_DUMP/kirascan-done.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
+    fi
+    echoInfo "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
     sleep 5
     set -x
     systemctl stop kiraup 

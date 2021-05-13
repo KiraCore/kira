@@ -185,10 +185,10 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 echoInfo "INFO: MTU Value Discovery..."
 MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
 (! $(isNaturalNumber $MTU)) && MTU=1500
-(($MTU < 100)) && MTU=9000
+(($MTU < 100)) && MTU=900
 globSet MTU $MTU
 
-rm -rfv $KIRA_UPDATE
+rm -rfv "$KIRA_UPDATE" "$KIRA_DUMP/kiraup-done.log.txt" "$KIRA_DUMP/kirascan-done.log.txt"
 
 cat > /etc/systemd/system/kiraup.service << EOL
 [Unit]
