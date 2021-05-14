@@ -114,8 +114,8 @@ docker run -d \
     -e CFG_seed_mode="false" \
     -e CFG_skip_timeout_commit="false" \
     -e CFG_allow_duplicate_ip="$CFG_allow_duplicate_ip" \
-    -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="15s" \
+    -e CFG_handshake_timeout="60s" \
+    -e CFG_dial_timeout="30s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \

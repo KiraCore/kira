@@ -118,15 +118,17 @@ while : ; do
     STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
-    seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
-    sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
-    priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
-    validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
-
-    if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
-    if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
-    if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
-    if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+    if [ "${SNAPS_ONLY,,}" != "true" ] ; then
+        seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
+        sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
+        priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
+        validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
+    
+        if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+    fi
 
     if ! timeout 0.25 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
     if ! timeout 0.25 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
@@ -140,10 +142,6 @@ while : ; do
 
     genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum, expected '', but got '$genesis_checksum' ($ip)" && continue 
-
-    # node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
-    # (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
-    # [ "$node_id" != "$nodeId" ] && echoWarn "WARNING: Diffrent node id was advertised, got '$node_id' but expected '$nodeId' ($ip)" && continue
 
     catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
     [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 

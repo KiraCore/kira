@@ -22,11 +22,9 @@ while : ; do
         i=$((i + 1))
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-        if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-            sleep 20
+        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
             echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-            continue
+            sleep 20 && continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
         fi

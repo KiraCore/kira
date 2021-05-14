@@ -15,15 +15,13 @@ i=0
 while [[ $i -le 40 ]]; do
     i=$((i + 1))
 
-    echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 12
-        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME container was found"
-    fi
+    echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
+        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
+            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
+            sleep 20 && continue
+        else
+            echoInfo "INFO: Success, container $CONTAINER_NAME was found"
+        fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"

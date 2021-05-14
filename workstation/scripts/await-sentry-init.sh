@@ -32,11 +32,9 @@ while : ; do
         i=$((i + 1))
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-        if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-            sleep 20
+        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
             echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-            continue
+            sleep 20 && continue
         else
             echoInfo "INFO: Success, container $CONTAINER_NAME was found"
         fi
@@ -133,12 +131,13 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     HEIGHT=0
     BLOCKS_LEFT_OLD=0
     timerStart BLOCK_HEIGHT_SPAN
+    globDel "${CONTAINER_NAME}_STATUS"
     while : ; do
         echoInfo "INFO: Awaiting node status..."
 
+        timerStart STATUS_AWAIT
         STATUS_SPAN=$(timerSpan STATUS_AWAIT)
         [ "${STATUS,,}" != "running" ] && globDel "${CONTAINER_NAME}_STATUS"
-        timerStart STATUS_AWAIT
         set +x
         while : ; do
             STATUS_SPAN=$(timerSpan STATUS_AWAIT)
@@ -173,9 +172,9 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        if [[ $DELTA_TIME -gt 900 ]] ; then
+        if [[ $DELTA_TIME -gt 1800 ]] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!"
+            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 30 minutes!"
             exit 1
         fi
 
