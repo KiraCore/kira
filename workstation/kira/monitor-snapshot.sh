@@ -21,9 +21,10 @@ while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     sleep 10
 done
 
-MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 LATEST_BLOCK=$(globGet LATEST_BLOCK)
 SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
+MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
+
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
@@ -38,7 +39,6 @@ echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
 echoWarn "|            MAX SNAPS: $MAX_SNAPS"
 echoWarn "------------------------------------------------"
 set -x
-
 
 CHECKSUM_TEST="false"
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
@@ -78,12 +78,6 @@ elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ([ "${SNAP_EXPOSE,,}" == "false" ] || [ -
     echoInfo "INFO: Removing publicly exposed snapshot..."
     rm -f -v $INTERX_SNAPSHOT_PATH
     CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
-if [ -d $KIRA_SNAP ]; then
-    echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-    find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echoErr "ERROR: Failed to remove excessive snapshots"
-    echoInfo "INFO: Success, all excessive snaps were removed"
 fi
 
 if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
