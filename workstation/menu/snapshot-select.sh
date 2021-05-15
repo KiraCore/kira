@@ -125,8 +125,7 @@ while : ; do
         echoInfo "INFO: User apprived checksum, snapshot will be added to the archive directory '$KIRA_SNAP'"
         SNAP_FILENAME="${SNAP_NETWORK}-${SNAP_HEIGHT}-$(date -u +%s).zip"
         SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-        rm -rfv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
-        rm -rfv $TMP_SNAP_PATH
+        mv -fv $TMP_SNAP_PATH $SNAPSHOT
         break
     fi
 

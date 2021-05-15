@@ -348,9 +348,7 @@ if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-    # repair & safe copy
-    rm -fv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
-    rm -fv $TMP_SNAP_PATH
+    mv -fv $TMP_SNAP_PATH $SNAPSHOT
 else
     SNAPSHOT=""
 fi
