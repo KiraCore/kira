@@ -232,55 +232,46 @@ function urlContentLength() {
 }
 
 function globName() {
-    #echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
     echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | md5sum | awk '{ print $1 }')
     return 0
 }
 
+function globFile() {
+    if [ ! -z "$2" ] && [ -d $2 ] ; then
+        echo "${2}/$(globName $1)"
+    else echo "${GLOB_STORE_DIR}/$(globName $1)" ; fi
+    return 0
+}
+
 function globGet() {
-    kg_NAM="$(globName $1)"
-    kg_FIL="${GLOB_STORE_DIR}/$kg_NAM"
+    kg_FIL=$(globFile "$1" "$2")
     [[ -s $kg_FIL ]] && cat $kg_FIL || echo ""
     return 0
 }
 
 # threadsafe global get
 function globGetTS() {
-    kg_NAM="$(globName $1)"
-    kg_FIL="${GLOB_STORE_DIR}/$kg_NAM"
-    [[ -s "$kg_FIL" ]] && sem --id $kg_NAM "cat $kg_FIL" || echo ""
+    kg_FIL=$(globFile "$1" "$2")
+    [[ -s "$kg_FIL" ]] && sem --id $1 "cat $kg_FIL" || echo ""
     return 0
 }
 
-function globGetFile() {
-    echo "${GLOB_STORE_DIR}/$(globName $1)"
-}
-
 function globSet() {
-    kg_NAM="$(globName $1)"
-    kg_FIL="${GLOB_STORE_DIR}/$kg_NAM"
-    touch $kg_FIL
-    if [ ! -z ${2+x} ] ; then
-        echo "$2" > "$kg_FIL.tmp"
-    else
-        cat > "$kg_FIL.tmp"
-    fi
+    [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
+    touch "$kg_FIL.tmp"
+    [ ! -z ${2+x} ] && echo "$2" > "$kg_FIL.tmp" || cat > "$kg_FIL.tmp"
     mv -f "$kg_FIL.tmp" $kg_FIL
 }
 
 # threadsafe global set
 function globSetTS() {
-    kg_NAM="$(globName $1)"
-    kg_FIL="${GLOB_STORE_DIR}/$kg_NAM"
-    if [ ! -z ${2+x} ] ; then
-        sem --id $kg_NAM "echo $2 > $kg_FIL"
-    else
-        sem --id $kg_NAM --pipe "cat > $kg_FIL"
-    fi
+    [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
+    touch "$kg_FIL"
+    [ ! -z ${2+x} ] &&  sem --id $kg_NAM "echo $2 > $kg_FIL" || sem --id $kg_NAM --pipe "cat > $kg_FIL"
 }
 
 function globEmpty() {
-    ($(isFileEmpty "${GLOB_STORE_DIR}/$(globName $1)")) && echo "true" || echo "false"
+    ($(isFileEmpty $(globFile "$1" "$2"))) && echo "true" || echo "false"
 }
 
 function globDel {

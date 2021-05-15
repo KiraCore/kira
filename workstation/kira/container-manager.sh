@@ -53,7 +53,7 @@ while : ; do
     fi
 
     if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
-        SEKAID_STATUS_FILE=$(globGetFile "${name}_SEKAID_STATUS")
+        SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""

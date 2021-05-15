@@ -35,7 +35,7 @@ elif [ "${NAME,,}" == "registry" ]; then
     REPO="master"
 fi
 
-DOCKER_INSPECT=$(globGetFile "${NAME}_DOCKER_INSPECT")
+DOCKER_INSPECT=$(globFile "${NAME}_DOCKER_INSPECT")
 ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
 if (! $(isNullOrEmpty "$ID")) ; then
@@ -56,8 +56,8 @@ if [ "${EXISTS,,}" == "true" ] ; then
     CONFIG_FILE="$COMMON_PATH/configuring"
     EXECUTED_CHECK="$COMMON_PATH/executed"
     
-    DOCKER_STATE=$(globGetFile "${NAME}_DOCKER_STATE")
-    DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
+    DOCKER_STATE=$(globFile "${NAME}_DOCKER_STATE")
+    DOCKER_NETWORKS=$(globFile "${NAME}_DOCKER_NETWORKS")
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"

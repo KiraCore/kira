@@ -53,7 +53,7 @@ for name in $CONTAINERS; do
     [ -z "$PIDX" ] && echoInfo "INFO: Status process '$PIDX' NOT found" && continue
     wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
 
-    STATUS_PATH=$(globGetFile "${name}_SEKAID_STATUS")
+    STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
 
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
