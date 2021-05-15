@@ -28,10 +28,11 @@ while : ; do
     HEIGHT=0
     STATUS=""
     NODE_ID=""
-    timerStart $TIMER_NAME
-    globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
 
-    while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
+    globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+    timerStart $TIMER_NAME
+    
+    while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
         if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then

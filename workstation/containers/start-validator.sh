@@ -30,6 +30,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+    chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
     rm -rfv "$COMMON_PATH"
     mkdir -p "$COMMON_LOGS"
 

@@ -29,8 +29,9 @@ PREVIOUS_HEIGHT=0
 HEIGHT=0
 
 globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+timerStart $TIMER_NAME
 
-while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
+while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
     if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then

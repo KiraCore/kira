@@ -12,8 +12,6 @@ COMMON_LOGS="$COMMON_PATH/logs"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=1800
 
-timerStart $TIMER_NAME
-
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
@@ -24,8 +22,9 @@ echoWarn "|-------------------------------------------------"
 set -x
 
 globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+timerStart $TIMER_NAME
 
-while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
+while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
     if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then

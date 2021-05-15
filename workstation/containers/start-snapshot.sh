@@ -43,9 +43,9 @@ set -x
 echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
-rm -rfv "$COMMON_PATH" "$SNAP_STATUS"
+chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
+rm -rfv "$COMMON_PATH" "$SNAP_STATUS" "$SNAP_DONE" "$SNAP_PROGRESS"
 mkdir -p "$COMMON_LOGS" "$SNAP_STATUS"
-rm -fv "$SNAP_DONE" "$SNAP_PROGRESS"
 
 echoInfo "INFO: Loading secrets..."
 set +x

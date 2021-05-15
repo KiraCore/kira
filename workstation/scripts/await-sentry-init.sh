@@ -41,8 +41,9 @@ while : ; do
     NODE_ID=""
 
     globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
-
-    while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
+    timerStart $TIMER_NAME
+    
+    while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
         if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then
             echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue

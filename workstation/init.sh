@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.4.2"
+SETUP_VER="v0.3.4.3"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -54,7 +54,6 @@ ARCHITECTURE=$(uname -m)
 [ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="56656"
 [ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
 [ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="59090"
-
 
 [ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
 

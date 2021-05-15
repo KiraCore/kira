@@ -44,7 +44,7 @@ done
 if [ ! -f "$EXECUTED_CHECK" ]; then
     mkdir -p $CACHE_DIR
 
-    rm -f $CONFIG_PATH
+    rm -fv $CONFIG_PATH
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$CFG_port" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --faucet_time_limit=30 \
