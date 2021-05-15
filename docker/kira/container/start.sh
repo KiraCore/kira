@@ -11,6 +11,12 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 timerStart "catching_up"
 timerStart "success"
 
+RESTART_COUNTER=$(globGet RESTART_COUNTER)
+if ($(isNaturalNumber $RESTART_COUNTER)) ; then
+    globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
+    globSet RESTART_TIME "$(date -u +%s)"
+fi
+
 while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
     if [ -f "$EXIT_CHECK" ]; then
         echoInfo "INFO: Ensuring sekaid process is killed"

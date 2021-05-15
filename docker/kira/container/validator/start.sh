@@ -104,6 +104,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   
     rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $TEST_KEY
     touch $EXECUTED_CHECK
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
 echoInfo "INFO: Local genesis.json SHA256 checksum:"

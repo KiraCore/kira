@@ -13,24 +13,23 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NETWORK: $KIRA_FRONTEND_NETWORK"
-echo "|  HOSTNAME: $KIRA_FRONTEND_DNS"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NETWORK: $KIRA_FRONTEND_NETWORK"
+echoWarn "|  HOSTNAME: $KIRA_FRONTEND_DNS"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
-
-mkdir -p $COMMON_LOGS
-
-# cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    rm -fv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS"
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -58,9 +57,5 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-echo "INFO: Waiting for frontend to start..."
+echoInfo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
-
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-# $KIRA_MANAGER/scripts/update-ifaces.sh

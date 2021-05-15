@@ -8,7 +8,7 @@ set -x
 MAX_HEIGHT=$1
 SYNC_FROM_SNAP=$2
 
-[ -z "$MAX_HEIGHT" ] && MAX_HEIGHT="0"
+[ -z "$MAX_HEIGHT" ] && MAX_HEIGHT=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MAX_HEIGHT")) && MAX_HEIGHT=0
 # ensure to create parent directory for shared status info
 CONTAINER_NAME="snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
@@ -23,26 +23,7 @@ RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=4 || UTIL_DIV=6
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
-LATETS_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$LATETS_BLOCK")) && LATETS_BLOCK=0
 
-rm -fvr "$SNAP_STATUS"
-mkdir -p "$SNAP_STATUS" "$COMMON_LOGS"
-
-echo "INFO: Setting up $CONTAINER_NAME config vars..." # * Config ~/configs/config.toml
-
-SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_SENTRY_RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-PRIV_SENTRY_STATUS=$(timeout 3 curl 0.0.0.0:$KIRA_PRIV_SENTRY_RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-
-SENTRY_CATCHING_UP=$(echo $SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$SENTRY_CATCHING_UP")) && SENTRY_CATCHING_UP="true"
-PRIV_SENTRY_CATCHING_UP=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "catching_up" 2>/dev/null || echo -n "") && ($(isNullOrEmpty "$PRIV_SENTRY_CATCHING_UP")) && PRIV_SENTRY_CATCHING_UP="true"
-
-SENTRY_NETWORK=$(echo $SENTRY_STATUS | jsonQuickParse "network" 2>/dev/null || echo -n "")
-PRIV_SENTRY_NETWORK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "network"  2>/dev/null || echo -n "")
-
-SENTRY_BLOCK=$(echo $SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$SENTRY_BLOCK")) && SENTRY_BLOCK=0
-PRIV_SENTRY_BLOCK=$(echo $PRIV_SENTRY_STATUS | jsonQuickParse "latest_block_height" || echo -n "") && (! $(isNaturalNumber "$PRIV_SENTRY_BLOCK")) && PRIV_SENTRY_BLOCK=0
-
-[[ $MAX_HEIGHT -le 0 ]] && MAX_HEIGHT=$LATETS_BLOCK
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
 
@@ -57,8 +38,18 @@ echoWarn "| SNAP SOURCE: $SYNC_FROM_SNAP"
 echoWarn "|     MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|     MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
+set -x
+
+echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+rm -rfv "$COMMON_PATH" "$SNAP_STATUS"
+mkdir -p "$COMMON_LOGS" "$SNAP_STATUS"
+rm -fv "$SNAP_DONE" "$SNAP_PROGRESS"
 
 echoInfo "INFO: Loading secrets..."
+set +x
+set +e
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
@@ -77,7 +68,7 @@ else
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 
-cp -f -a -v $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
+cp -afv $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
 
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 rm -rfv $SNAP_DESTINATION
@@ -85,12 +76,6 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     echoInfo "INFO: State snapshot was found, cloning..."
     ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
 fi
-
-echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-$KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-
-# cleanup
-rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE" "$SNAP_DONE" "$SNAP_PROGRESS"
 
 echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

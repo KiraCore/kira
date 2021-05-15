@@ -94,6 +94,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rfv $LOCAL_GENESIS
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     echo "0" > $SNAP_PROGRESS
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
 echoInfo "INFO: External sync is expected from sentry or priv_sentry"

@@ -18,33 +18,35 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NODE ID: $PRIV_SENTRY_NODE_ID"
-echo "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
-echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
-
-echo "INFO: Loading secrets..."
-source $KIRAMGR_SCRIPTS/load-secrets.sh
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NODE ID: $PRIV_SENTRY_NODE_ID"
+echoWarn "|  HOSTNAME: $KIRA_PRIV_SENTRY_DNS"
+echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
-set -e
-
-echo "INFO: Setting up $CONTAINER_NAME config vars..."
-# * Config sentry/configs/config.toml
-
-mkdir -p "$COMMON_LOGS"
-touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
-cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
-cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
-
-# cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    rm -fv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS"
+
+    echoInfo "INFO: Loading secrets..."
+    set +e
+    set +x
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    set -x
+    set -e
+
+    echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
+    touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
+    cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+    cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
+
     SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -66,9 +68,6 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
         NODE_ID="$PRIV_SENTRY_NODE_ID"
     fi
-
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -122,17 +121,18 @@ docker run -d \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
-    echo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
-    sleep 10
-    [ "${DEPLOYMENT_MODE,,}" == "full" ] && docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
+        echoInfo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
+        sleep 10
+        docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    fi
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-echo "INFO: Waiting for $CONTAINER_NAME to start..."
+echoInfo "INFO: Waiting for $CONTAINER_NAME to start..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
-
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")

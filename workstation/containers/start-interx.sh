@@ -14,32 +14,31 @@ COMMON_GLOBAL_PATH="$DOCKER_COMMON/global"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
-mkdir -p $COMMON_LOGS
-
-echo "INFO: Loading secrets..."
 set +x
-source $KIRAMGR_SCRIPTS/load-secrets.sh
-echo "$SIGNER_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/signing.mnemonic"
-echo "$FAUCET_ADDR_MNEMONIC" > "$DOCKER_COMMON/interx/faucet.mnemonic"
-set -e
-
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|  HOSTNAME: $KIRA_INTERX_DNS"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NODE ID: $SENTRY_NODE_ID"
+echoWarn "|  HOSTNAME: $KIRA_INTERX_DNS"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
 
-# cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
-
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    rm -fv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS"
+
+    echoInfo "INFO: Loading secrets..."
+    set +x
+    set +e
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    echo "$SIGNER_ADDR_MNEMONIC" > "$COMMON_PATH/signing.mnemonic"
+    echo "$FAUCET_ADDR_MNEMONIC" > "$COMMON_PATH/faucet.mnemonic"
+    set -e
+    set -x
 
     if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
         CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT"
@@ -80,17 +79,12 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-echo "INFO: Waiting for interx to start..."
+echoInfo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
-
-FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
-
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-# $KIRA_MANAGER/scripts/update-ifaces.sh
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do
+        FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
         echoInfo "INFO: Demo mode detected, attempting to transfer funds into INTERX account..."
         FAILED="false" && docker exec -i validator sekaid tx bank send validator $FAUCET_ADDR 100000000ukex --gas=1000000000 --keyring-backend=test --chain-id "$NETWORK_NAME" --home=$SEKAID_HOME --fees 100ukex --yes || FAILED="true"
         [ "${FAILED,,}" == "false" ] && echoInfo "INFO: Success, funds were sent to faucet account ($FAUCET_ADDR)" && break

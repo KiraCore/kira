@@ -211,7 +211,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
     cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
-    rm -rf "$DESTINATION_DIR"
+    rm -rfv "$DESTINATION_DIR"
     
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1

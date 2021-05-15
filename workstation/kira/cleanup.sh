@@ -12,8 +12,8 @@ echoInfo "INFO: Started kira cleanup service $KIRA_SETUP_VER"
 
 while : ; do
     journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum failed"
-    find "/var/log" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
-    find "/var/log/journal" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate journal"
+    find "/var/log" -type f -size +2M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
+    find "/var/log/journal" -type f -size +2M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate journal"
 
     echoInfo "INFO: Cleanup was finalized, elapsed $(timerSpan) seconds"
     sleep 600

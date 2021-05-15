@@ -99,3 +99,5 @@ unzip ./$DART_ZIP -d $FLUTTER_CACHE
 
 flutter config --enable-web
 flutter doctor
+
+rm -fv $DART_ZIP $FLUTTER_TAR $GO_TAR CDHelper-linux-$CDHELPER_ARCH.zip
