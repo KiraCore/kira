@@ -110,7 +110,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         echoInfo "INFO: Adding extra seed '$seed' from the list"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
-    done < $LOCAL_SEEDS_PATH
+    done < "${LOCAL_SEEDS_PATH}.tmp"
     set -x
 else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 

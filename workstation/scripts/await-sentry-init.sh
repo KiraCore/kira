@@ -165,9 +165,9 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        if [[ $DELTA_TIME -gt 1800 ]] ; then
+        if [[ $DELTA_TIME -gt $TIMEOUT ]] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 30 minutes!"
+            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over $TIMEOUT seconds!"
             exit 1
         fi
 
@@ -177,7 +177,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
         echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
-        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
+        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up $DELTA_TIME/$TIMEOUT seconds ..."
         set -x
         sleep 30
     done
@@ -187,8 +187,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: Local snapshot must be created before network can be started"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
-    echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
-    echo "$SNAP_NAME" >  $SNAP_NAME_FILE
+    echo "$HEIGHT" > $SNAP_HEIGHT_FILE
+    echo "$SNAP_NAME" > $SNAP_NAME_FILE
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 
     echoInfo "INFO: Creating new snapshot..."
