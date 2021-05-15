@@ -131,6 +131,7 @@ docker run -d \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
+    -e INFRA_MODE="$INFRA_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
@@ -168,3 +169,5 @@ if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
+
+systemctl restart kiraclean

@@ -96,3 +96,5 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
 else
     echoWarn "WARNING: You are running in non-DEMO mode, you will have to fuel INTERX faucet address ($FAUCET_ADDR) on your own!"
 fi
+
+systemctl restart kiraclean

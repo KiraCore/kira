@@ -46,6 +46,8 @@ docker run -d \
     --network $CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
+    -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
@@ -60,3 +62,5 @@ fi
 
 echoInfo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
+
+systemctl restart kiraclean

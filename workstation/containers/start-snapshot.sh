@@ -124,6 +124,7 @@ docker run -d \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SNAPSHOT_NODE_ID" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
+    -e INFRA_MODE="$INFRA_MODE" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
@@ -150,3 +151,5 @@ else
     echoInfo "INFO: Snapshot destination: $SNAP_FILE"
     echoInfo "INFO: Work in progress, await snapshot container to reach 100% sync status"
 fi
+
+systemctl restart kiraclean

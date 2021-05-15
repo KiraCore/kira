@@ -117,6 +117,8 @@ docker run -d \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e INFRA_MODE="$INFRA_MODE" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
@@ -144,3 +146,5 @@ if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
+
+systemctl restart kiraclean
