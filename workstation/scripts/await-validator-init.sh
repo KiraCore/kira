@@ -11,32 +11,36 @@ COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
+TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMEOUT=1800
+
+set +x
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|-------------------------------------------------"
+echoWarn "| COMMON DIR: $COMMON_PATH"
+echoWarn "|    TIMEOUT: $TIMEOUT seconds"
+echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|-------------------------------------------------"
+set -x
 
 NODE_ID=""
 PREVIOUS_HEIGHT=0
 HEIGHT=0
-i=0
 
-while [[ $i -le 40 ]]; do
-    i=$((i + 1))
+globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+
+while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
-        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
-            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-            sleep 20 && continue
-        else
-            echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-        fi
+    if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then
+        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
-    IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
-    if [ "${IS_STARTED,,}" != "true" ] ; then
-        sleep 12
-        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
-    fi
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     # copy genesis from validator only if internal node syncing takes place
     if [ "${NEW_NETWORK,,}" == "true" ] ; then 
@@ -48,9 +52,8 @@ while [[ $i -le 40 ]]; do
 
     # make sure genesis is present in the destination path
     if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
-        sleep 12
-        echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME"
-        continue
+        echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+        sleep 12 && continue
     else
         chattr +i "$LOCAL_GENESIS_PATH"
         echoInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
@@ -60,26 +63,18 @@ while [[ $i -le 40 ]]; do
     STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
     NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
     if (! $(isNodeId "$NODE_ID")); then
-        sleep 12
-        echoWarn "WARNING: Status and Node ID is not available"
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME node id found: $NODE_ID"
-    fi
+        echoWarn "WARNING: Status and Node ID is not available, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+        sleep 12 && continue
+    else echoInfo "INFO: Success, $CONTAINER_NAME node id found: $NODE_ID" ; fi
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
     (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
     
     if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-        echoWarn "INFO: Please wait, new blocks are not beeing synced or produced yet!"
-        sleep 10
-        PREVIOUS_HEIGHT=$HEIGHT
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks"
-        break
-    fi
+        echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+        sleep 10 && PREVIOUS_HEIGHT=$HEIGHT && continue
+    else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -88,30 +83,17 @@ docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.s
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
-if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
-    echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node"
-    exit 1
-fi
+[ ! -f "$LOCAL_GENESIS_PATH" ] && \
+    echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node" && exit 1
 
-if [ "$NODE_ID" != "$VALIDATOR_NODE_ID" ]; then
-    echoErr "ERROR: Check $CONTAINER_NAME Node id check failed!"
-    echoErr "ERROR: Expected '$VALIDATOR_NODE_ID', but got '$NODE_ID'"
-    exit 1
-else
-    echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
-fi
+[ "$NODE_ID" != "$VALIDATOR_NODE_ID" ] && \
+    echoErr "ERROR: Container $CONTAINER_NAME Node Id check failed! Expected '$VALIDATOR_NODE_ID', but got '$NODE_ID'" && exit 1
 
-if [ "${IS_STARTED,,}" != "true" ] ; then
-    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
-    exit 1
-else
-    echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
-fi
+[ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
+    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time" && exit 1
 
-if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly."
-    exit 1
-fi
+[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
+    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
@@ -195,3 +177,10 @@ EOL
 else
     echoInfo "INFO: Vailidaor is joining a new network, no new proposals will be raised"
 fi
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
+echoWarn "------------------------------------------------"
+set -x

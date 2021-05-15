@@ -28,7 +28,7 @@ set -x
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    rm -fv "$COMMON_PATH"
+    rm -rfv "$COMMON_PATH"
     mkdir -p "$COMMON_LOGS"
 
     echoInfo "INFO: Loading secrets..."

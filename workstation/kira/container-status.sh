@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 NAME=$1
 NETWORKS=$2
 
-timerStart
+timerStart KIRA_CONTAINER_STATUS
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -54,6 +54,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"
     HALT_FILE="$COMMON_PATH/halt"
     CONFIG_FILE="$COMMON_PATH/configuring"
+    EXECUTED_CHECK="$COMMON_PATH/executed"
     
     DOCKER_STATE=$(globGetFile "${NAME}_DOCKER_STATE")
     DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
@@ -64,7 +65,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
 
     if [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
-    elif [ -f "$CONFIG_FILE" ] ; then 
+    elif [ -f "$CONFIG_FILE" ] || [ ! -f "$EXECUTED_CHECK" ] ; then 
         globSet "${NAME}_STATUS" "configuring"
     else
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
@@ -99,7 +100,7 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER '$NAME' STATUS SCAN"
-echoWarn "|  ELAPSED: $(timerSpan) seconds"
+echoWarn "|  ELAPSED: $(timerSpan KIRA_CONTAINER_STATUS) seconds"
 echoWarn "------------------------------------------------"
 set -x
 

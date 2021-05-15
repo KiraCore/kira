@@ -9,60 +9,56 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
+TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMEOUT=1800
+
+set +x
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|-------------------------------------------------"
+echoWarn "| COMMON DIR: $COMMON_PATH"
+echoWarn "|    TIMEOUT: $TIMEOUT seconds"
+echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|-------------------------------------------------"
+set -x
 
 retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
     HEIGHT=0
     STATUS=""
-    i=0
     NODE_ID=""
-    IS_STARTED="false"
-    while [[ $i -le 40 ]]; do
-        i=$((i + 1))
+    timerStart $TIMER_NAME
+    globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+
+    while [[ $(timerSpan FRONTEND_INIT) -lt $TIMEOUT ]] ; do
 
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
-        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
-            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-            sleep 20 && continue
-        else
-            echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-        fi
+        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then
+            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+        else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
-        IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
-        if [ "${IS_STARTED,,}" != "true" ] ; then
-            sleep 20
-            echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
-            continue
-        else
-            echoInfo "INFO: Success, container was initialized"
-        fi
+        if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+            echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+        else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" 2> /dev/null || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
-            sleep 20
-            echoWarn "WARNING: Status and Node ID is not available"
-            continue
-        else
-            echoInfo "INFO: Success, $CONTAINER_NAME container id found: $NODE_ID"
-        fi
+            sleep 30 && echoWarn "WARNING: Status and Node ID is not available, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && continue
+        else echoInfo "INFO: Success, $CONTAINER_NAME container id found: $NODE_ID" ; fi
 
         echoInfo "INFO: Awaiting first blocks to be synced..."
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-            echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
+            echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
-            sleep 10
-            continue
-        else
-            echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks"
-            break
-        fi
+            sleep 30 && continue
+        else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
     done
 
     echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -72,31 +68,23 @@ while : ; do
     cat $COMMON_LOGS/start.log | tail -n 150 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
     FAILURE="false"
-    if [ "${IS_STARTED,,}" != "true" ] ; then
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
         echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
         FAILURE="true"
-    else
-        echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
-    fi
+    else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
 
     if [ "$NODE_ID" != "$SEED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
         echoErr "ERROR: Expected '$SEED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
-    else
-        echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
-    fi
+    else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
 
-    if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-        echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
-        FAILURE="true"
-    fi
+    [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
+        echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly." && FAILURE="true"
 
     NETWORK=$(echo $STATUS | jsonQuickParse "network" 2>/dev/null || echo -n "")
-    if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
-        echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'"
-        FAILURE="true"
-    fi
+    [ "$NETWORK_NAME" != "$NETWORK" ] && \
+        echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'" && FAILURE="true"
 
     if [ "${FAILURE,,}" == "true" ] ; then
         echoErr "ERROR: $CONTAINER_NAME node setup failed"
@@ -106,12 +94,8 @@ while : ; do
             $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
             continue
         fi
-        sleep 30
-        exit 1
-    else
-        echoInfo "INFO: $CONTAINER_NAME launched sucessfully"
-        break
-    fi
+        sleep 30 && exit 1
+    else echoInfo "INFO: $CONTAINER_NAME launched sucessfully" && break ; fi
 done
 
 if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
@@ -149,19 +133,15 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
         
         [[ $PREVIOUS_HEIGHT -lt $HEIGHT ]] && timerStart BLOCK_HEIGHT_SPAN
         [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
-
-        if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
-            echoInfo "INFO: Node finished catching up."
-            break
-        fi
+        [[ $HEIGHT -ge $MIN_HEIGH ]] && echoInfo "INFO: Node finished catching up." && break
         
         BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        if [[ $DELTA_TIME -gt 900 ]] ; then
+        if [[ $DELTA_TIME -gt $TIMEOUT ]] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!"
+            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 30 minutes!"
             exit 1
         fi
         
@@ -177,3 +157,10 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
     done
 fi
 
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
+echoWarn "------------------------------------------------"
+set -x

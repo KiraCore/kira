@@ -32,7 +32,6 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
-
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|validator)$ ]] ) ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 elif [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
@@ -101,12 +100,11 @@ if [ ! -s "$LOCAL_PEERS_PATH" ] ; then
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
     done < $LOCAL_PEERS_PATH
     set -x
-else
-    echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)"
-fi
+else echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)" ; fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
-    echoInfo "INFO: List of external seeds was found, adding to seeds config"
+    echoInfo "INFO: List of external seeds was found, shuffling and adding to seeds config"
+    shuf $LOCAL_SEEDS_PATH > "${LOCAL_SEEDS_PATH}.tmp"
     set +x
     while read seed ; do
         echoInfo "INFO: Adding extra seed '$seed' from the list"
@@ -114,9 +112,7 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
         CFG_seeds="${CFG_seeds}${seed}"
     done < $LOCAL_SEEDS_PATH
     set -x
-else
-    echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)"
-fi
+else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 
 if [ ! -z "$CFG_seeds" ] ; then
     echoInfo "INFO: Seed configuration is available, testing..."
@@ -145,9 +141,7 @@ if [ ! -z "$CFG_seeds" ] ; then
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
         set -x
     done
-else
-    echoWarn "WARNING: Seeds configuration is NOT available!"
-fi
+else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
 
 echoInfo "INFO: Final Seeds List:"
 echoInfo "$CFG_seeds"
