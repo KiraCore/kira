@@ -79,7 +79,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     globSet START_TIME "$(date -u +%s)"
 fi
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] && [ "${INFRA_MODE,,}" != "seed" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
         SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)

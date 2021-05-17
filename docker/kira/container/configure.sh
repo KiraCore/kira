@@ -26,8 +26,8 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
-[ -f "$COMMON_PEERS_PATH" ] && cp -a -v -f "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
-[ -f "$COMMON_SEEDS_PATH" ] && cp -a -v -f "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
+[ -f "$COMMON_PEERS_PATH" ] && cp -afv "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
+[ -f "$COMMON_SEEDS_PATH" ] && cp -afv "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
 
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
@@ -48,7 +48,7 @@ CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\""
 
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
     rm -fv $LOCAL_GENESIS
-    cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+    cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
 
     validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
@@ -64,11 +64,11 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    
+
     # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
     ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
     (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-    
+
     if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
         TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
         TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
@@ -79,7 +79,7 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     else
         TIMEOUT_COMMIT=$CFG_timeout_commit
     fi
-    
+
     if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
         echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
         CFG_timeout_commit=$TIMEOUT_COMMIT
@@ -117,6 +117,7 @@ else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 if [ ! -z "$CFG_seeds" ] ; then
     echoInfo "INFO: Seed configuration is available, testing..."
     TMP_CFG_seeds=""
+    i=0
     for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         set +x
@@ -133,14 +134,17 @@ if [ ! -z "$CFG_seeds" ] ; then
         (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Seed '$seed' IP could NOT be resolved" && continue
-        (! $(isPortOpen "$addr" "$port" "0.5")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
+        (! $(isPortOpen "$addr" "$port" "0.25")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
 
         seed="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra seed '$seed' to new config"
         [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
         set -x
+        i=$(($i + 1))
+        [[ $i -ge $CFG_max_num_outbound_peers ]] && echoWarn "INFO: Outbound seeds limit ($CFG_max_num_outbound_peers) reached" 
     done
+    CFG_seeds=$TMP_CFG_seeds
 else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
 
 echoInfo "INFO: Final Seeds List:"

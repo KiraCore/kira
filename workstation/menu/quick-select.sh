@@ -20,9 +20,9 @@ else
 fi
 
 DEPLOYMENT_MODE="f"
-if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
+if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
     set +x
-    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots!"
+    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
     DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
     set -x
 fi

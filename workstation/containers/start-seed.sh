@@ -45,13 +45,29 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -e
 
     echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
-    cp -afv $KIRA_SECRETS/seed_node_key.json $COMMON_PATH/node_key.json
+    cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    if [ "${INFRA_MODE,,}" == "seed" ] ; then
+        SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+        CFG_persistent_peers="tcp://$SNAPSHOT_SEED"
+        touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
+        if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
+            cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+            cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
+            CFG_addr_book_strict="false"
+        else
+            cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+            cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+            CFG_addr_book_strict="true"
+        fi
+        CFG_addr_book_strict="false"
+    else
+        SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+        PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
+        CFG_addr_book_strict="true"
+    fi
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -79,10 +95,10 @@ docker run -d \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="$PRIV_SENTRY_NODE_ID" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_addr_book_strict="true" \
+    -e CFG_addr_book_strict="$CFG_addr_book_strict" \
     -e CFG_seed_mode="true" \
     -e CFG_allow_duplicate_ip="false" \
-    -e CFG_max_num_outbound_peers="32" \
+    -e CFG_max_num_outbound_peers="64" \
     -e CFG_max_num_inbound_peers="1024" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \

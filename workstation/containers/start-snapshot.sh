@@ -63,12 +63,15 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    CFG_persistent_peers="tcp://$SEED_SEED"
+    CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
     CFG_persistent_peers="tcp://$SENTRY_SEED"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 
-cp -afv $KIRA_SECRETS/snapshot_node_key.json $COMMON_PATH/node_key.json
+cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 rm -rfv $SNAP_DESTINATION

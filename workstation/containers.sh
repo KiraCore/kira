@@ -38,7 +38,11 @@ if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh 
     $KIRA_MANAGER/containers/start-sentry.sh 
     $KIRA_MANAGER/containers/start-interx.sh 
-    $KIRA_MANAGER/containers/start-frontend.sh 
+    $KIRA_MANAGER/containers/start-frontend.sh
+elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    $KIRA_MANAGER/containers/start-seed.sh
+    $KIRA_MANAGER/containers/start-interx.sh
+    $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
         # save snapshot from sentry first

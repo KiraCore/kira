@@ -192,7 +192,6 @@ while : ; do
             continue
         fi
         peer="${peer} $PING"
-        [ "$LIMIT" != "0" ] && [ "${PEERS_ONLY,,}" != "true" ] && MAX_PING_TIME=$(( $PING + $MAX_PING_TIME / 2 ))
     fi
 
     i=$(($i + 1))

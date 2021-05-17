@@ -13,6 +13,7 @@ displayAlign center $printWidth "Select Deployment Mode"
 displayAlign left $printWidth " [1] | Demo Mode (local testnet only)"
 displayAlign left $printWidth " [2] | Validator Mode (mainnet / testnet)"
 displayAlign left $printWidth " [3] | Sentry Mode (mainnet / testnet)"
+displayAlign left $printWidth " [4] | Seed Mode (mainnet / testnet)"
 echo "|-----------------------------------------------|"
 displayAlign left $printWidth " [X] | Exit"
 echo -e "-------------------------------------------------\e[0m\c"
@@ -39,12 +40,19 @@ while :; do
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True # IMPORTANT: DISABLE IN MAINNET RELEASE
     break
     ;;
-
   3*)
     echo "INFO: Starting Sentry Mode Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
+    CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+    break
+    ;;
+  4*)
+    echo "INFO: Starting Seed Mode Deployment..."
+    CDHelper text lineswap --insert="INFRA_MODE=seed" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="FIREWALL_ZONE=seed" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;

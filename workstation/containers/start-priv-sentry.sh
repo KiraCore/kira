@@ -46,8 +46,8 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
     touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
-    cp -a -v -f "$PRIVATE_PEERS" "$COMMON_PATH/peers"
-    cp -a -v -f "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
+    cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
 
     SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -67,7 +67,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_PRIV_SENTRY_P2P_PORT"
         
-        cp -a -v $KIRA_SECRETS/priv_sentry_node_key.json $COMMON_PATH/node_key.json
+        cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
         NODE_ID="$PRIV_SENTRY_NODE_ID"
     fi
 

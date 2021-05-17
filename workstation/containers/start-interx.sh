@@ -42,7 +42,11 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -e
     set -x
 
-    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
+    if [ "${INFRA_MODE,,}" == "seed" ] ; then
+            CFG_grpc="dns:///seed:$DEFAULT_GRPC_PORT"
+            CFG_rpc="http://seed:$DEFAULT_RPC_PORT"
+            CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
+    elif [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
         CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT"
         CFG_rpc="http://sentry:$DEFAULT_RPC_PORT"
         CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
@@ -76,6 +80,7 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
+    
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
