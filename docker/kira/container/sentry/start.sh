@@ -4,7 +4,7 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "INFO: Staring sentry setup..."
+echoInfo "INFO: Staring $NODE_TYPE setup..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
@@ -114,7 +114,7 @@ rm -fv $CFG_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
-    rm -frv $SNAP_OUTPUT
+    rm -rfv $SNAP_OUTPUT
 
     touch ./output.log
     LAST_SNAP_BLOCK=0

@@ -7,6 +7,8 @@ set -x
 echoInfo "Staring INTERX $KIRA_SETUP_VER setup..."
 cd $SEKAI/INTERX
 
+mkdir -p $GLOB_STORE_DIR
+
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"

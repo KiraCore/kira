@@ -7,6 +7,8 @@ set -x
 echoInfo "INFO: Staring frontend $KIRA_SETUP_VER setup..."
 echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
+mkdir -p $GLOB_STORE_DIR
+
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"

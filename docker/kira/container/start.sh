@@ -5,6 +5,8 @@ set -x
 
 echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."
 
+mkdir -p $GLOB_STORE_DIR
+
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 CFG_CHECK="${COMMON_DIR}/configuring"

@@ -277,13 +277,12 @@ while : ; do
         TMP_DUMP=$CONTAINER_DUMP/logs.txt.tmp
         while : ; do
             printf "\033c"
-            echo "INFO: Please wait, reading $NAME ($ID) container log..."
+            echoInfo "INFO: Please wait, reading $NAME ($ID) container log..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
+            timeout 10 docker logs --details --timestamps $ID > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to dump $NAME container logs"
 
-            if [ ! -f "$START_LOGS" ] ; then
-                docker logs --details --timestamps $ID > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to dump $NAME container logs"
-            else
-                cat $START_LOGS > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to read $NAME container logs"
+            if (! $(isFileEmpty $TMP_DUMP)) ; then
+                cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $NAME container logs"
             fi
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
@@ -300,7 +299,7 @@ while : ; do
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             if [ "${ACCEPT,,}" == "d" ] ; then
                 rm -fv "$START_LOGS"
-                echo -n "" > $(docker inspect --format='{{.LogPath}}' $ID) || echo "INFO: Failed to delete docker logs"
+                echo -n "" > $(docker inspect --format='{{.LogPath}}' $ID) || echoErr "ERROR: Failed to delete docker logs"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
