@@ -45,7 +45,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
             CFG_grpc="dns:///seed:$DEFAULT_GRPC_PORT"
             CFG_rpc="http://seed:$DEFAULT_RPC_PORT"
-            CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
+            CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
     elif [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
         CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT"
         CFG_rpc="http://sentry:$DEFAULT_RPC_PORT"

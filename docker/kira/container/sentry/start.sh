@@ -82,9 +82,9 @@ fi
 if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] && [ "${INFRA_MODE,,}" != "seed" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
-        VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
+        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
         if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break
@@ -96,7 +96,7 @@ if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] && [ "${
 elif [ "${NEW_NETWORK,,}" == "true" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|priv_sentry)$ ]] ; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
         if [ "$VALIDATOR_OPEN" == "true" ] ; then
             echoInfo "INFO: Validator node is started"
             break

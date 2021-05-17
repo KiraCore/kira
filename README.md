@@ -51,12 +51,12 @@ KIRA_SERVICE_SUBNET="10.4.0.0/16"
 ```
 
 ```
-KIRA_REGISTRY_DNS="registry.regnet.local"
-KIRA_VALIDATOR_DNS="validator.kiranet.local"
-KIRA_SENTRY_DNS="sentry.sentrynet.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.sentrynet.local"
-KIRA_INTERX_DNS="interx.servicenet.local"
-KIRA_FRONTEND_DNS="fontend.servicenet.local"
+KIRA_REGISTRY_DNS="registry.local"
+KIRA_VALIDATOR_DNS="validator.local"
+KIRA_SENTRY_DNS="sentry.local"
+KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
+KIRA_INTERX_DNS="interx.local"
+KIRA_FRONTEND_DNS="fontend.local"
 ```
 
 ### 2. Validator Mode
@@ -69,10 +69,10 @@ KIRA_SERVICE_SUBNET="10.4.0.0/16"
 ```
 
 ```
-KIRA_REGISTRY_DNS="registry.regnet.local"
-KIRA_SEED_DNS="seed.sentrynet.local"
-KIRA_SENTRY_DNS="sentry.sentrynet.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.sentrynet.local"
-KIRA_INTERX_DNS="interx.servicenet.local"
-KIRA_FRONTEND_DNS="fontend.servicenet.local"
+KIRA_REGISTRY_DNS="registry.local"
+KIRA_SEED_DNS="seed.local"
+KIRA_SENTRY_DNS="sentry.local"
+KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
+KIRA_INTERX_DNS="interx.local"
+KIRA_FRONTEND_DNS="fontend.local"
 ```

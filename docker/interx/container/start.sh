@@ -41,7 +41,7 @@ else
 fi
 
 while ! ping -c1 $PING_TARGET &>/dev/null ; do
-    echoInfo "INFO: Waiting for ping response form sentry node... ($(date))"
+    echoInfo "INFO: Waiting for ping response form $PING_TARGET node... ($(date))"
     sleep 5
 done
 

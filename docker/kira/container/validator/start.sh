@@ -114,8 +114,8 @@ sha256 $LOCAL_GENESIS
 if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${DEPLOYMENT_MODE}" != "minimal" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.kiranet.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.kiranet.local 26656)
+        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
         if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break

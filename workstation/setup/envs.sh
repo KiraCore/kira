@@ -21,14 +21,14 @@ KIRA_SENTRY_NETWORK="sentrynet"
 KIRA_INTERX_NETWORK="servicenet"
 KIRA_FRONTEND_NETWORK="servicenet"
 
-KIRA_REGISTRY_DNS="registry.${KIRA_REGISTRY_NETWORK}.local"
-KIRA_VALIDATOR_DNS="validator.${KIRA_VALIDATOR_NETWORK}.local"
-KIRA_SENTRY_DNS="sentry.${KIRA_SENTRY_NETWORK}.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.${KIRA_SENTRY_NETWORK}.local"
-KIRA_SEED_DNS="seed.${KIRA_SENTRY_NETWORK}.local"
-KIRA_SNAPSHOT_DNS="snapshot.${KIRA_SENTRY_NETWORK}.local"
-KIRA_INTERX_DNS="interx.${KIRA_INTERX_NETWORK}.local"
-KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
+KIRA_REGISTRY_DNS="registry.local"
+KIRA_VALIDATOR_DNS="validator.local"
+KIRA_SENTRY_DNS="sentry.local"
+KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
+KIRA_SEED_DNS="seed.local"
+KIRA_SNAPSHOT_DNS="snapshot.local"
+KIRA_INTERX_DNS="interx.local"
+KIRA_FRONTEND_DNS="frontend.local"
 
 KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 
@@ -55,7 +55,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
 ESSENTIALS_HASH=$(echo "$KIRA_USER-$KIRA_INFRA-$KIRA_MANAGER-$FLUTTERROOT-" | md5)
-SETUP_CHECK="$KIRA_SETUP/kira-env-2-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/kira-env-3-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
