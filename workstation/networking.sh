@@ -53,7 +53,7 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
 
-if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] ; then
+if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp

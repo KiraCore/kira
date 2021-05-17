@@ -11,7 +11,7 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
 rm -fv "$TMP_GENESIS_PATH"
 
-if [ "${INFRA_MODE,,}" == "sentry" ]; then
+if [[ "${INFRA_MODE,,}" =~ ^(sentry|seed)$ ]] ; then
     SELECT="j"
 else
     set +x

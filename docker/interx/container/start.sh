@@ -32,11 +32,13 @@ done
 
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     PING_TARGET="validator"
+elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    PING_TARGET="seed"
 else
     PING_TARGET="sentry"
 fi
 
-while ! ping -c1 $PING_TARGET &>/dev/null; do
+while ! ping -c1 $PING_TARGET &>/dev/null ; do
     echoInfo "INFO: Waiting for ping response form sentry node... ($(date))"
     sleep 5
 done

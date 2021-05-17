@@ -41,19 +41,21 @@ done
 
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     PING_TARGET="validator"
+elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    PING_TARGET="seed"
 else
     PING_TARGET="sentry"
 fi
 
 while ! ping -c1 $PING_TARGET &>/dev/null; do
-  echoInfo "INFO: Waiting for ping response form $PING_TARGET node... ($(date))"
-  sleep 5
+    echoInfo "INFO: Waiting for ping response form $PING_TARGET node... ($(date))"
+    sleep 5
 done
 echoInfo "INFO: Sentry IP Found: $(getent hosts $PING_TARGET | awk '{ print $1 }')"
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
-  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
-  sleep 5
+    echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+    sleep 5
 done
 
 echoInfo "INFO: Sucess, genesis file was found!"

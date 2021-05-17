@@ -257,7 +257,7 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         if [ "$(globGet AUTO_BACKUP)" == "true" ]; then
             TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
             AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"

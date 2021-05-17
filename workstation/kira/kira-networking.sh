@@ -6,7 +6,9 @@ source $KIRA_MANAGER/utils.sh
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
 
-if [ "${INFRA_MODE,,}" == "sentry" ] ; then
+if [ "${INFRA_MODE,,}" == "seed" ] ; then
+    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_RPC_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
+elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then

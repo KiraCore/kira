@@ -4,6 +4,8 @@ source $KIRA_MANAGER/utils.sh
 
 if [ "${INFRA_MODE,,}" == "local" ]; then
   title="Demo Mode (local testnet)"
+elif [ "${INFRA_MODE,,}" == "seed" ]; then
+  title="Seed Mode"
 elif [ "${INFRA_MODE,,}" == "sentry" ]; then
   title="Sentry Mode"
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
@@ -130,7 +132,7 @@ while :; do
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
         CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -143,7 +145,7 @@ while :; do
     echo "INFO: Starting Advanced Setup..."
     $KIRA_MANAGER/menu/branch-select.sh "false"
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
     else
         $KIRA_MANAGER/menu/snapshot-select.sh
