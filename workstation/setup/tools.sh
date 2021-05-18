@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5)
-SETUP_CHECK="$KIRA_SETUP/base-tools-2-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/base-tools-3-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Update and Intall basic tools and dependencies..."
     apt-get update -y --fix-missing
