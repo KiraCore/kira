@@ -7,8 +7,9 @@ set -x
 
 echo "INFO: Started kira network contianers monitor..."
 
-timerStart
+timerStart MONITOR_CONTAINERS
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
+SCAN_LOGS="$KIRA_SCAN/logs"
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
@@ -33,8 +34,18 @@ for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
     mkdir -p "$DOCKER_COMMON/$name"
 
+    PIDX=$(globGet "${name}_STATUS_PID")
+
+    if kill -0 "$PIDX" 2>/dev/null; then
+        echoInfo "INFO: $name container status check is still running, see logs '$SCAN_LOGS/${name}-status.error.log' ..."
+        continue
+    fi
+
+    # cat "$SCAN_LOGS/seed-status.error.log"
+    timerStart "${name}_SCAN" 
+    globSet "${name}_SCAN_DONE" "false"
     $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" &> "$SCAN_LOGS/${name}-status.error.log" &
-    echo "$!" | globSet "${name}_STATUS_PID"
+    globSet "${name}_STATUS_PID" "$!"
 
     if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
@@ -50,8 +61,21 @@ NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     PIDX=$(globGet "${name}_STATUS_PID")
-    [ -z "$PIDX" ] && echoInfo "INFO: Status process '$PIDX' NOT found" && continue
-    wait $PIDX || { echoErr "ERROR: background pid failed: $?" >&2; exit 1;}
+
+    set +x
+    while : ; do
+        SCAN_SPAN=$(timerSpan "${name}_SCAN")
+        SCAN_DONE=$(globGet "${name}_SCAN_DONE")
+        [ "${SCAN_DONE}" == "true" ] && break
+        echoInfo "INFO: Waiting for $name scan (PID $PIDX) to finlize, elapsed $SCAN_SPAN/60 seconds ..."
+        [[ $SCAN_SPAN -gt 60 ]] && echoErr "ERROR: Timeout failed to scan $name container, see error logs '$SCAN_LOGS/${name}-status.error.log'" && exit 1
+        if ! kill -0 "$PIDX" 2>/dev/null ; then
+            [ "$(globSet ${name}_SCAN_DONE)" != "true" ] && \
+                echoErr "ERROR: Background PID $PIDX failed for the $name container. See error logs: '$SCAN_LOGS/${name}-status.error.log'" && exit 1
+        fi
+        sleep 1
+    done
+    set -x
 
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
 
@@ -108,6 +132,6 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
-echoWarn "|  ELAPSED: $(timerSpan) seconds"
+echoWarn "|  ELAPSED: $(timerSpan MONITOR_CONTAINERS) seconds"
 echoWarn "------------------------------------------------"
 set -x

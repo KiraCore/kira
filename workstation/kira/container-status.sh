@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 NAME=$1
 NETWORKS=$2
 
-timerStart KIRA_CONTAINER_STATUS
+timerStart "${NAME}_CONTAINER_STATUS"
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -97,12 +97,13 @@ else
     globSet "${NAME}_PORTS" ""
 fi
 
+globSet "${NAME}_SCAN_DONE" "true"
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER '$NAME' STATUS SCAN"
-echoWarn "|  ELAPSED: $(timerSpan KIRA_CONTAINER_STATUS) seconds"
+echoWarn "|-----------------------------------------------"
+echoWarn "| SCAN DONE: $(globGet ${NAME}_SCAN_DONE)"
+echoWarn "|  ELAPSED: $(timerSpan ${NAME}_CONTAINER_STATUS) seconds"
 echoWarn "------------------------------------------------"
 set -x
-
-# Examples:
-# cat "$SCAN_LOGS/sentry-status.error.log"

@@ -73,7 +73,8 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e CFG_grpc="$CFG_grpc" \
     -e CFG_rpc="$CFG_rpc" \
-    -e CFG_port="$DEFAULT_INTERX_PORT" \
+    -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
+    -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
     -e INFRA_MODE="$INFRA_MODE" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \

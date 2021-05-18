@@ -4,8 +4,7 @@ source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-START_TIME="$(date -u +%s)"
-echoInfo "INFO: Starting healthcheck $START_TIME"
+timerStart HEALTHCHECK
 
 BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" 
 COMMON_CONSENSUS="$COMMON_READ/consensus"
@@ -13,6 +12,21 @@ COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
+
+LIP_FILE="$COMMON_READ/local_ip"
+PIP_FILE="$COMMON_READ/public_ip"
+
+LOCAL_IP=$(tryCat $LIP_FILE)
+PUBLIC_IP=$(tryCat $PIP_FILE)
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "|   STARTED: HEALTHCHECK                       |"
+echoWarn "|----------------------------------------------|"
+echoWarn "| PUBLIC IP: $PUBLIC_IP"
+echoWarn "|  LOCAL IP: $LOCAL_IP"
+echoWarn "------------------------------------------------"
+set -x
 
 if [ -f "$EXIT_CHECK" ]; then
   echo "INFO: Ensuring interxd process is killed"
@@ -24,7 +38,10 @@ fi
 touch $BLOCK_HEIGHT_FILE
 
 if [ -f "$HALT_CHECK" ]; then
-  exit 0
+    echoWarn "INFO: Contianer is halted!"
+    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    sleep 1
+    exit 0
 fi
 
 echoInfo "INFO: Healthcheck => START"
@@ -35,9 +52,26 @@ find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || e
 find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate self logs"
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate common logs"
 
-LATEST_BLOCK_HEIGHT=$(cat $COMMON_LATEST_BLOCK_HEIGHT || echo -n "") 
-CONSENSUS_STOPPED=$(cat $COMMON_CONSENSUS | jsonQuickParse "consensus_stopped" || echo -n "")
-HEIGHT=$(curl --fail 127.0.0.1:11000/api/kira/status | jsonQuickParse "latest_block_height" || echo -n "")
+VERSION_EXT=$(timeout 8 curl --fail $PUBLIC_IP:$EXTERNAL_API_PORT/api/kira/status | jsonQuickParse "interx_version" || echo -n "")
+VERSION_INT=$(timeout 8 curl --fail $LOCAL_IP:$EXTERNAL_API_PORT/api/kira/status | jsonQuickParse "interx_version" || echo -n "")
+VERSION_LOC=$(timeout 8 curl --fail interx.local:$INTERNAL_API_PORT/api/kira/status | jsonQuickParse "interx_version" || echo -n "")
+
+if [ -z "$VERSION_EXT" ] ; then
+    echoInfo "INFO: External interx status found"
+    echo "$PUBLIC_IP:$EXTERNAL_API_PORT " > "$COMMON_DIR/external_address"
+elif [ -z "$VERSION_INT" ] ; then
+    echoInfo "INFO: Internal interx status found"
+    echo "$LOCAL_IP:$EXTERNAL_API_PORT" > "$COMMON_DIR/external_address"
+elif [ -z "$VERSION_INT" ] ;then
+    echoInfo "INFO: Local interx status found"
+    echo "interx.local:$INTERNAL_API_PORT" > "$COMMON_DIR/external_address"
+else
+    echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
+    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    exit 1
+fi
+
+
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 
@@ -55,14 +89,17 @@ if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     if [[ $LATEST_BLOCK_HEIGHT -ge 1 ]] && [[ $LATEST_BLOCK_HEIGHT -le $HEIGHT ]] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
         echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
     else
+        echo "OFFLINE" > "$COMMON_DIR/external_address_status"
         exit 1
     fi
 else
   echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
-echo "------------------------------------------------"
-echo "| FINISHED: HEALTHCHECK                        |"
-echo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
-echo "------------------------------------------------"
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: HEALTHCHECK                        |"
+echoWarn "|  ELAPSED: $(timerSpan HEALTHCHECK) seconds"
+echoWarn "------------------------------------------------"
+set -x
 exit 0

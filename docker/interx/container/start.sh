@@ -15,6 +15,8 @@ EXIT_CHECK="${COMMON_DIR}/exit"
 CONFIG_PATH="$SEKAI/INTERX/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
 
+echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+
 RESTART_COUNTER=$(globGet RESTART_COUNTER)
 if ($(isNaturalNumber $RESTART_COUNTER)) ; then
     globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
@@ -49,7 +51,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     mkdir -p $CACHE_DIR
 
     rm -fv $CONFIG_PATH
-    interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$CFG_port" \
+    interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \

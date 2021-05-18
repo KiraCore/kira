@@ -32,6 +32,8 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     rm -rfv "$COMMON_PATH"
     mkdir -p "$COMMON_LOGS"
 
+    INTERNAL_HTTP_PORT="80"
+
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -39,13 +41,15 @@ docker run -d \
     --security-opt=apparmor:unconfined \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_FRONTEND_PORT:80 \
+    -p $KIRA_FRONTEND_PORT:$INTERNAL_HTTP_PORT \
     --hostname $KIRA_FRONTEND_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
     --network $CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    -e EXTERNAL_HTTP_PORT="$KIRA_FRONTEND_PORT" \
+    -e INTERNAL_HTTP_PORT="$INTERNAL_HTTP_PORT" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \

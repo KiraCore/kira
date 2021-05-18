@@ -87,7 +87,6 @@ else
     if [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "$(globGet AUTO_BACKUP)" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
         TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
         if [[ $TIME_LEFT -le 0 ]] ; then
-            globSet IS_SCAN_DONE "false"
             rm -fv "${SNAPSHOT_SCAN_PATH}-start.log"
             [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
             $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"

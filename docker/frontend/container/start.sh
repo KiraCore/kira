@@ -19,6 +19,8 @@ BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
 
+echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+
 RESTART_COUNTER=$(globGet RESTART_COUNTER)
 if ($(isNaturalNumber $RESTART_COUNTER)) ; then
     globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
@@ -127,7 +129,7 @@ done
 echoInfo "INFO: Current configuration:"
 cat $CONFIG_JSON
 
-netstat -nlp | grep 80 || echoWarn "WARNINIG: Bind to port 80 was not found"
+netstat -nlp | grep $INTERNAL_HTTP_PORT || echoWarn "WARNINIG: Bind to port $INTERNAL_HTTP_PORT was not found"
 echoInfo "INFO: Testing NGINX configuration"
 nginx -V
 nginx -t

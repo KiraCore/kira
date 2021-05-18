@@ -50,9 +50,10 @@ if [ ! -f "$SETUP_CHECK" ]; then
     TOOLS_DIR="$KIRA_HOME/tools"
     KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
     PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
+    TMCONNECT_DIR="$TOOLS_DIR/tmconnect"
     $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
     FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-    EXPECTED_HASH="0a03a0d0b760c80c14bef5f0c1ac2c7290361370b394697f4c7ad711ca5c998c"
+    EXPECTED_HASH="1e96d2298a401e82e297e528709b90c747ef83bb04f75b2183baeb2d9debef90"
   
     if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
         echoWarn "WARNING: Failed to check integrity hash of the kira tools !!!"
@@ -75,9 +76,12 @@ if [ ! -f "$SETUP_CHECK" ]; then
     rm /bin/priv-key-gen || echoWarn "WARNING: Removing old priv-validator-key-gen symlink"
     ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-key-gen || echoErr "WARNING: priv-validator-key-gen symlink already exists"
 
-    # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')
-    # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
-    # priv-key-gen --mnemonic="$MNEMONIC" --valkey=./priv_validator_key.json --nodekey=./node_key.json --keyid=./node_id.key
+    cd $TMCONNECT_DIR
+    go build
+    make install
+    ls -l /bin/tmconnect || echoWarn "WARNING: tmconnect symlink not found"
+    rm /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
+    ln -s $TMCONNECT_DIR/tmconnect /bin/tmconnect || echoErr "WARNING: tmconnect symlink already exists"
 
     cat > /etc/systemd/system/kirascan.service << EOL
 [Unit]
