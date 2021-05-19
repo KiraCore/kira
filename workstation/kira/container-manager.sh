@@ -165,9 +165,15 @@ while : ; do
     fi
 
     EX_ADDR=$(tryCat "$COMMON_PATH/external_address")
-    if [ ! -z "$EX_ADDR" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] ; then
+    if [ ! -z "$EX_ADDR" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator|interx|frontend)$ ]] ; then
         EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
-        EX_ADDR="${EX_ADDR} (P2P) ${WHITESPACE}"
+
+        TARGET=""
+        [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] && TARGET="(P2P)"
+        [[ "${NAME,,}" =~ ^(interx)$ ]] && TARGET="(API)"
+        [[ "${NAME,,}" =~ ^(frontend)$ ]] && TARGET="(HTTP)"
+        
+        EX_ADDR="${EX_ADDR} ${TARGET} ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
