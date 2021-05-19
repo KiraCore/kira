@@ -111,7 +111,6 @@ TOOLS_DIR="$SELF_HOME/tools"
 KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
 PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
 TMCONNECT_DIR="$TOOLS_DIR/tmconnect"
-$KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
 
 git clone "https://github.com/KiraCore/tools.git" $TOOLS_DIR
 cd $TOOLS_DIR
