@@ -4,8 +4,14 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup/tools.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
+START_SERVICES=$1
+[ -z "$START_SERVICES" ] && START_SERVICES="true"
+
+$KIRA_MANAGER/setup/envs.sh
+$KIRA_MANAGER/setup/golang.sh
+
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5)
-SETUP_CHECK="$KIRA_SETUP/base-tools-3-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/base-tools-6-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Update and Intall basic tools and dependencies..."
     apt-get update -y --fix-missing
@@ -53,13 +59,13 @@ if [ ! -f "$SETUP_CHECK" ]; then
     TMCONNECT_DIR="$TOOLS_DIR/tmconnect"
     $KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
     FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-    EXPECTED_HASH="1e96d2298a401e82e297e528709b90c747ef83bb04f75b2183baeb2d9debef90"
-  
-    if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-        echoWarn "WARNING: Failed to check integrity hash of the kira tools !!!"
-        echoErr "ERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH"
-        exit 1
-    fi
+#    EXPECTED_HASH="1e96d2298a401e82e297e528709b90c747ef83bb04f75b2183baeb2d9debef90"
+#  
+#    if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
+#        echoWarn "WARNING: Failed to check integrity hash of the kira tools !!!"
+#        echoErr "ERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH"
+#        exit 1
+#    fi
   
     cd $KMS_KEYIMPORT_DIR
     ls -l /bin/tmkms-key-import || echoWarn "WARNING: tmkms-key-import symlink not found"
@@ -82,6 +88,12 @@ if [ ! -f "$SETUP_CHECK" ]; then
     ls -l /bin/tmconnect || echoWarn "WARNING: tmconnect symlink not found"
     rm /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
     ln -s $TMCONNECT_DIR/tmconnect /bin/tmconnect || echoErr "WARNING: tmconnect symlink already exists"
+
+    # MNEMONIC=$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jq '.[0].mnemonic' | tr -d '"')
+    # tmkms-key-import "$MNEMONIC" "$HOME/priv_validator_key.json" "$HOME/signing.key" "$HOME/node_key.json" "$HOME/node_id.key"
+    # priv-key-gen --mnemonic="$MNEMONIC" --valkey=./priv_validator_key.json --nodekey=./node_key.json --keyid=./node_id.key
+    # tmconnect handshake --address="e27b3a9d952f3863eaeb7141114c253edd03905d@167.99.54.200:26656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=60 --verbose
+    # tmconnect id --address="167.99.54.200:26656" --node_key="$COMMON_DIR/node_key.json" --timeout=1
 
     cat > /etc/systemd/system/kirascan.service << EOL
 [Unit]

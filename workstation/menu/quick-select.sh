@@ -19,21 +19,6 @@ else
     set -x
 fi
 
-DEPLOYMENT_MODE="f"
-if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
-    set +x
-    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
-    DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
-    set -x
-fi
-
-if [ "${DEPLOYMENT_MODE,,}" == "m" ] ; then
-    DEPLOYMENT_MODE="minimal"
-    globSet AUTO_BACKUP "false"
-fi
-
-[ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
-
 if [ "${SELECT,,}" == "n" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
     set +x
@@ -376,10 +361,6 @@ globSet MIN_HEIGHT $MIN_HEIGHT
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && \
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"

@@ -11,7 +11,6 @@ RUN mkdir ${SEKAI} -p
 RUN cd ${GOPATH}/src/github.com/kiracore && git clone ${REPO}
 RUN cd ${SEKAI} && git checkout ${BRANCH}
 RUN cd ${SEKAI}/INTERX && make install
-RUN echo "source ${SELF_CONTAINER}/sekaid-helper.sh" >> ${ETC_PROFILE}
 
 ADD ./container ${SELF_CONTAINER}
 

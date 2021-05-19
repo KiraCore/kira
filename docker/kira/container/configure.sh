@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
@@ -28,6 +27,14 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
 [ -f "$COMMON_PEERS_PATH" ] && cp -afv "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -afv "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
+
+echoInfo "INFO: Setting up node key..."
+cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
+
+if [ "${NODE_TYPE,,}" == "validator" ] ; then
+    echoInfo "INFO: Setting up priv validator key..."
+    cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+fi
 
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
@@ -135,6 +142,9 @@ if [ ! -z "$CFG_seeds" ] ; then
         ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Seed '$seed' IP could NOT be resolved" && continue
         (! $(isPortOpen "$addr" "$port" "0.25")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
+
+        currentNodeId=$(tmconnect id --address="$addr:$port" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+        [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
         seed="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra seed '$seed' to new config"
@@ -276,14 +286,6 @@ CDHelper text lineswap --insert="MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="MIN_
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
-
-echoInfo "INFO: Setting up node key..."
-cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
-
-if [ "${NODE_TYPE,,}" == "validator" ] ; then
-    echoInfo "INFO: Setting up priv validator key..."
-    cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
-fi
 
 echoInfo "INFO: Finished node configuration."
 rm -fv $CFG_CHECK

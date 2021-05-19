@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 LATEST_BLOCK_HEIGHT=$1

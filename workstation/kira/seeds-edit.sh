@@ -41,15 +41,18 @@ while : ; do
 
         p2=$(resolveDNS $p2)
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
-        PING_TIME=$(pingTime $p2)
-        if ! timeout 1 nc -z $p2 $p3 &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
-        if [[ $PING_TIME -ge 1 ]] && [[ $PING_TIME -le 999999 ]] ; then
-            SCALE=0
-            [[ $PING_TIME -lt 10000 ]] && SCALE=1
-            [[ $PING_TIME -lt 1000 ]] && SCALE=2
-            PING="$(echo "scale=$SCALE; ( $PING_TIME / 1000 )" | bc) ms"
+        PING_TIME=$(tmconnect handshake --address="$p1@$p2:$p3" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "0")
+        (! $(isNaturalNumber $PING_TIME)) && PING_TIME=0
+
+        if [[ $PING_TIME -ge 1 ]] && [[ $PING_TIME -le 999 ]] ; then
+            PING="$PING_TIME ms"
+            STATUS="ONLINE" 
+        elif [[ $PING_TIME -le 0 ]] ; then
+            PING="???? "
+            STATUS="OFFLINE" 
         else
             PING="> 1 s"
+            STATUS="ONLINE" 
         fi
              
         INDEX_TMP=$(echo "${WHITESPACE}${i}" | tail -c 4)

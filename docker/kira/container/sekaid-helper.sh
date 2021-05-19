@@ -1,5 +1,5 @@
 #!/bin/bash
-source $SELF_SCRIPTS/utils.sh
+
 # QUICK EDIT: FILE="$SELF_CONTAINER/sekaid-helper.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 function txAwait() {

@@ -1,5 +1,5 @@
 #!/bin/bash
-
+set +e && source $ETC_PROFILE &>/dev/null && set -e
 exec 2>&1
 set -e
 set -x
@@ -8,7 +8,7 @@ apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common curl wget git nginx apt-transport-https
 
-echo "APT Update, Update and Intall..."
+echoInfo "INFO: APT Update, Update and Intall..."
 apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     file build-essential net-tools hashdeep make nodejs node-gyp tar unzip xz-utils yarn zip p7zip-full \
@@ -47,7 +47,7 @@ GO_TAR=go$GO_VERSION.linux-$GOLANG_ARCH.tar.gz
 FLUTTER_TAR="flutter_linux_$FLUTTER_VERSION.tar.xz"
 DART_ZIP="dartsdk-linux-$DART_ARCH-release.zip"
 
-echo "INFO: Installing CDHelper tool"
+echoInfo "INFO: Installing CDHelper tool"
 
 if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
     rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
@@ -55,11 +55,12 @@ if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
     FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
  
     if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
-        echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $CDHELPER_EXPECTED_HASH, but got $FILE_HASH\n"
+        echoErr "ERROR: Failed to check integrity hash of the CDHelper tool!"
+        echoErr "ERROR: Expected hash: $CDHELPER_EXPECTED_HASH, but got $FILE_HASH"
         exit 1
     fi
 else
-    echo "INFO: CDHelper tool was already downloaded"
+    echoInfo "INFO: CDHelper tool was already downloaded"
 fi
  
 INSTALL_DIR="/usr/local/bin/CDHelper"
@@ -68,26 +69,27 @@ mkdir -pv $INSTALL_DIR
 unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
 chmod -R -v 555 $INSTALL_DIR
  
-ls -l /bin/CDHelper || echo "INFO: Symlink not found"
-rm /bin/CDHelper || echo "INFO: Failed to remove old symlink"
-ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "INFO: CDHelper symlink already exists"
+ls -l /bin/CDHelper || echoWarn "INFO: Symlink not found"
+rm /bin/CDHelper || echoWarn "INFO: Failed to remove old symlink"
+ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echoWarn "INFO: CDHelper symlink already exists"
  
 CDHelper version
 
 CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
 
-echo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
+echoInfo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
 cd /tmp
 
 wget https://dl.google.com/go/$GO_TAR &>/dev/null
 tar -C /usr/local -xvf $GO_TAR &>/dev/null
+go version
 
-echo "Setting up essential flutter dependencies..."
+echoInfo "INFO: Setting up essential flutter dependencies..."
 wget https://storage.googleapis.com/flutter_infra/releases/$FLUTTER_CHANNEL/linux/$FLUTTER_TAR
 mkdir -p /usr/lib # make sure flutter root directory exists
 tar -C /usr/lib -xvf ./$FLUTTER_TAR
 
-echo "Setting up essential dart dependencies..."
+echoInfo "INFO: Setting up essential dart dependencies..."
 FLUTTER_CACHE=$FLUTTERROOT/bin/cache
 rm -rfv $FLUTTER_CACHE/dart-sdk
 mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
@@ -101,3 +103,51 @@ flutter config --enable-web
 flutter doctor
 
 rm -fv $DART_ZIP $FLUTTER_TAR $GO_TAR CDHelper-linux-$CDHELPER_ARCH.zip
+
+echoInfo "INFO: Installing essential KIRA tools"
+
+cd $SELF_HOME
+TOOLS_DIR="$SELF_HOME/tools"
+KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
+PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
+TMCONNECT_DIR="$TOOLS_DIR/tmconnect"
+$KIRA_SCRIPTS/git-pull.sh "https://github.com/KiraCore/tools.git" "main" "$TOOLS_DIR" 555
+
+git clone "https://github.com/KiraCore/tools.git" $TOOLS_DIR
+cd $TOOLS_DIR
+git checkout main
+chmod -R 555 $TOOLS_DIR
+FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
+
+echoInfo "INFO: Tools checkout finalized, directory hash: $FILE_HASH"
+
+#TOOLS_EXPECTED_HASH="cbe7369e16260943354ad830607bf9618d7f90acb9f9903ca7dc1d305fc22c6b"
+TOOLS_EXPECTED_HASH=""
+
+if [ ! -z "$TOOLS_EXPECTED_HASH" ] && [ "$FILE_HASH" != "$TOOLS_EXPECTED_HASH" ]; then
+    echoErr "ERROR: Failed to check integrity hash of the KIRA tools!"
+    echoErr "ERROR: Expected hash: $TOOLS_EXPECTED_HASH, but got $FILE_HASH"
+    exit 1
+fi
+
+cd $KMS_KEYIMPORT_DIR
+ls -l /bin/tmkms-key-import || echoWarn "WARNING: tmkms-key-import symlink not found"
+rm /bin/tmkms-key-import || echoWarn "WARNING: failed removing old tmkms-key-import symlink"
+ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echoErr "WARNING: tmkms-key-import symlink already exists"
+
+echoInfo "INFO: Navigating to '$PRIV_KEYGEN_DIR' and building priv-key-gen tool..."
+cd $PRIV_KEYGEN_DIR
+export HOME="$SELF_HOME";
+go build
+make install
+
+ls -l /bin/priv-key-gen || echoWarn "WARNING: priv-validator-key-gen symlink not found"
+rm /bin/priv-key-gen || echoWarn "WARNING: Removing old priv-validator-key-gen symlink"
+ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-key-gen || echoErr "WARNING: priv-validator-key-gen symlink already exists"
+
+cd $TMCONNECT_DIR
+go build
+make install
+ls -l /bin/tmconnect || echoWarn "WARNING: tmconnect symlink not found"
+rm /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
+ln -s $TMCONNECT_DIR/tmconnect /bin/tmconnect || echoErr "WARNING: tmconnect symlink already exists"

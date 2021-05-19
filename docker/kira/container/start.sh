@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."

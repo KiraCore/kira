@@ -29,11 +29,14 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
+[ -z "$DEPLOYMENT_MODE" ] && DEPLOYMENT_MODE="minimal"
 
 CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="DEPLOYMENT_MODE=$DEPLOYMENT_MODE" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+
 timerDel AUTO_BACKUP
 globDel VALIDATOR_ADDR
 globSet SNAP_EXPOSE "true"
@@ -41,6 +44,11 @@ globSet SNAP_EXPOSE "true"
 if (! $(isBoolean "$(globGet AUTO_BACKUP)")) ; then
     CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
     globSet AUTO_BACKUP "true"
+fi
+
+if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+    globSet AUTO_BACKUP "false"
+    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
@@ -90,6 +98,13 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     set -x
 fi
 
+echo "INFO: Loading secrets..."
+set +e
+set +x
+source $KIRAMGR_SCRIPTS/load-secrets.sh
+set -x
+set -e
+
 while :; do
     set +e && source $ETC_PROFILE &>/dev/null && set -e
     set +x
@@ -102,6 +117,7 @@ while :; do
     echo -e "|-----------------------------------------------|"
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
+    echo -e "|         Deployment Mode: $DEPLOYMENT_MODE"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
@@ -113,7 +129,10 @@ while :; do
     displayAlign left $printWidth " [2] | Advanced Node Setup $setupHintAdvanced"
     displayAlign left $printWidth " [3] | Change Default Network Interface"
     displayAlign left $printWidth " [4] | Change SSH Port to Expose"
+    displayAlign left $printWidth " [5] | Change Default Branches"
+    displayAlign left $printWidth " [6] | Change Deployment Mode"
     echo "|-----------------------------------------------|"
+    displayAlign left $printWidth " [R] | Return to Main Menu"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c\n"
     echo ""
@@ -126,9 +145,6 @@ while :; do
   1*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
-
-    $KIRA_MANAGER/menu/branch-select.sh "true"
-
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
@@ -143,8 +159,6 @@ while :; do
     ;;
   2*)
     echo "INFO: Starting Advanced Setup..."
-    $KIRA_MANAGER/menu/branch-select.sh "false"
-
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
     else
@@ -152,7 +166,6 @@ while :; do
     fi
 
     $KIRA_MANAGER/menu/seeds-select.sh
-    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"full\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
     ;;
   3*)
@@ -165,10 +178,35 @@ while :; do
     CDHelper text lineswap --insert="DEFAULT_SSH_PORT=\"$DEFAULT_SSH_PORT\"" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     continue
     ;;
+  5*)
+    $KIRA_MANAGER/menu/branch-select.sh "false"
+    continue
+    ;;
+  6*)
+    DEPLOYMENT_MODE="f"
+    if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
+        set +x
+        echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
+        DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
+        set -x
+    fi
+
+    if [ "${DEPLOYMENT_MODE,,}" == "m" ] ; then
+        DEPLOYMENT_MODE="minimal"
+        globSet AUTO_BACKUP "false"
+        CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
+
+    [ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
+    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+    ;;
+  r*)
+    $KIRA_MANAGER/menu.sh
+    exit 0
+    ;;
   x*)
     exit 0
     ;;
-
   *)
     echo "Try again."
     sleep 1

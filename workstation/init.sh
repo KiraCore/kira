@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.4.8"
+SETUP_VER="v0.3.4.9"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -344,6 +344,8 @@ journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
 
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
+
+$KIRA_MANAGER/setup/tools.sh
 
 set +x
 echo "INFO: Your host environment was initialized"

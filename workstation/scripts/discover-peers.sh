@@ -76,7 +76,7 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
-MAX_PING_TIME="250000"
+MAX_HANDSHAKE_TIME="2500"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
@@ -160,11 +160,8 @@ while : ; do
         continue 
     fi
 
-    PING=$(pingTime $ip)
-    if [[ $PING -le 1 ]] ; then
-        echoWarn "WARNING: Failed to ping peer ($ip)"
-        continue 
-    fi
+    HANDSHAKE_TIME=$(tmconnect handshake --address="$nodeId@$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+    (! $(isNaturalNumber "$HANDSHAKE_TIME")) && echoWarn "WARNINIG: Handshake failed ($ip:$port)" && continue
 
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if [ "${SNAPS_ONLY,,}" == "true" ] ; then
@@ -187,11 +184,11 @@ while : ; do
             peer="${peer} $SIZE"
         fi
     else
-        if [[ $PING -ge $MAX_PING_TIME ]] ; then
-            echoWarn "WARNING: Ping time $PING is out of upper safe range $MAX_PING_TIME us ($ip)"
+        if [[ $HANDSHAKE_TIME -ge $MAX_HANDSHAKE_TIME ]] ; then
+            echoWarn "WARNING: Ping time $HANDSHAKE_TIME is out of upper safe range $MAX_HANDSHAKE_TIME ms ($ip)"
             continue
         fi
-        peer="${peer} $PING"
+        peer="${peer} $HANDSHAKE_TIME"
     fi
 
     i=$(($i + 1))

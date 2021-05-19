@@ -1,7 +1,6 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 echoInfo "INFO: Staring validator setup ..."

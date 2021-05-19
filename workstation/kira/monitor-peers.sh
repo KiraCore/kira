@@ -68,6 +68,7 @@ TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
 TMP_BOOK_PUBLIC_SNAPS="/tmp/addrbook.public-snaps.txt"
 rm -fv "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
 touch "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
+P2P_PORTS=(16656 26656 36656 56656)
 
 i=0
 i_snaps=0
@@ -90,24 +91,7 @@ while read ip; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    NODE_TYPE="undefined"
     if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if timeout 0.1 nc -z $ip 16656 ; then
-        port="16656"
-        NODE_TYPE="seed"
-    elif timeout 0.1 nc -z $ip 26656 ; then
-        port="26656"
-        NODE_TYPE="sentry"
-    elif timeout 0.1 nc -z $ip 36656 ; then
-        port="36656"
-        NODE_TYPE="priv_sentry"
-    elif timeout 0.1 nc -z $ip 56656 ; then
-        port="56656"
-        NODE_TYPE="validator"
-    else
-        echoWarn "WARNING: No open P2P ports were found ($ip)"
-        continue
-    fi
 
     set -x
     STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
@@ -115,42 +99,50 @@ while read ip; do
 
     KIRA_STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
-    set +x
-    
-    chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
-    [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
-
-    genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
-    [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum '$genesis_checksum' ($ip)" && continue 
-    
-    node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/${NODE_TYPE}_node_id" 2>/dev/null || echo -n "")
-    [ "${NODE_TYPE,,}" == "sentry" ] && (! $(isNodeId "$node_id")) && node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
-    (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid $NODE_TYPE node id '$node_id' ($ip)" && continue
-
-    if grep -q "$node_id" "$TMP_BOOK_PUBLIC"; then
-        echoWarn "WARNING: Node id '$node_id' is already present in the address book ($ip)" && continue 
-    fi
 
     catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
-    [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
+    [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
     [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
+    set +x
 
     # do not reject self otherwise nothing can be exposed in the peers list
     [ "$PUBLIC_IP" != "$ip" ] && \
         (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
 
-    peer="$node_id@$ip:$port"
-    echoInfo "INFO: Active peer found: '$peer'"
-    echo "$peer" >> $TMP_BOOK_PUBLIC
-    i=$(($i + 1))
+    chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
+    [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue
+
+    genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
+    [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum '$genesis_checksum' ($ip)" && continue 
+
+    for port in "${P2P_PORTS[@]}" ; do
+        if ! timeout 0.1 nc -z $ip $port ; then
+            echoWarn "WARNING: Port $port is closed ($ip)"
+            continue
+        fi
+
+        node_id=$(tmconnect id --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        (! $(isNodeId "$node_id")) && echoWarn "WARNINIG: Handshake fialure, Node Id was NOT found ($ip)" && continue
+
+        if grep -q "$node_id" "$TMP_BOOK_PUBLIC"; then
+            echoWarn "WARNING: Node Id '$node_id' is already present in the address book ($ip)" && continue 
+        fi
+
+        peer="$node_id@$ip:$port"
+        echoInfo "INFO: Active peer found: '$peer'"
+        echo "$peer" >> $TMP_BOOK_PUBLIC
+        i=$(($i + 1))
+        [[ $PEERS_LIMIT -gt 0 ]] && [[ $i -ge $PEERS_LIMIT ]] && break
+    done
+
     if [[ $PEERS_LIMIT -gt 0 ]] && [[ $i -ge $PEERS_LIMIT ]] ; then
         echoWarn "WARNING: Peer limit ($PEERS_LIMIT) reached"
         break
     fi
-
+    
     SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.zip"
     if (! $(urlExists "$SNAP_URL")) ; then
         echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
