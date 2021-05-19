@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+exec 2>&1
 set -x
 
 timerStart HEALTHCHECK

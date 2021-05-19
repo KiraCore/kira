@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+exec 2>&1
 set -x
 
 timerStart HEALTHCHECK
@@ -38,12 +39,12 @@ touch $BLOCK_HEIGHT_FILE
 if [ -f "$HALT_CHECK" ]; then
     echoWarn "INFO: Contianer is halted!"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-    sleep 1
+    sleep 5
     exit 0
 fi
 
 echoInfo "INFO: Healthcheck => START"
-sleep 30 # rate limit
+sleep 15 # rate limit
 
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
@@ -66,32 +67,8 @@ elif [ -z "$VERSION_INT" ] ;then
 else
     echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    sleep 5
     exit 1
-fi
-
-
-(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
-
-PREVIOUS_HEIGHT=$(cat $BLOCK_HEIGHT_FILE)
-echo "$HEIGHT" >$BLOCK_HEIGHT_FILE
-(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
-
-if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
-    echoWarn "WARNING: Blocks are not beeing produced or synced"
-    echoWarn "WARNING: Current height: $HEIGHT"
-    echoWarn "WARNING: Previous height: $PREVIOUS_HEIGHT"
-    echoWarn "WARNING: Latest height: $LATEST_BLOCK_HEIGHT"
-    echoWarn "WARNING: Consensus Stopped: $CONSENSUS_STOPPED"
-
-    if [[ $LATEST_BLOCK_HEIGHT -ge 1 ]] && [[ $LATEST_BLOCK_HEIGHT -le $HEIGHT ]] && [ "$CONSENSUS_STOPPED" == "true" ] ; then
-        echoWarn "WARNINIG: Cosnensus halted, lack of block production is not result of the issue with the node"
-    else
-        echo "OFFLINE" > "$COMMON_DIR/external_address_status"
-        exit 1
-    fi
-else
-  echoInfo "INFO: Success, new blocks were created or synced: $HEIGHT"
 fi
 
 set +x
@@ -100,4 +77,5 @@ echoWarn "| FINISHED: HEALTHCHECK                        |"
 echoWarn "|  ELAPSED: $(timerSpan HEALTHCHECK) seconds"
 echoWarn "------------------------------------------------"
 set -x
+sleep 5
 exit 0

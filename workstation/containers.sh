@@ -61,7 +61,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
 
     $KIRA_MANAGER/containers/start-seed.sh
     $KIRA_MANAGER/containers/start-interx.sh 
-    $KIRA_MANAGER/containers/start-frontend.sh 
+    [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-frontend.sh 
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
         if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then

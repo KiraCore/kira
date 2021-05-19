@@ -27,7 +27,6 @@ while :; do
   1*)
     echo "INFO: Starting Demo Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=local" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=demo" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
@@ -35,7 +34,6 @@ while :; do
   2*)
     echo "INFO: Starting Validator Node Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=validator" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=validator" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True # IMPORTANT: DISABLE IN MAINNET RELEASE
     break
@@ -43,7 +41,6 @@ while :; do
   3*)
     echo "INFO: Starting Sentry Mode Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=5" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     break
@@ -51,7 +48,6 @@ while :; do
   4*)
     echo "INFO: Starting Seed Mode Deployment..."
     CDHelper text lineswap --insert="INFRA_MODE=seed" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="FIREWALL_ZONE=seed" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
     CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
     break

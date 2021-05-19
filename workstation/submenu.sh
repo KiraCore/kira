@@ -41,16 +41,6 @@ timerDel AUTO_BACKUP
 globDel VALIDATOR_ADDR
 globSet SNAP_EXPOSE "true"
 
-if (! $(isBoolean "$(globGet AUTO_BACKUP)")) ; then
-    CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-    globSet AUTO_BACKUP "true"
-fi
-
-if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-    globSet AUTO_BACKUP "false"
-    CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
-fi
-
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
     set +x
@@ -183,21 +173,14 @@ while :; do
     continue
     ;;
   6*)
-    DEPLOYMENT_MODE="f"
-    if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
-        set +x
-        echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
-        DEPLOYMENT_MODE="." && while ! [[ "${DEPLOYMENT_MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 DEPLOYMENT_MODE && echo ""; done
-        set -x
-    fi
+    set +x
+    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
+    MODE="." && while ! [[ "${MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 MODE && echo ""; done
+    set -x
 
-    if [ "${DEPLOYMENT_MODE,,}" == "m" ] ; then
-        DEPLOYMENT_MODE="minimal"
-        globSet AUTO_BACKUP "false"
-        CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=3" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
+    [ "${MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
+    [ "${MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
 
-    [ "${DEPLOYMENT_MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     ;;
   r*)
@@ -214,6 +197,36 @@ while :; do
   esac
 done
 set -x
+
+if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+    globSet AUTO_BACKUP "false"
+    if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
+        INFRA_CONTAINER_COUNT=2
+    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
+        INFRA_CONTAINER_COUNT=4
+    else
+        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
+        exit 1
+    fi
+else
+    if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
+        INFRA_CONTAINER_COUNT=5
+    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
+        INFRA_CONTAINER_COUNT=4
+    elif [[ "${INFRA_MODE,,}" =~ ^(seed)$ ]] ; then
+        INFRA_CONTAINER_COUNT=3
+    else
+        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
+        exit 1
+    fi
+fi
+
+CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=\"$INFRA_CONTAINER_COUNT\"" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+if (! $(isBoolean "$(globGet AUTO_BACKUP)")) ; then
+    CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet AUTO_BACKUP "true"
+fi
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
