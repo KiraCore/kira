@@ -230,7 +230,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
             echoInfo "INFO: Please wait, downloading snapshot..."
             rm -rfv $TMP_SNAP_DIR
-            mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
+            mkdir -p "$TMP_SNAP_DIR/test"
             DOWNLOAD_SUCCESS="true" && wget "$SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
 
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
@@ -252,39 +252,33 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
          
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] || (! $(isFileEmpty "$TMP_SNAP_PATH")); then
             echoInfo "INFO: Snapshot archive was found, testing integrity..."
-            UNZIP_FAILED="false" && unzip -t $TMP_SNAP_PATH || UNZIP_FAILED="true"
-
-            if [ "${UNZIP_FAILED,,}" == "false" ] ; then
-                DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-                SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-                unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
-                unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
+            mkdir -p "$TMP_SNAP_DIR/test"
+            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
+            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
+            unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
+            unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
                 
-                SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
-                SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
-                (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
+            SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
+            SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
+            (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     
-                if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
-                    set +x
-                    [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
-                    [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
-                    [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
-                    [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
-                    [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
-                    set -x
-                    DOWNLOAD_SUCCESS="false"
-                else
-                    echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
-                    cp -afv $DATA_GENESIS $TMP_GENESIS_PATH
-                    SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
-                    DOWNLOAD_SUCCESS="true"
-                fi
-                 
-                rm -rfv "$TMP_SNAP_DIR/test"
-            else
-                echoWarn "WARNING: Unzip failed, archive might be corruped"
+            if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
+                set +x
+                [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
+                [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
+                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
+                [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
+                [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                set -x
                 DOWNLOAD_SUCCESS="false"
+            else
+                echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
+                cp -afv $DATA_GENESIS $TMP_GENESIS_PATH
+                SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
+                DOWNLOAD_SUCCESS="true"
             fi
+             
+            rm -rfv "$TMP_SNAP_DIR/test"
         fi
 
         if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
@@ -313,6 +307,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             echoInfo "INFO: Genesis file verification suceeded"
         fi
          
+        echoInfo "INFO: Calculating genesis checksum..."
         GENSUM=$(sha256 "$TMP_GENESIS_PATH")
          
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
