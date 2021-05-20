@@ -83,17 +83,16 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
-        NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" 2> /dev/null || echo -n "")
 
-        if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ -z "${NODE_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
-            echo "INFO: Could NOT read status, block height, chian-id or node-id"
+        if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
+            echo "INFO: Could NOT read status, block height or chian-id"
             echoWarn "WARNING: Address '$NODE_ADDR' is not a valid, publicly exposed public node address"
             continue
         fi
 
         SEED_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 16656 ; then
-            SEED_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
+            SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
             if $(isNodeId "$SEED_NODE_ID") ; then
                 SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
                 echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
@@ -102,16 +101,16 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
         SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 26656 ; then
-            SENTRY_NODE_ID=$NODE_ID
-            if $(isNodeId "$NODE_ID") ; then
-                SENTRY_NODE_ADDR="${NODE_ID}@${NODE_ADDR}:26656"
-                echoInfo "INFO: Sentry node ID '$NODE_ID' was found"
+            SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            if $(isNodeId "$SENTRY_NODE_ID") ; then
+                SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656"
+                echoInfo "INFO: Sentry node ID '$SENTRY_NODE_ID' was found"
             else echoWarn "WARNING: Sentry node ID was NOT found" && SENTRY_NODE_ADDR="" ; fi
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
 
         PRIV_SENTRY_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 36656 ; then
-            PRIV_SENTRY_NODE_ID=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
+            PRIV_SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
             if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
                 PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
                 echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
@@ -120,7 +119,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
         VALIDATOR_NODE_ADDR=""
         if timeout 3 nc -z $NODE_ADDR 56656 ; then
-            VALIDATOR_NODE_ADDR=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/validator_node_id" || echo -n "")
+            VALIDATOR_NODE_ADDR=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
             if $(isNodeId "$VALIDATOR_NODE_ADDR") ; then
                 VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656"
                 echoInfo "INFO: Validator node ID '$VALIDATOR_NODE_ADDR' was found"
@@ -128,7 +127,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 56656 is not exposed by node '$NODE_ADDR'" ; fi
 
         if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}${VALIDATOR_NODE_ADDR}" ] ; then
-            echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect to"
+            echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect with"
+            
             continue
         elif (! $(isPublicIp $NODE_ADDR)) && [ -z "$PRIV_SENTRY_NODE_ADDR" ] ; then
             echoWarn "WARNINIG: Node address '$NODE_ADDR' is a local IP but private sentry port is closed or node Id could not be found, choose diffrent public or private node to connect to"
@@ -376,7 +376,8 @@ if ($(isPublicIp $NODE_ADDR)) ; then
         echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+    ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+        echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 fi
 
 if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) ; then 

@@ -15,8 +15,9 @@ else
   exit 1
 fi
 
-systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped or does NOT exist yet"
-systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
+systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
+systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
+systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 globSet LATEST_BLOCK 0
 globSet MIN_HEIGHT 0
 

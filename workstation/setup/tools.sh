@@ -145,4 +145,6 @@ EOL
     touch $SETUP_CHECK
 else
     echoInfo "INFO: Base tools were already installed."
+    systemctl restart kirascan || echoWarn "WARNING: Failed to restart KIRA scan service"
+    systemctl restart kiraclean || echoWarn "WARNING: Failed to restart KIRA cleanup service"
 fi
