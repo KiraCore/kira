@@ -62,12 +62,15 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P
 
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
     CFG_persistent_peers="tcp://$SEED_SEED"
+    PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
     CFG_persistent_peers="tcp://$SENTRY_SEED"
+    PING_TARGET="sentry.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 
@@ -124,6 +127,7 @@ docker run -d \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
+    -e PING_TARGET="$PING_TARGET" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SNAPSHOT_NODE_ID" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \

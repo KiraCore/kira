@@ -42,18 +42,22 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -e
     set -x
 
+    PING_TARGET="sentry.local"
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
-            CFG_grpc="dns:///seed:$DEFAULT_GRPC_PORT"
-            CFG_rpc="http://seed:$DEFAULT_RPC_PORT"
+            CFG_grpc="dns:///seed.local:$DEFAULT_GRPC_PORT"
+            CFG_rpc="http://seed.local:$DEFAULT_RPC_PORT"
+            PING_TARGET="seed.local"
             CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
     elif [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
-        CFG_grpc="dns:///sentry:$DEFAULT_GRPC_PORT"
-        CFG_rpc="http://sentry:$DEFAULT_RPC_PORT"
+        CFG_grpc="dns:///sentry.local:$DEFAULT_GRPC_PORT"
+        CFG_rpc="http://sentry.local:$DEFAULT_RPC_PORT"
+        PING_TARGET="sentry.local"
         CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
     else
         if [ "${INFRA_MODE,,}" == "validator" ] ; then
-            CFG_grpc="dns:///validator:$DEFAULT_GRPC_PORT"
-            CFG_rpc="http://validator:$DEFAULT_RPC_PORT"
+            CFG_grpc="dns:///validator.local:$DEFAULT_GRPC_PORT"
+            CFG_rpc="http://validator.local:$DEFAULT_RPC_PORT"
+            PING_TARGET="validator.local"
             CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
         fi
     fi
@@ -78,6 +82,7 @@ docker run -d \
     -e INFRA_MODE="$INFRA_MODE" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e PING_TARGET="$PING_TARGET" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest

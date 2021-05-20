@@ -63,7 +63,6 @@ while : ; do
     else
         sleep 1
     fi
-
     
     if ! kill -0 $(globGet HARDWARE_SCAN_PID) 2>/dev/null; then
         echoInfo "INFO: Starting hardware monitor..."

@@ -38,14 +38,6 @@ while [ -f "$SNAP_DONE" ]; do
   sleep 600
 done
 
-if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
-    PING_TARGET="validator"
-elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    PING_TARGET="seed"
-else
-    PING_TARGET="sentry"
-fi
-
 while ! ping -c1 $PING_TARGET &>/dev/null; do
     echoInfo "INFO: Waiting for ping response form $PING_TARGET node... ($(date))"
     sleep 5

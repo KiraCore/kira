@@ -137,43 +137,41 @@ while : ; do
                 port=""
             fi
 
-            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
-            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
-            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
-            validator_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/validator_node_id" || echo -n "")
+            seed_node_id=$(tmconnect id --address="$dns:$KIRA_SEED_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            sentry_node_id=$(tmconnect id --address="$dns:$KIRA_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            priv_sentry_node_id=$(tmconnect id --address="$dns:$KIRA_PRIV_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            validator_node_id=$(tmconnect id --address="$dns:$KIRA_VALIDATOR_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is NOT exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is NOT accepting P2P connections" ; 
             fi
 
             if ($(isNodeId "$sentry_node_id")) && timeout 1 nc -z $dns $KIRA_SENTRY_P2P_PORT ; then 
                 tmp_addr="${sentry_node_id}@${dns}:$KIRA_SENTRY_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is NOT exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is NOT accepting P2P connections" ; 
             fi
 
             if ($(isNodeId "$priv_sentry_node_id")) && timeout 1 nc -z $dns $KIRA_PRIV_SENTRY_P2P_PORT ; then 
                 tmp_addr="${priv_sentry_node_id}@${dns}:$KIRA_PRIV_SENTRY_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is NOT exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is NOT accepting P2P connections" ; 
             fi
 
             if ($(isNodeId "$validator_node_id")) && timeout 1 nc -z $dns $KIRA_VALIDATOR_P2P_PORT ; then 
                 tmp_addr="${validator_node_id}@${dns}:$KIRA_VALIDATOR_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is NOT exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is NOT accepting P2P connections" ; 
             fi
         else
             DETECTED_NODES="${nodeId}@${dns}:${port}"

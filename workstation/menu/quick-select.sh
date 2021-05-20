@@ -9,7 +9,7 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
-rm -fv "$TMP_GENESIS_PATH"
+rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
 if [ "${NEW_NETWORK,,}" == "true" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
@@ -143,18 +143,65 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if ($(urlExists "$SNAP_URL")) && [[ $SNAP_SIZE -gt 0 ]]; then
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(s|a|d|c)$ ]]; do echoNErr "Choose to [S]ync from exposed snap, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(e|l|a|d|c)$ ]]; do echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
         else
             set +x
             echoWarn "WARNINIG: Node '$NODE_ADDR' is NOT exposing snapshot files! It might take you a VERY long time to sync your node!"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|d|c)$ ]]; do echoNErr "Try snapshot [A]uto-discovery, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|l|d|c)$ ]]; do echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
         fi
 
-        if [ "${VSEL,,}" == "s" ] ; then
+        rm -fv $TMP_SNAP_PATH
+        if [ "${VSEL,,}" == "e" ] ; then
             echoInfo "INFO: Snapshot exposed by $NODE_ADDR peer will be used to bootstrap blockchain state"
             SNAP_AVAILABLE="true"
+        elif [ "${VSEL,,}" == "l" ] ; then
+            # get all zip files in the snap directory
+            SNAPSHOTS=`ls $KIRA_SNAP/*.zip` || SNAPSHOTS=""
+            SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
+            SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
+
+            if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
+              set +x
+              echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
+              echoNErr "Press any key to continue..." && read -n 1 -s && echo ""
+              set -x
+              continue
+            fi
+            set +x
+            echoErr "Select snapshot to recover from:"
+
+            i=-1
+            LAST_SNAP=""
+            for s in $SNAPSHOTS ; do
+                i=$((i + 1))
+                echo "[$i] $s"
+                LAST_SNAP=$s
+            done
+
+            [ ! -f "$SNAP_LATEST_PATH" ] && SNAP_LATEST_PATH=$LAST_SNAP
+            echoInfo "INFO: Latest snapshot: '$SNAP_LATEST_PATH'"
+
+            OPTION=""
+            while : ; do
+                read -p "Input snapshot number 0-$i (Default: latest): " OPTION
+                [ -z "$OPTION" ] && break
+                [ "${OPTION,,}" == "latest" ] && break
+                ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
+            done
+            set -x
+
+            if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
+                SNAPSHOTS=( $SNAPSHOTS )
+                SNAPSHOT=${SNAPSHOTS[$OPTION]}
+            else
+                OPTION="latest"
+                SNAPSHOT=$SNAP_LATEST_PATH
+            fi
+
+            SNAP_AVAILABLE="false"
+            cp -afv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to copy snapshot to the local directory"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
@@ -181,7 +228,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         DOWNLOAD_SUCCESS="false"
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
             echoInfo "INFO: Please wait, downloading snapshot..."
-            rm -f -v -r $TMP_SNAP_DIR
+            rm -rfv $TMP_SNAP_DIR
             mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
             DOWNLOAD_SUCCESS="true" && wget "$SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
 
@@ -202,8 +249,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         SNAPSUM="none (slow sync)"
         rm -fv $TMP_GENESIS_PATH
          
-        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
-            echoInfo "INFO: Snapshot archive download was sucessfull, testing integrity..."
+        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] || (! $(isFileEmpty "$TMP_SNAP_PATH")); then
+            echoInfo "INFO: Snapshot archive was found, testing integrity..."
             UNZIP_FAILED="false" && unzip -t $TMP_SNAP_PATH || UNZIP_FAILED="true"
 
             if [ "${UNZIP_FAILED,,}" == "false" ] ; then
@@ -218,29 +265,36 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
     
                 if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
                     set +x
-                    echoWarn "WARNING: Snapshot is corrupted or created by outdated node"
                     [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
                     [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
                     [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
                     [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
                     [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
-                    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
                     set -x
-                    rm -f -v -r $TMP_SNAP_DIR
-                    if [ "${OPTION,,}" == "d" ] ; then
-                        echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
-                        continue
-                    fi
                     DOWNLOAD_SUCCESS="false"
                 else
-                    echoInfo "INFO: Success, snapshot file integrity appears to be valid"
-                    cp -f -v -a $DATA_GENESIS $TMP_GENESIS_PATH
+                    echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
+                    cp -afv $DATA_GENESIS $TMP_GENESIS_PATH
                     SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
+                    DOWNLOAD_SUCCESS="true"
                 fi
                  
-                rm -f -v -r "$TMP_SNAP_DIR/test"
+                rm -rfv "$TMP_SNAP_DIR/test"
             else
-                echo "INFO: Unzip failed, archive might be corruped"
+                echoWarn "WARNING: Unzip failed, archive might be corruped"
+                DOWNLOAD_SUCCESS="false"
+            fi
+        fi
+
+        if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
+            set +x
+            echoErr "ERROR: Snapshot could not be found, file was corrupted or created by outdated node"
+            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+            set -x
+            rm -f -v -r $TMP_SNAP_DIR
+            if [ "${OPTION,,}" == "d" ] ; then
+                echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
+                continue
             fi
         fi
              
@@ -319,6 +373,7 @@ else
 fi
 
 set -x
+
 if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
@@ -354,18 +409,11 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
 
-SAVED="false"
-if ($(isPublicIp $NODE_ADDR)) ; then
-    echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
-    if (! $(isFileEmpty "$TMP_PEERS")) ; then
-        echoInfo "INFO: Saving extra peers..."
-        cat $TMP_PEERS >> $PUBLIC_SEEDS
-    else
-        echoInfo "INFO: No extra public peers were found!"
-    fi
+set +x
+OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
+set -x
 
+if ($(isPublicIp $NODE_ADDR)) ; then
     ( $(isNaturalNumber $(tmconnect handshake --address="$SEED_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
         echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
     ( $(isNaturalNumber $(tmconnect handshake --address="$SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
@@ -380,7 +428,21 @@ else
         echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
 fi
 
-if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) ; then 
+if [ "${OPTION,,}" == "a" ] ; then
+    echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
+    if (! $(isFileEmpty "$TMP_PEERS")) ; then
+        echoInfo "INFO: Saving extra peers..."
+        cat $TMP_PEERS >> $PUBLIC_SEEDS
+    else
+        echoInfo "INFO: No extra public peers were found!"
+    fi
+else
+    $KIRA_MANAGER/menu/seeds-select.sh
+fi
+
+if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && ($(isFileEmpty "$PUBLIC_PEERS")) && ($(isFileEmpty "$PRIVATE_PEERS")) ; then 
     echoErr "ERROR: No public or private seeds were found"
     exit 1
 fi

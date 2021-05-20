@@ -138,8 +138,7 @@ while :; do
     displayAlign left $printWidth " [3] | Change Default Branches"
     displayAlign left $printWidth " [4] | Change Deployment Mode"
     echo "|-----------------------------------------------|"
-    displayAlign left $printWidth " [Q] | Start Quick Node Setup"
-    displayAlign left $printWidth " [A] | Start Advanced Node Setup"
+    displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [R] | Return to Main Menu"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c\n"
@@ -150,7 +149,7 @@ while :; do
     echo ""
 
   case ${KEY,,} in
-  q*)
+  s*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -163,17 +162,17 @@ while :; do
     fi
     break
     ;;
-  a*)
-    echo "INFO: Starting Advanced Setup..."
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
-        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
-    else
-        $KIRA_MANAGER/menu/snapshot-select.sh
-    fi
-
-    $KIRA_MANAGER/menu/seeds-select.sh
-    break
-    ;;
+#  a*)
+#    echo "INFO: Starting Advanced Setup..."
+#    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
+#        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
+#    else
+#        $KIRA_MANAGER/menu/snapshot-select.sh
+#    fi
+#
+#    $KIRA_MANAGER/menu/seeds-select.sh
+#    break
+#    ;;
   1*)
     $KIRA_MANAGER/menu/interface-select.sh
     continue
