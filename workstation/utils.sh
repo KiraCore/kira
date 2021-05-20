@@ -94,7 +94,8 @@ function fileSize() {
 
 function isFileEmpty() {
     if [ -z "$1" ] || [ ! -f $1 ] || [ ! -s $1 ] ; then echo "true" ; else
-        if [[ $(fileSize $1) -ge 32 ]] ; then
+        kg_PREFIX_AND_SUFFIX=$(echo "$(head -c 64 $1 2>/dev/null || echo '')$(tail -c 64 $1 2>/dev/null || echo '')" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+        if [ ! -z "$kg_PREFIX_AND_SUFFIX" ] ; then
             echo "false"
         else
             kg_TEXT=$(cat $1 | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
