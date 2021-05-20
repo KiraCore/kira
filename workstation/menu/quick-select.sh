@@ -201,7 +201,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             fi
 
             SNAP_AVAILABLE="false"
-            cp -afv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to copy snapshot to the local directory"
+            mkdir -p "$TMP_SNAP_DIR" 
+            ln -sfv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to create snapshot symlink"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
