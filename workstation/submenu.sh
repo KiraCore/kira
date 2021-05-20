@@ -95,6 +95,20 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
+if [ "${INFRA_MODE,,}" == "local" ]; then
+    NEW_NETWORK="true"
+elif [ "${INFRA_MODE,,}" == "validator" ]; then
+    set +x
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    set -x
+    [ "${SELECT,,}" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
+else
+    NEW_NETWORK="false"
+fi
+
+CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
+
 while :; do
     set +e && source $ETC_PROFILE &>/dev/null && set -e
     set +x
@@ -107,7 +121,10 @@ while :; do
     echo -e "|-----------------------------------------------|"
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
-    echo -e "|         Deployment Mode: $DEPLOYMENT_MODE"
+    echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
+    echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
+[ "${NEW_NETWORK,,}" == "true" ] && \
+    echo -e "|        NEW Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
@@ -115,13 +132,13 @@ while :; do
     echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
     echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
     echo -e "|-----------------------------------------------|"
-    displayAlign left $printWidth " [1] | Quick Node Setup $setupHintQuick"
-    displayAlign left $printWidth " [2] | Advanced Node Setup $setupHintAdvanced"
-    displayAlign left $printWidth " [3] | Change Default Network Interface"
-    displayAlign left $printWidth " [4] | Change SSH Port to Expose"
-    displayAlign left $printWidth " [5] | Change Default Branches"
-    displayAlign left $printWidth " [6] | Change Deployment Mode"
+    displayAlign left $printWidth " [1] | Change Default Network Interface"
+    displayAlign left $printWidth " [2] | Change SSH Port to Expose"
+    displayAlign left $printWidth " [3] | Change Default Branches"
+    displayAlign left $printWidth " [4] | Change Deployment Mode"
     echo "|-----------------------------------------------|"
+    displayAlign left $printWidth " [Q] | Start Quick Node Setup"
+    displayAlign left $printWidth " [A] | Start Advanced Node Setup"
     displayAlign left $printWidth " [R] | Return to Main Menu"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c\n"
@@ -132,7 +149,7 @@ while :; do
     echo ""
 
   case ${KEY,,} in
-  1*)
+  q*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -141,13 +158,11 @@ while :; do
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="NEW_NETWORK=\"true\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
         rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
     fi
     break
     ;;
-  2*)
+  a*)
     echo "INFO: Starting Advanced Setup..."
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
@@ -158,21 +173,21 @@ while :; do
     $KIRA_MANAGER/menu/seeds-select.sh
     break
     ;;
-  3*)
+  1*)
     $KIRA_MANAGER/menu/interface-select.sh
     continue
     ;;
-  4*)
+  2*)
     DEFAULT_SSH_PORT="." && while (! $(isPort "$DEFAULT_SSH_PORT")); do echoNErr "Input SSH port number to expose: " && read DEFAULT_SSH_PORT ; done
     set -x
     CDHelper text lineswap --insert="DEFAULT_SSH_PORT=\"$DEFAULT_SSH_PORT\"" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
     continue
     ;;
-  5*)
+  3*)
     $KIRA_MANAGER/menu/branch-select.sh "false"
     continue
     ;;
-  6*)
+  4*)
     set +x
     echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
     MODE="." && while ! [[ "${MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 MODE && echo ""; done
@@ -227,6 +242,8 @@ if (! $(isBoolean "$(globGet AUTO_BACKUP)")) ; then
     CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
     globSet AUTO_BACKUP "true"
 fi
+
+CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""

@@ -11,15 +11,7 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 
 rm -fv "$TMP_GENESIS_PATH"
 
-if [[ "${INFRA_MODE,,}" =~ ^(sentry|seed)$ ]] ; then
-    SELECT="j"
-else
-    set +x
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
-    set -x
-fi
-
-if [ "${SELECT,,}" == "n" ]; then
+if [ "${NEW_NETWORK,,}" == "true" ]; then
     $KIRA_MANAGER/menu/chain-id-select.sh
     set +x
     set +e && source "/etc/profile" &>/dev/null && set -e
@@ -30,7 +22,6 @@ if [ "${SELECT,,}" == "n" ]; then
     GENSUM=""
     SNAPSUM=""
     DOWNLOAD_SUCCESS="false"
-    NEW_NETWORK="true"
     TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
     MIN_HEIGHT="0"
@@ -57,8 +48,7 @@ if [ "${SELECT,,}" == "n" ]; then
         $KIRA_MANAGER/menu/chain-id-select.sh
         exit 0
     fi
-elif [ "${SELECT,,}" == "j" ] ; then
-    NEW_NETWORK="false"
+elif [ "${NEW_NETWORK,,}" == "false" ] ; then
     MIN_HEIGHT="0"
     while : ; do
         if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
@@ -129,7 +119,7 @@ elif [ "${SELECT,,}" == "j" ] ; then
         elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
 
         VALIDATOR_NODE_ADDR=""
-        if timeout 3 nc -z $NODE_ADDR 36656 ; then
+        if timeout 3 nc -z $NODE_ADDR 56656 ; then
             VALIDATOR_NODE_ADDR=$(timeout 3 curl -f "$NODE_ADDR:$DEFAULT_INTERX_PORT/download/validator_node_id" || echo -n "")
             if $(isNodeId "$VALIDATOR_NODE_ADDR") ; then
                 VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656"
@@ -359,7 +349,6 @@ NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 globSet MIN_HEIGHT $MIN_HEIGHT
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
@@ -377,10 +366,14 @@ if ($(isPublicIp $NODE_ADDR)) ; then
         echoInfo "INFO: No extra public peers were found!"
     fi
 
-    [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
+    ( $(isNaturalNumber $(tmconnect handshake --address="$SEED_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+        echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+    ( $(isNaturalNumber $(tmconnect handshake --address="$SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+        echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+        echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+    ( $(isNaturalNumber $(tmconnect handshake --address="$VALIDATOR_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+        echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
 else
     echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
     [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS

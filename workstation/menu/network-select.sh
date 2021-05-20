@@ -11,26 +11,19 @@ while :; do
     rm -fv "$TMP_GENESIS_PATH"
     NEW_NETWORK_NAME=""
     NEW_GENESIS_SOURCE=""
-    NEW_NETWORK="false"
+    NEW_NETWORK="$NEW_NETWORK"
 
-    if [ "${INFRA_MODE,,}" == "sentry" ]; then
-        set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
-    else
-        set +x
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|i|s)$ ]]; do echoNErr "Create [N]ew network, [I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
-    fi
-
+    set +x
+    [ "${NEW_NETWORK,,}" == "false" ] && SELECT="." && \
+        while ! [[ "${SELECT,,}" =~ ^(i|s)$ ]]; do echoNErr "[I]mport genesis or use [S]napshoot: " && read -d'' -s -n1 SELECT && echo ""; done
     set -x
-    if [ "${SELECT,,}" == "n" ]; then # create new name
+
+    if [ "${NEW_NETWORK,,}" == "true" ]; then # create new name
         $KIRA_MANAGER/menu/chain-id-select.sh
-        
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         set +x
         set +e && source "/etc/profile" &>/dev/null && set -e
         set -x
-        # NETWORK_NAME & NEW_NETWORK gets set my chain-id selector
-        NEW_NETWORK="true"
         NEW_NETWORK_NAME=$NETWORK_NAME
     elif [ "${SELECT,,}" == "s" ] ; then # import from snapshot
         $KIRA_MANAGER/menu/snapshot-select.sh
@@ -142,7 +135,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
     echoInfo "INFO: Validator mode detected, last parameter to setup..."
     echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
     echoWarn "IMORTANT: Set minimum block height to the latest block height that the network reached. If you input 0 and do NOT set this parameter to the latest height then the block height will be auto detected from the node you are currently connecting to, HOWEVER auto detection of the block height can't be 100% trused (because node might be behind latest block height) and in production environment a spacial care should be taken while setting this property!"
-    
+
     while : ; do
         echoNErr "Define minimum block height: " && read MIN_HEIGHT
         (! $(isNaturalNumber $MIN_HEIGHT)) && continue
