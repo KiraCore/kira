@@ -94,7 +94,7 @@ function fileSize() {
 
 function isFileEmpty() {
     if [ -z "$1" ] || [ ! -f $1 ] || [ ! -s $1 ] ; then echo "true" ; else
-        if [[ $(fileSize $1) -ge 64 ]] ; then
+        if [[ $(fileSize $1) -ge 32 ]] ; then
             echo "false"
         else
             kg_TEXT=$(cat $1 | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
