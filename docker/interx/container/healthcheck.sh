@@ -58,12 +58,15 @@ VERSION_LOC=$(timeout 8 curl --fail interx.local:$INTERNAL_API_PORT/api/kira/sta
 if [ -z "$VERSION_EXT" ] ; then
     echoInfo "INFO: External interx status found"
     echo "$PUBLIC_IP:$EXTERNAL_API_PORT " > "$COMMON_DIR/external_address"
+    echo "ONLINE" > "$COMMON_DIR/external_address_status"
 elif [ -z "$VERSION_INT" ] ; then
     echoInfo "INFO: Internal interx status found"
     echo "$LOCAL_IP:$EXTERNAL_API_PORT" > "$COMMON_DIR/external_address"
+    echo "ONLINE" > "$COMMON_DIR/external_address_status"
 elif [ -z "$VERSION_INT" ] ;then
     echoInfo "INFO: Local interx status found"
     echo "interx.local:$INTERNAL_API_PORT" > "$COMMON_DIR/external_address"
+    echo "ONLINE" > "$COMMON_DIR/external_address_status"
 else
     echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
