@@ -13,6 +13,9 @@ HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 CONFIG_PATH="$SEKAI/INTERX/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
+touch $CFG_CHECK
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
@@ -62,4 +65,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     globSet START_TIME "$(date -u +%s)"
 fi
 
-interxd start --config="$CONFIG_PATH"
+echoInfo "INFO: Starting INTERX service..."
+rm -fv $CFG_CHECK
+EXIT_CODE=0 && interxd start --config="$CONFIG_PATH" || EXIT_CODE="$?"
+
+echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
+sleep 3
+exit 1
+

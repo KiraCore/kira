@@ -170,8 +170,8 @@ while : ; do
 
         TARGET=""
         [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] && TARGET="(P2P)"
-        [[ "${NAME,,}" =~ ^(interx)$ ]] && TARGET="(API)"
-        [[ "${NAME,,}" =~ ^(frontend)$ ]] && TARGET="(HTTP)"
+        [ "${NAME,,}" == "interx" ] && TARGET="(API)"
+        [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
         EX_ADDR="${EX_ADDR} ${TARGET} ${WHITESPACE}"
         [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"

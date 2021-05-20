@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
+# quick edit: FILE="${SELF_CONTAINER}/defaultcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart HEALTHCHECK
 
@@ -48,11 +49,12 @@ find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoW
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
 
-if (! $(isServiceActive "nginx")) ; then
-  echoErr "ERROR: NGINX service is NOT active"
+if ($(isServiceActive "nginx")) ; then
+  echoErr "ERROR: NGINX service SHOULD NOT be active"
   echo "OFFLINE" > "$COMMON_DIR/external_address_status"
   nginx -t
-  service nginx restart
+  service nginx stop || echoErr "ERROR: Failed to stop nginx"
+  pkill -15 nginx || echoWarn "WARNING: Failed to kill nginx"
   exit 1
 fi
 
@@ -82,8 +84,11 @@ elif [ "$INDEX_STATUS_CODE_LOC" == "200" ]; then
 else
     echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
     echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    sleep 3
     exit 1
 fi
+
+echo "ONLINE" > "$COMMON_DIR/external_address_status"
 
 set +x
 echoWarn "------------------------------------------------"

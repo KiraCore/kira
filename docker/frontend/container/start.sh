@@ -1,8 +1,8 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
+# quick edit: FILE="${SELF_CONTAINER}/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 echoInfo "INFO: Staring frontend $KIRA_SETUP_VER setup..."
 echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
@@ -18,6 +18,9 @@ BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
+touch $CFG_CHECK
 
 echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
@@ -135,4 +138,9 @@ nginx -V
 nginx -t
 
 echoInfo "INFO: Starting nginx in current process..."
-nginx -g 'daemon off;'
+rm -fv $CFG_CHECK
+EXIT_CODE=0 && nginx -g 'daemon off;' || EXIT_CODE="$?"
+
+echoErr "ERROR: NGINX failed with the exit code $EXIT_CODE"
+sleep 3
+exit 1
