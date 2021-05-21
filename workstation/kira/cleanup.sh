@@ -21,8 +21,24 @@ while : ; do
 
     if [ -d $KIRA_SNAP ]; then
         echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-        find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echoErr "ERROR: Failed to remove excessive snapshots"
-        echoInfo "INFO: Success, all excessive snaps were removed"
+        SNAPSHOTS=`ls -S $KIRA_SNAP/*.zip | grep -v '^d'` || SNAPSHOTS=""
+        if [ ! -z "$SNAPSHOTS" ] ; then
+            i=0
+            SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
+            for s in $SNAPSHOTS ; do
+                [ ! -f $s ] && continue
+                i=$((i + 1))
+                if [[ $i -gt $MAX_SNAPS ]] ; then
+                    [ "$KIRA_SNAP_PATH" == "$s" ] && echoInfo "INFO: Snap '$s' is latest, will NOT be removed" && continue
+                    [ "$SNAP_LATEST_FILE" == "$s" ] && echoInfo "INFO: Snap '$s' might be latest, will NOT be removed" && continue
+                    rm -fv $s || echoErr "ERROR: Failed to remove $s"
+                else 
+                    echoInfo "INFO: Snap '$s' will not be removed, cleanup limit '$MAX_SNAPS' is NOT reached"
+                fi
+            done
+        else
+            echoInfo "INFO: No snaps were found in the snap directory, nothing to cleanup"
+        fi
     fi
 
     echoInfo "INFO: Cleanup was finalized, elapsed $(timerSpan) seconds"
