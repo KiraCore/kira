@@ -202,7 +202,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
             SNAP_AVAILABLE="false"
             mkdir -p "$TMP_SNAP_DIR" 
-            ln -sfv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to create snapshot symlink"
+            cp -afv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to create snapshot symlink"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
@@ -226,7 +226,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             SNAP_AVAILABLE="false"
         fi
 
-        DOWNLOAD_SUCCESS="false"
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
             echoInfo "INFO: Please wait, downloading snapshot..."
             rm -rfv $TMP_SNAP_DIR
@@ -242,15 +241,15 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
                     continue
                 fi
-                DOWNLOAD_SUCCESS="false"
             fi
         fi
          
         GENSUM="none"
         SNAPSUM="none (slow sync)"
+        DOWNLOAD_SUCCESS="false"
         rm -fv $TMP_GENESIS_PATH
          
-        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] || (! $(isFileEmpty "$TMP_SNAP_PATH")); then
+        if (! $(isFileEmpty "$TMP_SNAP_PATH")) ; then
             echoInfo "INFO: Snapshot archive was found, testing integrity..."
             mkdir -p "$TMP_SNAP_DIR/test"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
@@ -370,7 +369,7 @@ fi
 
 set -x
 
-if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
+if (! $(isFileEmpty "$TMP_SNAP_PATH")) ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
@@ -395,7 +394,7 @@ if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
     exit 1
 fi
 
-rm -f -v -r $TMP_SNAP_DIR
+rm -rfv $TMP_SNAP_DIR
 NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 globSet MIN_HEIGHT $MIN_HEIGHT
