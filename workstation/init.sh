@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.5.5"
+SETUP_VER="v0.3.5.6"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)

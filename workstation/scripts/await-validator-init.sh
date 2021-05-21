@@ -12,7 +12,7 @@ IS_STARTED="false"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
-TIMEOUT=1800
+TIMEOUT=3600
 
 set +x
 echoWarn "--------------------------------------------------"

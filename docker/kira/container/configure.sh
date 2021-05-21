@@ -9,6 +9,7 @@ touch $CFG_CHECK
 echoInfo "INFO: Starting $NODE_TYPE node configuration..."
 
 CFG="$SEKAID_HOME/config/config.toml"
+APP="$SEKAID_HOME/config/app.toml"
 COMMON_PEERS_PATH="$COMMON_DIR/peers"
 COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
@@ -253,6 +254,23 @@ echoInfo "$CFG_persistent_peers"
 # default 1024, kira def. 131072
 [ ! -z "$CFG_max_packet_msg_payload_size" ] && CDHelper text lineswap --insert="max_packet_msg_payload_size = $CFG_max_packet_msg_payload_size" --prefix="max_packet_msg_payload_size =" --path=$CFG
 
+# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
+# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
+# the network to take and serve state machine snapshots. State sync is not attempted if the node
+# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
+# starting from the height of the snapshot.
+[ ! -z "$CFG_statesync_enable" ] && CDHelper text lineswap --insert="enable = $CFG_statesync_enable" --prefix="enable =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
+# Will create a new, randomly named directory within, and remove it when done.
+[ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = $CFG_statesync_temp_dir" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+
+##########################
+# app.toml configuration
+##########################
+
+# snapshot-interval specifies the block interval at which local state sync snapshots are
+# taken (0 to disable). Must be a multiple of pruning-keep-every.
+[ ! -z "$CFG_snapshot_interval" ] && CDHelper text lineswap --insert="snapshot-interval = $CFG_snapshot_interval" --prefix="snapshot-interval =" --after-regex="^\[state\-sync\]" --path=$APP
 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
