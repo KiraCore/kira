@@ -426,7 +426,7 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
             ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
                 echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
         fi
-    
+
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 

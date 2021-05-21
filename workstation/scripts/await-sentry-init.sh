@@ -51,6 +51,7 @@ while : ; do
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
