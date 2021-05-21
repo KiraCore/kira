@@ -74,11 +74,11 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
 
         STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-        STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+        STATUS=$(timeout 15 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
 
         if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
             STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-            STATUS=$(timeout 3 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+            STATUS=$(timeout 15 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         fi
         
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
@@ -406,42 +406,48 @@ CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRU
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
 
-set +x
-OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
-set -x
+if [ "${NEW_NETWORK,,}" != "true" ] ; then
+    while : ; do
+        set +x
+        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
+        set -x
+    
+        if ($(isPublicIp $NODE_ADDR)) ; then
+            ( $(isNaturalNumber $(tmconnect handshake --address="$SEED_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+                echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+            ( $(isNaturalNumber $(tmconnect handshake --address="$SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+                echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+            ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+                echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+            ( $(isNaturalNumber $(tmconnect handshake --address="$VALIDATOR_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+                echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
+        else
+            echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
+            ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
+                echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
+        fi
+    
+        if [ "${OPTION,,}" == "a" ] ; then
+            echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
+            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
+            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
+            if (! $(isFileEmpty "$TMP_PEERS")) ; then
+                echoInfo "INFO: Saving extra peers..."
+                cat $TMP_PEERS >> $PUBLIC_SEEDS
+            else
+                echoInfo "INFO: No extra public peers were found!"
+                continue
+            fi
+        else
+            $KIRA_MANAGER/menu/seeds-select.sh
+        fi
 
-if ($(isPublicIp $NODE_ADDR)) ; then
-    ( $(isNaturalNumber $(tmconnect handshake --address="$SEED_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-        echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-    ( $(isNaturalNumber $(tmconnect handshake --address="$SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-        echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-        echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-    ( $(isNaturalNumber $(tmconnect handshake --address="$VALIDATOR_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-        echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
-else
-    echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-    ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-        echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
-fi
-
-if [ "${OPTION,,}" == "a" ] ; then
-    echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-    $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
-    if (! $(isFileEmpty "$TMP_PEERS")) ; then
-        echoInfo "INFO: Saving extra peers..."
-        cat $TMP_PEERS >> $PUBLIC_SEEDS
-    else
-        echoInfo "INFO: No extra public peers were found!"
-    fi
-else
-    $KIRA_MANAGER/menu/seeds-select.sh
-fi
-
-if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && ($(isFileEmpty "$PUBLIC_PEERS")) && ($(isFileEmpty "$PRIVATE_PEERS")) ; then 
-    echoErr "ERROR: No public or private seeds were found"
-    exit 1
+        if ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && ($(isFileEmpty "$PUBLIC_PEERS")) && ($(isFileEmpty "$PRIVATE_PEERS")) ; then 
+            echoErr "ERROR: You are attempting to join existing network but no public or private seeds were configured!"
+        else
+            break
+        fi
+    done
 fi
 
 echoInfo "INFO: Finished quick select!"
