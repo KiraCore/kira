@@ -85,8 +85,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
         if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
-            echo "INFO: Could NOT read status, block height or chian-id"
-            echoWarn "WARNING: Address '$NODE_ADDR' is not a valid, publicly exposed public node address"
+            echoWarn "WARNING: Could NOT read status, block height or chian-id"
+            echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
             continue
         fi
 
@@ -152,6 +152,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             set -x
         fi
 
+        SNAP_AVAILABLE="false"
+        DOWNLOAD_SUCCESS="false"
         rm -fv $TMP_SNAP_PATH
         if [ "${VSEL,,}" == "e" ] ; then
             echoInfo "INFO: Snapshot exposed by $NODE_ADDR peer will be used to bootstrap blockchain state"
@@ -194,15 +196,15 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
             if [ ! -z "$OPTION" ] && [ "${OPTION,,}" != "latest" ] ; then
                 SNAPSHOTS=( $SNAPSHOTS )
-                SNAPSHOT=${SNAPSHOTS[$OPTION]}
+                SELECTED_SNAPSHOT=${SNAPSHOTS[$OPTION]}
             else
                 OPTION="latest"
-                SNAPSHOT=$SNAP_LATEST_PATH
+                SELECTED_SNAPSHOT=$SNAP_LATEST_PATH
             fi
 
-            SNAP_AVAILABLE="false"
-            mkdir -p "$TMP_SNAP_DIR" 
-            cp -afv $SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to create snapshot symlink"
+            mkdir -p "$TMP_SNAP_DIR"
+            cp -afv $SELECTED_SNAPSHOT $TMP_SNAP_PATH || echoErr "ERROR: Failed to create snapshot symlink"
+            DOWNLOAD_SUCCESS="true"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
@@ -216,14 +218,12 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"
-                SNAP_AVAILABLE="false"
             fi
         elif [ "${VSEL,,}" == "d" ] ; then
             echoInfo "INFO: Auto-discovery was cancelled, try connecting with diffrent node"
             continue
         else
             echoInfo "INFO: Snapshot was NOT found, download will NOT be attempted"
-            SNAP_AVAILABLE="false"
         fi
 
         if [ "${SNAP_AVAILABLE,,}" == "true" ] ; then
@@ -246,10 +246,10 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
          
         GENSUM="none"
         SNAPSUM="none (slow sync)"
-        DOWNLOAD_SUCCESS="false"
+        
         rm -fv $TMP_GENESIS_PATH
          
-        if (! $(isFileEmpty "$TMP_SNAP_PATH")) ; then
+        if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Snapshot archive was found, testing integrity..."
             mkdir -p "$TMP_SNAP_DIR/test"
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
@@ -285,7 +285,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             echoErr "ERROR: Snapshot could not be found, file was corrupted or created by outdated node"
             OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
             set -x
-            rm -f -v -r $TMP_SNAP_DIR
+            rm -rfv $TMP_SNAP_DIR
             if [ "${OPTION,,}" == "d" ] ; then
                 echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
                 continue
@@ -295,11 +295,11 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
             echoWarn "INFO: Genesis file was not found, downloading..."
             rm -fv "$TMP_GENESIS_PATH" 
-            wget $NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json -O $TMP_GENESIS_PATH || echo "WARNING: Genesis download failed"
+            wget $NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json -O $TMP_GENESIS_PATH || echoWarn "WARNING: Genesis download failed"
             GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
              
             if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
-                echoWarning "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
+                echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
                 continue
             fi
              
@@ -369,18 +369,20 @@ fi
 
 set -x
 
-if (! $(isFileEmpty "$TMP_SNAP_PATH")) ; then
+if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
     mv -fv $TMP_SNAP_PATH $SNAPSHOT
+
+    ($(isFileEmpty $SNAPSHOT)) && echoErr "ERROR: Failed to copy snapshot file from temp directory '$TMP_SNAP_PATH' to destination '$SNAPSHOT'"
 else
     SNAPSHOT=""
 fi
 
 rm -fvr "$KIRA_SNAP/status"
 chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -fv "$LOCAL_GENESIS_PATH"
+rm -fv "$LOCAL_GENESIS_PATH" "$TMP_SNAP_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
     echoInfo "INFO: New genesis found, replacing"
