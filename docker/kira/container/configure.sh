@@ -52,6 +52,7 @@ fi
 CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
 echo "$CFG_external_address" > "$COMMON_DIR/external_address"
 CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="EXTERNAL_PORT=\"$EXTERNAL_P2P_PORT\"" --prefix="EXTERNAL_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then

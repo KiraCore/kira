@@ -77,9 +77,9 @@ else
     fi
 fi
 
-if [ ! -z "$EXTERNAL_ADDR" ] && [ ! -z "$EXTERNAL_P2P_PORT" ] ; then
+if [ ! -z "$EXTERNAL_ADDR" ] && [ ! -z "$EXTERNAL_PORT" ] ; then
     echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
-    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
+    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_PORT ; then 
         echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
         echo "ONLINE" > "$COMMON_DIR/external_address_status"
     else
