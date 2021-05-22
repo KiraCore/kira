@@ -10,6 +10,8 @@ START_SERVICES=$1
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/golang.sh
 
+set +e && source "/etc/profile" &>/dev/null && set -e
+
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-1" | md5)
 SETUP_CHECK="$KIRA_SETUP/base-tools-6-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
