@@ -90,53 +90,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             continue
         fi
 
-        SEED_NODE_ADDR=""
-        if timeout 3 nc -z $NODE_ADDR 16656 ; then
-            SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            if $(isNodeId "$SEED_NODE_ID") ; then
-                SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656"
-                echoInfo "INFO: Seed node ID '$SEED_NODE_ID' was found"
-            else echoWarn "WARNING: Seed node ID was NOT found" && SEED_NODE_ADDR="" ; fi
-        else echoWarn "WARNING: P2P Port 16656 is not exposed by node '$NODE_ADDR'" ; fi
-
-        SENTRY_NODE_ADDR=""
-        if timeout 3 nc -z $NODE_ADDR 26656 ; then
-            SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            if $(isNodeId "$SENTRY_NODE_ID") ; then
-                SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656"
-                echoInfo "INFO: Sentry node ID '$SENTRY_NODE_ID' was found"
-            else echoWarn "WARNING: Sentry node ID was NOT found" && SENTRY_NODE_ADDR="" ; fi
-        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 26656 is not exposed by node '$NODE_ADDR'" ; fi
-
-        PRIV_SENTRY_NODE_ADDR=""
-        if timeout 3 nc -z $NODE_ADDR 36656 ; then
-            PRIV_SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            if $(isNodeId "$PRIV_SENTRY_NODE_ID") ; then
-                PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656"
-                echoInfo "INFO: Private sentry node ID '$PRIV_SENTRY_NODE_ID' was found"
-            else echoWarn "WARNING: Private sentry node ID was NOT found" && PRIV_SENTRY_NODE_ADDR="" ; fi
-        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 36656 is not exposed by node '$NODE_ADDR'" ; fi
-
-        VALIDATOR_NODE_ADDR=""
-        if timeout 3 nc -z $NODE_ADDR 56656 ; then
-            VALIDATOR_NODE_ADDR=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            if $(isNodeId "$VALIDATOR_NODE_ADDR") ; then
-                VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656"
-                echoInfo "INFO: Validator node ID '$VALIDATOR_NODE_ADDR' was found"
-            else echoWarn "WARNING: Validator node ID was NOT found" && VALIDATOR_NODE_ADDR="" ; fi
-        elif [ -z "$NODE_PORT" ] ; then echoWarn "WARNING: P2P Port 56656 is not exposed by node '$NODE_ADDR'" ; fi
-
-        if [ -z "${SEED_NODE_ADDR}${SENTRY_NODE_ADDR}${PRIV_SENTRY_NODE_ADDR}${VALIDATOR_NODE_ADDR}" ] ; then
-            echoWarn "WARNING: Service located at '$NODE_ADDR' does NOT have any P2P ports exposed to your node or node id could not be retrieved, choose diffrent public or private node to connect with"
-            
-            continue
-        elif (! $(isPublicIp $NODE_ADDR)) && [ -z "$PRIV_SENTRY_NODE_ADDR" ] ; then
-            echoWarn "WARNINIG: Node address '$NODE_ADDR' is a local IP but private sentry port is closed or node Id could not be found, choose diffrent public or private node to connect to"
-            continue
-        else
-            echoInfo "INFO: Success address '$NODE_ADDR' has at least one exposed node"
-        fi
-
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
         SNAP_SIZE=$(urlContentLength "$SNAP_URL")
