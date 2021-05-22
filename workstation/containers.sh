@@ -104,8 +104,8 @@ else
   exit 1
 fi
 
-echoInfo "INFO: Containers build was finalized.."
-docker image prune -a -f || echoErr "ERROR: Failed to prune dangling images!"
+# echoInfo "INFO: Containers build was finalized.."
+# docker image prune -a -f || echoErr "ERROR: Failed to prune dangling images!"
 
 set +x
 echoWarn "------------------------------------------------"
