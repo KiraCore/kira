@@ -334,15 +334,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
-        echoNInfo "CONFIG:      Public Internet Exposure: " && echoErr $(isPublicIp $NODE_ADDR) 
-        [ ! -z "$SEED_NODE_ADDR" ] && \
-        echoNInfo "CONFIG:             Seed node address: " && echoErr $SEED_NODE_ADDR
-        [ ! -z "$SENTRY_NODE_ADDR" ] && \
-        echoNInfo "CONFIG:    Public Sentry node address: " && echoErr $SENTRY_NODE_ADDR
-        [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && \
-        echoNInfo "CONFIG:   Private Sentry node address: " && echoErr $PRIV_SENTRY_NODE_ADDR
-        [ ! -z "$VALIDATOR_NODE_ADDR" ] && \
-        echoNInfo "CONFIG:        Validator node address: " && echoErr $PRIV_SENTRY_NODE_ADDR
+        echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
         echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
@@ -411,21 +403,21 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
         set +x
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
-    
-        if ($(isPublicIp $NODE_ADDR)) ; then
-            ( $(isNaturalNumber $(tmconnect handshake --address="$SEED_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-                echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
-            ( $(isNaturalNumber $(tmconnect handshake --address="$SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-                echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-            ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-                echo "$PRIV_SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
-            ( $(isNaturalNumber $(tmconnect handshake --address="$VALIDATOR_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-                echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
-        else
-            echoInfo "INFO: Node address '$NODE_ADDR' is a local IP address, private peers will be added..."
-            ( $(isNaturalNumber $(tmconnect handshake --address="$PRIV_SENTRY_NODE_ADDR" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo ""))) && \
-                echo "$PRIV_SENTRY_NODE_ADDR" >> $PRIVATE_SEEDS
-        fi
+
+        SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$SEED_NODE_ADDR")) && SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656" || SEED_NODE_ADDR=""
+        SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$SENTRY_NODE_ID")) && SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656" || SENTRY_NODE_ID=""
+        PRIV_SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$PRIV_SENTRY_NODE_ID")) && PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656" || PRIV_SENTRY_NODE_ID=""
+        VALIDATOR_NODE_ADDR=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$VALIDATOR_NODE_ADDR")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656" || VALIDATOR_NODE_ADDR=""
+        ($(isPublicIp $NODE_ADDR)) && SEEDS_TARGET_FILE=$PUBLIC_SEEDS || SEEDS_TARGET_FILE=$PRIVATE_SEEDS
+
+        [ ! -z "$SEED_NODE_ID" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$SENTRY_NODE_ID" ] && echo "$SENTRY_NODE_ID" >> $SEEDS_TARGET_FILE
+        [ ! -z "$PRIV_SENTRY_NODE_ID" ] && echo "$PRIV_SENTRY_NODE_ID" >> $SEEDS_TARGET_FILE
+        [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $SEEDS_TARGET_FILE
 
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
