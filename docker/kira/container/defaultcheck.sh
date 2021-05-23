@@ -1,12 +1,13 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-set -x
+# quick edit: FILE="${SELF_CONTAINER}/defaultcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-timerStart
+timerStart DEFAULT_HEALTHCHECK
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: DEFAULT SEKAI HEALTHCHECK"
+echoWarn "|    DATE: $(date)"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -30,6 +31,7 @@ find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWar
 find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate common logs"
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
+echoInfo "INFO: Logs cleanup finalized"
 
 FAILED="false"
 if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
@@ -121,17 +123,19 @@ if [ "${FAILED,,}" == "true" ] ; then
     set +x
     echoErr "------------------------------------------------"
     echoErr "|  FAILURE: DEFAULT SEKAI HEALTHCHECK          |"
-    echoErr "|  ELAPSED: $(timerSpan) seconds"
+    echoErr "|  ELAPSED: $(timerSpan DEFAULT_HEALTHCHECK) seconds"
+    echoErr "|    DATE: $(date)"
     echoErr "------------------------------------------------"
     set -x
+    sleep 10
+    exit 1
 else
     timerStart "success"
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "|  SUCCESS: DEFAULT SEKAI HEALTHCHECK          |"
-    echoWarn "|  ELAPSED: $(timerSpan) seconds"
+    echoWarn "|  ELAPSED: $(timerSpan DEFAULT_HEALTHCHECK) seconds"
+    echoWarn "|    DATE: $(date)"
     echoWarn "------------------------------------------------"
     set -x
 fi
-
-sleep 10

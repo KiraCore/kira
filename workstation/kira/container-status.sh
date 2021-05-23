@@ -8,6 +8,8 @@ NETWORKS=$2
 
 timerStart "${NAME}_CONTAINER_STATUS"
 
+[ -z "$NETWORKS" ] && NETWORKS=$(globGet NETWORKS)
+
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER"
@@ -24,7 +26,7 @@ if [ "${NAME,,}" == "interx" ]; then
 elif [ "${NAME,,}" == "frontend" ]; then
     BRANCH="$FRONTEND_BRANCH"
     REPO="$FRONTEND_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] ; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] || [ "${NAME,,}" == "seed" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then
@@ -71,6 +73,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
     fi
 
+    #  echo -e $(jsonParse "Health.Log.[0].Output" $DOCKER_STATE)
     echo $(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_HEALTH"
     echo $(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")  | globSet "${NAME}_PAUSED"
     echo $(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_RESTARTING"

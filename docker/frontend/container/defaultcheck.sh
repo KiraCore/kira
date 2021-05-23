@@ -96,4 +96,3 @@ echoWarn "| FINISHED: HEALTHCHECK                        |"
 echoWarn "|  ELAPSED: $(timerSpan HEALTHCHECK) seconds"
 echoWarn "------------------------------------------------"
 set -x
-exit 0
