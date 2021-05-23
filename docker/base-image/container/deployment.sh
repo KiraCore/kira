@@ -52,7 +52,7 @@ echoInfo "INFO: Installing CDHelper tool"
 if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
     rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
     wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
-    FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
+    FILE_HASH=$(sha256 ./CDHelper-linux-$CDHELPER_ARCH.zip)
  
     if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
         echoErr "ERROR: Failed to check integrity hash of the CDHelper tool!"
