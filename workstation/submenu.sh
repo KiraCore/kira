@@ -120,10 +120,14 @@ while :; do
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
     echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
     echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
-[ "${NEW_NETWORK,,}" == "true" ] && \
+    [ "${NEW_NETWORK,,}" == "true" ] && \
     echo -e "|        NEW Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
+    [ -f "$KIRA_SNAP_PATH" ] && \
+    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
+    [ ! -z "$KIRA_SNAP_SHA256" ] && \
+    echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
     echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
     echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
@@ -195,7 +199,7 @@ while :; do
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     ;;
   r*)
-    $KIRA_MANAGER/menu.sh
+    $KIRA_MANAGER/menu.sh "false"
     exit 0
     ;;
   x*)

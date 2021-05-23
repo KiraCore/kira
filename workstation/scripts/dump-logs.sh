@@ -34,6 +34,10 @@ if [ -z $ID ] ; then
     exit 0
 fi
 
+echoInfo "INFO: Dumping old container logs..."
+globGet "${CONTAINER_NAME}_HEALTH_LOG_OLD" > "$CONTAINER_DUMP/health.log.old.txt"
+globGet "${CONTAINER_NAME}_START_LOG_OLD" > "$CONTAINER_DUMP/start.log.old.txt" 
+
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
 echo $(docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
 

@@ -44,6 +44,10 @@ echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
 $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
 chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
+# globGet snapshot_health_log_old
+tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
+# globGet start_start_log_old
+tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
 rm -rfv "$COMMON_PATH" "$SNAP_STATUS" "$SNAP_DONE" "$SNAP_PROGRESS"
 mkdir -p "$COMMON_LOGS" "$SNAP_STATUS"
 

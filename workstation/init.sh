@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.5.9"
+SETUP_VER="v0.3.6.0"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -353,7 +353,7 @@ echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT runni
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
 set -x
-source $KIRA_MANAGER/menu.sh
+source $KIRA_MANAGER/menu.sh "true"
 
 set +x
 echo "------------------------------------------------"
