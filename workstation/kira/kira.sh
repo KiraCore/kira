@@ -327,7 +327,7 @@ while : ; do
                 echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
                 echoErr "ERROR: Failed to remove snapshot symlink"
         fi
-        FORCE_SCAN="true" && EXECUTED="true"
+        FORCE_SCAN="false" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."

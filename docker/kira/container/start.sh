@@ -45,5 +45,6 @@ fi
 rm -fv $CFG_CHECK
 if [ "${FAILED,,}" == "true" ] ; then
     echoErr "ERROR: $NODE_TYPE node startup failed"
+    sleep 3
     exit 1
 fi

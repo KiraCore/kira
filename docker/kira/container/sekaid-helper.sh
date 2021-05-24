@@ -254,3 +254,26 @@ function showBalance() {
         echo $(sekaid query bank balances "$ADDR" --output json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
     fi
 }
+
+function updateCommitTimeout {
+    echoInfo "INFO: Updating commit timeout..."
+    VALOPERS_FILE="$COMMON_READ/valopers"
+    ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
+    if ($(isNaturalNumber "$ACTIVE_VALIDATORS")) ; then
+        echoInfo "INFO: Discovered $ACTIVE_VALIDATORS active validators, calculating timeout..."
+        TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
+        TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+        (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
+        TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
+
+        if [ "${TIMEOUT_COMMIT}" != "$CFG_timeout_commit" ] ; then
+            echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
+            CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}\"" --prefix="timeout_commit =" --path=$CFG
+        else
+            echoInfo "INFO: Commit timout ($TIMEOUT_COMMIT) will not be changed"
+        fi
+    else
+        echoInfo "WARNING: Unknown validator cound, could not calculate timeout commit."
+    fi
+}

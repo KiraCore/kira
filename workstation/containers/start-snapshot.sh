@@ -20,7 +20,7 @@ SNAP_PROGRESS="$SNAP_STATUS/progress"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=4 || UTIL_DIV=6
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
@@ -46,7 +46,7 @@ $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
 # globGet snapshot_health_log_old
 tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
-# globGet start_start_log_old
+# globGet snapshot_start_log_old
 tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
 rm -rfv "$COMMON_PATH" "$SNAP_STATUS" "$SNAP_DONE" "$SNAP_PROGRESS"
 mkdir -p "$COMMON_LOGS" "$SNAP_STATUS"
@@ -131,6 +131,7 @@ docker run -d \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
+    -e EXTERNAL_P2P_PORT="" \
     -e PING_TARGET="$PING_TARGET" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SNAPSHOT_NODE_ID" \

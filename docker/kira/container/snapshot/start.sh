@@ -65,10 +65,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file was found, attepting data recovery..."
-        cd $DATA_DIR
+        cd $DATA_DIR && timerStart SNAP_EXTRACT
         jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME
-
+        
         if [ -f "$DATA_GENESIS" ]; then
             echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
             SHA256_DATA_GENESIS=$(sha256 $DATA_GENESIS)

@@ -299,7 +299,13 @@ while : ; do
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
 
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d|f)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap, [F]ollow or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+
+            if [ "${ACCEPT,,}" == "f" ] ; then
+                echoInfo "INFO: Attempting to follow $NAME logs..."
+                docker logs --follow --details --timestamps $ID || echoErr "ERROR: Failed to follow $NAME logs"
+                echoNErr "\nPress any key to continue..." && read -n 1 -s && echo ""
+            fi
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
@@ -332,11 +338,12 @@ while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
-
-            if [ ! -f "$HEALTH_LOGS" ] ; then
-                docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $TMP_DUMP || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
-            else
-                cat $HEALTH_LOGS > $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to read $NAME container logs"
+            # docker inspect --format "{{json .State.Health }}" snapshot | jq '.Log[].Output'
+            echo -e $(docker inspect --format "{{json .State.Health }}" "$ID" 2> /dev/null | jq '.Log[-1].Output' 2> /dev/null) > $TMP_DUMP || echo "" > $TMP_DUMP
+            
+            if [ -f "$HEALTH_LOGS" ]; then
+                echo "--- HEALTH LOGS ---" >> $TMP_DUMP 
+                cat $HEALTH_LOGS >> $TMP_DUMP 2> /dev/null || echo "WARNING: Failed to read $NAME container logs"
             fi
 
             LINES_MAX=$(tryCat $TMP_DUMP | wc -l 2> /dev/null || echo "0")

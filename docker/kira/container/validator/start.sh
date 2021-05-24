@@ -37,8 +37,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file or directory was found, attepting integrity verification and data recovery..."
-        cd $DATA_DIR
-        jar xvf $SNAP_FILE_INPUT
+        cd $DATA_DIR && timerStart SNAP_EXTRACT
+        jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME/config
   
         SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")

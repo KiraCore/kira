@@ -113,7 +113,7 @@ while :; do
 
     printWidth=47
     echo -e "\e[31;1m-------------------------------------------------"
-    displayAlign center $printWidth "$title"
+    displayAlign center $printWidth "$title $KIRA_SETUP_VER"
     displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
     echo -e "|-----------------------------------------------|"
     echo -e "|       Network Interface: $IFACE (default)"
