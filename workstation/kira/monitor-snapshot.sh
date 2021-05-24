@@ -41,13 +41,15 @@ echoWarn "------------------------------------------------"
 set -x
 
 CHECKSUM_TEST="false"
+CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
         if [ "${CONTAINER_EXISTS,,}" == "true"  ] ; then
+            timerStart AUTO_BACKUP
             $KIRA_MANAGER/scripts/dump-logs.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to dump $CONAINER_NAME container logs"
             $KIRA_SCRIPTS/container-delete.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to delete $CONAINER_NAME container"
         fi
@@ -82,23 +84,24 @@ fi
 
 if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
     echoInfo "INFO: Snap can't be executed, update is not compleated"
-else
-    [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
+elif [ "${CONTAINER_EXISTS,,}" == "false"  ] ; then
+    AUTO_BACKUP_LAST_BLOCK=$(globGet $AUTO_BACKUP_LAST_BLOCK)
+    (! $(isNaturalNumber $AUTO_BACKUP_LAST_BLOCK)) && AUTO_BACKUP_LAST_BLOCK=0
     if [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "$(globGet AUTO_BACKUP)" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
         TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
         if [[ $TIME_LEFT -le 0 ]] ; then
+            timerStart AUTO_BACKUP
+            globSet AUTO_BACKUP_LAST_BLOCK "$LATEST_BLOCK"
             rm -fv "${SNAPSHOT_SCAN_PATH}-start.log"
             [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
             $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
-            timerStart AUTO_BACKUP
-            CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
         fi
     else
         echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
     fi
+else
+    echoInfo "INFO: Snapshot can't be started, container is already running!"
 fi
-
-sleep 30
 
 set +x
 echoWarn "------------------------------------------------"
@@ -106,3 +109,5 @@ echoWarn "| FINISHED: SNAPSHOT MONITOR                   |"
 echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
+
+sleep 30
