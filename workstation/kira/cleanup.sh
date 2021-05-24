@@ -15,9 +15,8 @@ while : ; do
 
     MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
 
-    journalctl --vacuum-time=2d || echoWarn "WARNING: journalctl vacuum failed"
-    find "/var/log" -type f -size +4M -exec truncate --size=2M {} + || echoWarn "WARNING: Failed to truncate system logs"
-    find "/var/log/journal" -type f -size +16M -exec truncate --size=4M {} + || echoWarn "WARNING: Failed to truncate journal"
+    journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
+    find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
 
     if [ -d $KIRA_SNAP ]; then
         echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
