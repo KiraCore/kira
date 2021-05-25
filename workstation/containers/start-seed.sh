@@ -56,22 +56,17 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
-       
         CFG_persistent_peers="tcp://$SNAPSHOT_SEED"
         touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
         if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
             cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
             cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
-            # CFG_addr_book_strict="false"
         else
             cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
             cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-            # CFG_addr_book_strict="true"
         fi
-        # CFG_addr_book_strict="false"
     else
         CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-        # CFG_addr_book_strict="true"
     fi
 
     CFG_addr_book_strict="false"

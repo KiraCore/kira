@@ -64,25 +64,36 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xarg
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-touch $PUBLIC_SEEDS $PRIVATE_SEEDS
-cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-tryCat "$PRIVATE_SEEDS" >> "$COMMON_PATH/seeds"
+EXTERNAL_P2P_PORT=""
+NODE_ID="$SNAPSHOT_NODE_ID"
+cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    # pretend to be a sentry node
+
+    if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
+        cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+        cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
+    else
+        cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+        cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+    fi
+
     CFG_persistent_peers="tcp://$SEED_SEED"
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+    EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
+    NODE_ID="$SENTRY_NODE_ID"
+    cp -afv "$KIRA_SECRETS/sentry_node_key.json" $COMMON_PATH/node_key.json
 else
     CFG_persistent_peers="tcp://$SENTRY_SEED"
     PING_TARGET="sentry.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
-
-cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
 rm -rfv $SNAP_DESTINATION
@@ -119,8 +130,8 @@ docker run -d \
     -e CFG_pex="false" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="0" \
-    -e CFG_max_num_inbound_peers="0" \
+    -e CFG_max_num_outbound_peers="64" \
+    -e CFG_max_num_inbound_peers="256" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_allow_duplicate_ip="true" \
     -e CFG_dial_timeout="30s" \
@@ -135,7 +146,7 @@ docker run -d \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
-    -e EXTERNAL_P2P_PORT="" \
+    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e PING_TARGET="$PING_TARGET" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SNAPSHOT_NODE_ID" \
