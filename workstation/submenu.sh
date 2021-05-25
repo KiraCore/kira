@@ -34,10 +34,6 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 
 CDHelper text lineswap --insert="DEPLOYMENT_MODE=$DEPLOYMENT_MODE" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
 
-timerStart AUTO_BACKUP
-globDel VALIDATOR_ADDR
-globSet SNAP_EXPOSE "true"
-
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
     set +x
@@ -236,17 +232,21 @@ else
     fi
 fi
 
-CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=\"$INFRA_CONTAINER_COUNT\"" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 
+timerStart AUTO_BACKUP
+globDel VALIDATOR_ADDR
+globSet SNAP_EXPOSE "true"
 globSet AUTO_BACKUP "true"
+
 (! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
-CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
 CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=\"$INFRA_CONTAINER_COUNT\"" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
