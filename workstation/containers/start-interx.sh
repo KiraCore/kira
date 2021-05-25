@@ -52,7 +52,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
             CFG_rpc="http://seed.local:$DEFAULT_RPC_PORT"
             PING_TARGET="seed.local"
             CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
-    elif [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
+    elif [ "${DEPLOYMENT_MODE,,}" == "full" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then    
         CFG_grpc="dns:///sentry.local:$DEFAULT_GRPC_PORT"
         CFG_rpc="http://sentry.local:$DEFAULT_RPC_PORT"
         PING_TARGET="sentry.local"
