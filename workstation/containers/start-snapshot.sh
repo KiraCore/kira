@@ -64,6 +64,10 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xarg
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
+touch $PUBLIC_SEEDS $PRIVATE_SEEDS
+cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+tryCat "$PRIVATE_SEEDS" >> "$COMMON_PATH/seeds"
+
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     PING_TARGET="validator.local"

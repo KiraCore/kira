@@ -54,6 +54,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 
+    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
@@ -67,7 +68,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
         NODE_ID="$VALIDATOR_NODE_ID"
     else
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SNAPSHOT_SEED"
         [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
