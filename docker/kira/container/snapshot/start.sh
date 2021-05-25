@@ -92,16 +92,17 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     globSet START_TIME "$(date -u +%s)"
 fi
 
-echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+echoInfo "INFO: External sync is expected from seed, sentry, priv_sentry or validator node"
 while : ; do
     SENTRY_OPEN=$(isPortOpen sentry.local 26656)
     PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
     VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
-    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
-        echoInfo "INFO: Sentry or Private Sentry container is running!"
+    SEED_OPEN=$(isPortOpen seed.local 26656)
+    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] || [ "$SEED_OPEN" == "true" ]  ; then
+        echoInfo "INFO: Sentry, Private Sentry, Seed or Validator container is running!"
         break
     else
-        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN) or validator ($VALIDATOR_OPEN) to start..."
+        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN), seed ($SEED_OPEN) or validator ($VALIDATOR_OPEN) to start..."
         sleep 15
     fi
 done
