@@ -69,6 +69,8 @@ EXTERNAL_RPC_PORT="$KIRA_SNAPSHOT_RPC_PORT"
 NODE_ID="$SNAPSHOT_NODE_ID"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
+touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+
 if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
     cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
@@ -77,12 +79,14 @@ else
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
 fi
 
+CFG_seeds=""
+CFG_persistent_peers=""
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    CFG_persistent_peers="tcp://$SEED_SEED"
+    CFG_seeds="tcp://$SEED_SEED"
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
