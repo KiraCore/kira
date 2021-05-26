@@ -373,8 +373,8 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
         ($(isPublicIp $NODE_ADDR)) && SEEDS_TARGET_FILE=$PUBLIC_SEEDS || SEEDS_TARGET_FILE=$PRIVATE_SEEDS
 
         [ ! -z "$SEED_NODE_ID" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$SENTRY_NODE_ID" ] && echo "$SENTRY_NODE_ID" >> $SEEDS_TARGET_FILE
-        [ ! -z "$PRIV_SENTRY_NODE_ID" ] && echo "$PRIV_SENTRY_NODE_ID" >> $SEEDS_TARGET_FILE
+        [ ! -z "$SENTRY_NODE_ID" ] && echo "$SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$PRIV_SENTRY_NODE_ID" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
         [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $SEEDS_TARGET_FILE
 
         if [ "${OPTION,,}" == "a" ] ; then

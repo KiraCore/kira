@@ -1,5 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+# quick edit: FILE="${SELF_CONTAINER}/configure.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 exec 2>&1
 set -x
 
@@ -40,7 +41,7 @@ fi
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|validator)$ ]] ) ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|snapshot)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(validator)$ ]] ) ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
 elif [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
     EXTERNAL_ADDR="$LOCAL_IP"
@@ -55,7 +56,7 @@ CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXT
 CDHelper text lineswap --insert="EXTERNAL_PORT=\"$EXTERNAL_P2P_PORT\"" --prefix="EXTERNAL_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry|snapshot)$ ]] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then

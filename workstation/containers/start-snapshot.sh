@@ -64,9 +64,9 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xarg
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
+NODE_ID="$SNAPSHOT_NODE_ID"
 EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
 EXTERNAL_RPC_PORT="$KIRA_SNAPSHOT_RPC_PORT"
-NODE_ID="$SNAPSHOT_NODE_ID"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
@@ -86,11 +86,11 @@ if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    CFG_seeds="tcp://$SEED_SEED"
+    CFG_seeds=""
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
-    CFG_persistent_peers="tcp://$SENTRY_SEED"
+    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
     PING_TARGET="sentry.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
@@ -128,7 +128,7 @@ docker run -d \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_pex="false" \
+    -e CFG_pex="true" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="64" \
@@ -150,7 +150,7 @@ docker run -d \
     -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e PING_TARGET="$PING_TARGET" \
     -e NODE_TYPE=$CONTAINER_NAME \
-    -e NODE_ID="$SNAPSHOT_NODE_ID" \
+    -e NODE_ID="$NODE_ID" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e INFRA_MODE="$INFRA_MODE" \
     -v $COMMON_PATH:/common \
@@ -159,7 +159,7 @@ docker run -d \
     kira:latest # use sentry image as base
 
 echoInfo "INFO: Waiting for $CONTAINER_NAME node to start..."
-CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SNAPSHOT_NODE_ID" || CONTAINER_CREATED="false"
+CONTAINER_CREATED="true" && $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" || CONTAINER_CREATED="false"
 
 if [ "${CONTAINER_CREATED,,}" != "true" ]; then
     echoErr "ERROR: Snapshot failed, '$CONTAINER_NAME' container did not start"
