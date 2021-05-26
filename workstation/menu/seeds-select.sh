@@ -46,7 +46,7 @@ while : ; do
 
         echoInfo "INFO: Downloading seeds list & attempting discovery of active nodes..."
         TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-        $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 8 || echoErr "ERROR: Active seeds discovery scan failed"
+        $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Active seeds discovery scan failed"
         SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
         if [ ! -z "$SNAP_PEER" ]; then
             echoInfo "INFO: List of active public seeds was found, saving changes to $PUBLIC_SEEDS"

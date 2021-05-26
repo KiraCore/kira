@@ -89,11 +89,11 @@ sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --d
 ## Change Network Property
 
 ```
-sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 50 --description="50 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
+sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
 
 voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property MAX_MISCHANCE 100 --description="100 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
+sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --description="200 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
 
 voteYes $(lastProposal) validator
 

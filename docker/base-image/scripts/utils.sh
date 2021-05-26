@@ -1,6 +1,6 @@
 #!/bin/bash
 # QUICK EDIT: FILE="$SELF_SCRIPTS/utils.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-GLOB_STORE_DIR="/var/kiraglob"
+GLOB_STORE_DIR="/common/kiraglob"
 REGEX_DNS="^(([a-zA-Z](-?[a-zA-Z0-9])*)\.)+[a-zA-Z]{2,}$"
 REGEX_IP="^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$"
 REGEX_NODE_ID="^[a-f0-9]{40}$"
@@ -22,49 +22,31 @@ function isNullOrWhitespaces() {
 }
 
 function isTxHash() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ "$1" =~ $REGEX_TXHASH ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ "$1" =~ $REGEX_TXHASH ]] && echo "true" || echo "false" ; fi
 }
 
 function isDns() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ "$1" =~ $REGEX_DNS ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ "$1" =~ $REGEX_DNS ]] && echo "true" || echo "false" ; fi
 }
 
 function isIp() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ "$1" =~ $REGEX_IP ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ "$1" =~ $REGEX_IP ]] && echo "true" || echo "false" ; fi
 }
 
 function isPublicIp() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        if [ "$(echo "$1" | grep -P $REGEX_PUBLIC_IP | xargs || echo \"\")" == "$1" ] ; then
-            echo "true"
-        else
-            echo "false"
-        fi
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [ "$(echo "$1" | grep -P $REGEX_PUBLIC_IP | xargs || echo \"\")" == "$1" ] && echo "true" || echo "false" ; fi
 }
 
 function isDnsOrIp() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && ($(isDns "$1")) && VTMP="true"
-        [ "$VTMP" != "true" ] && ($(isIp "$1")) && VTMP="true"
-        echo $VTMP
+        kg_var="false" && ($(isDns "$1")) && kg_var="true"
+        [ "$kg_var" != "true" ] && ($(isIp "$1")) && kg_var="true"
+        echo $kg_var
     fi
 }
 
 function isInteger() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ $1 =~ $REGEX_INTEGER ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ $1 =~ $REGEX_INTEGER ]] && echo "true" || echo "false" ; fi
 }
 
 function isBoolean() {
@@ -74,61 +56,50 @@ function isBoolean() {
     fi
 }
 
-function isPort() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && ( ($(isInteger $1)) && (($1 > 0 || $1 < 65536)) ) && VTMP="true"
-        echo $VTMP
-    fi
-}
-
 function isNodeId() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ "$1" =~ $REGEX_NODE_ID ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ "$1" =~ $REGEX_NODE_ID ]] && echo "true" || echo "false" ; fi
 }
 
 function isNumber() {
-     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && [[ "$1" =~ $REGEX_NUMBER ]] && VTMP="true"
-        echo $VTMP
-    fi
+     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else [[ "$1" =~ $REGEX_NUMBER ]] && echo "true" || echo "false" ; fi
 }
 
 function isNaturalNumber() {
-    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else
-        VTMP="false" && ($(isInteger "$1")) && [[ $1 -ge 0 ]] && VTMP="true"
-        echo $VTMP
-    fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; else ( ($(isInteger "$1")) && [[ $1 -ge 0 ]] ) && echo "true" || echo "false" ; fi
+}
+
+function isPort() {
+    ( ($(isNaturalNumber $1)) && (($1 > 0)) && (($1 < 65536)) ) && echo "true" || echo "false"
 }
 
 function isMnemonic() {
-    MNEMON=$(echo "$1" | xargs 2> /dev/null || echo -n "")
-    WCOUNT=$(echo "$MNEMON" | wc -w 2> /dev/null || echo -n "")
-    (! $(isNaturalNumber $WCOUNT)) && WCOUNT=0
-    if (( $WCOUNT % 4 == 0 )) && [ $WCOUNT -ge 12 ] ; then echo "true" ; else echo "false" ; fi
+    kg_mnem=$(echo "$1" | xargs 2> /dev/null || echo -n "")
+    kg_count=$(echo "$kg_mnem" | wc -w 2> /dev/null || echo -n "")
+    (! $(isNaturalNumber $kg_count)) && kg_count=0
+    if (( $kg_count % 4 == 0 )) && [ $kg_count -ge 12 ] ; then echo "true" ; else echo "false" ; fi
 }
 
 function isPortOpen() {
-    ADDR=$1 && PORT=$2 && TIMEOUT=$3
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=1
-    if (! $(isDnsOrIp $ADDR)) || (! $(isPort $PORT)) ; then echo "false"
-    elif timeout $TIMEOUT nc -z $ADDR $PORT ; then echo "true"
+    kg_addr=$1 && kg_port=$2 && kg_timeout=$3
+    (! $(isNaturalNumber $kg_timeout)) && kg_timeout=1
+    if (! $(isDnsOrIp $kg_addr)) || (! $(isPort $kg_port)) ; then echo "false"
+    elif timeout $kg_timeout nc -z $kg_addr $kg_port ; then echo "true"
     else echo "false" ; fi
 }
 
 function fileSize() {
-    BYTES=$(stat -c%s $1 2> /dev/null || echo -n "")
-    ($(isNaturalNumber "$BYTES")) && echo "$BYTES" || echo -n "0"
+    kg_bytes=$(stat -c%s $1 2> /dev/null || echo -n "")
+    ($(isNaturalNumber "$kg_bytes")) && echo "$kg_bytes" || echo -n "0"
 }
 
 function isFileEmpty() {
     if [ -z "$1" ] || [ ! -f $1 ] || [ ! -s $1 ] ; then echo "true" ; else
-        if [[ $(fileSize $1) -ge 64 ]] ; then
+        kg_PREFIX_AND_SUFFIX=$(echo "$(head -c 64 $1 2>/dev/null || echo '')$(tail -c 64 $1 2>/dev/null || echo '')" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+        if [ ! -z "$kg_PREFIX_AND_SUFFIX" ] ; then
             echo "false"
         else
-            TEXT=$(cat $1 | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
-            [ -z "$TEXT" ] && echo "true" || echo "false"
+            kg_TEXT=$(cat $1 | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+            [ -z "$kg_TEXT" ] && echo "true" || echo "false"
         fi
     fi
 }
@@ -150,25 +121,25 @@ function md5() {
 }
 
 function tryMkDir {
-    for var in "$@" ; do
-        var=$(echo "$var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
-        [ -z "$var" ] && continue
-        [ "${var,,}" == "-v" ] && continue
+    for kg_var in "$@" ; do
+        kg_var=$(echo "$kg_var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+        [ -z "$kg_var" ] && continue
+        [ "${kg_var,,}" == "-v" ] && continue
         
-        if [ -f "$var" ] ; then
+        if [ -f "$kg_var" ] ; then
             if [ "${1,,}" == "-v" ] ; then
-                rm -f "$var" 2> /dev/null || : 
-                [ ! -f "$var" ] && echo "removed file '$var'" || echo "failed to remove file '$var'"
+                rm -f "$kg_var" 2> /dev/null || : 
+                [ ! -f "$kg_var" ] && echo "removed file '$kg_var'" || echo "failed to remove file '$kg_var'"
             else
                 rm -f 2> /dev/null || :
             fi
         fi
 
         if [ "${1,,}" == "-v" ]  ; then
-            [ ! -d "$var" ] && mkdir -p "$var" 2> /dev/null || :
-            [ -d "$var" ] && echo "created directory '$var'" || echo "failed to create direcotry '$var'"
-        elif [ ! -d "$var" ] ; then
-            mkdir -p "$var" 2> /dev/null || :
+            [ ! -d "$kg_var" ] && mkdir -p "$var" 2> /dev/null || :
+            [ -d "$kg_var" ] && echo "created directory '$kg_var'" || echo "failed to create direcotry '$kg_var'"
+        elif [ ! -d "$kg_var" ] ; then
+            mkdir -p "$kg_var" 2> /dev/null || :
         fi
     done
 }
@@ -190,12 +161,12 @@ function isDirEmpty() {
 function isSimpleJsonObjOrArr() {
     if ($(isNullOrEmpty "$1")) ; then echo "false"
     else
-        HEADS=$(echo "$1" | head -c 8)
-        TAILS=$(echo "$1" | tail -c 8)
-        STR=$(echo "${HEADS}${TAILS}" | tr -d '\n' | tr -d '\r' | tr -d '\a' | tr -d '\t' | tr -d ' ')
-        if ($(isNullOrEmpty "$STR")) ; then echo "false"
-        elif [[ "$STR" =~ ^\{.*\}$ ]] ; then echo "true"
-        elif [[ "$STR" =~ ^\[.*\]$ ]] ; then echo "true"
+        kg_HEADS=$(echo "$1" | head -c 8)
+        kg_TAILS=$(echo "$1" | tail -c 8)
+        kg_STR=$(echo "${kg_HEADS}${kg_TAILS}" | tr -d '\n' | tr -d '\r' | tr -d '\a' | tr -d '\t' | tr -d ' ')
+        if ($(isNullOrEmpty "$kg_STR")) ; then echo "false"
+        elif [[ "$kg_STR" =~ ^\{.*\}$ ]] ; then echo "true"
+        elif [[ "$kg_STR" =~ ^\[.*\]$ ]] ; then echo "true"
         else echo "false"; fi
     fi
 }
@@ -203,9 +174,9 @@ function isSimpleJsonObjOrArr() {
 function isSimpleJsonObjOrArrFile() {
     if [ ! -f "$1" ] ; then echo "false"
     else
-        HEADS=$(head -c 8 $1 2>/dev/null || echo -ne "")
-        TAILS=$(tail -c 8 $1 2>/dev/null || echo -ne "")
-        echo $(isSimpleJsonObjOrArr "${HEADS}${TAILS}")
+        kg_HEADS=$(head -c 8 $1 2>/dev/null || echo -ne "")
+        kg_TAILS=$(tail -c 8 $1 2>/dev/null || echo -ne "")
+        echo $(isSimpleJsonObjOrArr "${kg_HEADS}${kg_TAILS}")
     fi
 }
 
@@ -262,107 +233,109 @@ function urlContentLength() {
 }
 
 function globName() {
-    #echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | base64 | tr '/+' '_-' | tr -d '=')
     echo $(echo "${1,,}" | tr -d '\011\012\013\014\015\040' | md5sum | awk '{ print $1 }')
     return 0
 }
 
+function globFile() {
+    if [ ! -z "$2" ] && [ -d $2 ] ; then
+        echo "${2}/$(globName $1)"
+    else echo "${GLOB_STORE_DIR}/$(globName $1)" ; fi
+    return 0
+}
+
 function globGet() {
-    GNAM="$(globName $1)"
-    GFIL="${GLOB_STORE_DIR}/$GNAM"
-    [[ -s $GFIL ]] && cat $GFIL || echo ""
+    kg_FIL=$(globFile "$1" "$2")
+    [[ -s $kg_FIL ]] && cat $kg_FIL || echo ""
     return 0
 }
 
 # threadsafe global get
 function globGetTS() {
-    GNAM="$(globName $1)"
-    GFIL="${GLOB_STORE_DIR}/$GNAM"
-    [[ -s "$GFIL" ]] && sem --id $GNAM "cat $GFIL" || echo ""
+    kg_FIL=$(globFile "$1" "$2")
+    [[ -s "$kg_FIL" ]] && sem --id $1 "cat $kg_FIL" || echo ""
     return 0
 }
 
-function globGetFile() {
-    echo "${GLOB_STORE_DIR}/$(globName $1)"
-}
-
 function globSet() {
-    GNAME="$(globName $1)"
-    GFILE="${GLOB_STORE_DIR}/$GNAME"
-    touch $GFILE
-    if [ ! -z ${2+x} ] ; then
-        echo "$2" > "$GFILE.tmp"
-    else
-        cat > "$GFILE.tmp"
-    fi
-    mv -f "$GFILE.tmp" $GFILE
+    [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
+    touch "$kg_FIL.tmp"
+    [ ! -z ${2+x} ] && echo "$2" > "$kg_FIL.tmp" || cat > "$kg_FIL.tmp"
+    mv -f "$kg_FIL.tmp" $kg_FIL
 }
 
 # threadsafe global set
 function globSetTS() {
-    GNAME="$(globName $1)"
-    GFILE="${GLOB_STORE_DIR}/$GNAME"
-    if [ ! -z ${2+x} ] ; then
-        sem --id $GNAME "echo $2 > $GFILE"
-    else
-        sem --id $GNAME --pipe "cat > $GFILE"
-    fi
+    [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
+    touch "$kg_FIL"
+    [ ! -z ${2+x} ] &&  sem --id $kg_NAM "echo $2 > $kg_FIL" || sem --id $kg_NAM --pipe "cat > $kg_FIL"
 }
 
 function globEmpty() {
-    ($(isFileEmpty "${GLOB_STORE_DIR}/$(globName $1)")) && echo "true" || echo "false"
+    ($(isFileEmpty $(globFile "$1" "$2"))) && echo "true" || echo "false"
 }
 
 function globDel {
-    for var in "$@" ; do
-        [ -z "$var" ] && continue
-        globSet "$var" ""
+    for kg_var in "$@" ; do
+        [ -z "$kg_var" ] && continue
+        globSet "$kg_var" ""
     done
 }
 
 function timerStart() {
-    [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="${BASH_SOURCE}"
-    TIME="$(date -u +%s)"
-    globSet "timer_start_${NAME}" "$TIME"
-    globSet "timer_end_${NAME}" ""
-    [ "${1,,}" == "-v" ] && echo "$TIME"
+    [ "${1,,}" == "-v" ] && kg_NAME=$2 || kg_NAME=$1
+    [ -z "$kg_NAME" ] && kg_NAME="${BASH_SOURCE}"
+    kg_TIME="$(date -u +%s)"
+    globSet "timer_start_${kg_NAME}" "$kg_TIME"
+    globSet "timer_stop_${kg_NAME}" ""
+    [ "${1,,}" == "-v" ] && echo "$kg_TIME"
     return 0
 }
 
-function timerEnd() {
-    [ "${1,,}" == "-v" ] && NAME=$2 || NAME=$1
-    [ -z "$NAME" ] && NAME="$BASH_SOURCE"
-    NAME="timer_end_${NAME}"
-    ($(globEmpty "$NAME")) && globSet "$NAME" "$(date -u +%s)"
-    [ "${1,,}" == "-v" ] && globGet "$NAME"
+function timerStop() {
+    [ "${1,,}" == "-v" ] && kg_NAME=$2 || kg_NAME=$1
+    [ -z "$kg_NAME" ] && kg_NAME="$BASH_SOURCE"
+    kg_NAME="timer_stop_${kg_NAME}"
+    ($(globEmpty "$NAME")) && globSet "$kg_NAME" "$(date -u +%s)"
+    [ "${1,,}" == "-v" ] && globGet "$kg_NAME"
     return 0
 }
 
+# if VMAX is set then time left until VMAX is calculated
 function timerSpan() {
-    NAME=$1 && [ -z "$NAME" ] && NAME="$BASH_SOURCE"
-    START_TIME=$(globGet "timer_start_${NAME}")
-    END_TIME=$(globGet "timer_end_${NAME}")
-    if (! $(isNaturalNumber "$START_TIME")) ; then
-        echo "0"
-    elif (! $(isNaturalNumber "$END_TIME")) ; then 
-        echo "$(($(date -u +%s) - $START_TIME))"
+    kg_NAME=$1 && [ -z "$kg_NAME" ] && kg_NAME="$BASH_SOURCE"
+    kg_VMAX=$2
+    ($(isNaturalNumber $kg_VMAX)) && kg_CALC_TIME_LEFT="true" || kg_CALC_TIME_LEFT="false"
+    kg_START_TIME=$(globGet "timer_start_${kg_NAME}")
+    kg_END_TIME=$(globGet "timer_stop_${kg_NAME}")
+    if (! $(isNaturalNumber "$kg_START_TIME")) ; then
+        kg_ELAPSED=0
+    elif (! $(isNaturalNumber "$kg_END_TIME")) ; then 
+        kg_ELAPSED="$(($(date -u +%s) - $kg_START_TIME))"
     else
-        echo "$(($END_TIME - $START_TIME))"
+        kg_ELAPSED="$(($kg_END_TIME - $kg_START_TIME))"
+    fi
+
+    if ($(isNaturalNumber $kg_VMAX)) ; then
+        kg_TDELTA=$(($kg_VMAX - $kg_ELAPSED))
+        [[ $kg_TDELTA -lt 0 ]] && kg_TDELTA=0
+        echo $kg_TDELTA
+    else
+        echo $kg_ELAPSED
     fi
     return 0
 }
 
 function timerDel() {
     if [ -z "$@" ] ; then
-        var="$BASH_SOURCE"
-        globSet "timer_start_${var}" ""
-        globSet "timer_end_${var}" ""
+        kg_var="$BASH_SOURCE"
+        globSet "timer_start_${kg_var}" ""
+        globSet "timer_stop_${kg_var}" ""
     else
-        for var in "$@" ; do
-            [ -z "$var" ] && var="$BASH_SOURCE"
-            globSet "timer_start_${var}" ""
-            globSet "timer_end_${var}" ""
+        for kg_var in "$@" ; do
+            [ -z "$kg_var" ] && kg_var="$BASH_SOURCE"
+            globSet "timer_start_${kg_var}" ""
+            globSet "timer_stop_${kg_var}" ""
         done
     fi
     return 0
@@ -388,8 +361,8 @@ function resolveDNS {
     if ($(isIp "$1")) ; then
         echo "$1"
     else
-        DNS=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
-        ($(isIp $DNS)) && echo $DNS || echo -e ""
+        kg_dns=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
+        ($(isIp $kg_dns)) && echo $kg_dns || echo -e ""
     fi
 }
 

@@ -1,5 +1,5 @@
 # (rm -fv $KIRA_INFRA/docker/validator/Dockerfile) && nano $KIRA_INFRA/docker/validator/Dockerfile
-FROM registry.regnet.local:5000/base-image:latest
+FROM registry.local:5000/base-image:latest
 
 ARG BUILD_HASH
 ARG BRANCH
@@ -20,6 +20,6 @@ ARG DEBIAN_FRONTEND=noninteractive
 
 RUN printenv
 
-HEALTHCHECK --interval=60s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
+HEALTHCHECK --interval=30s --timeout=600s --start-period=180s --retries=2 CMD ${HEALTHCHECK_SCRIPT}
 
 CMD ["sh", "-c", "/bin/bash ${START_SCRIPT} | tee -a ${COMMON_LOGS}/start.log ; test ${PIPESTATUS[0]} = 0"]

@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 CONTAINER_NAME=$1
-SENTRY_NODE_ID=$2
+EXPECTED_NODE_ID=$2
 SAVE_SNAPSHOT=$3
 SYNC_AWAIT=$4
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
@@ -20,36 +20,40 @@ IFACES_RESTARTED="false"
 DOCKER_SNAP_DESTINATION="$DOCKER_COMMON_RO/snap.zip"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
+TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMEOUT=3600
+
+set +x
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|-------------------------------------------------"
+echoWarn "| COMMON DIR: $COMMON_PATH"
+echoWarn "|    TIMEOUT: $TIMEOUT seconds"
+echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|-------------------------------------------------"
+set -x
+
 retry=0
 while : ; do
     PREVIOUS_HEIGHT=0
     HEIGHT=0
     STATUS=""
-    i=0
     NODE_ID=""
-    IS_STARTED="false"
-    while [[ $i -le 40 ]]; do
-        i=$((i + 1))
 
+    globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+    timerStart $TIMER_NAME
+    
+    while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-        if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-            sleep 20
-            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-            continue
-        else
-            echoInfo "INFO: Success, container $CONTAINER_NAME was found"
-        fi
+        if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ] ; then
+            echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+        else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
-        IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
-        if [ "${IS_STARTED,,}" != "true" ] ; then
-            sleep 20
-            echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
-            continue
-        else
-            echoInfo "INFO: Success, container was initialized"
-        fi
+        if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+        else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(timeout 6 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
@@ -67,14 +71,11 @@ while : ; do
         (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
         if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-            echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT"
+            echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
             sleep 10
             continue
-        else
-            echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks"
-            break
-        fi
+        else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
     done
 
     echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -84,20 +85,16 @@ while : ; do
     cat $COMMON_LOGS/start.log | tail -n 150 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
     FAILURE="false"
-    if [ "${IS_STARTED,,}" != "true" ] ; then
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
         echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
         FAILURE="true"
-    else
-        echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
-    fi
+    else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
 
-    if [ "$NODE_ID" != "$SENTRY_NODE_ID" ] ; then
+    if [ "$NODE_ID" != "$EXPECTED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
-        echoErr "ERROR: Expected '$SENTRY_NODE_ID', but got '$NODE_ID'"
+        echoErr "ERROR: Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
-    else
-        echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match"
-    fi
+    else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
 
     if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
         echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
@@ -120,24 +117,22 @@ while : ; do
         fi
         sleep 30
         exit 1
-    else
-        echoInfo "INFO: $CONTAINER_NAME launched sucessfully"
-        break
-    fi
+    else echoInfo "INFO: $CONTAINER_NAME launched sucessfully" && break ; fi
 done
 
 if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     echoInfo "INFO: $CONTAINER_NAME must be fully synced before setup can proceed..."
 
-    i=0
     HEIGHT=0
     BLOCKS_LEFT_OLD=0
     timerStart BLOCK_HEIGHT_SPAN
+    globDel "${CONTAINER_NAME}_STATUS"
     while : ; do
         echoInfo "INFO: Awaiting node status..."
 
-        globDel "${CONTAINER_NAME}_STATUS"
         timerStart STATUS_AWAIT
+        STATUS_SPAN=$(timerSpan STATUS_AWAIT)
+        [ "${STATUS,,}" != "running" ] && globDel "${CONTAINER_NAME}_STATUS"
         set +x
         while : ; do
             STATUS_SPAN=$(timerSpan STATUS_AWAIT)
@@ -172,9 +167,9 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
         BLOCKS_LEFT_OLD=$BLOCKS_LEFT
 
-        if [[ $DELTA_TIME -gt 900 ]] ; then
+        if [[ $DELTA_TIME -gt $TIMEOUT ]] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 15 minutes!"
+            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over $TIMEOUT seconds!"
             exit 1
         fi
 
@@ -184,7 +179,7 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
             echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
         fi
         echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
-        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
+        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up $DELTA_TIME/$TIMEOUT seconds ..."
         set -x
         sleep 30
     done
@@ -194,8 +189,8 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echoInfo "INFO: Local snapshot must be created before network can be started"
     echoInfo "INFO: Halting $CONTAINER_NAME container"
     SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
-    echo "$HEIGHT" >  $SNAP_HEIGHT_FILE
-    echo "$SNAP_NAME" >  $SNAP_NAME_FILE
+    echo "$HEIGHT" > $SNAP_HEIGHT_FILE
+    echo "$SNAP_NAME" > $SNAP_NAME_FILE
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 
     echoInfo "INFO: Creating new snapshot..."
@@ -211,7 +206,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
 
     echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
     cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
-    rm -rf "$DESTINATION_DIR"
+    rm -rfv "$DESTINATION_DIR"
     
     ls -1 "$KIRA_SNAP"
     [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
@@ -227,3 +222,9 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi
 
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
+echoWarn "------------------------------------------------"
+set -x

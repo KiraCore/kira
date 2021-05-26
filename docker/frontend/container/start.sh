@@ -1,11 +1,13 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
+# quick edit: FILE="${SELF_CONTAINER}/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 echoInfo "INFO: Staring frontend $KIRA_SETUP_VER setup..."
 echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
+
+mkdir -p $GLOB_STORE_DIR
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
@@ -16,6 +18,17 @@ BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
 NGINX_CONFIG="/etc/nginx/nginx.conf"
+CFG_CHECK="${COMMON_DIR}/configuring"
+
+touch $CFG_CHECK
+
+echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+
+RESTART_COUNTER=$(globGet RESTART_COUNTER)
+if ($(isNaturalNumber $RESTART_COUNTER)) ; then
+    globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
+    globSet RESTART_TIME "$(date -u +%s)"
+fi
 
 while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
     if [ -f "$EXIT_CHECK" ]; then
@@ -80,6 +93,8 @@ http {
 EOL
 
     touch $EXECUTED_CHECK
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
@@ -117,10 +132,15 @@ done
 echoInfo "INFO: Current configuration:"
 cat $CONFIG_JSON
 
-netstat -nlp | grep 80 || echoWarn "WARNINIG: Bind to port 80 was not found"
+netstat -nlp | grep $INTERNAL_HTTP_PORT || echoWarn "WARNINIG: Bind to port $INTERNAL_HTTP_PORT was not found"
 echoInfo "INFO: Testing NGINX configuration"
 nginx -V
 nginx -t
 
 echoInfo "INFO: Starting nginx in current process..."
-nginx -g 'daemon off;'
+rm -fv $CFG_CHECK
+EXIT_CODE=0 && nginx -g 'daemon off;' || EXIT_CODE="$?"
+
+echoErr "ERROR: NGINX failed with the exit code $EXIT_CODE"
+sleep 3
+exit 1

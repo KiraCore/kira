@@ -4,11 +4,11 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/containers-pkill.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # e.g. $KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
 
-SCRIPT_START_TIME="$(date -u +%s)"
-
 AWAIT=$1
 TASK=$2
 UNHALT=$3
+
+timerStart
 
 [ -z "$AWAIT" ] && AWAIT="false"
 [ -z "$UNHALT" ] && UNHALT="true"
@@ -43,6 +43,6 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: KIRA MULTI-CONTAINER TERMINATOR"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

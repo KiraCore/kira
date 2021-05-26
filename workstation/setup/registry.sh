@@ -12,7 +12,7 @@ curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="fa
 
 # ensure docker registry exists 
 ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5)
-SETUP_CHECK="$KIRA_SETUP/registry-2-$ESSENTIALS_HASH" 
+SETUP_CHECK="$KIRA_SETUP/registry-3-$ESSENTIALS_HASH" 
 
 if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     echoInfo "INFO: Container '$CONTAINER_NAME' does NOT exist or is not reachable, update is required recreating registry..."

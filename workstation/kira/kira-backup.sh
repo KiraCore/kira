@@ -3,10 +3,12 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
+MAX_SNAPS=$(globGet MAX_SNAPS)
 LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK)
+
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=$(globGet MIN_HEIGHT)
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
+(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1 && globSet MAX_SNAPS 1
 
 SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
 
@@ -14,14 +16,14 @@ while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
     (! $(isNaturalNumber "$NEW_MAX_SNAPS")) && NEW_MAX_SNAPS=$MAX_SNAPS
     ([[ $NEW_MAX_SNAPS -lt 1 ]] || [[ $NEW_MAX_SNAPS -gt 1024 ]]) && echoWarn "WARNINIG: Max number of snapshots must be wihting range of 1 and 1024" && continue
-    MAX_SNAPS=$NEW_MAX_SNAPS
-    CDHelper text lineswap --insert="MAX_SNAPS=$MAX_SNAPS" --prefix="MAX_SNAPS=" --path=$ETC_PROFILE --append-if-found-not=True
+    MAX_SNAPS=$NEW_MAX_SNAPS && globSet MAX_SNAPS "$MAX_SNAPS"
     break
 done
 
 if [ "${SELECT,,}" == "c" ]; then
+    AUTO_BACKUP=$(globGet AUTO_BACKUP)
     while :; do
-        [ "${AUTO_BACKUP_ENABLED,,}" == "false" ] && AUTO_BACKUP_INTERVAL=0
+        [ "$AUTO_BACKUP" == "false" ] && AUTO_BACKUP_INTERVAL=0
         echoNErr "How often (in hours) auto-backup should be performed? Input 0 to disable auto-backup or press [ENTER] for default ($AUTO_BACKUP_INTERVAL): " && read NEW_AUTO_BACKUP_INTERVAL
         if [ -z "$NEW_AUTO_BACKUP_INTERVAL" ] ; then
             echoInfo "INFO: Backup interval will not be chaned"
@@ -30,14 +32,14 @@ if [ "${SELECT,,}" == "c" ]; then
         
         (! $(isInteger "$NEW_AUTO_BACKUP_INTERVAL")) && echoWarn "WARNING: Input must be a valid integer" && continue
         [[ $NEW_AUTO_BACKUP_INTERVAL -lt 0 ]] && echoWarn "WARNING: Input must be an integer larger or equal to 0" && continue
-        [ "$NEW_AUTO_BACKUP_INTERVAL" == "0" ] && echoInfo "INFO: Auto backup will be disabled" && AUTO_BACKUP_ENABLED="false" && break
+        [ "$NEW_AUTO_BACKUP_INTERVAL" == "0" ] && echoInfo "INFO: Auto backup will be disabled" && AUTO_BACKUP="false" && break
         echoInfo "INFO: Auto backup is enabled and will be executed every ${NEW_AUTO_BACKUP_INTERVAL}h"
-        AUTO_BACKUP_ENABLED="true"
+        AUTO_BACKUP="true"
         AUTO_BACKUP_INTERVAL="$NEW_AUTO_BACKUP_INTERVAL"
         break
     done
-    
-    CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=$AUTO_BACKUP_ENABLED" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    globSet AUTO_BACKUP "$AUTO_BACKUP"
     CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=$AUTO_BACKUP_INTERVAL" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
     exit 0
 fi

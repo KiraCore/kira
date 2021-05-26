@@ -4,6 +4,8 @@ source $KIRA_MANAGER/utils.sh
 
 if [ "${INFRA_MODE,,}" == "local" ]; then
   title="Demo Mode (local testnet)"
+elif [ "${INFRA_MODE,,}" == "seed" ]; then
+  title="Seed Mode"
 elif [ "${INFRA_MODE,,}" == "sentry" ]; then
   title="Sentry Mode"
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
@@ -13,8 +15,9 @@ else
   exit 1
 fi
 
-systemctl stop kirascan || echoWarn "WARNING: Could NOT stop kirascan service it was propably already stopped or does NOT exist yet"
-systemctl stop kiraup || echoWarn "WARNING: KIRA update service was not stopped"
+systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
+systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
+systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 globSet LATEST_BLOCK 0
 globSet MIN_HEIGHT 0
 
@@ -27,15 +30,9 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
+[ -z "$DEPLOYMENT_MODE" ] && DEPLOYMENT_MODE="minimal"
 
-CDHelper text lineswap --insert="GENESIS_SHA256=\"\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=0" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
-[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=2" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-[ -z "$AUTO_BACKUP_ENABLED" ] && CDHelper text lineswap --insert="AUTO_BACKUP_ENABLED=\"true\"" --prefix="AUTO_BACKUP_ENABLED=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="DEPLOYMENT_MODE=$DEPLOYMENT_MODE" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
@@ -84,72 +81,126 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     set -x
 fi
 
+echo "INFO: Loading secrets..."
+set +e
 set +x
-printf "\033c"
+source $KIRAMGR_SCRIPTS/load-secrets.sh
+set -x
+set -e
 
-printWidth=47
-echo -e "\e[31;1m-------------------------------------------------"
-displayAlign center $printWidth "$title"
-displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
-echo -e "|-----------------------------------------------|"
-echo -e "|       Network Interface: $IFACE (default)"
-echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
-echo -e "|     Current kira Branch: $INFRA_BRANCH"
-echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
-echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
-echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
-echo -e "|-----------------------------------------------|"
-displayAlign left $printWidth " [1] | Quick Setup $setupHintQuick"
-displayAlign left $printWidth " [2] | Advanced Setup $setupHintAdvanced"
-echo "|-----------------------------------------------|"
-displayAlign left $printWidth " [X] | Exit"
-echo -e "-------------------------------------------------\e[0m\c\n"
-echo ""
+if [ "${INFRA_MODE,,}" == "local" ]; then
+    NEW_NETWORK="true"
+elif [ "${INFRA_MODE,,}" == "validator" ]; then
+    set +x
+    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    set -x
+    [ "${SELECT,,}" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
+else
+    NEW_NETWORK="false"
+fi
 
-FAILED="false"
+CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+[ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
 while :; do
-  read -n1 -p "Input option: " KEY
-  echo ""
+    set +e && source $ETC_PROFILE &>/dev/null && set -e
+    set +x
+    printf "\033c"
+
+    printWidth=47
+    echo -e "\e[31;1m-------------------------------------------------"
+    displayAlign center $printWidth "$title $KIRA_SETUP_VER"
+    displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
+    echo -e "|-----------------------------------------------|"
+    echo -e "|       Network Interface: $IFACE (default)"
+    echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
+    echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
+    echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
+    [ "${NEW_NETWORK,,}" == "true" ] && \
+    echo -e "|        NEW Network Name: ${NETWORK_NAME}"
+    echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
+    echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
+    [ -f "$KIRA_SNAP_PATH" ] && \
+    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
+    [ ! -z "$KIRA_SNAP_SHA256" ] && \
+    echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
+    echo -e "|     Current kira Branch: $INFRA_BRANCH"
+    echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
+    echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
+    echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
+    echo -e "|-----------------------------------------------|"
+    displayAlign left $printWidth " [1] | Change Default Network Interface"
+    displayAlign left $printWidth " [2] | Change SSH Port to Expose"
+    displayAlign left $printWidth " [3] | Change Default Branches"
+    displayAlign left $printWidth " [4] | Change Deployment Mode"
+    echo "|-----------------------------------------------|"
+    displayAlign left $printWidth " [S] | Start Node Setup"
+    displayAlign left $printWidth " [R] | Return to Main Menu"
+    displayAlign left $printWidth " [X] | Exit"
+    echo -e "-------------------------------------------------\e[0m\c\n"
+    echo ""
+    FAILED="false"
+  
+    read -n1 -p "Input option: " KEY
+    echo ""
 
   case ${KEY,,} in
-  1*)
+  s*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
-
-    $KIRA_MANAGER/menu/branch-select.sh "true"
-
     CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        CDHelper text lineswap --insert="NETWORK_NAME=\"local-1\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="NEW_NETWORK=\"true\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
         rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
     fi
     break
     ;;
-  2*)
-    echo "INFO: Starting Advanced Setup..."
-    $KIRA_MANAGER/menu/branch-select.sh "false"
-
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then
-        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
-    else
-        $KIRA_MANAGER/menu/snapshot-select.sh
-    fi
-
-    $KIRA_MANAGER/menu/seeds-select.sh
+#  a*)
+#    echo "INFO: Starting Advanced Setup..."
+#    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
+#        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
+#    else
+#        $KIRA_MANAGER/menu/snapshot-select.sh
+#    fi
+#
+#    $KIRA_MANAGER/menu/seeds-select.sh
+#    break
+#    ;;
+  1*)
     $KIRA_MANAGER/menu/interface-select.sh
-    break
+    continue
     ;;
+  2*)
+    DEFAULT_SSH_PORT="." && while (! $(isPort "$DEFAULT_SSH_PORT")); do echoNErr "Input SSH port number to expose: " && read DEFAULT_SSH_PORT ; done
+    set -x
+    CDHelper text lineswap --insert="DEFAULT_SSH_PORT=\"$DEFAULT_SSH_PORT\"" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    continue
+    ;;
+  3*)
+    $KIRA_MANAGER/menu/branch-select.sh "false"
+    continue
+    ;;
+  4*)
+    set +x
+    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
+    MODE="." && while ! [[ "${MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 MODE && echo ""; done
+    set -x
 
+    [ "${MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
+    [ "${MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
+
+    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+    ;;
+  r*)
+    $KIRA_MANAGER/menu.sh "false"
+    exit 0
+    ;;
   x*)
     exit 0
     ;;
-
   *)
     echo "Try again."
     sleep 1
@@ -158,20 +209,54 @@ while :; do
 done
 set -x
 
+if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+    globSet AUTO_BACKUP "false"
+    if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
+        INFRA_CONTAINER_COUNT=2
+    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
+        INFRA_CONTAINER_COUNT=4
+    else
+        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
+        exit 1
+    fi
+else
+    if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
+        INFRA_CONTAINER_COUNT=5
+    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
+        INFRA_CONTAINER_COUNT=4
+    elif [[ "${INFRA_MODE,,}" =~ ^(seed)$ ]] ; then
+        INFRA_CONTAINER_COUNT=3
+    else
+        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
+        exit 1
+    fi
+fi
+
+
+timerStart AUTO_BACKUP
+globDel VALIDATOR_ADDR
+globSet SNAP_EXPOSE "true"
+globSet AUTO_BACKUP "true"
+
+(! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
+
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
 CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=\"$INFRA_CONTAINER_COUNT\"" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
 echoInfo "INFO: MTU Value Discovery..."
 MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
 (! $(isNaturalNumber $MTU)) && MTU=1500
-(($MTU < 100)) && MTU=9000
+(($MTU < 100)) && MTU=900
 globSet MTU $MTU
 
-rm -rfv $KIRA_UPDATE
+rm -rfv "$KIRA_UPDATE" "$KIRA_DUMP/kiraup-done.log.txt" "$KIRA_DUMP/kirascan-done.log.txt"
 
 cat > /etc/systemd/system/kiraup.service << EOL
 [Unit]

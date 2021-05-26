@@ -11,39 +11,10 @@ if [ "${USER,,}" != root ]; then
     exit 1
 fi
 
-UPDATE_DONE_FILE="$KIRA_UPDATE/done"
-UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
-
-while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
-    if [ -f $UPDATE_FAIL_FILE ] ; then
-        echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
-        echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
-        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
-    else
-        echoWarn "WARNING: Your node setup is NOT compleated yet"
-        VSEL="" && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
-    fi
-    
-    if [ "${VSEL,,}" == "r" ] ; then
-        source $KIRA_MANAGER/kira/kira-reinitalize.sh
-    elif [ "${VSEL,,}" == "v" ] ; then
-        if [ -z "$SETUP_END_DT" ] ; then
-            echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
-            sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
-        else
-            echoInfo "INFO: Printing setup logs:"
-            sleep 2 && journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
-        fi
-    elif [ "${VSEL,,}" == "d" ] ; then
-        $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
-    else
-        break
-    fi
-done
+$KIRA_MANAGER/kira/kira-setup-status.sh
 
 cd $KIRA_HOME
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
-VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
@@ -68,8 +39,9 @@ while : ; do
     SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
     SCAN_DONE=$(globGet IS_SCAN_DONE)
+    SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
+    VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
-    VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
@@ -90,7 +62,6 @@ while : ; do
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
         CATCHING_UP="false"
-        ESSENTIAL_CONTAINERS_COUNT=0
         VALIDATOR_RUNNING="false"
         CONTAINERS=$(globGet CONTAINERS)
 
@@ -115,10 +86,6 @@ while : ; do
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
-
-            if [ "${STATUS_TMP,,}" == "running" ] && [[ "${name,,}" =~ ^(validator|sentry)$ ]]; then
-                ESSENTIAL_CONTAINERS_COUNT=$((ESSENTIAL_CONTAINERS_COUNT + 1))
-            fi
         done
         CONTAINERS_COUNT=$((i + 1))
     fi
@@ -128,7 +95,7 @@ while : ; do
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
-    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
+    echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------: $DEPLOYMENT_MODE deployment"
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
         RAM_UTIL=$(globGet RAM_UTIL) && [ -z "$RAM_UTIL" ] && RAM_UTIL="???" ; RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"
@@ -183,6 +150,22 @@ while : ; do
     fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
+        if [ ! -z "$VALIDATOR_ADDR" ]; then
+            if [ "${VALSTATUS,,}" == "active" ] ; then
+                echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "inactive" ] ; then
+                echo -e "|\e[0m\e[31;1m   VALIDATOR WAS STOPPED, ACTIVATE YOUR NODE   \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "jailed" ] ; then
+                echo -e "|\e[0m\e[31;1m    VALIDATOR COMMITED DOUBLE-SIGNING FAULT    \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "paused" ] ; then
+                echo -e "|\e[0m\e[36;1m      VALIDATOR ENTERED MAINTENANCE MODE       \e[33;1m: $VALSTATUS"
+            elif [ "${VALSTATUS,,}" == "waiting" ] ; then
+                echo -e "|\e[0m\e[33;1m  WHITELISTED, READY TO CLAIM VALIDATOR SEAT   \e[33;1m: $VALSTATUS"
+            else
+                echo -e "|\e[0m\e[31;1m    VALIDATOR NODE IS NOT PRODUCING BLOCKS     \e[33;1m: $VALSTATUS"
+            fi
+        fi
+
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
         elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]]; then
@@ -190,25 +173,9 @@ while : ; do
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
         elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
-            if [ ! -z "$VALADDR" ]; then
-                if [ "${VALSTATUS,,}" == "active" ] ; then
-                    echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "inactive" ] ; then
-                    echo -e "|\e[0m\e[31;1m   VALIDATOR WAS STOPPED, ACTIVATE YOUR NODE   \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "jailed" ] ; then
-                    echo -e "|\e[0m\e[31;1m    VALIDATOR COMMITED DOUBLE-SIGNING FAULT    \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "paused" ] ; then
-                    echo -e "|\e[0m\e[36;1m      VALIDATOR ENTERED MAINTENANCE MODE       \e[33;1m: $VALSTATUS"
-                elif [ "${VALSTATUS,,}" == "waiting" ] ; then
-                    echo -e "|\e[0m\e[33;1m  WHITELISTED, READY TO CLAIM VALIDATOR SEAT   \e[33;1m: $VALSTATUS"
-                else
-                    echo -e "|\e[0m\e[31;1m    VALIDATOR NODE IS NOT PRODUCING BLOCKS     \e[33;1m: $VALSTATUS"
-                fi
-            else
-                echo -e "|\e[0m\e[32;1m     SUCCESS, INFRASTRUCTURE IS HEALTHY        \e[33;1m|"
-            fi
+            [ -z "$VALIDATOR_ADDR" ] && echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
         else
-            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRA. IS NOT OPERATIONAL    \e[33;1m|"
+            echo -e "|\e[0m\e[31;1m      INFINFRA IS NOT FULLY OPERATIONAL        \e[33;1m|"
         fi
     fi
 
@@ -257,13 +224,9 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
 
-    if ([ "${INFRA_MODE,,}" == "validator" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 2 ]]) || [ "${INFRA_MODE,,}" == "sentry" ] && [[ $ESSENTIAL_CONTAINERS_COUNT -ge 1 ]]; then
-        if [ "${AUTO_BACKUP_ENABLED,,}" == "true" ]; then
-            [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] && AUTO_BACKUP_EXECUTED_TIME=$(date -u +%s)
-            ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-            INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-            TIME_LEFT=$(($INTERVAL_AS_SECOND - $ELAPSED_TIME))
-            [[ $TIME_LEFT -lt 0 ]] && TIME_LEFT=0
+    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
+        if [ "$(globGet AUTO_BACKUP)" == "true" ]; then
+            TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
             AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"
         else
             AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
@@ -353,18 +316,18 @@ while : ; do
     elif [ "${OPTION,,}" == "e" ]; then
         if [ "${SNAP_EXPOSE,,}" == "false" ]; then
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
-            CDHelper text lineswap --insert="SNAP_EXPOSE=\"true\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            globSet SNAP_EXPOSE "true"
             ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
                 echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip" || \
                 echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."
-            CDHelper text lineswap --insert="SNAP_EXPOSE=\"false\"" --prefix="SNAP_EXPOSE=" --path=$ETC_PROFILE --append-if-found-not=True
+            globSet SNAP_EXPOSE "false"
             rm -fv "$INTERX_SNAPSHOT_PATH" && \
                 echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
                 echoErr "ERROR: Failed to remove snapshot symlink"
         fi
-        FORCE_SCAN="true" && EXECUTED="true"
+        FORCE_SCAN="false" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."

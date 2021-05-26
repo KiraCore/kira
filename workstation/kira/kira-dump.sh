@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e && set -x
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-dump.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SCRIPT_START_TIME="$(date -u +%s)"
+timerStart
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -49,6 +49,6 @@ set +x
 echoInfo "INFO: All dump files were exported to $ZIP_FILE"
 echoWarn "------------------------------------------------"
 echoWarn "|    FINISHED: KIRA LOGS DUMP                  |"
-echoWarn "|     ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|     ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

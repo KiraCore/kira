@@ -48,6 +48,8 @@ RUN mkdir -p ${COMMON_READ} ${SNAP_DIR} ${SELF_HOME} ${SELF_SCRIPTS} ${SELF_CONF
 ADD ./container ${SELF_CONTAINER}
 ADD ./scripts ${SELF_SCRIPTS}
 
+RUN echo "source ${SELF_SCRIPTS}/utils.sh" >> ${ETC_PROFILE}
+
 RUN chmod -R 777 ${SELF_HOME} && chmod 555 ${ETC_PROFILE} && chmod 555 ${BASHRC}
 
 ARG DEBIAN_FRONTEND=noninteractive
