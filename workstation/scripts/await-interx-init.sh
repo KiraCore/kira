@@ -9,45 +9,39 @@ INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-IFACES_RESTARTED="false"
+TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMEOUT=1800
 
-i=0
-while [[ $i -le 40 ]]; do
-    i=$((i + 1))
+set +x
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|-------------------------------------------------"
+echoWarn "| COMMON DIR: $COMMON_PATH"
+echoWarn "|    TIMEOUT: $TIMEOUT seconds"
+echoWarn "|-------------------------------------------------"
+set -x
 
-    echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 12
-        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME container was found"
-    fi
+globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+timerStart $TIMER_NAME
+
+while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
+
+    echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
+    if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
+        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
-    IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
-    if [ "${IS_STARTED,,}" != "true" ]; then
-        sleep 12
-        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
-        #if [ "${IFACES_RESTARTED,,}" == "false" ] ; then
-        #    echoInfo "INFO: Restarting network interfaces..."
-        #    $KIRA_MANAGER/scripts/update-ifaces.sh
-        #    IFACES_RESTARTED="true"
-        #    continue
-        #    i=0
-        #fi
-    fi
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."
     INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$DEFAULT_INTERX_PORT/api/status 2>/dev/null | xargs || echo -n "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
-        echoWarn "WARNING: $CONTAINER_NAME is not started yet"
+        echoWarn "WARNING: $CONTAINER_NAME is not started yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
         continue
     fi
 
@@ -56,7 +50,7 @@ while [[ $i -le 40 ]]; do
 
     if [ -z "${FAUCET_ADDR}" ] || [ "$FAUCET_ADDR" == "null" ] ; then
         sleep 30
-        echoWarn "WARNING: $CONTAINER_NAME faucet is initalized yet"
+        echoWarn "WARNING: $CONTAINER_NAME faucet is initalized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
         continue
     else
         echoInfo "INFO: Success, faucet was found"
@@ -70,9 +64,14 @@ docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.s
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
-if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] ; then
+if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ -z "$FAUCET_ADDR" ] || [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
     echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
     exit 1
-else
-    echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
 fi
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
+echoWarn "------------------------------------------------"
+set -x

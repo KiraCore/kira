@@ -22,6 +22,9 @@ while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
 done
 
 LATEST_BLOCK=$(globGet LATEST_BLOCK)
+SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
+MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
+
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
@@ -33,19 +36,20 @@ echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
 echoWarn "| INTERX_SNAPSHOT_PATH: $INTERX_SNAPSHOT_PATH"
 echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
 echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
+echoWarn "|            MAX SNAPS: $MAX_SNAPS"
 echoWarn "------------------------------------------------"
 set -x
 
-(! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=2
-
 CHECKSUM_TEST="false"
+CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
         if [ "${CONTAINER_EXISTS,,}" == "true"  ] ; then
+            timerStart AUTO_BACKUP
             $KIRA_MANAGER/scripts/dump-logs.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to dump $CONAINER_NAME container logs"
             $KIRA_SCRIPTS/container-delete.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to delete $CONAINER_NAME container"
         fi
@@ -78,36 +82,26 @@ elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ([ "${SNAP_EXPOSE,,}" == "false" ] || [ -
     CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
-if [ -d $KIRA_SNAP ]; then
-    echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-    find $KIRA_SNAP/*.zip -maxdepth 1 -type f | xargs -x ls -t | awk "NR>$MAX_SNAPS" | xargs -L1 rm -fv || echoErr "ERROR: Failed to remove excessive snapshots"
-    echoInfo "INFO: Success, all excessive snaps were removed"
-fi
-
 if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
     echoInfo "INFO: Snap can't be executed, update is not compleated"
-else
-    [ -z "$AUTO_BACKUP_LAST_BLOCK" ] && AUTO_BACKUP_LAST_BLOCK=0
-    if [ -z "$AUTO_BACKUP_EXECUTED_TIME" ] ; then
-        echoInfo "INFO: Backup was never scheaduled before, it will be set to be executed within 1 interval from current time"
-        CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-    elif [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "${AUTO_BACKUP_ENABLED,,}" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
-        ELAPSED_TIME=$(($(date -u +%s) - $AUTO_BACKUP_EXECUTED_TIME))
-        INTERVAL_AS_SECOND=$(($AUTO_BACKUP_INTERVAL * 3600))
-        if [[ $ELAPSED_TIME -gt $INTERVAL_AS_SECOND ]] ; then
-            globSet "IS_SCAN_DONE" "false"
+elif [ "${CONTAINER_EXISTS,,}" == "false"  ] ; then
+    AUTO_BACKUP_LAST_BLOCK=$(globGet $AUTO_BACKUP_LAST_BLOCK)
+    (! $(isNaturalNumber $AUTO_BACKUP_LAST_BLOCK)) && AUTO_BACKUP_LAST_BLOCK=0
+    if [ "$(globGet IS_SCAN_DONE)" == "true" ] && [ "$(globGet AUTO_BACKUP)" == "true" ] && [ $LATEST_BLOCK -gt $AUTO_BACKUP_LAST_BLOCK ] && [[ $MAX_SNAPS -gt 0 ]]; then
+        TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
+        if [[ $TIME_LEFT -le 0 ]] ; then
+            timerStart AUTO_BACKUP
+            globSet AUTO_BACKUP_LAST_BLOCK "$LATEST_BLOCK"
             rm -fv "${SNAPSHOT_SCAN_PATH}-start.log"
             [ -f "$KIRA_SNAP_PATH" ] && SNAP_PATH_TMP=$KIRA_SNAP_PATH || SNAP_PATH_TMP=""
             $KIRA_MANAGER/containers/start-snapshot.sh "$LATEST_BLOCK" "$SNAP_PATH_TMP" &> "${SNAPSHOT_SCAN_PATH}-start.log"
-            CDHelper text lineswap --insert="AUTO_BACKUP_EXECUTED_TIME=\"$(date -u +%s)\"" --prefix="AUTO_BACKUP_EXECUTED_TIME=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="AUTO_BACKUP_LAST_BLOCK=$LATEST_BLOCK" --prefix="AUTO_BACKUP_LAST_BLOCK=" --path=$ETC_PROFILE --append-if-found-not=True
         fi
     else
         echoInfo "INFO: Conditions to execute snapshot were not met or auto snap is not enabled"
     fi
+else
+    echoInfo "INFO: Snapshot can't be started, container is already running!"
 fi
-
-sleep 30
 
 set +x
 echoWarn "------------------------------------------------"
@@ -115,3 +109,5 @@ echoWarn "| FINISHED: SNAPSHOT MONITOR                   |"
 echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x
+
+sleep 30

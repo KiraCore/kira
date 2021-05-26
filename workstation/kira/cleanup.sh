@@ -11,9 +11,34 @@ timerStart
 echoInfo "INFO: Started kira cleanup service $KIRA_SETUP_VER"
 
 while : ; do
-    journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum failed"
-    find "/var/log" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
-    find "/var/log/journal" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate journal"
+    set +e && source "/etc/profile" &>/dev/null && set -e
+
+    MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
+
+    journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
+    find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
+
+    if [ -d $KIRA_SNAP ]; then
+        echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
+        SNAPSHOTS=`ls -S $KIRA_SNAP/*.zip | grep -v '^d'` || SNAPSHOTS=""
+        if [ ! -z "$SNAPSHOTS" ] ; then
+            i=0
+            SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
+            for s in $SNAPSHOTS ; do
+                [ ! -f $s ] && continue
+                i=$((i + 1))
+                if [[ $i -gt $MAX_SNAPS ]] ; then
+                    [ "$KIRA_SNAP_PATH" == "$s" ] && echoInfo "INFO: Snap '$s' is latest, will NOT be removed" && continue
+                    [ "$SNAP_LATEST_FILE" == "$s" ] && echoInfo "INFO: Snap '$s' might be latest, will NOT be removed" && continue
+                    rm -fv $s || echoErr "ERROR: Failed to remove $s"
+                else 
+                    echoInfo "INFO: Snap '$s' will not be removed, cleanup limit '$MAX_SNAPS' is NOT reached"
+                fi
+            done
+        else
+            echoInfo "INFO: No snaps were found in the snap directory, nothing to cleanup"
+        fi
+    fi
 
     echoInfo "INFO: Cleanup was finalized, elapsed $(timerSpan) seconds"
     sleep 600

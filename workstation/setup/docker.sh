@@ -8,12 +8,11 @@ set -x
 $KIRA_SCRIPTS/docker-restart.sh
 sleep 5
 VERSION=$(docker -v || echo "error")
-ACTIVE=$(systemctl is-active docker || echo "inactive")
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
-if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
+if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceActive "docker")) ; then
     echoInfo "INFO: Attempting to remove old docker..."
     docker system prune -f || echoWarn "WARNING: failed to prune docker system"
     $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"

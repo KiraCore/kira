@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/cleanup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SRIPT_START_TIME="$(date -u +%s)"
+timerStart
 TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
@@ -98,6 +98,8 @@ fi
 echoInfo "INFO: Setting up essential environment variables..."
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     EXTERNAL_SYNC="false"
+elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+    EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
@@ -118,6 +120,6 @@ CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNA
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CLEANUP SCRIPT                      |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
+# quick edit: FILE="${SELF_CONTAINER}/configure.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 exec 2>&1
 set -x
 
@@ -10,6 +10,7 @@ touch $CFG_CHECK
 echoInfo "INFO: Starting $NODE_TYPE node configuration..."
 
 CFG="$SEKAID_HOME/config/config.toml"
+APP="$SEKAID_HOME/config/app.toml"
 COMMON_PEERS_PATH="$COMMON_DIR/peers"
 COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
@@ -26,16 +27,24 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
-[ -f "$COMMON_PEERS_PATH" ] && cp -a -v -f "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
-[ -f "$COMMON_SEEDS_PATH" ] && cp -a -v -f "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
+[ -f "$COMMON_PEERS_PATH" ] && cp -afv "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
+[ -f "$COMMON_SEEDS_PATH" ] && cp -afv "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
+
+echoInfo "INFO: Setting up node key..."
+cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
+
+if [ "${NODE_TYPE,,}" == "validator" ] ; then
+    echoInfo "INFO: Setting up priv validator key..."
+    cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+fi
 
 LOCAL_IP=$(cat $LIP_FILE || echo -n "")
 PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
 
-if [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-    EXTERNAL_ADDR="$LOCAL_IP"
-elif [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|snapshot)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(validator)$ ]] ) ; then
     EXTERNAL_ADDR="$PUBLIC_IP"
+elif [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
+    EXTERNAL_ADDR="$LOCAL_IP"
 else
     EXTERNAL_ADDR="$HOSTNAME"
     EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
@@ -44,11 +53,12 @@ fi
 CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
 echo "$CFG_external_address" > "$COMMON_DIR/external_address"
 CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="EXTERNAL_PORT=\"$EXTERNAL_P2P_PORT\"" --prefix="EXTERNAL_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry|snapshot)$ ]] ; then
     rm -fv $LOCAL_GENESIS
-    cp -a -v -f $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
+    cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
 
     validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
@@ -64,11 +74,11 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    
+
     # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
     ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
     (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-    
+
     if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
         TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
         TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
@@ -79,7 +89,7 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     else
         TIMEOUT_COMMIT=$CFG_timeout_commit
     fi
-    
+
     if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
         echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
         CFG_timeout_commit=$TIMEOUT_COMMIT
@@ -100,26 +110,24 @@ if [ ! -s "$LOCAL_PEERS_PATH" ] ; then
         CFG_persistent_peers="${CFG_persistent_peers}${peer}"
     done < $LOCAL_PEERS_PATH
     set -x
-else
-    echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)"
-fi
+else echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)" ; fi
 
 if [ -f "$LOCAL_SEEDS_PATH" ] ; then 
-    echoInfo "INFO: List of external seeds was found, adding to seeds config"
+    echoInfo "INFO: List of external seeds was found, shuffling and adding to seeds config"
+    shuf $LOCAL_SEEDS_PATH > "${LOCAL_SEEDS_PATH}.tmp"
     set +x
     while read seed ; do
         echoInfo "INFO: Adding extra seed '$seed' from the list"
         [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
         CFG_seeds="${CFG_seeds}${seed}"
-    done < $LOCAL_SEEDS_PATH
+    done < "${LOCAL_SEEDS_PATH}.tmp"
     set -x
-else
-    echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)"
-fi
+else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 
 if [ ! -z "$CFG_seeds" ] ; then
     echoInfo "INFO: Seed configuration is available, testing..."
     TMP_CFG_seeds=""
+    i=0
     for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         set +x
@@ -136,17 +144,21 @@ if [ ! -z "$CFG_seeds" ] ; then
         (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Seed '$seed' IP could NOT be resolved" && continue
-        (! $(isPortOpen "$addr" "$port" "0.5")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
+        (! $(isPortOpen "$addr" "$port" "0.25")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
+
+        currentNodeId=$(tmconnect id --address="$addr:$port" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+        [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
         seed="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra seed '$seed' to new config"
         [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
         set -x
+        i=$(($i + 1))
+        [[ $i -ge $CFG_max_num_outbound_peers ]] && echoWarn "INFO: Outbound seeds limit ($CFG_max_num_outbound_peers) reached" 
     done
-else
-    echoWarn "WARNING: Seeds configuration is NOT available!"
-fi
+    CFG_seeds=$TMP_CFG_seeds
+else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
 
 echoInfo "INFO: Final Seeds List:"
 echoInfo "$CFG_seeds"
@@ -244,6 +256,23 @@ echoInfo "$CFG_persistent_peers"
 # default 1024, kira def. 131072
 [ ! -z "$CFG_max_packet_msg_payload_size" ] && CDHelper text lineswap --insert="max_packet_msg_payload_size = $CFG_max_packet_msg_payload_size" --prefix="max_packet_msg_payload_size =" --path=$CFG
 
+# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
+# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
+# the network to take and serve state machine snapshots. State sync is not attempted if the node
+# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
+# starting from the height of the snapshot.
+[ ! -z "$CFG_statesync_enable" ] && CDHelper text lineswap --insert="enable = $CFG_statesync_enable" --prefix="enable =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
+# Will create a new, randomly named directory within, and remove it when done.
+[ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+
+##########################
+# app.toml configuration
+##########################
+
+# snapshot-interval specifies the block interval at which local state sync snapshots are
+# taken (0 to disable). Must be a multiple of pruning-keep-every.
+[ ! -z "$CFG_snapshot_interval" ] && CDHelper text lineswap --insert="snapshot-interval = $CFG_snapshot_interval" --prefix="snapshot-interval =" --after-regex="^\[state\-sync\]" --path=$APP
 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -277,14 +306,6 @@ CDHelper text lineswap --insert="MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="MIN_
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
-
-echoInfo "INFO: Setting up node key..."
-cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
-
-if [ "${NODE_TYPE,,}" == "validator" ] ; then
-    echoInfo "INFO: Setting up priv validator key..."
-    cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
-fi
 
 echoInfo "INFO: Finished node configuration."
 rm -fv $CFG_CHECK

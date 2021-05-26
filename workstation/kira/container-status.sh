@@ -5,16 +5,17 @@ source $KIRA_MANAGER/utils.sh
 
 NAME=$1
 NETWORKS=$2
-ID=$3
-SCRIPT_START_TIME="$(date -u +%s)"
+
+timerStart "${NAME}_CONTAINER_STATUS"
+
+[ -z "$NETWORKS" ] && NETWORKS=$(globGet NETWORKS)
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER  |"
+echoWarn "|  STARTING KIRA CONTAINER STATUS SCAN $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|       NETWORKS: $NETWORKS"
-echoWarn "|             ID: $ID"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -25,7 +26,7 @@ if [ "${NAME,,}" == "interx" ]; then
 elif [ "${NAME,,}" == "frontend" ]; then
     BRANCH="$FRONTEND_BRANCH"
     REPO="$FRONTEND_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] ; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] || [ "${NAME,,}" == "seed" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then
@@ -36,11 +37,12 @@ elif [ "${NAME,,}" == "registry" ]; then
     REPO="master"
 fi
 
-DOCKER_INSPECT=$(globGetFile "${NAME}_DOCKER_INSPECT")
+DOCKER_INSPECT=$(globFile "${NAME}_DOCKER_INSPECT")
+ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
 if (! $(isNullOrEmpty "$ID")) ; then
-    EXISTS="true"
-    echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") > $DOCKER_INSPECT
+    echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") | globSet "${NAME}_DOCKER_INSPECT"
+    (! $(isFileEmpty $DOCKER_INSPECT)) && EXISTS="true" || EXISTS="false"
 else
     EXISTS="false"
 fi
@@ -54,22 +56,24 @@ if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"
     HALT_FILE="$COMMON_PATH/halt"
     CONFIG_FILE="$COMMON_PATH/configuring"
+    EXECUTED_CHECK="$COMMON_PATH/executed"
     
-    DOCKER_STATE=$(globGetFile "${NAME}_DOCKER_STATE")
-    DOCKER_NETWORKS=$(globGetFile "${NAME}_DOCKER_NETWORKS")
+    DOCKER_STATE=$(globFile "${NAME}_DOCKER_STATE")
+    DOCKER_NETWORKS=$(globFile "${NAME}_DOCKER_NETWORKS")
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
-    jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echo -n "" > $DOCKER_STATE
-    jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echo -n "" > $DOCKER_NETWORKS
+    jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"
+    jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echoErr "ERROR: Failed to parsing docker networks"
 
     if [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
-    elif [ -f "$CONFIG_FILE" ] ; then 
+    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed|interx|frontend)$ ]] ) ; then 
         globSet "${NAME}_STATUS" "configuring"
     else
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
     fi
 
+    #  echo -e $(jsonParse "Health.Log.[0].Output" $DOCKER_STATE)
     echo $(jsonParse "Health.Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_HEALTH"
     echo $(jsonQuickParse "Paused" $DOCKER_STATE 2> /dev/null || echo -n "")  | globSet "${NAME}_PAUSED"
     echo $(jsonQuickParse "Restarting" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_RESTARTING"
@@ -96,12 +100,13 @@ else
     globSet "${NAME}_PORTS" ""
 fi
 
+globSet "${NAME}_SCAN_DONE" "true"
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER '$NAME' STATUS SCAN"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|-----------------------------------------------"
+echoWarn "| SCAN DONE: $(globGet ${NAME}_SCAN_DONE)"
+echoWarn "|  ELAPSED: $(timerSpan ${NAME}_CONTAINER_STATUS) seconds"
 echoWarn "------------------------------------------------"
 set -x
-
-# Examples:
-# cat "$SCAN_LOGS/sentry-status.error.log"

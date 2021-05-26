@@ -7,56 +7,75 @@ SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 
 CONTAINER_NAME="sentry"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
 
 set +x
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NODE ID: $SENTRY_NODE_ID"
-echo "|   NETWORK: $CONTAINER_NETWORK"
-echo "|  HOSTNAME: $KIRA_SENTRY_DNS"
-echo "|  SNAPSHOT: $KIRA_SNAP_PATH"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
-
-echo "INFO: Loading secrets..."
-source $KIRAMGR_SCRIPTS/load-secrets.sh
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NODE ID: $SENTRY_NODE_ID"
+echoWarn "|  HOSTNAME: $KIRA_SENTRY_DNS"
+echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
-set -e
-
-echo "INFO: Setting up $CONTAINER_NAME config vars..."
-# * Config sentry/configs/config.toml
-
-mkdir -p "$COMMON_LOGS"
-touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-cp -a -v -f $KIRA_SECRETS/sentry_node_key.json $COMMON_PATH/node_key.json
-cp -a -v -f "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-cp -a -v -f "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-
-# cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+    
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
+    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
+    # globGet sentry_health_log_old
+    tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
+    # globGet sentry_start_log_old
+    tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
+    rm -rfv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS"
+
+    echoInfo "INFO: Loading secrets..."
+    set +x
+    set +e
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    set -x
+    set -e
+
+    echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
+    touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+
+    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
-    [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
-    [ "${INFRA_MODE,,}" == "sentry" ] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$SEED_SEED"
+    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+        CFG_persistent_peers=""
+        CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+        # fake that sentry node is a validator to ensure that previously accepted connections remain valid
+        cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
+        NODE_ID="$VALIDATOR_NODE_ID"
+    else
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SNAPSHOT_SEED"
+        [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
+        CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+        EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
+        
+        cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
+        NODE_ID="$SENTRY_NODE_ID"
+    fi
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -84,13 +103,13 @@ docker run -d \
     -e CFG_persistent_peers="$CFG_persistent_peers" \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID" \
-    -e CFG_addr_book_strict="true" \
+    -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_allow_duplicate_ip="true" \
     -e CFG_max_num_outbound_peers="64" \
-    -e CFG_max_num_inbound_peers="128" \
-    -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="15s" \
+    -e CFG_max_num_inbound_peers="256" \
+    -e CFG_handshake_timeout="60s" \
+    -e CFG_dial_timeout="30s" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
@@ -98,29 +117,33 @@ docker run -d \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NODE_TYPE=$CONTAINER_NAME \
-    -e NODE_ID="$SENTRY_NODE_ID" \
+    -e NODE_ID="$NODE_ID" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
+    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
+    -e INFRA_MODE="$INFRA_MODE" \
     --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 
-    echo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
-    sleep 10
-    docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
+        echoInfo "INFO: Connecting container to $KIRA_VALIDATOR_NETWORK..."
+        sleep 10
+        docker network connect $KIRA_VALIDATOR_NETWORK $CONTAINER_NAME
+    fi
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
@@ -130,3 +153,5 @@ if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
+
+systemctl restart kiraclean

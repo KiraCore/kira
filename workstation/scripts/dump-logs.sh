@@ -11,6 +11,7 @@ CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 START_LOGS="$COMMON_LOGS/start.log"
+HEALTH_LOGS="$COMMON_LOGS/health.log"
 mkdir -p "$CONTAINER_DUMP" "$COMMON_PATH"
 [ -z "$DUMP_ZIP" ] && DUMP_ZIP="false"
 
@@ -32,6 +33,10 @@ if [ -z $ID ] ; then
     echo "WARNING: Can't dump files from $NAME container because it does not exists"
     exit 0
 fi
+
+echoInfo "INFO: Dumping old container logs..."
+globGet "${CONTAINER_NAME}_HEALTH_LOG_OLD" > "$CONTAINER_DUMP/health.log.old.txt"
+globGet "${CONTAINER_NAME}_START_LOG_OLD" > "$CONTAINER_DUMP/start.log.old.txt" 
 
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
 echo $(docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
@@ -58,9 +63,15 @@ docker logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echoWarn "W
 docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $CONTAINER_DUMP/healthcheck.txt || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
 
 if (! $(isFileEmpty $START_LOGS)) ; then
-    cp -afv > $CONTAINER_DUMP/start.txt || echoWarn "WARNING: Failed to dump $NAME start logs"
+    cp -afv $START_LOGS $CONTAINER_DUMP/start.txt || echoWarn "WARNING: Failed to dump $NAME start logs"
 else
     echoInfo "INFO: No start logs were found"
+fi
+
+if (! $(isFileEmpty $HEALTH_LOGS)) ; then
+    cp -afv $HEALTH_LOGS $CONTAINER_DUMP/health.txt || echoWarn "WARNING: Failed to dump $NAME health logs"
+else
+    echoInfo "INFO: No health logs were found"
 fi
 
 if [ "${DUMP_ZIP,,}" == "true" ] ; then

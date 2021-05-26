@@ -5,6 +5,7 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 # e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump true false 16
+# e.g. $KIRA_MANAGER/scripts/discover-peers.sh 18.168.78.192 /tmp/pdump false false 8
 
 ADDR=$1
 OUTPUT=$2
@@ -75,6 +76,11 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
+MAX_HANDSHAKE_TIME="2500"
+
+PUBLIC_IP=$(globGet "PUBLIC_IP")
+LOCAL_IP=$(globGet "LOCAL_IP")
+
 while : ; do
     total=$(($total + 1))
     peer=$(sed "${total}q;d" $TMP_PEERS_SHUFF | xargs || echo "")
@@ -85,16 +91,21 @@ while : ; do
     nodeId=${addrArr1[0],,}
     ip=${addrArr2[0],,}
     port=${addrArr2[1],,}
+    ip=$(resolveDNS "$ip")
 
-    (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($ip)" && continue
-    (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue 
+    (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public ip ($peer)" && continue
+    (! $(isNodeId "$nodeId")) && echoWarn "WARNING: Invalid node id '$nodeId' ($ip)" && continue
+    (! $(isPort "$port")) && echoWarn "WARNING: Invalid port '$port' ($ip)" && continue
+
+    [ "$ip" == "$PUBLIC_IP" ] && echoWarn "WARNING: Peer ip overlaps with the public host address ($ip)" && continue
+    [ "$ip" == "$LOCAL_IP" ] && echoWarn "WARNING: Peer ip overlaps with the local host address ($ip)" && continue
 
     if grep -q "$nodeId" "$OUTPUT"; then
         echoWarn "WARNING: Node id '$nodeId' is already present in the seeds list ($ip)" && continue 
     fi
 
-    if grep -q "$ip" "$OUTPUT"; then
-        echoWarn "WARNING: Address '$ip' is already present in the seeds list" && continue 
+    if grep -q "$ip:$port" "$OUTPUT"; then
+        echoWarn "WARNING: Address '$ip:$port' is already present in the seeds list" && continue 
     fi
 
     TMP_HEIGHT=$(globGet LATEST_BLOCK)
@@ -103,12 +114,24 @@ while : ; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    if ! timeout 0.05 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
-    if ! timeout 0.05 nc -z $ip $KIRA_SENTRY_P2P_PORT ; then echoWarn "WARNING: Port '$KIRA_SENTRY_P2P_PORT' closed ($ip)" && continue ; fi
-
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
     STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
+
+    if [ "${SNAPS_ONLY,,}" != "true" ] ; then
+        seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
+        sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
+        priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
+        validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
+    
+        if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+    fi
+
+    if ! timeout 0.25 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 0.25 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
     KIRA_STATUS=$(timeout 0.25 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
@@ -119,10 +142,6 @@ while : ; do
 
     genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum, expected '', but got '$genesis_checksum' ($ip)" && continue 
-    
-    node_id=$(echo "$KIRA_STATUS" | jsonQuickParse "id" || echo "")
-    (! $(isNodeId "$node_id")) && echoWarn "WARNING: Invalid node id '$node_id' ($ip)" && continue
-    [ "$node_id" != "$nodeId" ] && echoWarn "WARNING: Diffrent node id was advertised, got '$node_id' but expected '$nodeId' ($ip)" && continue
 
     catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
     [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue 
@@ -161,6 +180,15 @@ while : ; do
             MIN_SNAP_SIZE=$SIZE
             peer="${peer} $SIZE"
         fi
+    else
+        HANDSHAKE_TIME=$(tmconnect handshake --address="$nodeId@$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        (! $(isNaturalNumber "$HANDSHAKE_TIME")) && echoWarn "WARNINIG: Handshake failed ($ip:$port)" && continue
+
+        if [[ $HANDSHAKE_TIME -ge $MAX_HANDSHAKE_TIME ]] ; then
+            echoWarn "WARNING: Ping time $HANDSHAKE_TIME is out of upper safe range $MAX_HANDSHAKE_TIME ms ($ip)"
+            continue
+        fi
+        peer="${peer} $HANDSHAKE_TIME"
     fi
 
     i=$(($i + 1))
@@ -181,8 +209,12 @@ fi
 if [ "${SNAPS_ONLY,,}" == "true" ] && [[ $i -gt 1 ]] ; then
     echoInfo "INFO: Sorting peers by snapshot size"
     sort -nrk2 -n $OUTPUT > $TMP_OUTPUT
-    cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
+else
+    echoInfo "INFO: Sorting peers by ping response"
+    sort -nk2 -n $OUTPUT > $TMP_OUTPUT
 fi
+
+cat $TMP_OUTPUT | cut -d ' ' -f1 > $OUTPUT
 
 echoInfo "INFO: Printing results:"
 cat $OUTPUT

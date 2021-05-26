@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
+# quick edit: FILE="${SELF_CONTAINER}/sentry/healthcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 LATEST_BLOCK_HEIGHT=$1
@@ -12,15 +12,16 @@ CONSENSUS_STOPPED=$5
 START_TIME="$(date -u +%s)"
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
-echoWarn "|-----------------------------------------------"
-echoWarn "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
-echoWarn "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
-echoWarn "|              HEIGHT: $HEIGHT"
-echoWarn "|         CATCHING UP: $CATCHING_UP"
-echoWarn "|   CONSENSUS STOPPED: $CONSENSUS_STOPPED"
-echoWarn "------------------------------------------------"
+echoInfo "------------------------------------------------"
+echoInfo "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
+echoInfo "|    DATE: $(date)"
+echoInfo "|-----------------------------------------------"
+echoInfo "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
+echoInfo "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
+echoInfo "|              HEIGHT: $HEIGHT"
+echoInfo "|         CATCHING UP: $CATCHING_UP"
+echoInfo "|   CONSENSUS STOPPED: $CONSENSUS_STOPPED"
+echoInfo "------------------------------------------------"
 set -x
 
 if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
@@ -42,6 +43,6 @@ set +x
 echoInfo "------------------------------------------------"
 echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
 echoInfo "|  ELAPSED: $(($(date -u +%s)-$START_TIME)) seconds"
+echoInfo "|    DATE: $(date)"
 echoInfo "------------------------------------------------"
 set -x
-exit 0

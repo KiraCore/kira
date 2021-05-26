@@ -1,10 +1,9 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 exec 2>&1
 set -x
 
-echoInfo "INFO: Staring sentry setup..."
+echoInfo "INFO: Staring $NODE_TYPE setup..."
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
@@ -53,8 +52,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")); then
         echoInfo "INFO: Snap file was found, attepting integrity verification and data recovery..."
-        cd $DATA_DIR
-        jar xvf $SNAP_FILE_INPUT
+        cd $DATA_DIR && timerStart SNAP_EXTRACT
+        jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME
     
         if [ -f "$DATA_GENESIS" ] ; then
@@ -74,25 +74,29 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     rm -rfv $LOCAL_GENESIS
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
+    touch $EXECUTED_CHECK
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] && [ "${INFRA_MODE,,}" != "seed" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
-        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
+        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
+        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
+        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break
         else
-            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN) or validator ($VALIDATOR_OPEN) to start..."
             sleep 15
         fi
     done
 elif [ "${NEW_NETWORK,,}" == "true" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|priv_sentry)$ ]] ; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        VALIDATOR_OPEN=$(isPortOpen validator.kiranet.local 26656)
+        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
         if [ "$VALIDATOR_OPEN" == "true" ] ; then
             echoInfo "INFO: Validator node is started"
             break
@@ -106,12 +110,11 @@ fi
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-touch $EXECUTED_CHECK
 rm -fv $CFG_CHECK
 
 if ($(isNaturalNumber $SNAP_HEIGHT)) && [[ $SNAP_HEIGHT -gt 0 ]] && [ ! -z "$SNAP_NAME_FILE" ] ; then
     echoInfo "INFO: Snapshot was requested at height $SNAP_HEIGHT, executing..."
-    rm -frv $SNAP_OUTPUT
+    rm -rfv $SNAP_OUTPUT
 
     touch ./output.log
     LAST_SNAP_BLOCK=0

@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
+# quick edit: FILE="${SELF_CONTAINER}/validator/healthcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 LATEST_BLOCK_HEIGHT=$1
@@ -16,6 +16,7 @@ CFG="$SEKAID_HOME/config/config.toml"
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: ${NODE_TYPE^^} HEALTHCHECK"
+echoWarn "|    DATE: $(date)"
 echoWarn "|-----------------------------------------------"
 echoWarn "| LATEST BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
 echoWarn "|     PREVIOUS HEIGHT: $PREVIOUS_HEIGHT"
@@ -44,6 +45,6 @@ set +x
 echoInfo "------------------------------------------------"
 echoInfo "| FINISHED: ${NODE_TYPE^^} HEALTHCHECK"
 echoInfo "|  ELAPSED: $(timerSpan healthcheck) seconds"
+echoWarn "|    DATE: $(date)"
 echoInfo "------------------------------------------------"
 set -x
-exit 0

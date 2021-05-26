@@ -1,15 +1,22 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."
+
+mkdir -p $GLOB_STORE_DIR
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 CFG_CHECK="${COMMON_DIR}/configuring"
 timerStart "catching_up"
 timerStart "success"
+
+RESTART_COUNTER=$(globGet RESTART_COUNTER)
+if ($(isNaturalNumber $RESTART_COUNTER)) ; then
+    globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
+    globSet RESTART_TIME "$(date -u +%s)"
+fi
 
 while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
     if [ -f "$EXIT_CHECK" ]; then
@@ -38,5 +45,6 @@ fi
 rm -fv $CFG_CHECK
 if [ "${FAILED,,}" == "true" ] ; then
     echoErr "ERROR: $NODE_TYPE node startup failed"
+    sleep 3
     exit 1
 fi

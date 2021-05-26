@@ -3,8 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-START_TIME_NETWORKING="$(date -u +%s)"
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT)
+timerStart SETUP_NETWORKING
+PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_VALIDATOR_P2P_PORT)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
 PRIORITY_MIN="-31000"
@@ -37,15 +37,15 @@ timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart f
 echoInfo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 firewall-cmd --get-zones
 
-echoInfo "INFO: firewalld cleanup"
 firewall-cmd --permanent --zone=public --change-interface=$IFACE
-firewall-cmd --permanent --zone=demo --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from demo zone"
-firewall-cmd --permanent --zone=validator --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from validator zone"
-firewall-cmd --permanent --zone=sentry --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from validator zone"
 
-firewall-cmd --permanent --delete-zone=demo || echoInfo "INFO: Failed to delete demo zone"
-firewall-cmd --permanent --delete-zone=validator || echoInfo "INFO: Failed to delete validator zone"
-firewall-cmd --permanent --delete-zone=sentry || echoInfo "INFO: Failed to delete sentry zone"
+echoInfo "INFO: firewalld cleanup"
+DEFAULT_ZONES=(demo validator sentry seed)
+for zone in "${DEFAULT_ZONES[@]}" ; do
+    firewall-cmd --permanent --zone=$zone --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from $zone zone"
+    firewall-cmd --permanent --delete-zone=$zone || echoInfo "INFO: Failed to delete $zone zone"
+done
+
 firewall-cmd --permanent --new-zone=$FIREWALL_ZONE || echoInfo "INFO: Failed to create $FIREWALL_ZONE already exists"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface=$IFACE
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface=$IFACE
@@ -53,7 +53,7 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
 
-if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] ; then
+if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
@@ -61,23 +61,39 @@ if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] ; then
 fi
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_INTERX_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
+
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_P2P_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2P_PORT/tcp
+
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SNAPSHOT_P2P_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SNAPSHOT_P2P_PORT/tcp
+
+if [ "${INFRA_MODE,,}" == "validator" ] && [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_P2P_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_P2P_PORT/tcp
+else
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
+
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
+fi
+
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
+
+if [ "$DEFAULT_SSH_PORT" != "22" ] && ($(isPort "$DEFAULT_SSH_PORT")) ; then
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_SSH_PORT/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_SSH_PORT/tcp
+fi
+
 # required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=53/udp
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
-# required for SSH
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
-# required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=53/udp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ipv4\" source address=10.0.0.0/8 masquerade"
@@ -193,6 +209,6 @@ $KIRA_MANAGER/scripts/update-ifaces.sh
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: NETWORKING SCRIPT                  |"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $START_TIME_NETWORKING)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan SETUP_NETWORKING) seconds"
 echoWarn "------------------------------------------------"
 set -x

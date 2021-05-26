@@ -13,24 +13,30 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NETWORK: $KIRA_FRONTEND_NETWORK"
-echo "|  HOSTNAME: $KIRA_FRONTEND_DNS"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NETWORK: $KIRA_FRONTEND_NETWORK"
+echoWarn "|  HOSTNAME: $KIRA_FRONTEND_DNS"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
-
-mkdir -p $COMMON_LOGS
-
-# cleanup
-rm -f -v "$COMMON_LOGS/start.log" "$COMMON_PATH/executed" "$HALT_FILE"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+    chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
+    # globGet frontend_health_log_old
+    tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
+    # globGet frontend_start_log_old
+    tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
+    rm -rfv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS"
+
+    INTERNAL_HTTP_PORT="80"
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -39,13 +45,17 @@ docker run -d \
     --security-opt=apparmor:unconfined \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_FRONTEND_PORT:80 \
+    -p $KIRA_FRONTEND_PORT:$INTERNAL_HTTP_PORT \
     --hostname $KIRA_FRONTEND_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
     --network $CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    -e EXTERNAL_HTTP_PORT="$KIRA_FRONTEND_PORT" \
+    -e INTERNAL_HTTP_PORT="$INTERNAL_HTTP_PORT" \
+    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
+    -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -v $COMMON_PATH:/common \
@@ -58,9 +68,7 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
 fi
 
-echo "INFO: Waiting for frontend to start..."
+echoInfo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
 
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_SENTRY_NETWORK"
-# $KIRAMGR_SCRIPTS/restart-networks.sh "true" "$CONTAINER_NETWORK"
-# $KIRA_MANAGER/scripts/update-ifaces.sh
+systemctl restart kiraclean

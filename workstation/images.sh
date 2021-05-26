@@ -22,7 +22,7 @@ $KIRAMGR_SCRIPTS/update-base-image.sh
 $KIRAMGR_SCRIPTS/update-kira-image.sh & 
 $KIRAMGR_SCRIPTS/update-interx-image.sh &
 
-if [ "${INFRA_MODE,,}" != "validator" ] ; then
+if [ "${INFRA_MODE,,}" != "validator" ] && [ "${DEPLOYMENT_MODE,,}" != "minimal" ] ; then
     $KIRAMGR_SCRIPTS/update-frontend-image.sh &
 fi
 

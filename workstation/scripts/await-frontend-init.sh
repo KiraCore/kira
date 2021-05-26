@@ -3,35 +3,34 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 set -x
 
-i=0
-IS_STARTED="false"
 CONTAINER_NAME="frontend"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMEOUT=1800
 
-while [[ $i -le 40 ]]; do
-    i=$((i + 1))
+set +x
+echoWarn "--------------------------------------------------"
+echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|-------------------------------------------------"
+echoWarn "| COMMON DIR: $COMMON_PATH"
+echoWarn "|    TIMEOUT: $TIMEOUT seconds"
+echoWarn "|-------------------------------------------------"
+set -x
 
-    echoInfo "INFO: Waiting for $CONTAINER_NAME container to start..."
-    CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
-    if [ "${CONTAINER_EXISTS,,}" != "true" ]; then
-        sleep 12
-        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting..."
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME container was found"
-    fi
+globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
+timerStart $TIMER_NAME
+
+while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
+    echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
+    if [ "$(globGet ${CONTAINER_NAME}_EXISTS)" != "true" ]; then
+        echoWarn "WARNING: $CONTAINER_NAME container does not exists yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
-    IS_STARTED="false" && [ -f "$COMMON_PATH/executed" ] && IS_STARTED="true"
-    if [ "${IS_STARTED,,}" != "true" ]; then
-        sleep 20
-        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet"
-        continue
-    else
-        echoInfo "INFO: Success, $CONTAINER_NAME was initialized"
-        break
-    fi
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
+        echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
+    else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" && break ; fi
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -40,9 +39,11 @@ docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.s
 echoInfo "INFO: Printing all $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
-if [ "${IS_STARTED,,}" != "true" ]; then
-    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
-    exit 1
-else
-    echoInfo "INFO: $CONTAINER_NAME was started sucessfully"
-fi
+[ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time" && exit 1
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
+echoWarn "------------------------------------------------"
+set -x

@@ -1,13 +1,13 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
-set -x
+# quick edit: FILE="${SELF_CONTAINER}/defaultcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-timerStart
+timerStart DEFAULT_HEALTHCHECK
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: DEFAULT SEKAI HEALTHCHECK"
+echoWarn "|    DATE: $(date)"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -27,10 +27,11 @@ rm -rfv $STATUS_SCAN
 touch "$BLOCK_HEIGHT_FILE"
 
 echoInfo "INFO: Logs cleanup..."
-find "$SELF_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate self logs"
-find "$COMMON_LOGS" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate common logs"
-find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
-find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echoWarn "WARNING: Failed to truncate journal"
+find "$SELF_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate self logs"
+find "$COMMON_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate common logs"
+journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
+find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
+echoInfo "INFO: Logs cleanup finalized"
 
 FAILED="false"
 if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
@@ -42,7 +43,7 @@ if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
     elif [ -f "$CFG_CHECK" ] ; then
         echoInfo "INFO: Waiting for container configuration to be finalized..."
     else
-        echoInfo "INFO: health heck => STOP (halted)"
+        echoInfo "INFO: Health check => STOP (halted)"
     fi
 elif [ ! -f "$EXECUTED_CHECK" ] ; then
     echoWarn "WARNING: Setup of the '$NODE_TYPE' node was not finalized yet, no health data available"
@@ -78,13 +79,13 @@ else
     fi
 fi
 
-if [ ! -z "$EXTERNAL_ADDR" ] && [ ! -z "$EXTERNAL_P2P_PORT" ] ; then
-    echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR'"
-    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_P2P_PORT ; then 
+if [ ! -z "$EXTERNAL_ADDR" ] && [ ! -z "$EXTERNAL_PORT" ] ; then
+    echoInfo "INFO: Checking availability of the external address '$EXTERNAL_ADDR:$EXTERNAL_PORT'"
+    if timeout 15 nc -z $EXTERNAL_ADDR $EXTERNAL_PORT ; then 
         echoInfo "INFO: Success, your node external address '$EXTERNAL_ADDR' is exposed"
         echo "ONLINE" > "$COMMON_DIR/external_address_status"
     else
-        echoErr "ERROR: Your node external address is NOT visible to other nodes"
+        echoWarn "WARNING: Your node external address is NOT visible to other nodes"
         echo "OFFLINE" > "$COMMON_DIR/external_address_status"
     fi
 else
@@ -101,38 +102,26 @@ if [ "${FAILED,,}" == "true" ] ; then
         sleep 5
     fi
 else
-    echoInfo "INFO: Updating commit timeout..."
-    ACTIVE_VALIDATORS=$(jsonQuickParse "active_validators" $VALOPERS_FILE || echo "0")
-    (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-    if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-        TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-        TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-        (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-        TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-        
-        if [ "${TIMEOUT_COMMIT}" != "$CFG_timeout_commit" ] ; then
-            echoInfo "INFO: Commit timeout will be changed to $TIMEOUT_COMMIT"
-            CDHelper text lineswap --insert="CFG_timeout_commit=${TIMEOUT_COMMIT}" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="timeout_commit = \"${TIMEOUT_COMMIT}\"" --prefix="timeout_commit =" --path=$CFG
-        fi
-    fi
+    updateCommitTimeout || ( echoErr "ERROR: Failed to update commit timeout!" && sleep 3 )
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then
     set +x
     echoErr "------------------------------------------------"
     echoErr "|  FAILURE: DEFAULT SEKAI HEALTHCHECK          |"
-    echoErr "|  ELAPSED: $(timerSpan) seconds"
+    echoErr "|  ELAPSED: $(timerSpan DEFAULT_HEALTHCHECK) seconds"
+    echoErr "|    DATE: $(date)"
     echoErr "------------------------------------------------"
     set -x
+    sleep 10
+    exit 1
 else
     timerStart "success"
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "|  SUCCESS: DEFAULT SEKAI HEALTHCHECK          |"
-    echoWarn "|  ELAPSED: $(timerSpan) seconds"
+    echoWarn "|  ELAPSED: $(timerSpan DEFAULT_HEALTHCHECK) seconds"
+    echoWarn "|    DATE: $(date)"
     echoWarn "------------------------------------------------"
     set -x
 fi
-
-sleep 10

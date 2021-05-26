@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.2.3"
+SETUP_VER="v0.3.7.1"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -30,6 +30,7 @@ ARCHITECTURE=$(uname -m)
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
+[ -z "$DEFAULT_SSH_PORT" ] && DEFAULT_SSH_PORT="22"
 [ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
 [ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
 [ -z "$DEFAULT_GRPC_PORT" ] && DEFAULT_GRPC_PORT="9090"
@@ -37,17 +38,24 @@ ARCHITECTURE=$(uname -m)
 
 [ -z "$KIRA_FRONTEND_PORT" ] && KIRA_FRONTEND_PORT="80"
 [ -z "$KIRA_INTERX_PORT" ] && KIRA_INTERX_PORT="11000"
-[ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
-[ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
 
+[ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
 [ -z "$KIRA_SEED_RPC_PORT" ] && KIRA_SEED_RPC_PORT="16657"
-[ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
-[ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
-[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
-[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
 
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
-[ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
+[ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
+[ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
+
+[ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
+[ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
+
+[ -z "$KIRA_SNAPSHOT_P2P_PORT" ] && KIRA_SNAPSHOT_P2P_PORT="46656"
+[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
+
+[ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="56656"
+[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
+[ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="59090"
+
 [ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
 
 KIRA_HOME="/home/$KIRA_USER"
@@ -165,11 +173,10 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     # read only common directory
     DOCKER_COMMON_RO="/docker/shared/common_ro"
 
-    mkdir -p $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
     rm -rfv $KIRA_DUMP
-    mkdir -p "$KIRA_DUMP/INFRA/manager"
+    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-15" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-18" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -266,6 +273,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
 
+        CDHelper text lineswap --insert="DEFAULT_SSH_PORT=$DEFAULT_SSH_PORT" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DEFAULT_P2P_PORT=$DEFAULT_P2P_PORT" --prefix="DEFAULT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DEFAULT_RPC_PORT=$DEFAULT_RPC_PORT" --prefix="DEFAULT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DEFAULT_GRPC_PORT=$DEFAULT_GRPC_PORT" --prefix="DEFAULT_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -279,7 +287,11 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_RPC_PORT=$KIRA_PRIV_SENTRY_RPC_PORT" --prefix="KIRA_PRIV_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEED_RPC_PORT=$KIRA_SEED_RPC_PORT" --prefix="KIRA_SEED_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SNAPSHOT_RPC_PORT=$KIRA_SNAPSHOT_RPC_PORT" --prefix="KIRA_SNAPSHOT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SNAPSHOT_P2P_PORT=$KIRA_SNAPSHOT_P2P_PORT" --prefix="KIRA_SNAPSHOT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+
         CDHelper text lineswap --insert="KIRA_VALIDATOR_RPC_PORT=$KIRA_VALIDATOR_RPC_PORT" --prefix="KIRA_VALIDATOR_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_VALIDATOR_P2P_PORT=$KIRA_VALIDATOR_P2P_PORT" --prefix="KIRA_VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_VALIDATOR_GRPC_PORT=$KIRA_VALIDATOR_GRPC_PORT" --prefix="KIRA_VALIDATOR_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -335,13 +347,15 @@ journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
 find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
 find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
 
+$KIRA_MANAGER/setup/tools.sh
+
 set +x
 echo "INFO: Your host environment was initialized"
 echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
 echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 echo "INFO: Launching setup menu..."
 set -x
-source $KIRA_MANAGER/menu.sh
+source $KIRA_MANAGER/menu.sh "true"
 
 set +x
 echo "------------------------------------------------"

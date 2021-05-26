@@ -1,7 +1,6 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 echoInfo "INFO: Staring validator setup ..."
@@ -9,9 +8,12 @@ echoInfo "INFO: Staring validator setup ..."
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
 
+SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
+SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
+SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
+
 DATA_DIR="$SEKAID_HOME/data"
-SNAP_INFO="$DATA_DIR/snapinfo.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
@@ -27,11 +29,17 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   
     echoInfo "INFO: Importing priv key from common storage..."
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+
+    if (! $(isFileEmpty "$COMMON_DIR/addrbook.json")) ; then
+        echoInfo "INFO: Importing external addrbook file..."
+        cp -afv "$COMMON_DIR/addrbook.json" $SEKAID_HOME/config/addrbook.json
+    fi
   
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file or directory was found, attepting integrity verification and data recovery..."
-        cd $DATA_DIR
-        jar xvf $SNAP_FILE_INPUT
+        cd $DATA_DIR && timerStart SNAP_EXTRACT
+        jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME/config
   
         SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
@@ -96,16 +104,18 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
   
     rm -fv $SIGNER_KEY $FAUCET_KEY $VALIDATOR_KEY $TEST_KEY
     touch $EXECUTED_CHECK
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
 echoInfo "INFO: Local genesis.json SHA256 checksum:"
 sha256 $LOCAL_GENESIS
 
-if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${DEPLOYMENT_MODE}" != "minimal" ]; then
     echoInfo "INFO: External sync is expected from sentry or priv_sentry"
     while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.kiranet.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.kiranet.local 26656)
+        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
+        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
         if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
             echoInfo "INFO: Sentry or Private Sentry container is running!"
             break
@@ -121,4 +131,5 @@ $SELF_CONTAINER/configure.sh
 rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
-sekaid start --home=$SEKAID_HOME --trace  
+[ -z "$GRPC_ADDRESS" ] && sekaid start --home=$SEKAID_HOME --trace || \
+sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace

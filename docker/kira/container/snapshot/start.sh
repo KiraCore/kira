@@ -1,7 +1,6 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $SELF_SCRIPTS/utils.sh
 set -x
 
 echo "INFO: Staring snapshot setup..."
@@ -32,22 +31,22 @@ echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 ([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
-echo "$SNAP_FILENAME" >$SNAP_LATEST
+echo "$SNAP_FILENAME" > $SNAP_LATEST
 
 while [ -f "$SNAP_DONE" ]; do
   echoInfo "INFO: Snapshot was already finalized, nothing to do here"
   sleep 600
 done
 
-while ! ping -c1 sentry &>/dev/null; do
-  echoInfo "INFO: Waiting for ping response form sentry node... ($(date))"
-  sleep 5
+while ! ping -c1 $PING_TARGET &>/dev/null; do
+    echoInfo "INFO: Waiting for ping response form $PING_TARGET node... ($(date))"
+    sleep 5
 done
-echoInfo "INFO: Sentry IP Found: $(getent hosts sentry | awk '{ print $1 }')"
+echoInfo "INFO: Sentry IP Found: $(getent hosts $PING_TARGET | awk '{ print $1 }')"
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
-  echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
-  sleep 5
+    echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
+    sleep 5
 done
 
 echoInfo "INFO: Sucess, genesis file was found!"
@@ -66,10 +65,11 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file was found, attepting data recovery..."
-        cd $DATA_DIR
-        jar xvf $SNAP_FILE_INPUT
+        cd $DATA_DIR && timerStart SNAP_EXTRACT
+        jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME
-
+        
         if [ -f "$DATA_GENESIS" ]; then
             echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksums..."
             SHA256_DATA_GENESIS=$(sha256 $DATA_GENESIS)
@@ -88,17 +88,21 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rfv $LOCAL_GENESIS
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     echo "0" > $SNAP_PROGRESS
+    globSet RESTART_COUNTER 0
+    globSet START_TIME "$(date -u +%s)"
 fi
 
-echoInfo "INFO: External sync is expected from sentry or priv_sentry"
+echoInfo "INFO: External sync is expected from seed, sentry, priv_sentry or validator node"
 while : ; do
-    SENTRY_OPEN=$(isPortOpen sentry.sentrynet.local 26656)
-    PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.sentrynet.local 26656)
-    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
-        echoInfo "INFO: Sentry or Private Sentry container is running!"
+    SENTRY_OPEN=$(isPortOpen sentry.local 26656)
+    PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
+    VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
+    SEED_OPEN=$(isPortOpen seed.local 26656)
+    if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] || [ "$SEED_OPEN" == "true" ]  ; then
+        echoInfo "INFO: Sentry, Private Sentry, Seed or Validator container is running!"
         break
     else
-        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
+        echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN), seed ($SEED_OPEN) or validator ($VALIDATOR_OPEN) to start..."
         sleep 15
     fi
 done
@@ -128,7 +132,7 @@ while :; do
         echoInfo "INFO: Updating progress bar..."
         [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
         [[ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ]] && PERCENTAGE="100"
-        echo "$PERCENTAGE" >$SNAP_PROGRESS
+        echo "$PERCENTAGE" > $SNAP_PROGRESS
     fi
 
     if [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
@@ -138,6 +142,7 @@ while :; do
         echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
         LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
     else
+        tryCat ./output.log | tail -n 50
         echoWarn "WARNING: Blocks are not changing..."
     fi
 
@@ -145,7 +150,7 @@ while :; do
         echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$HALT_HEIGHT ($PERCENTAGE %)"
     else
         echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
-        cat ./output.log | tail -n 100
+        tryCat ./output.log | tail -n 100
         kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
         sleep 5
         kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"

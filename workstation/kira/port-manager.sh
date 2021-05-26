@@ -20,6 +20,8 @@ while : ; do
     [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && TYPE="P2P"
+    [ "$PORT" == "$KIRA_SNAPSHOT_P2P_PORT" ] && TYPE="P2P"
+    [ "$PORT" == "$KIRA_VALIDATOR_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_INTERX_PORT" ] && TYPE="API"
     [ "$PORT" == "$KIRA_FRONTEND_PORT" ] && TYPE="HTTP"
     PORT_TMP="${PORT}${WHITESPACE}"
