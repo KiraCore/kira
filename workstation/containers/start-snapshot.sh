@@ -64,31 +64,27 @@ SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xarg
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-EXTERNAL_P2P_PORT=""
+EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
+EXTERNAL_RPC_PORT="$KIRA_SNAPSHOT_RPC_PORT"
 NODE_ID="$SNAPSHOT_NODE_ID"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
+
+if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
+    cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
+else
+    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+fi
 
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
     CFG_persistent_peers="tcp://$VALIDATOR_SEED"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    # pretend to be a sentry node
-
-    if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
-        cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
-        cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
-    else
-        cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-        cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-    fi
-
     CFG_persistent_peers="tcp://$SEED_SEED"
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
-    EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
-    NODE_ID="$SENTRY_NODE_ID"
-    cp -afv "$KIRA_SECRETS/sentry_node_key.json" $COMMON_PATH/node_key.json
 else
     CFG_persistent_peers="tcp://$SENTRY_SEED"
     PING_TARGET="sentry.local"
@@ -107,7 +103,8 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_SNAPSHOT_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $EXTERNAL_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $EXTERNAL_RPC_PORT:$DEFAULT_RPC_PORT \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \

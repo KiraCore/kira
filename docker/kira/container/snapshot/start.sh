@@ -31,7 +31,7 @@ echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 ([ -z "$HALT_HEIGHT" ] || [[ $HALT_HEIGHT -le 0 ]]) && echo "ERROR: Invalid snapshot height, cant be less or equal to 0" && exit 1
 
-echo "$SNAP_FILENAME" >$SNAP_LATEST
+echo "$SNAP_FILENAME" > $SNAP_LATEST
 
 while [ -f "$SNAP_DONE" ]; do
   echoInfo "INFO: Snapshot was already finalized, nothing to do here"
@@ -132,7 +132,7 @@ while :; do
         echoInfo "INFO: Updating progress bar..."
         [[ $TOP_SNAP_BLOCK -lt $HALT_HEIGHT ]] && PERCENTAGE=$(echo "scale=2; ( ( 100 * $TOP_SNAP_BLOCK ) / $HALT_HEIGHT )" | bc)
         [[ $TOP_SNAP_BLOCK -ge $HALT_HEIGHT ]] && PERCENTAGE="100"
-        echo "$PERCENTAGE" >$SNAP_PROGRESS
+        echo "$PERCENTAGE" > $SNAP_PROGRESS
     fi
 
     if [[ "$TOP_SNAP_BLOCK" -ge "$HALT_HEIGHT" ]]; then
@@ -142,6 +142,7 @@ while :; do
         echoInfo "INFO: Success, block changed! ($LAST_SNAP_BLOCK -> $TOP_SNAP_BLOCK)"
         LAST_SNAP_BLOCK="$TOP_SNAP_BLOCK"
     else
+        tryCat ./output.log | tail -n 50
         echoWarn "WARNING: Blocks are not changing..."
     fi
 
@@ -149,7 +150,7 @@ while :; do
         echoInfo "INFO: Waiting for snapshot node to sync  $TOP_SNAP_BLOCK/$HALT_HEIGHT ($PERCENTAGE %)"
     else
         echoWarn "WARNING: Node finished running, starting tracking and checking final height..."
-        cat ./output.log | tail -n 100
+        tryCat ./output.log | tail -n 100
         kill -15 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P1"
         sleep 5
         kill -9 "$PID1" || echoInfo "INFO: Failed to kill sekai PID $PID1 gracefully P2"
