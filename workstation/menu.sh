@@ -6,7 +6,7 @@ set +x
 SKIP_SELECTION=$1
 [ -z "$SKIP_SELECTION" ] && SKIP_SELECTION="true"
 
-if [ "${SKIP_SELECTION,,}" == "true" ] && [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && [ "${INFRA_MODE,,}" != "local" ] ; then
+if [ "${SKIP_SELECTION,,}" == "false" ] && [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && [ "${INFRA_MODE,,}" != "local" ] ; then
     printf "\033c"
     printWidth=47
     echo -e "\e[31;1m-------------------------------------------------"

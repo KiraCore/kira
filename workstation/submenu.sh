@@ -133,6 +133,7 @@ while :; do
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
     displayAlign left $printWidth " [3] | Change Default Branches"
     displayAlign left $printWidth " [4] | Change Deployment Mode"
+    displayAlign left $printWidth " [5] | Change Infrastructure Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [R] | Return to Main Menu"
@@ -183,7 +184,7 @@ while :; do
 
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     ;;
-  r*)
+  5*)
     $KIRA_MANAGER/menu.sh "false"
     exit 0
     ;;
