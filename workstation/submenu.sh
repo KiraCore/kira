@@ -136,7 +136,6 @@ while :; do
     displayAlign left $printWidth " [5] | Change Infrastructure Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
-    displayAlign left $printWidth " [R] | Return to Main Menu"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c\n"
     echo ""

@@ -13,7 +13,7 @@ touch "$WHITELIST" "$BLACKLIST"
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
-    PORT_EXPOSURE="PORT_EXPOSURE_$PORT" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+    PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
     [ "$PORT" == "$KIRA_SENTRY_GRPC_PORT" ] && TYPE="GRPC"
     [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
@@ -85,24 +85,23 @@ echo -e "\e[37;1m--------------------------------------------------"
     if [ "${OPTION,,}" == "a" ] ; then
         echo "INFO: Enabling public access to the port $PORT..."
         PORT_EXPOSURE="enabled"
-        CDHelper text lineswap --insert="PORT_EXPOSURE_$PORT=$PORT_EXPOSURE" --prefix="PORT_EXPOSURE_$PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        REINITALIZE="true"
     elif [ "${OPTION,,}" == "b" ] ; then
         echo "INFO: Enabling whitelist access to the port $PORT..."
         PORT_EXPOSURE="whitelist"
-        CDHelper text lineswap --insert="PORT_EXPOSURE_$PORT=$PORT_EXPOSURE" --prefix="PORT_EXPOSURE_$PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        REINITALIZE="true"
     elif [ "${OPTION,,}" == "c" ] ; then
         echo "INFO: Enaling access blacklist to the port $PORT..."
         PORT_EXPOSURE="blacklist"
-        CDHelper text lineswap --insert="PORT_EXPOSURE_$PORT=$PORT_EXPOSURE" --prefix="PORT_EXPOSURE_$PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        REINITALIZE="true"
     elif [ "${OPTION,,}" == "d" ] ; then
         echo "INFO: Disabling access to the port $PORT..."
         PORT_EXPOSURE="disabled"
-        CDHelper text lineswap --insert="PORT_EXPOSURE_$PORT=$PORT_EXPOSURE" --prefix="PORT_EXPOSURE_$PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    fi
+
+    if [[ "${OPTION,,}" =~ ^(a|b|c|d)$ ]] ; then
+        globSet "PORT_EXPOSURE_$PORT" "$PORT_EXPOSURE"
         REINITALIZE="true"
-    elif [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "f" ] ; then
+    fi
+
+    if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "f" ] ; then
         while : ; do
             [ "${OPTION,,}" == "e" ] && FILE=$WHITELIST && TARGET="WHITELIST"
             [ "${OPTION,,}" == "f" ] && FILE=$BLACKLIST && TARGET="BLACKLIST"

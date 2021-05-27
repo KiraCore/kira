@@ -149,7 +149,7 @@ for PORT in "${PORTS[@]}" ; do
     mkdir -p "$PORT_CFG_DIR"
     touch "$WHITELIST" "$BLACKLIST"
 
-    PORT_EXPOSURE="PORT_EXPOSURE_$PORT" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+    PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
 
     if [ "${PORT_EXPOSURE,,}" == "disabled" ] ; then

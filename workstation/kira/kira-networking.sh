@@ -46,7 +46,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snapshot Node Monitor" && TYPE="HTTP"
         [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Validator Node Monitor" && TYPE="HTTP"
 
-        PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+        PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"
         NAME_TMP="${NAME}${WHITESPACE}"
