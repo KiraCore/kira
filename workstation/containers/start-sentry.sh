@@ -85,6 +85,7 @@ docker run -d \
     -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
     -p $KIRA_SENTRY_GRPC_PORT:$DEFAULT_GRPC_PORT \
+    -p $KIRA_SENTRY_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -96,6 +97,7 @@ docker run -d \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
+    -e CFG_prometheus="true" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \

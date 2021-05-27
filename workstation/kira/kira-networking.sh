@@ -5,21 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
-
-if [ "${INFRA_MODE,,}" == "seed" ] ; then
-    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_RPC_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SEED_P2P_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_INTERX_PORT)
-elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-        PORTS=($KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT $KIRA_VALIDATOR_P2P_PORT)
-    else
-        PORTS=($KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
-    fi
-else
-    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
-fi
-
+PORTS=($EXPOSED_PORTS)
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
 touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
@@ -41,16 +27,25 @@ echo -e "\e[37;1m--------------------------------------------------"
     LAST_SNAP=""
     for p in "${PORTS[@]}" ; do
         i=$((i + 1))
+
         NAME=""
+        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
         [ "$p" == "$KIRA_SENTRY_GRPC_PORT" ] && NAME="Public Sentry" && TYPE="GRPC"
         [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
+        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
+        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
+
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_SNAPSHOT_P2P_PORT" ] && NAME="Snapshot Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
         [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
-        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
+
+        [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Public Sentry Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && NAME="Private Sentry Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snapshot Node Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Validator Node Monitor" && TYPE="HTTP"
+
         PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"

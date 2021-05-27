@@ -66,7 +66,6 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P
 
 NODE_ID="$SNAPSHOT_NODE_ID"
 EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
-EXTERNAL_RPC_PORT="$KIRA_SNAPSHOT_RPC_PORT"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
@@ -107,8 +106,9 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $EXTERNAL_P2P_PORT:$DEFAULT_P2P_PORT \
-    -p $EXTERNAL_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SNAPSHOT_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $KIRA_SNAPSHOT_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SNAPSHOT_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -129,6 +129,7 @@ docker run -d \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_pex="true" \
+    -e CFG_prometheus="true" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="64" \

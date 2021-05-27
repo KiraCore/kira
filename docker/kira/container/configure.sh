@@ -266,6 +266,14 @@ echoInfo "$CFG_persistent_peers"
 # Will create a new, randomly named directory within, and remove it when done.
 [ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
 
+
+# When true, Prometheus metrics are served under /metrics on
+# PrometheusListenAddr.
+# Check out the documentation for the list of available metrics.
+[ ! -z "$CFG_prometheus" ] && CDHelper text lineswap --insert="prometheus = $CFG_prometheus" --prefix="prometheus =" --path=$CFG
+# Address to listen for Prometheus collector(s) connections
+[ ! -z "$CFG_prometheus_listen_addr" ] && CDHelper text lineswap --insert="prometheus_listen_addr = \"$CFG_prometheus_listen_addr\"" --prefix="prometheus_listen_addr =" --path=$CFG
+
 ##########################
 # app.toml configuration
 ##########################
