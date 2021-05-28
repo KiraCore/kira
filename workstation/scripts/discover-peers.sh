@@ -73,10 +73,10 @@ if (! $(isNaturalNumber "$MIN_HEIGHT")) ; then echoWarn "WARNING: Latest block h
 echoInfo "INFO: Processing peers list..."
 rm -fv "$TMP_PEERS_SHUFF" "$OUTPUT" "$TMP_OUTPUT"
 shuf $TMP_PEERS > $TMP_PEERS_SHUFF && rm -fv $TMP_PEERS
-touch $OUTPUT $TMP_OUTPUT
+touch $OUTPUT $TMP_OUTPUT $TMP_PEERS_SHUFF
 
 echoInfo "INFO: List of known peers"
-cat $TMP_PEERS
+cat $TMP_PEERS_SHUFF
 
 i=0
 total=0
