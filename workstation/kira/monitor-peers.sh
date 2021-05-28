@@ -40,7 +40,6 @@ touch $TMP_BOOK
 (timeout 60 docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 (timeout 60 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 (timeout 60 docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
-[ "${INFRA_MODE,,}" == "validator" ] && [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && \
 (timeout 60 docker exec -i validator cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
@@ -68,7 +67,7 @@ TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
 TMP_BOOK_PUBLIC_SNAPS="/tmp/addrbook.public-snaps.txt"
 rm -fv "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
 touch "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
-P2P_PORTS=(16656 26656 36656 46656 56656)
+P2P_PORTS=(16656 26656 36656 56656)
 
 i=0
 i_snaps=0
@@ -77,7 +76,8 @@ HEIGHT=0
 while read ip; do
     sleep 2
     total=$(($total + 1))
-    ip=$(echo $ip | xargs || "")
+    ip=$(delWhitespaces $ip)
+    ($(isNullOrEmpty "$ip")) && continue
     set +x
     (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public IPv4 ($ip)" && continue
 
@@ -105,7 +105,7 @@ while read ip; do
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-    [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
+    [[ $((latest_block_height + 500)) -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
     set +x
 
     # do not reject self otherwise nothing can be exposed in the peers list
@@ -156,6 +156,10 @@ while read ip; do
         echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
         continue 
     else
+        if grep -q "$peer" "$TMP_BOOK_PUBLIC_SNAPS"; then
+            echoWarn "WARNING: Peer '$peer' is already present in the snap book" && continue 
+        fi
+
         SIZE=$(urlContentLength "$SNAP_URL")
         if [[ $SIZE -gt $MIN_SNAP_SIZE ]] ; then
             i_snaps=$(($i_snaps + 1))

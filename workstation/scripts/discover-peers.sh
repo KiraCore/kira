@@ -129,11 +129,11 @@ while : ; do
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     if [ "${SNAPS_ONLY,,}" != "true" ] ; then
-        seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
-        sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
-        priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
-        validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
-    
+        seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+
         if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
         if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
         if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
