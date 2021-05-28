@@ -20,6 +20,7 @@ SCRIPT_START_TIME="$(date -u +%s)"
 
 TMP_OUTPUT="${OUTPUT}.tmp" 
 TMP_PEERS="/tmp/$ADDR.peers"
+TMP_SNAPS="/tmp/$ADDR.snaps"
 TMP_PEERS_SHUFF="/tmp/$ADDR.peers.shuff"
 URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt"
 URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
@@ -39,14 +40,18 @@ echoWarn "------------------------------------------------"
 set -x
 
 echoInfo "INFO: Fetching peers file..."
-rm -fv $TMP_PEERS
-DOWNLOAD_SUCCESS="true" && wget $URL_PEERS -O $TMP_PEERS || DOWNLOAD_SUCCESS="false"
+rm -fv $TMP_PEERS $TMP_SNAPS
+wget $URL_PEERS -O $TMP_PEERS || echoWarn "WARNING: Failed to download peers"
+wget $URL_SNAPS -O $TMP_SNAPS || echoWarn "WARNING: Failed to download snaps"
+touch $TMP_PEERS $TMP_SNAPS
 
-if ($(isFileEmpty $TMP_PEERS)) || [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
-    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers list"
-    rm -fv $TMP_PEERS
+if ($(isFileEmpty $TMP_PEERS)) || ($(isFileEmpty $TMP_SNAPS)) ; then
+    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers or snaps list"
+    rm -fv $TMP_PEERS $TMP_SNAPS
     exit 1
 fi
+
+cat $TMP_SNAPS >> $TMP_PEERS
 
 BASE_STATUS=$(timeout 10 curl $ADDR:$DEFAULT_INTERX_PORT/api/status 2>/dev/null || echo -n "")
 if ($(isNullOrEmpty "$BASE_STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ADDR)" && exit 1 ; fi
