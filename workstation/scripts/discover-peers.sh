@@ -45,13 +45,15 @@ wget $URL_PEERS -O $TMP_PEERS || echoWarn "WARNING: Failed to download peers"
 wget $URL_SNAPS -O $TMP_SNAPS || echoWarn "WARNING: Failed to download snaps"
 touch $TMP_PEERS $TMP_SNAPS
 
-if ($(isFileEmpty $TMP_PEERS)) || ($(isFileEmpty $TMP_SNAPS)) ; then
-    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers or snaps list"
+cat $TMP_SNAPS >> $TMP_PEERS
+
+sed -i '/^$/d' $TMP_PEERS
+
+if ($(isFileEmpty $TMP_PEERS)) ; then
+    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers"
     rm -fv $TMP_PEERS $TMP_SNAPS
     exit 1
 fi
-
-cat $TMP_SNAPS >> $TMP_PEERS
 
 BASE_STATUS=$(timeout 10 curl $ADDR:$DEFAULT_INTERX_PORT/api/status 2>/dev/null || echo -n "")
 if ($(isNullOrEmpty "$BASE_STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ADDR)" && exit 1 ; fi
@@ -73,6 +75,9 @@ rm -fv "$TMP_PEERS_SHUFF" "$OUTPUT" "$TMP_OUTPUT"
 shuf $TMP_PEERS > $TMP_PEERS_SHUFF && rm -fv $TMP_PEERS
 touch $OUTPUT $TMP_OUTPUT
 
+echoInfo "INFO: List of known peers"
+cat $TMP_PEERS
+
 i=0
 total=0
 HEIGHT=0
@@ -81,7 +86,7 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
-MAX_HANDSHAKE_TIME="2500"
+MAX_HANDSHAKE_TIME="1500"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
