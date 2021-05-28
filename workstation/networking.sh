@@ -85,7 +85,7 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRYRPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_RPC_PORT/tcp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SNAPSHOT_RPC_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SNAPSHOT_RPC_PORT/tcp
