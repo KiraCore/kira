@@ -29,16 +29,21 @@ echo -e "\e[37;1m--------------------------------------------------"
         i=$((i + 1))
 
         NAME=""
-        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_SENTRY_GRPC_PORT" ] && NAME="Public Sentry" && TYPE="GRPC"
-        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
+        
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
         [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
 
+        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
         [ "$p" == "$KIRA_SNAPSHOT_P2P_PORT" ] && NAME="Snapshot Node" && TYPE="P2P"
         [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P"
+
+        [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC"
+        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
+        [ "$p" == "$KIRA_PRIV_SENTRY_RPC_PORT" ] && NAME="Private Sentry" && TYPE="RPC"
+        [ "$p" == "$KIRA_SNAPSHOT_RPC_PORT" ] && NAME="Snapshot Node" && TYPE="RPC"
+        [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC"
 
         [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP"
         [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Public Sentry Monitor" && TYPE="HTTP"

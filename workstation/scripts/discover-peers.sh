@@ -188,6 +188,10 @@ while : ; do
             echoWarn "WARNING: Ping time $HANDSHAKE_TIME is out of upper safe range $MAX_HANDSHAKE_TIME ms ($ip)"
             continue
         fi
+
+        chain_id=$(tmconnect network --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
+
         peer="${peer} $HANDSHAKE_TIME"
     fi
 

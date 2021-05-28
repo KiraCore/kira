@@ -131,6 +131,14 @@ while read ip; do
             echoWarn "WARNING: Node Id '$node_id' is already present in the address book ($ip)" && continue 
         fi
 
+        chain_id=$(tmconnect network --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue
+
+        rpc_port=$((port + 1))
+        if (! $(isPortOpen "$ip" "$rpc_port" "0.25")) ; then
+            echoWarn "WARNING: RPC Port '$rpc_port' is closed ($ip)" && continue
+        fi
+
         peer="$node_id@$ip:$port"
         echoInfo "INFO: Active peer found: '$peer'"
         echo "$peer" >> $TMP_BOOK_PUBLIC

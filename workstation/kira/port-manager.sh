@@ -15,15 +15,21 @@ while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
-    [ "$PORT" == "$KIRA_SENTRY_GRPC_PORT" ] && TYPE="GRPC"
-    [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
+    
+    [ "$PORT" == "$KIRA_INTERX_PORT" ] && TYPE="API"
+    [ "$PORT" == "$KIRA_FRONTEND_PORT" ] && TYPE="HTTP"
+
     [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SNAPSHOT_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_VALIDATOR_P2P_PORT" ] && TYPE="P2P"
-    [ "$PORT" == "$KIRA_INTERX_PORT" ] && TYPE="API"
-    [ "$PORT" == "$KIRA_FRONTEND_PORT" ] && TYPE="HTTP"
+
+    [ "$PORT" == "$KIRA_SEED_RPC_PORT" ] && TYPE="RPC"
+    [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
+    [ "$PORT" == "$KIRA_PRIV_SENTRY_RPC_PORT" ] && TYPE="RPC"
+    [ "$PORT" == "$KIRA_SNAPSHOT_RPC_PORT" ] && TYPE="RPC"
+    [ "$PORT" == "$KIRA_VALIDATOR_RPC_PORT" ] && TYPE="RPC"
 
     [ "$PORT" == "$KIRA_SEED_PROMETHEUS_PORT" ] && TYPE="HTTP"
     [ "$PORT" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && TYPE="HTTP"

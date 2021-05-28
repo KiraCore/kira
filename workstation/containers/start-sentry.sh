@@ -84,7 +84,6 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SENTRY_GRPC_PORT:$DEFAULT_GRPC_PORT \
     -p $KIRA_SENTRY_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SENTRY_DNS \
     --restart=always \

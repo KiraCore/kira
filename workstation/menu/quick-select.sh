@@ -220,7 +220,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                 [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
                 [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
                 [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
-                [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                [[ $SNAP_HEIGHT -gt $HEIGHT ]] && HEIGHT=$SNAP_HEIGHT
                 set -x
                 DOWNLOAD_SUCCESS="false"
             else
