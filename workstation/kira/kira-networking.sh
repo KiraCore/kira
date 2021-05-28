@@ -26,8 +26,6 @@ echo -e "\e[37;1m--------------------------------------------------"
     i=-1
     LAST_SNAP=""
     for p in "${PORTS[@]}" ; do
-        i=$((i + 1))
-
         NAME=""
         
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
@@ -46,17 +44,21 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC"
 
         [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Public Sentry Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && NAME="Private Sentry Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snapshot Node Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Validator Node Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && NAME="Priv. Sentry Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snap. Node Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP"
+
+        #[ -z "$NAME" ] && continue
+        i=$((i + 1))
 
         PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"
         NAME_TMP="${NAME}${WHITESPACE}"
         TYPE_TMP="${TYPE}${WHITESPACE}"
-        echo "| [$i] | ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:22} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
+        INDEX="[$i]${WHITESPACE}"
+        echo "| ${INDEX:0:5}| ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:21} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
     done
        echo "|------------------------------------------------|"
        [ "${PORTS_EXPOSURE,,}" != "enabled" ] && \
