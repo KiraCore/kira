@@ -106,6 +106,7 @@ docker run -d \
     -e CFG_max_num_inbound_peers="1024" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \
+    -e CFG_trust_period="87600h" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
