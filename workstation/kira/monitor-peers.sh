@@ -100,10 +100,10 @@ while read ip; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
 
     set -x
-    STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
+    STATUS=$(timeout 3 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     KIRA_STATUS=$(timeout 3 curl "$ip:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
@@ -126,7 +126,7 @@ while read ip; do
 
     peer=""
     for port in "${P2P_PORTS[@]}" ; do
-        if ! timeout 0.1 nc -z $ip $port ; then
+        if ! timeout 1 nc -z $ip $port ; then
             echoWarn "WARNING: Port $port is closed ($ip)"
             continue
         fi
