@@ -92,11 +92,15 @@ else
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/addrbook.json"
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/peers" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/peers"
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/seeds" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/seeds"
+ADDRBOOK_DEST="$COMMON_PATH/addrbook.json"
+PEERS_DEST="$COMMON_PATH/peers"
+SEEDS_DEST="$COMMON_PATH/seeds"
+rm -fv $ADDRBOOK_DEST $PEERS_DEST $SEEDS_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/addrbook.json" $ADDRBOOK_DEST || echo "" > $ADDRBOOK_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/peers" $PEERS_DEST || echo "" > $PEERS_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/seeds" $SEEDS_DEST || echo "" > $SEEDS_DEST
 
-if ($(isFileEmpty $COMMON_PATH/addrbook.json)) && ($(isFileEmpty $COMMON_PATH/addrbook.json)) && ($(isFileEmpty $COMMON_PATH/addrbook.json)) ; then
+if ($(isFileEmpty $ADDRBOOK_DEST)) && ($(isFileEmpty $SEEDS_DEST)) && ($(isFileEmpty $PEERS_DEST)) ; then
     echoErr "ERROR: Failed to start snapshot contianer, could not find addressbook, seeds nor peers list"
     exit 1
 fi
