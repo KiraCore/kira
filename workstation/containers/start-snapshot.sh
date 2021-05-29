@@ -70,28 +70,35 @@ cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.js
 
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
-if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
-    cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
-    cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
-else
-    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-fi
-
+PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
 CFG_seeds=""
 CFG_persistent_peers=""
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    CFG_seeds=""
+    CONTAINER_TARGET="seed"
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-    PING_TARGET="sentry.local"
+    if [ "${PRIV_CONN_PRIORITY,,}" == "true" ] ; then
+        CONTAINER_TARGET="priv_sentry"
+        PING_TARGET="priv-sentry.local"
+    else
+        CONTAINER_TARGET="sentry"
+        PING_TARGET="sentry.local"
+    fi
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+fi
+
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/addrbook.json"
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/peers" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/peers"
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/seeds" $TMP_BOOK_DUMP || echo "" > "$COMMON_PATH/seeds"
+
+if ($(isFileEmpty $COMMON_PATH/addrbook.json)) && ($(isFileEmpty $COMMON_PATH/addrbook.json)) && ($(isFileEmpty $COMMON_PATH/addrbook.json)) ; then
+    echoErr "ERROR: Failed to start snapshot contianer, could not find addressbook, seeds nor peers list"
+    exit 1
 fi
 
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
