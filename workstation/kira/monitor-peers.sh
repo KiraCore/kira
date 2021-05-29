@@ -83,7 +83,6 @@ i_snaps=0
 total=0
 HEIGHT=0
 while read ip; do
-    sleep 2
     total=$(($total + 1))
     ip=$(delWhitespaces $ip | tr -d '"' || "")
     ($(isNullOrEmpty "$ip")) && continue
@@ -102,6 +101,7 @@ while read ip; do
 
     if ! timeout 1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
 
+    sleep 1
     set -x
     STATUS=$(timeout 3 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
