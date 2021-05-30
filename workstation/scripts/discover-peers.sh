@@ -134,10 +134,11 @@ while : ; do
         priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
         validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
 
-        if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+
+        if ! grep -q "$seed_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$seed_node_id")) ; then echoWarn "WARNING: Extra seed peer found ($seed_node_id)" && echo "${seed_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$sentry_node_id")) ; then echoWarn "WARNING: Extra sentry peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$priv_sentry_node_id")) ; then echoWarn "WARNING: Extra priv_sentry peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$validator_node_id")) ; then echoWarn "WARNING: Extra validator peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
     fi
 
     if ! timeout 0.25 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
