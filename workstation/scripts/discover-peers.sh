@@ -20,6 +20,7 @@ SCRIPT_START_TIME="$(date -u +%s)"
 
 TMP_OUTPUT="${OUTPUT}.tmp" 
 TMP_PEERS="/tmp/$ADDR.peers"
+TMP_SNAPS="/tmp/$ADDR.snaps"
 TMP_PEERS_SHUFF="/tmp/$ADDR.peers.shuff"
 URL_PEERS="$ADDR:$DEFAULT_INTERX_PORT/download/peers.txt"
 URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
@@ -39,12 +40,18 @@ echoWarn "------------------------------------------------"
 set -x
 
 echoInfo "INFO: Fetching peers file..."
-rm -fv $TMP_PEERS
-DOWNLOAD_SUCCESS="true" && wget $URL_PEERS -O $TMP_PEERS || DOWNLOAD_SUCCESS="false"
+rm -fv $TMP_PEERS $TMP_SNAPS
+wget $URL_PEERS -O $TMP_PEERS || echoWarn "WARNING: Failed to download peers"
+wget $URL_SNAPS -O $TMP_SNAPS || echoWarn "WARNING: Failed to download snaps"
+touch $TMP_PEERS $TMP_SNAPS
 
-if ($(isFileEmpty $TMP_PEERS)) || [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
-    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers list"
-    rm -fv $TMP_PEERS
+cat $TMP_SNAPS >> $TMP_PEERS
+
+sed -i '/^$/d' $TMP_PEERS
+
+if ($(isFileEmpty $TMP_PEERS)) ; then
+    echoErr "ERROR: Discovery address '$ADDR' is not exposing public peers"
+    rm -fv $TMP_PEERS $TMP_SNAPS
     exit 1
 fi
 
@@ -66,7 +73,10 @@ if (! $(isNaturalNumber "$MIN_HEIGHT")) ; then echoWarn "WARNING: Latest block h
 echoInfo "INFO: Processing peers list..."
 rm -fv "$TMP_PEERS_SHUFF" "$OUTPUT" "$TMP_OUTPUT"
 shuf $TMP_PEERS > $TMP_PEERS_SHUFF && rm -fv $TMP_PEERS
-touch $OUTPUT $TMP_OUTPUT
+touch $OUTPUT $TMP_OUTPUT $TMP_PEERS_SHUFF
+
+echoInfo "INFO: List of known peers"
+cat $TMP_PEERS_SHUFF
 
 i=0
 total=0
@@ -76,7 +86,7 @@ HEIGHT=0
 MAX_BLOCK_SIZE="131072000"
 MIN_SNAP_SIZE="524288"
 
-MAX_HANDSHAKE_TIME="2500"
+MAX_HANDSHAKE_TIME="1500"
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 LOCAL_IP=$(globGet "LOCAL_IP")
@@ -119,15 +129,16 @@ while : ; do
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     if [ "${SNAPS_ONLY,,}" != "true" ] ; then
-        seed_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/seed_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $seed_sentry_node_id)) && seed_sentry_node_id=""
-        sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/sentry_node_id" 2>/dev/null || echo -n "")  && (! $(isNodeId $sentry_node_id)) && sentry_node_id=""
-        priv_sentry_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $priv_sentry_node_id)) && priv_sentry_node_id=""
-        validator_node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/validator_node_id" 2>/dev/null || echo -n "") && (! $(isNodeId $validator_node_id)) && validator_node_id=""
-    
-        if ! grep -q "$seed_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($seed_sentry_node_id)" && echo "${seed_sentry_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
-        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" ; then echoWarn "WARNING: Extra peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
+        seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+
+
+        if ! grep -q "$seed_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$seed_node_id")) ; then echoWarn "WARNING: Extra seed peer found ($seed_node_id)" && echo "${seed_node_id}@${ip}:16656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$sentry_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$sentry_node_id")) ; then echoWarn "WARNING: Extra sentry peer found ($sentry_node_id)" && echo "${sentry_node_id}@${ip}:26656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$priv_sentry_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$priv_sentry_node_id")) ; then echoWarn "WARNING: Extra priv_sentry peer found ($priv_sentry_node_id)" && echo "${priv_sentry_node_id}@${ip}:36656" >> $TMP_PEERS_SHUFF ; fi
+        if ! grep -q "$validator_node_id" "$TMP_PEERS_SHUFF" && ($(isNodeId "$validator_node_id")) ; then echoWarn "WARNING: Extra validator peer found ($validator_node_id)" && echo "${validator_node_id}@${ip}:56656" >> $TMP_PEERS_SHUFF ; fi
     fi
 
     if ! timeout 0.25 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
@@ -188,6 +199,10 @@ while : ; do
             echoWarn "WARNING: Ping time $HANDSHAKE_TIME is out of upper safe range $MAX_HANDSHAKE_TIME ms ($ip)"
             continue
         fi
+
+        chain_id=$(tmconnect network --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue 
+
         peer="${peer} $HANDSHAKE_TIME"
     fi
 

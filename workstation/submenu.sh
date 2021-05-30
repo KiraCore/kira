@@ -133,9 +133,9 @@ while :; do
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
     displayAlign left $printWidth " [3] | Change Default Branches"
     displayAlign left $printWidth " [4] | Change Deployment Mode"
+    displayAlign left $printWidth " [5] | Change Infrastructure Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
-    displayAlign left $printWidth " [R] | Return to Main Menu"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c\n"
     echo ""
@@ -158,17 +158,6 @@ while :; do
     fi
     break
     ;;
-#  a*)
-#    echo "INFO: Starting Advanced Setup..."
-#    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
-#        $KIRA_MANAGER/menu/network-select.sh # network selector allows for selecting snapshot
-#    else
-#        $KIRA_MANAGER/menu/snapshot-select.sh
-#    fi
-#
-#    $KIRA_MANAGER/menu/seeds-select.sh
-#    break
-#    ;;
   1*)
     $KIRA_MANAGER/menu/interface-select.sh
     continue
@@ -194,7 +183,7 @@ while :; do
 
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     ;;
-  r*)
+  5*)
     $KIRA_MANAGER/menu.sh "false"
     exit 0
     ;;
@@ -209,29 +198,7 @@ while :; do
 done
 set -x
 
-if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-    globSet AUTO_BACKUP "false"
-    if [[ "${INFRA_MODE,,}" =~ ^(validator|seed)$ ]] ; then
-        INFRA_CONTAINER_COUNT=2
-    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
-        INFRA_CONTAINER_COUNT=4
-    else
-        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
-        exit 1
-    fi
-else
-    if [[ "${INFRA_MODE,,}" =~ ^(validator)$ ]] ; then
-        INFRA_CONTAINER_COUNT=5
-    elif [[ "${INFRA_MODE,,}" =~ ^(sentry|local)$ ]] ; then
-        INFRA_CONTAINER_COUNT=4
-    elif [[ "${INFRA_MODE,,}" =~ ^(seed)$ ]] ; then
-        INFRA_CONTAINER_COUNT=3
-    else
-        echoErr "ERROR: Unknown infra mode $INFRA_MODE"
-        exit 1
-    fi
-fi
-
+[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && globSet AUTO_BACKUP "false"
 
 timerStart AUTO_BACKUP
 globDel VALIDATOR_ADDR
@@ -244,7 +211,6 @@ SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 SETUP_END_DT=""
 CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INFRA_CONTAINER_COUNT=\"$INFRA_CONTAINER_COUNT\"" --prefix="INFRA_CONTAINER_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 

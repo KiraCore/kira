@@ -68,7 +68,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
         cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
         NODE_ID="$VALIDATOR_NODE_ID"
     else
-        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED,tcp://$SNAPSHOT_SEED"
+        CFG_persistent_peers="tcp://$PRIV_SENTRY_SEED"
         [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] && CFG_persistent_peers="${CFG_persistent_peers},tcp://$VALIDATOR_SEED"
         CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
         EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
@@ -84,7 +84,7 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SENTRY_GRPC_PORT:$DEFAULT_GRPC_PORT \
+    -p $KIRA_SENTRY_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SENTRY_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -96,6 +96,7 @@ docker run -d \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
     -e CFG_pex="true" \
+    -e CFG_prometheus="true" \
     -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
     -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
     -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
@@ -110,6 +111,7 @@ docker run -d \
     -e CFG_max_num_inbound_peers="256" \
     -e CFG_handshake_timeout="60s" \
     -e CFG_dial_timeout="30s" \
+    -e CFG_trust_period="87600h" \
     -e CFG_max_txs_bytes="131072000" \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \

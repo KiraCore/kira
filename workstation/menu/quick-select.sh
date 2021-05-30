@@ -214,13 +214,13 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
             (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     
-            if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] || [ $SNAP_HEIGHT -gt $HEIGHT ] ; then
+            if [ ! -f "$DATA_GENESIS" ] || [ ! -f "$SNAP_INFO" ] || [ "$SNAP_NETWORK" != "$CHAIN_ID" ] || [ $SNAP_HEIGHT -le 0 ] ; then
                 set +x
                 [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
                 [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
                 [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
                 [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
-                [[ $SNAP_HEIGHT -gt $HEIGHT ]] && echoErr "ERROR: Snap height 0 is greater then latest chain height $HEIGHT"
+                [[ $SNAP_HEIGHT -gt $HEIGHT ]] && HEIGHT=$SNAP_HEIGHT
                 set -x
                 DOWNLOAD_SUCCESS="false"
             else
@@ -351,6 +351,7 @@ CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_N
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENSUM\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="CONTAINERS_COUNT=\"100\"" --prefix="CONTAINERS_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
@@ -363,18 +364,18 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
         set -x
 
         SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-        ($(isNodeId "$SEED_NODE_ADDR")) && SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656" || SEED_NODE_ADDR=""
+        ($(isNodeId "$SEED_NODE_ID")) && SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656" || SEED_NODE_ADDR=""
         SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$SENTRY_NODE_ID")) && SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656" || SENTRY_NODE_ID=""
         PRIV_SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$PRIV_SENTRY_NODE_ID")) && PRIV_SENTRY_NODE_ADDR="${PRIV_SENTRY_NODE_ID}@${NODE_ADDR}:36656" || PRIV_SENTRY_NODE_ID=""
-        VALIDATOR_NODE_ADDR=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-        ($(isNodeId "$VALIDATOR_NODE_ADDR")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ADDR}@${NODE_ADDR}:56656" || VALIDATOR_NODE_ADDR=""
+        VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$VALIDATOR_NODE_ID")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ID}@${NODE_ADDR}:56656" || VALIDATOR_NODE_ADDR=""
         ($(isPublicIp $NODE_ADDR)) && SEEDS_TARGET_FILE=$PUBLIC_SEEDS || SEEDS_TARGET_FILE=$PRIVATE_SEEDS
 
-        [ ! -z "$SEED_NODE_ID" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$SENTRY_NODE_ID" ] && echo "$SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$PRIV_SENTRY_NODE_ID" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$PRIV_SENTRY_NODE_ADDR" ] && echo "$PRIV_SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
         [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $SEEDS_TARGET_FILE
 
         if [ "${OPTION,,}" == "a" ] ; then

@@ -66,33 +66,43 @@ PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P
 
 NODE_ID="$SNAPSHOT_NODE_ID"
 EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
-EXTERNAL_RPC_PORT="$KIRA_SNAPSHOT_RPC_PORT"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
-if (! $(isFileEmpty $PRIVATE_PEERS)) || (! $(isFileEmpty $PRIVATE_SEEDS)) ; then
-    cp -afv "$PRIVATE_PEERS" "$COMMON_PATH/peers"
-    cp -afv "$PRIVATE_SEEDS" "$COMMON_PATH/seeds"
-else
-    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-fi
-
+PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
 CFG_seeds=""
 CFG_persistent_peers=""
 if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
-    CFG_persistent_peers="tcp://$VALIDATOR_SEED"
+    CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    CFG_seeds=""
+    CONTAINER_TARGET="seed"
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-    PING_TARGET="sentry.local"
+    if [ "${PRIV_CONN_PRIORITY,,}" == "true" ] ; then
+        CONTAINER_TARGET="priv_sentry"
+        PING_TARGET="priv-sentry.local"
+    else
+        CONTAINER_TARGET="sentry"
+        PING_TARGET="sentry.local"
+    fi
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+fi
+
+ADDRBOOK_DEST="$COMMON_PATH/addrbook.json"
+PEERS_DEST="$COMMON_PATH/peers"
+SEEDS_DEST="$COMMON_PATH/seeds"
+rm -fv $ADDRBOOK_DEST $PEERS_DEST $SEEDS_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/addrbook.json" $ADDRBOOK_DEST || echo "" > $ADDRBOOK_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/peers" $PEERS_DEST || echo "" > $PEERS_DEST
+timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/seeds" $SEEDS_DEST || echo "" > $SEEDS_DEST
+
+if ($(isFileEmpty $ADDRBOOK_DEST)) && ($(isFileEmpty $SEEDS_DEST)) && ($(isFileEmpty $PEERS_DEST)) ; then
+    echoErr "ERROR: Failed to start snapshot contianer, could not find addressbook, seeds nor peers list"
+    exit 1
 fi
 
 SNAP_DESTINATION="$COMMON_PATH/snap.zip"
@@ -107,8 +117,9 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $EXTERNAL_P2P_PORT:$DEFAULT_P2P_PORT \
-    -p $EXTERNAL_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SNAPSHOT_P2P_PORT:$DEFAULT_P2P_PORT \
+    -p $KIRA_SNAPSHOT_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SNAPSHOT_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
@@ -129,6 +140,7 @@ docker run -d \
     -e CFG_private_peer_ids="" \
     -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
     -e CFG_pex="true" \
+    -e CFG_prometheus="true" \
     -e CFG_addr_book_strict="false" \
     -e CFG_seed_mode="false" \
     -e CFG_max_num_outbound_peers="64" \
@@ -140,6 +152,7 @@ docker run -d \
     -e CFG_max_tx_bytes="131072" \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
+    -e CFG_trust_period="87600h" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NEW_NETWORK="$NEW_NETWORK" \

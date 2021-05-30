@@ -93,6 +93,7 @@ docker run -d \
     -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
     -p $KIRA_VALIDATOR_GRPC_PORT:$DEFAULT_GRPC_PORT \
+    -p $KIRA_VALIDATOR_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
@@ -127,9 +128,11 @@ docker run -d \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e SETUP_VER="$KIRA_SETUP_VER" \
     -e CFG_pex="$CFG_pex" \
+    -e CFG_prometheus="true" \
     -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
+    -e CFG_trust_period="87600h" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \

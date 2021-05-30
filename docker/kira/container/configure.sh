@@ -15,6 +15,7 @@ COMMON_PEERS_PATH="$COMMON_DIR/peers"
 COMMON_SEEDS_PATH="$COMMON_DIR/seeds"
 LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
 LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
+LOCAL_RPC_PATH="$SEKAID_HOME/config/rpc"
 
 LIP_FILE="$COMMON_READ/local_ip"
 PIP_FILE="$COMMON_READ/public_ip"
@@ -56,6 +57,17 @@ CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXT
 CDHelper text lineswap --insert="EXTERNAL_PORT=\"$EXTERNAL_P2P_PORT\"" --prefix="EXTERNAL_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
 
+echoInfo "INFO: Starting state file configuration..."
+STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
+LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
+(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
+(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
+[[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
+[[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
+
+
+echoInfo "INFO: Starting genesis configuration..."
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry|snapshot)$ ]] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
@@ -124,6 +136,9 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
     set -x
 else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 
+rm -fv $LOCAL_RPC_PATH
+touch $LOCAL_RPC_PATH
+
 if [ ! -z "$CFG_seeds" ] ; then
     echoInfo "INFO: Seed configuration is available, testing..."
     TMP_CFG_seeds=""
@@ -149,7 +164,19 @@ if [ ! -z "$CFG_seeds" ] ; then
         currentNodeId=$(tmconnect id --address="$addr:$port" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
         [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
-        seed="tcp://${nodeId}@${addr}:${port}"
+        rpc_port=$((port + 1))
+        if ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
+            echoInfo "INFO: Detected open RPC port $rpc_port"
+            rpc="${addr}:${rpc_port}"
+            if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
+                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+            else
+                echoInfo "INFO: Adding $rpc to the RPC list"
+                echo "$rpc" >> $LOCAL_RPC_PATH
+            fi
+        fi
+
+        seed="tcp://${nodeId}@${ip}:${port}"
         echoInfo "INFO: Adding extra seed '$seed' to new config"
         [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
         TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
@@ -176,13 +203,26 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         nodeId=${addrArr1[0],,}
         addr=${addrArr2[0],,}
         port=${addrArr2[1],,}
-        #addr=$(resolveDNS $addr)
+        ip=$(resolveDNS $addr)
         
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Peer '$peer' PORT is invalid!" && continue
         ($(isSubStr "$TMP_CFG_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the peers config." && continue
         ($(isSubStr "$CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the seeds config." && continue
+        (! $(isIp "$ip")) && echoWarn "WARNINIG: Peer '$peer' IP could NOT be resolved" && continue
+
+        rpc_port=$((port + 1))
+        if ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
+            echoInfo "INFO: Detected open RPC port $rpc_port"
+            rpc="${addr}:${rpc_port}"
+            if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
+                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+            else
+                echoInfo "INFO: Adding $rpc to the RPC list"
+                echo "$rpc" >> $LOCAL_RPC_PATH
+            fi
+        fi
 
         peer="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra peer '$peer' to new config"
@@ -204,6 +244,36 @@ fi
 echoInfo "INFO: Final Peers List:"
 echoInfo "$CFG_persistent_peers"
 
+if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
+    echoInfo "INFO: Starting fast sync configuaration, RPC nodes detected!"
+    TRUST_HASH=""
+    RPC_SERVERS=""
+    while read rpc ; do
+        set +x
+        BLOCK_INFO=$(timeout 3 curl --fail $rpc/block?height=$LATEST_BLOCK_HEIGHT 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        [ -z "$BLOCK_INFO" ] && echoWarn "WARNING: Failed to fetch block info from '$rpc'" && continue
+        HEIGHT=$(echo "$BLOCK_INFO" | jsonParse "block.header.height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber $HEIGHT)) && HEIGHT=0
+        [ "$HEIGHT" != "$LATEST_BLOCK_HEIGHT" ]] && echoWarn "INFO: RPC height is $HEIGHT but expected $LATEST_BLOCK_HEIGHT" && continue
+        NEW_TRUST_HASH=$(echo "$BLOCK_INFO" | jsonParse "block_id.hash" 2>/dev/null || echo -n "")
+        [ -z "$TRUST_HASH" ] && TRUST_HASH=$NEW_TRUST_HASH
+        [ "$NEW_TRUST_HASH" != "$TRUST_HASH" ]] && echoWarn "WARNING: Got block hash '$NEW_TRUST_HASH' but expected '$TRUST_HASH'" && continue
+        echoInfo "INFO: Adding RPC '$rpc' to the fast sync list"
+        [ -z "$RPC_SERVERS" ] && \
+            RPC_SERVERS=$rpc || \
+            RPC_SERVERS="${RPC_SERVERS},$rpc"
+        set -x
+    done < "$LOCAL_RPC_PATH"
+    CFG_trust_hash=$TRUST_HASH
+    CFG_rpc_servers=$RPC_SERVERS
+    CFG_trust_height="$LATEST_BLOCK_HEIGHT"
+else
+    echoWarn "WARNING: Fast sync is NOT possible, RPC nodes NOT found"
+fi
+
+echoInfo "INFO: Final Peers List:"
+echoInfo "$CFG_rpc_servers"
+
+echoInfo "INFO: Starting sekai & tendermint configs setup..."
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
 [ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG
 [ ! -z "$CFG_persistent_peers" ] && CDHelper text lineswap --insert="persistent_peers = \"$CFG_persistent_peers\"" --prefix="persistent_peers =" --path=$CFG
@@ -266,6 +336,22 @@ echoInfo "$CFG_persistent_peers"
 # Will create a new, randomly named directory within, and remove it when done.
 [ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
 
+# When true, Prometheus metrics are served under /metrics on
+# PrometheusListenAddr.
+# Check out the documentation for the list of available metrics.
+[ ! -z "$CFG_prometheus" ] && CDHelper text lineswap --insert="prometheus = $CFG_prometheus" --prefix="prometheus =" --path=$CFG
+# Address to listen for Prometheus collector(s) connections
+[ ! -z "$CFG_prometheus_listen_addr" ] && CDHelper text lineswap --insert="prometheus_listen_addr = \"$CFG_prometheus_listen_addr\"" --prefix="prometheus_listen_addr =" --path=$CFG
+
+#######################################################
+###         State Sync Configuration Options        ###
+#######################################################
+# [statesync]
+
+[ ! -z "$CFG_rpc_servers" ] && CDHelper text lineswap --insert="rpc_servers = \"$CFG_rpc_servers\"" --prefix="rpc_servers =" --path=$CFG
+[ ! -z "$CFG_trust_height" ] && CDHelper text lineswap --insert="trust_height = $CFG_trust_height" --prefix="trust_height =" --path=$CFG
+[ ! -z "$CFG_trust_hash" ] && CDHelper text lineswap --insert="trust_hash = \"$CFG_trust_hash\"" --prefix="trust_hash =" --path=$CFG
+
 ##########################
 # app.toml configuration
 ##########################
@@ -277,15 +363,6 @@ echoInfo "$CFG_persistent_peers"
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-echoInfo "INFO: Starting state file configuration..."
-STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
-LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
-(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
-(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
-(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
-[[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
-[[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
-
 if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
     cat >$LOCAL_STATE <<EOL
@@ -295,9 +372,6 @@ if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEI
   "step": 0
 }
 EOL
-    #(jq ".height = \"$LATEST_BLOCK_HEIGHT\"" $LOCAL_STATE) > "$LOCAL_STATE.tmp"
-    #cp -f -v -a "$LOCAL_STATE.tmp" $LOCAL_STATE
-    #rm -fv "$LOCAL_STATE.tmp"
 fi
 
 [[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGHT ]] && \
@@ -309,3 +383,5 @@ echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."
 rm -fv $CFG_CHECK
+
+

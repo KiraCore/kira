@@ -43,8 +43,15 @@ done
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     mkdir -p $CACHE_DIR
-
     rm -fv $CONFIG_PATH
+
+    CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
+    CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
+
+    CDHelper text lineswap --insert="CFG_grpc=$CFG_grpc" --prefix="CFG_grpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_rpc=$CFG_rpc" --prefix="CFG_rpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="PING_TARGET=$PING_TARGET" --prefix="PING_TARGET=" --path=$ETC_PROFILE --append-if-found-not=True
+
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --faucet_time_limit=30 \
