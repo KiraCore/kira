@@ -37,6 +37,9 @@ done
 echoInfo "INFO: KIRA Scan service cleanup..."
 rm -frv "$KIRA_SCAN" && mkdir -p "$KIRA_SCAN"
 
+echoInfo "INFO: Pruning dangling images..."
+docker image prune -a -f || echoErr "ERROR: Failed to prune dangling images!"
+
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
 
 echoInfo "INFO: Docker common directories cleanup..."

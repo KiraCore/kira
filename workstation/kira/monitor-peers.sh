@@ -33,19 +33,27 @@ set -x
 
 echoInfo "INFO: Fetching address book file..."
 TMP_BOOK="/tmp/addrbook.txt"
+TMP_BOOK_DUMP="/tmp/addrbook-dump.json"
 TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
 
 touch $TMP_BOOK
 
-(timeout 60 docker exec -i seed cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
-(timeout 60 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
-(timeout 60 docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
-[ "${INFRA_MODE,,}" == "validator" ] && [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && \
-(timeout 60 docker exec -i validator cat "$SEKAID_HOME/config/addrbook.json" 2>&1 | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK
+rm -fv $TMP_BOOK_DUMP
+timeout 60 docker cp "seed:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
+timeout 60 docker cp "sentry:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
+timeout 60 docker cp "priv_sentry:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
+timeout 60 docker cp "snapshot:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
+timeout 60 docker cp "validator:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")
 (! $(isNullOrEmpty $PUBLIC_IP)) && echo "\"$PUBLIC_IP\"" >> $TMP_BOOK
 
+sed -i '/^$/d' $TMP_BOOK
 sort -u $TMP_BOOK -o $TMP_BOOK
 shuf $TMP_BOOK > $TMP_BOOK_SHUFF
 
@@ -68,16 +76,16 @@ TMP_BOOK_PUBLIC="/tmp/addrbook.public.txt"
 TMP_BOOK_PUBLIC_SNAPS="/tmp/addrbook.public-snaps.txt"
 rm -fv "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
 touch "$TMP_BOOK_PUBLIC" "$TMP_BOOK_PUBLIC_SNAPS"
-P2P_PORTS=(16656 26656 36656 46656 56656)
+P2P_PORTS=(16656 26656 36656 56656)
 
 i=0
 i_snaps=0
 total=0
 HEIGHT=0
 while read ip; do
-    sleep 2
     total=$(($total + 1))
-    ip=$(echo $ip | xargs || "")
+    ip=$(delWhitespaces $ip | tr -d '"' || "")
+    ($(isNullOrEmpty "$ip")) && continue
     set +x
     (! $(isPublicIp $ip)) && echoWarn "WARNING: Not a valid public IPv4 ($ip)" && continue
 
@@ -91,26 +99,24 @@ while read ip; do
         HEIGHT=$TMP_HEIGHT
     fi
 
-    if ! timeout 0.1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
+    if ! timeout 1 nc -z $ip $DEFAULT_INTERX_PORT ; then echoWarn "WARNING: Port '$DEFAULT_INTERX_PORT' closed ($ip)" && continue ; fi
 
+    sleep 1
     set -x
-    STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
+    STATUS=$(timeout 3 curl "$ip:$DEFAULT_INTERX_PORT/api/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
-    KIRA_STATUS=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
+    KIRA_STATUS=$(timeout 3 curl "$ip:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
-
-    catching_up=$(echo "$KIRA_STATUS" | jsonQuickParse "catching_up" || echo "")
-    [ "$catching_up" != "false" ] && echoWarn "WARNING: Node is still catching up '$catching_up' ($ip)" && continue
 
     latest_block_height=$(echo "$KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
     (! $(isNaturalNumber "$latest_block_height")) && echoWarn "WARNING: Inavlid block heigh '$latest_block_height' ($ip)" && continue 
-    [[ $latest_block_height -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
+    [[ $((latest_block_height + 100)) -lt $HEIGHT ]] && echoWarn "WARNING: Block heigh '$latest_block_height' older than latest '$HEIGHT' ($ip)" && continue 
     set +x
 
     # do not reject self otherwise nothing can be exposed in the peers list
     [ "$PUBLIC_IP" != "$ip" ] && \
-        (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is not exposing peers list ($ip)" && continue
+        (! $(urlExists "$ip:$DEFAULT_INTERX_PORT/download/peers.txt")) && echoWarn "WARNING: Peer is NOT exposing peers list ($ip)" && continue
 
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
     [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue
@@ -118,25 +124,47 @@ while read ip; do
     genesis_checksum=$(echo "$STATUS" | jsonQuickParse "genesis_checksum" || echo "")
     [ "$CHECKSUM" != "$genesis_checksum" ] && echoWarn "WARNING: Invalid genesis checksum '$genesis_checksum' ($ip)" && continue 
 
+    peer=""
     for port in "${P2P_PORTS[@]}" ; do
-        if ! timeout 0.1 nc -z $ip $port ; then
+        if ! timeout 1 nc -z $ip $port ; then
             echoWarn "WARNING: Port $port is closed ($ip)"
             continue
         fi
 
         node_id=$(tmconnect id --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-        (! $(isNodeId "$node_id")) && echoWarn "WARNINIG: Handshake fialure, Node Id was NOT found ($ip)" && continue
+        if (! $(isNodeId "$node_id")) ; then
+            echoWarn "WARNING: Handshake fialure, Node Id was NOT found ($ip)"
+            TARGET=""
+            [[ $port == 16656 ]] && TARGET="seed_node_id"
+            [[ $port == 26656 ]] && TARGET="sentry_node_id"
+            [[ $port == 36656 ]] && TARGET="priv_sentry_node_id"
+            [[ $port == 56656 ]] && TARGET="validator_node_id"
+            node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/$TARGET" 2>/dev/null || echo -n "")
+            ($(isNodeId "$node_id")) && peer="$node_id@$ip:$port"
+            continue
+        else
+            peer="$node_id@$ip:$port"
+        fi
 
         if grep -q "$node_id" "$TMP_BOOK_PUBLIC"; then
             echoWarn "WARNING: Node Id '$node_id' is already present in the address book ($ip)" && continue 
         fi
 
-        peer="$node_id@$ip:$port"
+        chain_id=$(tmconnect network --address="$ip:$port" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        [ "$NETWORK_NAME" != "$chain_id" ] && echoWarn "WARNING: Invalid chain id '$chain_id' ($ip)" && continue
+
+        rpc_port=$((port + 1))
+        if (! $(isPortOpen "$ip" "$rpc_port" "0.25")) ; then
+            echoWarn "WARNING: RPC Port '$rpc_port' is closed ($ip)" && continue
+        fi
+
         echoInfo "INFO: Active peer found: '$peer'"
         echo "$peer" >> $TMP_BOOK_PUBLIC
         i=$(($i + 1))
         [[ $PEERS_LIMIT -gt 0 ]] && [[ $i -ge $PEERS_LIMIT ]] && break
     done
+
+    [ -z "$peer" ] && echoWarn "WARNING: No P2P peers were found ($ip)" && continue
 
     if [[ $PEERS_LIMIT -gt 0 ]] && [[ $i -ge $PEERS_LIMIT ]] ; then
         echoWarn "WARNING: Peer limit ($PEERS_LIMIT) reached"
@@ -148,10 +176,14 @@ while read ip; do
         echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
         continue 
     else
+        if grep -q "$peer" "$TMP_BOOK_PUBLIC_SNAPS"; then
+            echoWarn "WARNING: Peer '$peer' is already present in the snap book" && continue 
+        fi
+
         SIZE=$(urlContentLength "$SNAP_URL")
         if [[ $SIZE -gt $MIN_SNAP_SIZE ]] ; then
             i_snaps=$(($i_snaps + 1))
-            echoInfo "INFO: Peer $ip is exposing $SIZE Bytes snpashot"
+            echoInfo "INFO: Peer $peer is exposing $SIZE Bytes snpashot"
             echo "${peer} $SIZE" >> $TMP_BOOK_PUBLIC_SNAPS
         fi
     fi
@@ -160,7 +192,10 @@ done < $TMP_BOOK_SHUFF
 if ($(isFileEmpty $TMP_BOOK_PUBLIC)) || [[ $i -le 0 ]] ; then
     echoInfo "INFO: No public addresses were found in the '$TMP_BOOK_PUBLIC'"
     sleep 60
-    exit 0
+else
+    echoInfo "INFO: Sucessfully discovered '$i' public peers out of total '$total' in the address book, saving results to '$PEERS_SCAN_PATH' and '$INTERX_PEERS_PATH'"
+    cp -afv $TMP_BOOK_PUBLIC $PEERS_SCAN_PATH
+    cp -afv $TMP_BOOK_PUBLIC $INTERX_PEERS_PATH
 fi
 
 if (! $(isFileEmpty $TMP_BOOK_PUBLIC_SNAPS)) ; then
@@ -172,10 +207,6 @@ if (! $(isFileEmpty $TMP_BOOK_PUBLIC_SNAPS)) ; then
     cp -afv $TMP_BOOK_PUBLIC_SNAPS $SNAPS_SCAN_PATH
     cp -afv $TMP_BOOK_PUBLIC_SNAPS $INTERX_SNAPS_PATH
 fi
-
-echoInfo "INFO: Sucessfully discovered '$i' public peers out of total '$total' in the address book, saving results to '$PEERS_SCAN_PATH' and '$INTERX_PEERS_PATH'"
-cp -afv $TMP_BOOK_PUBLIC $PEERS_SCAN_PATH
-cp -afv $TMP_BOOK_PUBLIC $INTERX_PEERS_PATH
 
 set +x
 echoWarn "------------------------------------------------"

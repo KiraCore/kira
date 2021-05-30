@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart SETUP_NETWORKING
-PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_VALIDATOR_P2P_PORT)
+PORTS=($KIRA_FRONTEND_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SEED_RPC_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_RPC_PORT $KIRA_SNAPSHOT_RPC_PORT $KIRA_VALIDATOR_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_SNAPSHOT_P2P_PORT $KIRA_VALIDATOR_P2P_PORT $KIRA_SEED_PROMETHEUS_PORT $KIRA_SENTRY_PROMETHEUS_PORT $KIRA_PRIV_SENTRY_PROMETHEUS_PORT $KIRA_SNAPSHOT_PROMETHEUS_PORT $KIRA_VALIDATOR_PROMETHEUS_PORT)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
 PRIORITY_MIN="-31000"
@@ -53,16 +53,17 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
 
-if [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "demo" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
-fi
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_INTERX_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp
 
+# P2P
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_P2P_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_P2P_PORT/tcp
+    
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_P2P_PORT/tcp
 
@@ -72,16 +73,42 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENT
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SNAPSHOT_P2P_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SNAPSHOT_P2P_PORT/tcp
 
-if [ "${INFRA_MODE,,}" == "validator" ] && [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_P2P_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_P2P_PORT/tcp
-else
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_P2P_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_P2P_PORT/tcp
 
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_GRPC_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_GRPC_PORT/tcp
-fi
+# RPC
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_RPC_PORT/tcp
+    
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_RPC_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_RPC_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SNAPSHOT_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SNAPSHOT_RPC_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_RPC_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_RPC_PORT/tcp
+
+# PROMETHEUS
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SEED_PROMETHEUS_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SEED_PROMETHEUS_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_VALIDATOR_PROMETHEUS_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_VALIDATOR_PROMETHEUS_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SENTRY_PROMETHEUS_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_PROMETHEUS_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_PRIV_SENTRY_PROMETHEUS_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_PRIV_SENTRY_PROMETHEUS_PORT/tcp
+
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_SNAPSHOT_PROMETHEUS_PORT/tcp
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SNAPSHOT_PROMETHEUS_PORT/tcp
 
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
@@ -132,7 +159,7 @@ for PORT in "${PORTS[@]}" ; do
     mkdir -p "$PORT_CFG_DIR"
     touch "$WHITELIST" "$BLACKLIST"
 
-    PORT_EXPOSURE="PORT_EXPOSURE_$PORT" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+    PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
 
     if [ "${PORT_EXPOSURE,,}" == "disabled" ] ; then

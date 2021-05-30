@@ -59,9 +59,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     $SELF_CONTAINER/configure.sh
     set +e && source "/etc/profile" &>/dev/null && set -e
+    cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 
-    rm -fv $SEKAID_HOME/config/node_key.json
-    cp $COMMON_DIR/node_key.json $SEKAID_HOME/config/
+    if (! $(isFileEmpty "$COMMON_DIR/addrbook.json")) ; then
+        echoInfo "INFO: Importing external addrbook file..."
+        cp -afv "$COMMON_DIR/addrbook.json" $SEKAID_HOME/config/addrbook.json
+    fi
 
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
         echoInfo "INFO: Snap file was found, attepting data recovery..."

@@ -73,6 +73,12 @@ else
     exit 1
 fi
 
+if ! ping -c1 $PING_TARGET &>/dev/null ; do
+    echoErr "ERROR: Ping target $PING_TARGET is unavilable ($(date))"
+    sleep 5
+    exit 1
+done
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: HEALTHCHECK                        |"

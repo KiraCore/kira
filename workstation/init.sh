@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.7.1"
+SETUP_VER="v0.3.7.7"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -33,6 +33,7 @@ ARCHITECTURE=$(uname -m)
 [ -z "$DEFAULT_SSH_PORT" ] && DEFAULT_SSH_PORT="22"
 [ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
 [ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
+[ -z "$DEFAULT_PROMETHEUS_PORT" ] && DEFAULT_PROMETHEUS_PORT="26660"
 [ -z "$DEFAULT_GRPC_PORT" ] && DEFAULT_GRPC_PORT="9090"
 [ -z "$DEFAULT_INTERX_PORT" ] && DEFAULT_INTERX_PORT="11000"
 
@@ -41,20 +42,24 @@ ARCHITECTURE=$(uname -m)
 
 [ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
 [ -z "$KIRA_SEED_RPC_PORT" ] && KIRA_SEED_RPC_PORT="16657"
+[ -z "$KIRA_SEED_PROMETHEUS_PORT" ] && KIRA_SEED_PROMETHEUS_PORT="16660"
 
-[ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
 [ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
 [ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
+[ -z "$KIRA_SENTRY_PROMETHEUS_PORT" ] && KIRA_SENTRY_PROMETHEUS_PORT="26660"
 
 [ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
 [ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
+[ -z "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && KIRA_PRIV_SENTRY_PROMETHEUS_PORT="36660"
 
 [ -z "$KIRA_SNAPSHOT_P2P_PORT" ] && KIRA_SNAPSHOT_P2P_PORT="46656"
 [ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
+[ -z "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && KIRA_SNAPSHOT_PROMETHEUS_PORT="46660"
 
 [ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="56656"
 [ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
 [ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="59090"
+[ -z "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && KIRA_VALIDATOR_PROMETHEUS_PORT="56660"
 
 [ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
 
@@ -176,7 +181,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-18" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-19" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -278,6 +283,13 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="DEFAULT_RPC_PORT=$DEFAULT_RPC_PORT" --prefix="DEFAULT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DEFAULT_GRPC_PORT=$DEFAULT_GRPC_PORT" --prefix="DEFAULT_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DEFAULT_INTERX_PORT=$DEFAULT_INTERX_PORT" --prefix="DEFAULT_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="DEFAULT_PROMETHEUS_PORT=$DEFAULT_PROMETHEUS_PORT" --prefix="DEFAULT_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        CDHelper text lineswap --insert="KIRA_SEED_PROMETHEUS_PORT=$KIRA_SEED_PROMETHEUS_PORT" --prefix="KIRA_SEED_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SENTRY_PROMETHEUS_PORT=$KIRA_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_PROMETHEUS_PORT=$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_PRIV_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SNAPSHOT_PROMETHEUS_PORT=$KIRA_SNAPSHOT_PROMETHEUS_PORT" --prefix="KIRA_SNAPSHOT_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_VALIDATOR_PROMETHEUS_PORT=$KIRA_VALIDATOR_PROMETHEUS_PORT" --prefix="KIRA_VALIDATOR_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_INTERX_PORT=$KIRA_INTERX_PORT" --prefix="KIRA_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -293,7 +305,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_VALIDATOR_P2P_PORT=$KIRA_VALIDATOR_P2P_PORT" --prefix="KIRA_VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_GRPC_PORT=$KIRA_VALIDATOR_GRPC_PORT" --prefix="KIRA_VALIDATOR_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
-        CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 

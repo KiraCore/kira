@@ -47,22 +47,23 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -x
 
     PING_TARGET="sentry.local"
+    CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
+
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
-            CFG_grpc="dns:///seed.local:$DEFAULT_GRPC_PORT"
-            CFG_rpc="http://seed.local:$DEFAULT_RPC_PORT"
             PING_TARGET="seed.local"
             CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
-    elif [ "${DEPLOYMENT_MODE,,}" == "full" ] || [ "${INFRA_MODE,,}" == "sentry" ] ; then    
-        CFG_grpc="dns:///sentry.local:$DEFAULT_GRPC_PORT"
-        CFG_rpc="http://sentry.local:$DEFAULT_RPC_PORT"
-        PING_TARGET="sentry.local"
-        CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
-    else
-        if [ "${INFRA_MODE,,}" == "validator" ] ; then
-            CFG_grpc="dns:///validator.local:$DEFAULT_GRPC_PORT"
-            CFG_rpc="http://validator.local:$DEFAULT_RPC_PORT"
+    elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
+        if [ "$(globGet PRIV_CONN_PRIORITY)" == "true" ] ; then
+            PING_TARGET="priv-sentry.local"
+        else
+            PING_TARGET="sentry.local"
+        fi
+    elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+        if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
             PING_TARGET="validator.local"
             CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+        else
+            PING_TARGET="sentry.local"
         fi
     fi
 
@@ -79,18 +80,17 @@ docker run -d \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e CFG_grpc="$CFG_grpc" \
-    -e CFG_rpc="$CFG_rpc" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
     -e INFRA_MODE="$INFRA_MODE" \
     -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e PING_TARGET="$PING_TARGET" \
+    -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
+    -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
-    
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"

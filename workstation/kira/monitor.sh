@@ -98,7 +98,7 @@ while : ; do
         echo "INFO: Starting peers monitor..."
         LOG_FILE="$PEERS_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
-        timeout 3600 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
+        timeout 21600 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
         globSet PEERS_SCAN_PID "$!"
     else
         sleep 1
