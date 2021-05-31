@@ -175,7 +175,7 @@ while : ; do
         elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
             [ -z "$VALIDATOR_ADDR" ] && echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
         else
-            echo -e "|\e[0m\e[31;1m      INFINFRA IS NOT FULLY OPERATIONAL        \e[33;1m|"
+            echo -e "|\e[0m\e[31;1m    INFRASTRUCTURE IS NOT FULLY OPERATIONAL    \e[33;1m|"
         fi
     fi
 
