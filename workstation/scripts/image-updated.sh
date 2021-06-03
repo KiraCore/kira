@@ -16,13 +16,19 @@ touch $KIRA_SETUP_FILE
 
 cd $IMAGE_DIR
 
-OLD_HASH=$(cat $KIRA_SETUP_FILE)
-NEW_HASH="$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true)-$INTEGRITY"
+OLD_HASH=$(tryCat $KIRA_SETUP_FILE)
+NEW_HASH=$(CDHelper hash SHA256 -p="$IMAGE_DIR" -x=true -r=true --silent=true || echo "")
 
-if ! command -v docker images -q $IMAGE_NAME &> /dev/null ; then
-    echo "false"
-elif [ -z $(docker images -q $IMAGE_NAME || "") ] || [ "$OLD_HASH" != "$NEW_HASH" ] ; then
+if [ -z "$NEW_HASH" ] ; then
     echo "false"
 else
-    echo "true"
+    NEW_HASH="$NEW_HASH-$INTEGRITY"
+
+    if ! command -v docker images -q $IMAGE_NAME &> /dev/null ; then
+        echo "false"
+    elif [ -z $(docker images -q $IMAGE_NAME || "") ] || [ "$OLD_HASH" != "$NEW_HASH" ] ; then
+        echo "false"
+    else
+        echo "true"
+    fi
 fi

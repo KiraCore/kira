@@ -201,7 +201,7 @@ set -x
 [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && globSet AUTO_BACKUP "false"
 
 timerStart AUTO_BACKUP
-globDel VALIDATOR_ADDR
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER
 globSet SNAP_EXPOSE "true"
 globSet AUTO_BACKUP "true"
 

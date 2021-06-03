@@ -19,15 +19,13 @@ $KIRA_MANAGER/setup/registry.sh
 echoInfo "INFO: Starting images build..."
 
 $KIRAMGR_SCRIPTS/update-base-image.sh
-$KIRAMGR_SCRIPTS/update-kira-image.sh & 
-$KIRAMGR_SCRIPTS/update-interx-image.sh &
+$KIRAMGR_SCRIPTS/update-kira-image.sh
+$KIRAMGR_SCRIPTS/update-interx-image.sh
 
 if [ "${INFRA_MODE,,}" != "validator" ] && [ "${DEPLOYMENT_MODE,,}" != "minimal" ] ; then
-    $KIRAMGR_SCRIPTS/update-frontend-image.sh &
+    $KIRAMGR_SCRIPTS/update-frontend-image.sh
 fi
 
-echoInfo "INFO: Waiting for images build to finalize..."
-wait
 echoInfo "INFO: Images build was finalized.."
 
 set +x
