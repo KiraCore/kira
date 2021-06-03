@@ -12,10 +12,6 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
 if [ "${NEW_NETWORK,,}" == "true" ]; then
-    $KIRA_MANAGER/menu/chain-id-select.sh
-    set +x
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    set -x
     rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
     CHAIN_ID="$NETWORK_NAME"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR="" && PRIV_SENTRY_NODE_ADDR=""
