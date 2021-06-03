@@ -44,6 +44,9 @@ globSet VALIDATOR_EXPOSED false
 globSet FRONTEND_EXPOSED false
 globSet INTERX_EXPOSED true
 
+# in case deployment fails set contianers count to infinite
+CDHelper text lineswap --insert="CONTAINERS_COUNT=\"100\"" --prefix="CONTAINERS_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
