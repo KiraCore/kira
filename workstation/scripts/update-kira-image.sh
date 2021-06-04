@@ -17,3 +17,9 @@ else
     echoErr "ERROR: Failed to test if kira image exists or not: '$IMAGE_EXISTS'"
     exit 1
 fi
+
+IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/kira" "kira" "latest" "$SEKAI_INTEGRITY" || echo "error")
+if [ "${IMAGE_EXISTS,,}" != "true" ] ; then
+    echoErr "ERROR: Failed to create kira image ($IMAGE_EXISTS)"
+    exit 1
+fi

@@ -15,6 +15,12 @@ if [ "${IMAGE_EXISTS,,}" == "false" ]; then
 elif [ "${IMAGE_EXISTS,,}" == "true" ]; then
     echoInfo "INFO: base-image is up to date"
 else
-    echoErr "ERROR: Failed to test if base image exists: '$IMAGE_EXISTS'"
+    echoErr "ERROR: Failed to test if base image exists ($IMAGE_EXISTS)"
+    exit 1
+fi
+
+IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" "base-image" || echo "error")
+if [ "${IMAGE_EXISTS,,}" != "true" ] ; then
+    echoErr "ERROR: Failed to create base image ($IMAGE_EXISTS)"
     exit 1
 fi

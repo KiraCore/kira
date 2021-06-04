@@ -11,7 +11,6 @@ mkdir -p $UPDATE_LOGS_DIR
 UPDATE_DONE="true"
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
-UPDATE_FAIL_COUNTER="$KIRA_UPDATE/fail_counter"
 UPDATE_DUMP="$KIRA_DUMP/kiraup"
 MAX_FAILS=3
 
@@ -20,8 +19,11 @@ UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CONTAINERS="containers-build-1-$KIRA_SETUP_VER"
 
-touch $UPDATE_FAIL_COUNTER
-UPDATE_FAILS=$(tryCat $UPDATE_FAIL_COUNTER "0") && (! $(isNaturalNumber $UPDATE_FAILS)) && UPDATE_FAILS=0
+UPDATE_FAILS=$(globGet UPDATE_FAIL_COUNTER) 
+if (! $(isNaturalNumber $UPDATE_FAILS)) ; then
+    UPDATE_FAILS=0
+    globSet UPDATE_FAIL_COUNTER $UPDATE_FAILS
+fi  
 
 if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
@@ -75,7 +77,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         exit 0
     else
         echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
-        UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
+        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
         sleep 5 && exit 1
     fi
 else
@@ -100,7 +102,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         touch $UPDATE_CHECK
     else
         echoErr "ERROR: Failed cleaning up environment ($UPDATE_CHECK_CLEANUP)"
-        UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
+        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
         sleep 5 && exit 1
     fi
 else
@@ -141,8 +143,9 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
-        UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
-        sleep 5 && exit 1
+        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
+        sleep 5
+        reboot
     fi
 else
     echoInfo "INFO: Docker images were already updated ($UPDATE_CHECK_IMAGES)"
@@ -166,7 +169,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     else
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
-        UPDATE_FAILS=$(($UPDATE_FAILS + 1)) && echo "$UPDATE_FAILS" > $UPDATE_FAIL_COUNTER
+        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
         sleep 5 && exit 1
     fi
 else

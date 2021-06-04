@@ -203,6 +203,14 @@ function jsonParse() {
     fi
 }
 
+function isFileJson() {
+    if (! $(isFileEmpty "$1")) ; then
+        jsonParse "" "$1" &> /dev/null && echo "true" || echo "false"
+    else
+        echo "false"
+    fi
+}
+
 function jsonQuickParse() {
     if [ -z "$2" ] ; then
         OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)

@@ -14,6 +14,12 @@ if [ "${IMAGE_EXISTS,,}" == "false" ]; then
 elif [ "${IMAGE_EXISTS,,}" == "true" ]; then
     echoInfo "INFO: frontend image is up to date"
 else
-    echoErr "ERROR: Failed to test if frontend image exists: '$IMAGE_EXISTS'"
+    echoErr "ERROR: Failed to test if frontend image exists ($IMAGE_EXISTS)"
+    exit 1
+fi
+
+IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/frontend" "frontend" "latest" "$FRONTEND_INTEGRITY" || echo "error")
+if [ "${IMAGE_EXISTS,,}" != "true" ] ; then
+    echoErr "ERROR: Failed to create frontend image ($IMAGE_EXISTS)"
     exit 1
 fi

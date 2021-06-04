@@ -30,7 +30,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     echoInfo "INFO: Importing priv key from common storage..."
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
-    if (! $(isFileEmpty "$COMMON_DIR/addrbook.json")) ; then
+    if ($(isFileJson "$COMMON_DIR/addrbook.json")) ; then
         echoInfo "INFO: Importing external addrbook file..."
         cp -afv "$COMMON_DIR/addrbook.json" $SEKAID_HOME/config/addrbook.json
     fi

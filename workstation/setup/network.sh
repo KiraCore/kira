@@ -27,6 +27,7 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     # ensure docker containers will have internet access & that firewall reload does not cause issues on ARM64
     FIREWALLD_CONF="/etc/firewalld/firewalld.conf"
     sysctl -w net.ipv4.ip_forward=1
+    sysctl -w fs.inotify.max_user_watches=524288
     CDHelper text lineswap --insert="net.ipv4.ip_forward=1" --prefix="net.ipv4.ip_forward=" --path=/etc/sysctl.conf --append-if-found-not=True
     CDHelper text lineswap --insert="IndividualCalls=yes" --prefix="IndividualCalls=" --path=$FIREWALLD_CONF --append-if-found-not=True
     CDHelper text lineswap --insert="FirewallBackend=iptables" --prefix="FirewallBackend=" --path=$FIREWALLD_CONF --append-if-found-not=True
