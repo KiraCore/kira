@@ -7,7 +7,6 @@ set -x
 REGISTRY_VERSION="2.7.1"
 CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="true"
-UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
 curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists 
@@ -92,7 +91,6 @@ EOL
 
     #$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
     $KIRA_MANAGER/scripts/update-ifaces.sh
-    rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_IMAGES"
     touch $SETUP_CHECK
 else
     echoInfo "INFO: Container 'registry' already exists."
