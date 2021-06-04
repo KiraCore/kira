@@ -177,12 +177,16 @@ if [ ! -z "$CFG_seeds" ] ; then
         fi
 
         seed="tcp://${nodeId}@${ip}:${port}"
-        echoInfo "INFO: Adding extra seed '$seed' to new config"
-        [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
-        TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
-        set -x
+
         i=$(($i + 1))
-        [[ $i -ge $CFG_max_num_outbound_peers ]] && echoWarn "INFO: Outbound seeds limit ($CFG_max_num_outbound_peers) reached" 
+        if [[ $i -ge $CFG_max_num_outbound_peers ]] ; then
+            echoWarn "INFO: Outbound seeds limit (${i}/${CFG_max_num_outbound_peers}) reached"
+        else
+            echoInfo "INFO: Adding extra seed '$seed' to new config"
+            [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
+            TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
+        fi
+        set -x
     done
     CFG_seeds=$TMP_CFG_seeds
 else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
@@ -253,10 +257,10 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
         BLOCK_INFO=$(timeout 3 curl --fail $rpc/block?height=$LATEST_BLOCK_HEIGHT 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         [ -z "$BLOCK_INFO" ] && echoWarn "WARNING: Failed to fetch block info from '$rpc'" && continue
         HEIGHT=$(echo "$BLOCK_INFO" | jsonParse "block.header.height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber $HEIGHT)) && HEIGHT=0
-        [ "$HEIGHT" != "$LATEST_BLOCK_HEIGHT" ]] && echoWarn "INFO: RPC height is $HEIGHT but expected $LATEST_BLOCK_HEIGHT" && continue
+        [ "$HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] && echoWarn "INFO: RPC height is $HEIGHT but expected $LATEST_BLOCK_HEIGHT" && continue
         NEW_TRUST_HASH=$(echo "$BLOCK_INFO" | jsonParse "block_id.hash" 2>/dev/null || echo -n "")
         [ -z "$TRUST_HASH" ] && TRUST_HASH=$NEW_TRUST_HASH
-        [ "$NEW_TRUST_HASH" != "$TRUST_HASH" ]] && echoWarn "WARNING: Got block hash '$NEW_TRUST_HASH' but expected '$TRUST_HASH'" && continue
+        [ "$NEW_TRUST_HASH" != "$TRUST_HASH" ] && echoWarn "WARNING: Got block hash '$NEW_TRUST_HASH' but expected '$TRUST_HASH'" && continue
         echoInfo "INFO: Adding RPC '$rpc' to the fast sync list"
         [ -z "$RPC_SERVERS" ] && \
             RPC_SERVERS=$rpc || \
