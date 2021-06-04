@@ -330,16 +330,6 @@ echoInfo "INFO: Starting sekai & tendermint configs setup..."
 # default 1024, kira def. 131072
 [ ! -z "$CFG_max_packet_msg_payload_size" ] && CDHelper text lineswap --insert="max_packet_msg_payload_size = $CFG_max_packet_msg_payload_size" --prefix="max_packet_msg_payload_size =" --path=$CFG
 
-# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
-# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
-# the network to take and serve state machine snapshots. State sync is not attempted if the node
-# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
-# starting from the height of the snapshot.
-[ ! -z "$CFG_statesync_enable" ] && CDHelper text lineswap --insert="enable = $CFG_statesync_enable" --prefix="enable =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
-# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
-# Will create a new, randomly named directory within, and remove it when done.
-[ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
-
 # When true, Prometheus metrics are served under /metrics on
 # PrometheusListenAddr.
 # Check out the documentation for the list of available metrics.
@@ -351,6 +341,25 @@ echoInfo "INFO: Starting sekai & tendermint configs setup..."
 ###         State Sync Configuration Options        ###
 #######################################################
 # [statesync]
+
+if ( $(isNullOrEmpty $CFG_rpc_servers) ) ; then
+    echoWarn "WARNING: NO live RPC servers were found, disabling statesync"
+    CFG_statesync_enable="false"
+    CFG_trust_height=0
+    CFG_trust_hash=""
+fi
+
+mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync temp directory"
+
+# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
+# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
+# the network to take and serve state machine snapshots. State sync is not attempted if the node
+# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
+# starting from the height of the snapshot.
+[ ! -z "$CFG_statesync_enable" ] && CDHelper text lineswap --insert="enable = $CFG_statesync_enable" --prefix="enable =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
+# Will create a new, randomly named directory within, and remove it when done.
+[ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
 
 [ ! -z "$CFG_rpc_servers" ] && CDHelper text lineswap --insert="rpc_servers = \"$CFG_rpc_servers\"" --prefix="rpc_servers =" --path=$CFG
 [ ! -z "$CFG_trust_height" ] && CDHelper text lineswap --insert="trust_height = $CFG_trust_height" --prefix="trust_height =" --path=$CFG

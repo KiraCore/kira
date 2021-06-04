@@ -33,6 +33,11 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
+    echoInfo "INFO: Ensuring base images exist..."
+    $KIRA_MANAGER/setup/registry.sh
+    $KIRAMGR_SCRIPTS/update-base-image.sh
+    $KIRAMGR_SCRIPTS/update-kira-image.sh
+
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
     # globGet priv_sentry_health_log_old
     tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"

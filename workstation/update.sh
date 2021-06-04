@@ -16,7 +16,6 @@ MAX_FAILS=3
 
 UPDATE_CHECK_TOOLS="tools-setup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
-UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CONTAINERS="containers-build-1-$KIRA_SETUP_VER"
 
 UPDATE_FAILS=$(globGet UPDATE_FAIL_COUNTER) 
@@ -124,33 +123,6 @@ else
     touch "$KIRA_SETUP/rebooted"
 fi
 
-UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_IMAGES"
-LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log"
-if [ ! -f "$UPDATE_CHECK" ]; then
-    echoInfo "INFO: Building docker images ($UPDATE_CHECK_IMAGES)"
-    set -x
-    UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
-    echoInfo "INFO: Starting build process..."
-    LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_IMAGES}.log"
-
-    rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/images.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
-    echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-    if [ "${SUCCESS,,}" == "true" ] ; then
-        echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_IMAGES"
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
-        touch $UPDATE_CHECK
-    else
-        echoErr "ERROR: Failed docker images build ($UPDATE_CHECK_IMAGES)"
-        rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
-        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
-        sleep 5
-        reboot
-    fi
-else
-    echoInfo "INFO: Docker images were already updated ($UPDATE_CHECK_IMAGES)"
-fi
-
 UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
 LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log"
 if [ ! -f "$UPDATE_CHECK" ]; then
@@ -170,7 +142,8 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         echoErr "ERROR: Failed docker containers build ($UPDATE_CHECK_CONTAINERS)"
         rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_CLEANUP" "$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
-        sleep 5 && exit 1
+        sleep 5
+        reboot
     fi
 else
     echoInfo "INFO: Docker containers were already updated ($UPDATE_CHECK_CONTAINERS)"
