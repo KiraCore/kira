@@ -187,6 +187,7 @@ else
     rm -fv "$SNAP_DESTINATION"
 
     echoInfo "INFO: Checking genesis SHA256 hash"
+    GENESIS_SHA256=$(globGet GENESIS_SHA256)
     TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
     if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ]; then
         echoErr "ERROR: Snapshot failed, expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
