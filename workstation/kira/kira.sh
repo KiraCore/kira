@@ -41,6 +41,7 @@ while : ; do
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
     VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
+    GENESIS_SHA256=$(globGet GENESIS_SHA256)
 
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
