@@ -156,8 +156,8 @@ fi
 
 mkdir -p $INTERX_REFERENCE_DIR
 if [ "${NEW_NETWORK,,}" == true ] ; then
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
 fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
@@ -167,16 +167,18 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
 
 if [ "${NEW_NETWORK,,}" == true ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
     chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
-    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet GENESIS_SHA256 "$GENESIS_SHA256"
 fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
-if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
+if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$(globGet GENESIS_SHA256)" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
     exit 1
 else

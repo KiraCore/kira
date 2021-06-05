@@ -16,6 +16,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 mkdir -p $INTERX_REFERENCE_DIR
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
 chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
 rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
 
@@ -26,12 +27,11 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
     chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 "$LOCAL_GENESIS_PATH")
 else
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
     rm -fv "$LOCAL_GENESIS_PATH"
     GENESIS_SHA256=""
 fi
 
-CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
 globSet PRIV_CONN_PRIORITY "null"
