@@ -152,21 +152,24 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    VOTE_YES_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -rc '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote \$LAST_PROPOSAL 1 --from=validator --chain-id=\$NETWORK_NAME --keyring-backend=test --fees=100ukex --yes | jq"
-    QUERY_LAST_PROPOSAL="LAST_PROPOSAL=\$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes \$LAST_PROPOSAL --output json | jq && sekaid query customgov proposal \$LAST_PROPOSAL --output json | jq"
+    VOTE_YES_LAST_PROPOSAL="voteYes \$(lastProposal) validator"
+    QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
 
-    PROP_UPSERT_KEX_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT" | jsonParse "code" || echo -n "")
-    PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonParse "code" || echo -n "")
+    PROP_UPSERT_KEX_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT" | jsonQuickParse "code" || echo -n "")
+    sleep 10
+    PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
-    PROP_UPSERT_TEST_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT" | jsonParse "code" || echo -n "")
-    PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonParse "code" || echo -n "")
+    PROP_UPSERT_TEST_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT" | jsonQuickParse "code" || echo -n "")
+    sleep 10
+    PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
-    PROP_UPSERT_SAMOLEAN_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT" | jsonParse "code" || echo -n "")
-    PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonParse "code" || echo -n "")
+    PROP_UPSERT_SAMOLEAN_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT" | jsonQuickParse "code" || echo -n "")
+    sleep 10
+    PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 

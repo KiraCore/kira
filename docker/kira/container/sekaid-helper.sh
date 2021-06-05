@@ -114,7 +114,7 @@ function tryGetValidator() {
 }
 
 function lastProposal() {
-    PROPOSALS=$(sekaid query customgov proposals --output json 2> /dev/null || echo "")
+    PROPOSALS=$(sekaid query customgov proposals --limit=1 --output json 2> /dev/null || echo "")
     [ -z "$PROPOSALS" ] && echo 0 && return 1
     LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
     (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
@@ -150,7 +150,7 @@ function showProposal() {
 }
 
 function showProposals() {
-    sekaid query customgov proposals --output json | jsonParse
+    sekaid query customgov proposals --limit=999999999 --output json | jsonParse
 }
 
 # propAwait $(lastProposal) 
