@@ -191,6 +191,38 @@ if [ ! -z "$CFG_seeds" ] ; then
     CFG_seeds=$TMP_CFG_seeds
 else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
 
+if ($(isNullOrWhitespaces $CFG_seeds)) && ($(isNullOrWhitespaces $CFG_persistent_peers)) ; then
+    echoWarn "WARNING: No seeds or peers were fonud in the configuration, attempting to handshake and add local adresses"
+    ip=$(resolveDNS validator.local)
+    validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$validator_node_id")) && ip="$PUBLIC_IP" && validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$validator_node_id")) && ip="$LOCAL_IP" && validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    validator_seed="tcp://${validator_node_id}@$ip:56656"
+    ip=$(resolveDNS sentry.local)
+    sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$sentry_node_id")) && ip="$PUBLIC_IP" && sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$sentry_node_id")) && ip="$LOCAL_IP" && sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    sentry_node_seed="tcp://${sentry_node_id}@$ip:26656"
+    ip=$(resolveDNS priv-sentry.local)
+    priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$priv_sentry_node_id")) && ip="$PUBLIC_IP" && priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$priv_sentry_node_id")) && ip="$LOCAL_IP" && priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    priv_sentry_node_seed="tcp://${priv_sentry_node_id}@$ip:36656"
+    ip=$(resolveDNS seed.local)
+    seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$seed_node_id")) && ip="$PUBLIC_IP" && seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    (! $(isNodeId "$seed_node_id")) && ip="$LOCAL_IP" && seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
+    seed_node_seed="tcp://${seed_node_id}@$ip:16656"
+    ($(isNodeId "$validator_node_id")) && CFG_seeds="$validator_seed"
+    if ($(isNodeId "$sentry_node_id")) ; then
+        [ -z "$CFG_seeds" ] && CFG_seeds="$sentry_node_seed" || CFG_seeds="${CFG_seeds},${sentry_node_seed}"
+    fi
+    if ($(isNodeId "$priv_sentry_node_id")) ; then
+        [ -z "$CFG_seeds" ] && CFG_seeds="$priv_sentry_node_seed" || CFG_seeds="${CFG_seeds},${priv_sentry_node_seed}"
+    fi
+    ($(isNodeId "$seed_node_id")) && [ -z "$CFG_seeds" ] && CFG_seeds="$seed_node_seed"
+fi
+
 echoInfo "INFO: Final Seeds List:"
 echoInfo "$CFG_seeds"
 
