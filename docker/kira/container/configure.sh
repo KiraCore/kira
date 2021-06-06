@@ -165,7 +165,7 @@ if [ ! -z "$CFG_seeds" ] ; then
         [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
         rpc_port=$((port + 1))
-        if ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
+        if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
             echoInfo "INFO: Detected open RPC port $rpc_port"
             rpc="${addr}:${rpc_port}"
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
@@ -249,7 +249,7 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Peer '$peer' IP could NOT be resolved" && continue
 
         rpc_port=$((port + 1))
-        if ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
+        if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
             echoInfo "INFO: Detected open RPC port $rpc_port"
             rpc="${addr}:${rpc_port}"
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
