@@ -279,6 +279,7 @@ fi
 
 echoInfo "INFO: Final Peers List:"
 echoInfo "$CFG_persistent_peers"
+rpc_cntr=0
 
 if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
     echoInfo "INFO: Starting fast sync configuaration, RPC nodes detected!"
@@ -297,11 +298,18 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
         [ -z "$RPC_SERVERS" ] && \
             RPC_SERVERS=$rpc || \
             RPC_SERVERS="${RPC_SERVERS},$rpc"
+        
+        rpc_cntr=$((rpc_cntr + 1))
         set -x
     done < "$LOCAL_RPC_PATH"
-    CFG_trust_hash=$TRUST_HASH
-    CFG_rpc_servers=$RPC_SERVERS
-    CFG_trust_height="$LATEST_BLOCK_HEIGHT"
+
+    if [[ $rpc_cntr -ge 2 ]] ; then
+        CFG_trust_hash=$TRUST_HASH
+        CFG_rpc_servers=$RPC_SERVERS
+        CFG_trust_height="$LATEST_BLOCK_HEIGHT"
+    else
+        echoWarn "WARNING: Insufficicent RPC nodes count ($rpc_cntr)"
+    fi
 else
     echoWarn "WARNING: Fast sync is NOT possible, RPC nodes NOT found"
 fi
