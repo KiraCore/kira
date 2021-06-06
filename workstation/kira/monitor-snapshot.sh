@@ -6,7 +6,7 @@ source $KIRA_MANAGER/utils.sh
 
 set -x
 
-timerStart
+timerStart SNAP_MONITOR
 SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
@@ -46,6 +46,7 @@ CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "e
 if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
     SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST)"
     if [ -f "$SNAP_LATEST_FILE" ] && [ "$KIRA_SNAP_PATH" != "$SNAP_LATEST_FILE" ]; then
+        echoInfo "INFO: Snap path changed from '$KIRA_SNAP_PATH' into '$KIRA_SNAP_PATH'"
         KIRA_SNAP_PATH=$SNAP_LATEST_FILE
         CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
         if [ "${CONTAINER_EXISTS,,}" == "true"  ] ; then
@@ -63,7 +64,7 @@ if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KI
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
-if [ -f "$KIRA_SNAP_PATH" ] && [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ] ; then
+if [ -f "$KIRA_SNAP_PATH" ] && ( [ "$KIRA_SNAP_SHA256" != "$INTERX_SNAP_SHA256" ] || [ ! -f "$INTERX_SNAPSHOT_PATH" ] ) ; then
     echoInfo "INFO: Latest snapshot is NOT exposed yet"
     mkdir -p $INTERX_REFERENCE_DIR
 
@@ -80,6 +81,8 @@ elif [ -f "$INTERX_SNAPSHOT_PATH" ] && ([ "${SNAP_EXPOSE,,}" == "false" ] || [ -
     echoInfo "INFO: Removing publicly exposed snapshot..."
     rm -f -v $INTERX_SNAPSHOT_PATH
     CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+else
+    echoInfo "INFO: No need for snapshot symlink update"
 fi
 
 if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
@@ -106,7 +109,7 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: SNAPSHOT MONITOR                   |"
-echoWarn "|  ELAPSED: $(timerSpan) seconds"
+echoWarn "|  ELAPSED: $(timerSpan SNAP_MONITOR) seconds"
 echoWarn "------------------------------------------------"
 set -x
 
