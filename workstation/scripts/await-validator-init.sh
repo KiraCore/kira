@@ -31,6 +31,8 @@ HEIGHT=0
 globDel "${CONTAINER_NAME}_STATUS" "${CONTAINER_NAME}_EXISTS"
 timerStart $TIMER_NAME
 
+systemctl restart kirascan || echoWarn "WARNING: Could NOT restart kira scan service"
+
 while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Waiting for container $CONTAINER_NAME to start..."
