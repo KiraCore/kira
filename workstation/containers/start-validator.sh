@@ -138,6 +138,8 @@ docker run -d \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e CFG_trust_period="87600h" \
+    -e CFG_fastsync="true" \
+    -e CFG_fastsync_version="v1" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \

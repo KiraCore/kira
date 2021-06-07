@@ -50,10 +50,10 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snap. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
-        [ -z "$NAME" ] && continue
         i=$((i + 1))
+        [ -z "$NAME" ] && continue
 
-        PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
+        PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_${p}")
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"
         NAME_TMP="${NAME}${WHITESPACE}"

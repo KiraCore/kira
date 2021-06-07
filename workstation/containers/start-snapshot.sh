@@ -158,6 +158,8 @@ docker run -d \
     -e CFG_send_rate="65536000" \
     -e CFG_recv_rate="65536000" \
     -e CFG_trust_period="87600h" \
+    -e CFG_fastsync="true" \
+    -e CFG_fastsync_version="v1" \
     -e CFG_max_packet_msg_payload_size="131072" \
     -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
     -e NEW_NETWORK="$NEW_NETWORK" \

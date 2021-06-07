@@ -405,6 +405,19 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 [ ! -z "$CFG_trust_height" ] && CDHelper text lineswap --insert="trust_height = $CFG_trust_height" --prefix="trust_height =" --path=$CFG
 [ ! -z "$CFG_trust_hash" ] && CDHelper text lineswap --insert="trust_hash = \"$CFG_trust_hash\"" --prefix="trust_hash =" --path=$CFG
 
+#######################################################
+###       Fast Sync Configuration Connections       ###
+#######################################################
+# [fastsync]
+
+[ ! -z "$CFG_fastsync" ] && CDHelper text lineswap --insert="fast_sync = $CFG_fastsync" --prefix="fast_sync =" --path=$CFG
+
+# Fast Sync version to use:
+#   1) "v0" (default) - the legacy fast sync implementation
+#   2) "v1" - refactor of v0 version for better testability
+#   2) "v2" - complete redesign of v0, optimized for testability & readability
+[ ! -z "$CFG_fastsync_version" ] && CDHelper text lineswap --insert="version = $CFG_fastsync_version" --prefix="version =" --after-regex="^\[fastsync\]" --before-regex="^\[consensus\]" --path=$CFG
+
 ##########################
 # app.toml configuration
 ##########################
