@@ -98,36 +98,12 @@ EOL
 fi
 
 CONFIG_JSON="${BUILD_DESTINATION}/assets/assets/config.json"
-DEFAULT_INTERX_PORT=11000
 echoInfo "INFO: Printing current config file:"
 cat $CONFIG_JSON || echoWarn "WARNINIG: Failed to print config file"
 echoInfo "INFO: Setting up default API configuration..."
-echo "{ \"api_url\": \"http://0.0.0.0:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
-
-i=0
-while [ $i -le 5 ]; do
-    i=$((i + 1))
-
-    if [ ! -z "$PUBLIC_IP" ] && timeout 2 nc -z $PUBLIC_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$PUBLIC_IP" ; fi
-    if [ -z "$EXTERNAL_IP" ] && timeout 2 nc -z $LOCAL_IP $DEFAULT_INTERX_PORT ; then EXTERNAL_IP="$LOCAL_IP" ; fi
-
-    if [ ! -z "$EXTERNAL_IP" ] && timeout 2 nc -z $EXTERNAL_IP $DEFAULT_INTERX_PORT ; then
-        echoInfo "INFO: Public IP addess '$EXTERNAL_IP' was detected"
-        INTEREX_AVAILABLE=$(curl http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api/status -s -f -o /dev/null && echo "true" || echo "false")
-        if [ "${INTEREX_AVAILABLE,,}" == "true" ]; then
-            echo "INFO: INTEREX is available externally, defaulting to '$EXTERNAL_IP'"
-            echo "{ \"api_url\": \"http://$EXTERNAL_IP:$DEFAULT_INTERX_PORT/api\" }" >"$CONFIG_JSON"
-            break
-        else
-            echoInfo "INFO: INTERX is NOT available yet over public network..."
-            sleep 15
-        fi
-    else
-        EXTERNAL_IP="0.0.0.0"
-        echoInfo "INFO: Public IP is not avilable yet"
-        sleep 15
-    fi
-done
+[ -z "$PUBLIC_IP" ] && PUBLIC_IP="0.0.0.0"
+[ -z "$LOCAL_IP" ] && LOCAL_IP="127.0.0.1"
+echo "{ \"api_url\": [\"0.0.0.0:$DEFAULT_INTERX_PORT\", \"127.0.0.1:$DEFAULT_INTERX_PORT\", \"interx.local:$DEFAULT_INTERX_PORT\", \"$PUBLIC_IP:$KIRA_INTERX_PORT\", \"$LOCAL_IP:$KIRA_INTERX_PORT\"], \"autoconnect\": false }" >"$CONFIG_JSON"
 
 echoInfo "INFO: Current configuration:"
 cat $CONFIG_JSON

@@ -1,6 +1,7 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-frontend.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -63,6 +64,8 @@ docker run -d \
     -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
+    -e DEFAULT_INTERX_PORT="$DEFAULT_INTERX_PORT" \
+    -e KIRA_INTERX_PORT="$KIRA_INTERX_PORT" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     $CONTAINER_NAME:latest
