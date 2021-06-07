@@ -13,7 +13,8 @@ apt-get update -y --fix-missing
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     file build-essential net-tools hashdeep make nodejs node-gyp tar unzip xz-utils yarn zip p7zip-full \
     protobuf-compiler golang-goprotobuf-dev golang-grpc-gateway golang-github-grpc-ecosystem-grpc-gateway-dev \
-    clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq python python3 python3-pip
+    clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq python python3 python3-pip \
+    bash libglu1-mesa
 
 apt update -y
 apt install -y bc dnsutils psmisc netcat default-jre default-jdk
@@ -23,10 +24,10 @@ pip3 install ECPy
 ARCHITECTURE=$(uname -m)
 GO_VERSION="1.15.11"
 CDHELPER_VERSION="v0.6.51"
-FLUTTER_CHANNEL="dev"
-FLUTTER_VERSION="1.27.0-8.0.pre-$FLUTTER_CHANNEL"
-DART_CHANNEL_PATH="dev/release"
-DART_VERSION="2.13.0-59.0.dev"
+FLUTTER_CHANNEL="stable"
+FLUTTER_VERSION="2.2.1-${FLUTTER_CHANNEL}"
+DART_CHANNEL_PATH="stable/release"
+DART_VERSION="2.13.1"
 GLOB_STORE_DIR="/var/kiraglob"
 
 mkdir -p $GLOB_STORE_DIR
