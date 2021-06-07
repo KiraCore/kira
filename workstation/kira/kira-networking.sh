@@ -25,29 +25,30 @@ echo -e "\e[37;1m--------------------------------------------------"
            echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') -------------| [config]"
     i=-1
     LAST_SNAP=""
+    PORTS_CNT=0
     for p in "${PORTS[@]}" ; do
         NAME=""
         
-        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
-        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
+        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
-        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
-        [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
-        [ "$p" == "$KIRA_SNAPSHOT_P2P_PORT" ] && NAME="Snapshot Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P"
+        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SNAPSHOT_P2P_PORT" ] && NAME="Snapshot Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
 
-        [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC"
-        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
-        [ "$p" == "$KIRA_PRIV_SENTRY_RPC_PORT" ] && NAME="Private Sentry" && TYPE="RPC"
-        [ "$p" == "$KIRA_SNAPSHOT_RPC_PORT" ] && NAME="Snapshot Node" && TYPE="RPC"
-        [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC"
+        [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_PRIV_SENTRY_RPC_PORT" ] && NAME="Private Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SNAPSHOT_RPC_PORT" ] && NAME="Snapshot Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
 
-        [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && NAME="Priv. Sentry Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snap. Node Monitor" && TYPE="HTTP"
-        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP"
+        [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && NAME="Priv. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snap. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
         [ -z "$NAME" ] && continue
         i=$((i + 1))
@@ -75,7 +76,13 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "| [F] | Reload FIREWALL Settings                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
        echo "| [R] | RELOAD Networking                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     echo -e "| [X] | Exit ___________________________________ |\e[0m"
-    OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
+
+    if [[ $PORTS_CNT -le 9 ]] ; then
+        OPTION="" && read -s -n 1 -t 30 OPTION || OPTION=""
+    else
+        OPTION="" && read -n 2 -t 30 OPTION || OPTION=""
+    fi
+
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 

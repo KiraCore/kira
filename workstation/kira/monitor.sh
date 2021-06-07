@@ -36,7 +36,7 @@ while : ; do
     echoWarn "------------------------------------------------"
     set -x
 
-    if (! $(isCommand "docker"))  ; then
+    if (! $(isCommand "docker")) ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
         globSet IS_SCAN_DONE "true"
         sleep 10
