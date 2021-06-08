@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.4.0.5"
+SETUP_VER="v0.4.0.7"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -241,7 +241,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         chmod -R -v 555 $INSTALL_DIR
 
         ls -l /bin/CDHelper || echo "Symlink not found"
-        rm /bin/CDHelper || echo "Removing old symlink"
+        rm -fv /bin/CDHelper || echo "Removing old symlink"
         ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
 
         CDHelper version

@@ -17,9 +17,9 @@ while : ; do
     set +x
     set +e && source $ETC_PROFILE &>/dev/null && set -e
     echoInfo "INFO: Current list of private peers:"
-    (! $(isFileEmpty $PUBLIC_SEEDS )) && cat $PUBLIC_SEEDS || echo "none"
-    echoInfo "INFO: Current list of public peers:"
     (! $(isFileEmpty $PRIVATE_SEEDS )) && cat $PRIVATE_SEEDS || echo "none"
+    echoInfo "INFO: Current list of public peers:"
+    (! $(isFileEmpty $PUBLIC_SEEDS )) && cat $PUBLIC_SEEDS || echo "none"
     echoWarn "WARNING: If you want to connect to external networks you have to specify at least one public seed or private seed node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the public and private seed & peer nodes list"
     TVAL="." && while ! [[ "${TVAL,,}" =~ ^(a|p|v|e|w)$ ]] ; do echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [P]ublic/Pri[V]ate Seed Nodes, [W]ipe all or [E]xit: " && read -d'' -s -n1 TVAL && echo ""; done

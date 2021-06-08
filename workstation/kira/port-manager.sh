@@ -103,8 +103,12 @@ echo -e "\e[37;1m--------------------------------------------------"
     fi
 
     if [[ "${OPTION,,}" =~ ^(a|b|c|d)$ ]] ; then
-        globSet "PORT_EXPOSURE_$PORT" "$PORT_EXPOSURE"
+        set -x
+        globSet "PORT_EXPOSURE_${PORT}" "$PORT_EXPOSURE"
         REINITALIZE="true"
+        set +x
+    else
+        echoInfo "INFO: Port exposure will NOT be changed"
     fi
 
     if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "f" ] ; then
