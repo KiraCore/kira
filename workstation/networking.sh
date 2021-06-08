@@ -140,11 +140,11 @@ echoInfo "INFO: Setting up '$FIREWALL_ZONE' zone networking for '$IFACE' interfa
 for PORT in "${PORTS[@]}" ; do
     if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then
         echoInfo "INFO: Disabling public access to the port $PORT, networking is tured off ($PORTS_EXPOSURE)"
-        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
+        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
     elif [ "${PORTS_EXPOSURE,,}" == "enabled" ] ; then
         echoInfo "INFO: Enabling public access to the port $PORT, networking is tured on ($PORTS_EXPOSURE)"
-        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
+        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
         continue 
     elif [ "${PORTS_EXPOSURE,,}" != "custom" ] ; then
         echoErr "WRROR: Unknown ports exposure type '$PORTS_EXPOSURE'"
@@ -159,12 +159,12 @@ for PORT in "${PORTS[@]}" ; do
     mkdir -p "$PORT_CFG_DIR"
     touch "$WHITELIST" "$BLACKLIST"
 
-    PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
+    PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_${PORT}")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
 
     if [ "${PORT_EXPOSURE,,}" == "disabled" ] ; then
         echoInfo "INFO: Disabling public access to the port $PORT..."
-        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
+        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
     elif [ "${PORT_EXPOSURE,,}" == "enabled" ] ; then
         echoInfo "INFO: Enabling public access to the port $PORT..."
@@ -187,7 +187,7 @@ for PORT in "${PORTS[@]}" ; do
         done < $BLACKLIST
     else
         echoWarn "WARNING: Rule '$PORT_EXPOSURE' is unrecognized and can NOT be applied to the port $PORT, disabling port access"
-        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
+        firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
     fi
 

@@ -132,7 +132,7 @@ fi
 
 cd $KMS_KEYIMPORT_DIR
 ls -l /bin/tmkms-key-import || echoWarn "WARNING: tmkms-key-import symlink not found"
-rm /bin/tmkms-key-import || echoWarn "WARNING: failed removing old tmkms-key-import symlink"
+rm -fv /bin/tmkms-key-import || echoWarn "WARNING: failed removing old tmkms-key-import symlink"
 ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echoErr "WARNING: tmkms-key-import symlink already exists"
 
 echoInfo "INFO: Navigating to '$PRIV_KEYGEN_DIR' and building priv-key-gen tool..."
@@ -142,12 +142,12 @@ go build
 make install
 
 ls -l /bin/priv-key-gen || echoWarn "WARNING: priv-validator-key-gen symlink not found"
-rm /bin/priv-key-gen || echoWarn "WARNING: Removing old priv-validator-key-gen symlink"
+rm -fv /bin/priv-key-gen || echoWarn "WARNING: Removing old priv-validator-key-gen symlink"
 ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-key-gen || echoErr "WARNING: priv-validator-key-gen symlink already exists"
 
 cd $TMCONNECT_DIR
 go build
 make install
 ls -l /bin/tmconnect || echoWarn "WARNING: tmconnect symlink not found"
-rm /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
+rm -fv /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
 ln -s $TMCONNECT_DIR/tmconnect /bin/tmconnect || echoErr "WARNING: tmconnect symlink already exists"

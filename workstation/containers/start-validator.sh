@@ -82,8 +82,8 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
         CFG_private_peer_ids=""
         CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID"
-        CFG_max_num_outbound_peers="64"
-        CFG_max_num_inbound_peers="256"
+        CFG_max_num_outbound_peers="32"
+        CFG_max_num_inbound_peers="128"
         CFG_persistent_peers=""
         CFG_pex="true"
         CFG_allow_duplicate_ip="true"
@@ -138,6 +138,8 @@ docker run -d \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e CFG_trust_period="87600h" \
+    -e CFG_fastsync="true" \
+    -e CFG_fastsync_version="v1" \
     -e NEW_NETWORK="$NEW_NETWORK" \
     -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \

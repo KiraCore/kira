@@ -331,7 +331,6 @@ echoInfo "INFO: Starting sekai & tendermint configs setup..."
 [ ! -z "$CFG_rpc_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_rpc_laddr\"" --prefix="laddr = \"tcp://127.0.0.1:26657\"" --path=$CFG
 [ ! -z "$CFG_p2p_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_p2p_laddr\"" --prefix="laddr = \"tcp://0.0.0.0:26656\"" --path=$CFG
 #[ ! -z "$CFG_grpc_laddr" ] && CDHelper text lineswap --insert="grpc_laddr = \"$CFG_grpc_laddr\"" --prefix="grpc_laddr =" --path=$CFG
-[ ! -z "$CFG_version" ] && CDHelper text lineswap --insert="version = \"$CFG_version\"" --prefix="version =" --path=$CFG
 [ ! -z "$CFG_double_sign_check_height" ] && CDHelper text lineswap --insert="double_sign_check_height = $CFG_double_sign_check_height" --prefix="double_sign_check_height =" --path=$CFG
 [ ! -z "$CFG_seed_mode" ] && CDHelper text lineswap --insert="seed_mode = $CFG_seed_mode" --prefix="seed_mode =" --path=$CFG
 [ ! -z "$CFG_skip_timeout_commit" ] && CDHelper text lineswap --insert="skip_timeout_commit = $CFG_skip_timeout_commit" --prefix="skip_timeout_commit =" --path=$CFG
@@ -404,6 +403,19 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 [ ! -z "$CFG_rpc_servers" ] && CDHelper text lineswap --insert="rpc_servers = \"$CFG_rpc_servers\"" --prefix="rpc_servers =" --path=$CFG
 [ ! -z "$CFG_trust_height" ] && CDHelper text lineswap --insert="trust_height = $CFG_trust_height" --prefix="trust_height =" --path=$CFG
 [ ! -z "$CFG_trust_hash" ] && CDHelper text lineswap --insert="trust_hash = \"$CFG_trust_hash\"" --prefix="trust_hash =" --path=$CFG
+
+#######################################################
+###       Fast Sync Configuration Connections       ###
+#######################################################
+# [fastsync]
+
+[ ! -z "$CFG_fastsync" ] && CDHelper text lineswap --insert="fast_sync = $CFG_fastsync" --prefix="fast_sync =" --path=$CFG
+
+# Fast Sync version to use:
+#   1) "v0" (default) - the legacy fast sync implementation
+#   2) "v1" - refactor of v0 version for better testability
+#   2) "v2" - complete redesign of v0, optimized for testability & readability
+[ ! -z "$CFG_fastsync_version" ] && CDHelper text lineswap --insert="version = \"$CFG_fastsync_version\"" --prefix="version =" --after-regex="^\[fastsync\]" --before-regex="^\[consensus\]" --path=$CFG
 
 ##########################
 # app.toml configuration
