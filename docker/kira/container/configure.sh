@@ -87,26 +87,28 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
-    ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
-    (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
+    
+fi
 
-    if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-        TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-        TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-        (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-        TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-    elif [ -z "$CFG_timeout_commit" ] ; then
-        TIMEOUT_COMMIT="5000ms"
-    else
-        TIMEOUT_COMMIT=$CFG_timeout_commit
-    fi
+# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
+ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
+(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
 
-    if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-        echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-        CFG_timeout_commit=$TIMEOUT_COMMIT
-        CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
+if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
+    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
+    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
+    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
+    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
+elif [ -z "$CFG_timeout_commit" ] ; then
+    TIMEOUT_COMMIT="5000ms"
+else
+    TIMEOUT_COMMIT=$CFG_timeout_commit
+fi
+
+if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
+    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
+    CFG_timeout_commit=$TIMEOUT_COMMIT
+    CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
 fi
 
 echoInfo "INFO: Local Addr: $LOCAL_IP"
@@ -165,15 +167,18 @@ if [ ! -z "$CFG_seeds" ] ; then
         [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
         rpc_port=$((port + 1))
+        rpc="${addr}:${rpc_port}"
         if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
-            echoInfo "INFO: Detected open RPC port $rpc_port"
-            rpc="${addr}:${rpc_port}"
+            echoInfo "INFO: Detected open RPC port ($rpc)"
+            
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
-                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+                echoWarn "WARNING: Address is already present in the RPC list ($rpc)"
             else
-                echoInfo "INFO: Adding $rpc to the RPC list"
+                echoInfo "INFO: Adding address to the RPC list ($rpc)"
                 echo "$rpc" >> $LOCAL_RPC_PATH
             fi
+        else
+            echoInfo "INFP: RPC address in NOT exposed ($rpc)"
         fi
 
         seed="tcp://${nodeId}@${ip}:${port}"
@@ -249,15 +254,18 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Peer '$peer' IP could NOT be resolved" && continue
 
         rpc_port=$((port + 1))
+        rpc="${addr}:${rpc_port}"
         if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
-            echoInfo "INFO: Detected open RPC port $rpc_port"
-            rpc="${addr}:${rpc_port}"
+            echoInfo "INFO: Detected open RPC port ($rpc)"
+            
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
-                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+                echoWarn "WARNING: Address is already present in the RPC list ($rpc)"
             else
-                echoInfo "INFO: Adding $rpc to the RPC list"
+                echoInfo "INFO: Adding address to the RPC list ($rpc)"
                 echo "$rpc" >> $LOCAL_RPC_PATH
             fi
+        else
+            echoInfo "INFP: RPC address in NOT exposed ($rpc)"
         fi
 
         peer="tcp://${nodeId}@${addr}:${port}"

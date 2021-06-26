@@ -29,7 +29,7 @@ INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|       STARTING KIRA SNAPSHOT SCAN            |"
+echoWarn "| STARTING KIRA SNAPSHOT SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echoWarn "|          SNAP_EXPOSE: $SNAP_EXPOSE"
@@ -53,9 +53,15 @@ if [ -f "$SNAP_LATEST" ] && [ -f "$SNAP_DONE" ]; then
             timerStart AUTO_BACKUP
             $KIRA_MANAGER/scripts/dump-logs.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to dump $CONAINER_NAME container logs"
             $KIRA_SCRIPTS/container-delete.sh "$CONAINER_NAME" || echoErr "ERROR: Failed to delete $CONAINER_NAME container"
+        else
+            echoInfo "INFO: Snpashot conainer does NOT exits"
         fi
         CHECKSUM_TEST="true"
+    else
+        echoInfo "INFO: Latest snap file '$SNAP_LATEST_FILE' was NOT found or 'KIRA_SNAP_PATH' ($KIRA_SNAP_PATH) did NOT changed"
     fi
+else
+    echoInfo "INFO: Latest snap info file '$SNAP_LATEST' was NOT found or snapshot container is NOT done yet"
 fi
 
 if [ "${CHECKSUM_TEST,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ; then

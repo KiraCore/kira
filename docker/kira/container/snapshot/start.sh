@@ -2,13 +2,15 @@
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
+# quick edit: FILE="${SELF_CONTAINER}/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 echo "INFO: Staring snapshot setup..."
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
-EXECUTED_CHECK="$COMMON_DIR/executed"
+EXECUTED_CHECK="${COMMON_DIR}/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
+DONE_CHECK="${COMMON_DIR}/done"
 
 SNAP_FILE_INPUT="$COMMON_DIR/snap.zip"
 
@@ -33,9 +35,11 @@ echo "OFFLINE" > "$COMMON_DIR/external_address_status"
 
 echo "$SNAP_FILENAME" > $SNAP_LATEST
 
-while [ -f "$SNAP_DONE" ]; do
-  echoInfo "INFO: Snapshot was already finalized, nothing to do here"
-  sleep 600
+while [ -f "$SNAP_DONE" ] || [ -f "$DONE_CHECK" ]; do
+    echoInfo "INFO: Snapshot was already finalized, nothing more to do here..."
+    rm -fv $CFG_CHECK
+    touch $DONE_CHECK
+    sleep 600
 done
 
 while ! ping -c1 $PING_TARGET &>/dev/null; do
@@ -189,4 +193,4 @@ zip -9 -r "$DESTINATION_FILE" . *
 
 [ ! -f "$DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file $DESTINATION_FILE was not found" && exit 1
 
-touch $SNAP_DONE
+touch $SNAP_DONE $DONE_CHECK

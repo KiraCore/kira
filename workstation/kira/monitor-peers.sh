@@ -21,7 +21,7 @@ done
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|     STARTING KIRA PEERS SCAN $KIRA_SETUP_VER        |"
+echoWarn "| STARTING KIRA PEERS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "|        PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
 echoWarn "|        SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
