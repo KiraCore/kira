@@ -38,7 +38,7 @@ set +x
 echoInfo "INFO: SEKAI branch '$SEKAI_BRANCH' was selected"
 echoInfo "INFO: FRONTEND branch '$FRONTEND_BRANCH' was selected"
 echoInfo "INFO: INTERX branch '$INTERX_BRANCH' was selected"
-[ "${USE_DEFAULTS,,}" != "true" ] && echoErr -en "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+[ "${USE_DEFAULTS,,}" != "true" ] && echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
 CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True

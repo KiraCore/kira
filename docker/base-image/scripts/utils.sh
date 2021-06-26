@@ -401,6 +401,25 @@ function pingTime() {
     else echo "0" ; fi
 }
 
+function pressToContinue {
+    if ($(isNullOrEmpty "$1")) ; then
+        read -n 1 -s 
+        globSet OPTION ""
+    else
+        while : ; do
+            read -n 1 -s kg_OPTION
+            kg_OPTION="${kg_OPTION,,}"
+            FOUND=false
+            for kg_var in "$@" ; do
+                kg_var=$(echo "$kg_var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
+                [ "${kg_var,,}" == "$kg_OPTION" ] && globSet OPTION "$kg_OPTION" && FOUND=true && break
+            done
+            [ "$FOUND" == "true" ] && break
+        done
+    fi
+    echo ""
+}
+
 displayAlign() {
   align=$1
   width=$2

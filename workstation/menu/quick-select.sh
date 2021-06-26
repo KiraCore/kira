@@ -116,7 +116,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
               set +x
               echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-              echoNErr "Press any key to continue..." && read -n 1 -s && echo ""
+              echoNErr "Press any key to continue..." && pressToContinue
               set -x
               continue
             fi

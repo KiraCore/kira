@@ -304,7 +304,7 @@ while : ; do
             if [ "${ACCEPT,,}" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $NAME logs..."
                 docker logs --follow --details --timestamps $ID || echoErr "ERROR: Failed to follow $NAME logs"
-                echoNErr "\nPress any key to continue..." && read -n 1 -s && echo ""
+                echoNErr "\nPress any key to continue..." && pressToContinue
             fi
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
@@ -386,7 +386,7 @@ while : ; do
 
     # trigger re-scan if loading requested
     [ "${LOADING,,}" == "true" ] && globSet IS_SCAN_DONE "false"
-    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 done
 
 echoInfo "INFO: Container Manager Stopped"

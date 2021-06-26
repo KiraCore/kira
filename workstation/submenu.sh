@@ -92,9 +92,9 @@ if [ "${INFRA_MODE,,}" == "local" ]; then
     NEW_NETWORK="true"
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
-    [ "${SELECT,,}" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
+    [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
 else
     NEW_NETWORK="false"
 fi
@@ -175,12 +175,11 @@ while :; do
   4*)
     set +x
     echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
-    MODE="." && while ! [[ "${MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 MODE && echo ""; done
+    echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && pressToContinue m f && MODE=($(globGet OPTION))
     set -x
 
     [ "${MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
     [ "${MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
-
     CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
     ;;
   5*)

@@ -106,7 +106,7 @@ while :; do
 
     set +x
     echoInfo "INFO: Network name will be set to '$NEW_NETWORK_NAME'"
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
     set -x
     
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
@@ -144,7 +144,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] && [ "${NEW_NETWORK}" == "false" ] ; the
 
     echoInfo "INFO: Minimum block height your validator node will start prodicing new blocks at will be no lower than $MIN_HEIGHT"
     globSet MIN_HEIGHT $MIN_HEIGHT
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
     set -x
 else
     globSet MIN_HEIGHT 0

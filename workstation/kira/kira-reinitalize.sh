@@ -65,7 +65,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         else
             echoInfo "INFO: Hash verification was skipped"
             echoWarn "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
-            echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+            echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
             SUCCESS_HASH_CHECK="true"
             break
         fi
@@ -78,7 +78,7 @@ fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
     echoInfo "INFO: Re-initialization failed or was aborted"
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 else
     echoInfo "INFO: Hash verification was sucessfull, ready to re-initalize environment"
     ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo ""; done

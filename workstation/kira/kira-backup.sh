@@ -10,7 +10,7 @@ LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK)
 (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1 && globSet MAX_SNAPS 1
 
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(b|c)$ ]]; do echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && read -d'' -s -n1 SELECT && echo ""; done
+echoNErr "Do you want to create a new [B]ackup, or [C]hange auto-backup configuration?: " && pressToContinue b c && SELECT=($(globGet OPTION))
 
 while :; do
     echoNErr "Input maximum number of snapshots to persist, press [ENTER] for default ($MAX_SNAPS): " && read NEW_MAX_SNAPS
@@ -57,7 +57,7 @@ echoInfo "INFO: Making sure that snap direcotry exists..."
 mkdir -p $DEFAULT_SNAP_DIR && echo "INFO: Success, snap direcotry is present"
 
 SNAPSHOT=""
-SELECT="." && while ! [[ "${SELECT,,}" =~ ^(s|c)$ ]]; do echoNErr "Choose to [S]ync from snapshot or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+echoNErr "Choose to [S]ync from snapshot or [C]ontinue: " && pressToContinue s c && SELECT=($(globGet OPTION))
 if [ "${SELECT,,}" == "s" ]; then
     # get all zip files in the snap directory
     SNAPSHOTS=$(ls $DEFAULT_SNAP_DIR/*.zip) || SNAPSHOTS=""
@@ -67,7 +67,7 @@ if [ "${SELECT,,}" == "s" ]; then
           
     if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ]; then
         echoWarn "WARNING: No snapshots were found in the '$DEFAULT_SNAP_DIR' direcory"
-        echoNErr "Press any key to abort..." && read -n 1 -s && echo ""
+        echoNErr "Press any key to abort..." && pressToContinue
         exit 0
     else
         i=-1
@@ -101,7 +101,7 @@ if [ "${SELECT,,}" == "s" ]; then
     fi
 
     set +x
-    echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
     set -x
 fi
 

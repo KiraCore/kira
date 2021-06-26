@@ -363,7 +363,7 @@ while : ; do
 
     # trigger re-scan if requested
     [ "${FORCE_SCAN,,}" == "true" ] && globSet IS_SCAN_DONE "false"
-    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 
     if [ "${OPTION,,}" == "i" ]; then
         cd $KIRA_HOME
