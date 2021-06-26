@@ -125,9 +125,9 @@ while :; do
     [ ! -z "$KIRA_SNAP_SHA256" ] && \
     echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
-    echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
-    echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
-    echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
+    echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
+    echo -e "|   Default interx Branch: $INTERX_BRANCH"
+    echo -e "| Default frontend Branch: $FRONTEND_BRANCH"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
