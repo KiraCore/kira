@@ -8,6 +8,7 @@ REGISTRY_VERSION="2.7.1"
 CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="true"
 curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
+docker exec -i registry bin/registry --version || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists 
 ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5)
