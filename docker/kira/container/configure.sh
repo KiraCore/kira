@@ -69,21 +69,20 @@ CFG_p2p_laddr=$(globGet CFG_p2p_laddr)
 echoInfo "INFO: Setting up node key..."
 cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 
-if [ "${NODE_TYPE,,}" == "validator" ] ; then
-    echoInfo "INFO: Setting up priv validator key..."
+[ "${NODE_TYPE,,}" == "validator" ] && \
+    echoInfo "INFO: Setting up priv validator key..." && \
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
-fi
 
-if [ "${PRIVATE_MODE,,}" == "true" ] then
-    EXTERNAL_DNS="$LOCAL_IP"
-else
-    EXTERNAL_DNS="$PUBLIC_IP"
-fi
+[ "${PRIVATE_MODE,,}" == "true" ] && EXTERNAL_DNS="$LOCAL_IP" || EXTERNAL_DNS="$PUBLIC_IP"
 
 EXTERNAL_ADDRESS="tcp://$EXTERNAL_DNS:$EXTERNAL_P2P_PORT"
 globSet EXTERNAL_ADDRESS "$EXTERNAL_ADDRESS"
 globSet EXTERNAL_DNS "$EXTERNAL_DNS"
 globSet EXTERNAL_PORT "$EXTERNAL_PORT"
+
+echoInfo "INFO:    Local Addr: $LOCAL_IP"
+echoInfo "INFO:   Public Addr: $PUBLIC_IP"
+echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
 
 echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
@@ -134,10 +133,6 @@ if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
     CFG_timeout_commit=$TIMEOUT_COMMIT
     globSet CFG_timeout_commit "$CFG_timeout_commit"
 fi
-
-echoInfo "INFO:    Local Addr: $LOCAL_IP"
-echoInfo "INFO:   Public Addr: $PUBLIC_IP"
-echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
 
 if [ ! -s "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found, adding to peers config"
