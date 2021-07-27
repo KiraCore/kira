@@ -21,7 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.4.1.0"
+SETUP_VER="v0.4.1.1"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -182,7 +182,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-19" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-20" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."

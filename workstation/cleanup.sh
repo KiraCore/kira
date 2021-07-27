@@ -46,7 +46,9 @@ echoInfo "INFO: Docker common directories cleanup..."
 rm -fv $TMP_GENESIS_PATH
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
 chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" && rm -fv $LOCAL_GENESIS_PATH
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
+rm -fv $LOCAL_GENESIS_PATH
+mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" 
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
 
 echoInfo "INFO: Restarting firewall settings..."
