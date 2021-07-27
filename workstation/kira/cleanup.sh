@@ -27,13 +27,14 @@ while : ; do
 
     if [ -d $KIRA_SNAP ]; then
         echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-        SNAPSHOTS=`ls -S $KIRA_SNAP/*.zip | grep -v '^d'` || SNAPSHOTS=""
+        SNAPSHOTS=`ls -S $KIRA_SNAP/*.zip | grep '^d'` || SNAPSHOTS=""
 
         if [ ! -z "$SNAPSHOTS" ] ; then
             i=0
             for s in $SNAPSHOTS ; do
                 [ ! -f $s ] && continue
                 i=$((i + 1))
+
                 FILENAME=$(basename $s)
                 FILENAME_PREFIX="${NETWORK_NAME}-"
                 if [[ "$FILENAME" != $FILENAME_PREFIX* ]]; then
@@ -50,7 +51,7 @@ while : ; do
                 else 
                     echoInfo "INFO: Snap '$s' will not be removed, cleanup limit '$MAX_SNAPS' is NOT reached"
                 fi
-            done
+            done | tac
         else
             echoInfo "INFO: No snaps were found in the snap directory, nothing to cleanup"
         fi

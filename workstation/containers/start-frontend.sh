@@ -12,6 +12,7 @@ CONTAINER_NAME="frontend"
 CONTAINER_NETWORK="$KIRA_FRONTEND_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
 
 set +x
@@ -40,7 +41,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet frontend_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
 
     INTERNAL_HTTP_PORT="80"
 
@@ -60,10 +61,7 @@ docker run -d \
     --log-opt max-file=5 \
     -e EXTERNAL_HTTP_PORT="$KIRA_FRONTEND_PORT" \
     -e INTERNAL_HTTP_PORT="$INTERNAL_HTTP_PORT" \
-    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
-    -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e DEFAULT_INTERX_PORT="$DEFAULT_INTERX_PORT" \
     -e KIRA_INTERX_PORT="$KIRA_INTERX_PORT" \
     -v $COMMON_PATH:/common \

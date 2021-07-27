@@ -8,6 +8,7 @@ ENV BASHRC="/root/.bashrc"
 ENV JOURNAL_LOGS="/var/log/journal"
 ENV COMMON_DIR="/common"
 ENV COMMON_READ="/common_ro"
+ENV GLOBAL_COMMON_RO="/common_ro/kiraglob"
 ENV SNAP_DIR="/snap"
 
 # Env necessary for the individual child container setup

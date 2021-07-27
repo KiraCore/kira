@@ -4,14 +4,13 @@ source $KIRA_MANAGER/utils.sh
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=4 || UTIL_DIV=6
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
-COMMON_GLOBAL_PATH="$DOCKER_COMMON/global"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
 
 set +x
@@ -26,7 +25,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
     echoInfo "INFO: Ensuring base images exist..."
@@ -40,7 +39,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet interx_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
 
     echoInfo "INFO: Loading secrets..."
     set +x
@@ -51,26 +50,26 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -e
     set -x
 
-    PING_TARGET="sentry.local"
     CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
 
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
-            PING_TARGET="seed.local"
-            CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+        PING_TARGET="seed.local"
+        #CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
     elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-        if [ "$(globGet PRIV_CONN_PRIORITY)" == "true" ] ; then
-            PING_TARGET="priv-sentry.local"
-        else
-            PING_TARGET="sentry.local"
-        fi
-    elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-        if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-            PING_TARGET="validator.local"
-            CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
-        else
-            PING_TARGET="sentry.local"
-        fi
+        PING_TARGET="sentry.local"
+    elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
+        PING_TARGET="validator.local"
+        #CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+    else
+        echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
+        exit 1
     fi
+
+    globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
+    globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
+    globSet priv_sentry_node_id "$PRIV_SENTRY_NODE_ID" $COMMON_GLOB
+    globSet snapshot_node_id "$SNAPSHOT_NODE_ID" $COMMON_GLOB
+    globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -87,9 +86,6 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
-    -e INFRA_MODE="$INFRA_MODE" \
-    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
-    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e PING_TARGET="$PING_TARGET" \
     -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
     -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \

@@ -2,6 +2,8 @@
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
+KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
+
 echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."
 
 mkdir -p $GLOB_STORE_DIR

@@ -18,7 +18,8 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
-echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+NEW_NETWORK=$(globGet NEW_NETWORK "$GLOBAL_COMMON_RO")
+globSet EXTERNAL_STATUS "OFFLINE"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rf $SEKAID_HOME
@@ -108,23 +109,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     globSet START_TIME "$(date -u +%s)"
 fi
 
-echoInfo "INFO: Local genesis.json SHA256 checksum:"
+echoInfo "INFO: Local genesis.json, calculating SHA256 checksum..."
 sha256 $LOCAL_GENESIS
-
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${DEPLOYMENT_MODE}" != "minimal" ]; then
-    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
-    while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
-        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
-            echoInfo "INFO: Sentry or Private Sentry container is running!"
-            break
-        else
-            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
-            sleep 15
-        fi
-    done
-fi
 
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh

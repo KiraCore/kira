@@ -15,10 +15,13 @@ VALIDATORS_SCAN_PATH="$KIRA_SCAN/validators"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 
+INFRA_MODE=$(globGet INFRA_MODE)
+
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|    STARTING KIRA VALIDATORS SCAN $KIRA_SETUP_VER    |"
+echoWarn "| STARTING KIRA VALIDATORS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
+echoWarn "|          INFRA_MODE: $INFRA_MODE"
 echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
 echoWarn "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"

@@ -5,6 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
@@ -91,6 +92,11 @@ while : ; do
     HOSTNAME=$(globGet "${NAME}_HOSTNAME")
     PORTS=$(globGet "${NAME}_PORTS")
 
+    # globs
+    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$COMMON_GLOB") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
+    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$COMMON_GLOB")
+    PRIVATE_MODE=$(globGet PRIVATE_MODE "$COMMON_GLOB")
+
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
         echo "WARNING: Container $NAME no longer exists, aborting container manager..."
@@ -164,17 +170,14 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    EX_ADDR=$(tryCat "$COMMON_PATH/external_address")
-    if [ ! -z "$EX_ADDR" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator|interx|frontend)$ ]] ; then
-        EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
-
+    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator|interx|frontend)$ ]] ; then
         TARGET=""
         [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] && TARGET="(P2P)"
         [ "${NAME,,}" == "interx" ] && TARGET="(API)"
         [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
-        EX_ADDR="${EX_ADDR} ${TARGET} ${WHITESPACE}"
-        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
+        EX_ADDR="${EXTERNAL_ADDRESS} ${TARGET} ${WHITESPACE}"
+        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EXTERNAL_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EXTERNAL_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
     
@@ -191,8 +194,12 @@ while : ; do
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     [ "$STATUS" == "exited" ]      && echo "| [S] | START container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    if [ "$STATUS" == "running" ] ; then
+                                      echo "| [S] | STOP container                                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+                                      echo "| [P] | PAUSE container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+        [ "$PRIV_MODE" == "true" ] && echo "| [M] | Disable Private MODE (access via PUBLIC IP)     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+       [ "$PRIV_MODE" == "false" ] && echo "| [M] | Enable Private MODE (access via LOCAL IP)       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    fi
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ -f "$HALT_FILE" ]            && echo "| [K] | Un-HALT (revive) all processes                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
     [ ! -f "$HALT_FILE" ]          && echo "| [K] | KILL (halt) all processes                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
@@ -258,6 +265,17 @@ while : ; do
             echo "INFO: Creating halt file"
             $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
         fi
+        LOADING="true" && EXECUTED="true"
+    elif [ "${OPTION,,}" == "m" ] ; then
+        if [ "$PRIV_MODE" == "true" ] ; then
+            echoInfo "INFO: Disabling private mode..."
+            globSet PRIVATE_MODE "false" "$COMMON_GLOB"
+        else
+            echoInfo "INFO: Enabling private mode..."
+            globSet PRIVATE_MODE "true" "$COMMON_GLOB"
+        fi
+        echoInfo "INFO: Restarting container..."
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."

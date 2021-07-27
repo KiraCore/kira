@@ -129,20 +129,12 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
 
-        if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
-            echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && pressToContinue p v && SELECT=($(globGet OPTION))
-            [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
-            [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
-            [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
-            [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
-        else
-            [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
-            [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
-            EXPOSURE="public"
-            [ "${INFRA_MODE,,}" == "validator" ] && CONTAINER="validator"
-            [ "${INFRA_MODE,,}" == "sentry" ] && CONTAINER="sentry"
-            [ "${INFRA_MODE,,}" == "seed" ] && CONTAINER="seed"
-        fi
+        [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
+        [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
+        EXPOSURE="public"
+        [ "${INFRA_MODE,,}" == "validator" ] && CONTAINER="validator"
+        [ "${INFRA_MODE,,}" == "sentry" ] && CONTAINER="sentry"
+        [ "${INFRA_MODE,,}" == "seed" ] && CONTAINER="seed"
 
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"

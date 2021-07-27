@@ -13,26 +13,30 @@ SNAP_NAME_FILE="$COMMON_DIR/snap_name"
 SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
-LIP_FILE="$COMMON_READ/local_ip"
-PIP_FILE="$COMMON_READ/public_ip"
 DATA_DIR="$SEKAID_HOME/data"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
-echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+globSet EXTERNAL_STATUS "OFFLINE"
 
 while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
     sleep 5
 done
 
-while ($(isFileEmpty "$LIP_FILE")) && [ "${NODE_TYPE,,}" == "priv_sentry" ] ; do
+LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
+PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
+EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC "$GLOBAL_COMMON_RO")
+INFRA_MODE=$(globGet INFRA_MODE "$GLOBAL_COMMON_RO")
+NEW_NETWORK=$(globGet NEW_NETWORK "$GLOBAL_COMMON_RO")
+
+while [ -z "$LOCAL_IP" ] && [ "${NODE_TYPE,,}" == "priv_sentry" ] ; do
    echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
    sleep 5
 done
 
-while ($(isFileEmpty "$PIP_FILE")) && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ); do
+while [ -z "$PUBLIC_IP" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ); do
     echoInfo "INFO: Waiting for Public IP to be provisioned... ($(date))"
     sleep 5
 done

@@ -219,7 +219,7 @@ if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     KIRA_SNAP_PATH=$DESTINATION_FILE
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    [[ $HEIGHT -gt $MIN_HEIGH ]] && globSet MIN_HEIGHT $HEIGHT
+    [[ $HEIGHT -gt $MIN_HEIGH ]] && globSet MIN_HEIGHT $HEIGHT && globSet MIN_HEIGHT $HEIGHT $GLOBAL_COMMON_RO
 
     ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
 fi

@@ -14,15 +14,15 @@ CONTAINER_NAME="snapshot"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 5 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 5 ) / 1024 " | bc)m"
 
 SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
 SNAP_FILE="$KIRA_SNAP/$SNAP_FILENAME"
@@ -54,7 +54,7 @@ tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OL
 # globGet snapshot_start_log_old
 tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
 rm -rfv "$COMMON_PATH" "$SNAP_STATUS" "$SNAP_DONE" "$SNAP_PROGRESS"
-mkdir -p "$COMMON_LOGS" "$SNAP_STATUS"
+mkdir -p "$COMMON_LOGS" "$SNAP_STATUS" "$COMMON_GLOB"
 
 echoInfo "INFO: Loading secrets..."
 set +x
@@ -76,9 +76,8 @@ cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.js
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
 PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
-CFG_seeds=""
-CFG_persistent_peers=""
-if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [ "${INFRA_MODE,,}" == "validator" ] ; then
+
+if [ "${INFRA_MODE,,}" == "validator" ] ; then
     CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
@@ -117,6 +116,44 @@ if [ -f "$KIRA_SNAP_PATH" ] ; then
     ln -fv "$KIRA_SNAP_PATH" "$SNAP_DESTINATION"
 fi
 
+globSet CFG_pex "true" $COMMON_GLOB
+globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
+# true
+globSet CFG_allow_duplicate_ip "false" $COMMON_GLOB
+globSet CFG_addr_book_strict "false" $COMMON_GLOB
+globSet CFG_fastsync "true" $COMMON_GLOB
+globSet CFG_fastsync_version "v1" $COMMON_GLOB
+
+globSet CFG_handshake_timeout "60s" $COMMON_GLOB
+globSet CFG_dial_timeout "30s" $COMMON_GLOB
+globSet CFG_trust_period "87600h" $COMMON_GLOB
+globSet CFG_max_txs_bytes "131072000" $COMMON_GLOB
+globSet CFG_max_tx_bytes "131072" $COMMON_GLOB
+globSet CFG_send_rate "65536000" $COMMON_GLOB
+globSet CFG_recv_rate "65536000" $COMMON_GLOB
+globSet CFG_max_packet_msg_payload_size "131072" $COMMON_GLOB
+globSet CFG_cors_allowed_origins "*" $COMMON_GLOB
+globSet CFG_snapshot_interval "1000" $COMMON_GLOB
+globSet CFG_statesync_enable "true" $COMMON_GLOB
+globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB
+globSet CFG_timeout_commit "5000ms" $COMMON_GLOB
+globSet CFG_create_empty_blocks_interval "10s" $COMMON_GLOB
+globSet CFG_max_num_outbound_peers "32" $COMMON_GLOB
+globSet CFG_max_num_inbound_peers "128" $COMMON_GLOB
+globSet CFG_prometheus "true" $COMMON_GLOB
+globSet CFG_seed_mode "false" $COMMON_GLOB
+globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
+globSet CFG_private_peer_ids "" $COMMON_GLOB
+globSet CFG_unconditional_peer_ids "$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
+globSet CFG_persistent_peers "" $COMMON_GLOB
+globSet CFG_seeds "" $COMMON_GLOB
+
+globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
+globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
+globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
+
+globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $COMMON_GLOB
+
 echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
@@ -136,43 +173,12 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_SNAPSHOT_DNS" \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
-    -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_seeds="$CFG_seeds" \
-    -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
-    -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="" \
-    -e CFG_unconditional_peer_ids="$VALIDATOR_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_pex="true" \
-    -e CFG_prometheus="true" \
-    -e CFG_addr_book_strict="false" \
-    -e CFG_seed_mode="false" \
-    -e CFG_max_num_outbound_peers="32" \
-    -e CFG_max_num_inbound_peers="128" \
-    -e CFG_handshake_timeout="60s" \
-    -e CFG_allow_duplicate_ip="true" \
-    -e CFG_dial_timeout="30s" \
-    -e CFG_max_txs_bytes="131072000" \
-    -e CFG_max_tx_bytes="131072" \
-    -e CFG_send_rate="65536000" \
-    -e CFG_recv_rate="65536000" \
-    -e CFG_trust_period="87600h" \
-    -e CFG_fastsync="true" \
-    -e CFG_fastsync_version="v1" \
-    -e CFG_max_packet_msg_payload_size="131072" \
-    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
-    -e NEW_NETWORK="$NEW_NETWORK" \
-    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
-    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e PING_TARGET="$PING_TARGET" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$NODE_ID" \
-    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
-    -e INFRA_MODE="$INFRA_MODE" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \

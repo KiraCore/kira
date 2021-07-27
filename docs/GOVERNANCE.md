@@ -97,3 +97,57 @@ voteYes $(lastProposal) validator
 
 networkProperties | jq
 ```
+## Network Updates
+
+```
+sekaid tx upgrade set-plan \
+ --resource-id=1 \
+ --resource-git=1 \
+ --resource-checkout=1 \
+ --resource-checksum=1 \
+ --min-halt-time=1 \
+ --old-chain-id=$NETWORK_NAME \
+ --new-chain-id=1 \
+ --rollback-memo=1 \
+ --max-enrollment-duration=1 
+ --upgrade-memo=1 
+ --from=validator 
+ --keyring-backend=test 
+ --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_level=debug --yes --broadcast-mode=async | txAwait 
+
+```
+
+```
+{
+    "resources": [ {
+            "id": "infra",
+            "git": "<url-string>",
+            "checkout": "<branch-or-tag-string>",
+            "checksum": "sha256-string"
+        }, {
+            "id": "chain",
+            "git": ...
+        }, { ... }, ...
+    ],
+    "min_halt_time": <uint>,
+    "old_chain_id": <string>,
+    "new_chain_id": <string>,
+    "rollback_checksum": <sha256-string>,
+    "max_enrolment_duration": <uint>,
+    "memo": <string>
+}
+```
+
+
+[ {
+            "id": "sekai",
+            "git": "https://github.com/KiraCore/sekai",
+            "checkout": "master",
+            "checksum": "sha256-string"
+        }, {
+            "id": "interx",
+            "git": "https://github.com/KiraCore/sekai",
+            "checkout": "master",
+            "checksum": "sha256-string"
+        }
+    ]

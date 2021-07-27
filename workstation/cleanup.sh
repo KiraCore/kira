@@ -46,7 +46,7 @@ echoInfo "INFO: Docker common directories cleanup..."
 rm -fv $TMP_GENESIS_PATH
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
 chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && rm -fv $LOCAL_GENESIS_PATH
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" && mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" && rm -fv $LOCAL_GENESIS_PATH
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
 
 echoInfo "INFO: Restarting firewall settings..."
@@ -118,7 +118,22 @@ fi
 
 [ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$INFRA_MODE' mode"
 [ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$INFRA_MODE' mode"
-CDHelper text lineswap --insert="EXTERNAL_SYNC=$EXTERNAL_SYNC" --prefix="EXTERNAL_SYNC=" --path=$ETC_PROFILE --append-if-found-not=True
+
+MIN_HEIGHT=$(globGet MIN_HEIGHT)
+
+globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
+globSet INFRA_MODE "$INFRA_MODE"
+globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
+globSet NEW_NETWORK "$NEW_NETWORK"
+globSet DEPLOYMENT_MODE "$DEPLOYMENT_MODE"
+globSet MIN_HEIGHT $HEIGHT
+
+globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO
+globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
+globSet KIRA_SETUP_VER "$KIRA_SETUP_VER" $GLOBAL_COMMON_RO
+globSet NEW_NETWORK "$NEW_NETWORK" $GLOBAL_COMMON_RO
+globSet DEPLOYMENT_MODE "$DEPLOYMENT_MODE" $GLOBAL_COMMON_RO
+globSet MIN_HEIGHT $HEIGHT $GLOBAL_COMMON_RO
 
 set +x
 echoWarn "------------------------------------------------"

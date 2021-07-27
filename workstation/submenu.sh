@@ -102,6 +102,8 @@ fi
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
+PRIVATE_MODE=$(globGet PRIVATE_MODE) && [ -z "$PRIVATE_MODE" ] && PRIVATE_MODE="false"
+
 while :; do
     set +e && source $ETC_PROFILE &>/dev/null && set -e
     set +x
@@ -115,6 +117,7 @@ while :; do
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
     echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
+    echo -e "|    Public Net. Exposure: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
     [ "${NEW_NETWORK,,}" == "true" ] && \
     echo -e "|        NEW Network Name: ${NETWORK_NAME}"
@@ -134,6 +137,7 @@ while :; do
     displayAlign left $printWidth " [3] | Change Default Branches"
     displayAlign left $printWidth " [4] | Change Deployment Mode"
     displayAlign left $printWidth " [5] | Change Infrastructure Mode"
+    displayAlign left $printWidth " [6] | Change Network Exposure (privacy) Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [X] | Exit"
@@ -174,7 +178,7 @@ while :; do
     ;;
   4*)
     set +x
-    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
+    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and other non-essential tasks!"
     echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && pressToContinue m f && MODE=($(globGet OPTION))
     set -x
 
@@ -185,6 +189,15 @@ while :; do
   5*)
     $KIRA_MANAGER/menu.sh "false"
     exit 0
+    ;;
+  6*)
+    set +x
+    echoWarn "WARNING: Nodes launched in the private mode can only communicate with other nodes deployed in their local/private network"
+    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue m f && MODE=($(globGet OPTION))
+    set -x
+
+    [ "${MODE,,}" == "p" ] && PRIVATE_MODE="false"
+    [ "${MODE,,}" == "v" ] && PRIVATE_MODE="true"
     ;;
   x*)
     exit 0
@@ -203,6 +216,7 @@ timerStart AUTO_BACKUP
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER
 globSet SNAP_EXPOSE "true"
 globSet AUTO_BACKUP "true"
+globSet PRIVATE_MODE "$PRIVATE_MODE"
 
 (! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
 

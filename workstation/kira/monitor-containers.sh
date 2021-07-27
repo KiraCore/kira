@@ -119,11 +119,12 @@ if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
     fi
 
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
-    echo "$NEW_LATEST_BLOCK" > "$DOCKER_COMMON_RO/latest_block_height"
+    globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
 
     MIN_HEIGHT="$(globGet MIN_HEIGHT)"
     if (! $(isNaturalNumber $MIN_HEIGHT)) || [[ $MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
         globSet MIN_HEIGHT $NEW_LATEST_BLOCK
+        globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
     fi
 fi
 # save latest known status
