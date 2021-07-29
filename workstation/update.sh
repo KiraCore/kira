@@ -67,6 +67,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
 
     if [ -z "$SETUP_REBOOT" ] ; then
         echoInfo "INFO: Reboot is required before tools setup can continue..." && sleep 3
+        echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
         globSet SETUP_REBOOT "done"
         reboot
         exit 0
@@ -129,6 +130,7 @@ fi
 
 if [ -z "$SETUP_REBOOT" ] ; then
     echoInfo "INFO: Reboot is required before setup can continue..." && sleep 3
+    echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
     globSet SETUP_REBOOT "done"
     reboot
     exit 0
