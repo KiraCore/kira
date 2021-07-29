@@ -43,8 +43,6 @@ timeout 60 docker cp "seed:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || 
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
 timeout 60 docker cp "sentry:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
-timeout 60 docker cp "priv_sentry:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
-echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
 timeout 60 docker cp "snapshot:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
 timeout 60 docker cp "validator:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
@@ -137,7 +135,7 @@ while read ip; do
             TARGET=""
             [[ $port == 16656 ]] && TARGET="seed_node_id"
             [[ $port == 26656 ]] && TARGET="sentry_node_id"
-            [[ $port == 36656 ]] && TARGET="priv_sentry_node_id"
+            [[ $port == 46656 ]] && TARGET="snapshot_node_id"
             [[ $port == 56656 ]] && TARGET="validator_node_id"
             node_id=$(timeout 1 curl "$ip:$DEFAULT_INTERX_PORT/download/$TARGET" 2>/dev/null || echo -n "")
             ($(isNodeId "$node_id")) && peer="$node_id@$ip:$port"

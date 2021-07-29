@@ -53,7 +53,7 @@ while : ; do
         fi
     fi
 
-    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|snapshot|seed)$ ]] ; then
         SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
@@ -170,9 +170,9 @@ while : ; do
         echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator|interx|frontend)$ ]] ; then
+    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|validator|interx|frontend)$ ]] ; then
         TARGET=""
-        [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] && TARGET="(P2P)"
+        [[ "${NAME,,}" =~ ^(sentry|seed|validator)$ ]] && TARGET="(P2P)"
         [ "${NAME,,}" == "interx" ] && TARGET="(API)"
         [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
@@ -209,7 +209,7 @@ while : ; do
     [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit __________________________________________ |\e[0m"
 
-    read -s -n 1 -t 6 OPTION || continue
+    read -s -n 1 -t 20 OPTION || continue
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 

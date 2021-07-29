@@ -56,14 +56,14 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     seed_node_id=$(globGet seed_node_id)
     sentry_node_id=$(globGet sentry_node_id)
-    priv_sentry_node_id=$(globGet priv_sentry_node_id)
+    snapshot_node_id=$(globGet snapshot_node_id)
     validator_node_id=$(globGet validator_node_id)
 
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --seed_node_id="$seed_node_id" \
       --sentry_node_id="$sentry_node_id" \
-      --priv_sentry_node_id="$priv_sentry_node_id" \
+      --priv_sentry_node_id="$snapshot_node_id" \
       --validator_node_id="$validator_node_id" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \

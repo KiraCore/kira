@@ -26,7 +26,7 @@ if [ "${NAME,,}" == "interx" ]; then
 elif [ "${NAME,,}" == "frontend" ]; then
     BRANCH="$FRONTEND_BRANCH"
     REPO="$FRONTEND_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "priv_sentry" ] || [ "${NAME,,}" == "snapshot" ] || [ "${NAME,,}" == "seed" ] ; then
+elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "snapshot" ] || [ "${NAME,,}" == "seed" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
 elif [ "${NAME,,}" == "validator" ]; then
@@ -67,7 +67,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
 
     if [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
-    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed|interx|frontend)$ ]] ) ; then 
+    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|snapshot|seed|interx|frontend)$ ]] ) ; then 
         globSet "${NAME}_STATUS" "configuring"
     else
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"

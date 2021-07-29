@@ -64,7 +64,7 @@ else
         globSet previous_height "$HEIGHT"
     else
         echoInfo "INFO: Starting healthcheck..."
-        if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
+        if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
             $SELF_CONTAINER/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
         elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
             $SELF_CONTAINER/snapshot/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
@@ -90,7 +90,7 @@ if [ ! -z "$EXTERNAL_DNS" ] && [ ! -z "$EXTERNAL_PORT" ] ; then
         globSet EXTERNAL_STATUS "OFFLINE"
     fi
 else
-    echoWarn "WARNING: This node is NOT advertising its public or local external address to other nodes in the network!"
+    echoWarn "WARNING: This node is NOT advertising its port ('$EXTERNAL_PORT') or external address ('$EXTERNAL_DNS') to other nodes in the network!"
     globSet EXTERNAL_STATUS "OFFLINE"
 fi
 

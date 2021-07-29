@@ -33,7 +33,7 @@ done
 
 touch $CFG_CHECK
 FAILED="false"
-if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
+if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
     $SELF_CONTAINER/sentry/start.sh || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
     $SELF_CONTAINER/snapshot/start.sh || FAILED="true"

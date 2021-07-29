@@ -5,6 +5,8 @@ source $KIRA_MANAGER/utils.sh
 
 timerStart
 
+SETUP_START_DT=$(globGet SETUP_START_DT)
+
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "| STARTING KIRA LOGS DUMP $KIRA_SETUP_VER"
@@ -13,6 +15,7 @@ echoWarn "| CONTAINER NAME: $NAME"
 echoWarn "|      VARS_FILE: $VARS_FILE"
 echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|             ID: $ID"
+echoWarn "| SETUP START DT: $SETUP_START_DT"
 echoWarn "--------------------------------------------------"
 set -x
 

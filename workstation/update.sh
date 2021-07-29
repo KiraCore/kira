@@ -18,16 +18,21 @@ UPDATE_CHECK_TOOLS="tools-setup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CLEANUP="system-cleanup-1-$KIRA_SETUP_VER"
 UPDATE_CHECK_CONTAINERS="containers-build-1-$KIRA_SETUP_VER"
 
-UPDATE_FAILS=$(globGet UPDATE_FAIL_COUNTER) 
+UPDATE_FAILS=$(globGet UPDATE_FAIL_COUNTER)
+
 if (! $(isNaturalNumber $UPDATE_FAILS)) ; then
     UPDATE_FAILS=0
     globSet UPDATE_FAIL_COUNTER $UPDATE_FAILS
-fi  
+fi 
+
+SETUP_START_DT=$(globGet SETUP_START_DT)
+# marks if system was rebooted before tools setup started (this is required in case of docker deamon malfunction)
+SETUP_REBOOT=$(globGet SETUP_REBOOT)
 
 if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
     touch $UPDATE_FAIL_FILE
-    CDHelper text lineswap --insert="SETUP_END_DT=\"$(date +'%Y-%m-%d %H:%M:%S')\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     echoInfo "INFO: Dumping service logs..."
     if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
         journalctl --since "$SETUP_START_DT" -u kiraup -b --no-pager --output cat > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
@@ -42,10 +47,13 @@ fi
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "| UPDATE LOGS DIR: $UPDATE_LOGS_DIR"
-echoWarn "|   FAILS COUNTER: $UPDATE_FAILS"
-echoWarn "|       MAX FAILS: $MAX_FAILS"
+echoWarn "|       BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|   UPDATE LOGS DIR: $UPDATE_LOGS_DIR"
+echoWarn "|     FAILS COUNTER: $UPDATE_FAILS"
+echoWarn "|         MAX FAILS: $MAX_FAILS"
+echoWarn "| SETUP START DTATE: $SETUP_START_DT"
+echoWarn "|   SETUP END DTATE: $SETUP_END_DT"
+echoWarn "|      SETUP REBOOT: $SETUP_REBOOT"
 echoWarn "------------------------------------------------"
 
 mkdir -p $UPDATE_DUMP
@@ -56,6 +64,16 @@ mkdir -p $UPDATE_DUMP
 UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_TOOLS"
 if [ ! -f "$UPDATE_CHECK" ]; then
     echoInfo "INFO: Installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
+
+    if [ -z "$SETUP_REBOOT" ] ; then
+        echoInfo "INFO: Reboot is required before tools setup can continue..." && sleep 3
+        globSet SETUP_REBOOT "done"
+        reboot
+        exit 0
+    else
+        echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."
+    fi
+
     set -x
     UPDATE_DONE="false" && rm -fv $UPDATE_DONE_FILE
     rm -rfv $UPDATE_LOGS_DIR 
@@ -73,6 +91,7 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         touch $UPDATE_CHECK
         systemctl daemon-reload
         systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
+        globSet SETUP_REBOOT ""
         exit 0
     else
         echoErr "ERROR: Failed installing essential tools and dependecies ($UPDATE_CHECK_TOOLS)"
@@ -108,19 +127,13 @@ else
     echoInfo "INFO: Environment cleanup was already executed ($UPDATE_CHECK_CLEANUP)"
 fi
 
-if [ ! -f "$KIRA_SETUP/reboot" ] ; then
-    rm -fv "$KIRA_SETUP/rebooted"
-    echoWarn "WARNING: To apply all changes your machine must be rebooted!"
-    echoWarn "WARNING: After restart is compleated type 'kira' in your console terminal to continue"
-    echoInfo "INFO: Rebooting will occur in 3 seconds and you will be logged out of your machine"
-    echoErr "Log back in and type 'kira' in terminal then select [V]iew progress option to continue..."
-    sleep 3
-    set -x
-    touch "$KIRA_SETUP/reboot"
+if [ -z "$SETUP_REBOOT" ] ; then
+    echoInfo "INFO: Reboot is required before setup can continue..." && sleep 3
+    globSet SETUP_REBOOT "done"
     reboot
+    exit 0
 else
     echoInfo "INFO: Reboot was already performed, setup will continue..."
-    touch "$KIRA_SETUP/rebooted"
 fi
 
 UPDATE_CHECK="$KIRA_UPDATE/$UPDATE_CHECK_CONTAINERS"
@@ -154,7 +167,7 @@ if [ "${UPDATE_DONE,,}" == "true" ] ; then
     if [ ! -f $UPDATE_DONE_FILE ] ; then
         set -x
         touch $UPDATE_DONE_FILE
-        CDHelper text lineswap --insert="SETUP_END_DT=\"$(date +'%Y-%m-%d %H:%M:%S')\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
         set +x
     fi
 else

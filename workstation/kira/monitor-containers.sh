@@ -47,7 +47,7 @@ for name in $CONTAINERS; do
     $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" &> "$SCAN_LOGS/${name}-status.error.log" &
     globSet "${name}_STATUS_PID" "$!"
 
-    if [[ "${name,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+    if [[ "${name,,}" =~ ^(validator|sentry|snapshot|seed)$ ]] ; then
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
         echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
     elif [ "${name,,}" == "interx" ] ; then 
@@ -84,7 +84,7 @@ for name in $CONTAINERS; do
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=false
-        if [[ "${name,,}" =~ ^(sentry|priv_sentry|seed|validator)$ ]] ; then
+        if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
@@ -107,25 +107,13 @@ done
 # save latest known block height
 OLD_LATEST_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
 if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
-    TRUSTED_KIRA_STATUS=$(timeout 8 curl --fail "$TRUSTED_NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null || echo -n "")
-    TRUSTED_HEIGHT=$(echo "$TRUSTED_KIRA_STATUS"  | jsonQuickParse "latest_block_height" || echo "")
-    (! $(isNaturalNumber $TRUSTED_HEIGHT)) && TRUSTED_HEIGHT=0
 
     globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
-    
-    if [[ $TRUSTED_HEIGHT -gt $NEW_LATEST_BLOCK ]] ; then
-        echoInfo "INFO: Block heigher then internal $NEW_LATEST_BLOCK was found ($TRUSTED_HEIGHT)"
-        NEW_LATEST_BLOCK=$TRUSTED_HEIGHT
-    fi
-
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
 
-    MIN_HEIGHT="$(globGet MIN_HEIGHT)"
-    if (! $(isNaturalNumber $MIN_HEIGHT)) || [[ $MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
-        globSet MIN_HEIGHT $NEW_LATEST_BLOCK
-        globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
-    fi
+    globSet MIN_HEIGHT $NEW_LATEST_BLOCK
+    globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH

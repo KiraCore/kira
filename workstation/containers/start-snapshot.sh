@@ -67,7 +67,7 @@ echoInfo "INFO: Checking peers info..."
 SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
 NODE_ID="$SNAPSHOT_NODE_ID"
 EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
@@ -86,13 +86,8 @@ elif [ "${INFRA_MODE,,}" == "seed" ] ; then
     PING_TARGET="seed.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
-    if [ "${PRIV_CONN_PRIORITY,,}" == "true" ] ; then
-        CONTAINER_TARGET="priv_sentry"
-        PING_TARGET="priv-sentry.local"
-    else
-        CONTAINER_TARGET="sentry"
-        PING_TARGET="sentry.local"
-    fi
+    CONTAINER_TARGET="sentry"
+    PING_TARGET="sentry.local"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 

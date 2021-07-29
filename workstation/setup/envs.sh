@@ -24,7 +24,6 @@ KIRA_FRONTEND_NETWORK="servicenet"
 KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
 KIRA_SEED_DNS="seed.local"
 KIRA_SNAPSHOT_DNS="snapshot.local"
 KIRA_INTERX_DNS="interx.local"
@@ -68,7 +67,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_REGISTRY_DNS=$KIRA_REGISTRY_DNS" --prefix="KIRA_REGISTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_VALIDATOR_DNS=$KIRA_VALIDATOR_DNS" --prefix="KIRA_VALIDATOR_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_DNS=$KIRA_SENTRY_DNS" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_DNS=$KIRA_PRIV_SENTRY_DNS" --prefix="KIRA_PRIV_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SEED_DNS=$KIRA_SEED_DNS" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAPSHOT_DNS=$KIRA_SNAPSHOT_DNS" --prefix="KIRA_SNAPSHOT_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_INTERX_DNS=$KIRA_INTERX_DNS" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -41,7 +41,7 @@ globGet "${CONTAINER_NAME}_START_LOG_OLD" > "$CONTAINER_DUMP/start.log.old.txt"
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
 echo $(docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
 
-if [[ "${NAME,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+if [[ "${NAME,,}" =~ ^(validator|sentry|snapshot|seed)$ ]] ; then
     DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"
     DUMP_DATA="$CONTAINER_DUMP/.sekaid/data"
     mkdir -p $DUMP_CONFIG

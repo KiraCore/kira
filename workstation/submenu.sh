@@ -18,6 +18,7 @@ fi
 systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
+sleep 1
 globSet LATEST_BLOCK 0
 globSet MIN_HEIGHT 0
 
@@ -213,7 +214,7 @@ set -x
 [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && globSet AUTO_BACKUP "false"
 
 timerStart AUTO_BACKUP
-globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT
 globSet SNAP_EXPOSE "true"
 globSet AUTO_BACKUP "true"
 globSet PRIVATE_MODE "$PRIVATE_MODE"
@@ -221,11 +222,15 @@ globSet PRIVATE_MODE "$PRIVATE_MODE"
 (! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
-SETUP_END_DT=""
-CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet SETUP_START_DT "$SETUP_START_DT"
+
 CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+
+rm -fv $(globFile validator_SEKAID_STATUS)
+rm -fv $(globFile sentry_SEKAID_STATUS)
+rm -fv $(globFile seed_SEKAID_STATUS)
+rm -fv $(globFile snapshot_SEKAID_STATUS)
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 

@@ -31,13 +31,19 @@ EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC "$GLOBAL_COMMON_RO")
 INFRA_MODE=$(globGet INFRA_MODE "$GLOBAL_COMMON_RO")
 NEW_NETWORK=$(globGet NEW_NETWORK "$GLOBAL_COMMON_RO")
 
-while [ -z "$LOCAL_IP" ] && [ "${NODE_TYPE,,}" == "priv_sentry" ] ; do
+PRIVATE_MODE=$(globGet PRIVATE_MODE)
+
+while [ -z "$LOCAL_IP" ] && [ "${PRIVATE_MODE,,}" == "true" ] ; do
    echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
+   LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
+   PRIVATE_MODE=$(globGet PRIVATE_MODE)
    sleep 5
 done
 
-while [ -z "$PUBLIC_IP" ] && ( [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ] ); do
+while [ -z "$PUBLIC_IP" ] && [ "${PRIVATE_MODE,,}" != "true" ] ; do
     echoInfo "INFO: Waiting for Public IP to be provisioned... ($(date))"
+    PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
+    PRIVATE_MODE=$(globGet PRIVATE_MODE)
     sleep 5
 done
 
@@ -81,34 +87,6 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     touch $EXECUTED_CHECK
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
-fi
-
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${NODE_TYPE,,}" == "seed" ] && [ "${INFRA_MODE,,}" != "seed" ]; then
-    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
-    while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
-        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
-        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] || [ "$VALIDATOR_OPEN" == "true" ] ; then
-            echoInfo "INFO: Sentry or Private Sentry container is running!"
-            break
-        else
-            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN), private sentry ($PRIV_SENTRY_OPEN) or validator ($VALIDATOR_OPEN) to start..."
-            sleep 15
-        fi
-    done
-elif [ "${NEW_NETWORK,,}" == "true" ] && [[ "${NODE_TYPE,,}" =~ ^(sentry|priv_sentry)$ ]] ; then
-    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
-    while : ; do
-        VALIDATOR_OPEN=$(isPortOpen validator.local 26656)
-        if [ "$VALIDATOR_OPEN" == "true" ] ; then
-            echoInfo "INFO: Validator node is started"
-            break
-        else
-            echoWarn "WARNINIG: Waiting for validator ($VALIDATOR_OPEN) to start..."
-            sleep 15
-        fi
-    done
 fi
 
 echoInfo "INFO: Loading configuration..."

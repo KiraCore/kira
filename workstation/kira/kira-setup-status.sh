@@ -7,6 +7,8 @@ set +x
 echoInfo "INFO: Checking KIRA Setup Status..."
 UPDATE_DONE_FILE="$KIRA_UPDATE/done"
 UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
+SETUP_END_DT=$(globGet SETUP_END_DT)
+SETUP_START_DT=$(globGet SETUP_START_DT)
 
 while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
