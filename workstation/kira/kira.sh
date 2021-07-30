@@ -2,8 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
- 
-set +x
+
 echoInfo "INFO: Launching KIRA Network Manager..."
 
 if [ "${USER,,}" != root ]; then
@@ -32,6 +31,8 @@ systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service
 
 globSet IS_SCAN_DONE "false"
 PREVIOUS_BLOCK=0
+set +x
+
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     SNAP_STATUS="$KIRA_SNAP/status"
