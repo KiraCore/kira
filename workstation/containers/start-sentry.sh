@@ -77,7 +77,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet CFG_pex "true" $COMMON_GLOB
     globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
     #true
-    globSet CFG_allow_duplicate_ip "false" $COMMON_GLOB
+    globSet CFG_allow_duplicate_ip "true" $COMMON_GLOB
     globSet CFG_addr_book_strict "false" $COMMON_GLOB
     globSet CFG_fastsync "true" $COMMON_GLOB
     globSet CFG_fastsync_version "v1" $COMMON_GLOB
