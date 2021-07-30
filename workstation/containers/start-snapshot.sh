@@ -64,11 +64,6 @@ set -x
 set -e
 
 echoInfo "INFO: Checking peers info..."
-SEED_SEED=$(echo "${SEED_NODE_ID}@$KIRA_SEED_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-VALIDATOR_SEED=$(echo "${VALIDATOR_NODE_ID}@$KIRA_VALIDATOR_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
 NODE_ID="$SNAPSHOT_NODE_ID"
 EXTERNAL_P2P_PORT="$KIRA_SNAPSHOT_P2P_PORT"
 cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
@@ -80,27 +75,36 @@ PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"
+    NODE_ID_TARGET="$VALIDATOR_NODE_ID"
     CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
     CONTAINER_TARGET="seed"
     PING_TARGET="seed.local"
+    NODE_ID_TARGET="$SEED_NODE_ID"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 else
     CONTAINER_TARGET="sentry"
     PING_TARGET="sentry.local"
+    NODE_ID_TARGET="$SENTRY_NODE_ID"
     CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 fi
 
-ADDRBOOK_DEST="$COMMON_PATH/addrbook.json"
-PEERS_DEST="$COMMON_PATH/peers"
-SEEDS_DEST="$COMMON_PATH/seeds"
-rm -fv $ADDRBOOK_DEST $PEERS_DEST $SEEDS_DEST
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/addrbook.json" $ADDRBOOK_DEST || echo "" > $ADDRBOOK_DEST
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/peers" $PEERS_DEST || echo "" > $PEERS_DEST
-timeout 60 docker cp "$CONTAINER_TARGET:$SEKAID_HOME/config/seeds" $SEEDS_DEST || echo "" > $SEEDS_DEST
+LISTEN_ADDR=$(timeout 3 curl --fail $PING_TARGET:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonParse "result.node_info.listen_addr" 2>/dev/null || echo -n "")
+LISTEN_ADDR=$(echo "$LISTEN_ADDR" | sed 's/tcp\?:\/\///')
 
-if ($(isFileEmpty $ADDRBOOK_DEST)) && ($(isFileEmpty $SEEDS_DEST)) && ($(isFileEmpty $PEERS_DEST)) ; then
-    echoErr "ERROR: Failed to start snapshot contianer, could not find addressbook, seeds nor peers list"
+CFG_persistent_peers=""
+if [ ! -z "$LISTEN_ADDR" ] ; then
+    addrArr=( $(echo $LISTEN_ADDR | tr ":" "\n") )
+    LISTEN_ADDR=${addrArr[0],,}
+    LISTEN_PORT=${addrArr[1],,}
+
+    if ($(isDnsOrIp "$LISTEN_ADDR")) && ($(isPort "$LISTEN_PORT")) ; then
+        CFG_persistent_peers=$(echo "${NODE_ID_TARGET}@$LISTEN_ADDR:$LISTEN_PORT" | xargs | tr -d '\n' | tr -d '\r')
+    fi
+fi
+
+if [ -z "$CFG_persistent_peers" ] ; then
+    echoErr "ERROR: No persistent local peers found, snapshot can NOT be created"
     exit 1
 fi
 
@@ -114,7 +118,7 @@ fi
 globSet CFG_pex "true" $COMMON_GLOB
 globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
 # true
-globSet CFG_allow_duplicate_ip "false" $COMMON_GLOB
+globSet CFG_allow_duplicate_ip "true" $COMMON_GLOB
 globSet CFG_addr_book_strict "false" $COMMON_GLOB
 globSet CFG_fastsync "true" $COMMON_GLOB
 globSet CFG_fastsync_version "v1" $COMMON_GLOB
@@ -140,14 +144,14 @@ globSet CFG_seed_mode "false" $COMMON_GLOB
 globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
 globSet CFG_private_peer_ids "" $COMMON_GLOB
 globSet CFG_unconditional_peer_ids "$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
-globSet CFG_persistent_peers "" $COMMON_GLOB
+globSet CFG_persistent_peers "$CFG_persistent_peers" $COMMON_GLOB
 globSet CFG_seeds "" $COMMON_GLOB
 
 globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
 globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
 globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
 
-globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $COMMON_GLOB
+globSet PRIVATE_MODE "true" $COMMON_GLOB
 
 echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

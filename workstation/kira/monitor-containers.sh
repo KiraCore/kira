@@ -89,7 +89,7 @@ for name in $CONTAINERS; do
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 
-        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] ; then
+        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ "${name,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
             NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"
         fi
@@ -105,15 +105,16 @@ for name in $CONTAINERS; do
 done
 
 # save latest known block height
-OLD_LATEST_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$OLD_LATEST_BLOCK")) && OLD_LATEST_BLOCK=0
-if [[ $OLD_LATEST_BLOCK -lt $NEW_LATEST_BLOCK ]] ; then
-
+if ($(isNaturalNumber "$NEW_LATEST_BLOCK")) && [ "$NEW_LATEST_BLOCK" != "0" ] ; then
     globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
 
-    globSet MIN_HEIGHT $NEW_LATEST_BLOCK
-    globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
+    OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
+    if [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
+        globSet MIN_HEIGHT $NEW_LATEST_BLOCK
+        globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
+    fi
 fi
 # save latest known status
 (! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH

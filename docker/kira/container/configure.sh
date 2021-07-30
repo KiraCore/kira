@@ -67,6 +67,7 @@ CFG_rpc_laddr=$(globGet CFG_rpc_laddr)
 CFG_p2p_laddr=$(globGet CFG_p2p_laddr)
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE)
+FORCE_EXTERNAL_DNS=$(globGet FORCE_EXTERNAL_DNS)
 
 echoInfo "INFO: Setting up node key..."
 cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
