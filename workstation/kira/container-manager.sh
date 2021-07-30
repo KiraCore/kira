@@ -177,7 +177,7 @@ while : ; do
         [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
         EX_ADDR="${EXTERNAL_ADDRESS} ${TARGET} ${WHITESPACE}"
-        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EXTERNAL_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EXTERNAL_STATUS\e[36;1m"
+        [ "${EXTERNAL_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EXTERNAL_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EXTERNAL_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
     
