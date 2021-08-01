@@ -247,6 +247,9 @@ while : ; do
         [ "${VALSTATUS,,}" == "paused" ]   && echo "| [M] | Disable MAINTENANCE Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
         [ "${VALSTATUS,,}" == "inactive" ] && echo "| [A] | Re-ACTIVATE Jailed Validator            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
     fi
+
+    [ "${VALSTATUS,,}" == "waiting" ] && \
+    echo "| [J] | JOIN Validator Set                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}j"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
     echo "| [I] | Re-INITALIZE Infrastructure             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
@@ -333,22 +336,29 @@ while : ; do
     elif [ "${OPTION,,}" == "m" ]; then
         if [ "${VALSTATUS,,}" == "active" ]; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing pause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || \
             echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         elif [ "${VALSTATUS,,}" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing unpause --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 100ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || \
             echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
         FORCE_SCAN="true" && EXECUTED="true"
+    elif [ "${OPTION,,}" == "j" ]; then
+        echoInfo "INFO: Attempting to claim validator seat..."
+        read -p "INPUT UNIQUE MONIKER (your node new nickname): " MONIKER
+        ( docker exec -i validator /bin/bash -c ". /etc/profile && claimValidatorSeat validator \"$MONIKER\"" || \
+        echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+        sleep 5
+        FORCE_SCAN="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "a" ]; then
         if [ "${VALSTATUS,,}" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
-            ( docker exec -i validator /bin/bash -c ". /etc/profile && sekaid tx customslashing activate --from validator --chain-id=\$NETWORK_NAME --keyring-backend=test --home=\$SEKAID_HOME --fees 1000ukex --gas=1000000000 --yes --broadcast-mode=async --log_format=json | txAwait 180" || \
+            ( docker exec -i validator /bin/bash -c ". /etc/profile && activateValidator validator" || \
             echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else

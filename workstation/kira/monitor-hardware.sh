@@ -65,7 +65,7 @@ LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || 
 echoInfo "INFO: Updating IP addresses info..."
 tryMkDir "$DOCKER_COMMON_RO"
 tryMkDir "$GLOBAL_COMMON_RO"
-($(isPublicIp "$PUBLIC_IP")) && globSet "PUBLIC_IP" "$PUBLIC_IP" && globSet "PUBLIC_IP" "$LOCAL_IP" "$GLOBAL_COMMON_RO"
+($(isPublicIp "$PUBLIC_IP")) && globSet "PUBLIC_IP" "$PUBLIC_IP" && globSet "PUBLIC_IP" "$PUBLIC_IP" "$GLOBAL_COMMON_RO"
 ($(isIp "$LOCAL_IP")) && globSet "LOCAL_IP" "$LOCAL_IP" && globSet "LOCAL_IP" "$LOCAL_IP" "$GLOBAL_COMMON_RO"
 
 echoInfo "INFO: Updating network speed info..."

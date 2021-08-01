@@ -129,7 +129,7 @@ function voteYes() {
     ACCOUNT=$2
     YES=1
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL $YES --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+    sekaid tx customgov proposal vote $PROPOSAL $YES --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 }
 
 function networkProperties() {
@@ -189,17 +189,17 @@ function propAwait() {
 function whitelistValidator() {
     ACC="$1"
     ADDR="$2"
-    ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
-    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Validator address was not defined " && return 1
+    ($(isNullOrEmpty $ACC)) && echoErr "ERROR: Account name was not defined " && return 1
+    ($(isNullOrEmpty $ADDR)) && echoErr "ERROR: Validator address was not defined " && return 1
     if ($(isPermWhitelisted $ADDR $PermClaimValidator)) ; then
         echoWarn "WARNING: Address $ADDR was already whitelisted as validator"
     else
         echoInfo "INFO: Adding $ADDR to the validator set"
         echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
-        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait
+        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 
         echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait 
+        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait 
 
         echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
         LAST_PROPOSAL=$(lastProposal) 
@@ -236,6 +236,18 @@ function whitelistValidators() {
     else
         echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
     fi
+}
+
+# claimValidatorSeat <account> <moniker> <timeout-seconds>
+# e.g.: claimValidatorSeat validator "BOB's NODE" 180
+function claimValidatorSeat() {
+    ACCOUNT=$1
+    MONIKER=$2
+    TIMEOUT=$3
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    ($(isNullOrEmpty $MONIKER)) && MONIKER=$(openssl rand -hex 16)
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    sekaid tx customstaking claim-validator-seat --from "$ACCOUNT" --keyring-backend=test --home=$SEKAID_HOME --moniker="$MONIKER" --chain-id=$NETWORK_NAME --broadcast-mode=async --fees=100ukex --yes | txAwait $TIMEOUT
 }
 
 # e.g. showAddress validator
@@ -276,4 +288,67 @@ function updateCommitTimeout {
     else
         echoInfo "WARNING: Unknown validator cound, could not calculate timeout commit."
     fi
+}
+
+# e.g. showStatus -> { ... }
+function showStatus() {
+    echo $(sekaid status 2>&1 | jsonParse "" 2>/dev/null || echo -n "")
+}
+
+# e.g. showBlockHeight -> 123
+function showBlockHeight() {
+    SH_LATEST_BLOCK_HEIGHT=$(showStatus | jsonParse "SyncInfo.latest_block_height" 2>/dev/null || echo -n "")
+    ($(isNaturalNumber "$SH_LATEST_BLOCK_HEIGHT")) && echo $SH_LATEST_BLOCK_HEIGHT || echo ""
+}
+
+# awaitBlocks <number-of-blocks> <timeout-seconds>
+# e.g. awaitBlocks 5
+function awaitBlocks() {
+    BLOCKS=$1
+    (! $(isNaturalNumber $BLOCKS)) && echoErr "ERROR: Number of blocks to await was NOT defined" && return 1
+    SH_START_BLOCK=""
+    while : ; do
+        SH_NEW_BLOCK=$(showBlockHeight)
+        (! $(isNaturalNumber $SH_NEW_BLOCK)) && sleep 1 && continue
+        [ -z "$SH_START_BLOCK" ] && SH_START_BLOCK=$SH_NEW_BLOCK
+        SH_DELTA=$(($SH_NEW_BLOCK - $SH_START_BLOCK))
+        [ $SH_DELTA -gt $BLOCKS ] && break
+        sleep 1
+    done
+}
+
+# e.g. showCatchingUp -> false
+function showCatchingUp() {
+    SH_CATCHING_UP=$(showStatus | jsonParse "SyncInfo.catching_up" 2>/dev/null || echo -n "")
+    ($(isBoolean "$SH_CATCHING_UP")) && echo "${SH_CATCHING_UP,,}" || echo ""
+}
+
+# activateValidator <account> <timeout-seconds>
+# e.g. activateValidator validator 180
+function activateValidator() {
+    ACCOUNT=$1
+    TIMEOUT=$2
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    sekaid tx customslashing activate --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 1000ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+}
+
+# pauseValidator <account> <timeout-seconds>
+# e.g. pauseValidator validator 180
+function pauseValidator() {
+    ACCOUNT=$1
+    TIMEOUT=$2
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    sekaid tx customslashing pause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+}
+
+# unpauseValidator <account> <timeout-seconds>
+# e.g. unpauseValidator validator 180
+function unpauseValidator() {
+    ACCOUNT=$1
+    TIMEOUT=$2
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
 }

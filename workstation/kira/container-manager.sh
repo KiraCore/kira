@@ -197,8 +197,8 @@ while : ; do
     if [ "$STATUS" == "running" ] ; then
                                       echo "| [S] | STOP container                                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
                                       echo "| [P] | PAUSE container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "$PRIV_MODE" == "true" ] && echo "| [M] | Disable Private MODE (access via PUBLIC IP)     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
-       [ "$PRIV_MODE" == "false" ] && echo "| [M] | Enable Private MODE (access via LOCAL IP)       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+     [ "$PRIVATE_MODE" == "true" ] && echo "| [M] | Disable Private MODE (access via PUBLIC IP)     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    [ "$PRIVATE_MODE" == "false" ] && echo "| [M] | Enable Private MODE (access via LOCAL IP)       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
     fi
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ -f "$HALT_FILE" ]            && echo "| [K] | Un-HALT (revive) all processes                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
@@ -267,7 +267,7 @@ while : ; do
         fi
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "m" ] ; then
-        if [ "$PRIV_MODE" == "true" ] ; then
+        if [ "$PRIVATE_MODE" == "true" ] ; then
             echoInfo "INFO: Disabling private mode..."
             globSet PRIVATE_MODE "false" "$COMMON_GLOB"
         else
