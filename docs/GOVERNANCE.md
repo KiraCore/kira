@@ -39,7 +39,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg" \
  --decimals=6 \
  --denoms="ukex" \
- --description="This is an initial alias update" \
+ --title="This is an initial alias update" \
  --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
@@ -64,23 +64,23 @@ read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator valid
 ```
 
 
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 30 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
+sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 30 --title="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
 
 ## Change Proposals Speed
 ```
-sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --description="Proposal End Time set to 15 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
+sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --title="Proposal End Time set to 15 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --description="Proposal Enactment Time set to 16 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
+sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --title="Proposal Enactment Time set to 16 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
 ```
 
 ## Change Network Property
 
 ```
-sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
+sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --title="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
 
 voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --description="200 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
+sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --title="200 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
 
 voteYes $(lastProposal) validator
 

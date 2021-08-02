@@ -12,8 +12,6 @@ SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_LATEST="$SNAP_STATUS/latest"
-UPDATE_DONE_FILE="$KIRA_UPDATE/done"
-UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 CONAINER_NAME="snapshot"
 
 while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
@@ -24,6 +22,8 @@ done
 LATEST_BLOCK=$(globGet LATEST_BLOCK)
 SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 MAX_SNAPS=$(globGet MAX_SNAPS) && (! $(isNaturalNumber "$MAX_SNAPS")) && MAX_SNAPS=1
+UPDATE_DONE=$(globGet UPDATE_DONE)
+UPDATE_FAIL=$(globGet UPDATE_FAIL)
 
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
@@ -91,7 +91,7 @@ else
     echoInfo "INFO: No need for snapshot symlink update"
 fi
 
-if [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; then
+if [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] ; then
     echoInfo "INFO: Snap can't be executed, update is not compleated"
 elif [ "${CONTAINER_EXISTS,,}" == "false"  ] ; then
     AUTO_BACKUP_LAST_BLOCK=$(globGet $AUTO_BACKUP_LAST_BLOCK)

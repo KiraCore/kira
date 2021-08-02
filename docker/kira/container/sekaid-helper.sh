@@ -199,7 +199,7 @@ function whitelistValidator() {
         sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 
         echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait 
+        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait 
 
         echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
         LAST_PROPOSAL=$(lastProposal) 
@@ -351,4 +351,21 @@ function unpauseValidator() {
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+}
+
+# whitelistPermission <account> <permission> <address> <timeout-seconds>
+# e.g. whitelistPermission validator 11 kiraXXX..YYY 180
+function whitelistPermission() {
+    ACCOUNT=$1
+    PERMISSION=$2
+    ADDRESS=$3
+    TIMEOUT=$4
+    ($(isNaturalNumber $PERMISSION)) && echoInfo "INFO: Invalid permission id '$PERMISSION' " && return 1
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermWhitelisted $ADDR $PERMISSION)) ; then
+        echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERMISSION'"
+    else
+        sekaid tx customgov permission whitelist-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERMISSION" --addr="$ADDRESS" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+    fi
 }

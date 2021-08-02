@@ -7,10 +7,10 @@ set -x
 echoInfo "INFO: Checking KIRA Setup Status..."
 timerStart SETUP_STATUS_CHECK
 
-UPDATE_DONE_FILE="$KIRA_UPDATE/done"
-UPDATE_FAIL_FILE="$KIRA_UPDATE/fail"
 SETUP_END_DT=$(globGet SETUP_END_DT)
 SETUP_START_DT=$(globGet SETUP_START_DT)
+UPDATE_DONE=$(globGet UPDATE_DONE)
+UPDATE_FAIL=$(globGet UPDATE_FAIL)
 
 set +x
 echoWarn "------------------------------------------------"
@@ -18,17 +18,21 @@ echoWarn "| STARTING: KIRA SETUP STATUS CHECK $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| SETUP START DATE: $SETUP_START_DT"
 echoWarn "|   SETUP END DATE: $SETUP_END_DT"
+echoWarn "|      UPDATE DONE: $UPDATE_DONE"
+echoWarn "|    UPDATE FAILED: $UPDATE_FAIL"
 echoWarn "------------------------------------------------"
 set -x
 
-while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
+while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] ; do
     set +x
     set +e && source "$ETC_PROFILE" &>/dev/null && set -e
     source $KIRA_MANAGER/utils.sh
     SETUP_END_DT=$(globGet SETUP_END_DT)
     SETUP_START_DT=$(globGet SETUP_START_DT)
+    UPDATE_DONE=$(globGet UPDATE_DONE)
+    UPDATE_FAIL=$(globGet UPDATE_FAIL)
 
-    if [ -f $UPDATE_FAIL_FILE ] ; then
+    if [ "${UPDATE_FAIL,,}" == "true" ] ; then
         echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
         echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
         VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
@@ -45,7 +49,13 @@ while [ ! -f "$UPDATE_DONE_FILE" ] || [ -f $UPDATE_FAIL_FILE ] ; do
             echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
             sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
         else
-            echoInfo "INFO: Printing setup logs:"
+            echoInfo "INFO: Printing update tools logs:"
+            cat $(globGet UPDATE_TOOLS_LOG) || echoErr "ERROR: Tools Update Log was NOT found!"
+            echoInfo "INFO: Printing update cleanup logs:"
+            cat $(globGet UPDATE_CLEANUP_LOG) || echoErr "ERROR: Cleanup Update Log was NOT found!"
+            echoInfo "INFO: Printing update containers logs:"
+            cat $(globGet UPDATE_CONTAINERS_LOG) || echoErr "ERROR: Containers Update Log was NOT found!"
+            echoInfo "INFO: Printing update service logs:"
             sleep 2
             if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
                 journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat

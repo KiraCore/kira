@@ -101,21 +101,12 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
-    PERMSET_PERMISSIONS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermCreateSetPermissionsProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --gas=1000000000 --yes | jq"
-    PERMSETVOTE_PERMISSIONS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermVoteSetPermissionProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --gas=1000000000 --yes | jq"
-    PERMSET_UPSERTALIAS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermCreateUpsertTokenAliasProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --gas=1000000000 --yes | jq"
-    PERMSETVOTE_UPSERTALIAS_PROPOSALS="sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=\$PermVoteUpsertTokenAliasProposal --addr=\$VALIDATOR_ADDR --chain-id=\$NETWORK_NAME --fees=100ukex --gas=1000000000 --yes | jq"
+
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSetPermissionsProposal \$VALIDATOR_ADDR 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSetPermissionProposal \$VALIDATOR_ADDR 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateUpsertTokenAliasProposal \$VALIDATOR_ADDR 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteUpsertTokenAliasProposal \$VALIDATOR_ADDR 180"
     
-    PERMSET_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_PERMISSIONS_PROPOSALS" | jsonParse "code" || echo -n "")
-    PERMSETVOTE_PERMISSIONS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_PERMISSIONS_PROPOSALS" | jsonParse "code" || echo -n "")
-    PERMSET_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSET_UPSERTALIAS_PROPOSALS" | jsonParse "code" || echo -n "")
-    PERMSETVOTE_UPSERTALIAS_PROPOSALS_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $PERMSETVOTE_UPSERTALIAS_PROPOSALS" | jsonParse "code" || echo -n "")
-
-    if [ "0000" != "${PERMSET_PERMISSIONS_PROPOSALS_RESULT}${PERMSETVOTE_PERMISSIONS_PROPOSALS_RESULT}${PERMSET_UPSERTALIAS_PROPOSALS_RESULT}${PERMSETVOTE_UPSERTALIAS_PROPOSALS_RESULT}" ] ; then
-        echoErr "ERROR: One of the permission assignments failed"
-        exit 1
-    fi
-
     echoInfo "INFO: Creating initial upsert token aliases proposals and voting on them..."
 
     KEX_UPSERT=$(cat <<EOL
@@ -125,7 +116,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg" \
  --decimals=6 \
  --denoms="ukex" \
- --description="Upsert KEX icon URL link" \
+ --title="Upsert KEX icon URL link" \
  --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq
 EOL
 )
@@ -137,19 +128,19 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/test.svg" \
  --decimals=8 \
  --denoms="test" \
- --description="Upsert Test TestCoin icon URL link" \
+ --title="Upsert Test TestCoin icon URL link" \
  --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq
 EOL
 )
 
     SAMOLEAN_UPSERT=$(cat <<EOL
 sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
- --symbol="SAMOLEAN" \
+ --symbol="SAMO" \
  --name="Samolean TestCoin" \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/samolean.svg" \
  --decimals=18 \
  --denoms="samolean" \
- --description="Upsert Samolean TestCoin icon URL link" \
+ --title="Upsert Samolean TestCoin icon URL link" \
  --chain-id=\$NETWORK_NAME --fees=100ukex --yes | jq
 EOL
 )
