@@ -360,7 +360,7 @@ function whitelistPermission() {
     PERMISSION=$2
     ADDRESS=$3
     TIMEOUT=$4
-    ($(isNaturalNumber $PERMISSION)) && echoInfo "INFO: Invalid permission id '$PERMISSION' " && return 1
+    (! $(isNaturalNumber $PERMISSION)) && echoInfo "INFO: Invalid permission id '$PERMISSION' " && return 1
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if ($(isPermWhitelisted $ADDR $PERMISSION)) ; then
