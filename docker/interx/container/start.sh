@@ -68,7 +68,8 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
       --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean,1lol" \
-      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex"
+      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex" \
+      --version="$KIRA_SETUP_VER"
 
     touch $EXECUTED_CHECK
     globSet RESTART_COUNTER 0
