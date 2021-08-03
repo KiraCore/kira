@@ -152,25 +152,19 @@ EOL
     QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
 
     docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT"
-    PROP_UPSERT_KEX_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
-    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
+    docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
+    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT"
-    PROP_UPSERT_TEST_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
-    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
+    docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
+    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT"
-    sleep 10
-    PROP_UPSERT_SAMOLEAN_VOTE_RESULT=$(docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL" | jsonQuickParse "code" || echo -n "")
-    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq || echo -n ""
+    docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
+    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
-
-    if [ "000000" != "${PROP_UPSERT_KEX_VOTE_RESULT}${PROP_UPSERT_TEST_VOTE_RESULT}${PROP_UPSERT_SAMOLEAN_VOTE_RESULT}" ] ; then
-        echoErr "ERROR: Failed to vote on one of the initial proposals"
-        exit 1
-    fi
 
     echoInfo "INFO: Success, all initial proposals were raised and voted on"
 else
