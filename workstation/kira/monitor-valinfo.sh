@@ -61,7 +61,7 @@ fi
 echoInfo "INFO: Fetching validator status ($VALIDATOR_ADDR) ..."
 VALSTATUS=""
 if [ ! -z "$VALIDATOR_ADDR" ] && [[ $VALIDATOR_ADDR == kira* ]] ; then
-    VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query validator --addr=$VALIDATOR_ADDR --output=json)" | jsonParse "" || echo -n "")
+    VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query customstaking validator --addr=$VALIDATOR_ADDR --output=json)" | jsonParse "" || echo -n "")
 fi
 
 if [ -z "$VALSTATUS" ] ; then

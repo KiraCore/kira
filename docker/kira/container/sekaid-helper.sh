@@ -104,9 +104,9 @@ function isPermWhitelisted() {
 function tryGetValidator() {
     VAL_ADDR="${1,,}"
     if [[ $VAL_ADDR == kiravaloper* ]] ; then
-        VAL_STATUS=$(sekaid query validator --val-addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
     elif [[ $VAL_ADDR == kira* ]] ; then
-        VAL_STATUS=$(sekaid query validator --addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+        VAL_STATUS=$(sekaid query customstaking validator --addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
     else
         VAL_STATUS=""
     fi

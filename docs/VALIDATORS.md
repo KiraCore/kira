@@ -11,7 +11,7 @@ cd /tmp && read -p "Input branch name: " BRANCH && \
 # Query Validator Info
 
 ```
-sekaid query validator --addr=$VALIDATOR_ADDR --output=json | jq
+sekaid query customstaking validator --addr=$VALIDATOR_ADDR --output=json | jq
 sekaid query customslashing signing-infos $(sekaid valcons-address $VALIDATOR_ADDR) --output=json | jq
 ```
 
