@@ -17,6 +17,7 @@ fi
 
 systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
+systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 sleep 1
 globSet LATEST_BLOCK 0
@@ -221,6 +222,8 @@ globSet PRIVATE_MODE "$PRIVATE_MODE"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
+globSet PLAN_DONE "true"
+globSet PLAN_FAIL "false"
 
 (! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
 
@@ -265,8 +268,29 @@ LimitNOFILE=4096
 WantedBy=default.target
 EOL
 
+cat > /etc/systemd/system/kiraplan.service << EOL
+[Unit]
+Description=KIRA Upgrade Plan Service
+After=network.target
+[Service]
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
 systemctl daemon-reload
 systemctl enable kiraup
+systemctl enable kiraplan
 systemctl restart kiraup
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"

@@ -112,7 +112,8 @@ else
     echo "INFO: Initalizing setup script..."
 fi
 
-systemctl stop kiraup || echo "WARNING: KIRA update service could NOT be stopped, service might not exist yet!"
+systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
+systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
 
 echo -n ""
 set -x
@@ -334,6 +335,9 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     exit 0
 fi
 
+SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
+[ -z "SETUP_VER" ] && echo -en "\e[31;1mERROR: Invalid setup release version!\e[0m" && exit 1
+
 CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
 
@@ -346,6 +350,8 @@ CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" 
 CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+
+CDHelper text lineswap --insert="source \$KIRA_MANAGER/utils.sh" --suffix="/utils.sh" --path=$ETC_PROFILE --append-if-found-not=True
 
 echo "INFO: Startting cleanup..."
 apt-get autoclean || echo "WARNING: autoclean failed"

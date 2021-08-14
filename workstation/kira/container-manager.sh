@@ -128,6 +128,7 @@ while : ; do
         for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
             port_tmp="${port}${WHITESPACE}"
             port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
+            [[ $port_tmp == *":::"* ]] && continue
             echo "| Port Map: ${port_tmp:0:43} |"
         done
     fi

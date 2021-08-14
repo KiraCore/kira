@@ -183,7 +183,7 @@ fi
 
 echoInfo "INFO: To preview logs type 'cd $UPDATE_LOGS_DIR'"
 echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: LAUNCH SCRIPT $KIRA_SETUP_VER"
+echoWarn "| FINISHED: UPDATE SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
 

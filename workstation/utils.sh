@@ -68,6 +68,14 @@ function isNaturalNumber() {
     if ($(isNullOrEmpty "$1")) ; then echo "false" ; else ( ($(isInteger "$1")) && [[ $1 -ge 0 ]] ) && echo "true" || echo "false" ; fi
 }
 
+function isLetters() {
+    [[ "$1" =~ [^a-zA-Z] ]] && echo "false" || echo "true"
+}
+
+function isAlphanumeric() {
+    [[ "$1" =~ [^a-zA-Z0-9] ]] && echo "false" || echo "true"
+}
+
 function isPort() {
     ( ($(isNaturalNumber $1)) && (($1 > 0)) && (($1 < 65536)) ) && echo "true" || echo "false"
 }

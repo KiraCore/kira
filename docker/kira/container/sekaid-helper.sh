@@ -356,16 +356,20 @@ function unpauseValidator() {
 # whitelistPermission <account> <permission> <address> <timeout-seconds>
 # e.g. whitelistPermission validator 11 kiraXXX..YYY 180
 function whitelistPermission() {
-    ACCOUNT=$1
-    PERMISSION=$2
-    ADDRESS=$3
+    ACC=$1
+    PERM=$2
+    ADDR=$3
     TIMEOUT=$4
-    (! $(isNaturalNumber $PERMISSION)) && echoInfo "INFO: Invalid permission id '$PERMISSION' " && return 1
-    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
+    ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    if ($(isPermWhitelisted $ADDR $PERMISSION)) ; then
-        echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERMISSION'"
+    if ($(isPermWhitelisted $ADDR $PERM)) ; then
+        echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
     else
-        sekaid tx customgov permission whitelist-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERMISSION" --addr="$ADDRESS" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+        sekaid tx customgov permission whitelist-permission --from "$ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
     fi
+}
+
+function showUpgradePlan() {
+    sekaid query upgrade show-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
 }

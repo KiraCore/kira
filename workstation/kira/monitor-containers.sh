@@ -23,12 +23,17 @@ echoWarn "|      CONTAINERS: $CONTAINERS"
 echoWarn "|        NETWORKS: $NETWORKS"
 echoWarn "| INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
+sleep 1
 set -x
 
 [ -z "$(globGet LATEST_BLOCK)" ] && globSet LATEST_BLOCK "0"
 [ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
 
 mkdir -p "$INTERX_REFERENCE_DIR"
+UPGRADE_NAME=$(globGet UPGRADE_NAME)
+UPGRADE_TIME=$(globGet UPGRADE_TIME)
+UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
+NEW_UPGRADE_PLAN=""
 
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
@@ -48,15 +53,52 @@ for name in $CONTAINERS; do
     globSet "${name}_STATUS_PID" "$!"
 
     if [[ "${name,,}" =~ ^(validator|sentry|snapshot|seed)$ ]] ; then
+        echoInfo "INFO: Fetching sekai status..."
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
         echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
-    elif [ "${name,,}" == "interx" ] ; then 
+        # TODO: REMOVE DOCKER
+        echoInfo "INFO: Fetching upgrade plan..."
+        TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showUpgradePlan" | jsonParse "" || echo "")
+        (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$UPGRADE_PLAN" != "$TMP_UPGRADE_PLAN" ] && NEW_UPGRADE_PLAN=$TMP_UPGRADE_PLAN
+    elif [ "${name,,}" == "interx" ] ; then
+        echoInfo "INFO: Fetching sekai & interx status..."
         echo $(timeout 3 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         echo $(timeout 3 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
     fi
 done
 
+if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
+    echoInfo "INFO: New upgrade plan is available!"
+    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.name" || echo "")
+    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.min_upgrade_time" || echo "")
+    TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.instate_upgrade" || echo "")
+    if ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
+        echoInfo "INFO: New upgrade plan was found!"
+        globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
+        globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
+        globSet "UPGRADE_INSTATE" "$TMP_UPGRADE_INSTATE"
+        globSet "UPGRADE_PLAN" "$NEW_UPGRADE_PLAN"
+        globSet "UPDATE_FAIL_COUNTER" "0"
+        globSet "PLAN_DONE" "false"
+        globSet "PLAN_FAIL" "false"
+        globSet "PLAN_FAIL_COUNT" "0"
+        globSet "UPGRADE_DONE" "false"
+        globSet "UPGRADE_REPOS_DONE" "false"
+        globSet "UPGRADE_PAUSE_ATTEMPTED" "false"
+        globSet "UPGRADE_UNPAUSE_ATTEMPTED" "false"
+        globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+        globSet PLAN_END_DT ""
+        
+        systemctl start kiraplan
+    else
+        echoWarn "WARNING: Upgrade plan is invalid"
+    fi
+else
+    echoInfo "INFO: No new upgrade plans were found!"
+fi
+
 NEW_LATEST_BLOCK=0
+NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
 NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
@@ -78,10 +120,15 @@ for name in $CONTAINERS; do
     set -x
 
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
-
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
+        LATEST_BLOCK_TIME=$(jsonQuickParse "latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00.000000000Z")
+        # convert time to unix timestamp
+        LATEST_BLOCK_TIME=$(date -d "$LATEST_BLOCK_TIME" +"%s")
+        
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+        (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        
         CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
         ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=false
         if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
@@ -89,8 +136,9 @@ for name in $CONTAINERS; do
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 
-        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ "${name,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
+        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ $NEW_LATEST_BLOCK_TIME -lt $LATEST_BLOCK_TIME ]] && [[ "${name,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
+            NEW_LATEST_BLOCK_TIME="$LATEST_BLOCK_TIME"
             NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"
         fi
     else
@@ -105,9 +153,11 @@ for name in $CONTAINERS; do
 done
 
 # save latest known block height
-if ($(isNaturalNumber "$NEW_LATEST_BLOCK")) && [ "$NEW_LATEST_BLOCK" != "0" ] ; then
+if [ "$NEW_LATEST_BLOCK" != "0" ] && [ "$NEW_LATEST_BLOCK_TIME" != "0"  ] ; then
+    echoInfo "INFO: Block height chaned to $LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
     globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
+    globSet LATEST_BLOCK_TIME $NEW_LATEST_BLOCK_TIME
     globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
 
     OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
@@ -124,4 +174,5 @@ echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINERS MONITOR                 |"
 echoWarn "|  ELAPSED: $(timerSpan MONITOR_CONTAINERS) seconds"
 echoWarn "------------------------------------------------"
+sleep 1
 set -x
