@@ -103,10 +103,13 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSetPermissionsProposal \$VALIDATOR_ADDR 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSetPermissionProposal \$VALIDATOR_ADDR 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateUpsertTokenAliasProposal \$VALIDATOR_ADDR 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSoftwareUpgradeProposal \$VALIDATOR_ADDR 180"
+
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSetPermissionProposal \$VALIDATOR_ADDR 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteUpsertTokenAliasProposal \$VALIDATOR_ADDR 180"
-    
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSoftwareUpgradeProposal \$VALIDATOR_ADDR 180"
+
     echoInfo "INFO: Creating initial upsert token aliases proposals and voting on them..."
 
     KEX_UPSERT=$(cat <<EOL
@@ -145,6 +148,25 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --title="Upsert Samolean TestCoin icon URL link" \
  --description="Initial Setup From KIRA Manager" \
  --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async | txAwait 180
+EOL
+)
+
+    UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
+    [ -z "UPGRADE_NAME" ] && echoErr "ERROR: Invalid upgrade namen!" && exit 1
+
+    UPGRADE_PROPOSAL=$(cat <<EOL
+sekaid tx upgrade proposal-set-plan \
+ --name="$UPGRADE_NAME" \
+ --instate-upgrade=true \
+ --resources="[{\"id\":\"infra\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"\"}]" \
+ --min-upgrade-time=1 \
+ --height=0  \
+ --old-chain-id="\$NETWORK_NAME" \
+ --new-chain-id="\$NETWORK_NAME" \
+ --rollback-memo="${UPGRADE_NAME}-roll" \
+ --max-enrollment-duration=1 \
+ --upgrade-memo="Genesis setup plan" \
+ --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 EOL
 )
 

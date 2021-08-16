@@ -72,7 +72,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
         elif [ "${VSEL,,}" == "d" ] ; then
             $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
         else
-            break
+            exit 0
         fi
     done
     
@@ -112,7 +112,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
         elif [ "${VSEL,,}" == "d" ] ; then
             $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
         else
-            break
+            exit 0
         fi
     done
 done
