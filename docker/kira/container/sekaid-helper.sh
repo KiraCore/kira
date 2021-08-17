@@ -2,6 +2,10 @@
 
 # QUICK EDIT: FILE="$SELF_CONTAINER/sekaid-helper.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+function txQuery() {
+    (! $(isTxHash "$1")) && echoErr "ERROR: Infalid Transaction Hash '$1'" && sekaid query tx "$1" --output=json --home=$SEKAID_HOME | jq || echoErr "ERROR: Transaction '$1' was NOT found or failed"
+}
+
 function txAwait() {
     START_TIME="$(date -u +%s)"
 
@@ -40,7 +44,7 @@ function txAwait() {
 
     while : ; do
         ELAPSED=$(($(date -u +%s) - $START_TIME))
-        OUT=$(sekaid query tx $TXHASH --output=json 2> /dev/null | jsonParse "" 2> /dev/null || echo -n "")
+        OUT=$(sekaid query tx $TXHASH --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "" 2> /dev/null || echo -n "")
         if [ ! -z "$OUT" ] ; then
             echoInfo "INFO: Transaction query response received received:"
             echo $OUT | jq
@@ -69,8 +73,7 @@ function txAwait() {
 }
 
 function tryGetPermissions() {
-    ADDR=$1
-    [[ $ADDR == kira* ]] && echo $(sekaid query customgov permissions $ADDR --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    [[ $1 == kira* ]] && echo $(sekaid query customgov permissions "$1" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 function isPermBlacklisted() {
@@ -104,9 +107,9 @@ function isPermWhitelisted() {
 function tryGetValidator() {
     VAL_ADDR="${1,,}"
     if [[ $VAL_ADDR == kiravaloper* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
     elif [[ $VAL_ADDR == kira* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --addr="$VAL_ADDR" --output=json 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+        VAL_STATUS=$(sekaid query customstaking validator --addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
     else
         VAL_STATUS=""
     fi
@@ -114,7 +117,7 @@ function tryGetValidator() {
 }
 
 function lastProposal() {
-    PROPOSALS=$(sekaid query customgov proposals --limit=1 --output json 2> /dev/null || echo "")
+    PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
     [ -z "$PROPOSALS" ] && echo 0 && return 1
     LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
     (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
@@ -133,7 +136,7 @@ function voteYes() {
 }
 
 function networkProperties() {
-    NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
+    NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
     [ -z "$NETWORK_PROPERTIES" ] && echo -n "" && return 1
     echo $NETWORK_PROPERTIES
     return 0
@@ -141,16 +144,16 @@ function networkProperties() {
 
 # showVotes $(lastProposal) 
 function showVotes() {
-    sekaid query customgov votes $1 --output json | jsonParse
+    sekaid query customgov votes "$1" --output=json --home=$SEKAID_HOME | jsonParse
 }
 
 # showProposal $(lastProposal) 
 function showProposal() {
-    sekaid query customgov proposal $1 --output json | jsonParse
+    sekaid query customgov proposal "$1" --output json --home=$SEKAID_HOME | jsonParse
 }
 
 function showProposals() {
-    sekaid query customgov proposals --limit=999999999 --output json | jsonParse
+    sekaid query customgov proposals --limit=999999999 --output=json --home=$SEKAID_HOME | jsonParse
 }
 
 # propAwait $(lastProposal) 
@@ -252,7 +255,7 @@ function claimValidatorSeat() {
 
 # e.g. showAddress validator
 function showAddress() {
-    echo $(sekaid keys show "$1" --keyring-backend=test --output json 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
+    echo $(sekaid keys show "$1" --keyring-backend=test --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
 }
 
 # e.g. showBalance validator
@@ -263,7 +266,7 @@ function showBalance() {
     fi
 
     if [ ! -z "$ADDR" ] ; then
-        echo $(sekaid query bank balances "$ADDR" --output json 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+        echo $(sekaid query bank balances "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
     fi
 }
 
@@ -330,7 +333,7 @@ function activateValidator() {
     TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
-    sekaid tx customslashing activate --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 1000ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+    sekaid tx customslashing activate --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 1000ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # pauseValidator <account> <timeout-seconds>
@@ -340,7 +343,7 @@ function pauseValidator() {
     TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
-    sekaid tx customslashing pause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+    sekaid tx customslashing pause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # unpauseValidator <account> <timeout-seconds>
@@ -350,7 +353,7 @@ function unpauseValidator() {
     TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
-    sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+    sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # whitelistPermission <account> <permission> <address> <timeout-seconds>
@@ -366,10 +369,28 @@ function whitelistPermission() {
     if ($(isPermWhitelisted $ADDR $PERM)) ; then
         echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
     else
-        sekaid tx customgov permission whitelist-permission --from "$ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json | txAwait $TIMEOUT
+        sekaid tx customgov permission whitelist-permission --from "$ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
 
 function showUpgradePlan() {
     sekaid query upgrade show-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
 }
+
+# upsertIdentityRecord <account> <key> <value> <timeout-seconds>
+# e.g. upsertIdentityRecord validator "moniker" "My Moniker" 180
+function upsertIdentityRecord() {
+    ACC=$1
+    IR_KEY=$2
+    IR_VAL=$3
+    TIMEOUT=$4
+    ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
+    (! $(isAlphanumeric $IR_KEY)) && echoError "ERROR:  Identity Registrar key must be an alphanumeric string, but got '$IR_KEY' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    
+    IR_FILE_NAME="HELPER_TMP_IR_${IR_KEY}"
+    globSet $IR_FILE_NAME "{\"key\":\"$IR_KEY\",\"value\":\"$IR_VAL\"}"
+    sekaid tx customgov create-identity-record --infos-file=$(globFile $IR_FILE_NAME) --from=$ACC --keyring-backend=test --home=$SEKAID_HOME --fees=100ukex --chain-id=testing --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+#echo '{"key":"moniker","value":"My Moniker"}' > ./tmp.json && sekaid tx customgov create-identity-record --infos-file=./tmp.json --from=validator --keyring-backend=test --home=$SEKAID_HOME --fees=100ukex --chain-id=testing --yes
