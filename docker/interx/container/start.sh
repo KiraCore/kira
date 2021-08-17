@@ -63,7 +63,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
       --seed_node_id="$seed_node_id" \
       --sentry_node_id="$sentry_node_id" \
-      --priv_sentry_node_id="$snapshot_node_id" \
+      --snapshot_node_id="$snapshot_node_id" \
       --validator_node_id="$validator_node_id" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
