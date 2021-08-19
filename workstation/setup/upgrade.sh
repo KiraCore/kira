@@ -61,7 +61,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
         if (! $(isNullOrWhitespaces "$checkout")) ; then
             echoInfo "INFO: Fetching '$joid' repository from git..."
             $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
-            zip -9 -r "$REPO_ZIP" . * || DOWNLOAD_SUCCESS="false"
+            zip -9 -r -v "$REPO_ZIP" "$REPO_TMP" || DOWNLOAD_SUCCESS="false"
         else
             echoInfo "INFO: Downloading '$joid' repository from external file..."
             wget "$repository" -O $REPO_ZIP || DOWNLOAD_SUCCESS="false"
