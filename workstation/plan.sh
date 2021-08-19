@@ -126,9 +126,6 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
                     CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
                           
                     globSet PLAN_DONE "true"
-                else
-                    echoErr "ERROR: Checksum verificaion failed, invalid SHA256 hash, expected $checksum, but got $REPO_HASH"
-                    globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
                 fi
             else
                 echoErr "ERROR: Failed downloading or fetching KIRA Manager repo!"

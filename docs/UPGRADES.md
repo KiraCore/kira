@@ -20,11 +20,11 @@ sekaid tx upgrade proposal-set-plan \
  --name="upgrade-3" \
  --instate-upgrade=true \
  --resources="[{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}]" \
- --min-upgrade-time=1628520613 \
+ --min-upgrade-time=1629295619 \
  --height=0  \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
- --rollback-memo="update-1-roll" \
+ --rollback-memo="update-3-roll" \
  --max-enrollment-duration=1 \
  --upgrade-memo="upgrade-1 test" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
