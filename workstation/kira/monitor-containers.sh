@@ -98,7 +98,7 @@ else
 fi
 
 NEW_LATEST_BLOCK=0
-NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && NEW_LATEST_BLOCK_TIME=0
 NEW_LATEST_STATUS=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
@@ -122,7 +122,7 @@ for name in $CONTAINERS; do
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
-        LATEST_BLOCK_TIME=$(jsonQuickParse "latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00.000000000Z")
+        LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00.000000000Z")
         # convert time to unix timestamp
         LATEST_BLOCK_TIME=$(date -d "$LATEST_BLOCK_TIME" +"%s")
         

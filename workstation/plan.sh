@@ -37,7 +37,7 @@ fi
 
 mkdir -p $KIRA_INFRA
 
-if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" != "${UPGRADE_NAME_OLD,,}" ] && [ "${UPDATE_DONE,,}" == "false" ]; then
+if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" != "${UPGRADE_NAME_OLD,,}" ] && [ "${UPDATE_DONE,,}" == "true" ]; then
     echoInfo "INFO: NEW Upgrade scheaduled!"
     UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
     LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
