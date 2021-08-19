@@ -77,7 +77,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
 
             DOWNLOAD_SUCCESS="true"
             KM_ZIP="/tmp/kira.zip"
-            KM_TMP="/tmp/$KIRA_INFRA"
+            KM_TMP="/tmp${KIRA_INFRA}"
             rm -fv $KM_ZIP
             cd $HOME && rm -rfv $KM_TMP
             mkdir -p $KM_TMP && cd "$KM_TMP" 
@@ -85,7 +85,8 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
             if (! $(isNullOrWhitespaces "$checkout")) ; then
                 echoInfo "INFO: Fetching KIRA Manager repository from git..."
                 $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
-                zip -9 -r -v "$KM_ZIP" "$KM_TMP" || DOWNLOAD_SUCCESS="false"
+                cd "$KM_TMP" 
+                zip -9 -r -v "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
             else
                 echoInfo "INFO: Downloading KIRA Manager repository from external file..."
                 wget "$repository" -O $KM_ZIP || DOWNLOAD_SUCCESS="false"
@@ -106,7 +107,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
                 else
                     echoInfo "INFO: Success, checksum verified, unzipping..."
                     rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
-                    unzip $KM_ZIP -d $KIRA_INFRA
+                    unzip -v $KM_ZIP -d $KIRA_INFRA
                     chmod -R -v 555 $KIRA_INFRA
                           
                     rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
