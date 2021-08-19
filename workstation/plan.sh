@@ -85,7 +85,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
             if (! $(isNullOrWhitespaces "$checkout")) ; then
                 echoInfo "INFO: Fetching KIRA Manager repository from git..."
                 $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
-                zip -9 -r "$KM_ZIP" . * || DOWNLOAD_SUCCESS="false"
+                zip -9 -r "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
             else
                 echoInfo "INFO: Downloading KIRA Manager repository from external file..."
                 wget "$repository" -O $KM_ZIP || DOWNLOAD_SUCCESS="false"
