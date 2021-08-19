@@ -104,6 +104,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
     globSet UPGRADE_REPOS_DONE "true"
     globSet UPDATE_FAIL_COUNTER "0"
     globSet UPDATE_DONE "false"
+    globSet SETUP_REBOOT ""
     systemctl daemon-reload
     systemctl start kiraup 
 fi
