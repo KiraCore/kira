@@ -17,10 +17,10 @@ sekaid tx upgrade proposal-set-plan
 
 
 sekaid tx upgrade proposal-set-plan \
- --name="upgrade-3" \
+ --name="upgrade-4" \
  --instate-upgrade=true \
  --resources="[{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}]" \
- --min-upgrade-time=1629295619 \
+ --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 1800)) \
  --height=0  \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
