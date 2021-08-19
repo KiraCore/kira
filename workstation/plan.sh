@@ -13,19 +13,23 @@ UPGRADE_NAME_OLD=$(cat $KIRA_INFRA/upgrade || echo "")
 UPGRADE_NAME_NEW=$(globGet UPGRADE_NAME)
 UPGRADE_DONE=$(globGet UPGRADE_DONE)
 PLAN_START_DT=$(globGet PLAN_START_DT)
+UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|      BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|      UPDATE DONE: ${UPDATE_DONE}"
-echoWarn "|        PLAN DONE: ${PLAN_DONE}"
-echoWarn "|     UPGRADE DONE: ${UPGRADE_DONE}"
-echoWarn "| UPGRADE NAME OLD: ${UPGRADE_NAME_OLD}"
-echoWarn "| UPGRADE NAME NEW: ${UPGRADE_NAME_NEW}"
-echoWarn "|      PLAN FAILED: ${PLAN_FAIL}"
-echoWarn "|  PLAN FAIL COUNT: ${PLAN_FAIL_COUNT}"
-echoWarn "|  PLAN START DATE: ${PLAN_START_DT}"
+echoWarn "|       BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|       UPDATE DONE: ${UPDATE_DONE}"
+echoWarn "|         PLAN DONE: ${PLAN_DONE}"
+echoWarn "|      UPGRADE DONE: ${UPGRADE_DONE}"
+echoWarn "|  UPGRADE NAME OLD: ${UPGRADE_NAME_OLD}"
+echoWarn "|  UPGRADE NAME NEW: ${UPGRADE_NAME_NEW}"
+echoWarn "|       PLAN FAILED: ${PLAN_FAIL}"
+echoWarn "|   PLAN FAIL COUNT: ${PLAN_FAIL_COUNT}"
+echoWarn "|   PLAN START DATE: ${PLAN_START_DT}"
+echoWarn "|      UPGRADE TIME: ${UPGRADE_TIME}"
+echoWarn "| LATEST BLOCK TIME: ${LATEST_BLOCK_TIME}"
 echoWarn "------------------------------------------------"
 
 if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPGRADE_DONE,,}" == "true" ] ; then
@@ -39,9 +43,7 @@ mkdir -p $KIRA_INFRA
 
 if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" != "${UPGRADE_NAME_OLD,,}" ] && [ "${UPDATE_DONE,,}" == "true" ]; then
     echoInfo "INFO: NEW Upgrade scheaduled!"
-    UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
-    LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
-    if [ "$UPGRADE_TIME" != "0" ] && [ "$LATEST_BLOCK_TIME" != "0" ] && [[ $UPGRADE_TIME -ge $LATEST_BLOCK_TIME ]] && [ "${PLAN_DONE,,}" == "false" ] ; then
+    if [ "$UPGRADE_TIME" != "0" ] && [ "$LATEST_BLOCK_TIME" != "0" ] && [[ $LATEST_BLOCK_TIME -ge $UPGRADE_TIME ]] && [ "${PLAN_DONE,,}" == "false" ] ; then
         echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
         echoInfo "INFO: Attempting kira manager branch discovery"
         KIRA_PLAN=""
