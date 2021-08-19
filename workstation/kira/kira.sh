@@ -43,6 +43,8 @@ while : ; do
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
     VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
     GENESIS_SHA256=$(globGet GENESIS_SHA256)
+    UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+    PLAN_DONE=$(globGet PLAN_DONE)
 
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
@@ -98,6 +100,22 @@ while : ; do
     echo -e "\e[33;1m-------------------------------------------------"
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
+
+    if [ "${PLAN_DONE,,}" == "false" ]; then # plan in action
+        LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
+        UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+        [ ${UPGRADE_INSTATE,,} == "true" ] && UPGRADE_INSTATE="SOFT" || UPGRADE_INSTATE="HARD"
+        TMP_UPGRADE_MSG="NEW $UPGRADE_INSTATE UPGRADE"
+        if [[ $UPGRADE_TIME_LEFT -gt 0 ]] ; then
+            UPGRADE_TIME_LEFT=$(prettyTimeSlim $UPGRADE_TIME_LEFT)
+            TMP_UPGRADE_MSG="${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT ${WHITESPACE}"
+        else
+            TMP_UPGRADE_MSG="         ${TMP_UPGRADE_MSG} IS ONGOING ${WHITESPACE}"
+        fi
+
+        echo -e "|\e[31;1m ${TMP_UPGRADE_MSG:0:45} \e[33;1m|"
+    fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
         RAM_UTIL=$(globGet RAM_UTIL) && [ -z "$RAM_UTIL" ] && RAM_UTIL="???" ; RAM_TMP="RAM: ${RAM_UTIL}${WHITESPACE}"

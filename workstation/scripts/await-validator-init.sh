@@ -154,11 +154,35 @@ EOL
     UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
     [ -z "UPGRADE_NAME" ] && echoErr "ERROR: Invalid upgrade namen!" && exit 1
 
+    UPGRADE_RESOURCES=""
+    REPO_ZIP="/tmp/repo.zip"
+    REPO_TMP="/tmp/repo"
+
+    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
+    $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$REPO_TMP" 555
+    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
+    UPGRADE_RESOURCES="{\"id\":\"infra\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+
+    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
+    $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$REPO_TMP" 555
+    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
+    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"sekai\",\"git\":\"$SEKAI_REPO\",\"checkout\":\"$SEKAI_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+
+    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
+    $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$REPO_TMP" 555
+    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
+    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"interx\",\"git\":\"$INTERX_REPO\",\"checkout\":\"$INTERX_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+
+    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
+    $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$REPO_TMP" 555
+    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
+    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"$FRONTEND_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
  --instate-upgrade=true \
- --resources="[{\"id\":\"infra\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"\"}]" \
+ --resources="[$UPGRADE_RESOURCES]" \
  --min-upgrade-time=1 \
  --height=0  \
  --old-chain-id="\$NETWORK_NAME" \
@@ -184,6 +208,11 @@ EOL
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT"
+    docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
+    docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
+    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+
+    docker exec -i validator bash -c "source /etc/profile && $UPGRADE_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"

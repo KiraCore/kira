@@ -73,7 +73,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
             if (! $(isNullOrWhitespaces "$checksum")) ; then
                 cd $HOME && rm -rfv $REPO_TMP
                 mkdir -p $REPO_TMP
-                unzip $KM_ZIP -d $REPO_TMP
+                unzip -: $KM_ZIP -d $REPO_TMP
                 chmod -R -v 555 $REPO_TMP
                 REPO_HASH=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
                 rm -rfv $REPO_TMP

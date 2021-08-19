@@ -224,6 +224,8 @@ globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
 globSet PLAN_DONE "true"
 globSet PLAN_FAIL "false"
+globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 (! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
 

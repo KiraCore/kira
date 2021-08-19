@@ -373,6 +373,22 @@ function prettyTime {
   (( $S != 1 )) && printf '%d seconds\n' $S || printf '%d second\n' $S
 }
 
+function prettyTimeSlim {
+  local T=$1
+  (! $(isNaturalNumber $T)) && T=0
+  local D=$((T/60/60/24))
+  local H=$((T/60/60%24))
+  local M=$((T/60%60))
+  local S=$((T%60))
+  (( $D > 0 )) && (( $D > 1 )) && printf '%d d ' $D
+  (( $D > 0 )) && (( $D < 2 )) && printf '%d d ' $D
+  (( $H > 0 )) && (( $H > 1 )) && printf '%d h ' $H
+  (( $H > 0 )) && (( $H < 2 )) && printf '%d h ' $H
+  (( $M > 0 )) && (( $M > 1 )) && printf '%d m ' $M
+  (( $M > 0 )) && (( $M < 2 )) && printf '%d m ' $M
+  (( $S != 1 )) && printf '%d s\n' $S || printf '%d s\n' $S
+}
+
 function resolveDNS {
     if ($(isIp "$1")) ; then
         echo "$1"
