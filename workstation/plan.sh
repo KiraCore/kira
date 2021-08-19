@@ -95,7 +95,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
             if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$KM_ZIP" ]; then
                 echoInfo "INFO: Download or Fetch suceeded, veryfying checksum..."
                 cd $HOME && rm -rfv $KM_TMP && mkdir -p $KM_TMP
-                unzip -: $KM_ZIP -d $KM_TMP
+                unzip -o -: $KM_ZIP -d $KM_TMP
                 chmod -R -v 555 $KM_TMP
                 REPO_HASH=$(CDHelper hash SHA256 -p="$KM_TMP" -x=true -r=true --silent=true -i="$KM_TMP/.git,$KM_TMP/.gitignore")
                 rm -rfv $KM_TMP
@@ -105,8 +105,8 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
                     globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
                 else
                     echoInfo "INFO: Success, checksum verified, unzipping..."
-                    rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
-                    unzip -: $KM_ZIP -d $KIRA_INFRA
+                    cd $HOME && rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
+                    unzip -o -: $KM_ZIP -d $KIRA_INFRA
                     chmod -R -v 555 $KIRA_INFRA
                           
                     rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"

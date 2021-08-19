@@ -71,9 +71,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
         if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$REPO_ZIP" ]; then
             echoInfo "INFO: Download or Fetch of '$joid' repository suceeded"
             if (! $(isNullOrWhitespaces "$checksum")) ; then
-                cd $HOME && rm -rfv $REPO_TMP
-                mkdir -p $REPO_TMP
-                unzip -: $KM_ZIP -d $REPO_TMP
+                cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
+                unzip -o -: $KM_ZIP -d $REPO_TMP
                 chmod -R -v 555 $REPO_TMP
                 REPO_HASH=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
                 rm -rfv $REPO_TMP
