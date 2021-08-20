@@ -15,18 +15,21 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 ```
 sekaid tx upgrade proposal-set-plan
 
-
+INFRA_RES_TMP='{"id":"infra","git":"https://github.com/KiraCore/kira","checkout":"testnet","checksum":""}' && \
+SEKAI_RES_TMP='{"id":"sekai","git":"https://github.com/KiraCore/kira","checkout":"master","checksum":""}' && \
+INTRX_RES_TMP='{"id":"interx","git":"https://github.com/KiraCore/kira","checkout":"master","checksum":""}' && \
+FRONT_RES_TMP='{"id":"frontend","git":"https://github.com/KiraCore/kira","checkout":"testnet","checksum":""}' && \
 sekaid tx upgrade proposal-set-plan \
- --name="upgrade-4" \
+ --name="upgrade-6" \
  --instate-upgrade=true \
- --resources="[{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}]" \
+ --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 1800)) \
  --height=0  \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
- --rollback-memo="update-3-roll" \
+ --rollback-memo="update-roll-1" \
  --max-enrollment-duration=1 \
- --upgrade-memo="upgrade-1 test" \
+ --upgrade-memo="This is a test upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 
 

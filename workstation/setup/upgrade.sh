@@ -29,8 +29,10 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
     if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "true" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
         globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
-        VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || VFAIL="true"
-
+        # NOTE: Pause disabled until safety min validators hotfix
+        # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || VFAIL="true"
+        VFAIL="false"
+        
         [ "${VFAIL,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
     fi
 fi
@@ -116,7 +118,9 @@ if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] ;
     if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "true" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "true"
-        VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || VFAIL="true"
+        # NOTE: Pause disabled until safety min validators hotfix
+        # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || VFAIL="true"
+        VFAIL="false"
 
         if [ "${VFAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Failed to pause validator node"

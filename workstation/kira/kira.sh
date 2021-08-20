@@ -109,7 +109,7 @@ while : ; do
         TMP_UPGRADE_MSG="NEW $UPGRADE_INSTATE UPGRADE"
         if [[ $UPGRADE_TIME_LEFT -gt 0 ]] ; then
             UPGRADE_TIME_LEFT=$(prettyTimeSlim $UPGRADE_TIME_LEFT)
-            TMP_UPGRADE_MSG="${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT ${WHITESPACE}"
+            TMP_UPGRADE_MSG="    ${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT ${WHITESPACE}"
         else
             TMP_UPGRADE_MSG="         ${TMP_UPGRADE_MSG} IS ONGOING ${WHITESPACE}"
         fi
