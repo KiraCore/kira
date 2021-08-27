@@ -377,20 +377,32 @@ function showUpgradePlan() {
     sekaid query upgrade show-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
 }
 
+
+
+function showIdentityRecord() {
+    KM_ACC=$1
+    KM_REC=$2
+    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name or address was not defined " && return 1
+    sekaid query customgov identity-record-by-addr $(showAddress validator) --output=json | jq
+}
+
+
 # upsertIdentityRecord <account> <key> <value> <timeout-seconds>
 # e.g. upsertIdentityRecord validator "moniker" "My Moniker" 180
 function upsertIdentityRecord() {
-    ACC=$1
+    KM_ACC=$1
     IR_KEY=$2
     IR_VAL=$3
     TIMEOUT=$4
-    ($(isNullOrEmpty $ACC)) && echoInfo "INFO: Account name was not defined " && return 1
+    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined " && return 1
     (! $(isAlphanumeric $IR_KEY)) && echoError "ERROR:  Identity Registrar key must be an alphanumeric string, but got '$IR_KEY' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     
     IR_FILE_NAME="HELPER_TMP_IR_${IR_KEY}"
-    globSet $IR_FILE_NAME "{\"key\":\"$IR_KEY\",\"value\":\"$IR_VAL\"}"
-    sekaid tx customgov create-identity-record --infos-file=$(globFile $IR_FILE_NAME) --from=$ACC --keyring-backend=test --home=$SEKAID_HOME --fees=100ukex --chain-id=testing --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    globSet $IR_FILE_NAME "{\"$IR_KEY\":\"$IR_VAL\"}"
+    sekaid tx customgov create-identity-record --infos-file=$(globFile $IR_FILE_NAME) --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
-#echo '{"key":"moniker","value":"My Moniker"}' > ./tmp.json && sekaid tx customgov create-identity-record --infos-file=./tmp.json --from=validator --keyring-backend=test --home=$SEKAID_HOME --fees=100ukex --chain-id=testing --yes
+#echo '{"key":"moniker2","value":"My Moniker"}' > ./tmp.json && sekaid tx customgov create-identity-record --infos-file=./tmp.json --from=validator --keyring-backend=test --home=$SEKAID_HOME --fees=100ukex --chain-id=$NETWORK_NAME --yes
+
+
