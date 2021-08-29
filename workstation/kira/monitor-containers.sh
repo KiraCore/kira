@@ -18,10 +18,11 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "|        STARTING: KIRA CONTAINER SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|       KIRA_SCAN: $KIRA_SCAN"
-echoWarn "|      CONTAINERS: $CONTAINERS"
-echoWarn "|        NETWORKS: $NETWORKS"
-echoWarn "| INTERX REF. DIR: $INTERX_REFERENCE_DIR"
+echoWarn "|        KIRA SCAN: $KIRA_SCAN"
+echoWarn "|       CONTAINERS: $CONTAINERS"
+echoWarn "|         NETWORKS: $NETWORKS"
+echoWarn "| OLD UPGRADE NAME: $OLD_UPGRADE_NAME"
+echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 sleep 1
 set -x
@@ -72,8 +73,8 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.min_upgrade_time" || echo "")
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.instate_upgrade" || echo "")
-    if ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
-        echoInfo "INFO: New upgrade plan was found!"
+    if [ "$UPGRADE_NAME" != "$TMP_UPGRADE_NAME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
+        echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
         globSet "UPGRADE_INSTATE" "$TMP_UPGRADE_INSTATE"

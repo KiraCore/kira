@@ -181,9 +181,9 @@ EOL
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
- --instate-upgrade=true \
+ --instate-upgrade=false \
  --resources='[$UPGRADE_RESOURCES]' \
- --min-upgrade-time=1 \
+ --min-upgrade-time=0 \
  --height=0  \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
@@ -193,6 +193,7 @@ sekaid tx upgrade proposal-set-plan \
  --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 EOL
 )
+    globSet "UPGRADE_NAME" "$UPGRADE_NAME"
 
     VOTE_YES_LAST_PROPOSAL="voteYes \$(lastProposal) validator"
     QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
