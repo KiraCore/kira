@@ -181,7 +181,7 @@ EOL
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
- --instate-upgrade=false \
+ --instate-upgrade=true \
  --resources='[$UPGRADE_RESOURCES]' \
  --min-upgrade-time=0 \
  --height=0  \
