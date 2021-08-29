@@ -26,7 +26,7 @@ UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
-    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "false" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "true" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
         globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
         # NOTE: Pause disabled until safety min validators hotfix
@@ -115,7 +115,7 @@ UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
 if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] ; then
-    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "false" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
+    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_INSTATE,,}" == "true" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "true"
         # NOTE: Pause disabled until safety min validators hotfix
