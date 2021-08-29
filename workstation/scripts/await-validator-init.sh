@@ -183,7 +183,7 @@ sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
  --instate-upgrade=true \
  --resources='[$UPGRADE_RESOURCES]' \
- --min-upgrade-time=0 \
+ --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --height=0  \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
