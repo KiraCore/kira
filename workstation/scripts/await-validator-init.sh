@@ -232,8 +232,8 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"username\" \"KIRA\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"logo\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"avatar\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest_1\" '<iframe src=\"javascript:alert(1)\">' 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest\" '<iframe src=\"javascript:alert(1)\">' 180"
+    #docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
 
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"KIRA-TEST\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"description\" '<iframe src=\"javascript:alert(1)\">' 180"
