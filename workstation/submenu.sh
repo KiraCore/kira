@@ -240,6 +240,13 @@ rm -fv $(globFile sentry_SEKAID_STATUS)
 rm -fv $(globFile seed_SEKAID_STATUS)
 rm -fv $(globFile snapshot_SEKAID_STATUS)
 
+UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
+globSet "UPGRADE_NAME" "$UPGRADE_NAME"
+globSet "UPGRADE_DONE" "true"
+globSet "UPGRADE_TIME" "$(date +'%Y-%m-%d %H:%M:%S')"
+globSet "PLAN_DONE" "true"
+
+
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
 echoInfo "INFO: MTU Value Discovery..."

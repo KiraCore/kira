@@ -14,6 +14,11 @@ LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
 
+UPGRADE_NAME=$(globGet UPGRADE_NAME)
+UPGRADE_TIME=$(globGet UPGRADE_TIME)
+UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
+NEW_UPGRADE_PLAN=""
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "|        STARTING: KIRA CONTAINER SCAN $KIRA_SETUP_VER"
@@ -21,7 +26,7 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
-echoWarn "| OLD UPGRADE NAME: $OLD_UPGRADE_NAME"
+echoWarn "| OLD UPGRADE NAME: $UPGRADE_NAME"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 sleep 1
@@ -31,10 +36,6 @@ set -x
 [ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
 
 mkdir -p "$INTERX_REFERENCE_DIR"
-UPGRADE_NAME=$(globGet UPGRADE_NAME)
-UPGRADE_TIME=$(globGet UPGRADE_TIME)
-UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
-NEW_UPGRADE_PLAN=""
 
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
