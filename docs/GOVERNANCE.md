@@ -28,7 +28,7 @@ sekaid tx customgov permission whitelist-permission --from validator --keyring-b
 
 ## Create Proposal to Add new Validator
 ```
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --description="Genesis Validator Adding Initial Set" --title="Add New Validator" --yes | jq
 ```
 
 ## Change Token Alias

@@ -19,15 +19,18 @@ while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     sleep 10
 done
 
+CONTAINERS=$(globGet CONTAINERS)
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA PEERS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|        PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
-echoWarn "|        SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
-echoWarn "|   INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
-echoWarn "|      INTERX_PEERS_PATH: $INTERX_PEERS_PATH"
-echoWarn "|      INTERX_SNAPS_PATH: $INTERX_SNAPS_PATH"
+echoWarn "|      PEERS_SCAN_PATH: $PEERS_SCAN_PATH"
+echoWarn "|      SNAPS_SCAN_PATH: $SNAPS_SCAN_PATH"
+echoWarn "| INTERX_REFERENCE_DIR: $INTERX_REFERENCE_DIR"
+echoWarn "|    INTERX_PEERS_PATH: $INTERX_PEERS_PATH"
+echoWarn "|    INTERX_SNAPS_PATH: $INTERX_SNAPS_PATH"
+echoWarn "|           CONTAINERS: $CONTAINERS"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -38,6 +41,28 @@ TMP_BOOK_SHUFF="/tmp/addrbook-shuff.txt"
 
 touch $TMP_BOOK
 
+echoInfo "INFO: Substituting address book..."
+rm -fv $TMP_BOOK_DUMP
+CONTAINERS=$(globGet CONTAINERS)
+for name in $CONTAINERS; do
+    if [[ "${name,,}" =~ ^(validator|sentry|seed)$ ]] ; then
+        echoInfo "INFO: Fetching address book..."
+        TMP_BOOK_DUMP=$(globFile TMP_BOOK_DUMP)
+        timeout 60 docker cp "$name:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+
+        if (! $(isFileEmpty $TMP_BOOK_DUMP)) ; then
+            COMMON_PATH="$DOCKER_COMMON/interx"
+            COMMON_GLOB="$COMMON_PATH/kiraglob"
+            TMP_BOOK_DUMP_GLOB=$(globFile KIRA_ADDRBOOK $COMMON_GLOB)
+            echoInfo "INFO: Address book was found in the $name container, exporting file from tmp directory to '$TMP_BOOK_DUMP_GLOB'"
+            cat $TMP_BOOK_DUMP > $TMP_BOOK_DUMP_GLOB
+        else
+            echoWarn "WARNING: Address book was empty, can't subsitute for the interx..."
+        fi
+    fi
+done
+
+echoInfo "INFO: Starting address discovery..."
 rm -fv $TMP_BOOK_DUMP
 timeout 60 docker cp "seed:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP

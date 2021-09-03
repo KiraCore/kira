@@ -69,6 +69,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
     globSet snapshot_node_id "$SNAPSHOT_NODE_ID" $COMMON_GLOB
     globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
+    globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

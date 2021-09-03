@@ -15,15 +15,15 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 ```
 sekaid tx upgrade proposal-set-plan
 
-INFRA_RES_TMP='{"id":"infra","git":"https://github.com/KiraCore/kira","checkout":"testnet","checksum":""}' && \
-SEKAI_RES_TMP='{"id":"sekai","git":"https://github.com/KiraCore/kira","checkout":"master","checksum":""}' && \
-INTRX_RES_TMP='{"id":"interx","git":"https://github.com/KiraCore/kira","checkout":"master","checksum":""}' && \
-FRONT_RES_TMP='{"id":"frontend","git":"https://github.com/KiraCore/kira","checkout":"testnet","checksum":""}' && \
+INFRA_RES_TMP='{"id":"infra","git":"$INFRA_REPO","checkout":"testnet","checksum":""}' && \
+SEKAI_RES_TMP='{"id":"sekai","git":"$SEKAI_REPO","checkout":"master","checksum":""}' && \
+INTRX_RES_TMP='{"id":"interx","git":"$INTERX_REPO","checkout":"master","checksum":""}' && \
+FRONT_RES_TMP='{"id":"frontend","git":"$FRONTEND_REPO","checkout":"testnet","checksum":""}' && \
 sekaid tx upgrade proposal-set-plan \
  --name="upgrade-6" \
  --instate-upgrade=true \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
- --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 1800)) \
+ --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --height=0  \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \

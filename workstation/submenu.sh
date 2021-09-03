@@ -246,7 +246,6 @@ globSet "UPGRADE_DONE" "true"
 globSet "UPGRADE_TIME" "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet "PLAN_DONE" "true"
 
-
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
 echoInfo "INFO: MTU Value Discovery..."
