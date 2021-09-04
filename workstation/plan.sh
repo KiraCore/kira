@@ -31,6 +31,7 @@ echoWarn "|   PLAN START DATE: ${PLAN_START_DT}"
 echoWarn "|      UPGRADE TIME: ${UPGRADE_TIME}"
 echoWarn "| LATEST BLOCK TIME: ${LATEST_BLOCK_TIME}"
 echoWarn "------------------------------------------------"
+set -x
 
 if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPGRADE_DONE,,}" == "true" ] ; then
     echoInfo "ERROR: KIRA Upgrade Plan Failed ($PLAN_FAIL) or was already finalized ($UPGRADE_DONE), stopping service..."
@@ -45,7 +46,6 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
     echoInfo "INFO: NEW Upgrade scheaduled!"
     if [ "$UPGRADE_TIME" != "0" ] && [ "$LATEST_BLOCK_TIME" != "0" ] && [[ $LATEST_BLOCK_TIME -ge $UPGRADE_TIME ]] && [ "${PLAN_DONE,,}" == "false" ] ; then
         echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
-        echoInfo "INFO: Attempting kira manager branch discovery"
         KIRA_PLAN=""
         UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
         UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
@@ -57,6 +57,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
             echoWarn "WARNING: Failed to querry resources info"
             KIRA_PLAN=""
         else
+            echoInfo "INFO: Attempting kira manager branch discovery..."
             while IFS="" read -r row || [ -n "$row" ] ; do
                 sleep 0.1
                 jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
@@ -154,11 +155,13 @@ else
     echoInfo "INFO: NO new upgrades were scheaduled or update is in progress..."
 fi
 
+set +x
 echoInfo "INFO: To preview logs type 'journalctl -u kiraplan -f --output cat'"
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: UPGRADE PLAN SCRIPT $KIRA_SETUP_VER"
 echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
 echoWarn "------------------------------------------------"
+set -x
 
 UPGRADE_DONE=$(globGet UPGRADE_DONE)
 if [ "${UPGRADE_DONE,,}" == "true" ] ; then

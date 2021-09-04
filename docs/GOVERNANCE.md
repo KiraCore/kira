@@ -109,7 +109,7 @@ sekaid tx upgrade set-plan \
 ```
 {
     "resources": [ {
-            "id": "infra",
+            "id": "kira",
             "git": "<url-string>",
             "checkout": "<branch-or-tag-string>",
             "checksum": "sha256-string"

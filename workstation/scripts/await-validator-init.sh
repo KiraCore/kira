@@ -161,7 +161,7 @@ EOL
     rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
     $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$REPO_TMP" 555
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-    UPGRADE_RESOURCES="{\"id\":\"infra\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
     rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
     $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$REPO_TMP" 555
