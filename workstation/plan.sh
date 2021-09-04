@@ -46,7 +46,7 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
     echoInfo "INFO: NEW Upgrade scheaduled!"
     if [ "$UPGRADE_TIME" != "0" ] && [ "$LATEST_BLOCK_TIME" != "0" ] && [[ $LATEST_BLOCK_TIME -ge $UPGRADE_TIME ]] && [ "${PLAN_DONE,,}" == "false" ] ; then
         echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
-        KIRA_PLAN=""
+        globSet KIRA_PLAN ""
         UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
         UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
         UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
@@ -55,7 +55,6 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
 
         if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
             echoWarn "WARNING: Failed to querry resources info"
-            KIRA_PLAN=""
         else
             echoInfo "INFO: Attempting kira manager branch discovery..."
             while IFS="" read -r row || [ -n "$row" ] ; do
@@ -64,17 +63,20 @@ if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" !
                 joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
                 if [ "${joid,,}" == "kira" ] ; then
                     echoInfo "INFO: KIRA Manager repo plan found"
-                    KIRA_PLAN="$jobj"
+                    globSet KIRA_PLAN "$jobj"
                     break
+                else
+                    echoWarn "WARNING: Plan '$joid' is NOT a 'kira' plan, searching..."
                 fi
             done < $UPGRADE_PLAN_RES64_FILE
         fi
 
+        KIRA_PLAN=$(globGet KIRA_PLAN)
         if (! $(isNullOrWhitespaces "$KIRA_PLAN")) ; then
             echoInfo "INFO: KIRA Manager upgrade plan was found!"
-            repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
-            checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
-            checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
+            repository=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
+            checkout=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
+            checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
 
             DOWNLOAD_SUCCESS="true"
             KM_ZIP="/tmp/kira.zip"
@@ -172,7 +174,7 @@ fi
 PLAN_FAIL_COUNT=$(globGet PLAN_FAIL_COUNT)
 if [[ $PLAN_FAIL_COUNT -ge 10 ]] ; then
     echoErr "ERROR: Plan failed $PLAN_FAIL_COUNT / 10 times, topping kiraplan service..."
-    globGet PLAN_FAIL "true"
+    globSet PLAN_FAIL "true"
     
     journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
     systemctl stop kiraplan
