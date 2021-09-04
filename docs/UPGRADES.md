@@ -15,11 +15,11 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 ```
 sekaid tx upgrade proposal-set-plan
 
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"$SEKAI_REPO\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"$INTERX_REPO\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-7" && \
+INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
+FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/frontend\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+UPGRADE_NAME_TMP="upgrade-8" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
@@ -29,14 +29,14 @@ sekaid tx upgrade proposal-set-plan \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
- --max-enrollment-duration=7 \
+ --max-enrollment-duration=8 \
  --upgrade-memo="This is a test upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 
 
 voteYes $(lastProposal) validator
 
-sekaid query upgrade show-plan --output=json
+showUpgradePlan | jq
 ```
 
 Usage:
