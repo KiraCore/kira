@@ -34,127 +34,126 @@ echoWarn "------------------------------------------------"
 set -x
 
 if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPGRADE_DONE,,}" == "true" ] ; then
-    echoInfo "ERROR: KIRA Upgrade Plan Failed ($PLAN_FAIL) or was already finalized ($UPGRADE_DONE), stopping service..."
+    [ "${PLAN_FAIL,,}" == "true" ]  && echoErr "ERROR: KIRA Upgrade Plan Failed, stopping service..."
+    [ "${UPGRADE_DONE,,}" == "true" ] && echoWarn "WARNING: KIRA Upgrade Plan was already finalized ($UPGRADE_DONE), stopping service..."
     sleep 10
     systemctl stop kiraplan
     exit 1
 fi
 
+[ "${UPDATE_DONE,,}" != "true" ] && echoWarn "WARNING: KIRA Update must be finalized before upgrade can proceed!" && sleep 10 && exit 0
+
+[[ $LATEST_BLOCK_TIME -lt $UPGRADE_TIME ]] && echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})" && sleep 10 && exit 0
+
 mkdir -p $KIRA_INFRA
 
-if (! $(isNullOrWhitespaces "$UPGRADE_NAME_NEW")) && [ "${UPGRADE_NAME_NEW,,}" != "${UPGRADE_NAME_OLD,,}" ] && [ "${UPDATE_DONE,,}" == "true" ]; then
-    echoInfo "INFO: NEW Upgrade scheaduled!"
-    if [ "$UPGRADE_TIME" != "0" ] && [ "$LATEST_BLOCK_TIME" != "0" ] && [[ $LATEST_BLOCK_TIME -ge $UPGRADE_TIME ]] && [ "${PLAN_DONE,,}" == "false" ] ; then
-        echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
-        globSet KIRA_PLAN ""
-        UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
-        UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
-        UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
-        jsonParse "plan.resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
-        (jq -rc '.[] | @base64' $UPGRADE_PLAN_RES_FILE 2> /dev/null || echo -n "") > $UPGRADE_PLAN_RES64_FILE
-
-        if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
-            echoWarn "WARNING: Failed to querry resources info"
-        else
-            echoInfo "INFO: Attempting kira manager branch discovery..."
-            while IFS="" read -r row || [ -n "$row" ] ; do
-                sleep 0.1
-                jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-                joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
-                if [ "${joid,,}" == "kira" ] ; then
-                    echoInfo "INFO: KIRA Manager repo plan found"
-                    globSet KIRA_PLAN "$jobj"
-                    break
-                else
-                    echoWarn "WARNING: Plan '$joid' is NOT a 'kira' plan, searching..."
-                fi
-            done < $UPGRADE_PLAN_RES64_FILE
-        fi
-
-        KIRA_PLAN=$(globGet KIRA_PLAN)
-        if (! $(isNullOrWhitespaces "$KIRA_PLAN")) ; then
-            echoInfo "INFO: KIRA Manager upgrade plan was found!"
-            repository=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
-            checkout=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
-            checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
-
-            DOWNLOAD_SUCCESS="true"
-            KM_ZIP="/tmp/kira.zip"
-            KM_TMP="/tmp${KIRA_INFRA}"
-            rm -fv $KM_ZIP
-            cd $HOME && rm -rfv $KM_TMP
-            mkdir -p $KM_TMP && cd "$KM_TMP" 
-
-            if (! $(isNullOrWhitespaces "$checkout")) ; then
-                echoInfo "INFO: Fetching KIRA Manager repository from git..."
-                $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
-                cd "$KM_TMP" 
-                zip -9 -r -v "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
+echoInfo "INFO: NEW Upgrade scheaduled!"
+if [ "${PLAN_DONE,,}" == "false" ] ; then
+    echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
+    globSet KIRA_PLAN ""
+    UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
+    UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
+    UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
+    jsonParse "plan.resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
+    (jq -rc '.[] | @base64' $UPGRADE_PLAN_RES_FILE 2> /dev/null || echo -n "") > $UPGRADE_PLAN_RES64_FILE
+                  
+    if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
+        echoWarn "WARNING: Failed to querry resources info"
+    else
+        echoInfo "INFO: Attempting kira manager branch discovery..."
+        while IFS="" read -r row || [ -n "$row" ] ; do
+            sleep 0.1
+            jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
+            joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
+            if [ "${joid,,}" == "kira" ] ; then
+                echoInfo "INFO: KIRA Manager repo plan found"
+                globSet KIRA_PLAN "$jobj"
+                break
             else
-                echoInfo "INFO: Downloading KIRA Manager repository from external file..."
-                wget "$repository" -O $KM_ZIP || DOWNLOAD_SUCCESS="false"
+                echoWarn "WARNING: Plan '$joid' is NOT a 'kira' plan, searching..."
             fi
-
-            if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$KM_ZIP" ]; then
-                echoInfo "INFO: Download or Fetch suceeded, veryfying checksum..."
-                cd $HOME && rm -rfv $KM_TMP && mkdir -p $KM_TMP
-                unzip -o -: $KM_ZIP -d $KM_TMP
-                chmod -R -v 555 $KM_TMP
-                REPO_HASH=$(CDHelper hash SHA256 -p="$KM_TMP" -x=true -r=true --silent=true -i="$KM_TMP/.git,$KM_TMP/.gitignore")
-                rm -rfv $KM_TMP
-
-                if (! $(isNullOrWhitespaces "$checksum")) && [ "$checksum" != "$REPO_HASH" ] ; then
-                    echoErr "ERROR: Checksum verificaion failed, invalid SHA256 hash, expected '$checksum', but got '$REPO_HASH'"
-                    globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
-                else
-                    echoInfo "INFO: Success, checksum verified, unzipping..."
-                    cd $HOME && rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
-                    unzip -o -: $KM_ZIP -d $KIRA_INFRA
-                    chmod -R -v 555 $KIRA_INFRA
-                          
-                    rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
-                    cp -rfv "$KIRA_INFRA/workstation/." $KIRA_MANAGER
-                    chmod -R 555 $KIRA_MANAGER
+        done < $UPGRADE_PLAN_RES64_FILE
+    fi
+                       
+    KIRA_PLAN=$(globGet KIRA_PLAN)
+    if (! $(isNullOrWhitespaces "$KIRA_PLAN")) ; then
+        echoInfo "INFO: KIRA Manager upgrade plan was found!"
+        repository=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
+        checkout=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
+                     
+        DOWNLOAD_SUCCESS="true"
+        KM_ZIP="/tmp/kira.zip"
+        KM_TMP="/tmp${KIRA_INFRA}"
+        rm -fv $KM_ZIP
+        cd $HOME && rm -rfv $KM_TMP
+        mkdir -p $KM_TMP && cd "$KM_TMP" 
                       
-                    if (! $(isNullOrWhitespaces "$checkout")) ; then
-                        echoInfo "INFO: Updating branch name and repository address..."
-                        CDHelper text lineswap --insert="INFRA_REPO=$repository" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-                        CDHelper text lineswap --insert="INFRA_BRANCH=$checkout" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-                        globSet "INFRA_REPO" "$repository"
-                        globSet "INFRA_BRANCH" "$checkout"
-                    fi
-                    CDHelper text lineswap --insert="INFRA_CHECKSUM=$checksum" --prefix="INFRA_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
-
-                    echoInfo "INFO: Updating setup version..."
-                    SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
-                    [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
-                    CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
-                          
-                    globSet PLAN_DONE "true"
-                fi
-            else
-                echoErr "ERROR: Failed downloading or fetching KIRA Manager repo!"
+        if (! $(isNullOrWhitespaces "$checkout")) ; then
+            echoInfo "INFO: Fetching KIRA Manager repository from git..."
+            $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
+            cd "$KM_TMP" 
+            zip -9 -r -v "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
+        else
+            echoInfo "INFO: Downloading KIRA Manager repository from external file..."
+            wget "$repository" -O $KM_ZIP || DOWNLOAD_SUCCESS="false"
+        fi
+             
+        if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$KM_ZIP" ]; then
+            echoInfo "INFO: Download or Fetch suceeded, veryfying checksum..."
+            cd $HOME && rm -rfv $KM_TMP && mkdir -p $KM_TMP
+            unzip -o -: $KM_ZIP -d $KM_TMP
+            chmod -R -v 555 $KM_TMP
+            REPO_HASH=$(CDHelper hash SHA256 -p="$KM_TMP" -x=true -r=true --silent=true -i="$KM_TMP/.git,$KM_TMP/.gitignore")
+            rm -rfv $KM_TMP
+              
+            if (! $(isNullOrWhitespaces "$checksum")) && [ "$checksum" != "$REPO_HASH" ] ; then
+                echoErr "ERROR: Checksum verificaion failed, invalid SHA256 hash, expected '$checksum', but got '$REPO_HASH'"
                 globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
+            else
+                echoInfo "INFO: Success, checksum verified, unzipping..."
+                cd $HOME && rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
+                unzip -o -: $KM_ZIP -d $KIRA_INFRA
+                chmod -R -v 555 $KIRA_INFRA
+                      
+                rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
+                cp -rfv "$KIRA_INFRA/workstation/." $KIRA_MANAGER
+                chmod -R 555 $KIRA_MANAGER
+                  
+                if (! $(isNullOrWhitespaces "$checkout")) ; then
+                    echoInfo "INFO: Updating branch name and repository address..."
+                    CDHelper text lineswap --insert="INFRA_REPO=$repository" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+                    CDHelper text lineswap --insert="INFRA_BRANCH=$checkout" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+                    globSet "INFRA_REPO" "$repository"
+                    globSet "INFRA_BRANCH" "$checkout"
+                fi
+                CDHelper text lineswap --insert="INFRA_CHECKSUM=$checksum" --prefix="INFRA_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
+                
+                echoInfo "INFO: Updating setup version..."
+                SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
+                [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
+                CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+                      
+                globSet PLAN_DONE "true"
             fi
         else
-            echoWarn "WARNING: KIRA Manager upgrade plan was NOT found!"
+            echoErr "ERROR: Failed downloading or fetching KIRA Manager repo!"
+            globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
         fi
     else
-        if [ "${PLAN_DONE,,}" == "true" ] ; then
-            echoInfo "INFO: Plan was alredy executed, starting upgrade..."
-            UPSUCCESS="true" && $KIRA_MANAGER/setup/upgrade.sh || UPSUCCESS="false" 
-            if [ "${UPSUCCESS,,}" == "true" ] ; then
-                echoInfo "INFO: Upgrade round was sucessfull!"
-            else
-                echoErr "ERROR: Plan failed during upgrade process!"
-                globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
-            fi
-        else
-            echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})"
-        fi
+        echoWarn "WARNING: KIRA Manager upgrade plan was NOT found!"
     fi
-else
-    echoInfo "INFO: NO new upgrades were scheaduled or update is in progress..."
+fi
+
+if [ "${PLAN_DONE,,}" == "true" ] ; then
+    echoInfo "INFO: Plan was alredy executed, starting upgrade..."
+    UPSUCCESS="true" && $KIRA_MANAGER/setup/upgrade.sh || UPSUCCESS="false" 
+    if [ "${UPSUCCESS,,}" == "true" ] ; then
+        echoInfo "INFO: Upgrade round was sucessfull!"
+    else
+        echoErr "ERROR: Plan failed during upgrade process!"
+        globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
+    fi
 fi
 
 set +x

@@ -39,11 +39,16 @@ fi
 
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
+
     while IFS="" read -r row || [ -n "$row" ] ; do
         sleep 0.1
         jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
         joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
+
+        # kira repo is processed during plan setup, so ony other repost must be upgraded
+        [ "$joid" == "kira" ] && echoInfo "INFO: Infra repo was already upgraded..." && continue
+
         repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$repository")) && echoErr "ERROR: Repository of the plan '$joid' was undefined" && sleep 10 && exit 1
         checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
@@ -108,7 +113,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
     globSet UPDATE_DONE "false"
     globSet SETUP_REBOOT ""
     systemctl daemon-reload
-    systemctl start kiraup 
+    systemctl start kiraup
 fi
 
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
@@ -126,11 +131,11 @@ if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] ;
             echoWarn "WARNING: Failed to pause validator node"
         else
             echoInfo "INFO: Validator node was sucesfully unpaused"
-            globSet "UPGRADE_DONE" "true"
+            globSet UPGRADE_DONE "true"
             globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
         fi
     else
-        globSet "UPGRADE_DONE" "true"
+        globSet UPGRADE_DONE "true"
         globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     fi
 fi
