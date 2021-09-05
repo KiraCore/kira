@@ -101,19 +101,20 @@ while : ; do
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
-    if [ "${PLAN_DONE,,}" == "false" ]; then # plan in action
+    if [ "${PLAN_DONE,,}" == "false" ] || [ "${PLAN_FAIL,,}" == "true" ]; then # plan in action
         LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
         [ ${UPGRADE_INSTATE,,} == "true" ] && UPGRADE_INSTATE="SOFT" || UPGRADE_INSTATE="HARD"
         TMP_UPGRADE_MSG="NEW $UPGRADE_INSTATE UPGRADE"
-        if [[ $UPGRADE_TIME_LEFT -gt 0 ]] ; then
+        if [ "${PLAN_FAIL,,}" == "true" ] ; then
+            TMP_UPGRADE_MSG="  WARNING!!! UPGRADE FAILED, RUN MANUAL SETUP ${WHITESPACE}"
+        elif [[ $UPGRADE_TIME_LEFT -gt 0 ]] ; then
             UPGRADE_TIME_LEFT=$(prettyTimeSlim $UPGRADE_TIME_LEFT)
             TMP_UPGRADE_MSG="    ${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT ${WHITESPACE}"
         else
             TMP_UPGRADE_MSG="         ${TMP_UPGRADE_MSG} IS ONGOING ${WHITESPACE}"
         fi
-
         echo -e "|\e[31;1m ${TMP_UPGRADE_MSG:0:45} \e[33;1m|"
     fi
 
