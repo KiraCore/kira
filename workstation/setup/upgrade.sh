@@ -112,6 +112,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
     globSet UPDATE_FAIL_COUNTER "0"
     globSet UPDATE_DONE "false"
     globSet SETUP_REBOOT ""
+    globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+    globSet SETUP_END_DT ""
     systemctl daemon-reload
     systemctl start kiraup
 fi

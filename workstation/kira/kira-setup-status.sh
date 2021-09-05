@@ -43,7 +43,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
         else
-            echoWarn "WARNING: Your node setup is NOT compleated yet"
+            echoWarn "WARNING: Your node initial setup is NOT compleated yet"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
         fi
         set -x
@@ -90,7 +90,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
         else
-            echoWarn "WARNING: Your node setup is NOT compleated yet"
+            echoWarn "WARNING: Your node upgrade setup is NOT compleated yet"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
         fi
         set -x
