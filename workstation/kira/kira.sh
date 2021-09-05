@@ -45,6 +45,7 @@ while : ; do
     GENESIS_SHA256=$(globGet GENESIS_SHA256)
     UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
     PLAN_DONE=$(globGet PLAN_DONE)
+    PLAN_FAIL=$(globGet PLAN_FAIL)
 
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""

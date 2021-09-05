@@ -98,12 +98,12 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
         if [ "${VSEL,,}" == "r" ] ; then
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
         elif [ "${VSEL,,}" == "v" ] ; then
-            if ($(isNullOrWhitespaces "$PLAN_END_DT")) ; then
+            if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
                 echoInfo "INFO: Starting plan logs preview, to exit type Ctrl+c"
                 sleep 2 && journalctl --since "$PLAN_START_DT" -u kiraplan -f --output cat
             else
                 echoInfo "INFO: Printing plan logs:"
-                if ($(isFileEmpty "$KIRA_DUMP/kiraplan-done.log.txt")) ; then
+                if ($(isFileEmpty "$KIRA_DUMP/kiraplan-done.log.txt")) && [ ! -z "$PLAN_END_DT"] ; then
                     journalctl --since "$PLAN_START_DT" --until "$PLAN_END_DT" -u kiraplan -b --no-pager --output cat
                 else
                     tryCat "$KIRA_DUMP/kiraplan-done.log.txt"
