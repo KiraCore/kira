@@ -73,14 +73,14 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        globSet PRIV_CONN_PRIORITY false
-        $KIRA_MANAGER/containers/start-sentry.sh "true"
-    fi
-
-    ADDRBOOK_DST="$DOCKER_COMMON_RO/addrbook.json"
-    (timeout 8 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
-    $KIRA_SCRIPTS/container-delete.sh "sentry"
+#    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
+#        globSet PRIV_CONN_PRIORITY false
+#        $KIRA_MANAGER/containers/start-sentry.sh "true"
+#    fi
+#
+#    ADDRBOOK_DST="$DOCKER_COMMON_RO/addrbook.json"
+#    (timeout 8 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
+#    $KIRA_SCRIPTS/container-delete.sh "sentry"
     $KIRA_MANAGER/containers/start-validator.sh
     $KIRA_MANAGER/containers/start-interx.sh
 else

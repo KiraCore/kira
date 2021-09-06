@@ -27,7 +27,7 @@ while : ; do
 
     if [ -d $KIRA_SNAP ]; then
         echoInfo "INFO: Directory '$KIRA_SNAP' found, clenaing up to $MAX_SNAPS snaps..."
-        SNAPSHOTS=`ls -S $KIRA_SNAP/*.zip | grep '^d'` || SNAPSHOTS=""
+        SNAPSHOTS=`ls -Str $KIRA_SNAP/*.zip` || SNAPSHOTS=""
 
         if [ ! -z "$SNAPSHOTS" ] ; then
             i=0
