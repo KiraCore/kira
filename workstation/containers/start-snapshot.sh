@@ -1,6 +1,5 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/containers/start-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set -x

@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-validator.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="validator"
 CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
@@ -68,7 +68,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-    cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
+    #cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
 
     EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
