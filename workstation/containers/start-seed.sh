@@ -126,7 +126,7 @@ docker run -d \
     kira:latest
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start..."

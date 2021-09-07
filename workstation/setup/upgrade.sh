@@ -4,11 +4,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/setup/upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 SCRIPT_START_TIME="$(date -u +%s)"
+PLAN_START_DT=$(globGet PLAN_START_DT)
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "| PLAN START DATE: $PLAN_START_DT"
 echoWarn "------------------------------------------------"
 
 UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
@@ -45,7 +47,6 @@ for name in $CONTAINERS; do
     
     $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
 
-    
     SNAP_STATUS="$KIRA_SNAP/status"
     echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
 done
@@ -106,6 +107,13 @@ if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
     else
         echoWarn "WARNING: NO new public seed nodes were found in the address book!"
     fi
+
+    echoInfo "INFO: Wiping all unised containers..."
+    for name in $CONTAINERS; do
+        [ "${name,,}" == "registry" ] && continue
+        echoInfo "INFO: Removing '$name' container..."
+        $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    done
 else
     echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
 fi
@@ -178,6 +186,9 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi
     done < $UPGRADE_PLAN_RES64_FILE
+
+    echoInfo "INFO: Dumping loggs before planned reboot & update..."
+    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
 
     echoInfo "INFO: Starting update service..."
     globSet UPGRADE_REPOS_DONE "true"

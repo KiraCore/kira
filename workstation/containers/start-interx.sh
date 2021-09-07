@@ -94,7 +94,7 @@ docker run -d \
     $CONTAINER_NAME:latest
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
 echoInfo "INFO: Waiting for interx to start..."
