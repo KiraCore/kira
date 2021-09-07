@@ -13,6 +13,7 @@ UPDATE_DONE=$(globGet UPDATE_DONE)
 UPDATE_FAIL=$(globGet UPDATE_FAIL)
 PLAN_DONE=$(globGet PLAN_DONE)
 PLAN_FAIL=$(globGet PLAN_FAIL)
+UPGRADE_DONE=$(globGet UPGRADE_DONE)
 
 set +x
 echoWarn "------------------------------------------------"
@@ -21,13 +22,14 @@ echoWarn "|-----------------------------------------------"
 echoWarn "| SETUP START DATE: $SETUP_START_DT"
 echoWarn "|   SETUP END DATE: $SETUP_END_DT"
 echoWarn "|      UPDATE DONE: $UPDATE_DONE"
+echoWarn "|     UPGRADE DONE: $UPGRADE_DONE"
 echoWarn "|    UPDATE FAILED: $UPDATE_FAIL"
 echoWarn "|        PLAN DONE: $PLAN_DONE"
 echoWarn "|      PLAN FAILED: $PLAN_FAIL"
 echoWarn "------------------------------------------------"
 set -x
 
-while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
+while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
 
     while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] ; do
         set +x
@@ -76,7 +78,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
         fi
     done
     
-    while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] ; do
+    while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPGRADE_DONE,,}" != "true" ] ; do
         set +x
         set +e && source "$ETC_PROFILE" &>/dev/null && set -e
         source $KIRA_MANAGER/utils.sh
@@ -84,6 +86,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${
         PLAN_START_DT=$(globGet PLAN_START_DT)
         PLAN_DONE=$(globGet PLAN_DONE)
         PLAN_FAIL=$(globGet PLAN_FAIL)
+        UPGRADE_DONE=$(globGet UPGRADE_DONE)
     
         if [ "${PLAN_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node upgrade FAILED, its reccomended that you [D]ump all logs"

@@ -13,8 +13,6 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 
 
 ```
-sekaid tx upgrade proposal-set-plan
-
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
@@ -32,7 +30,6 @@ sekaid tx upgrade proposal-set-plan \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a test upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
-
 
 voteYes $(lastProposal) validator
 

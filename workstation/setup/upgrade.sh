@@ -53,8 +53,8 @@ done
 MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
-    echoInfo "INFO: Starting cleanup before snapshoot is generated..."
-    $KIRA_MANAGER/kira/cleanup.sh
+    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    rm -fv $KIRA_SNAP/*.zip
 
     CONTAINER_NAME="${INFRA_MODE,,}"
     COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
@@ -65,9 +65,6 @@ if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
     rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
 
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
-
-    echoInfo "INFO: Starting cleanup after snapshoot was already generated..."
-    $KIRA_MANAGER/kira/cleanup.sh
 
     [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
     [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1

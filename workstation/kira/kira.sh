@@ -45,6 +45,7 @@ while : ; do
     GENESIS_SHA256=$(globGet GENESIS_SHA256)
     UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
     PLAN_DONE=$(globGet PLAN_DONE)
+    UPGRADE_DONE=$(globGet UPGRADE_DONE)
     PLAN_FAIL=$(globGet PLAN_FAIL)
 
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
@@ -102,7 +103,7 @@ while : ; do
     echo "|         KIRA NETWORK MANAGER $KIRA_SETUP_VER         : $INFRA_MODE mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
-    if [ "${PLAN_DONE,,}" == "false" ] || [ "${PLAN_FAIL,,}" == "true" ]; then # plan in action
+    if [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" == "true" ]; then # plan in action
         LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
