@@ -111,8 +111,9 @@ if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
     echoInfo "INFO: Wiping all unised containers..."
     for name in $CONTAINERS; do
         [ "${name,,}" == "registry" ] && continue
-        echoInfo "INFO: Removing '$name' container..."
+        echoInfo "INFO: Removing '$name' container and cleaning up resources..."
         $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+        rm -rfv "$DOCKER_COMMON/${name}"
     done
 else
     echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1

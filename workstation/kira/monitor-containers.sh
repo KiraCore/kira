@@ -91,6 +91,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
         globSet PLAN_END_DT ""
         
+        rm -fv $KIRA_DUMP/kiraplan-done.log.txt || echoInfo "INFO: plan log dump could not be wipred before plan service start"
         systemctl start kiraplan
     else
         echoWarn "WARNING: Upgrade plan is invalid"

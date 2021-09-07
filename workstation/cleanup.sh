@@ -32,6 +32,7 @@ for name in $CONTAINERS; do
     i=$((i + 1)) # dele all containers except registry
     [ "${name,,}" == "registry" ] && continue
     $KIRA_SCRIPTS/container-delete.sh "$name"
+    rm -rfv "$DOCKER_COMMON/${name}"
 done
 
 echoInfo "INFO: KIRA Scan service cleanup..."
