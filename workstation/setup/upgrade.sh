@@ -5,13 +5,21 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 SCRIPT_START_TIME="$(date -u +%s)"
 PLAN_START_DT=$(globGet PLAN_START_DT)
+UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
+UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
+UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "| PLAN START DATE: $PLAN_START_DT"
+echoWarn "|        BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|    PLAN START DATE: $PLAN_START_DT"
+echoWarn "|  UPGRADE SNAP DONE: $UPGRADE_SNAP_DONE"
+echoWarn "| UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
+echoWarn "|    UPGRADE INSTATE: $UPGRADE_INSTATE"
 echoWarn "------------------------------------------------"
+
+(! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
 
 UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
 UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
@@ -24,104 +32,107 @@ if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
     exit 1
 fi
 
-UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
-(! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
+if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
+    echoInfo "INFO: Started creating snapshoot..."
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
-    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
-        echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
-        globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
-        # NOTE: Pause disabled until safety min validators hotfix
-        # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || VFAIL="true"
-        VFAIL="false"
-        
-        [ "${VFAIL,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
-    fi
-fi
+    if [ "${INFRA_MODE,,}" == "validator" ] ; then
+        UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
+        if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
+            echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
+            globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
+            # NOTE: Pause disabled until safety min validators hotfix
+            # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || VFAIL="true"
+            VFAIL="false"
 
-echoInfo "INFO: Halting and re-starting all containers..."
-for name in $CONTAINERS; do
-    [ "${name,,}" == "registry" ] && continue
-    echoInfo "INFO: Halting and re-starting '$name' container..."
-    
-    $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
-
-    SNAP_STATUS="$KIRA_SNAP/status"
-    echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
-done
-
-MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
-
-if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
-    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-    rm -fv $KIRA_SNAP/*.zip
-
-    CONTAINER_NAME="${INFRA_MODE,,}"
-    COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
-    SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
-    ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
-    KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
-
-    rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
-
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
-
-    [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
-    [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
-
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    echoInfo "INFO: Recovering public & private seed nodes..."
-    SEEDS_DUMP="/tmp/seedsdump"
-    ADDR_DUMP="/tmp/addrdump"
-    ADDR_DUMP_ARR="/tmp/addrdumparr"
-    ADDR_DUMP_BASE64="/tmp/addrdump64"
-    rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64
-    touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
-    jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
-    (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
-
-    while IFS="" read -r row || [ -n "$row" ] ; do
-        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        last_success=$(echo "$jobj" | jsonParse "last_success" 2> /dev/null || echo -n "") && last_success=$(delWhitespaces $last_success | tr -d '"' || "")
-        ( [ -z "$last_success" ] || [ "$last_success" == "0001-01-01T00:00:00Z" ] ) && echoInfo "INFO: Skipping address, connection was never establised." && continue
-        nodeId=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "") && nodeId=$(delWhitespaces $nodeId | tr -d '"' || "")
-        (! $(isNodeId "$nodeId")) && echoInfo "INFO: Skipping address, node id '$nodeId' is invalid." && continue
-        ip=$(echo "$jobj" | jsonQuickParse "ip" 2> /dev/null || echo -n "") && ip=$(delWhitespaces $ip | tr -d '"' || "")
-        (! $(isIp "$ip")) && echoInfo "INFO: Skipping address, node ip '$ip' is NOT a valid IPv4." && continue
-        port=$(echo "$jobj" | jsonQuickParse "port" 2> /dev/null || echo -n "") && port=$(delWhitespaces $port | tr -d '"' || "")
-        (! $(isPort "$port")) && echoInfo "INFO: Skipping address, '$port' is NOT a valid port." && continue
-        if grep -q "$nodeId" "$SEEDS_DUMP" || grep -q "$ip:$port" "$SEEDS_DUMP" || grep -q "$nodeId" "$PUBLIC_SEEDS" || grep -q "$ip:$port" "$PUBLIC_SEEDS" ; then
-            echoWarn "WARNING: Address '$nodeId@$ip:$port' is already present in the seeds list or invalid, last conn ($last_success)"
-        else
-            echoInfo "INFO: Success, found new node addess '$nodeId@$ip:$port', last conn ($last_success)"
-            echo "$nodeId@$ip:$port" >> $SEEDS_DUMP
+            [ "${VFAIL,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
         fi
-    done < $ADDR_DUMP_BASE64
-
-    if (! $(isFileEmpty $SEEDS_DUMP)) ; then
-        echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to PUBLIC_SEEDS '$PUBLIC_SEEDS'..."
-        cat $SEEDS_DUMP >> $PUBLIC_SEEDS
-    else
-        echoWarn "WARNING: NO new public seed nodes were found in the address book!"
     fi
 
-    echoInfo "INFO: Wiping all unised containers..."
+    echoInfo "INFO: Halting and re-starting all containers..."
     for name in $CONTAINERS; do
         [ "${name,,}" == "registry" ] && continue
-        echoInfo "INFO: Removing '$name' container and cleaning up resources..."
-        $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-        rm -rfv "$DOCKER_COMMON/${name}"
+        echoInfo "INFO: Halting and re-starting '$name' container..."
+
+        $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
+
+        SNAP_STATUS="$KIRA_SNAP/status"
+        echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     done
-else
-    echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
+
+    MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
+
+    if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
+        echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+        rm -fv $KIRA_SNAP/*.zip
+
+        CONTAINER_NAME="${INFRA_MODE,,}"
+        COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
+        SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
+        ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
+        KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
+
+        rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
+
+        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
+
+        [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
+        [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
+
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        echoInfo "INFO: Recovering public & private seed nodes..."
+        SEEDS_DUMP="/tmp/seedsdump"
+        ADDR_DUMP="/tmp/addrdump"
+        ADDR_DUMP_ARR="/tmp/addrdumparr"
+        ADDR_DUMP_BASE64="/tmp/addrdump64"
+        rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64
+        touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
+        jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
+        (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
+
+        while IFS="" read -r row || [ -n "$row" ] ; do
+            jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
+            last_success=$(echo "$jobj" | jsonParse "last_success" 2> /dev/null || echo -n "") && last_success=$(delWhitespaces $last_success | tr -d '"' || "")
+            ( [ -z "$last_success" ] || [ "$last_success" == "0001-01-01T00:00:00Z" ] ) && echoInfo "INFO: Skipping address, connection was never establised." && continue
+            nodeId=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "") && nodeId=$(delWhitespaces $nodeId | tr -d '"' || "")
+            (! $(isNodeId "$nodeId")) && echoInfo "INFO: Skipping address, node id '$nodeId' is invalid." && continue
+            ip=$(echo "$jobj" | jsonQuickParse "ip" 2> /dev/null || echo -n "") && ip=$(delWhitespaces $ip | tr -d '"' || "")
+            (! $(isIp "$ip")) && echoInfo "INFO: Skipping address, node ip '$ip' is NOT a valid IPv4." && continue
+            port=$(echo "$jobj" | jsonQuickParse "port" 2> /dev/null || echo -n "") && port=$(delWhitespaces $port | tr -d '"' || "")
+            (! $(isPort "$port")) && echoInfo "INFO: Skipping address, '$port' is NOT a valid port." && continue
+            if grep -q "$nodeId" "$SEEDS_DUMP" || grep -q "$ip:$port" "$SEEDS_DUMP" || grep -q "$nodeId" "$PUBLIC_SEEDS" || grep -q "$ip:$port" "$PUBLIC_SEEDS" ; then
+                echoWarn "WARNING: Address '$nodeId@$ip:$port' is already present in the seeds list or invalid, last conn ($last_success)"
+            else
+                echoInfo "INFO: Success, found new node addess '$nodeId@$ip:$port', last conn ($last_success)"
+                echo "$nodeId@$ip:$port" >> $SEEDS_DUMP
+            fi
+        done < $ADDR_DUMP_BASE64
+
+        if (! $(isFileEmpty $SEEDS_DUMP)) ; then
+            echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to PUBLIC_SEEDS '$PUBLIC_SEEDS'..."
+            cat $SEEDS_DUMP >> $PUBLIC_SEEDS
+        else
+            echoWarn "WARNING: NO new public seed nodes were found in the address book!"
+        fi
+
+        echoInfo "INFO: Wiping all unised containers..."
+        for name in $CONTAINERS; do
+            [ "${name,,}" == "registry" ] && continue
+            echoInfo "INFO: Removing '$name' container and cleaning up resources..."
+            $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+            rm -rfv "$DOCKER_COMMON/${name}"
+        done
+    else
+        echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
+    fi
+
+    globSet UPGRADE_SNAP_DONE "true"
 fi
 
-UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
-if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
-
+UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
+if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "false" ]; then
+    echoInfo "INFO: Starting repos upgrade..."
     while IFS="" read -r row || [ -n "$row" ] ; do
         jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
         joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
@@ -188,9 +199,6 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
         fi
     done < $UPGRADE_PLAN_RES64_FILE
 
-    echoInfo "INFO: Dumping loggs before planned reboot & update..."
-    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
-
     echoInfo "INFO: Starting update service..."
     globSet UPGRADE_REPOS_DONE "true"
     globSet UPDATE_FAIL_COUNTER "0"
@@ -199,14 +207,16 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] ; then
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
     systemctl daemon-reload
+
+    echoInfo "INFO: Dumping loggs before planned reboot & update..."
+    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
     systemctl start kiraup
 fi
 
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
-if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] ; then
-    echoInfo "INFO: Un-halting and re-starting all containers..."
+if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] && [ "${UPGRADE_SNAP_DONE,,}" == "true" ] ; then
 
     if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"

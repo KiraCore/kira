@@ -33,22 +33,15 @@ echoWarn "| LATEST BLOCK TIME: ${LATEST_BLOCK_TIME}"
 echoWarn "------------------------------------------------"
 set -x
 
-if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPGRADE_DONE,,}" == "true" ] ; then
-    [ "${PLAN_FAIL,,}" == "true" ]  && echoErr "ERROR: KIRA Upgrade Plan Failed, stopping service..."
-    [ "${UPGRADE_DONE,,}" == "true" ] && echoWarn "WARNING: KIRA Upgrade Plan was already finalized ($UPGRADE_DONE), stopping service..."
-    sleep 10
-    systemctl stop kiraplan
-    exit 1
-fi
-
-[ "${UPDATE_DONE,,}" != "true" ] && echoWarn "WARNING: KIRA Update must be finalized before upgrade can proceed!" && sleep 10 && exit 0
-
-[[ $LATEST_BLOCK_TIME -lt $UPGRADE_TIME ]] && echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})" && sleep 10 && exit 0
-
-mkdir -p $KIRA_INFRA
+[ "${PLAN_FAIL,,}" == "true" ]  && echoErr "ERROR: KIRA Upgrade Plan Failed, stopping service..." && sleep 10 && systemctl stop kiraplan && exit 1
+[ "${UPDATE_DONE,,}" != "true" ] && echoWarn "WARNING: KIRA Update must be finalized before upgrade plan can proceed!" && sleep 10 && exit 0
 
 echoInfo "INFO: NEW Upgrade scheaduled!"
 if [ "${PLAN_DONE,,}" == "false" ] ; then
+    [[ $LATEST_BLOCK_TIME -lt $UPGRADE_TIME ]] && echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})" && sleep 10 && exit 0
+
+    mkdir -p $KIRA_INFRA
+
     echoInfo "INFO: Upgrade time elapsed, ready to execute new plan!"
     globSet KIRA_PLAN ""
     UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
@@ -145,7 +138,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
     fi
 fi
 
-if [ "${PLAN_DONE,,}" == "true" ] ; then
+if [ "${PLAN_DONE,,}" == "true" ] && [ "${UPGRADE_DONE,,}" == "false" ] ; then
     echoInfo "INFO: Plan was alredy executed, starting upgrade..."
     UPSUCCESS="true" && $KIRA_MANAGER/setup/upgrade.sh || UPSUCCESS="false" 
     if [ "${UPSUCCESS,,}" == "true" ] ; then
