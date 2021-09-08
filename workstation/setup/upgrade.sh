@@ -128,10 +128,12 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
     fi
 
     globSet UPGRADE_SNAP_DONE "true"
+else
+    echoInfo "INFO: Snapshot already done."
 fi
 
 UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
-if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "false" ]; then
+if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "true" ]; then
     echoInfo "INFO: Starting repos upgrade..."
     while IFS="" read -r row || [ -n "$row" ] ; do
         jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
@@ -211,6 +213,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "fa
     echoInfo "INFO: Dumping loggs before planned reboot & update..."
     journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
     systemctl start kiraup
+else
+    echoInfo "INFO: Repos upgrade already done"
 fi
 
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
