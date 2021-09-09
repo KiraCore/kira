@@ -71,8 +71,6 @@ cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.js
 
 touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
-PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
-
 if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
     CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"

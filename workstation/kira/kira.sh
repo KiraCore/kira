@@ -31,6 +31,7 @@ systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service
 
 globSet IS_SCAN_DONE "false"
 PREVIOUS_BLOCK=0
+INFRA_CONTAINERS_COUNT=$(globGet INFRA_CONTAINERS_COUNT)
 set +x
 
 while : ; do
@@ -48,7 +49,7 @@ while : ; do
     UPGRADE_DONE=$(globGet UPGRADE_DONE)
     PLAN_FAIL=$(globGet PLAN_FAIL)
     UPDATE_FAIL=$(globGet UPDATE_FAIL)
-
+    
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
@@ -73,6 +74,7 @@ while : ; do
         CONTAINERS=$(globGet CONTAINERS)
 
         i=-1
+        CONTAINERS_COUNT=0
         for name in $CONTAINERS; do
             EXISTS_TMP=$(globGet "${name}_EXISTS")
 
@@ -192,7 +194,7 @@ while : ; do
 
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
-        elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINER_COUNT ]]; then
+        elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINERS_COUNT ]]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"

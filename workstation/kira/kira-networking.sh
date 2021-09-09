@@ -5,7 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
-PORTS=($EXPOSED_PORTS)
+PORTS=$(globGet EXPOSED_PORTS)
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
 touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
