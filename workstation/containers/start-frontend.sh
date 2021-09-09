@@ -8,7 +8,7 @@ CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
 RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="frontend"
-CONTAINER_NETWORK="$KIRA_FRONTEND_NETWORK"
+CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"
@@ -18,7 +18,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
-echoWarn "|   NETWORK: $KIRA_FRONTEND_NETWORK"
+echoWarn "|   NETWORK: $CONTAINER_NETWORK"
 echoWarn "|  HOSTNAME: $KIRA_FRONTEND_DNS"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"

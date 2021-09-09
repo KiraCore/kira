@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/containers/start-validator.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="validator"
-CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"

@@ -6,6 +6,7 @@ SAVE_SNAPSHOT=$1
 [ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
 
 CONTAINER_NAME="sentry"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"
@@ -21,6 +22,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SENTRY_NODE_ID"
+echoWarn "|   NETWORK: $CONTAINER_NETWORK"
 echoWarn "|  HOSTNAME: $KIRA_SENTRY_DNS"
 echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -57,21 +59,10 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+    cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
-    if [ "${INFRA_MODE,,}" == "validator" ] ; then
-        CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
-        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
-
-        # fake that sentry node is a validator to ensure that previously accepted connections remain valid
-        cp -afv $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
-        NODE_ID="$VALIDATOR_NODE_ID"
-    else
-        CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
-        EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
-        
-        cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
-        NODE_ID="$SENTRY_NODE_ID"
-    fi
+    EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
+    NODE_ID="$SENTRY_NODE_ID"
 
     globSet CFG_pex "true" $COMMON_GLOB
     globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB

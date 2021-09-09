@@ -14,8 +14,8 @@ echoWarn "|    TARGET: $TARGET"
 echoWarn "------------------------------------------------"
 set -x
 
-declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
-declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
+declare -a networks=("kiranet" "servicenet" "regnet")
+declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
 echo "INFO: Updating DNS names of all containers in the local hosts file"

@@ -403,8 +403,8 @@ function upsertIdentityRecord() {
     IR_KEY=$2
     IR_VAL=$3
     TIMEOUT=$4
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was not defined " && return 1
-    (! $(isAlphanumeric $IR_KEY)) && echoErr "ERROR:  Identity Registrar key must be an alphanumeric string, but got '$IR_KEY' " && return 1
+    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
+    ($(isNullOrEmpty $IR_KEY)) && echoErr "ERROR: Key was NOT defined " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
     if [ -z "$IR_VAL" ] ; then
@@ -454,29 +454,27 @@ function showIdentityVerificationRequests() {
     fi
 }
 
-# approveIdentityVerificationRequest <account> <requester-address>
-# e.g. approveIdentityVerificationRequest validator $(showAddress test)
+# approveIdentityVerificationRequest <account> <id> <timeout>
+# e.g. approveIdentityVerificationRequest validator 1 180
 function approveIdentityVerificationRequest() {
     KM_ACC=$1
-    # [[ $1 != kira* ]] && KM_REQ=$2 || KM_REQ=""
-    KM_REQ=$2
-    TIMEOUT=$4
+    KM_REQ=$2 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    TIMEOUT=$3
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
-    ($(isNullOrEmpty $KM_REQ)) && echoErr "ERROR: Requester address '$KM_REQ' is NOT valid" && return 1
+    (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
     sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
-# rejectIdentityVerificationRequest <account> <requester-address>
-# e.g. rejectIdentityVerificationRequest validator $(showAddress test)
+# rejectIdentityVerificationRequest <account> <id> <timeout>
+# e.g. rejectIdentityVerificationRequest validator 1 180
 function rejectIdentityVerificationRequest() {
     KM_ACC=$1
-    # [[ $1 != kira* ]] && KM_REQ=$2 || KM_REQ=""
-    KM_REQ=$2
-    TIMEOUT=$4
+    KM_REQ=$2 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    TIMEOUT=$3
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
-    ($(isNullOrEmpty $KM_REQ)) && echoErr "ERROR: Requester address '$KM_REQ' is NOT valid" && return 1
+    (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
     sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT

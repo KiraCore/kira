@@ -11,15 +11,12 @@ CARGO_ENV="/home/$KIRA_USER/.cargo/env"
 
 KIRA_STATE=/kira/state
 KIRA_REGISTRY_SUBNET="10.1.0.0/16"
-KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
-KIRA_SENTRY_SUBNET="10.3.0.0/16"
-KIRA_SERVICE_SUBNET="10.4.0.0/16"
+KIRA_SENTRY_SUBNET="10.2.0.0/16"
+KIRA_SERVICE_SUBNET="10.3.0.0/16"
 
 KIRA_REGISTRY_NETWORK="regnet"
-KIRA_VALIDATOR_NETWORK="kiranet"
-KIRA_SENTRY_NETWORK="sentrynet"
+KIRA_SENTRY_NETWORK="kiranet"
 KIRA_INTERX_NETWORK="servicenet"
-KIRA_FRONTEND_NETWORK="servicenet"
 
 KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
@@ -73,7 +70,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=$KIRA_FRONTEND_DNS" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_REGISTRY_SUBNET=$KIRA_REGISTRY_SUBNET" --prefix="KIRA_REGISTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_SUBNET=$KIRA_VALIDATOR_SUBNET" --prefix="KIRA_VALIDATOR_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=$KIRA_SENTRY_SUBNET" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SERVICE_SUBNET=$KIRA_SERVICE_SUBNET" --prefix="KIRA_SERVICE_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
 
@@ -85,10 +81,8 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_STATE=$KIRA_STATE" --prefix="KIRA_STATE=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_REGISTRY_NETWORK=$KIRA_REGISTRY_NETWORK" --prefix="KIRA_REGISTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_NETWORK=$KIRA_VALIDATOR_NETWORK" --prefix="KIRA_VALIDATOR_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_NETWORK=$KIRA_SENTRY_NETWORK" --prefix="KIRA_SENTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_INTERX_NETWORK=$KIRA_INTERX_NETWORK" --prefix="KIRA_INTERX_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_NETWORK=$KIRA_FRONTEND_NETWORK" --prefix="KIRA_FRONTEND_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_REGISTRY=$KIRA_REGISTRY" --prefix="KIRA_REGISTRY=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_DOCKER=$KIRA_DOCKER" --prefix="KIRA_DOCKER=" --path=$ETC_PROFILE --append-if-found-not=True

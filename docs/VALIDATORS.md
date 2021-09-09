@@ -25,7 +25,6 @@ sekaid tx customstaking claim-validator-seat --from validator --keyring-backend=
 
 ```
 
-
 sekaid tx customslashing activate --from validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=1000ukex --gas=1000000 --broadcast-mode=async --yes --broadcast-mode=async | txAwait
 ```
 

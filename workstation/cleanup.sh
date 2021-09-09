@@ -62,8 +62,8 @@ set -e
 set -x
 
 echoInfo "INFO: Recreating docker networks..."
-declare -a networks=("kiranet" "sentrynet" "servicenet")
-declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET")
+declare -a networks=("kiranet" "servicenet")
+declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET")
 len=${#networks[@]}
 
 MTU=$(globGet MTU)

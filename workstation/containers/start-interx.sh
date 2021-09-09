@@ -54,12 +54,10 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
         PING_TARGET="seed.local"
-        #CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
     elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
         PING_TARGET="sentry.local"
     elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
         PING_TARGET="validator.local"
-        #CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
     else
         echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
         exit 1

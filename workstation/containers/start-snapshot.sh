@@ -10,6 +10,7 @@ SYNC_FROM_SNAP=$2
 [ -z "$MAX_HEIGHT" ] && MAX_HEIGHT=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MAX_HEIGHT")) && MAX_HEIGHT=0
 # ensure to create parent directory for shared status info
 CONTAINER_NAME="snapshot"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 SNAP_STATUS="$KIRA_SNAP/status"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -31,6 +32,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|    HOSTNAME: $KIRA_SNAPSHOT_DNS"
+echoWarn "|     NETWORK: $CONTAINER_NETWORK"
 echoWarn "| SYNC HEIGHT: $MAX_HEIGHT"
 echoWarn "|  SNAP DEST.: $SNAP_FILE"
 echoWarn "| SNAP SOURCE: $SYNC_FROM_SNAP"
@@ -71,21 +73,20 @@ touch "$PRIVATE_PEERS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
 PRIV_CONN_PRIORITY=$(globGet PRIV_CONN_PRIORITY)
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
+if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
     CONTAINER_TARGET="validator"
     PING_TARGET="validator.local"
     NODE_ID_TARGET="$VALIDATOR_NODE_ID"
-    CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
 elif [ "${INFRA_MODE,,}" == "seed" ] ; then
     CONTAINER_TARGET="seed"
     PING_TARGET="seed.local"
     NODE_ID_TARGET="$SEED_NODE_ID"
-    CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
-else
+elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     CONTAINER_TARGET="sentry"
     PING_TARGET="sentry.local"
     NODE_ID_TARGET="$SENTRY_NODE_ID"
-    CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
+else
+    echoErr "ERROR: Unsupported infra mode '$INFRA_MODE', snapshoot sentry can't be launched"
 fi
 
 LISTEN_ADDR=$(timeout 3 curl --fail $PING_TARGET:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonParse "result.node_info.listen_addr" 2>/dev/null || echo -n "")
