@@ -14,7 +14,7 @@ echoWarn "|    TARGET: $TARGET"
 echoWarn "------------------------------------------------"
 set -x
 
-declare -a networks=("kiranet" "servicenet" "regnet")
+declare -a networks=("sentrynet" "servicenet" "regnet")
 declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 

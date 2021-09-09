@@ -15,7 +15,7 @@ KIRA_SENTRY_SUBNET="10.2.0.0/16"
 KIRA_SERVICE_SUBNET="10.3.0.0/16"
 
 KIRA_REGISTRY_NETWORK="regnet"
-KIRA_SENTRY_NETWORK="kiranet"
+KIRA_SENTRY_NETWORK="sentrynet"
 KIRA_INTERX_NETWORK="servicenet"
 
 KIRA_REGISTRY_DNS="registry.local"
@@ -51,7 +51,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
 ESSENTIALS_HASH=$(echo "$KIRA_USER-$KIRA_INFRA-$KIRA_MANAGER-$FLUTTERROOT-" | md5)
-SETUP_CHECK="$KIRA_SETUP/kira-env-5-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/kira-env-6-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
