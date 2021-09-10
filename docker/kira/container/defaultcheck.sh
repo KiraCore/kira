@@ -102,11 +102,7 @@ if [ "${FAILED,,}" == "true" ] ; then
         pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
         sleep 5
     fi
-else
-    updateCommitTimeout || ( echoErr "ERROR: Failed to update commit timeout!" && sleep 3 )
-fi
 
-if [ "${FAILED,,}" == "true" ] ; then
     set +x
     echoErr "------------------------------------------------"
     echoErr "|  FAILURE: DEFAULT SEKAI HEALTHCHECK          |"

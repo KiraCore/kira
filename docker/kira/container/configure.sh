@@ -33,6 +33,7 @@ PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
 NEW_NETWORK=$(globGet NEW_NETWORK "$GLOBAL_COMMON_RO")
 MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO")
+CFG_timeout_commit=$(globGet CFG_timeout_commit)
 
 CFG_pex=$(globGet CFG_pex)
 CFG_moniker=$(globGet CFG_moniker)
@@ -53,7 +54,6 @@ CFG_snapshot_interval=$(globGet CFG_snapshot_interval)
 CFG_statesync_enable=$(globGet CFG_statesync_enable)
 CFG_statesync_temp_dir=$(globGet CFG_statesync_temp_dir)
 CFG_create_empty_blocks_interval=$(globGet CFG_create_empty_blocks_interval)
-CFG_timeout_commit=$(globGet CFG_timeout_commit)
 CFG_max_num_outbound_peers=$(globGet CFG_max_num_outbound_peers)
 CFG_max_num_inbound_peers=$(globGet CFG_max_num_inbound_peers)
 CFG_prometheus=$(globGet CFG_prometheus)
@@ -114,27 +114,6 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True    
-fi
-
-# block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
-ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
-(! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-
-if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-    TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-    TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-    (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-    TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-elif [ -z "$CFG_timeout_commit" ] ; then
-    TIMEOUT_COMMIT="5000ms"
-else
-    TIMEOUT_COMMIT=$CFG_timeout_commit
-fi
-
-if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-    echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-    CFG_timeout_commit=$TIMEOUT_COMMIT
-    globSet CFG_timeout_commit "$CFG_timeout_commit"
 fi
 
 if [ ! -s "$LOCAL_PEERS_PATH" ] ; then 

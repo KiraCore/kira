@@ -67,7 +67,7 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
 
         CONTAINER_NAME="${INFRA_MODE,,}"
         COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
-        SNAP_FILENAME="${NETWORK_NAME}-$MAX_HEIGHT-$(date -u +%s).zip"
+        SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).zip"
         ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
         KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 

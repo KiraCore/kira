@@ -41,21 +41,18 @@ echoInfo "INFO: Saving valopers info..."
 ($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
-    echoInfo "INFO: Scanning validator info..."
+    echoInfo "INFO: Fetching validator address.."
+    VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
+    if [ ! -z "$VALIDATOR_ADDR" ] && [[ $VALIDATOR_ADDR == kira* ]] ; then
+        globSet VALIDATOR_ADDR "$VALIDATOR_ADDR"
+    else
+        VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
+    fi
 else
     echoInfo "INFO: Validator info will NOT be scanned..."
     echo -n "" > $VALINFO_SCAN_PATH
-    globDel VALIDATOR_ADDR
     echo -n "" > $VALSTATUS_SCAN_PATH
-    exit 0
-fi
-
-echoInfo "INFO: Fetching validator address.."
-VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
-if [ ! -z "$VALIDATOR_ADDR" ] && [[ $VALIDATOR_ADDR == kira* ]] ; then
-    globSet VALIDATOR_ADDR "$VALIDATOR_ADDR"
-else
-    VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
+    globDel VALIDATOR_ADDR
 fi
 
 echoInfo "INFO: Fetching validator status ($VALIDATOR_ADDR) ..."
@@ -115,6 +112,18 @@ else
         echo -n "" > $VALINFO_SCAN_PATH
     fi
 fi
+
+VAL_ACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_ACTIVE")) && VAL_ACTIVE="???"
+VAL_TOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_TOTAL")) && VAL_TOTAL="???"
+VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_WAITING")) && VAL_WAITING="???"
+CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???"
+CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
+
+globSet VAL_ACTIVE $VAL_ACTIVE
+globSet VAL_TOTAL $VAL_TOTAL
+globSet VAL_WAITING $VAL_WAITING
+globSet CONS_STOPPED $CONS_STOPPED
+globSet CONS_BLOCK_TIME $CONS_BLOCK_TIME
 
 set +x
 echoWarn "------------------------------------------------"
