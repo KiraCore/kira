@@ -12,6 +12,7 @@ PLAN_FAIL_COUNT=$(globGet PLAN_FAIL_COUNT)
 UPGRADE_NAME_OLD=$(cat $KIRA_INFRA/upgrade || echo "")
 UPGRADE_NAME_NEW=$(globGet UPGRADE_NAME)
 UPGRADE_DONE=$(globGet UPGRADE_DONE)
+AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
 PLAN_START_DT=$(globGet PLAN_START_DT)
 UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
@@ -20,6 +21,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "|       BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|     AUTO UPGRADES: ${AUTO_UPGRADES}"
 echoWarn "|       UPDATE DONE: ${UPDATE_DONE}"
 echoWarn "|         PLAN DONE: ${PLAN_DONE}"
 echoWarn "|      UPGRADE DONE: ${UPGRADE_DONE}"
