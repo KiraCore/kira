@@ -57,6 +57,7 @@ while : ; do
     KIRA_BLOCK=$(globGet LATEST_BLOCK)
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
+    AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
 
     if [ -f "$SNAP_DONE" ]; then
         PROGRESS_SNAP="done"                                                                       # show done progress
@@ -261,6 +262,10 @@ while : ; do
             echo "| [E] | Hide EXPOSED Snapshot                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
     fi
 
+    [ "${AUTO_UPGRADES,,}" != "true" ] &&
+            echo "| [U] | Enable Automated UPGRADES               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u" ||
+            echo "| [U] | Disable Automated UPGRADES              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u"
+
     if [ "${VALIDATOR_RUNNING,,}" == "true" ] ; then
         [ "${VALSTATUS,,}" == "active" ]   && echo "| [M] | Enable MAINTENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
         [ "${VALSTATUS,,}" == "paused" ]   && echo "| [M] | Disable MAINTENANCE Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
@@ -323,12 +328,22 @@ while : ; do
         fi
     done
 
+    
+
     if [ "${OPTION,,}" == "d" ]; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
         EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "${ALL_CONTAINERS_STOPPED,,}" != "false" ]; then
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
+    elif [ "${OPTION,,}" == "u" ] ; then
+        if [ "${AUTO_UPGRADES,,}" != "true" ] ; then
+            globSet AUTO_UPGRADES "true"
+            echoInfo "INFO: Enabled automated upgrades"
+        else
+            globSet AUTO_UPGRADES "false"
+            echoInfo "INFO: Disabled automated upgrades"
+        fi
     elif [ "${OPTION,,}" == "b" ]; then
         echoInfo "INFO: Backing up blockchain state..."
         $KIRA_MANAGER/kira/kira-backup.sh || echoErr "ERROR: Snapshot failed"

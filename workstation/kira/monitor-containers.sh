@@ -159,7 +159,6 @@ done
 # save latest known block height
 if [ "$NEW_LATEST_BLOCK" != "0" ] && [ "$NEW_LATEST_BLOCK_TIME" != "0"  ] ; then
     echoInfo "INFO: Block height chaned to $LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
-    globSet INTERNAL_BLOCK $NEW_LATEST_BLOCK
     globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     globSet LATEST_BLOCK_TIME $NEW_LATEST_BLOCK_TIME
     globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"

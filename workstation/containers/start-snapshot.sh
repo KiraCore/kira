@@ -158,6 +158,7 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_SNAPSHOT_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SNAPSHOT_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_SNAPSHOT_GRPC_PORT:$DEFAULT_GRPC_PORT \
     -p $KIRA_SNAPSHOT_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SNAPSHOT_DNS \
     --restart=always \

@@ -245,6 +245,7 @@ globSet "UPGRADE_NAME" "$UPGRADE_NAME"
 globSet "UPGRADE_DONE" "true"
 globSet "UPGRADE_TIME" "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet "PLAN_DONE" "true"
+globSet AUTO_UPGRADES "true"
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 

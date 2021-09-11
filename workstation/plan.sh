@@ -35,6 +35,7 @@ set -x
 
 [ "${PLAN_FAIL,,}" == "true" ]  && echoErr "ERROR: KIRA Upgrade Plan Failed, stopping service..." && sleep 10 && systemctl stop kiraplan && exit 1
 [ "${UPDATE_DONE,,}" != "true" ] && echoWarn "WARNING: KIRA Update must be finalized before upgrade plan can proceed!" && sleep 10 && exit 0
+[ "${AUTO_UPGRADES,,}" != "true" ] && echoWarn "WARNING: Automated upgrades are disabled, enter KIRA Manager and select option [U] to enable" && sleep 10 && exit 0
 
 echoInfo "INFO: NEW Upgrade scheaduled!"
 if [ "${PLAN_DONE,,}" == "false" ] ; then

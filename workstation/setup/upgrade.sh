@@ -20,6 +20,8 @@ echoWarn "|    UPGRADE INSTATE: $UPGRADE_INSTATE"
 echoWarn "------------------------------------------------"
 
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
+[ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && \
+    echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
 
 UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
 UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
@@ -33,10 +35,9 @@ if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
 fi
 
 if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
-    echoInfo "INFO: Started creating snapshoot..."
 
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
-        UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
+    UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
         if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
             echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
             globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
@@ -58,74 +59,102 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
         SNAP_STATUS="$KIRA_SNAP/status"
         echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     done
+fi
+
+[ "${INFRA_MODE,,}" == "local" ] && CONTAINER_NAME="validator" || CONTAINER_NAME="${INFRA_MODE,,}"
+COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
+
+if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
+    echoInfo "INFO: Started creating snapshoot, instate upgrade requested!"
 
     MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
 
-    if [[ "${INFRA_MODE,,}" =~ ^(validator|sentry|seed)$ ]]; then
-        echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-        rm -fv $KIRA_SNAP/*.zip
+    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    rm -fv $KIRA_SNAP/*.zip
+    
+    SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).zip"
+    ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
+    KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 
-        CONTAINER_NAME="${INFRA_MODE,,}"
-        COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
-        SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).zip"
-        ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
-        KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
+    rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
 
-        rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
 
-        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
+    [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
+    [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
 
-        [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
-        [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
-        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+    echoInfo "INFO: Recovering public & private seed nodes..."
+    SEEDS_DUMP="/tmp/seedsdump"
+    ADDR_DUMP="/tmp/addrdump"
+    ADDR_DUMP_ARR="/tmp/addrdumparr"
+    ADDR_DUMP_BASE64="/tmp/addrdump64"
+    rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64
+    touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
+    jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
+    (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
 
-        echoInfo "INFO: Recovering public & private seed nodes..."
-        SEEDS_DUMP="/tmp/seedsdump"
-        ADDR_DUMP="/tmp/addrdump"
-        ADDR_DUMP_ARR="/tmp/addrdumparr"
-        ADDR_DUMP_BASE64="/tmp/addrdump64"
-        rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64
-        touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
-        jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
-        (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
-
-        while IFS="" read -r row || [ -n "$row" ] ; do
-            jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-            last_success=$(echo "$jobj" | jsonParse "last_success" 2> /dev/null || echo -n "") && last_success=$(delWhitespaces $last_success | tr -d '"' || "")
-            ( [ -z "$last_success" ] || [ "$last_success" == "0001-01-01T00:00:00Z" ] ) && echoInfo "INFO: Skipping address, connection was never establised." && continue
-            nodeId=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "") && nodeId=$(delWhitespaces $nodeId | tr -d '"' || "")
-            (! $(isNodeId "$nodeId")) && echoInfo "INFO: Skipping address, node id '$nodeId' is invalid." && continue
-            ip=$(echo "$jobj" | jsonQuickParse "ip" 2> /dev/null || echo -n "") && ip=$(delWhitespaces $ip | tr -d '"' || "")
-            (! $(isIp "$ip")) && echoInfo "INFO: Skipping address, node ip '$ip' is NOT a valid IPv4." && continue
-            port=$(echo "$jobj" | jsonQuickParse "port" 2> /dev/null || echo -n "") && port=$(delWhitespaces $port | tr -d '"' || "")
-            (! $(isPort "$port")) && echoInfo "INFO: Skipping address, '$port' is NOT a valid port." && continue
-            if grep -q "$nodeId" "$SEEDS_DUMP" || grep -q "$ip:$port" "$SEEDS_DUMP" || grep -q "$nodeId" "$PUBLIC_SEEDS" || grep -q "$ip:$port" "$PUBLIC_SEEDS" ; then
-                echoWarn "WARNING: Address '$nodeId@$ip:$port' is already present in the seeds list or invalid, last conn ($last_success)"
-            else
-                echoInfo "INFO: Success, found new node addess '$nodeId@$ip:$port', last conn ($last_success)"
-                echo "$nodeId@$ip:$port" >> $SEEDS_DUMP
-            fi
-        done < $ADDR_DUMP_BASE64
-
-        if (! $(isFileEmpty $SEEDS_DUMP)) ; then
-            echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to PUBLIC_SEEDS '$PUBLIC_SEEDS'..."
-            cat $SEEDS_DUMP >> $PUBLIC_SEEDS
+    while IFS="" read -r row || [ -n "$row" ] ; do
+        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
+        last_success=$(echo "$jobj" | jsonParse "last_success" 2> /dev/null || echo -n "") && last_success=$(delWhitespaces $last_success | tr -d '"' || "")
+        ( [ -z "$last_success" ] || [ "$last_success" == "0001-01-01T00:00:00Z" ] ) && echoInfo "INFO: Skipping address, connection was never establised." && continue
+        nodeId=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "") && nodeId=$(delWhitespaces $nodeId | tr -d '"' || "")
+        (! $(isNodeId "$nodeId")) && echoInfo "INFO: Skipping address, node id '$nodeId' is invalid." && continue
+        ip=$(echo "$jobj" | jsonQuickParse "ip" 2> /dev/null || echo -n "") && ip=$(delWhitespaces $ip | tr -d '"' || "")
+        (! $(isIp "$ip")) && echoInfo "INFO: Skipping address, node ip '$ip' is NOT a valid IPv4." && continue
+        port=$(echo "$jobj" | jsonQuickParse "port" 2> /dev/null || echo -n "") && port=$(delWhitespaces $port | tr -d '"' || "")
+        (! $(isPort "$port")) && echoInfo "INFO: Skipping address, '$port' is NOT a valid port." && continue
+        if grep -q "$nodeId" "$SEEDS_DUMP" || grep -q "$ip:$port" "$SEEDS_DUMP" || grep -q "$nodeId" "$PUBLIC_SEEDS" || grep -q "$ip:$port" "$PUBLIC_SEEDS" ; then
+            echoWarn "WARNING: Address '$nodeId@$ip:$port' is already present in the seeds list or invalid, last conn ($last_success)"
         else
-            echoWarn "WARNING: NO new public seed nodes were found in the address book!"
+            echoInfo "INFO: Success, found new node addess '$nodeId@$ip:$port', last conn ($last_success)"
+            echo "$nodeId@$ip:$port" >> $SEEDS_DUMP
         fi
+    done < $ADDR_DUMP_BASE64
 
-        echoInfo "INFO: Wiping all unised containers..."
-        for name in $CONTAINERS; do
-            [ "${name,,}" == "registry" ] && continue
-            echoInfo "INFO: Removing '$name' container and cleaning up resources..."
-            $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-            rm -rfv "$DOCKER_COMMON/${name}"
-        done
+    if (! $(isFileEmpty $SEEDS_DUMP)) ; then
+        echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to PUBLIC_SEEDS '$PUBLIC_SEEDS'..."
+        cat $SEEDS_DUMP >> $PUBLIC_SEEDS
     else
-        echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
+        echoWarn "WARNING: NO new public seed nodes were found in the address book!"
     fi
+
+    globSet UPGRADE_SNAP_DONE "true"
+elif && [ "${UPGRADE_INSTATE}" == "true" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
+    echoInfo "INFO: Started creation of new genesis requested!"
+    GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
+    rm -fv $GENESIS_EXPORT
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME > \$COMMON_DIR/genesis-export.json"
+
+    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file was NOT exported or empty!" && sleep 10 && exit 1
+    NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
+    [ -z "$NEW_NETWORK_NAME" ] && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
+    NEW_BLOCK_HEIGHT=$(jsonParse "initial_height" $GENESIS_EXPORT 2> /dev/null || echo -n "")
+    ($(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
+    NEW_BLOCK_TIME=$(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n "")
+    [ -z "$NEW_BLOCK_TIME" ] && echoErr "ERROR: Could NOT identify new block time in the exported genesis file" && sleep 10 && exit 1
+
+    echoInfo "INFO: Upgrading network identifier, block height and global genesis files"
+
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+    rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
+    cp -afv "$GENESIS_EXPORT" "$LOCAL_GENESIS_PATH"
+    ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
+    GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
+    globSet GENESIS_SHA256 "$GENESIS_SHA256"
+
+    CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    globSet LATEST_BLOCK $NEW_BLOCK_HEIGHT
+    globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
+    globSet latest_block_height "$NEW_BLOCK_HEIGHT" "$GLOBAL_COMMON_RO"
+    globSet MIN_HEIGHT $NEW_BLOCK_HEIGHT
+    globSet MIN_HEIGHT $NEW_BLOCK_HEIGHT $GLOBAL_COMMON_RO
 
     globSet UPGRADE_SNAP_DONE "true"
 else
@@ -134,6 +163,14 @@ fi
 
 UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
 if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "true" ]; then
+    echoInfo "INFO: Wiping all unused containers..."
+    for name in $CONTAINERS; do
+        [ "${name,,}" == "registry" ] && continue
+        echoInfo "INFO: Removing '$name' container and cleaning up resources..."
+        $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+        rm -rfv "$DOCKER_COMMON/${name}"
+    done
+
     echoInfo "INFO: Starting repos upgrade..."
     while IFS="" read -r row || [ -n "$row" ] ; do
         jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
