@@ -101,7 +101,7 @@ if [ "$(globGet INTERX_EXPOSED)" == "true" ] ; then
 fi
 
 globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
-globSet EXPOSED_PORTS "$EXPOSED_PORTS"
+globSet EXPOSED_PORTS "$PORTS"
 
 set +x
 echoWarn "------------------------------------------------"

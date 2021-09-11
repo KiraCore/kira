@@ -11,6 +11,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 $KIRA_MANAGER/kira/kira-setup-status.sh
+set -x
 
 cd $KIRA_HOME
 LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
@@ -24,7 +25,7 @@ INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 mkdir -p "$INTERX_REFERENCE_DIR"
 
 echoInfo "INFO: Restarting network scanner..."
-systemctl daemon-reload
+timeout 30 systemctl daemon-reload || echoErr "ERROR: Failed to reload deamon"
 systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
 globSet IS_SCAN_DONE "false"
