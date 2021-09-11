@@ -34,17 +34,14 @@ echo -e "\e[37;1m--------------------------------------------------"
 
         [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SNAPSHOT_P2P_PORT" ] && NAME="Snapshot Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
 
         [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SNAPSHOT_RPC_PORT" ] && NAME="Snapshot Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
 
         [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && NAME="Snap. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
         i=$((i + 1))

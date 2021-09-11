@@ -51,22 +51,24 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -x
 
     CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
+    globSet seed_node_id "" $COMMON_GLOB
+    globSet sentry_node_id "" $COMMON_GLOB
+    globSet validator_node_id "" $COMMON_GLOB
 
     if [ "${INFRA_MODE,,}" == "seed" ] ; then
         PING_TARGET="seed.local"
+        globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
     elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
         PING_TARGET="sentry.local"
+        globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
     elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
         PING_TARGET="validator.local"
+        globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
     else
         echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
         exit 1
     fi
-
-    globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
-    globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
-    globSet snapshot_node_id "$SNAPSHOT_NODE_ID" $COMMON_GLOB
-    globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
+    
     globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."

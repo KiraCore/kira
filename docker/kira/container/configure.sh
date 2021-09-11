@@ -96,7 +96,7 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 [[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
 echoInfo "INFO: Starting genesis configuration..."
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|snapshot)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then

@@ -6,10 +6,8 @@ set -x
 
 CONTAINER_NAME=$1
 EXPECTED_NODE_ID=$2
-SAVE_SNAPSHOT=$3
-SYNC_AWAIT=$4
-[ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
-[ -z "$SYNC_AWAIT" ] && SYNC_AWAIT="$SAVE_SNAPSHOT"
+SYNC_AWAIT=$3
+[ -z "$SYNC_AWAIT" ] && SYNC_AWAIT="true"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
@@ -187,42 +185,11 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     done
 fi
 
-if [ "${SAVE_SNAPSHOT,,}" == "true" ] ; then
-    echoInfo "INFO: Local snapshot must be created before network can be started"
-    echoInfo "INFO: Halting $CONTAINER_NAME container"
-    SNAP_NAME="${NETWORK_NAME}-${HEIGHT}-$(date -u +%s)"
-    echo "$HEIGHT" > $SNAP_HEIGHT_FILE
-    echo "$SNAP_NAME" > $SNAP_NAME_FILE
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
-
-    echoInfo "INFO: Creating new snapshot..."
-    i=0
-    DESTINATION_DIR="$KIRA_SNAP/$SNAP_NAME"
-    DESTINATION_FILE="${DESTINATION_DIR}.zip"
-    while [ ! -d "$DESTINATION_DIR" ] || [ -f $SNAP_HEIGHT_FILE ] ; do
-        i=$((i + 1))
-        cat $COMMON_LOGS/start.log | tail -n 10 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-        echoInfo "INFO: Waiting for snapshot '$SNAP_NAME' to be created..."
-        sleep 30
-    done
-
-    echoInfo "INFO: Packaging snapshot into '$DESTINATION_FILE' ..."
-    cd $DESTINATION_DIR && zip -r "$DESTINATION_FILE" . *
-    rm -rfv "$DESTINATION_DIR"
-    
-    ls -1 "$KIRA_SNAP"
-    [ ! -f "$DESTINATION_FILE" ] && echoErr "ERROR: Failed to create snpashoot, file $DESTINATION_FILE was not found." && exit 1
-    echoInfo "INFO: New snapshot was created!"
-
-    SNAP_STATUS="$KIRA_SNAP/status"
-    mkdir -p $SNAP_STATUS
-    echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
-    KIRA_SNAP_PATH=$DESTINATION_FILE
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    [[ $HEIGHT -gt $MIN_HEIGH ]] && globSet MIN_HEIGHT $HEIGHT && globSet MIN_HEIGHT $HEIGHT $GLOBAL_COMMON_RO
-
-    ln -fv "$KIRA_SNAP_PATH" "$DOCKER_SNAP_DESTINATION"
-fi
+echoInfo "INFO: Creating snapshot..."
+globSet SNAPSHOT_TARGET $CONTAINER_NAME
+globSet SNAPSHOT_EXECUTE "true"
+globSet SNAPSHOT_UNHALT "true"
+$KIRA_MANAGER/kira/monitor-snapshot.sh
 
 set +x
 echoWarn "------------------------------------------------"

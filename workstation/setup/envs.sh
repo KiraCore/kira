@@ -22,7 +22,6 @@ KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
 KIRA_SEED_DNS="seed.local"
-KIRA_SNAPSHOT_DNS="snapshot.local"
 KIRA_INTERX_DNS="interx.local"
 KIRA_FRONTEND_DNS="frontend.local"
 
@@ -51,7 +50,7 @@ INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
 mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
 
 ESSENTIALS_HASH=$(echo "$KIRA_USER-$KIRA_INFRA-$KIRA_MANAGER-$FLUTTERROOT-" | md5)
-SETUP_CHECK="$KIRA_SETUP/kira-env-6-$ESSENTIALS_HASH"
+SETUP_CHECK="$KIRA_SETUP/kira-env-7-$ESSENTIALS_HASH"
 if [ ! -f "$SETUP_CHECK" ]; then
     echoInfo "INFO: Setting up kira environment variables"
     touch $CARGO_ENV
@@ -65,7 +64,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_VALIDATOR_DNS=$KIRA_VALIDATOR_DNS" --prefix="KIRA_VALIDATOR_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_DNS=$KIRA_SENTRY_DNS" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SEED_DNS=$KIRA_SEED_DNS" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SNAPSHOT_DNS=$KIRA_SNAPSHOT_DNS" --prefix="KIRA_SNAPSHOT_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_INTERX_DNS=$KIRA_INTERX_DNS" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=$KIRA_FRONTEND_DNS" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
 

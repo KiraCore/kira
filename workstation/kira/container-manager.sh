@@ -53,7 +53,7 @@ while : ; do
         fi
     fi
 
-    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|snapshot|seed)$ ]] ; then
+    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|seed)$ ]] ; then
         SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
@@ -163,12 +163,6 @@ while : ; do
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
-    elif [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
-        LAST_SNAP_FILE="$(tryCat $SNAP_LATEST)${WHITESPACE}"
-        LAST_SNAP_PROGRESS="$(tryCat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
-        [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
-        echo "|     Snap: ${LAST_SNAP_FILE:0:43} : $LAST_SNAP_PROGRESS"
-        echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
     if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|validator|interx|frontend)$ ]] ; then
@@ -357,7 +351,7 @@ while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
-            # docker inspect --format "{{json .State.Health }}" snapshot | jq '.Log[].Output'
+
             echo -e $(docker inspect --format "{{json .State.Health }}" "$ID" 2> /dev/null | jq '.Log[-1].Output' 2> /dev/null) > $TMP_DUMP || echo "" > $TMP_DUMP
             
             if [ -f "$HEALTH_LOGS" ]; then

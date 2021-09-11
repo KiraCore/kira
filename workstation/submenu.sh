@@ -238,7 +238,6 @@ CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSUR
 rm -fv $(globFile validator_SEKAID_STATUS)
 rm -fv $(globFile sentry_SEKAID_STATUS)
 rm -fv $(globFile seed_SEKAID_STATUS)
-rm -fv $(globFile snapshot_SEKAID_STATUS)
 
 UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
 globSet "UPGRADE_NAME" "$UPGRADE_NAME"

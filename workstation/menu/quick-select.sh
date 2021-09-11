@@ -362,15 +362,12 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
         ($(isNodeId "$SEED_NODE_ID")) && SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656" || SEED_NODE_ADDR=""
         SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$SENTRY_NODE_ID")) && SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656" || SENTRY_NODE_ID=""
-        SNAPSHOT_NODE_ID=$(tmconnect id --address="$NODE_ADDR:46656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-        ($(isNodeId "$SNAPSHOT_NODE_ID")) && SNAPSHOT_NODE_ADDR="${SNAPSHOT_NODE_ID}@${NODE_ADDR}:46656" || SNAPSHOT_NODE_ID=""
-        VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:56656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-        ($(isNodeId "$VALIDATOR_NODE_ID")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ID}@${NODE_ADDR}:56656" || VALIDATOR_NODE_ADDR=""
+        VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        ($(isNodeId "$VALIDATOR_NODE_ID")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ID}@${NODE_ADDR}:36656" || VALIDATOR_NODE_ADDR=""
         ($(isPublicIp $NODE_ADDR)) && SEEDS_TARGET_FILE=$PUBLIC_SEEDS || SEEDS_TARGET_FILE=$PRIVATE_SEEDS
 
         [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
         [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$SNAPSHOT_NODE_ADDR" ] && echo "$SNAPSHOT_NODE_ADDR" >> $SEEDS_TARGET_FILE
         [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $SEEDS_TARGET_FILE
 
         if [ "${OPTION,,}" == "a" ] ; then

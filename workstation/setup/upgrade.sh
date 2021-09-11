@@ -5,18 +5,18 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 SCRIPT_START_TIME="$(date -u +%s)"
 PLAN_START_DT=$(globGet PLAN_START_DT)
-UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
+UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|        BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|    PLAN START DATE: $PLAN_START_DT"
-echoWarn "|  UPGRADE SNAP DONE: $UPGRADE_SNAP_DONE"
-echoWarn "| UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
-echoWarn "|    UPGRADE INSTATE: $UPGRADE_INSTATE"
+echoWarn "|         BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|     PLAN START DATE: $PLAN_START_DT"
+echoWarn "| UPGRADE EXPORT DONE: $UPGRADE_EXPORT_DONE"
+echoWarn "|  UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
+echoWarn "|     UPGRADE INSTATE: $UPGRADE_INSTATE"
 echoWarn "------------------------------------------------"
 
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
@@ -34,7 +34,7 @@ if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
     exit 1
 fi
 
-if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
+if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
     UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
@@ -55,16 +55,13 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] ; then
         echoInfo "INFO: Halting and re-starting '$name' container..."
 
         $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
-
-        SNAP_STATUS="$KIRA_SNAP/status"
-        echo "$SNAP_FILENAME" > "$SNAP_STATUS/latest"
     done
 fi
 
 [ "${INFRA_MODE,,}" == "local" ] && CONTAINER_NAME="validator" || CONTAINER_NAME="${INFRA_MODE,,}"
 COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 
-if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
+if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
     echoInfo "INFO: Started creating snapshoot, instate upgrade requested!"
 
     MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
@@ -80,7 +77,7 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ]
 
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
 
-    [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create snapshoot file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
+    [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create address book file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
     [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
 
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -121,7 +118,7 @@ if [ "${UPGRADE_SNAP_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ]
         echoWarn "WARNING: NO new public seed nodes were found in the address book!"
     fi
 
-    globSet UPGRADE_SNAP_DONE "true"
+    globSet UPGRADE_EXPORT_DONE "true"
 elif [ "${UPGRADE_INSTATE}" == "true" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
     echoInfo "INFO: Started creation of new genesis requested!"
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
@@ -156,13 +153,13 @@ elif [ "${UPGRADE_INSTATE}" == "true" ] && [ "${UPGRADE_INSTATE}" == "false" ] ;
     globSet MIN_HEIGHT $NEW_BLOCK_HEIGHT
     globSet MIN_HEIGHT $NEW_BLOCK_HEIGHT $GLOBAL_COMMON_RO
 
-    globSet UPGRADE_SNAP_DONE "true"
+    globSet UPGRADE_EXPORT_DONE "true"
 else
     echoInfo "INFO: Snapshot already done."
 fi
 
-UPGRADE_SNAP_DONE=$(globGet UPGRADE_SNAP_DONE)
-if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_SNAP_DONE,,}" == "true" ]; then
+UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
+if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ]; then
     echoInfo "INFO: Wiping all unused containers..."
     for name in $CONTAINERS; do
         [ "${name,,}" == "registry" ] && continue
@@ -257,7 +254,7 @@ fi
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
-if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] && [ "${UPGRADE_SNAP_DONE,,}" == "true" ] ; then
+if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ] ; then
 
     if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"

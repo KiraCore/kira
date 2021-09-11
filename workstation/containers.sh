@@ -39,7 +39,6 @@ echoInfo "INFO: Starting containers build..."
 
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
-globSet SNAPSHOT_EXPOSED true
 globSet VALIDATOR_EXPOSED false
 globSet FRONTEND_EXPOSED false
 globSet INTERX_EXPOSED false
@@ -52,6 +51,11 @@ if ($(isFileEmpty $PUBLIC_SEEDS)) && ($(isFileEmpty $PUBLIC_PEERS )) ; then
     cat $PRIVATE_PEERS > $PUBLIC_PEERS
 fi
 
+if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ; then 
+    echoErr "ERROR: Containers setup can't proceed, no PUBLIC SEERDS or PEERS were define on existing network"
+    exit 1
+fi
+
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
@@ -61,18 +65,13 @@ elif [ "${INFRA_MODE,,}" == "seed" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
     $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-        # save snapshot from sentry first
-        $KIRA_MANAGER/containers/start-sentry.sh "true" && globSet SENTRY_EXPOSED true
-    else
-        echoWarn "WARNING: Public seeds or peers were NOT found, syncing your node from external source will NOT be possible"
-        exit 1
-    fi
-
-    $KIRA_MANAGER/containers/start-interx.sh
+    $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
+    $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
+    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
+    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     exit 1
@@ -88,10 +87,6 @@ fi
 if [ "$(globGet SENTRY_EXPOSED)" == "true" ] ; then
     CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
     PORTS="$PORTS $KIRA_SENTRY_RPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_PROMETHEUS_PORT"
-fi
-
-if [ "$(globGet SNAPSHOT_EXPOSED)" == "true" ] ; then
-    PORTS="$PORTS $KIRA_SNAPSHOT_P2P_PORT $KIRA_SNAPSHOT_RPC_PORT $KIRA_SNAPSHOT_PROMETHEUS_PORT"
 fi
 
 if [ "$(globGet VALIDATOR_EXPOSED)" == "true" ] ; then

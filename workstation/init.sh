@@ -49,15 +49,10 @@ ARCHITECTURE=$(uname -m)
 [ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="29090"
 [ -z "$KIRA_SENTRY_PROMETHEUS_PORT" ] && KIRA_SENTRY_PROMETHEUS_PORT="26660"
 
-[ -z "$KIRA_SNAPSHOT_P2P_PORT" ] && KIRA_SNAPSHOT_P2P_PORT="46656"
-[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
-[ -z "$KIRA_SNAPSHOT_GRPC_PORT" ] && KIRA_SNAPSHOT_GRPC_PORT="49090"
-[ -z "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && KIRA_SNAPSHOT_PROMETHEUS_PORT="46660"
-
-[ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="56656"
-[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
-[ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="59090"
-[ -z "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && KIRA_VALIDATOR_PROMETHEUS_PORT="56660"
+[ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="36656"
+[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="36657"
+[ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="39090"
+[ -z "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && KIRA_VALIDATOR_PROMETHEUS_PORT="36660"
 
 [ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
 
@@ -181,7 +176,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     rm -rfv $KIRA_DUMP
     mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-22" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-23" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -288,7 +283,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
         CDHelper text lineswap --insert="KIRA_SEED_PROMETHEUS_PORT=$KIRA_SEED_PROMETHEUS_PORT" --prefix="KIRA_SEED_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SENTRY_PROMETHEUS_PORT=$KIRA_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_PROMETHEUS_PORT=$KIRA_SNAPSHOT_PROMETHEUS_PORT" --prefix="KIRA_SNAPSHOT_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_PROMETHEUS_PORT=$KIRA_VALIDATOR_PROMETHEUS_PORT" --prefix="KIRA_VALIDATOR_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -296,17 +290,14 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         
         CDHelper text lineswap --insert="KIRA_SENTRY_RPC_PORT=$KIRA_SENTRY_RPC_PORT" --prefix="KIRA_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEED_RPC_PORT=$KIRA_SEED_RPC_PORT" --prefix="KIRA_SEED_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_RPC_PORT=$KIRA_SNAPSHOT_RPC_PORT" --prefix="KIRA_SNAPSHOT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_RPC_PORT=$KIRA_VALIDATOR_RPC_PORT" --prefix="KIRA_VALIDATOR_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         
         CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SENTRY_P2P_PORT=$KIRA_SENTRY_P2P_PORT" --prefix="KIRA_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_P2P_PORT=$KIRA_SNAPSHOT_P2P_PORT" --prefix="KIRA_SNAPSHOT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_P2P_PORT=$KIRA_VALIDATOR_P2P_PORT" --prefix="KIRA_VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_SEED_GRPC_PORT=$KIRA_SEED_GRPC_PORT" --prefix="KIRA_SEED_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_GRPC_PORT=$KIRA_SNAPSHOT_GRPC_PORT" --prefix="KIRA_SNAPSHOT_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_GRPC_PORT=$KIRA_VALIDATOR_GRPC_PORT" --prefix="KIRA_VALIDATOR_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True

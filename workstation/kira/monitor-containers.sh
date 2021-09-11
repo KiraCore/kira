@@ -54,7 +54,7 @@ for name in $CONTAINERS; do
     $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" &> "$SCAN_LOGS/${name}-status.error.log" &
     globSet "${name}_STATUS_PID" "$!"
 
-    if [[ "${name,,}" =~ ^(validator|sentry|snapshot|seed)$ ]] ; then
+    if [[ "${name,,}" =~ ^(validator|sentry|seed)$ ]] ; then
         echoInfo "INFO: Fetching sekai status..."
         RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
         echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
@@ -86,7 +86,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         globSet "PLAN_FAIL_COUNT" "0"
         globSet "UPGRADE_DONE" "false"
         globSet "UPGRADE_REPOS_DONE" "false"
-        globSet "UPGRADE_SNAP_DONE" "false"
+        globSet "UPGRADE_EXPORT_DONE" "false"
         globSet "UPGRADE_PAUSE_ATTEMPTED" "false"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "false"
         globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"

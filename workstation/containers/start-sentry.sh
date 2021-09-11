@@ -2,9 +2,6 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/containers/start-sentry.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SAVE_SNAPSHOT=$1
-[ -z "$SAVE_SNAPSHOT" ] && SAVE_SNAPSHOT="false"
-
 CONTAINER_NAME="sentry"
 CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -92,7 +89,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet CFG_seed_mode "false" $COMMON_GLOB
     globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
     globSet CFG_private_peer_ids "" $COMMON_GLOB
-    globSet CFG_unconditional_peer_ids "$SNAPSHOT_NODE_ID,$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
+    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
     globSet CFG_persistent_peers "" $COMMON_GLOB
     globSet CFG_seeds "" $COMMON_GLOB
     globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
@@ -134,7 +131,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "$SAVE_SNAPSHOT" "true" || exit 1
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "true" || exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 GENESIS_SHA256=$(globGet GENESIS_SHA256)

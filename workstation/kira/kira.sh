@@ -36,7 +36,6 @@ while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     SNAP_STATUS="$KIRA_SNAP/status"
     SNAP_PROGRESS="$SNAP_STATUS/progress"
-    SNAP_DONE="$SNAP_STATUS/done"
     SNAP_LATEST="$SNAP_STATUS/latest"
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
@@ -47,22 +46,17 @@ while : ; do
     UPGRADE_DONE=$(globGet UPGRADE_DONE)
     PLAN_FAIL=$(globGet PLAN_FAIL)
     UPDATE_FAIL=$(globGet UPDATE_FAIL)
+    SNAPSHOT_TARGET=$(globSet SNAPSHOT_TARGET)
+    SNAPSHOT_EXECUTE=$(globSet SNAPSHOT_EXECUTE)
     
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    PROGRESS_SNAP="$(tryCat $SNAP_PROGRESS "0") %"
-    SNAP_LATEST_FILE="$KIRA_SNAP/$(tryCat $SNAP_LATEST "")"
     KIRA_BLOCK=$(globGet LATEST_BLOCK)
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
-
-    if [ -f "$SNAP_DONE" ]; then
-        PROGRESS_SNAP="done"                                                                       # show done progress
-        [ -f "$SNAP_LATEST_FILE" ] && [ -f "$KIRA_SNAP_PATH" ] && KIRA_SNAP_PATH=$SNAP_LATEST_FILE # ensure latest snap is up to date
-    fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
         SUCCESS="true"
@@ -83,7 +77,7 @@ while : ; do
             SYNCING_TMP=$(globGet "${name}_SYNCING")
 
             # if some other node then snapshot is syncig then infra is not ready
-            [ "${name,,}" != "snapshot" ] && [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
+            [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
 
             STATUS_TMP=$(globGet "${name}_STATUS")
             HEALTH_TMP=$(globGet "${name}_HEALTH")
@@ -91,7 +85,6 @@ while : ; do
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
             [ "${name,,}" == "registry" ] && continue
-            [ "${name,,}" == "snapshot" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
@@ -111,14 +104,14 @@ while : ; do
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
         [ ${UPGRADE_INSTATE,,} == "true" ] && UPGRADE_INSTATE="SOFT" || UPGRADE_INSTATE="HARD"
-        TMP_UPGRADE_MSG="NEW $UPGRADE_INSTATE UPGRADE"
+        TMP_UPGRADE_MSG="NEW $UPGRADE_INSTATE FORK UPGRADE"
         if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then
             TMP_UPGRADE_MSG="  WARNING!!! UPGRADE FAILED, RUN MANUAL SETUP ${WHITESPACE}"
         elif [[ $UPGRADE_TIME_LEFT -gt 0 ]] ; then
             UPGRADE_TIME_LEFT=$(prettyTimeSlim $UPGRADE_TIME_LEFT)
             TMP_UPGRADE_MSG="    ${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT ${WHITESPACE}"
         else
-            TMP_UPGRADE_MSG="         ${TMP_UPGRADE_MSG} IS ONGOING ${WHITESPACE}"
+            TMP_UPGRADE_MSG="      ${TMP_UPGRADE_MSG} IS ONGOING ${WHITESPACE}"
         fi
         echo -e "|\e[31;1m ${TMP_UPGRADE_MSG:0:45} \e[33;1m|"
     fi
@@ -216,7 +209,6 @@ while : ; do
 
             STATUS_TMP=$(globGet "${name}_STATUS")
             HEALTH_TMP=$(globGet "${name}_HEALTH")
-            [ "${name,,}" == "snapshot" ] && [ "${STATUS_TMP,,}" == "running" ] && STATUS_TMP="$PROGRESS_SNAP"
 
             if [[ "${name,,}" =~ ^(validator|sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
                 LATEST_BLOCK=$(globGet "${name}_BLOCK") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
@@ -246,15 +238,7 @@ while : ; do
         echo "|-----------------------------------------------|"
     fi
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
-        if [ "$(globGet AUTO_BACKUP)" == "true" ]; then
-            TIME_LEFT=$(timerSpan AUTO_BACKUP $(($AUTO_BACKUP_INTERVAL * 3600)))
-            AUTO_BACKUP_TMP=": AUTO-SNAP ${TIME_LEFT}s${WHITESPACE}"
-        else
-            AUTO_BACKUP_TMP=": MANUAL-SNAP${WHITESPACE}"
-        fi
-        echo "| [B] | BACKUP Chain State ${AUTO_BACKUP_TMP:0:21}|" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
-    fi
+    [ "${SNAPSHOT_EXECUTE,,}" == "false" ] && echo "| [B] | BACKUP Chain State                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}b"
 
     if [ ! -z "$KIRA_SNAP_PATH" ] && [ -f "$KIRA_SNAP_PATH" ]; then
         [ "${SNAP_EXPOSE,,}" == "false" ] &&

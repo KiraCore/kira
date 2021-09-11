@@ -245,6 +245,12 @@ else
     echoInfo "INFO: Vailidaor is joining a new network, no new proposals will be raised"
 fi
 
+echoInfo "INFO: Creating snapshot..."
+globSet SNAPSHOT_TARGET $CONTAINER_NAME
+globSet SNAPSHOT_EXECUTE "true"
+globSet SNAPSHOT_UNHALT "true"
+$KIRA_MANAGER/kira/monitor-snapshot.sh
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"

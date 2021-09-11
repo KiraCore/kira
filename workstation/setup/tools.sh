@@ -96,7 +96,7 @@ if [ ! -f "$SETUP_CHECK" ]; then
     # priv-key-gen --mnemonic="$MNEMONIC" --valkey=./priv_validator_key.json --nodekey=./node_key.json --keyid=./node_id.key
     # tmconnect handshake --address="e27b3a9d952f3863eaeb7141114c253edd03905d@167.99.54.200:26656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=60 --verbose
     # tmconnect id --address="167.99.54.200:26656" --node_key="$COMMON_DIR/node_key.json" --timeout=1
-    # tmconnect network --address="78.46.241.36:56656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=1
+    # tmconnect network --address="78.46.241.36:36656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=1
 
     cat > /etc/systemd/system/kirascan.service << EOL
 [Unit]
