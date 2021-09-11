@@ -35,7 +35,6 @@ set +x
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
     SNAP_STATUS="$KIRA_SNAP/status"
-    SNAP_PROGRESS="$SNAP_STATUS/progress"
     SNAP_LATEST="$SNAP_STATUS/latest"
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)

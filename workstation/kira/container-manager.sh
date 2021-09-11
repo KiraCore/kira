@@ -23,7 +23,6 @@ WHITESPACE="                                                          "
 
 SNAP_STATUS="$KIRA_SNAP/status"
 SNAP_DONE="$SNAP_STATUS/done"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address

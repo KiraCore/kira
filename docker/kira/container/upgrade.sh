@@ -24,11 +24,9 @@ LOCAL_ADDRBOOK="$CONFIG_DIR/addrbook.json"
 LOCAL_STATE="$DATA_DIR/priv_validator_state.json"
 SNAP_INFO="$DATA_DIR/snapinfo.json"
 
-
 SNAP_STATUS="$SNAP_DIR/status"
 SNAP_DONE="$SNAP_STATUS/done"
 SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
 SNAP_LATEST="$SNAP_STATUS/latest"
 
 SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
@@ -50,7 +48,6 @@ cd $DATA_DIR
 zip -9 -r "$SNAP_DESTINATION_FILE" . *
 [ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
-echo "100" > $SNAP_PROGRESS
 touch $SNAP_DONE
 
 echoInfo "INFO: Finished container upgrade sequence..."
