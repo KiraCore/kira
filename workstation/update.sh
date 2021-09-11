@@ -165,7 +165,6 @@ set -x
 
 if [ "${UPDATE_DONE,,}" == "true" ] ; then
     echoInfo "INFO: Update & Setup was sucessfully finalized"
-    timerStart AUTO_BACKUP
     if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
         journalctl --since "$SETUP_START_DT" -u kiraup -b --no-pager --output cat > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
         journalctl --since "$SETUP_START_DT" -u kirascan -b --no-pager --output cat > "$KIRA_DUMP/kirascan-done.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"

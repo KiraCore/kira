@@ -32,9 +32,6 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
-[ -z "$DEPLOYMENT_MODE" ] && DEPLOYMENT_MODE="minimal"
-
-CDHelper text lineswap --insert="DEPLOYMENT_MODE=$DEPLOYMENT_MODE" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
@@ -118,16 +115,15 @@ while :; do
     echo -e "|-----------------------------------------------|"
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
-    echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
     [ "${NEW_NETWORK,,}" == "true" ] && \
     echo -e "|        NEW Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
-    [ -f "$KIRA_SNAP_PATH" ] && \
+    [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
-    [ ! -z "$KIRA_SNAP_SHA256" ] && \
+    [ "${NEW_NETWORK,,}" != "true" ] && [ ! -z "$KIRA_SNAP_SHA256" ] && \
     echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
     echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
@@ -137,9 +133,8 @@ while :; do
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
     displayAlign left $printWidth " [3] | Change Default Branches"
-    displayAlign left $printWidth " [4] | Change Deployment Mode"
-    displayAlign left $printWidth " [5] | Change Infrastructure Mode"
-    displayAlign left $printWidth " [6] | Change Network Exposure (privacy) Mode"
+    displayAlign left $printWidth " [4] | Change Infrastructure Mode"
+    displayAlign left $printWidth " [5] | Change Network Exposure (privacy) Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [X] | Exit"
@@ -179,22 +174,12 @@ while :; do
     continue
     ;;
   4*)
-    set +x
-    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and other non-essential tasks!"
-    echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && pressToContinue m f && MODE=($(globGet OPTION))
-    set -x
-
-    [ "${MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
-    [ "${MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
-    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    ;;
-  5*)
     $KIRA_MANAGER/menu.sh "false"
     exit 0
     ;;
-  6*)
+  5*)
     set +x
-    echoWarn "WARNING: Nodes launched in the private mode can only communicate with other nodes deployed in their local/private network"
+    echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
     echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue m f && MODE=($(globGet OPTION))
     set -x
 
@@ -212,12 +197,10 @@ while :; do
 done
 set -x
 
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && globSet AUTO_BACKUP "false"
-
-timerStart AUTO_BACKUP
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG
 globSet SNAP_EXPOSE "true"
-globSet AUTO_BACKUP "true"
+globSet SNAPSHOT_EXECUTE "false"
+globSet SNAPSHOT_TARGET ""
 globSet PRIVATE_MODE "$PRIVATE_MODE"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
@@ -227,12 +210,9 @@ globSet PLAN_FAIL "false"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
-(! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
-
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
 
-CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
 
 rm -fv $(globFile validator_SEKAID_STATUS)

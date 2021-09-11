@@ -34,7 +34,6 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
     echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $DEPLOYMENT_MODE
     
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
@@ -291,7 +290,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
         echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-        echoNInfo "CONFIG:               Deployment Mode: " && echoErr $DEPLOYMENT_MODE
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
         set -x
 
@@ -349,7 +347,6 @@ CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_
 
 rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
-globSet AUTO_BACKUP_LAST_BLOCK "0"
 globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "${NEW_NETWORK,,}" != "true" ] ; then
