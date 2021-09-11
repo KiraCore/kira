@@ -56,11 +56,7 @@ if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isF
     exit 1
 fi
 
-if [ "${INFRA_MODE,,}" == "local" ] ; then
-    $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
-    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
-elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+if [ "${INFRA_MODE,,}" == "seed" ] ; then
     $KIRA_MANAGER/containers/start-seed.sh && globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
     $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
@@ -68,7 +64,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
     $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
     $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
     $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
