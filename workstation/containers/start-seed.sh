@@ -104,7 +104,6 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_SEED_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SEED_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SEED_GRPC_PORT:$DEFAULT_GRPC_PORT \
     -p $KIRA_SEED_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname $KIRA_SEED_DNS \
     --restart=always \

@@ -114,7 +114,6 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_VALIDATOR_GRPC_PORT:$DEFAULT_GRPC_PORT \
     -p $KIRA_VALIDATOR_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \

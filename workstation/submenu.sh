@@ -20,7 +20,8 @@ systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be sto
 systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 sleep 1
-globSet LATEST_BLOCK 0
+globSet LATEST_BLOCK_HEIGHT 0
+globSet LATEST_BLOCK_TIME 0
 globSet MIN_HEIGHT 0
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
@@ -197,11 +198,10 @@ while :; do
 done
 set -x
 
-globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
 globSet SNAPSHOT_EXECUTE "false"
-globSet SNAPSHOT_TARGET ""
 globSet PRIVATE_MODE "$PRIVATE_MODE"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"

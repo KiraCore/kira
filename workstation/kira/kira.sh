@@ -14,7 +14,6 @@ $KIRA_MANAGER/kira/kira-setup-status.sh
 set -x
 
 cd $KIRA_HOME
-LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
@@ -121,7 +120,7 @@ while : ; do
         DISK_UTIL=$(globGet DISK_UTIL) && [ -z "$DISK_UTIL" ] && DISK_UTIL="???" ; DISK_TMP="DISK: ${DISK_UTIL}${WHITESPACE}"
         echo -e "|\e[35;1m ${CPU_TMP:0:16}${RAM_TMP:0:16}${DISK_TMP:0:13} \e[33;1m: $(globGet DISK_CONS)"
 
-        KIRA_NETWORK=$(jsonQuickParse "network" $LATEST_STATUS_SCAN_PATH 2>/dev/null || echo -n "")
+        KIRA_NETWORK=$(jsonQuickParse "network" $(globGet LATEST_STATUS) 2>/dev/null || echo -n "")
         ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK="???"
         if (! $(isNaturalNumber "$KIRA_BLOCK")) || [ "$KIRA_BLOCK" == "0" ]; then
             KIRA_BLOCK="???"

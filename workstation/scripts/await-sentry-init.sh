@@ -151,12 +151,12 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
         PREVIOUS_HEIGHT=$HEIGHT
         HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
         SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
-        LATEST_BLOCK=$(globGet LATEST_BLOCK)
+        LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
         MIN_HEIGH=$(globGet MIN_HEIGHT)
         DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
 
         [[ $PREVIOUS_HEIGHT -lt $HEIGHT ]] && timerStart BLOCK_HEIGHT_SPAN
-        [[ $LATEST_BLOCK -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK
+        [[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK_HEIGHT
         
         if [[ $HEIGHT -ge $MIN_HEIGH ]] ; then
             echoInfo "INFO: Node finished catching up."

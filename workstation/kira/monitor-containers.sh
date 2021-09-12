@@ -10,7 +10,6 @@ echo "INFO: Started kira network contianers monitor..."
 timerStart MONITOR_CONTAINERS
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 SCAN_LOGS="$KIRA_SCAN/logs"
-LATEST_STATUS_SCAN_PATH="$KIRA_SCAN/latest_status"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
 
@@ -32,8 +31,7 @@ echoWarn "------------------------------------------------"
 sleep 1
 set -x
 
-[ -z "$(globGet LATEST_BLOCK)" ] && globSet LATEST_BLOCK "0"
-[ ! -f "$LATEST_STATUS_SCAN_PATH" ] && echo -n "" > $LATEST_STATUS_SCAN_PATH
+[ -z "$(globGet LATEST_BLOCK_HEIGHT)" ] && globSet LATEST_BLOCK_HEIGHT "0"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -147,30 +145,34 @@ for name in $CONTAINERS; do
         fi
     else
         LATEST_BLOCK="0"
+        LATEST_BLOCK_TIME="0"
         CATCHING_UP="false"
     fi
     
     echoInfo "INFO: Saving status props..."
     PREVIOUS_BLOCK=$(globGet "${name}_BLOCK")
     globSet "${name}_BLOCK" "$LATEST_BLOCK"
+    globSet "${name}_BLOCK_TIME" "$LATEST_BLOCK_TIME"
     globSet "${name}_SYNCING" "$CATCHING_UP"
 done
 
 # save latest known block height
-if [ "$NEW_LATEST_BLOCK" != "0" ] && [ "$NEW_LATEST_BLOCK_TIME" != "0"  ] ; then
+
+if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] ; then
     echoInfo "INFO: Block height chaned to $LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
-    globSet LATEST_BLOCK $NEW_LATEST_BLOCK
     globSet LATEST_BLOCK_TIME $NEW_LATEST_BLOCK_TIME
-    globSet latest_block_height "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
+    globSet LATEST_BLOCK_HEIGHT "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
 
     OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
     if [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
         globSet MIN_HEIGHT $NEW_LATEST_BLOCK
         globSet MIN_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
     fi
+else
+    echoWarn "WARNING: New latest block was NOT found!"
 fi
 # save latest known status
-(! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" > $LATEST_STATUS_SCAN_PATH
+(! $(isNullOrEmpty "$NEW_LATEST_STATUS")) && echo "$NEW_LATEST_STATUS" | globSet LATEST_STATUS
 
 set +x
 echoWarn "------------------------------------------------"
