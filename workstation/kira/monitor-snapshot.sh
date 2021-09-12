@@ -11,23 +11,25 @@ timerStart SNAP_MONITOR
 SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
 CONTAINER_NAME=$(globGet SNAPSHOT_TARGET)
 SNAPSHOT_KEEP_OLD=$(globGet SNAPSHOT_KEEP_OLD)
-LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
+CONTAINER_BLOCK_HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK") && (! $(isNaturalNumber $CONTAINER_BLOCK_HEIGHT)) && CONTAINER_BLOCK_HEIGHT=0
 SNAPSHOT_UNHALT=$(globGet SNAPSHOT_UNHALT)
 SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA SNAPSHOT SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
-echoWarn "|       CONTAINER NAME: $CONTAINER_NAME"
-echoWarn "|     CONTAINER UNHALT: $SNAPSHOT_UNHALT"
-echoWarn "|          SNAP EXPOSE: $SNAP_EXPOSE"
-echoWarn "| INTERX SNAPSHOT PATH: $INTERX_SNAPSHOT_PATH"
-echoWarn "|         BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
-echoWarn "|   SNAPSHOT REQUESTED: $SNAPSHOT_EXECUTE"
-echoWarn "|       KEEP OLD SNAPS: $SNAPSHOT_KEEP_OLD"
+echoWarn "|         KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
+echoWarn "|         CONTAINER NAME: $CONTAINER_NAME"
+echoWarn "|       CONTAINER UNHALT: $SNAPSHOT_UNHALT"
+echoWarn "|            SNAP EXPOSE: $SNAP_EXPOSE"
+echoWarn "|           BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
+echoWarn "| CONTAINER BLOCK HEIGHT: $CONTAINER_BLOCK_HEIGHT"
+echoWarn "|     SNAPSHOT REQUESTED: $SNAPSHOT_EXECUTE"
+echoWarn "|         KEEP OLD SNAPS: $SNAPSHOT_KEEP_OLD"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -38,6 +40,8 @@ sleep 15
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 [ "${SNAPSHOT_EXECUTE,,}" != "true" ] && echoErr "ERROR: Snapshoot was not requested and will not be processed, aborting..." && sleep 10 && exit 1
 
+[ $LATEST_BLOCK_HEIGHT -lt $CONTAINER_BLOCK_HEIGHT ] && LATEST_BLOCK_HEIGHT=$CONTAINER_BLOCK_HEIGHT
+
 echoInfo "INFO: Restarting '$CONTAINER_NAME' container and ensuring all processes are killed."
 $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "false"
 
@@ -45,7 +49,7 @@ CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "
 sleep 15
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 
-SNAP_FILENAME="${NETWORK_NAME}-$LATEST_BLOCK_HEIGHT-$(date -u +%s).zip"
+SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).zip"
 KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 
 if [ "${SNAPSHOT_KEEP_OLD,,}" == "true" ] ; then
