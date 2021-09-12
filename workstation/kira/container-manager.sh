@@ -38,6 +38,8 @@ LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(globGet "NETWORKS")
+    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KADDR=$(tryCat $KADDR_PATH "")
     LATEST_BLOCK=$(globGet LATEST_BLOCK)
     [ "${NAME,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
@@ -298,6 +300,13 @@ while : ; do
 
             if (! $(isFileEmpty $TMP_DUMP)) ; then
                 cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $NAME container logs"
+            fi
+
+            if [ "${SNAPSHOT_TARGET,,}" == "${NAME,,}" ] && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+                echoWarn "WARNING: Snapshot is ongoing, output logs will be included"
+                echo "--- SNAPSHOT LOG START ---" >> $TMP_DUMP
+                cat "$KIRA_SCAN/snapshot.log" >> $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $NAME container snapshot logs" >> $TMP_DUMP
+                echo "--- SNAPSHOT LOG END ---" >> $TMP_DUMP
             fi
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")

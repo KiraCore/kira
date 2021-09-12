@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-# quick edit: FILE="${SELF_CONTAINER}/validator/soft-upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="${SELF_CONTAINER}/snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 echoInfo "INFO: Staring snapshot..."
@@ -25,7 +25,7 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNatura
 [[ $LATEST_BLOCK_HEIGHT -lt $STATE_HEIGHT ]] && STATE_HEIGHT=$STATE_HEIGHT
 
 ($(isNullOrWhitespace $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${STATE_HEIGHT}-$(date -u +%s).zip"
-SNAP_DESTINATION_FILE="$SNAP_DIR/$NETWORK_NAME-$STATE_HEIGHT-"
+SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
  
 echoInfo "INFO: Creating '$SNAP_FILENAME' backup package..."
 cp -afv "$LOCAL_GENESIS" $DATA_GENESIS
