@@ -185,10 +185,6 @@ if [ "${SYNC_AWAIT,,}" == "true" ] ; then
     done
 fi
 
-echoInfo "INFO: Creating snapshot..."
-globSet SNAPSHOT_TARGET $CONTAINER_NAME
-globSet SNAPSHOT_EXECUTE "true"
-globSet SNAPSHOT_UNHALT "true"
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"

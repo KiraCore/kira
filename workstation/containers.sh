@@ -73,6 +73,11 @@ else
     exit 1
 fi
 
+echoInfo "INFO: Creating snapshot..."
+globSet SNAPSHOT_TARGET $CONTAINER_NAME
+globSet SNAPSHOT_EXECUTE "true"
+globSet SNAPSHOT_UNHALT "true"
+
 PORTS="$DEFAULT_SSH_PORT"
 CONTAINERS_COUNT=0
 if [ "$(globGet SEED_EXPOSED)" == "true" ] ; then
