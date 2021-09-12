@@ -74,7 +74,8 @@ else
 fi
 
 echoInfo "INFO: Creating snapshot..."
-globSet SNAPSHOT_TARGET $CONTAINER_NAME
+[ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
+globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
 globSet SNAPSHOT_EXECUTE "true"
 globSet SNAPSHOT_UNHALT "true"
 

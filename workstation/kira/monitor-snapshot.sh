@@ -9,10 +9,11 @@ set -x
 timerStart SNAP_MONITOR
 
 SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
-CONAINER_NAME=$(globGet SNAPSHOT_TARGET)
+CONTAINER_NAME=$(globGet SNAPSHOT_TARGET)
 SNAPSHOT_KEEP_OLD=$(globGet SNAPSHOT_KEEP_OLD)
 LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
 SNAPSHOT_UNHALT=$(globGet SNAPSHOT_UNHALT)
+SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 set +x
@@ -20,30 +21,29 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA SNAPSHOT SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "|       KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
-echoWarn "|       CONTAINER NAME: $CONAINER_NAME"
+echoWarn "|       CONTAINER NAME: $CONTAINER_NAME"
 echoWarn "|     CONTAINER UNHALT: $SNAPSHOT_UNHALT"
 echoWarn "|          SNAP EXPOSE: $SNAP_EXPOSE"
 echoWarn "| INTERX SNAPSHOT PATH: $INTERX_SNAPSHOT_PATH"
-echoWarn "|         LATEST BLOCK: $LATEST_BLOCK"
 echoWarn "|         BLOCK HEIGHT: $LATEST_BLOCK_HEIGHT"
 echoWarn "|   SNAPSHOT REQUESTED: $SNAPSHOT_EXECUTE"
 echoWarn "|       KEEP OLD SNAPS: $SNAPSHOT_KEEP_OLD"
 echoWarn "------------------------------------------------"
 set -x
 
-($(isNullOrWhitespace $CONAINER_NAME)) && echoErr "ERROR: Target container '$CONAINER_NAME' was NOT defined" && sleep 10 && exit 1
-CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+($(isNullOrWhitespace $CONTAINER_NAME)) && echoErr "ERROR: Target container '$CONTAINER_NAME' was NOT defined" && sleep 10 && exit 1
+CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
 
-[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONAINER_NAME' does NOT exists" && sleep 10 && exit 1
+[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 [ "${SNAPSHOT_EXECUTE,,}" != "true" ] && echoErr "ERROR: Snapshoot was not requested and will not be processed, aborting..." && sleep 10 && exit 1
 
-echoInfo "INFO: Restarting '$CONAINER_NAME' container and ensuring all processes are killed."
-$KIRA_MANAGER/kira/container-pkill.sh "$CONAINER_NAME" "true" "restart" "false"
+echoInfo "INFO: Restarting '$CONTAINER_NAME' container and ensuring all processes are killed."
+$KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "false"
 
-CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONAINER_NAME" || echo "error")
+CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
-[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONAINER_NAME' does NOT exists" && sleep 10 && exit 1
+[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 
 SNAP_FILENAME="${NETWORK_NAME}-$LATEST_BLOCK_HEIGHT-$(date -u +%s).zip"
 KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
@@ -72,10 +72,10 @@ else
 fi
 
 if [ "${SNAPSHOT_UNHALT,,}" == "true" ] ; then
-    echoInfo "INFO: Restarting and unhalting '$CONAINER_NAME' container..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONAINER_NAME" "true" "restart" "true"
+    echoInfo "INFO: Restarting and unhalting '$CONTAINER_NAME' container..."
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 else
-    echoInfo "INFO: No need to unhalt '$CONAINER_NAME' container, container was requested to remain stopped"
+    echoInfo "INFO: No need to unhalt '$CONTAINER_NAME' container, container was requested to remain stopped"
 fi
 
 globSet SNAPSHOT_EXECUTE "false"

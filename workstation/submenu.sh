@@ -198,7 +198,8 @@ done
 set -x
 
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG
-globSet SNAP_EXPOSE "true"
+[ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
+[ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
 globSet SNAPSHOT_EXECUTE "false"
 globSet SNAPSHOT_TARGET ""
 globSet PRIVATE_MODE "$PRIVATE_MODE"
@@ -219,10 +220,10 @@ rm -fv $(globFile sentry_SEKAID_STATUS)
 rm -fv $(globFile seed_SEKAID_STATUS)
 
 UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
-globSet "UPGRADE_NAME" "$UPGRADE_NAME"
-globSet "UPGRADE_DONE" "true"
-globSet "UPGRADE_TIME" "$(date +'%Y-%m-%d %H:%M:%S')"
-globSet "PLAN_DONE" "true"
+globSet UPGRADE_NAME "$UPGRADE_NAME"
+globSet UPGRADE_DONE "true"
+globSet UPGRADE_TIME "$(date +'%Y-%m-%d %H:%M:%S')"
+globSet PLAN_DONE "true"
 globSet AUTO_UPGRADES "true"
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
