@@ -235,7 +235,7 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest1\" \"<iframe src=javascript:alert(1)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest2\" \"<img/src=x a='' onerror=alert(2)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest3\" \"<img src=1 onerror=alert(3)>\" 180"
-    #docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
 
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"KIRA-TEST\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord faucet \"username\" \"KIRA-FAUCET\" 180"

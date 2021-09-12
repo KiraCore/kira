@@ -368,14 +368,26 @@ while : ; do
         echoInfo "INFO: Attempting to claim validator seat..."
         read -p "INPUT UNIQUE MONIKER (your node new nickname): " MONIKER
         ( docker exec -i validator /bin/bash -c ". /etc/profile && claimValidatorSeat validator \"$MONIKER\"" || \
-        echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+        echoErr "ERROR: Failed to confirm claim validator tx" )
+
+        echoInfo "INFO: Loading secrets..."
+        set +e
+        set +x
+        source $KIRAMGR_SCRIPTS/load-secrets.sh
+        set -x
+        set -e
+
+        ( docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180" || \
+        echoErr "ERROR: Failed to confirm indentity registrar upsert tx" )
+        
+        echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
         sleep 5
         FORCE_SCAN="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "a" ]; then
         if [ "${VALSTATUS,,}" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && activateValidator validator" || \
-            echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            echoErr "ERROR: Failed to confirm activate tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
