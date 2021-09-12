@@ -35,8 +35,7 @@ set +x
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
-    SNAP_STATUS="$KIRA_SNAP/status"
-    SNAP_LATEST="$SNAP_STATUS/latest"
+    PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
     VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
@@ -46,8 +45,8 @@ while : ; do
     UPGRADE_DONE=$(globGet UPGRADE_DONE)
     PLAN_FAIL=$(globGet PLAN_FAIL)
     UPDATE_FAIL=$(globGet UPDATE_FAIL)
-    SNAPSHOT_TARGET=$(globSet SNAPSHOT_TARGET)
-    SNAPSHOT_EXECUTE=$(globSet SNAPSHOT_EXECUTE)
+    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
+    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""

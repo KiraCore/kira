@@ -116,7 +116,7 @@ for name in $CONTAINERS; do
         echoInfo "INFO: Waiting for $name scan (PID $PIDX) to finlize, elapsed $SCAN_SPAN/60 seconds ..."
         [[ $SCAN_SPAN -gt 60 ]] && echoErr "ERROR: Timeout failed to scan $name container, see error logs '$SCAN_LOGS/${name}-status.error.log'" && exit 1
         if ! kill -0 "$PIDX" 2>/dev/null ; then
-            [ "$(globSet ${name}_SCAN_DONE)" != "true" ] && \
+            [ "$(globGet ${name}_SCAN_DONE)" != "true" ] && \
                 echoErr "ERROR: Background PID $PIDX failed for the $name container. See error logs: '$SCAN_LOGS/${name}-status.error.log'" && exit 1
         fi
         sleep 1

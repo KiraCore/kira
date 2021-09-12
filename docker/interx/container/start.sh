@@ -51,9 +51,9 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
 
-    CDHelper text lineswap --insert="CFG_grpc=$CFG_grpc" --prefix="CFG_grpc=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="CFG_rpc=$CFG_rpc" --prefix="CFG_rpc=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="PING_TARGET=$PING_TARGET" --prefix="PING_TARGET=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_grpc=\"$CFG_grpc\"" --prefix="CFG_grpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_rpc=\"$CFG_rpc\"" --prefix="CFG_rpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="PING_TARGET=\"$PING_TARGET\"" --prefix="PING_TARGET=" --path=$ETC_PROFILE --append-if-found-not=True
 
     seed_node_id=$(globGet seed_node_id)
     sentry_node_id=$(globGet sentry_node_id)

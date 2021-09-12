@@ -15,10 +15,6 @@ SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 HARDWARE_SCAN_PATH="$KIRA_SCAN/hardware"
 PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 
-SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_LATEST="$SNAP_STATUS/latest"
-
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
 timerDel "DISK_CONS" "NET_CONS"
@@ -48,7 +44,7 @@ while : ; do
         continue
     fi
     
-    tryMkDir $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
+    tryMkDir $KIRA_SNAP $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SCAN_DUMP
     touch "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH"
 
     set +e && source "/etc/profile" &>/dev/null && set -e

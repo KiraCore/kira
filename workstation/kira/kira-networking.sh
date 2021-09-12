@@ -12,6 +12,7 @@ touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
+    PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
@@ -98,16 +99,13 @@ echo -e "\e[37;1m--------------------------------------------------"
     
     if [ "${OPTION,,}" == "d" ]; then
         echoInfo "INFO: Disabling all ports..."
-        PORTS_EXPOSURE="disabled"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "disabled"
     elif [ "${OPTION,,}" == "e" ]; then
         echoInfo "INFO: Enabling all ports..."
-        PORTS_EXPOSURE="enabled"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "enabled"
     elif [ "${OPTION,,}" == "c" ]; then
         echoInfo "INFO: Enabling custom ports configuration..."
-        PORTS_EXPOSURE="custom"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "custom"
     elif [ "${OPTION,,}" == "i" ]; then
         echoInfo "INFO: Starting network interface selection menu..."
         IFACE_OLD="$IFACE"

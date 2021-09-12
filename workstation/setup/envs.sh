@@ -60,16 +60,16 @@ if [ ! -f "$SETUP_CHECK" ]; then
     touch /etc/default/apport
     CDHelper text lineswap --insert="enabled=0" --prefix="enabled=" --path=/etc/default/apport --append-if-found-not=True
 
-    CDHelper text lineswap --insert="KIRA_REGISTRY_DNS=$KIRA_REGISTRY_DNS" --prefix="KIRA_REGISTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_DNS=$KIRA_VALIDATOR_DNS" --prefix="KIRA_VALIDATOR_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_DNS=$KIRA_SENTRY_DNS" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SEED_DNS=$KIRA_SEED_DNS" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_INTERX_DNS=$KIRA_INTERX_DNS" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=$KIRA_FRONTEND_DNS" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_REGISTRY_DNS=\"$KIRA_REGISTRY_DNS\"" --prefix="KIRA_REGISTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_VALIDATOR_DNS=\"$KIRA_VALIDATOR_DNS\"" --prefix="KIRA_VALIDATOR_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SENTRY_DNS=\"$KIRA_SENTRY_DNS\"" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SEED_DNS=\"$KIRA_SEED_DNS\"" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_INTERX_DNS=\"$KIRA_INTERX_DNS\"" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=\"$KIRA_FRONTEND_DNS\"" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    CDHelper text lineswap --insert="KIRA_REGISTRY_SUBNET=$KIRA_REGISTRY_SUBNET" --prefix="KIRA_REGISTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=$KIRA_SENTRY_SUBNET" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SERVICE_SUBNET=$KIRA_SERVICE_SUBNET" --prefix="KIRA_SERVICE_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_REGISTRY_SUBNET=\"$KIRA_REGISTRY_SUBNET\"" --prefix="KIRA_REGISTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=\"$KIRA_SENTRY_SUBNET\"" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SERVICE_SUBNET=\"$KIRA_SERVICE_SUBNET\"" --prefix="KIRA_SERVICE_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="HOSTS_PATH=$HOSTS_PATH" --prefix="HOSTS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRAMGR_SCRIPTS=$KIRAMGR_SCRIPTS" --prefix="KIRAMGR_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True

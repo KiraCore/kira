@@ -96,10 +96,10 @@ else
             INTERX_BRANCH="$DEFAULT_BRANCH"
         fi
 
-        CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="INFRA_BRANCH=\"$NEW_BRANCH\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
     source $INIT_SCRIPT_OUT "$NEW_BRANCH"
 fi

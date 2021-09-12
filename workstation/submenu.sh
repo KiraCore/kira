@@ -31,7 +31,7 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
-[ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
+[ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
@@ -149,7 +149,7 @@ while :; do
   s*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
-    CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="IFACE=\"$IFACE\"" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
@@ -212,8 +212,7 @@ globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
-
-CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet PORTS_EXPOSURE "enabled"
 
 rm -fv $(globFile validator_SEKAID_STATUS)
 rm -fv $(globFile sentry_SEKAID_STATUS)

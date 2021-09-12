@@ -60,8 +60,8 @@ if [ "${EXISTS,,}" == "true" ] ; then
     
     DOCKER_STATE=$(globFile "${NAME}_DOCKER_STATE")
     DOCKER_NETWORKS=$(globFile "${NAME}_DOCKER_NETWORKS")
-    SNAPSHOT_TARGET=$(globSet SNAPSHOT_TARGET)
-    SNAPSHOT_EXECUTE=$(globSet SNAPSHOT_EXECUTE)
+    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
+    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
 
     echoInfo "INFO: Sucessfully inspected '$NAME' container '$ID'"
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"

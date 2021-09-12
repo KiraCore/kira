@@ -15,19 +15,11 @@ echoInfo "INFO: Ensuring sekaid process is killed..."
 pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
 sleep 15
 
-DATA_DIR="$SEKAID_HOME/data"
-CONFIG_DIR="$SEKAID_HOME/config"
-
-DATA_GENESIS="$DATA_DIR/genesis.json"
-LOCAL_GENESIS="$CONFIG_DIR/genesis.json"
-LOCAL_ADDRBOOK="$CONFIG_DIR/addrbook.json"
-LOCAL_STATE="$DATA_DIR/priv_validator_state.json"
-SNAP_INFO="$DATA_DIR/snapinfo.json"
-
-SNAP_STATUS="$SNAP_DIR/status"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_FINALIZYNG="$SNAP_STATUS/finalizing"
-SNAP_LATEST="$SNAP_STATUS/latest"
+DATA_GENESIS="$SEKAID_DATA/genesis.json"
+LOCAL_GENESIS="$SEKAID_CONFIG/genesis.json"
+LOCAL_ADDRBOOK="$SEKAID_CONFIG/addrbook.json"
+LOCAL_STATE="$SEKAID_DATA/priv_validator_state.json"
+SNAP_INFO="$SEKAID_DATA/snapinfo.json"
 
 SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 ADDRBOOK_DESTINATION_FILE="${COMMON_DIR}/upgrade-addrbook.json"
@@ -44,7 +36,7 @@ cp -afv "$LOCAL_ADDRBOOK" $ADDRBOOK_DESTINATION_FILE
 [ ! -f "$ADDRBOOK_DESTINATION_FILE" ] && echoErr "ERROR: Failed to save addr, file '$ADDRBOOK_DESTINATION_FILE' was not found" && sleep 5 && exit 1
 
 # to prevent appending root path we must zip all from within the target data folder
-cd $DATA_DIR
+cd $SEKAID_DATA
 zip -9 -r "$SNAP_DESTINATION_FILE" . *
 [ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 

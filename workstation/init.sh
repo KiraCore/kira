@@ -334,18 +334,18 @@ fi
 SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
 [ -z "SETUP_VER" ] && echo -en "\e[31;1mERROR: Invalid setup release version!\e[0m" && exit 1
 
-CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SETUP_VER=\"$SETUP_VER\"" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_USER=\"$KIRA_USER\"" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
 
-CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INFRA_BRANCH=\"$INFRA_BRANCH\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
-CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INFRA_REPO=\"$INFRA_REPO\"" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SEKAI_REPO=\"$SEKAI_REPO\"" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_REPO=\"$FRONTEND_REPO\"" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_REPO=\"$INTERX_REPO\"" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
 CDHelper text lineswap --insert="source \$KIRA_MANAGER/utils.sh" --suffix="/utils.sh" --path=$ETC_PROFILE --append-if-found-not=True
 

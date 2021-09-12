@@ -227,9 +227,9 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         fi
 
         if ($(isLetters "$joid")) ; then
-            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=$checksum" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="${joid^^}_BRANCH=$checkout" --prefix="${joid^^}_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=$checksum" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=\"$checksum\"" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="${joid^^}_BRANCH=\"$checkout\"" --prefix="${joid^^}_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=\"$checksum\"" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
         else
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi

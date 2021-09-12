@@ -182,4 +182,4 @@ echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SNAP=\"$DEFAULT_SNAP_DIR\"" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
