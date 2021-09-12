@@ -40,8 +40,8 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     echoInfo "INFO: Starting registry container..."
     CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
     RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-    CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-    RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+    CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+    RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
     docker run -d \
         --cpus="$CPU_RESERVED" \

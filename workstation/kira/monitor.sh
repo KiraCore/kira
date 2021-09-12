@@ -24,8 +24,6 @@ globDel "HOSTS_SCAN_PID" "HARDWARE_SCAN_PID" "PEERS_SCAN_PID" "SNAPSHOT_SCAN_PID
 while : ; do
     timerStart MONITOR
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
-    SNAPSHOT_MONITOR=$(globGet SNAPSHOT_MONITOR)
-    [ -z "$SNAPSHOT_MONITOR" ] && SNAPSHOT_MONITOR="true"
 
     set +x
     echoWarn "------------------------------------------------"
@@ -33,7 +31,6 @@ while : ; do
     echoWarn "|----------------------------------------------|"
     echoWarn "|        SCAN DONE: $(globGet IS_SCAN_DONE) "
     echoWarn "| SNAPSHOT EXECUTE: $SNAPSHOT_EXECUTE"
-    echoWarn "| SNAPSHOT MONITOR: $SNAPSHOT_MONITOR"
     echoWarn "------------------------------------------------"
     set -x
 
