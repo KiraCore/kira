@@ -40,6 +40,4 @@ cd $SEKAID_DATA
 zip -9 -r "$SNAP_DESTINATION_FILE" . *
 [ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
-touch $SNAP_DONE
-
 echoInfo "INFO: Finished container upgrade sequence..."
