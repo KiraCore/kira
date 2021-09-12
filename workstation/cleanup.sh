@@ -109,7 +109,7 @@ elif [ "${INFRA_MODE,,}" == "seed" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) && ($(isFileEmpty $PRIVATE_SEEDS )) && ($(isFileEmpty $PRIVATE_PEERS )) ) ; then
+    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ) ; then
         EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"

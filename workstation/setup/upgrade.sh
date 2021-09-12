@@ -83,7 +83,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
-    echoInfo "INFO: Recovering public & private seed nodes..."
+    echoInfo "INFO: Recovering seed & peer nodes..."
     SEEDS_DUMP="/tmp/seedsdump"
     ADDR_DUMP="/tmp/addrdump"
     ADDR_DUMP_ARR="/tmp/addrdumparr"

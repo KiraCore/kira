@@ -46,11 +46,6 @@ globSet INTERX_EXPOSED false
 # setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
 globSet INFRA_CONTAINERS_COUNT "100"
 
-if ($(isFileEmpty $PUBLIC_SEEDS)) && ($(isFileEmpty $PUBLIC_PEERS )) ; then
-    cat $PRIVATE_SEEDS > $PUBLIC_SEEDS
-    cat $PRIVATE_PEERS > $PUBLIC_PEERS
-fi
-
 if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ; then 
     echoErr "ERROR: Containers setup can't proceed, no PUBLIC SEERDS or PEERS were define on existing network"
     exit 1

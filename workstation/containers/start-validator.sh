@@ -61,9 +61,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
 
-    touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
-    cat $PRIVATE_SEEDS >> $PUBLIC_SEEDS
-    cat $PRIVATE_PEERS >> $PUBLIC_PEERS
+    touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"

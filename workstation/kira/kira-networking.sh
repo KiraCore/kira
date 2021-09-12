@@ -8,7 +8,7 @@ WHITESPACE="                                                     "
 PORTS=$(globGet EXPOSED_PORTS)
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
-touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e

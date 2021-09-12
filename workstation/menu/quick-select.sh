@@ -12,7 +12,7 @@ TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
 if [ "${NEW_NETWORK,,}" == "true" ]; then
-    rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+    rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     CHAIN_ID="$NETWORK_NAME"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR=""
     GENSUM=""
@@ -345,8 +345,8 @@ CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_N
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 
-rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
-touch "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$PUBLIC_PEERS" "$PRIVATE_PEERS"
+rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "${NEW_NETWORK,,}" != "true" ] ; then
@@ -361,11 +361,10 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
         ($(isNodeId "$SENTRY_NODE_ID")) && SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656" || SENTRY_NODE_ID=""
         VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$VALIDATOR_NODE_ID")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ID}@${NODE_ADDR}:36656" || VALIDATOR_NODE_ADDR=""
-        ($(isPublicIp $NODE_ADDR)) && SEEDS_TARGET_FILE=$PUBLIC_SEEDS || SEEDS_TARGET_FILE=$PRIVATE_SEEDS
 
-        [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $SEEDS_TARGET_FILE
-        [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $SEEDS_TARGET_FILE
+        [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS
+        [ ! -z "$SENTRY_NODE_ADDR" ] && echo "$SENTRY_NODE_ADDR" >> $PUBLIC_SEEDS
+        [ ! -z "$VALIDATOR_NODE_ADDR" ] && echo "$VALIDATOR_NODE_ADDR" >> $PUBLIC_SEEDS
 
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
@@ -382,8 +381,8 @@ if [ "${NEW_NETWORK,,}" != "true" ] ; then
             $KIRA_MANAGER/menu/seeds-select.sh
         fi
 
-        if ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PRIVATE_SEEDS")) && ($(isFileEmpty "$PUBLIC_PEERS")) && ($(isFileEmpty "$PRIVATE_PEERS")) ; then 
-            echoErr "ERROR: You are attempting to join existing network but no public or private seeds were configured!"
+        if ($(isFileEmpty "$PUBLIC_SEEDS")) && ($(isFileEmpty "$PUBLIC_PEERS")) ; then 
+            echoErr "ERROR: You are attempting to join existing network but no seeds or peers were configured!"
         else
             break
         fi
