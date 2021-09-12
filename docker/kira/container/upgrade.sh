@@ -1,6 +1,6 @@
 #!/bin/bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-# quick edit: FILE="${SELF_CONTAINER}/validator/soft-upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="${SELF_CONTAINER}/upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 echoInfo "INFO: Staring container upgrade sequence..."
