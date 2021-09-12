@@ -87,4 +87,4 @@ set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting sekaid..."
-sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace 
+sekaid start --home=$SEKAID_HOME --trace 

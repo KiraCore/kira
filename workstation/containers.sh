@@ -46,11 +46,6 @@ globSet INTERX_EXPOSED false
 # setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
 globSet INFRA_CONTAINERS_COUNT "100"
 
-if [ "${NEW_NETWORK,,}" != "true" ] && ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ; then 
-    echoErr "ERROR: Containers setup can't proceed, no PUBLIC SEERDS or PEERS were define on existing network"
-    exit 1
-fi
-
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     $KIRA_MANAGER/containers/start-seed.sh && globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
