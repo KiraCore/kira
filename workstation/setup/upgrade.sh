@@ -86,7 +86,6 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
 
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
     echoInfo "INFO: Recovering seed & peer nodes..."
     SEEDS_DUMP="/tmp/seedsdump"
@@ -141,16 +140,14 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     echoInfo "INFO: Upgrading network identifier, block height and global genesis files"
 
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
     rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
     cp -afv "$GENESIS_EXPORT" "$LOCAL_GENESIS_PATH"
-    ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i $LOCAL_GENESIS_PATH
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
     CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
     globSet LATEST_BLOCK $NEW_BLOCK_HEIGHT
     globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
@@ -170,6 +167,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         [ "${name,,}" == "registry" ] && continue
         echoInfo "INFO: Removing '$name' container and cleaning up resources..."
         $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+
+        # chattr -i
         rm -rfv "$DOCKER_COMMON/${name}"
     done
 
@@ -239,6 +238,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi
     done < $UPGRADE_PLAN_RES64_FILE
+
+    CDHelper text lineswap --insert="NEW_NETWORK=\"false\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
 
     echoInfo "INFO: Starting update service..."
     globSet UPGRADE_REPOS_DONE "true"
