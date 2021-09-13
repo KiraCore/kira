@@ -119,7 +119,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     fi
 
     globSet UPGRADE_EXPORT_DONE "true"
-elif [ "${UPGRADE_INSTATE}" == "true" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
+elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
     echoInfo "INFO: Started creation of new genesis requested!"
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
     rm -fv $GENESIS_EXPORT
@@ -155,7 +155,7 @@ elif [ "${UPGRADE_INSTATE}" == "true" ] && [ "${UPGRADE_INSTATE}" == "false" ] ;
 
     globSet UPGRADE_EXPORT_DONE "true"
 else
-    echoInfo "INFO: Snapshot already done."
+    echoInfo "INFO: State export already done."
 fi
 
 UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
