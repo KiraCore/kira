@@ -58,6 +58,9 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
         $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
     done
+
+    echoInfo "INFO: Waiting for contianers to restart..."
+    sleep 15
 fi
 
 [ "${INFRA_MODE,,}" == "local" ] && CONTAINER_NAME="validator" || CONTAINER_NAME="${INFRA_MODE,,}"
@@ -131,7 +134,7 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     [ -z "$NEW_NETWORK_NAME" ] && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
     NEW_BLOCK_HEIGHT=$(jsonParse "initial_height" $GENESIS_EXPORT 2> /dev/null || echo -n "")
-    ($(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
+    (! $(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
     NEW_BLOCK_TIME=$(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     [ -z "$NEW_BLOCK_TIME" ] && echoErr "ERROR: Could NOT identify new block time in the exported genesis file" && sleep 10 && exit 1
 
