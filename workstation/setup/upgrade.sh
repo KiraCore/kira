@@ -8,6 +8,7 @@ PLAN_START_DT=$(globGet PLAN_START_DT)
 UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+CONTAINERS=$(globGet CONTAINERS)
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
@@ -17,6 +18,7 @@ echoWarn "|     PLAN START DATE: $PLAN_START_DT"
 echoWarn "| UPGRADE EXPORT DONE: $UPGRADE_EXPORT_DONE"
 echoWarn "|  UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
 echoWarn "|     UPGRADE INSTATE: $UPGRADE_INSTATE"
+echoWarn "|          CONTAINERS: $CONTAINERS"
 echoWarn "------------------------------------------------"
 
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
