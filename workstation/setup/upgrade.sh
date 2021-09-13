@@ -69,7 +69,7 @@ COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
     echoInfo "INFO: Started creating snapshoot, instate upgrade requested!"
 
-    MIN_BLOCK=$(globGet LATEST_BLOCK) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
+    MIN_BLOCK=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
 
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
     rm -fv $KIRA_SNAP/*.zip

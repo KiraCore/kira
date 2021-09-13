@@ -118,7 +118,7 @@ while : ; do
         echoWarn "WARNING: Address '$ip:$port' is already present in the seeds list" && continue 
     fi
 
-    TMP_HEIGHT=$(globGet LATEST_BLOCK)
+    TMP_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
     if ($(isNaturalNumber "$TMP_HEIGHT")) && [[ $TMP_HEIGHT -gt $HEIGHT ]] ; then
         echoInfo "INFO: Block height was updated form $HEIGHT to $TMP_HEIGHT"
         HEIGHT=$TMP_HEIGHT

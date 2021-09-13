@@ -31,7 +31,7 @@ echoWarn "------------------------------------------------"
 sleep 1
 set -x
 
-[ -z "$(globGet LATEST_BLOCK_HEIGHT)" ] && globSet LATEST_BLOCK_HEIGHT "0"
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0 && globSet LATEST_BLOCK_HEIGHT "0"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -159,9 +159,11 @@ done
 # save latest known block height
 
 if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] ; then
-    echoInfo "INFO: Block height chaned to $LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
+    echoInfo "INFO: Block height chaned to $NEW_LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
     globSet LATEST_BLOCK_TIME $NEW_LATEST_BLOCK_TIME
-    globSet LATEST_BLOCK_HEIGHT "$NEW_LATEST_BLOCK" "$GLOBAL_COMMON_RO"
+    globSet LATEST_BLOCK_TIME $NEW_LATEST_BLOCK_TIME $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_HEIGHT $NEW_LATEST_BLOCK
+    globSet LATEST_BLOCK_HEIGHT $NEW_LATEST_BLOCK $GLOBAL_COMMON_RO
 
     OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
     if [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then

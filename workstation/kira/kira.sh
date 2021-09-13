@@ -51,7 +51,7 @@ while : ; do
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    KIRA_BLOCK=$(globGet LATEST_BLOCK)
+    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
@@ -122,14 +122,14 @@ while : ; do
 
         KIRA_NETWORK=$(jsonQuickParse "network" $(globFile LATEST_STATUS) 2>/dev/null || echo -n "")
         ($(isNullOrEmpty "$KIRA_NETWORK")) && KIRA_NETWORK="???"
-        if (! $(isNaturalNumber "$KIRA_BLOCK")) || [ "$KIRA_BLOCK" == "0" ]; then
-            KIRA_BLOCK="???"
+        if (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) || [ "$LATEST_BLOCK_HEIGHT" == "0" ]; then
+            LATEST_BLOCK_HEIGHT="???"
         else
-            ($(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME=$(echo "scale=1; ( $CONS_BLOCK_TIME / 1 ) " | bc) && KIRA_BLOCK="$KIRA_BLOCK ~${CONS_BLOCK_TIME}s"
+            ($(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME=$(echo "scale=1; ( $CONS_BLOCK_TIME / 1 ) " | bc) && LATEST_BLOCK_HEIGHT="$LATEST_BLOCK_HEIGHT ~${CONS_BLOCK_TIME}s"
         fi
 
         KIRA_NETWORK_TMP="NETWORK: ${KIRA_NETWORK}${WHITESPACE}"
-        KIRA_BLOCK_TMP="BLOCKS: ${KIRA_BLOCK}${WHITESPACE}"
+        KIRA_BLOCK_TMP="BLOCKS: ${LATEST_BLOCK_HEIGHT}${WHITESPACE}"
         [ -z "$GENESIS_SHA256" ] && GENESIS_SHA256="????????????"
         echo -e "|\e[35;1m ${KIRA_NETWORK_TMP:0:24}${KIRA_BLOCK_TMP:0:21} \e[33;1m: $(echo "$GENESIS_SHA256" | head -c 4)...$(echo "$GENESIS_SHA256" | tail -c 5)"
 
@@ -137,12 +137,12 @@ while : ; do
         VAL_TOTAL=$(globGet VAL_TOTAL) && VALTOTAL="V.TOTAL: ${VAL_TOTAL}${WHITESPACE}"
         VAL_WAITING=$(globGet VAL_WAITING) && VALWAITING="WAITING: ${VAL_WAITING}${WHITESPACE}"
         
-        [ "$PREVIOUS_BLOCK" == "$KIRA_BLOCK" ] && [ "${CONS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
+        [ "$PREVIOUS_BLOCK" == "$LATEST_BLOCK_HEIGHT" ] && [ "${CONS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
         [ "${CONS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
         
-        PREVIOUS_BLOCK="$KIRA_BLOCK"
+        ($(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && PREVIOUS_BLOCK="$LATEST_BLOCK_HEIGHT"
     else
-        KIRA_BLOCK="???"
+        LATEST_BLOCK_HEIGHT="???"
     fi
 
     LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
@@ -374,13 +374,13 @@ while : ; do
         set +e
         set +x
         source $KIRAMGR_SCRIPTS/load-secrets.sh
-        set -x
         set -e
 
         ( docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180" || \
         echoErr "ERROR: Failed to confirm indentity registrar upsert tx" )
         
         echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+        set +x
         sleep 5
         FORCE_SCAN="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "a" ]; then

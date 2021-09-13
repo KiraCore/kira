@@ -41,7 +41,7 @@ while : ; do
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK=$(globGet LATEST_BLOCK)
+    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
     [ "${NAME,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -177,7 +177,7 @@ while : ; do
     [ ! -z "$KIRA_NODE_ID" ] && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
-        LATEST_BLOCK_TMP="${LATEST_BLOCK}${WHITESPACE}"
+        LATEST_BLOCK_TMP="${LATEST_BLOCK_HEIGHT}${WHITESPACE}"
         [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && CATCHUP_TMP="catching up" || CATCHUP_TMP=""
         echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${LATEST_BLOCK_TMP:0:23} : $CATCHUP_TMP"
     fi
