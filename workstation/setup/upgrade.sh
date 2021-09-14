@@ -37,9 +37,8 @@ if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
 fi
 
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
-
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
+        UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
         if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
             echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
             globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
@@ -148,6 +147,10 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
     CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    
+    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    rm -fv $KIRA_SNAP/*.zip
 
     globSet LATEST_BLOCK $NEW_BLOCK_HEIGHT
     globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
