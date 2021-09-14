@@ -14,7 +14,7 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-37" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
@@ -40,7 +40,7 @@ showUpgradePlan | jq
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-37" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
