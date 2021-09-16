@@ -15,7 +15,7 @@ INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"c
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-38" && \
+UPGRADE_NAME_TMP="upgrade-40" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
@@ -41,7 +41,7 @@ INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"c
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-38" && \
+UPGRADE_NAME_TMP="upgrade-40" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
@@ -86,7 +86,7 @@ Flags:
       --new-chain-id string           new chain id
       --node string                   <host>:<port> to tendermint rpc interface for this chain (default "tcp://localhost:26657")
       --offline                       Offline mode (does not allow any online functionality
-      --old-chain-id string           old chain id
+      --old-chain-id strin           old chain id
       --resources string              resource info (default "[]")
       --rollback-memo string          rollback memo
   -s, --sequence uint                 The sequence number of the signing account (offline mode only)
