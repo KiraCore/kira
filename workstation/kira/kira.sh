@@ -367,8 +367,9 @@ while : ; do
     elif [ "${OPTION,,}" == "j" ]; then
         echoInfo "INFO: Attempting to claim validator seat..."
         read -p "INPUT UNIQUE MONIKER (your node new nickname): " MONIKER
-        SUCCESS=false && ( docker exec -i validator /bin/bash -c ". /etc/profile && claimValidatorSeat validator \"$MONIKER\"" && SUCCESS=true || \
-        echoErr "ERROR: Failed to confirm claim validator tx" )
+        SUCCESS=false 
+        docker exec -i validator /bin/bash -c ". /etc/profile && claimValidatorSeat validator \"$MONIKER\"" && SUCCESS=true || \
+            echoErr "ERROR: Failed to confirm claim validator tx"
 
         if [ "${SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Loading secrets..."
