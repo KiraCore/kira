@@ -192,17 +192,20 @@ function propAwait() {
 function whitelistValidator() {
     ACC="$1"
     ADDR="$2"
+    TIMEOUT=$3
     ($(isNullOrEmpty $ACC)) && echoErr "ERROR: Account name was not defined " && return 1
     ($(isNullOrEmpty $ADDR)) && echoErr "ERROR: Validator address was not defined " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+
     if ($(isPermWhitelisted $ADDR $PermClaimValidator)) ; then
         echoWarn "WARNING: Address $ADDR was already whitelisted as validator"
     else
         echoInfo "INFO: Adding $ADDR to the validator set"
         echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
-        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async | txAwait
+        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async | txAwait $TIMEOUT
 
         echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --description="Adding Validator via KIRA Manager" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait 
+        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --description="Adding Validator via KIRA Manager" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait $TIMEOUT
 
         echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
         LAST_PROPOSAL=$(lastProposal) 
@@ -225,6 +228,8 @@ function whitelistValidator() {
 function whitelistValidators() {
     ACCOUNT=$1
     WHITELIST=$2
+    TIMEOUT=$3
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if [ -f "$WHITELIST" ] ; then 
         echoInfo "INFO: List of validators was found ($WHITELIST)"
         while read key ; do
@@ -234,7 +239,7 @@ function whitelistValidators() {
                 continue
             fi
             echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
-            whitelistValidator validator $key || echoErr "ERROR: Failed to whitelist $key"
+            whitelistValidator validator $key $TIMEOUT || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
         done < $WHITELIST
     else
         echoErr "ERROR: List of validators was NOT found ($WHITELIST)"

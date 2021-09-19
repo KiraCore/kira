@@ -58,7 +58,9 @@ LAST_PROPOSAL=$(lastProposal) && sekaid query customgov votes $LAST_PROPOSAL --o
 ```
 ## Adding Validators
 ```
-kira1yswhg6caeedep2xg88a795rkx9y08yucmpn2e2
+kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6
+kira10p4uaylvx7les2ara6unzl0tkkldt4h8xwjvzp
+kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
 
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
 ```
