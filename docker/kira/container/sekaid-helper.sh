@@ -355,8 +355,12 @@ function whitelistPermission() {
     fi
 }
 
-function showUpgradePlan() {
-    sekaid query upgrade show-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
+function showCurrentPlan() {
+    sekaid query upgrade current-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
+}
+
+function showNextPlan() {
+    sekaid query upgrade next-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
 }
 
 # showIdentityRecord <account> <key> // shows all or a single key

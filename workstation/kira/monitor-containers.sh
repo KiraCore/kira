@@ -26,6 +26,7 @@ echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
 echoWarn "| OLD UPGRADE NAME: $UPGRADE_NAME"
+echoWarn "| OLD UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 sleep 1
@@ -58,7 +59,8 @@ for name in $CONTAINERS; do
         echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         # TODO: REMOVE DOCKER
         echoInfo "INFO: Fetching upgrade plan..."
-        TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showUpgradePlan" | jsonParse "" || echo "")
+        TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "" || echo "")
+        [ "${TMP_UPGRADE_PLAN,,}" == "{\"plan\":null}" ] && TMP_UPGRADE_PLAN=""
         (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$UPGRADE_PLAN" != "$TMP_UPGRADE_PLAN" ] && NEW_UPGRADE_PLAN=$TMP_UPGRADE_PLAN
     elif [ "${name,,}" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
@@ -72,7 +74,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.min_upgrade_time" || echo "")
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.instate_upgrade" || echo "")
-    if [ "$UPGRADE_NAME" != "$TMP_UPGRADE_NAME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
+    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"

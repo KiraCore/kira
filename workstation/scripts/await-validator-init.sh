@@ -178,13 +178,13 @@ EOL
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"$FRONTEND_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
+    UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900));
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
  --instate-upgrade=true \
  --resources='[$UPGRADE_RESOURCES]' \
- --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
- --height=0  \
+ --min-upgrade-time=$UPGRADE_TIME \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
  --rollback-memo="${UPGRADE_NAME}-roll" \
@@ -194,29 +194,44 @@ sekaid tx upgrade proposal-set-plan \
 EOL
 )
     globSet "UPGRADE_NAME" "$UPGRADE_NAME"
+    globSet "UPGRADE_TIME" "$UPGRADE_TIME"
 
     VOTE_YES_LAST_PROPOSAL="voteYes \$(lastProposal) validator"
     QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
+    PREVIOUS_PROPOSAL="0"
 
     docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
-    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
+    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
+    
 
     docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
-    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
+    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
 
     docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
-    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+    
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
+    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
 
     docker exec -i validator bash -c "source /etc/profile && $UPGRADE_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
-    echoWarn "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+    
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
+    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
 
     echoInfo "INFO: Loading secrets..."
     set +e
