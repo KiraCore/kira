@@ -183,6 +183,7 @@ EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
  --instate-upgrade=true \
+ --skip-handler=true \
  --resources='[$UPGRADE_RESOURCES]' \
  --min-upgrade-time=$UPGRADE_TIME \
  --old-chain-id="\$NETWORK_NAME" \

@@ -15,10 +15,11 @@ INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"c
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-44" && \
+UPGRADE_NAME_TMP="upgrade-45" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
+ --skip-handler=true \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --height=0  \
@@ -42,10 +43,11 @@ INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"c
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-44" && \
+UPGRADE_NAME_TMP="upgrade-45" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
+ --skip-handler=true \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --height=0  \
