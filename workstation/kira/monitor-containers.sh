@@ -96,9 +96,9 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         rm -fv $KIRA_DUMP/kiraplan-done.log.txt || echoInfo "INFO: plan log dump could not be wipred before plan service start"
         systemctl start kiraplan
     else
-        echoWatn "WARNING:    Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
-        echoWatn "WARNING:    Upgrade Name: $UPGRADE_NAME -> $TMP_UPGRADE_NAME"
-        echoWatn "WARNING: Upgrade Instate: $TMP_UPGRADE_INSTATE"
+        echoWarn "WARNING:    Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
+        echoWarn "WARNING:    Upgrade Name: $UPGRADE_NAME -> $TMP_UPGRADE_NAME"
+        echoWarn "WARNING: Upgrade Instate: $TMP_UPGRADE_INSTATE"
         echoWarn "WARNING: Upgrade plan will NOT be changed!"
         
     fi
