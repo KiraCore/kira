@@ -28,7 +28,7 @@ echoWarn "------------------------------------------------"
 UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
 UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
 UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
-jsonParse "plan.resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
+jsonParse "resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
 (jq -rc '.[] | @base64' $UPGRADE_PLAN_RES_FILE 2> /dev/null || echo -n "") > $UPGRADE_PLAN_RES64_FILE
 
 if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then

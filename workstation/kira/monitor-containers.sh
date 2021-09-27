@@ -59,8 +59,8 @@ for name in $CONTAINERS; do
         echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         # TODO: REMOVE DOCKER
         echoInfo "INFO: Fetching upgrade plan..."
-        TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "" || echo "")
-        [ "${TMP_UPGRADE_PLAN,,}" == "{\"plan\":null}" ] && TMP_UPGRADE_PLAN=""
+        TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "plan" || echo "")
+        ($(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showCurrentPlan" | jsonParse "plan" || echo "")
         (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$UPGRADE_PLAN" != "$TMP_UPGRADE_PLAN" ] && NEW_UPGRADE_PLAN=$TMP_UPGRADE_PLAN
     elif [ "${name,,}" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
@@ -71,10 +71,11 @@ done
 
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     echoInfo "INFO: New upgrade plan is available!"
-    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.name" || echo "")
-    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.min_upgrade_time" || echo "")
-    TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "plan.instate_upgrade" || echo "")
-    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) ; then
+    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
+    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "min_upgrade_time" || echo "")
+    TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
+    # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
+    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) && [ $UPGRADE_TIME -lt $TMP_UPGRADE_TIME ] ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
