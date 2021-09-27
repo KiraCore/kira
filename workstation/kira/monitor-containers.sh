@@ -70,12 +70,12 @@ for name in $CONTAINERS; do
 done
 
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
-    echoInfo "INFO: New upgrade plan is available!"
+    echoInfo "INFO: Upgrade plan was found!"
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isBoolean "$TMP_UPGRADE_INSTATE")) && [ $UPGRADE_TIME -lt $TMP_UPGRADE_TIME ] ; then
+    if [[ $TMP_UPGRADE_TIME -lt $UPGRADE_TIME ]] && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
@@ -96,7 +96,11 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         rm -fv $KIRA_DUMP/kiraplan-done.log.txt || echoInfo "INFO: plan log dump could not be wipred before plan service start"
         systemctl start kiraplan
     else
-        echoWarn "WARNING: Upgrade plan is invalid"
+        echoWatn "WARNING:    Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
+        echoWatn "WARNING:    Upgrade Name: $UPGRADE_NAME -> $TMP_UPGRADE_NAME"
+        echoWatn "WARNING: Upgrade Instate: $TMP_UPGRADE_INSTATE"
+        echoWarn "WARNING: Upgrade plan will NOT be changed!"
+        
     fi
 else
     echoInfo "INFO: No new upgrade plans were found!"
