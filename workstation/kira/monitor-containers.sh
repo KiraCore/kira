@@ -14,7 +14,7 @@ NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
 
 UPGRADE_NAME=$(globGet UPGRADE_NAME)
-UPGRADE_TIME=$(globGet UPGRADE_TIME)
+UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
 NEW_UPGRADE_PLAN=""
 
@@ -72,10 +72,10 @@ done
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     echoInfo "INFO: New upgrade plan is available!"
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
-    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "min_upgrade_time" || echo "")
+    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && ($(isNaturalNumber "$TMP_UPGRADE_TIME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isNullOrEmpty "$TMP_UPGRADE_INSTATE")) && [ $UPGRADE_TIME -lt $TMP_UPGRADE_TIME ] ; then
+    if [ "$UPGRADE_TIME" != "$TMP_UPGRADE_TIME" ] && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && (! $(isBoolean "$TMP_UPGRADE_INSTATE")) && [ $UPGRADE_TIME -lt $TMP_UPGRADE_TIME ] ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
