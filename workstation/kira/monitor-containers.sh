@@ -75,7 +75,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
+    if [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [ "${UPGRADE_NAME,,}" != "${TMP_UPGRADE_NAME,,}" ] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         globSet "UPGRADE_NAME" "$TMP_UPGRADE_NAME"
         globSet "UPGRADE_TIME" "$TMP_UPGRADE_TIME"
@@ -103,7 +103,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         
     fi
 else
-    echoInfo "INFO: No new upgrade plans were found!"
+    echoInfo "INFO: No new upgrade plans were found or are not expeted!"
 fi
 
 NEW_LATEST_BLOCK=0

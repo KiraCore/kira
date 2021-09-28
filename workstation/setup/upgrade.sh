@@ -123,7 +123,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
 
     globSet UPGRADE_EXPORT_DONE "true"
 elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
-    echoInfo "INFO: Started creation of new genesis requested!"
+    echoInfo "INFO: Started, creation of new genesis requested!"
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
     rm -fv $GENESIS_EXPORT
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME > \$COMMON_DIR/genesis-export.json"
