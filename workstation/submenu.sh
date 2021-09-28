@@ -279,7 +279,7 @@ systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan
 systemctl restart kiraup
-systemctl restart kiraplan
+systemctl stop kiraplan || echoWarn "WARNING: Failed to stop KIRA Plan!"
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
