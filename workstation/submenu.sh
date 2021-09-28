@@ -223,7 +223,6 @@ UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
 globSet UPGRADE_NAME "$UPGRADE_NAME"
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date +'%Y-%m-%d %H:%M:%S')"
-globSet PLAN_DONE "true"
 globSet AUTO_UPGRADES "true"
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
@@ -280,6 +279,7 @@ systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan
 systemctl restart kiraup
+systemctl restart kiraplan
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2

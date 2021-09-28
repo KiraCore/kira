@@ -12,17 +12,24 @@ IS_STARTED="false"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+UPGRADE_NAME=$(globGet UPGRADE_NAME)
+UPGRADE_TIME=$(globGet UPGRADE_TIME)
 TIMEOUT=3600
 
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
-echoWarn "| COMMON DIR: $COMMON_PATH"
-echoWarn "|    TIMEOUT: $TIMEOUT seconds"
-echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|   COMMON DIR: $COMMON_PATH"
+echoWarn "|      TIMEOUT: $TIMEOUT seconds"
+echoWarn "|     RPC PORT: $RPC_PORT"
+echoWarn "| UPGRADE NAME: $UPGRADE_NAME"
+echoWarn "| UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|-------------------------------------------------"
 set -x
+
+($(isNullOrEmpty $UPGRADE_NAME)) && echoErr "ERROR: Invalid upgrade name!" && exit 1
+(! $(isNaturalNumber $UPGRADE_TIME)) && echoErr "ERROR: Invalid upgrade time!" && exit 1
 
 NODE_ID=""
 PREVIOUS_HEIGHT=0
@@ -151,9 +158,6 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
-    [ -z "UPGRADE_NAME" ] && echoErr "ERROR: Invalid upgrade namen!" && exit 1
-
     UPGRADE_RESOURCES=""
     REPO_ZIP="/tmp/repo.zip"
     REPO_TMP="/tmp/repo"
@@ -178,7 +182,6 @@ EOL
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"$FRONTEND_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
-    UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900));
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
@@ -194,8 +197,6 @@ sekaid tx upgrade proposal-set-plan \
  --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 EOL
 )
-    globSet "UPGRADE_NAME" "$UPGRADE_NAME"
-    globSet "UPGRADE_TIME" "$UPGRADE_TIME"
 
     VOTE_YES_LAST_PROPOSAL="voteYes \$(lastProposal) validator"
     QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
