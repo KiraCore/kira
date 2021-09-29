@@ -72,14 +72,21 @@ function txAwait() {
     done
 }
 
+# e.g. showAddress validator
+function showAddress() {
+    ($(isKiraAddress "$1")) && echo "$1" || echo $(sekaid keys show "$1" --keyring-backend=test --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
+}
+
+# tryGetPermissions validator
 function tryGetPermissions() {
-    [[ $1 == kira* ]] && echo $(sekaid query customgov permissions "$1" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    ADDR=$(showAddress $1)
+    echo $(sekaid query customgov permissions "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 function isPermBlacklisted() {
-    ADDR=$1
+    ADDR=$(showAddress "$1")
     PERM=$2
-    if (! $(isNaturalNumber $PERM)) || [[ $ADDR != kira* ]] ; then
+    if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
         INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
@@ -88,9 +95,9 @@ function isPermBlacklisted() {
 }
 
 function isPermWhitelisted() {
-    ADDR=$1
+    ADDR=$(showAddress "$1")
     PERM=$2
-    if (! $(isNaturalNumber $PERM)) || [[ $ADDR != kira* ]] ; then
+    if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
         INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
@@ -191,7 +198,7 @@ function propAwait() {
 # e.g. whitelistValidator validator kiraXXXXXXXXXXX
 function whitelistValidator() {
     ACC="$1"
-    ADDR="$2"
+    ADDR=$(showAddress $2)
     TIMEOUT=$3
     ($(isNullOrEmpty $ACC)) && echoErr "ERROR: Account name was not defined " && return 1
     ($(isNullOrEmpty $ADDR)) && echoErr "ERROR: Validator address was not defined " && return 1
@@ -258,21 +265,10 @@ function claimValidatorSeat() {
     sekaid tx customstaking claim-validator-seat --from "$ACCOUNT" --keyring-backend=test --home=$SEKAID_HOME --moniker="$MONIKER" --chain-id=$NETWORK_NAME --broadcast-mode=async --fees=100ukex --yes | txAwait $TIMEOUT
 }
 
-# e.g. showAddress validator
-function showAddress() {
-    echo $(sekaid keys show "$1" --keyring-backend=test --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
-}
-
 # e.g. showBalance validator
 function showBalance() {
-    ADDR=$1
-    if [[ $ADDR != kira* ]] ; then
-        ADDR=$(showAddress $ADDR)
-    fi
-
-    if [ ! -z "$ADDR" ] ; then
-        echo $(sekaid query bank balances "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
-    fi
+    ADDR=$(showAddress $1)
+    (! $(isNullOrEmpty $ADDR)) && echo $(sekaid query bank balances "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
 }
 
 # e.g. showStatus -> { ... }
@@ -343,9 +339,10 @@ function unpauseValidator() {
 function whitelistPermission() {
     KM_ACC=$1
     PERM=$2
-    ADDR=$3
+    ADDR=$(showAddress $3)
     TIMEOUT=$4
-    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined " && return 1
+    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
     (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if ($(isPermWhitelisted $ADDR $PERM)) ; then
@@ -367,7 +364,7 @@ function showNextPlan() {
 # e.g. showIdentityRecord validator "mykey"
 # e.g. showIdentityRecord validator 15
 function showIdentityRecord() {
-    [[ $1 != kira* ]] && KM_ACC=$(showAddress $1) || KM_ACC=$1
+    KM_ACC=$(showAddress $1)
     KM_KEY=$2 && [ "$KM_KEY" == "*" ] && KM_KEY=""
 
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name or address '$1' is invalid" && return 1
@@ -385,7 +382,7 @@ function showIdentityRecord() {
 # upsertIdentityRecord <account> <key> <value> <timeout-seconds>
 # e.g. upsertIdentityRecord validator "mykey" "My Value" 180
 function upsertIdentityRecord() {
-    KM_ACC=$1
+    KM_ACC=$(showAddress $1)
     IR_KEY=$2
     IR_VAL=$3
     TIMEOUT=$4
@@ -404,13 +401,13 @@ function upsertIdentityRecord() {
 # e.g. verifyIdentityRecord validator $(showAddress test) "mykey,mykey2" "200ukex" 180
 function verifyIdentityRecord() {
     KM_ACC=$1
-    [[ $2 != kira* ]] && KM_VER="" || KM_VER=$2
+    KM_VER=$(showAddress $2)
     KM_KEYS=$3
     KM_TIP=$4
     TIMEOUT=$5
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
-    ($(isNullOrEmpty $KM_VER)) && echoErr "ERROR: Verifier address '$KM_VER' is invalid" && return 1
-    ($(isNullOrEmpty $KM_KEYS)) && echoErr "ERROR: Record keys to verify were NOT specified" && return 1
+    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $KM_VER)) && echoErr "ERROR: Verifier address '$2' is invalid" && return 1
+    ($(isNullOrEmpty $KM_KEYS)) && echoErr "ERROR: Record keys to verify were NOT specified '$3'" && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
     FINAL_IR_KEYS=""
@@ -429,8 +426,8 @@ function verifyIdentityRecord() {
 # showIdentityVerificationRequests <verifier-account/address> <requester-address>
 # e.g. showIdentityVerificationRequests validator $(showAddress test)
 function showIdentityVerificationRequests() {
-    [[ $1 != kira* ]] && KM_ACC=$(showAddress $1) || KM_ACC=$1
-    [[ $1 != kira* ]] && KM_REQ=$2 || KM_REQ=""
+    KM_ACC=$(showAddress $1)
+    KM_REQ=$(showAddress $2)
 
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name or address '$1' is invalid" && return 1
     if ($(isNullOrEmpty $KM_REQ)) ; then
@@ -444,12 +441,11 @@ function showIdentityVerificationRequests() {
 # e.g. approveIdentityVerificationRequest validator 1 180
 function approveIdentityVerificationRequest() {
     KM_ACC=$1
-    KM_REQ=$2 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    TIMEOUT=$3
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
+    KM_REQ=$2
+    TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-
+    
     sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
@@ -457,12 +453,11 @@ function approveIdentityVerificationRequest() {
 # e.g. rejectIdentityVerificationRequest validator 1 180
 function rejectIdentityVerificationRequest() {
     KM_ACC=$1
-    KM_REQ=$2 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    TIMEOUT=$3
+    KM_REQ=$2
+    TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-
+    
     sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
