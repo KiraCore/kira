@@ -9,6 +9,9 @@ UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
 UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 CONTAINERS=$(globGet CONTAINERS)
+UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
+OLD_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
+NEW_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
 
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
@@ -18,6 +21,8 @@ echoWarn "|     PLAN START DATE: $PLAN_START_DT"
 echoWarn "| UPGRADE EXPORT DONE: $UPGRADE_EXPORT_DONE"
 echoWarn "|  UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
 echoWarn "|     UPGRADE INSTATE: $UPGRADE_INSTATE"
+echoWarn "|        OLD CHAIN ID: $OLD_CHAIN_ID"
+echoWarn "|        NEW CHAIN ID: $NEW_CHAIN_ID"
 echoWarn "|          CONTAINERS: $CONTAINERS"
 echoWarn "------------------------------------------------"
 
@@ -124,13 +129,24 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     globSet UPGRADE_EXPORT_DONE "true"
 elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
     echoInfo "INFO: Started, creation of new genesis requested!"
+    
+
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
     rm -fv $GENESIS_EXPORT
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME > \$COMMON_DIR/genesis-export.json"
 
+    echoInfo "INFO: Exporting genesis!"
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME > \$COMMON_DIR/genesis-export.json"
     ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file was NOT exported or empty!" && sleep 10 && exit 1
+    OLD_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
+    [ "$OLD_NETWORK_NAME" != "$OLD_CHAIN_ID" ] && echoErr "ERROR: Invalid genesis export, expected chain id '$OLD_CHAIN_ID', but got '$OLD_NETWORK_NAME'" && sleep 10 && exit 1
+    
+    # TODO ADD CHAIN ID to genesies!!!
+    jq ".chain_id = \"$NEW_CHAIN_ID\"" $GENESIS_EXPORT > "$GENESIS_EXPORT.tmp" && cp -afv "$GENESIS_EXPORT.tmp" "$GENESIS_EXPORT" && rm -fv "$GENESIS_EXPORT.tmp"
+
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
-    [ -z "$NEW_NETWORK_NAME" ] && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
+    ($(isNullOrEmpty $NEW_NETWORK_NAME)) && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
+    [ "$NEW_NETWORK_NAME" != "$NEW_CHAIN_ID" ] && echoErr "ERROR: Invalid genesis chain id swap, expected '$NEW_CHAIN_ID', but got '$NEW_NETWORK_NAME'" && sleep 10 && exit 1
+    
     NEW_BLOCK_HEIGHT=$(jsonParse "initial_height" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     (! $(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
     NEW_BLOCK_TIME=$(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n "")

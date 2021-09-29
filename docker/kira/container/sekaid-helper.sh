@@ -137,9 +137,16 @@ function lastProposal() {
 function voteYes() {
     PROPOSAL=$1
     ACCOUNT=$2
-    YES=1
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL $YES --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
+    sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
+}
+
+# voteNo $(lastProposal) validator
+function voteNo() {
+    PROPOSAL=$1
+    ACCOUNT=$2
+    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
+    sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 }
 
 function networkProperties() {
