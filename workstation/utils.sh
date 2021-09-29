@@ -92,6 +92,12 @@ function isMnemonic() {
     if (( $kg_count % 4 == 0 )) && [ $kg_count -ge 12 ] ; then echo "true" ; else echo "false" ; fi
 }
 
+function date2unix() {
+    if (! $(isNullOrWhitespaces "$1")) ; then
+        (! $(isNaturalNumber $1)) && echo $(date -d "$1" +"%s") || echo "$1"
+    fi
+}
+
 function isPortOpen() {
     kg_addr=$1 && kg_port=$2 && kg_timeout=$3
     (! $(isNaturalNumber $kg_timeout)) && kg_timeout=1

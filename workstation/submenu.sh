@@ -24,6 +24,8 @@ globSet LATEST_BLOCK_HEIGHT 0
 globSet LATEST_BLOCK_TIME 0
 globSet MIN_HEIGHT 0
 
+timedatectl set-timezone "Etc/UTC"
+
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
 INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
@@ -206,10 +208,6 @@ globSet PRIVATE_MODE "$PRIVATE_MODE"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
-globSet PLAN_DONE "true"
-globSet PLAN_FAIL "false"
-globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
-globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
@@ -224,6 +222,11 @@ globSet UPGRADE_NAME "$UPGRADE_NAME"
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet AUTO_UPGRADES "true"
+globSet PLAN_DONE "true"
+globSet PLAN_FAIL "false"
+globSet PLAN_FAIL_COUNT "0"
+globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
