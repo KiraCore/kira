@@ -43,21 +43,18 @@ echoInfo "INFO: Saving valopers info..."
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
     echoInfo "INFO: Fetching validator address.."
     VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
-    if [ ! -z "$VALIDATOR_ADDR" ] && [[ $VALIDATOR_ADDR == kira* ]] ; then
-        globSet VALIDATOR_ADDR "$VALIDATOR_ADDR"
-    else
-        VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
-    fi
+    ($(isKiraAddress "$VALIDATOR_ADDR")) && globSet VALIDATOR_ADDR "$VALIDATOR_ADDR" || VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 else
     echoInfo "INFO: Validator info will NOT be scanned..."
     echo -n "" > $VALINFO_SCAN_PATH
     echo -n "" > $VALSTATUS_SCAN_PATH
     globDel VALIDATOR_ADDR
+    VALIDATOR_ADDR=""
 fi
 
 echoInfo "INFO: Fetching validator status ($VALIDATOR_ADDR) ..."
 VALSTATUS=""
-if [ ! -z "$VALIDATOR_ADDR" ] && [[ $VALIDATOR_ADDR == kira* ]] ; then
+if ($(isKiraAddress "$VALIDATOR_ADDR")) ; then
     VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query customstaking validator --addr=$VALIDATOR_ADDR --output=json)" | jsonParse "" || echo -n "")
 fi
 
