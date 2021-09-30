@@ -93,8 +93,9 @@ function isMnemonic() {
 }
 
 function date2unix() {
-    if (! $(isNullOrWhitespaces "$1")) ; then
-        (! $(isNaturalNumber $1)) && echo $(date -d "$1" +"%s") || echo "$1"
+    kg_date_tmp="$*" && kg_date_tmp=$(echo "$kg_date_tmp" | xargs 2> /dev/null || echo -n "")
+    if (! $(isNullOrWhitespaces "$kg_date_tmp")) ; then
+        ($(isNaturalNumber $kg_date_tmp)) && echo "$kg_date_tmp" || echo $(date -d "$kg_date_tmp" +"%s")
     fi
 }
 

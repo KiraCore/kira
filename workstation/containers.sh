@@ -98,6 +98,7 @@ fi
 
 globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
 globSet EXPOSED_PORTS "$PORTS"
+globSet CONTAINERS_BUILD_SUCCESS "true"
 
 set +x
 echoWarn "------------------------------------------------"

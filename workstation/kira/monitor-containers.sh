@@ -79,8 +79,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
     if [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt 0 ]] && [ "${UPGRADE_NAME,,}" != "${TMP_UPGRADE_NAME,,}" ] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) ; then
         echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
-        
-        #"$(date +'%Y-%m-%d %H:%M:%S')"
+
         globSet UPGRADE_NAME "$TMP_UPGRADE_NAME"
         globSet UPGRADE_TIME "$TMP_UPGRADE_TIME"
         globSet UPGRADE_INSTATE "$TMP_UPGRADE_INSTATE"

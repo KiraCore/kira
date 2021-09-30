@@ -74,6 +74,6 @@ else
 fi
 
 echoInfo "INFO: Waiting for frontend to start..."
-$KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
+$KIRAMGR_SCRIPTS/await-frontend-init.sh
 
 systemctl restart kiraclean

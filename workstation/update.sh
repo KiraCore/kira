@@ -145,9 +145,11 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     LOG_FILE="$UPDATE_LOGS_DIR/${UPDATE_CHECK_CONTAINERS}.log" && globSet UPDATE_CONTAINERS_LOG "$LOG_FILE"
 
     rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    globSet CONTAINERS_BUILD_SUCCESS "false"
+    $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || echoErr "ERROR: Containers build logs pipe failed!"
+    CONTAINERS_BUILD_SUCCESS=$(globGet CONTAINERS_BUILD_SUCCESS)
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-    if [ "${SUCCESS,,}" == "true" ] ; then
+    if [ "${CONTAINERS_BUILD_SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized $UPDATE_CHECK_CONTAINERS"
         touch $UPDATE_CHECK
     else

@@ -98,7 +98,7 @@ else
 fi
 
 echoInfo "INFO: Waiting for interx to start..."
-$KIRAMGR_SCRIPTS/await-interx-init.sh || exit 1
+$KIRAMGR_SCRIPTS/await-interx-init.sh
 
 if [ "${INFRA_MODE,,}" == "local" ] ; then
     while : ; do
