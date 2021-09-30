@@ -102,6 +102,7 @@ else
 fi
 
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE) && [ -z "$PRIVATE_MODE" ] && PRIVATE_MODE="false"

@@ -31,7 +31,6 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
 PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
-NEW_NETWORK=$(globGet NEW_NETWORK "$GLOBAL_COMMON_RO")
 MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO")
 CFG_timeout_commit=$(globGet CFG_timeout_commit)
 
@@ -441,7 +440,7 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] && [ "$NEW_NETWORK" != "true" ] ; then
+if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
     cat >$LOCAL_STATE <<EOL
 {

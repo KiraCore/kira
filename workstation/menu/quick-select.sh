@@ -40,7 +40,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
 
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"
-        $KIRA_MANAGER/menu/chain-id-select.sh
+        source $KIRA_MANAGER/submenu.sh
         exit 0
     fi
 elif [ "${NEW_NETWORK,,}" == "false" ] ; then

@@ -106,6 +106,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
 
     globSet PRIVATE_MODE "$PRIVATE_MODE" $COMMON_GLOB
+    globSet NEW_NETWORK "$NEW_NETWORK" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
