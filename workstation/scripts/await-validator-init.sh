@@ -204,7 +204,7 @@ sekaid tx upgrade proposal-set-plan \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
  --rollback-memo="${UPGRADE_NAME}-roll" \
- --max-enrollment-duration=1 \
+ --max-enrollment-duration=60 \
  --upgrade-memo="Genesis setup plan" \
  --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 EOL
