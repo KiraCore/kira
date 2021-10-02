@@ -204,9 +204,12 @@ function isSimpleJsonObjOrArrFile() {
 }
 
 function jsonParse() {
-    QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
-    FIN="" && [ ! -z "$2" ] && FIN=$(realpath $2 2> /dev/null || echo -n "")
-    FOUT="" && [ ! -z "$3" ] && FOUT=$(realpath $3 2> /dev/null || echo -n "")
+    local QUERY=""
+    local FIN=""
+    local FOUT=""
+    local INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    [ ! -z "$2" ] && FIN=$(realpath $2 2> /dev/null || echo -n "")
+    [ ! -z "$3" ] && FOUT=$(realpath $3 2> /dev/null || echo -n "")
     if [ ! -z "$INPUT" ] ; then
         for k in ${INPUT//./ } ; do
             k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
@@ -215,13 +218,9 @@ function jsonParse() {
         done
     fi
     if [ ! -z "$FIN" ] ; then
-        local TMP_SWAP="false"
-        local SUCCESS="true"
-        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
         if [ ! -z "$FOUT" ] ; then
-            rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()" || SUCCESS="false"
-            [ "$SUCCESS" == "true" ] && [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
+            rm -f "$FOUT" || :
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);fin.close();json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
         fi
@@ -252,10 +251,13 @@ function jsonQuickParse() {
 }
 
 function jsonEdit() {
-    local QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    local QUERY=""
+    local FIN=""
+    local FOUT=""
+    local INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
     local VALUE="$2"
-    local FIN="" && [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
-    local FOUT="" && [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
+    [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
+    [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
     [ "${VALUE,,}" == "null" ] && VALUE="None"
     [ "${VALUE,,}" == "true" ] && VALUE="True"
     [ "${VALUE,,}" == "false" ] && VALUE="False"
@@ -267,12 +269,9 @@ function jsonEdit() {
         done
     fi
     if [ ! -z "$FIN" ] ; then
-        local TMP_SWAP="false"
-        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
         if [ ! -z "$FOUT" ] ; then
             rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);obj$QUERY=$VALUE;json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()"
-            [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);obj$QUERY=$VALUE;fin.close();json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);obj$QUERY=$VALUE;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
         fi
@@ -282,10 +281,14 @@ function jsonEdit() {
 }
 
 function jsonObjEdit() {
-    local QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
-    local FVAL="" && [ ! -z "$2" ] && FVAL=$(realpath $2 2> /dev/null || echo -n "")
-    local FIN="" && [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
-    local FOUT="" && [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
+    local QUERY=""
+    local FVAL=""
+    local FIN=""
+    local FOUT=""
+    local INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    [ ! -z "$2" ] && FVAL=$(realpath $2 2> /dev/null || echo -n "")
+    [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
+    [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
     [ "${VALUE,,}" == "null" ] && VALUE="None"
     [ "${VALUE,,}" == "true" ] && VALUE="True"
     [ "${VALUE,,}" == "false" ] && VALUE="False"
@@ -297,13 +300,9 @@ function jsonObjEdit() {
         done
     fi
     if [ ! -z "$FIN" ] ; then
-        local TMP_SWAP="false"
-        local SUCCESS="true"
-        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
         if [ ! -z "$FOUT" ] ; then
             rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(fin);obj$QUERY=obj2;json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin.close();fin2.close();fout.close()" || SUCCESS="false"
-            [ "$SUCCESS" == "true" ] && [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(fin);obj$QUERY=obj2;fin.close();json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin2.close();fout.close()" || SUCCESS="false"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(f);obj$QUERY=obj2;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close();fin2.close()"
         fi
@@ -322,7 +321,7 @@ function urlExists() {
 # TODO: Investigate 0 output
 # urlContentLength 18.168.78.192:11000/download/snapshot.zip 
 function urlContentLength() {
-    VAL=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 2> /dev/null | awk '{print $2}' 2> /dev/null || echo -n "")
+    local VAL=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 2> /dev/null | awk '{print $2}' 2> /dev/null || echo -n "")
     # remove invisible whitespace characters
     VAL=$(echo ${VAL%$'\r'})
     (! $(isNaturalNumber $VAL)) && VAL=0
@@ -342,19 +341,20 @@ function globFile() {
 }
 
 function globGet() {
-    kg_FIL=$(globFile "$1" "$2")
+    local kg_FIL=$(globFile "$1" "$2")
     [[ -s $kg_FIL ]] && cat $kg_FIL || echo ""
     return 0
 }
 
 # threadsafe global get
 function globGetTS() {
-    kg_FIL=$(globFile "$1" "$2")
+    local kg_FIL=$(globFile "$1" "$2")
     [[ -s "$kg_FIL" ]] && sem --id $1 "cat $kg_FIL" || echo ""
     return 0
 }
 
 function globSet() {
+    local kg_FIL=""
     [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
     touch "$kg_FIL.tmp"
     [ ! -z ${2+x} ] && echo "$2" > "$kg_FIL.tmp" || cat > "$kg_FIL.tmp"
@@ -363,6 +363,7 @@ function globSet() {
 
 # threadsafe global set
 function globSetTS() {
+    local kg_FIL=""
     [ ! -z "$3" ] && kg_FIL=$(globFile "$1" "$3") || kg_FIL=$(globFile "$1")
     touch "$kg_FIL"
     [ ! -z ${2+x} ] &&  sem --id $kg_NAM "echo $2 > $kg_FIL" || sem --id $kg_NAM --pipe "cat > $kg_FIL"

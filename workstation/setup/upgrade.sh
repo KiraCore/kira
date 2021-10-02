@@ -3,6 +3,7 @@ set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/setup/upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+set -x
 SCRIPT_START_TIME="$(date -u +%s)"
 PLAN_START_DT=$(globGet PLAN_START_DT)
 UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
@@ -13,6 +14,7 @@ UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
 OLD_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
 NEW_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
 
+set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
@@ -25,6 +27,7 @@ echoWarn "|        OLD CHAIN ID: $OLD_CHAIN_ID"
 echoWarn "|        NEW CHAIN ID: $NEW_CHAIN_ID"
 echoWarn "|          CONTAINERS: $CONTAINERS"
 echoWarn "------------------------------------------------"
+set -x
 
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
 [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && \
@@ -33,12 +36,16 @@ echoWarn "------------------------------------------------"
 UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
 UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
 UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
+
+echoInfo "INFO: Extracting resources from the upgrade plan..."
 jsonParse "resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
 (jq -rc '.[] | @base64' $UPGRADE_PLAN_RES_FILE 2> /dev/null || echo -n "") > $UPGRADE_PLAN_RES64_FILE
 
 if ($(isFileEmpty "$UPGRADE_PLAN_RES64_FILE")) ; then
     echoErr "ERROR: Failed to querry upgrade plan resources info"
     exit 1
+else
+    echoInfo "INFO: Success upgrade plan file was found"
 fi
 
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
