@@ -140,8 +140,17 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     OLD_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     [ "$OLD_NETWORK_NAME" != "$OLD_CHAIN_ID" ] && echoErr "ERROR: Invalid genesis export, expected chain id '$OLD_CHAIN_ID', but got '$OLD_NETWORK_NAME'" && sleep 10 && exit 1
     
-    # TODO ADD CHAIN ID to genesies!!!
-    jq ".chain_id = \"$NEW_CHAIN_ID\"" $GENESIS_EXPORT > "$GENESIS_EXPORT.tmp" && cp -afv "$GENESIS_EXPORT.tmp" "$GENESIS_EXPORT" && rm -fv "$GENESIS_EXPORT.tmp"
+    # lets copy plan to separate file
+    TMP_NEXT_PLAN=$(globFile TMP_NEXT_PLAN)
+    jsonParse "app_state.upgrade.next_plan" $GENESIS_EXPORT $TMP_NEXT_PLAN
+    NEXT_CHAIN_ID=$(jsonParse "new_chain_id" $TMP_NEXT_PLAN)
+    jsonEdit "instate_upgrade" "true" $TMP_NEXT_PLAN $TMP_NEXT_PLAN
+    jsonEdit "old_chain_id" "\"$NEXT_CHAIN_ID\"" $TMP_NEXT_PLAN $TMP_NEXT_PLAN
+    jsonEdit "upgrade_time" "\"0\"" $TMP_NEXT_PLAN $TMP_NEXT_PLAN
+    jsonEdit "app_state.upgrade.next_plan" "null" $GENESIS_EXPORT $GENESIS_EXPORT
+
+    jsonEdit "chain_id" "\"$NEW_CHAIN_ID\"" $GENESIS_EXPORT $GENESIS_EXPORT
+    jsonObjEdit "app_state.upgrade.current_plan" $(globFile TMP_NEXT_PLAN) $GENESIS_EXPORT $GENESIS_EXPORT
 
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     ($(isNullOrEmpty $NEW_NETWORK_NAME)) && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1

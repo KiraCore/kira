@@ -56,17 +56,6 @@ voteYes $(lastProposal) validator
 ```
 LAST_PROPOSAL=$(lastProposal) && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 ```
-## Adding Validators
-```
-kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6
-kira10p4uaylvx7les2ara6unzl0tkkldt4h8xwjvzp
-kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
-
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
-```
-
-
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 30 --title="Proposal End Time set to 1 min" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
 
 ## Change Proposals Speed
 ```

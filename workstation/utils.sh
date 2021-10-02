@@ -94,9 +94,11 @@ function isMnemonic() {
 
 function date2unix() {
     kg_date_tmp="$*" && kg_date_tmp=$(echo "$kg_date_tmp" | xargs 2> /dev/null || echo -n "")
-    if (! $(isNullOrWhitespaces "$kg_date_tmp")) ; then
-        ($(isNaturalNumber $kg_date_tmp)) && echo "$kg_date_tmp" || echo $(date -d "$kg_date_tmp" +"%s")
+    if (! $(isNullOrWhitespaces "$kg_date_tmp")) && (! $(isNaturalNumber $kg_date_tmp)) ; then
+        kg_date_tmp=$(date -d "$kg_date_tmp" +"%s" 2> /dev/null || echo "0")
     fi
+
+    ($(isNaturalNumber "$kg_date_tmp")) && echo "$kg_date_tmp" || echo "0"
 }
 
 function isPortOpen() {
@@ -212,9 +214,13 @@ function jsonParse() {
         done
     fi
     if [ ! -z "$FIN" ] ; then
+        local TMP_SWAP="false"
+        local SUCCESS="true"
+        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
         if [ ! -z "$FOUT" ] ; then
             rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()"
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()" || SUCCESS="false"
+            [ "$SUCCESS" == "true" ] && [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
         fi
@@ -232,6 +238,7 @@ function isFileJson() {
 }
 
 function jsonQuickParse() {
+    local OUT=""
     if [ -z "$2" ] ; then
         OUT=$(cat | grep -Eo "\"$1\"[^,]*" 2> /dev/null | grep -Eo '[^:]*$' 2> /dev/null | xargs 2> /dev/null | awk '{print $1;}' 2> /dev/null 2> /dev/null)
     else
@@ -241,6 +248,68 @@ function jsonQuickParse() {
     OUT=${OUT%\}}
     ($(isNullOrEmpty "$OUT")) && return 1
     echo "$OUT"
+}
+
+function jsonEdit() {
+    local QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    local VALUE="$2"
+    local FIN="" && [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
+    local FOUT="" && [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
+    [ "${VALUE,,}" == "null" ] && VALUE="None"
+    [ "${VALUE,,}" == "true" ] && VALUE="True"
+    [ "${VALUE,,}" == "false" ] && VALUE="False"
+    if [ ! -z "$INPUT" ] ; then
+        for k in ${INPUT//./ } ; do
+            k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
+            [[ "$k" =~ ^\[.*\]$ ]] && QUERY="${QUERY}${k}" && continue
+            ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
+        done
+    fi
+    if [ ! -z "$FIN" ] ; then
+        local TMP_SWAP="false"
+        local SUCCESS="true"
+        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
+        if [ ! -z "$FOUT" ] ; then
+            rm -f "$FOUT"
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);obj$QUERY=$VALUE;json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin.close();fout.close()" || SUCCESS="false"
+            [ "$SUCCESS" == "true" ] && [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
+        else
+            python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);obj$QUERY=$VALUE;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
+        fi
+    else
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);obj$QUERY=$VALUE;print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));"
+    fi
+}
+
+function jsonObjEdit() {
+    local QUERY="" && INPUT=$(echo $1 | xargs 2> /dev/null 2> /dev/null || echo -n "")
+    local FVAL="" && [ ! -z "$2" ] && FVAL=$(realpath $2 2> /dev/null || echo -n "")
+    local FIN="" && [ ! -z "$3" ] && FIN=$(realpath $3 2> /dev/null || echo -n "")
+    local FOUT="" && [ ! -z "$4" ] && FOUT=$(realpath $4 2> /dev/null || echo -n "")
+    [ "${VALUE,,}" == "null" ] && VALUE="None"
+    [ "${VALUE,,}" == "true" ] && VALUE="True"
+    [ "${VALUE,,}" == "false" ] && VALUE="False"
+    if [ ! -z "$INPUT" ] ; then
+        for k in ${INPUT//./ } ; do
+            k=$(echo $k | xargs 2> /dev/null || echo -n "") && [ -z "$k" ] && continue
+            [[ "$k" =~ ^\[.*\]$ ]] && QUERY="${QUERY}${k}" && continue
+            ($(isNaturalNumber "$k")) && QUERY="${QUERY}[$k]" || QUERY="${QUERY}[\"$k\"]" 
+        done
+    fi
+    if [ ! -z "$FIN" ] ; then
+        local TMP_SWAP="false"
+        local SUCCESS="true"
+        [ "$FIN" == "$FOUT" ] && TMP_SWAP="true" && FOUT="${FOUT}.tmp"
+        if [ ! -z "$FOUT" ] ; then
+            rm -f "$FOUT"
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(fin);obj$QUERY=obj2;json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin.close();fin2.close();fout.close()" || SUCCESS="false"
+            [ "$SUCCESS" == "true" ] && [ "$TMP_SWAP" == "true" ] && cp -af "$FOUT" "$FIN" && rm -f $FOUT 
+        else
+            python3 -c "import json,sys;f=open('$FIN',\"r\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(f);obj$QUERY=obj2;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close();fin2.close()"
+        fi
+    else
+        cat | python3 -c "import json,sys;obj=json.load(sys.stdin);fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj$QUERY=obj2;print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));fin2.close()"
+    fi
 }
 
 # e.g. urlExists "18.168.78.192:11000/download/peers.txt"
@@ -370,8 +439,7 @@ function timerDel() {
 }
 
 function prettyTime {
-  local T=$1
-  (! $(isNaturalNumber $T)) && T=0
+  local T=$(date2unix "$1")
   local D=$((T/60/60/24))
   local H=$((T/60/60%24))
   local M=$((T/60%60))
@@ -386,19 +454,18 @@ function prettyTime {
 }
 
 function prettyTimeSlim {
-  local T=$1
-  (! $(isNaturalNumber $T)) && T=0
+  local T=$(date2unix "$1")
   local D=$((T/60/60/24))
   local H=$((T/60/60%24))
   local M=$((T/60%60))
   local S=$((T%60))
-  (( $D > 0 )) && (( $D > 1 )) && printf '%d d ' $D
-  (( $D > 0 )) && (( $D < 2 )) && printf '%d d ' $D
-  (( $H > 0 )) && (( $H > 1 )) && printf '%d h ' $H
-  (( $H > 0 )) && (( $H < 2 )) && printf '%d h ' $H
-  (( $M > 0 )) && (( $M > 1 )) && printf '%d m ' $M
-  (( $M > 0 )) && (( $M < 2 )) && printf '%d m ' $M
-  (( $S != 1 )) && printf '%d s\n' $S || printf '%d s\n' $S
+  (( $D > 0 )) && (( $D > 1 )) && printf '%dd ' $D
+  (( $D > 0 )) && (( $D < 2 )) && printf '%dd ' $D
+  (( $H > 0 )) && (( $H > 1 )) && printf '%dh ' $H
+  (( $H > 0 )) && (( $H < 2 )) && printf '%dh ' $H
+  (( $M > 0 )) && (( $M > 1 )) && printf '%dm ' $M
+  (( $M > 0 )) && (( $M < 2 )) && printf '%dm ' $M
+  (( $S != 1 )) && printf '%ds\n' $S || printf '%ds\n' $S
 }
 
 function resolveDNS {

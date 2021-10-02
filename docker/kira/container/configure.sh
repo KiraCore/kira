@@ -287,6 +287,7 @@ else
     echoWarn "WARNING: Fast sync is NOT possible, RPC nodes NOT found"
 fi
 
+set +x
 echoInfo "INFO: Final Peers List:"
 echoInfo "$CFG_rpc_servers"
 
@@ -330,6 +331,8 @@ echoInfo "|                 EXTERNAL_ADDRESS: $EXTERNAL_ADDRESS"
 echoInfo "----------------------------------"
 
 echoInfo "INFO: Starting sekai & tendermint configs setup..."
+set -x
+
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
 [ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG
 [ ! -z "$CFG_persistent_peers" ] && CDHelper text lineswap --insert="persistent_peers = \"$CFG_persistent_peers\"" --prefix="persistent_peers =" --path=$CFG

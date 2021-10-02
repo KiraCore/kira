@@ -134,16 +134,11 @@ for name in $CONTAINERS; do
 
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0")
-        LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00.000000000Z")
-        # convert time to unix timestamp
-        LATEST_BLOCK_TIME=$(date -d "$LATEST_BLOCK_TIME" +"%s")
-        
-        (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
-        (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
-        
-        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
-        ($(isNullOrEmpty "$CATCHING_UP")) && CATCHING_UP=false
+        LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+        LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00")
+        LATEST_BLOCK_TIME=$(date2unix "$LATEST_BLOCK_TIME") && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false") && (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP=false
+
         if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
