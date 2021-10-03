@@ -40,24 +40,32 @@ echoInfo "INFO: Starting containers build..."
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
 globSet VALIDATOR_EXPOSED false
-globSet FRONTEND_EXPOSED false
-globSet INTERX_EXPOSED false
+globSet FRONTEND_EXPOSED true
+globSet INTERX_EXPOSED true
 
 # setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
 globSet INFRA_CONTAINERS_COUNT "100"
 
+set -x
+set -e
+
+DEPLOYMENT_SUCCESS="true"
+
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
-    $KIRA_MANAGER/containers/start-seed.sh && globSet SEED_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
-    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
+    globSet SEED_EXPOSED true
+    $KIRA_MANAGER/containers/start-seed.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
-    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
+    globSet SENTRY_EXPOSED true
+    $KIRA_MANAGER/containers/start-sentry.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
-    $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh && globSet INTERX_EXPOSED true
-    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
+    globSet VALIDATOR_EXPOSED true
+    $KIRA_MANAGER/containers/start-validator.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     exit 1
@@ -98,7 +106,13 @@ fi
 
 globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
 globSet EXPOSED_PORTS "$PORTS"
-globSet CONTAINERS_BUILD_SUCCESS "true"
+
+if [ "${DEPLOYMENT_SUCCESS,,}" != "true" ] ; then
+    globSet CONTAINERS_BUILD_SUCCESS "false"
+    echoErr "ERROR: Failed to deploy one of the essential containers!" && exit 1
+else
+    globSet CONTAINERS_BUILD_SUCCESS "true"
+fi
 
 set +x
 echoWarn "------------------------------------------------"

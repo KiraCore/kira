@@ -13,7 +13,6 @@ IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 UPGRADE_NAME=$(globGet UPGRADE_NAME)
-UPGRADE_TIME=$(globGet UPGRADE_TIME)
 TIMEOUT=3600
 
 set +x
@@ -24,12 +23,10 @@ echoWarn "|   COMMON DIR: $COMMON_PATH"
 echoWarn "|      TIMEOUT: $TIMEOUT seconds"
 echoWarn "|     RPC PORT: $RPC_PORT"
 echoWarn "| UPGRADE NAME: $UPGRADE_NAME"
-echoWarn "| UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|-------------------------------------------------"
 set -x
 
 ($(isNullOrEmpty $UPGRADE_NAME)) && echoErr "ERROR: Invalid upgrade name!" && exit 1
-(! $(isNaturalNumber $UPGRADE_TIME)) && echoErr "ERROR: Invalid upgrade time!" && exit 1
 
 NODE_ID=""
 PREVIOUS_HEIGHT=0
@@ -129,6 +126,29 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteSoftwareUpgradeProposal")
     [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteSoftwareUpgradeProposal'" && exit 1
 
+    echoInfo "INFO: Loading secrets..."
+    set +e
+    set +x
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    set -x
+    set -e
+
+    echoInfo "INFO: Updating identity registrar..."
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"description\" \"This is genesis validator account of the KIRA Team\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"social\" \"https://tg.kira.network,twitter.kira.network\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"contact\" \"https://support.kira.network\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"website\" \"https://kira.network\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"username\" \"KIRA\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"logo\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"avatar\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest1\" \"<iframe src=javascript:alert(1)>\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest2\" \"<img/src=x a='' onerror=alert(2)>\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest3\" \"<img src=1 onerror=alert(3)>\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
+
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"KIRA-TEST\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord faucet \"username\" \"KIRA-FAUCET\" 180"
+
     echoInfo "INFO: Creating initial upsert token aliases proposals and voting on them..."
 
     KEX_UPSERT=$(cat <<EOL
@@ -194,6 +214,8 @@ EOL
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"$FRONTEND_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
+    UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
+
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
@@ -204,7 +226,7 @@ sekaid tx upgrade proposal-set-plan \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
  --rollback-memo="${UPGRADE_NAME}-roll" \
- --max-enrollment-duration=60 \
+ --max-enrollment-duration=666 \
  --upgrade-memo="Genesis setup plan" \
  --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 EOL
@@ -214,13 +236,16 @@ EOL
     QUERY_LAST_PROPOSAL="showProposal \$(lastProposal)"
     PREVIOUS_PROPOSAL="0"
 
+    set -x
+    set -e
+
     docker exec -i validator bash -c "source /etc/profile && $KEX_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
 
     LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
-    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
+    PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
     
 
     docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT"
@@ -229,7 +254,7 @@ EOL
 
     LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
-    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
+    PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     docker exec -i validator bash -c "source /etc/profile && $SAMOLEAN_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
@@ -237,7 +262,7 @@ EOL
     
     LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
-    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
+    PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
     docker exec -i validator bash -c "source /etc/profile && $UPGRADE_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
@@ -245,29 +270,9 @@ EOL
     
     LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
-    echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')" && PREVIOUS_PROPOSAL=$LAST_PROPOSAL
+    PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
-    echoInfo "INFO: Loading secrets..."
-    set +e
-    set +x
-    source $KIRAMGR_SCRIPTS/load-secrets.sh
-    set -x
-    set -e
-
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"description\" \"This is genesis validator account of the KIRA Team\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"social\" \"https://tg.kira.network,twitter.kira.network\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"contact\" \"https://support.kira.network\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"website\" \"https://kira.network\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"username\" \"KIRA\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"logo\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"avatar\" \"https://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest1\" \"<iframe src=javascript:alert(1)>\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest2\" \"<img/src=x a='' onerror=alert(2)>\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest3\" \"<img src=1 onerror=alert(3)>\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
-
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"KIRA-TEST\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord faucet \"username\" \"KIRA-FAUCET\" 180"
+    
 
     echoInfo "INFO: Success, all initial proposals were raised and voted on"
 else
