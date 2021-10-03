@@ -87,14 +87,14 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
         set -x
         # default chain properties
-        jq '.app_state.customgov.network_properties.proposal_end_time = "360"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.proposal_enactment_time = "300"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.mischance_confidence = "25"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.max_mischance = "50"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+        jsonEdit "app_state.customgov.network_properties.proposal_end_time" "\"360\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.proposal_enactment_time" "\"300\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.mischance_confidence" "\"25\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.max_mischance" "\"50\"" $LOCAL_GENESIS $LOCAL_GENESIS
         # do not allow to unjail after 2 weeks of inactivity
-        jq '.app_state.customgov.network_properties.jail_max_time = "1209600"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.mischance_rank_decrease_amount = "1"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-    
+        jsonEdit "app_state.customgov.network_properties.jail_max_time" "\"1209600\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.mischance_rank_decrease_amount" "\"1\"" $LOCAL_GENESIS $LOCAL_GENESIS
+
         echoInfo "INFO: New network was created, saving genesis to local directory..."
         cp -afv $LOCAL_GENESIS $COMMON_DIR/genesis.json
     else

@@ -219,8 +219,8 @@ function jsonParse() {
     fi
     if [ ! -z "$FIN" ] ; then
         if [ ! -z "$FOUT" ] ; then
-            rm -f "$FOUT" || :
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);fin.close();json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
+            [ "$FIN" != "$FOUT" ] && rm -f "$FOUT" || :
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");obj=json.load(fin);fin.close();fout=open('$FOUT',\"w\",encoding=\"utf8\");json.dump(obj$QUERY,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);print(json.dumps(obj$QUERY,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
         fi
@@ -270,8 +270,8 @@ function jsonEdit() {
     fi
     if [ ! -z "$FIN" ] ; then
         if [ ! -z "$FOUT" ] ; then
-            rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");obj=json.load(fin);obj$QUERY=$VALUE;fin.close();json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
+            [ "$FIN" != "$FOUT" ] && rm -f "$FOUT" || :
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");obj=json.load(fin);obj$QUERY=$VALUE;fin.close();fout=open('$FOUT',\"w\",encoding=\"utf8\");json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fout.close()"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");obj=json.load(f);obj$QUERY=$VALUE;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close()"
         fi
@@ -301,8 +301,8 @@ function jsonObjEdit() {
     fi
     if [ ! -z "$FIN" ] ; then
         if [ ! -z "$FOUT" ] ; then
-            rm -f "$FOUT"
-            python3 -c "import json,sys;fin=open('$FIN',\"r\");fout=open('$FOUT',\"w\",encoding=\"utf8\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(fin);obj$QUERY=obj2;fin.close();json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin2.close();fout.close()" || SUCCESS="false"
+            [ "$FIN" != "$FOUT" ] && rm -f "$FOUT" || :
+            python3 -c "import json,sys;fin=open('$FIN',\"r\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(fin);obj$QUERY=obj2;fin.close();fout=open('$FOUT',\"w\",encoding=\"utf8\");json.dump(obj,fout,separators=(',',':'),ensure_ascii=False);fin2.close();fout.close()" || SUCCESS="false"
         else
             python3 -c "import json,sys;f=open('$FIN',\"r\");fin2=open('$FVAL',\"r\");obj2=json.load(fin2);obj=json.load(f);obj$QUERY=obj2;print(json.dumps(obj,separators=(',', ':'),ensure_ascii=False).strip(' \t\n\r\"'));f.close();fin2.close()"
         fi
@@ -473,14 +473,14 @@ function resolveDNS {
     if ($(isIp "$1")) ; then
         echo "$1"
     else
-        kg_dns=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
+        local kg_dns=$(timeout 10 dig +short "$1" 2> /dev/null || echo -e "")
         ($(isIp $kg_dns)) && echo $kg_dns || echo -e ""
     fi
 }
 
 function isSubStr {
-    STR=$1
-    SUB=$2
+    local STR=$1
+    local SUB=$2
     [[ $STR == *"$SUB"* ]] && echo "true" || echo "false"
 }
 
@@ -489,16 +489,16 @@ function isCommand {
 }
 
 function isServiceActive {
-    ISACT=$(systemctl is-active "$1" 2> /dev/null || echo "inactive")
+    local ISACT=$(systemctl is-active "$1" 2> /dev/null || echo "inactive")
     [ "${ISACT,,}" == "active" ] && echo "true" || echo "false"
 }
 
 # returns 0 if failure, otherwise natural number in microseconds
 function pingTime() {
     if ($(isDnsOrIp "$1")) ; then
-        PAVG=$(ping -qc1 "$1" 2>&1 | awk -F'/' 'END{ print (/^rtt/? $5:"FAIL") }' 2> /dev/null || echo -n "")
+        local PAVG=$(ping -qc1 "$1" 2>&1 | awk -F'/' 'END{ print (/^rtt/? $5:"FAIL") }' 2> /dev/null || echo -n "")
         if ($(isNumber $PAVG)) ; then
-            PAVGUS=$(echo "scale=3; ( $PAVG * 1000 )" | bc 2> /dev/null || echo -n "")
+            local PAVGUS=$(echo "scale=3; ( $PAVG * 1000 )" | bc 2> /dev/null || echo -n "")
             PAVGUS=$(echo "scale=0; ( $PAVGUS / 1 ) " | bc 2> /dev/null || echo -n "")
             ($(isNaturalNumber $PAVGUS)) && echo "$PAVGUS" || echo "0"
         else echo "0" ; fi
@@ -511,9 +511,10 @@ function pressToContinue {
         globSet OPTION ""
     else
         while : ; do
+            local kg_OPTION=""
+            local FOUND=false
             read -n 1 -s kg_OPTION
             kg_OPTION="${kg_OPTION,,}"
-            FOUND=false
             for kg_var in "$@" ; do
                 kg_var=$(echo "$kg_var" | tr -d '\011\012\013\014\015\040' 2>/dev/null || echo -n "")
                 [ "${kg_var,,}" == "$kg_OPTION" ] && globSet OPTION "$kg_OPTION" && FOUND=true && break
@@ -525,17 +526,17 @@ function pressToContinue {
 }
 
 displayAlign() {
-  align=$1
-  width=$2
-  text=$3
+    local align=$1
+    local width=$2
+    local text=$3
 
-  if [ $align == "center" ]; then
-    textRight=$(((${#text} + $width) / 2))
-    printf "|%*s %*s\n" $textRight "$text" $(($width - $textRight)) "|"
-  elif [ $align == "left" ]; then
-    textRight=$width
-    printf "|%-*s|\n" $textRight "$text"
-  fi
+    if [ $align == "center" ]; then
+        local textRight=$(((${#text} + $width) / 2))
+        printf "|%*s %*s\n" $textRight "$text" $(($width - $textRight)) "|"
+    elif [ $align == "left" ]; then
+        local textRight=$width
+        printf "|%-*s|\n" $textRight "$text"
+    fi
 }
 
 function echoInfo() {
