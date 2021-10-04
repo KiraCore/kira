@@ -274,8 +274,28 @@ function claimValidatorSeat() {
 
 # e.g. showBalance validator
 function showBalance() {
-    ADDR=$(showAddress $1)
-    (! $(isNullOrEmpty $ADDR)) && echo $(sekaid query bank balances "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+    local ADDR=$(showAddress $1)
+    local DENOM="$2"
+    local RESULT=""
+    (! $(isNullOrEmpty $ADDR)) && RESULT=$(sekaid query bank balances "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+    if (! $(isNullOrEmpty $DENOM)) ; then
+        RESULT=$(echo $RESULT | showBalance $ADDR | jq '.balances' |  jq ".[] | select(.denom==\"$DENOM\")" | jq '.amount' | xargs 2> /dev/null || echo "0")
+        (! $(isNaturalNumber $RESULT)) && RESULT=0
+    fi
+    echo $RESULT
+}
+
+# e.g. sendTokens faucet kiraXXX...XXX 1000 ukex
+function sendTokens() {
+    local SOURCE=$1
+    local DESTINATION=$(showAddress $2)
+    local AMOUNT="$3"
+    local DENOM="$4"
+    echoInfo "INFO: Sending $AMOUNT $DENOM | $SOURCE -> $DESTINATION"
+    OLD_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $OLD_BALANCE)) && OLD_BALANCE=0
+    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | txAwait $TIMEOUT
+    NEW_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $NEW_BALANCE)) && NEW_BALANCE=0
+    echoInfo "INFO: Balance change $DESTINATION | $OLD_BALANCE $DENOM -> $NEW_BALANCE $DENOM"
 }
 
 # e.g. showStatus -> { ... }
