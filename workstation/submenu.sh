@@ -184,7 +184,7 @@ while :; do
   5*)
     set +x
     echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
-    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue m f && MODE=($(globGet OPTION))
+    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=($(globGet OPTION))
     set -x
 
     [ "${MODE,,}" == "p" ] && PRIVATE_MODE="false"
