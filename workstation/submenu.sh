@@ -105,7 +105,7 @@ CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NET
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
-PRIVATE_MODE=$(globGet PRIVATE_MODE) && [ -z "$PRIVATE_MODE" ] && PRIVATE_MODE="false"
+PRIVATE_MODE=$(globGet PRIVATE_MODE) && (! $(isBoolean "$PRIVATE_MODE")) && PRIVATE_MODE="false" && globSet PRIVATE_MODE "$PRIVATE_MODE"
 
 while :; do
     set +e && source $ETC_PROFILE &>/dev/null && set -e
@@ -187,8 +187,8 @@ while :; do
     echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=($(globGet OPTION))
     set -x
 
-    [ "${MODE,,}" == "p" ] && PRIVATE_MODE="false"
-    [ "${MODE,,}" == "v" ] && PRIVATE_MODE="true"
+    [ "${MODE,,}" == "p" ] && globSet PRIVATE_MODE "false"
+    [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
     ;;
   x*)
     exit 0
@@ -205,7 +205,6 @@ globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONT
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
 globSet SNAPSHOT_EXECUTE "false"
-globSet PRIVATE_MODE "$PRIVATE_MODE"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
