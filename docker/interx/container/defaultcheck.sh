@@ -4,18 +4,13 @@ set -x
 
 timerStart HEALTHCHECK
 
-BLOCK_HEIGHT_FILE="$SELF_LOGS/latest_block_height" 
 COMMON_CONSENSUS="$COMMON_READ/consensus"
-COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
 
-LIP_FILE="$COMMON_READ/local_ip"
-PIP_FILE="$COMMON_READ/public_ip"
-
-LOCAL_IP=$(tryCat $LIP_FILE)
-PUBLIC_IP=$(tryCat $PIP_FILE)
+LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
+PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 
 set +x
 echoWarn "------------------------------------------------"
@@ -33,11 +28,9 @@ if [ -f "$EXIT_CHECK" ]; then
   rm -fv $EXIT_CHECK
 fi
 
-touch $BLOCK_HEIGHT_FILE
-
 if [ -f "$HALT_CHECK" ]; then
     echoWarn "INFO: Contianer is halted!"
-    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    globSet EXTERNAL_STATUS "OFFLINE"
     sleep 5
     exit 0
 fi
@@ -56,19 +49,19 @@ VERSION_LOC=$(timeout 8 curl --fail interx.local:$INTERNAL_API_PORT/api/kira/sta
 
 if [ -z "$VERSION_EXT" ] ; then
     echoInfo "INFO: External interx status found"
-    echo "$PUBLIC_IP:$EXTERNAL_API_PORT " > "$COMMON_DIR/external_address"
-    echo "ONLINE" > "$COMMON_DIR/external_address_status"
+    globSet EXTERNAL_ADDRESS "$PUBLIC_IP:$EXTERNAL_API_PORT"
+    globSet EXTERNAL_STATUS "ONLINE"
 elif [ -z "$VERSION_INT" ] ; then
     echoInfo "INFO: Internal interx status found"
-    echo "$LOCAL_IP:$EXTERNAL_API_PORT" > "$COMMON_DIR/external_address"
-    echo "ONLINE" > "$COMMON_DIR/external_address_status"
+    globSet EXTERNAL_ADDRESS "$LOCAL_IP:$EXTERNAL_API_PORT"
+    globSet EXTERNAL_STATUS "ONLINE"
 elif [ -z "$VERSION_INT" ] ;then
     echoInfo "INFO: Local interx status found"
-    echo "interx.local:$INTERNAL_API_PORT" > "$COMMON_DIR/external_address"
-    echo "ONLINE" > "$COMMON_DIR/external_address_status"
+    globSet EXTERNAL_ADDRESS "interx.local:$EXTERNAL_API_PORT"
+    globSet EXTERNAL_STATUS "ONLINE"
 else
     echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
-    echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+    globSet EXTERNAL_STATUS "OFFLINE"
     sleep 5
     exit 1
 fi

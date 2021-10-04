@@ -1,18 +1,19 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-validator.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="validator"
-CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
+PRIVATE_MODE=$(globGet PRIVATE_MODE)
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && UTIL_DIV=2 || UTIL_DIV=6
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / $UTIL_DIV )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / $UTIL_DIV ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 2 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 2 ) / 1024 " | bc)m"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -27,7 +28,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars for the $DEPLOYMENT_MODE deployment mode..."
+    echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
@@ -36,7 +37,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet validator_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
 
     echoInfo "INFO: Ensuring base images exist..."
     $KIRA_MANAGER/setup/registry.sh
@@ -56,39 +57,56 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -x
     set -e
 
-    SNAPSHOT_SEED=$(echo "${SNAPSHOT_NODE_ID}@$KIRA_SNAPSHOT_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    CFG_seeds=""
 
-    if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then    
-        [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
-        CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-        CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID"
-        CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID"
-        CFG_max_num_outbound_peers="2"
-        CFG_max_num_inbound_peers="4"
-        CFG_pex="false"
-        CFG_allow_duplicate_ip="true"
-        EXTERNAL_P2P_PORT=""
-    else
-        touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_PEERS" "$PRIVATE_SEEDS"
-        cat $PRIVATE_SEEDS >> $PUBLIC_SEEDS
-        cat $PRIVATE_PEERS >> $PUBLIC_PEERS
+    [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
 
-        cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
-        cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-        cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
+    touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
-        CFG_private_peer_ids=""
-        CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID"
-        CFG_max_num_outbound_peers="32"
-        CFG_max_num_inbound_peers="128"
-        CFG_persistent_peers=""
-        CFG_pex="true"
-        CFG_allow_duplicate_ip="true"
-        EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
-    fi
+    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+    #cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
+
+    EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
+
+    globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
+    globSet CFG_pex "true" $COMMON_GLOB
+    # true
+    globSet CFG_allow_duplicate_ip "true" $COMMON_GLOB
+    globSet CFG_addr_book_strict "false" $COMMON_GLOB
+    globSet CFG_fastsync "true" $COMMON_GLOB
+    globSet CFG_fastsync_version "v1" $COMMON_GLOB
+
+    globSet CFG_handshake_timeout "60s" $COMMON_GLOB
+    globSet CFG_dial_timeout "30s" $COMMON_GLOB
+    globSet CFG_trust_period "87600h" $COMMON_GLOB
+    globSet CFG_max_txs_bytes "131072000" $COMMON_GLOB
+    globSet CFG_max_tx_bytes "131072" $COMMON_GLOB
+    globSet CFG_send_rate "65536000" $COMMON_GLOB
+    globSet CFG_recv_rate "65536000" $COMMON_GLOB
+    globSet CFG_max_packet_msg_payload_size "131072" $COMMON_GLOB
+    globSet CFG_cors_allowed_origins "*" $COMMON_GLOB
+    globSet CFG_snapshot_interval "1000" $COMMON_GLOB
+    globSet CFG_statesync_enable "true" $COMMON_GLOB
+    globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB
+    globSet CFG_timeout_commit "5000ms" $COMMON_GLOB
+    globSet CFG_create_empty_blocks_interval "10s" $COMMON_GLOB
+    globSet CFG_max_num_outbound_peers "32" $COMMON_GLOB
+    globSet CFG_max_num_inbound_peers "128" $COMMON_GLOB
+    globSet CFG_prometheus "true" $COMMON_GLOB
+    globSet CFG_seed_mode "false" $COMMON_GLOB
+    globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
+
+    globSet CFG_private_peer_ids "" $COMMON_GLOB
+    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
+    globSet CFG_persistent_peers "" $COMMON_GLOB
+    globSet CFG_seeds "" $COMMON_GLOB
+    globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
+    globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
+    globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
+
+    globSet PRIVATE_MODE "$PRIVATE_MODE" $COMMON_GLOB
+    globSet NEW_NETWORK "$NEW_NETWORK" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -97,7 +115,6 @@ docker run -d \
     --oom-kill-disable \
     -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_VALIDATOR_GRPC_PORT:$DEFAULT_GRPC_PORT \
     -p $KIRA_VALIDATOR_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
@@ -108,52 +125,18 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
-    -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
-    -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="$CFG_private_peer_ids" \
-    -e CFG_seeds="$CFG_seeds" \
-    -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$CFG_unconditional_peer_ids" \
-    -e CFG_max_num_outbound_peers="$CFG_max_num_outbound_peers" \
-    -e CFG_max_num_inbound_peers="$CFG_max_num_inbound_peers" \
-    -e CFG_timeout_commit="5s" \
-    -e CFG_create_empty_blocks_interval="10s" \
-    -e CFG_addr_book_strict="false" \
-    -e CFG_seed_mode="false" \
-    -e CFG_skip_timeout_commit="false" \
-    -e CFG_allow_duplicate_ip="$CFG_allow_duplicate_ip" \
-    -e CFG_handshake_timeout="60s" \
-    -e CFG_dial_timeout="30s" \
-    -e CFG_max_txs_bytes="131072000" \
-    -e CFG_send_rate="65536000" \
-    -e CFG_recv_rate="65536000" \
-    -e CFG_max_tx_bytes="131072" \
-    -e CFG_max_packet_msg_payload_size="131072" \
-    -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="$CFG_pex" \
-    -e CFG_prometheus="true" \
     -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
-    -e CFG_trust_period="87600h" \
-    -e CFG_fastsync="true" \
-    -e CFG_fastsync_version="v1" \
-    -e NEW_NETWORK="$NEW_NETWORK" \
-    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
-    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
-    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
-    -e INFRA_MODE="$INFRA_MODE" \
-    --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
+    -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
 mkdir -p $INTERX_REFERENCE_DIR
@@ -163,7 +146,7 @@ if [ "${NEW_NETWORK,,}" == true ] ; then
     rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
 fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
-$KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
 

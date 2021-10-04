@@ -45,16 +45,14 @@ cd /tmp && read -p "Input branch name: " BRANCH && \
 
 ```
 KIRA_REGISTRY_SUBNET="10.1.0.0/16"
-KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
-KIRA_SENTRY_SUBNET="10.3.0.0/16"
-KIRA_SERVICE_SUBNET="10.4.0.0/16"
+KIRA_SENTRY_SUBNET="10.2.0.0/16"
+KIRA_SERVICE_SUBNET="10.3.0.0/16"
 ```
 
 ```
 KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
 KIRA_INTERX_DNS="interx.local"
 KIRA_FRONTEND_DNS="fontend.local"
 ```
@@ -64,7 +62,7 @@ KIRA_FRONTEND_DNS="fontend.local"
 ### 3. Sentry Mode
 ```
 KIRA_REGISTRY_SUBNET="10.1.0.0/16"
-KIRA_SENTRY_SUBNET="10.3.0.0/16"
+KIRA_SENTRY_SUBNET="10.2.0.0/16"
 KIRA_SERVICE_SUBNET="10.4.0.0/16"
 ```
 
@@ -72,7 +70,6 @@ KIRA_SERVICE_SUBNET="10.4.0.0/16"
 KIRA_REGISTRY_DNS="registry.local"
 KIRA_SEED_DNS="seed.local"
 KIRA_SENTRY_DNS="sentry.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.local"
 KIRA_INTERX_DNS="interx.local"
 KIRA_FRONTEND_DNS="fontend.local"
 ```

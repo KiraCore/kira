@@ -14,7 +14,7 @@ apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-ess
     file build-essential net-tools hashdeep make nodejs node-gyp tar unzip xz-utils yarn zip p7zip-full \
     protobuf-compiler golang-goprotobuf-dev golang-grpc-gateway golang-github-grpc-ecosystem-grpc-gateway-dev \
     clang cmake gcc g++ pkg-config libudev-dev libusb-1.0-0-dev curl iputils-ping nano jq python python3 python3-pip \
-    bash libglu1-mesa
+    bash libglu1-mesa lsof
 
 apt update -y
 apt install -y bc dnsutils psmisc netcat default-jre default-jdk

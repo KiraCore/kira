@@ -2,6 +2,8 @@
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 
+KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
+
 echoInfo "INFO: Staring $NODE_TYPE container $KIRA_SETUP_VER ..."
 
 mkdir -p $GLOB_STORE_DIR
@@ -31,10 +33,8 @@ done
 
 touch $CFG_CHECK
 FAILED="false"
-if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "priv_sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
+if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
     $SELF_CONTAINER/sentry/start.sh || FAILED="true"
-elif [ "${NODE_TYPE,,}" == "snapshot" ]; then
-    $SELF_CONTAINER/snapshot/start.sh || FAILED="true"
 elif [ "${NODE_TYPE,,}" == "validator" ]; then
     $SELF_CONTAINER/validator/start.sh || FAILED="true"
 else

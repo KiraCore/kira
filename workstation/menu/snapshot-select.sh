@@ -137,7 +137,7 @@ while : ; do
     if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
       set +x
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+      echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
       set -x
       exit 0
     fi
@@ -178,8 +178,8 @@ SNAPSUM=$(sha256 "$SNAPSHOT")
 set +x
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to ensure following snapshot checksum is valid: $SNAPSUM"
-echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SNAP=\"$DEFAULT_SNAP_DIR\"" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

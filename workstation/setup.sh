@@ -83,6 +83,27 @@ LimitNOFILE=4096
 WantedBy=default.target
 EOL
 
+echoInfo "INFO: Updating kira upgrade plan service..."
+cat > /etc/systemd/system/kiraplan.service << EOL
+[Unit]
+Description=KIRA Upgrade Plan Service
+After=network.target
+[Service]
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
 touch /tmp/rs_manager
 touch /tmp/rs_git_manager
 touch /tmp/rs_container_manager

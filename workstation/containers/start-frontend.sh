@@ -1,24 +1,24 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/containers/start-frontend.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="frontend"
-CONTAINER_NETWORK="$KIRA_FRONTEND_NETWORK"
+CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
-echoWarn "|   NETWORK: $KIRA_FRONTEND_NETWORK"
+echoWarn "|   NETWORK: $CONTAINER_NETWORK"
 echoWarn "|  HOSTNAME: $KIRA_FRONTEND_DNS"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
@@ -40,7 +40,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet frontend_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
 
     INTERNAL_HTTP_PORT="80"
 
@@ -60,10 +60,7 @@ docker run -d \
     --log-opt max-file=5 \
     -e EXTERNAL_HTTP_PORT="$KIRA_FRONTEND_PORT" \
     -e INTERNAL_HTTP_PORT="$INTERNAL_HTTP_PORT" \
-    -e DEPLOYMENT_MODE="$DEPLOYMENT_MODE" \
-    -e INFRA_MODE="$INFRA_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e KIRA_SETUP_VER="$KIRA_SETUP_VER" \
     -e DEFAULT_INTERX_PORT="$DEFAULT_INTERX_PORT" \
     -e KIRA_INTERX_PORT="$KIRA_INTERX_PORT" \
     -v $COMMON_PATH:/common \
@@ -73,10 +70,10 @@ docker run -d \
     docker network connect $KIRA_SENTRY_NETWORK $CONTAINER_NAME
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
 echoInfo "INFO: Waiting for frontend to start..."
-$KIRAMGR_SCRIPTS/await-frontend-init.sh || exit 1
+$KIRAMGR_SCRIPTS/await-frontend-init.sh
 
 systemctl restart kiraclean

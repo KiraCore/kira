@@ -17,10 +17,7 @@ LOCAL_PEERS_PATH="$SEKAID_HOME/config/peers"
 LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
 LOCAL_RPC_PATH="$SEKAID_HOME/config/rpc"
 
-LIP_FILE="$COMMON_READ/local_ip"
-PIP_FILE="$COMMON_READ/public_ip"
 VALOPERS_FILE="$COMMON_READ/valopers"
-COMMON_LATEST_BLOCK_HEIGHT="$COMMON_READ/latest_block_height"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
 DATA_DIR="$SEKAID_HOME/data"
@@ -31,44 +28,74 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 [ -f "$COMMON_PEERS_PATH" ] && cp -afv "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -afv "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
 
+LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
+PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
+LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
+MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO")
+CFG_timeout_commit=$(globGet CFG_timeout_commit)
+
+CFG_pex=$(globGet CFG_pex)
+CFG_moniker=$(globGet CFG_moniker)
+CFG_allow_duplicate_ip=$(globGet CFG_allow_duplicate_ip)
+CFG_addr_book_strict=$(globGet CFG_addr_book_strict)
+CFG_fastsync=$(globGet CFG_fastsync)
+CFG_fastsync_version=$(globGet CFG_fastsync_version)
+CFG_handshake_timeout=$(globGet CFG_handshake_timeout)
+CFG_dial_timeout=$(globGet CFG_dial_timeout)
+CFG_trust_period=$(globGet CFG_trust_period)
+CFG_max_txs_bytes=$(globGet CFG_max_txs_bytes)
+CFG_max_tx_bytes=$(globGet CFG_max_tx_bytes)
+CFG_send_rate=$(globGet CFG_send_rate)
+CFG_recv_rate=$(globGet CFG_recv_rate)
+CFG_max_packet_msg_payload_size=$(globGet CFG_max_packet_msg_payload_size)
+CFG_cors_allowed_origins=$(globGet CFG_cors_allowed_origins)
+CFG_snapshot_interval=$(globGet CFG_snapshot_interval)
+CFG_statesync_enable=$(globGet CFG_statesync_enable)
+CFG_statesync_temp_dir=$(globGet CFG_statesync_temp_dir)
+CFG_create_empty_blocks_interval=$(globGet CFG_create_empty_blocks_interval)
+CFG_max_num_outbound_peers=$(globGet CFG_max_num_outbound_peers)
+CFG_max_num_inbound_peers=$(globGet CFG_max_num_inbound_peers)
+CFG_prometheus=$(globGet CFG_prometheus)
+CFG_seed_mode=$(globGet CFG_seed_mode)
+CFG_skip_timeout_commit=$(globGet CFG_skip_timeout_commit)
+CFG_unconditional_peer_ids=$(globGet CFG_unconditional_peer_ids)
+CFG_persistent_peers=$(globGet CFG_persistent_peers)
+CFG_seeds=$(globGet CFG_seeds)
+CFG_grpc_laddr=$(globGet CFG_grpc_laddr)
+CFG_rpc_laddr=$(globGet CFG_rpc_laddr)
+CFG_p2p_laddr=$(globGet CFG_p2p_laddr)
+
+PRIVATE_MODE=$(globGet PRIVATE_MODE)
+FORCE_EXTERNAL_DNS=$(globGet FORCE_EXTERNAL_DNS)
+
 echoInfo "INFO: Setting up node key..."
 cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 
-if [ "${NODE_TYPE,,}" == "validator" ] ; then
-    echoInfo "INFO: Setting up priv validator key..."
+[ "${NODE_TYPE,,}" == "validator" ] && \
+    echoInfo "INFO: Setting up priv validator key..." && \
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
-fi
 
-LOCAL_IP=$(cat $LIP_FILE || echo -n "")
-PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
+[ "${PRIVATE_MODE,,}" == "true" ] && EXTERNAL_DNS="$LOCAL_IP" || EXTERNAL_DNS="$PUBLIC_IP"
 
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|snapshot)$ ]] || ( [ "${DEPLOYMENT_MODE,,}" == "minimal" ] && [[ "${NODE_TYPE,,}" =~ ^(validator)$ ]] ) ; then
-    EXTERNAL_ADDR="$PUBLIC_IP"
-elif [ "${NODE_TYPE,,}" == "priv_sentry" ] ; then
-    EXTERNAL_ADDR="$LOCAL_IP"
-else
-    EXTERNAL_ADDR="$HOSTNAME"
-    EXTERNAL_P2P_PORT=$INTERNAL_P2P_PORT
-fi
+EXTERNAL_ADDRESS="tcp://$EXTERNAL_DNS:$EXTERNAL_P2P_PORT"
+globSet EXTERNAL_ADDRESS "$EXTERNAL_ADDRESS"
+globSet EXTERNAL_DNS "$EXTERNAL_DNS"
+globSet EXTERNAL_PORT "$EXTERNAL_P2P_PORT"
 
-CFG_external_address="tcp://$EXTERNAL_ADDR:$EXTERNAL_P2P_PORT"
-echo "$CFG_external_address" > "$COMMON_DIR/external_address"
-CDHelper text lineswap --insert="EXTERNAL_ADDR=\"$EXTERNAL_ADDR\"" --prefix="EXTERNAL_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="EXTERNAL_PORT=\"$EXTERNAL_P2P_PORT\"" --prefix="EXTERNAL_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="CFG_external_address=\"$CFG_external_address\"" --prefix="CFG_external_address=" --path=$ETC_PROFILE --append-if-found-not=True
+echoInfo "INFO:    Local Addr: $LOCAL_IP"
+echoInfo "INFO:   Public Addr: $PUBLIC_IP"
+echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
 
 echoInfo "INFO: Starting state file configuration..."
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
-LATEST_BLOCK_HEIGHT=$(cat COMMON_LATEST_BLOCK_HEIGHT || echo "")
 (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
 (! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
 (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
 [[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
 [[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
-
 echoInfo "INFO: Starting genesis configuration..."
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed|priv_sentry|snapshot)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
@@ -80,38 +107,13 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     valoperAddr=$(sekaid val-address $validatorAddr || echo "")
     consPubAddr=$(sekaid tendermint show-validator || echo "")
     
-    [ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=$validatorAddr" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=$testAddr" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=$signerAddr" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=$faucetAddr" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=$valoperAddr" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=$consPubAddr" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    # block time should vary from minimum of 5.1s to 100ms depending on the validator count. The more validators, the shorter the block time
-    ACTIVE_VALIDATORS=$(jsonParse "status.active_validators" $VALOPERS_FILE || echo "0")
-    (! $(isNaturalNumber "$ACTIVE_VALIDATORS")) && ACTIVE_VALIDATORS=0
-
-    if [ "${ACTIVE_VALIDATORS}" != "0" ] ; then
-        TIMEOUT_COMMIT=$(echo "scale=3; ((( 5 / ( $ACTIVE_VALIDATORS + 1 ) ) * 1000 ) + 1000) " | bc)
-        TIMEOUT_COMMIT=$(echo "scale=0; ( $TIMEOUT_COMMIT / 1 ) " | bc)
-        (! $(isNaturalNumber "$TIMEOUT_COMMIT")) && TIMEOUT_COMMIT="5000"
-        TIMEOUT_COMMIT="${TIMEOUT_COMMIT}ms"
-    elif [ -z "$CFG_timeout_commit" ] ; then
-        TIMEOUT_COMMIT="5000ms"
-    else
-        TIMEOUT_COMMIT=$CFG_timeout_commit
-    fi
-
-    if [ "$CFG_timeout_commit" != "$TIMEOUT_COMMIT" ] ; then
-        echoInfo "INFO: Timeout commit will be changed to ${TIMEOUT_COMMIT}"
-        CFG_timeout_commit=$TIMEOUT_COMMIT
-        CDHelper text lineswap --insert="CFG_timeout_commit=$CFG_timeout_commit" --prefix="CFG_timeout_commit=" --path=$ETC_PROFILE --append-if-found-not=True
-    fi
+    [ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=\"$validatorAddr\"" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=\"$testAddr\"" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=\"$signerAddr\"" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=\"$faucetAddr\"" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=\"$valoperAddr\"" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+    [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=\"$consPubAddr\"" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True    
 fi
-
-echoInfo "INFO: Local Addr: $LOCAL_IP"
-echoInfo "INFO: Public Addr: $PUBLIC_IP"
-echoInfo "INFO: External Addr: $CFG_external_address"
 
 if [ ! -s "$LOCAL_PEERS_PATH" ] ; then 
     echoInfo "INFO: List of external peers was found, adding to peers config"
@@ -165,15 +167,18 @@ if [ ! -z "$CFG_seeds" ] ; then
         [ "$currentNodeId" != "$nodeId" ] && echoWarn "WARNINIG: Handshake fialure, expected node id to be '$isNodeId' but got '$currentNodeId'" && continue
 
         rpc_port=$((port + 1))
+        rpc="${addr}:${rpc_port}"
         if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
-            echoInfo "INFO: Detected open RPC port $rpc_port"
-            rpc="${addr}:${rpc_port}"
+            echoInfo "INFO: Detected open RPC port ($rpc)"
+            
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
-                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+                echoWarn "WARNING: Address is already present in the RPC list ($rpc)"
             else
-                echoInfo "INFO: Adding $rpc to the RPC list"
+                echoInfo "INFO: Adding address to the RPC list ($rpc)"
                 echo "$rpc" >> $LOCAL_RPC_PATH
             fi
+        else
+            echoInfo "INFP: RPC address in NOT exposed ($rpc)"
         fi
 
         seed="tcp://${nodeId}@${ip}:${port}"
@@ -190,41 +195,6 @@ if [ ! -z "$CFG_seeds" ] ; then
     done
     CFG_seeds=$TMP_CFG_seeds
 else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
-
-if ($(isNullOrWhitespaces $CFG_seeds)) && ($(isNullOrWhitespaces $CFG_persistent_peers)) ; then
-    echoWarn "WARNING: No seeds or peers were fonud in the configuration, attempting to handshake and add local adresses"
-    ip=$(resolveDNS validator.local)
-    validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$validator_node_id")) && ip="$PUBLIC_IP" && validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$validator_node_id")) && ip="$LOCAL_IP" && validator_node_id=$(tmconnect id --address="$ip:56656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    validator_seed="tcp://${validator_node_id}@$ip:56656"
-    ip=$(resolveDNS sentry.local)
-    sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$sentry_node_id")) && ip="$PUBLIC_IP" && sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$sentry_node_id")) && ip="$LOCAL_IP" && sentry_node_id=$(tmconnect id --address="$ip:26656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    sentry_node_seed="tcp://${sentry_node_id}@$ip:26656"
-    ip=$(resolveDNS priv-sentry.local)
-    priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$priv_sentry_node_id")) && ip="$PUBLIC_IP" && priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$priv_sentry_node_id")) && ip="$LOCAL_IP" && priv_sentry_node_id=$(tmconnect id --address="$ip:36656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    priv_sentry_node_seed="tcp://${priv_sentry_node_id}@$ip:36656"
-    ip=$(resolveDNS seed.local)
-    seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$seed_node_id")) && ip="$PUBLIC_IP" && seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    (! $(isNodeId "$seed_node_id")) && ip="$LOCAL_IP" && seed_node_id=$(tmconnect id --address="$ip:16656" --node_key="$SEKAID_HOME/config/node_key.json" --timeout=3 || echo "")
-    seed_node_seed="tcp://${seed_node_id}@$ip:16656"
-    ($(isNodeId "$validator_node_id")) && CFG_seeds="$validator_seed"
-    if ($(isNodeId "$sentry_node_id")) ; then
-        [ -z "$CFG_seeds" ] && CFG_seeds="$sentry_node_seed" || CFG_seeds="${CFG_seeds},${sentry_node_seed}"
-    fi
-    if ($(isNodeId "$priv_sentry_node_id")) ; then
-        [ -z "$CFG_seeds" ] && CFG_seeds="$priv_sentry_node_seed" || CFG_seeds="${CFG_seeds},${priv_sentry_node_seed}"
-    fi
-    ($(isNodeId "$seed_node_id")) && [ -z "$CFG_seeds" ] && CFG_seeds="$seed_node_seed"
-fi
-
-echoInfo "INFO: Final Seeds List:"
-echoInfo "$CFG_seeds"
 
 if [ ! -z "$CFG_persistent_peers" ] ; then
     echoInfo "INFO: Peers configuration is available, testing..."
@@ -249,15 +219,18 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Peer '$peer' IP could NOT be resolved" && continue
 
         rpc_port=$((port + 1))
+        rpc="${addr}:${rpc_port}"
         if ($(isPublicIp "$addr")) && ($(isPortOpen "$addr" "$rpc_port" "0.25")) ; then
-            echoInfo "INFO: Detected open RPC port $rpc_port"
-            rpc="${addr}:${rpc_port}"
+            echoInfo "INFO: Detected open RPC port ($rpc)"
+            
             if grep -q "$rpc" "$LOCAL_RPC_PATH"; then
-                echoWarn "WARNING: Address '$rpc' is already present in the RPC list"
+                echoWarn "WARNING: Address is already present in the RPC list ($rpc)"
             else
-                echoInfo "INFO: Adding $rpc to the RPC list"
+                echoInfo "INFO: Adding address to the RPC list ($rpc)"
                 echo "$rpc" >> $LOCAL_RPC_PATH
             fi
+        else
+            echoInfo "INFP: RPC address in NOT exposed ($rpc)"
         fi
 
         peer="tcp://${nodeId}@${addr}:${port}"
@@ -314,10 +287,52 @@ else
     echoWarn "WARNING: Fast sync is NOT possible, RPC nodes NOT found"
 fi
 
+set +x
 echoInfo "INFO: Final Peers List:"
 echoInfo "$CFG_rpc_servers"
 
+echoInfo "INFO: Ensuring, that following config vars are set via global parameters:"
+echoInfo "----------------------------------"
+echoInfo "|                      CFG_moniker: $CFG_moniker"
+echoInfo "|                          CFG_pex: $CFG_pex"
+echoInfo "|           CFG_allow_duplicate_ip: $CFG_allow_duplicate_ip"
+echoInfo "|             CFG_addr_book_strict: $CFG_addr_book_strict"
+echoInfo "|                     CFG_fastsync: $CFG_fastsync"
+echoInfo "|             CFG_fastsync_version: $CFG_fastsync_version"
+echoInfo "|            CFG_handshake_timeout: $CFG_handshake_timeout"
+echoInfo "|                 CFG_dial_timeout: $CFG_dial_timeout"
+echoInfo "|                 CFG_trust_period: $CFG_trust_period"
+echoInfo "|                CFG_max_txs_bytes: $CFG_max_txs_bytes"
+echoInfo "|                 CFG_max_tx_bytes: $CFG_max_tx_bytes"
+echoInfo "|                    CFG_send_rate: $CFG_send_rate"
+echoInfo "|                    CFG_recv_rate: $CFG_recv_rate"
+echoInfo "|  CFG_max_packet_msg_payload_size: $CFG_max_packet_msg_payload_size"
+echoInfo "|         CFG_cors_allowed_origins: $CFG_cors_allowed_origins"
+echoInfo "|            CFG_snapshot_interval: $CFG_snapshot_interval"
+echoInfo "|             CFG_statesync_enable: $CFG_statesync_enable"
+echoInfo "|           CFG_statesync_temp_dir: $CFG_statesync_temp_dir"
+echoInfo "| CFG_create_empty_blocks_interval: $CFG_create_empty_blocks_interval"
+echoInfo "|               CFG_timeout_commit: $CFG_timeout_commit"
+echoInfo "|       CFG_max_num_outbound_peers: $CFG_max_num_outbound_peers"
+echoInfo "|        CFG_max_num_inbound_peers: $CFG_max_num_inbound_peers"
+echoInfo "|                   CFG_prometheus: $CFG_prometheus"
+echoInfo "|                    CFG_seed_mode: $CFG_seed_mode"
+echoInfo "|          CFG_skip_timeout_commit: $CFG_skip_timeout_commit"
+echoInfo "|             CFG_private_peer_ids: $CFG_private_peer_ids"
+echoInfo "|       CFG_unconditional_peer_ids: $CFG_unconditional_peer_ids"
+echoInfo "|             CFG_persistent_peers: $CFG_persistent_peers"
+echoInfo "|                        CFG_seeds: $CFG_seeds"
+echoInfo "|                   CFG_grpc_laddr: $CFG_grpc_laddr"
+echoInfo "|                    CFG_rpc_laddr: $CFG_rpc_laddr"
+echoInfo "|                    CFG_p2p_laddr: $CFG_p2p_laddr"
+echoInfo "----------------------------------"
+echoInfo "|                       MIN_HEIGHT: $MIN_HEIGHT"
+echoInfo "|                 EXTERNAL_ADDRESS: $EXTERNAL_ADDRESS"
+echoInfo "----------------------------------"
+
 echoInfo "INFO: Starting sekai & tendermint configs setup..."
+set -x
+
 [ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
 [ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG
 [ ! -z "$CFG_persistent_peers" ] && CDHelper text lineswap --insert="persistent_peers = \"$CFG_persistent_peers\"" --prefix="persistent_peers =" --path=$CFG
@@ -327,7 +342,7 @@ echoInfo "INFO: Starting sekai & tendermint configs setup..."
 # addr_book_strict -> set true for strict address routability rules ; set false for private or local networks
 [ ! -z "$CFG_addr_book_strict" ] && CDHelper text lineswap --insert="addr_book_strict = $CFG_addr_book_strict" --prefix="addr_book_strict =" --path=$CFG
 # P2P Address to advertise to peers for them to dial, If empty, will use the same port as the laddr, and will introspect on the listener or use UPnP to figure out the address.
-[ ! -z "$CFG_external_address" ] && CDHelper text lineswap --insert="external_address = \"$CFG_external_address\"" --prefix="external_address =" --path=$CFG
+[ ! -z "$EXTERNAL_ADDRESS" ] && CDHelper text lineswap --insert="external_address = \"$EXTERNAL_ADDRESS\"" --prefix="external_address =" --path=$CFG
 [ ! -z "$CFG_rpc_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_rpc_laddr\"" --prefix="laddr = \"tcp://127.0.0.1:26657\"" --path=$CFG
 [ ! -z "$CFG_p2p_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_p2p_laddr\"" --prefix="laddr = \"tcp://0.0.0.0:26656\"" --path=$CFG
 #[ ! -z "$CFG_grpc_laddr" ] && CDHelper text lineswap --insert="grpc_laddr = \"$CFG_grpc_laddr\"" --prefix="grpc_laddr =" --path=$CFG
@@ -428,7 +443,7 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] && [ "$NEW_NETWORK" != "true" ] ; then
+if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
     cat >$LOCAL_STATE <<EOL
 {
@@ -438,9 +453,6 @@ if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEI
 }
 EOL
 fi
-
-[[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGHT ]] && \
-CDHelper text lineswap --insert="MIN_HEIGHT=$LATEST_BLOCK_HEIGHT" --prefix="MIN_HEIGHT=" --path=$ETC_PROFILE --append-if-found-not=True
 
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"

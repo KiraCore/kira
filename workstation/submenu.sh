@@ -17,9 +17,14 @@ fi
 
 systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
+systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
-globSet LATEST_BLOCK 0
+sleep 1
+globSet LATEST_BLOCK_HEIGHT 0
+globSet LATEST_BLOCK_TIME 0
 globSet MIN_HEIGHT 0
+
+timedatectl set-timezone "Etc/UTC"
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
@@ -29,10 +34,7 @@ INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 [ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
-[ -z "$PORTS_EXPOSURE" ] && PORTS_EXPOSURE="enabled"
-[ -z "$DEPLOYMENT_MODE" ] && DEPLOYMENT_MODE="minimal"
-
-CDHelper text lineswap --insert="DEPLOYMENT_MODE=$DEPLOYMENT_MODE" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
+[ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
 
 if [ "${INFRA_MODE,,}" == "validator" ] ; then
     MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
@@ -92,15 +94,18 @@ if [ "${INFRA_MODE,,}" == "local" ]; then
     NEW_NETWORK="true"
 elif [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
-    SELECT="." && while ! [[ "${SELECT,,}" =~ ^(n|j)$ ]]; do echoNErr "Create [N]ew network or [J]oin existing one: " && read -d'' -s -n1 SELECT && echo ""; done
+    echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
-    [ "${SELECT,,}" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
+    [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
 else
     NEW_NETWORK="false"
 fi
 
 CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
+
+PRIVATE_MODE=$(globGet PRIVATE_MODE) && [ -z "$PRIVATE_MODE" ] && PRIVATE_MODE="false"
 
 while :; do
     set +e && source $ETC_PROFILE &>/dev/null && set -e
@@ -114,26 +119,26 @@ while :; do
     echo -e "|-----------------------------------------------|"
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
-    echo -e "|         Deployment Mode: ${DEPLOYMENT_MODE^^}"
+    echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
     [ "${NEW_NETWORK,,}" == "true" ] && \
     echo -e "|        NEW Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
-    [ -f "$KIRA_SNAP_PATH" ] && \
+    [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
-    [ ! -z "$KIRA_SNAP_SHA256" ] && \
+    [ "${NEW_NETWORK,,}" != "true" ] && [ ! -z "$KIRA_SNAP_SHA256" ] && \
     echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
-    echo -e "|    Default sekai Branch: $SEKAI_BRANCH_DEFAULT"
-    echo -e "|   Default interx Branch: $INTERX_BRANCH_DEFAULT"
-    echo -e "| Default frontend Branch: $FRONTEND_BRANCH_DEFAULT"
+    echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
+    echo -e "|   Default interx Branch: $INTERX_BRANCH"
+    echo -e "| Default frontend Branch: $FRONTEND_BRANCH"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
     displayAlign left $printWidth " [3] | Change Default Branches"
-    displayAlign left $printWidth " [4] | Change Deployment Mode"
-    displayAlign left $printWidth " [5] | Change Infrastructure Mode"
+    displayAlign left $printWidth " [4] | Change Infrastructure Mode"
+    displayAlign left $printWidth " [5] | Change Network Exposure (privacy) Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [X] | Exit"
@@ -148,13 +153,13 @@ while :; do
   s*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
-    CDHelper text lineswap --insert="IFACE=$IFACE" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="IFACE=\"$IFACE\"" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        rm -fv "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
+        rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
     fi
     break
     ;;
@@ -173,19 +178,17 @@ while :; do
     continue
     ;;
   4*)
-    set +x
-    echoWarn "WARNING: Deploying your node in minimal mode will disable automated snapshots and only start essential containers!"
-    MODE="." && while ! [[ "${MODE,,}" =~ ^(m|f)$ ]]; do echoNErr "Launch $INFRA_MODE node in [M]inimal or [F]ull deployment mode: " && read -d'' -s -n1 MODE && echo ""; done
-    set -x
-
-    [ "${MODE,,}" == "m" ] && DEPLOYMENT_MODE="minimal"
-    [ "${MODE,,}" == "f" ] && DEPLOYMENT_MODE="full"
-
-    CDHelper text lineswap --insert="DEPLOYMENT_MODE=\"$DEPLOYMENT_MODE\"" --prefix="DEPLOYMENT_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-    ;;
-  5*)
     $KIRA_MANAGER/menu.sh "false"
     exit 0
+    ;;
+  5*)
+    set +x
+    echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
+    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue m f && MODE=($(globGet OPTION))
+    set -x
+
+    [ "${MODE,,}" == "p" ] && PRIVATE_MODE="false"
+    [ "${MODE,,}" == "v" ] && PRIVATE_MODE="true"
     ;;
   x*)
     exit 0
@@ -198,21 +201,33 @@ while :; do
 done
 set -x
 
-[ "${DEPLOYMENT_MODE,,}" == "minimal" ] && globSet AUTO_BACKUP "false"
-
-timerStart AUTO_BACKUP
-globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER
-globSet SNAP_EXPOSE "true"
-globSet AUTO_BACKUP "true"
-
-(! $(isNaturalNumber $AUTO_BACKUP_INTERVAL)) && AUTO_BACKUP_INTERVAL=6
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
+[ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
+[ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
+globSet SNAPSHOT_EXECUTE "false"
+globSet PRIVATE_MODE "$PRIVATE_MODE"
+globSet LATEST_BLOCK 0
+globSet UPDATE_DONE "false"
+globSet UPDATE_FAIL "false"
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
-SETUP_END_DT=""
-CDHelper text lineswap --insert="SETUP_START_DT=\"$SETUP_START_DT\"" --prefix="SETUP_START_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SETUP_END_DT=\"$SETUP_END_DT\"" --prefix="SETUP_END_DT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="AUTO_BACKUP_INTERVAL=6" --prefix="AUTO_BACKUP_INTERVAL=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="PORTS_EXPOSURE=enabled" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet SETUP_START_DT "$SETUP_START_DT"
+globSet PORTS_EXPOSURE "enabled"
+
+rm -fv $(globFile validator_SEKAID_STATUS)
+rm -fv $(globFile sentry_SEKAID_STATUS)
+rm -fv $(globFile seed_SEKAID_STATUS)
+
+UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
+globSet UPGRADE_NAME "$UPGRADE_NAME"
+globSet UPGRADE_DONE "true"
+globSet UPGRADE_TIME "0"
+globSet AUTO_UPGRADES "true"
+globSet PLAN_DONE "true"
+globSet PLAN_FAIL "false"
+globSet PLAN_FAIL_COUNT "0"
+globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
@@ -244,9 +259,31 @@ LimitNOFILE=4096
 WantedBy=default.target
 EOL
 
+cat > /etc/systemd/system/kiraplan.service << EOL
+[Unit]
+Description=KIRA Upgrade Plan Service
+After=network.target
+[Service]
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
 systemctl daemon-reload
 systemctl enable kiraup
+systemctl enable kiraplan
 systemctl restart kiraup
+systemctl stop kiraplan || echoWarn "WARNING: Failed to stop KIRA Plan!"
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2

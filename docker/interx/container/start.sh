@@ -3,6 +3,9 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 exec 2>&1
 set -x
 
+KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
+KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
+
 echoInfo "Staring INTERX $KIRA_SETUP_VER setup..."
 cd $SEKAI/INTERX
 
@@ -17,7 +20,7 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 
 touch $CFG_CHECK
 
-echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+globSet EXTERNAL_STATUS "OFFLINE"
 
 RESTART_COUNTER=$(globGet RESTART_COUNTER)
 if ($(isNaturalNumber $RESTART_COUNTER)) ; then
@@ -48,16 +51,25 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
 
-    CDHelper text lineswap --insert="CFG_grpc=$CFG_grpc" --prefix="CFG_grpc=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="CFG_rpc=$CFG_rpc" --prefix="CFG_rpc=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="PING_TARGET=$PING_TARGET" --prefix="PING_TARGET=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_grpc=\"$CFG_grpc\"" --prefix="CFG_grpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="CFG_rpc=\"$CFG_rpc\"" --prefix="CFG_rpc=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="PING_TARGET=\"$PING_TARGET\"" --prefix="PING_TARGET=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    seed_node_id=$(globGet seed_node_id)
+    sentry_node_id=$(globGet sentry_node_id)
+    validator_node_id=$(globGet validator_node_id)
 
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
+      --seed_node_id="$seed_node_id" \
+      --sentry_node_id="$sentry_node_id" \
+      --validator_node_id="$validator_node_id" \
+      --addrbook="$KIRA_ADDRBOOK_FILE" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
       --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean,1lol" \
-      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex"
+      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex" \
+      --version="$KIRA_SETUP_VER"
 
     touch $EXECUTED_CHECK
     globSet RESTART_COUNTER 0

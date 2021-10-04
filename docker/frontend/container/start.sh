@@ -4,6 +4,8 @@ exec 2>&1
 set -x
 # quick edit: FILE="${SELF_CONTAINER}/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
+
 echoInfo "INFO: Staring frontend $KIRA_SETUP_VER setup..."
 echoInfo "INFO: Build hash -> ${BUILD_HASH} -> Branch: ${BRANCH} -> Repo: ${REPO}"
 
@@ -12,8 +14,6 @@ mkdir -p $GLOB_STORE_DIR
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"
 EXIT_CHECK="${COMMON_DIR}/exit"
-LIP_FILE="$COMMON_READ/local_ip"
-PIP_FILE="$COMMON_READ/public_ip"
 BUILD_SOURCE="${FRONTEND_SRC}/build/web"
 BUILD_DESTINATION="/usr/share/nginx/html"
 CONFIG_DIRECTORY="${BUILD_DESTINATION}/assets/assets"
@@ -22,7 +22,7 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 
 touch $CFG_CHECK
 
-echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+globSet EXTERNAL_STATUS "OFFLINE"
 
 RESTART_COUNTER=$(globGet RESTART_COUNTER)
 if ($(isNaturalNumber $RESTART_COUNTER)) ; then
@@ -41,22 +41,22 @@ while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
     sleep 30
 done
 
+LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
+PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
+
+while [ -z "$LOCAL_IP" ] && [ -z "$PUBLIC_IP" ] ; do
+    echoInfo "INFO: Waiting for local or public IP address discovery"
+    sleep 10
+done
+
+echoInfo "INFO: Local IP: $LOCAL_IP"
+echoInfo "INFO: Public IP: $PUBLIC_IP"
+
 while ! ping -c1 interx &>/dev/null ; do
     echoInfo "INFO: Waiting for ping response form INTERX container... (`date`)"
     sleep 5
 done
 echoInfo "INFO: INTERX IP Found: $(getent hosts interx | awk '{ print $1 }')"
-
-while [ ! -f "$LIP_FILE" ] && [ ! -f "$PIP_FILE" ] ; do
-    echoInfo "INFO: Waiting for local or public IP address discovery"
-    sleep 10
-done
-
-LOCAL_IP=$(cat $LIP_FILE || echo -n "")
-PUBLIC_IP=$(cat $PIP_FILE || echo -n "")
-
-echoInfo "INFO: Local IP: $LOCAL_IP"
-echoInfo "INFO: Public IP: $PUBLIC_IP"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     echoInfo "INFO: Cloning fronted from '$BUILD_SOURCE' into '$BUILD_DESTINATION'..."

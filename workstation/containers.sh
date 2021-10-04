@@ -6,6 +6,8 @@ source $KIRA_MANAGER/utils.sh
 timerStart
 cd $KIRA_HOME
 
+EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CONTAINERS BUILD SCRIPT             |"
@@ -34,93 +36,46 @@ fi
 globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
-globSet PRIV_CONN_PRIORITY "null"
 
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
-globSet PRIV_SENTRY_EXPOSED false
-globSet SNAPSHOT_EXPOSED true
 globSet VALIDATOR_EXPOSED false
-globSet FRONTEND_EXPOSED false
+globSet FRONTEND_EXPOSED true
 globSet INTERX_EXPOSED true
 
-# in case deployment fails set contianers count to infinite
-CDHelper text lineswap --insert="CONTAINERS_COUNT=\"100\"" --prefix="CONTAINERS_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
+# setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
+globSet INFRA_CONTAINERS_COUNT "100"
 
-if [ "${INFRA_MODE,,}" == "local" ] ; then
-    $KIRA_MANAGER/containers/start-validator.sh && globSet VALIDATOR_EXPOSED true
-    $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh
-    $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
-elif [ "${INFRA_MODE,,}" == "seed" ] ; then
-    $KIRA_MANAGER/containers/start-seed.sh && globSet SEED_EXPOSED true
-    $KIRA_MANAGER/containers/start-interx.sh
-    [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-frontend.sh && globSet FRONTEND_EXPOSED true
+set -x
+set -e
+
+DEPLOYMENT_SUCCESS="true"
+
+if [ "${INFRA_MODE,,}" == "seed" ] ; then
+    globSet SEED_EXPOSED true
+    $KIRA_MANAGER/containers/start-seed.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-        # save snapshot from sentry first
-        globSet PRIV_CONN_PRIORITY false
-        $KIRA_MANAGER/containers/start-sentry.sh "true" && globSet SENTRY_EXPOSED true
-        [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-priv-sentry.sh && globSet PRIV_SENTRY_EXPOSED true
-    elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-        # save snapshot from private sentry first
-        globSet PRIV_CONN_PRIORITY true
-        $KIRA_MANAGER/containers/start-priv-sentry.sh "true" && globSet PRIV_SENTRY_EXPOSED true
-        [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-sentry.sh && globSet SENTRY_EXPOSED true
-    else
-        echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
-        exit 1
-    fi
-
-    $KIRA_MANAGER/containers/start-interx.sh
-    [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-frontend.sh 
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+    globSet SENTRY_EXPOSED true
+    $KIRA_MANAGER/containers/start-sentry.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
+elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
     globSet VALIDATOR_EXPOSED true
-    if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-        if (! $(isFileEmpty $PUBLIC_SEEDS )) || (! $(isFileEmpty $PUBLIC_PEERS )) ; then
-            # save snapshot from sentry first
-            globSet PRIV_CONN_PRIORITY false
-            $KIRA_MANAGER/containers/start-sentry.sh "true"
-            [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-priv-sentry.sh
-        elif (! $(isFileEmpty $PRIVATE_SEEDS )) || (! $(isFileEmpty $PRIVATE_PEERS )) ; then
-            # save snapshot from private sentry first
-            globSet PRIV_CONN_PRIORITY true
-            $KIRA_MANAGER/containers/start-priv-sentry.sh "true"
-            [ "${DEPLOYMENT_MODE,,}" == "full" ] && $KIRA_MANAGER/containers/start-sentry.sh
-        else
-            echoWarn "WARNING: No public or priveate seeds were found, syning your node from external source will not be possible"
-            exit 1
-        fi
-    fi
-
-    if [ "${DEPLOYMENT_MODE,,}" == "minimal" ] ; then
-        ADDRBOOK_DST="$DOCKER_COMMON_RO/addrbook.json"
-        (timeout 8 docker exec -i sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
-        ($(isFileEmpty $ADDRBOOK_DST)) && (timeout 8 docker exec -i priv_sentry cat "$SEKAID_HOME/config/addrbook.json" 2>&1 || echo "") > $ADDRBOOK_DST
-        $KIRA_SCRIPTS/container-delete.sh "sentry"
-        $KIRA_SCRIPTS/container-delete.sh "priv_sentry"
-        $KIRA_MANAGER/containers/start-validator.sh
-        $KIRA_MANAGER/containers/start-interx.sh
-    elif [ "${EXTERNAL_SYNC,,}" == "false" ] ; then
-        globSet SENTRY_EXPOSED true
-        globSet PRIV_SENTRY_EXPOSED true
-
-        $KIRA_MANAGER/containers/start-validator.sh
-        if [ "${DEPLOYMENT_MODE,,}" == "full" ] ; then
-            $KIRA_MANAGER/containers/start-sentry.sh
-            $KIRA_MANAGER/containers/start-priv-sentry.sh
-        fi
-        $KIRA_MANAGER/containers/start-interx.sh
-    else
-        globSet SENTRY_EXPOSED true
-        globSet PRIV_SENTRY_EXPOSED true
-        $KIRA_MANAGER/containers/start-interx.sh
-        $KIRA_MANAGER/containers/start-validator.sh
-    fi
+    $KIRA_MANAGER/containers/start-validator.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     exit 1
 fi
+
+echoInfo "INFO: Creating snapshot..."
+[ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
+globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
+globSet SNAPSHOT_EXECUTE "true"
+globSet SNAPSHOT_UNHALT "true"
 
 PORTS="$DEFAULT_SSH_PORT"
 CONTAINERS_COUNT=0
@@ -132,15 +87,6 @@ fi
 if [ "$(globGet SENTRY_EXPOSED)" == "true" ] ; then
     CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
     PORTS="$PORTS $KIRA_SENTRY_RPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_PROMETHEUS_PORT"
-fi
-
-if [ "$(globGet PRIV_SENTRY_EXPOSED)" == "true" ] ; then
-    CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
-    PORTS="$PORTS $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_PRIV_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_PROMETHEUS_PORT"
-fi
-
-if [ "$(globGet SNAPSHOT_EXPOSED)" == "true" ] ; then
-    PORTS="$PORTS $KIRA_SNAPSHOT_P2P_PORT $KIRA_SNAPSHOT_RPC_PORT $KIRA_SNAPSHOT_PROMETHEUS_PORT"
 fi
 
 if [ "$(globGet VALIDATOR_EXPOSED)" == "true" ] ; then
@@ -158,8 +104,15 @@ if [ "$(globGet INTERX_EXPOSED)" == "true" ] ; then
     PORTS="$PORTS $KIRA_INTERX_PORT"
 fi
 
-CDHelper text lineswap --insert="CONTAINERS_COUNT=\"$CONTAINERS_COUNT\"" --prefix="CONTAINERS_COUNT=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="EXPOSED_PORTS=\"$PORTS\"" --prefix="PORTS=" --path=$ETC_PROFILE --append-if-found-not=True
+globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
+globSet EXPOSED_PORTS "$PORTS"
+
+if [ "${DEPLOYMENT_SUCCESS,,}" != "true" ] ; then
+    globSet CONTAINERS_BUILD_SUCCESS "false"
+    echoErr "ERROR: Failed to deploy one of the essential containers!" && exit 1
+else
+    globSet CONTAINERS_BUILD_SUCCESS "true"
+fi
 
 set +x
 echoWarn "------------------------------------------------"

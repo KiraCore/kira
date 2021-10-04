@@ -15,11 +15,6 @@ SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
 HARDWARE_SCAN_PATH="$KIRA_SCAN/hardware"
 PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 
-SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_LATEST="$SNAP_STATUS/latest"
-
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
 timerDel "DISK_CONS" "NET_CONS"
@@ -28,11 +23,14 @@ globDel "HOSTS_SCAN_PID" "HARDWARE_SCAN_PID" "PEERS_SCAN_PID" "SNAPSHOT_SCAN_PID
 
 while : ; do
     timerStart MONITOR
+    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "|   STARTED: MONITOR                           |"
     echoWarn "|----------------------------------------------|"
-    echoWarn "| SCAN DONE: $(globGet IS_SCAN_DONE) "
+    echoWarn "|        SCAN DONE: $(globGet IS_SCAN_DONE) "
+    echoWarn "| SNAPSHOT EXECUTE: $SNAPSHOT_EXECUTE"
     echoWarn "------------------------------------------------"
     set -x
 
@@ -43,7 +41,7 @@ while : ; do
         continue
     fi
     
-    tryMkDir $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SNAP_STATUS $SCAN_DUMP
+    tryMkDir $KIRA_SNAP $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SCAN_DUMP
     touch "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH"
 
     set +e && source "/etc/profile" &>/dev/null && set -e
@@ -84,7 +82,7 @@ while : ; do
         sleep 1
     fi
 
-    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null; then
+    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
         echo "INFO: Starting snapshot monitor..."
         LOG_FILE="$SNAPSHOT_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"

@@ -28,7 +28,7 @@ sekaid tx customgov permission whitelist-permission --from validator --keyring-b
 
 ## Create Proposal to Add new Validator
 ```
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --description="Genesis Validator Adding Initial Set" --title="Add New Validator" --yes | jq
 ```
 
 ## Change Token Alias
@@ -39,7 +39,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --icon="http://kira-network.s3-eu-west-1.amazonaws.com/assets/img/tokens/kex.svg" \
  --decimals=6 \
  --denoms="ukex" \
- --description="This is an initial alias update" \
+ --title="This is an initial alias update" \
  --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
@@ -48,52 +48,86 @@ sekaid query tokens all-aliases --chain-id=$NETWORK_NAME
 ## Vote Yes on the Latest Proposal
 
 ```
-LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes | jq
+voteYes $(lastProposal) validator
 ```
 
 ## Wait For Last Proposal Result
 
 ```
-LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
+LAST_PROPOSAL=$(lastProposal) && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 ```
-
-## Quick & Dirty Setup For Adding new Validator To The Testnet
-
-```
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && \
-sekaid tx bank send validator $ADDR "99000ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait && \
-sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=validator --keyring-backend=test --chain-id=$NETWORK_NAME --description="Adding Testnet Validator $ADDR" --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait && \
-LAST_PROPOSAL=$(sekaid query customgov proposals --output json | jq -cr '.proposals | last | .proposal_id') && sekaid tx customgov proposal vote $LAST_PROPOSAL 1 --from=validator --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --gas=1000000 --broadcast-mode=async | txAwait && \
-sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
-```
-
-## Macro for Adding Validators
-```
-kira1yswhg6caeedep2xg88a795rkx9y08yucmpn2e2
-
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
-```
-
-
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 30 --description="Proposal End Time set to 1 min" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes &
 
 ## Change Proposals Speed
 ```
-sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --description="Proposal End Time set to 15 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
+sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --title="Proposal End Time set to 15 seconds" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --description="Proposal Enactment Time set to 16 seconds" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
+sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --title="Proposal Enactment Time set to 16 seconds" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
 ```
 
 ## Change Network Property
 
 ```
-sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --description="100 Blocks Confidence" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
+sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --title="100 Blocks Confidence" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
 
 voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --description="200 Blocks Mischance" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
+sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --title="200 Blocks Mischance" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
 
 voteYes $(lastProposal) validator
 
 networkProperties | jq
 ```
+## Network Updates
+
+```
+sekaid tx upgrade set-plan \
+ --resource-id=1 \
+ --resource-git=1 \
+ --resource-checkout=1 \
+ --resource-checksum=1 \
+ --min-halt-time=1 \
+ --old-chain-id=$NETWORK_NAME \
+ --new-chain-id=1 \
+ --rollback-memo=1 \
+ --max-enrollment-duration=1 
+ --upgrade-memo=1 
+ --from=validator 
+ --keyring-backend=test 
+ --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_level=debug --yes --broadcast-mode=async | txAwait 
+
+```
+
+```
+{
+    "resources": [ {
+            "id": "kira",
+            "git": "<url-string>",
+            "checkout": "<branch-or-tag-string>",
+            "checksum": "sha256-string"
+        }, {
+            "id": "chain",
+            "git": ...
+        }, { ... }, ...
+    ],
+    "min_halt_time": <uint>,
+    "old_chain_id": <string>,
+    "new_chain_id": <string>,
+    "rollback_checksum": <sha256-string>,
+    "max_enrolment_duration": <uint>,
+    "memo": <string>
+}
+```
+
+
+[ {
+            "id": "sekai",
+            "git": "https://github.com/KiraCore/sekai",
+            "checkout": "master",
+            "checksum": "sha256-string"
+        }, {
+            "id": "interx",
+            "git": "https://github.com/KiraCore/sekai",
+            "checkout": "master",
+            "checksum": "sha256-string"
+        }
+    ]

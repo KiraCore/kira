@@ -19,12 +19,12 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     apt-get remove --auto-remove golang-go -y
     echoInfo "INFO: Setting up environment variables ..."
     mkdir -p $GOCACHE
-    CDHelper text lineswap --insert="GO_VERSION=$GO_VERSION" --prefix="GO_VERSION=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOROOT=$GOROOT" --prefix="GOROOT=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOPATH=$GOPATH" --prefix="GOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOBIN=$GOBIN" --prefix="GOBIN=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="GO_VERSION=\"$GO_VERSION\"" --prefix="GO_VERSION=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="GOROOT=\"$GOROOT\"" --prefix="GOROOT=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="GOPATH=\"$GOPATH\"" --prefix="GOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="GOBIN=\"$GOBIN\"" --prefix="GOBIN=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="GO111MODULE=on" --prefix="GO111MODULE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="GOCACHE=$GOCACHE" --prefix="GOCACHE=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="GOCACHE=\"$GOCACHE\"" --prefix="GOCACHE=" --path=$ETC_PROFILE --append-if-found-not=True
     set +e && source "/etc/profile" &>/dev/null && set -e
     CDHelper text lineswap --insert="PATH=$PATH:$GOPATH" --prefix="PATH=" --and-contains-not=":$GOPATH" --path=$ETC_PROFILE
     set +e && source "/etc/profile" &>/dev/null && set -e

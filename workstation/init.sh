@@ -21,7 +21,6 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.4.0.7"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
 ARCHITECTURE=$(uname -m)
@@ -29,39 +28,33 @@ ARCHITECTURE=$(uname -m)
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
-
 [ -z "$DEFAULT_SSH_PORT" ] && DEFAULT_SSH_PORT="22"
-[ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
-[ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
-[ -z "$DEFAULT_PROMETHEUS_PORT" ] && DEFAULT_PROMETHEUS_PORT="26660"
-[ -z "$DEFAULT_GRPC_PORT" ] && DEFAULT_GRPC_PORT="9090"
-[ -z "$DEFAULT_INTERX_PORT" ] && DEFAULT_INTERX_PORT="11000"
 
-[ -z "$KIRA_FRONTEND_PORT" ] && KIRA_FRONTEND_PORT="80"
-[ -z "$KIRA_INTERX_PORT" ] && KIRA_INTERX_PORT="11000"
+DEFAULT_P2P_PORT="26656"
+DEFAULT_RPC_PORT="26657"
+DEFAULT_PROMETHEUS_PORT="26660"
+DEFAULT_GRPC_PORT="9090"
+DEFAULT_INTERX_PORT="11000"
 
-[ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
-[ -z "$KIRA_SEED_RPC_PORT" ] && KIRA_SEED_RPC_PORT="16657"
-[ -z "$KIRA_SEED_PROMETHEUS_PORT" ] && KIRA_SEED_PROMETHEUS_PORT="16660"
+KIRA_FRONTEND_PORT="80"
+KIRA_INTERX_PORT="11000"
 
-[ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
-[ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
-[ -z "$KIRA_SENTRY_PROMETHEUS_PORT" ] && KIRA_SENTRY_PROMETHEUS_PORT="26660"
+KIRA_SEED_P2P_PORT="16656"
+KIRA_SEED_RPC_PORT="16657"
+KIRA_SEED_GRPC_PORT="19090"
+KIRA_SEED_PROMETHEUS_PORT="16660"
 
-[ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
-[ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
-[ -z "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && KIRA_PRIV_SENTRY_PROMETHEUS_PORT="36660"
+KIRA_SENTRY_RPC_PORT="26657"
+KIRA_SENTRY_P2P_PORT="26656"
+KIRA_SENTRY_GRPC_PORT="29090"
+KIRA_SENTRY_PROMETHEUS_PORT="26660"
 
-[ -z "$KIRA_SNAPSHOT_P2P_PORT" ] && KIRA_SNAPSHOT_P2P_PORT="46656"
-[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
-[ -z "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && KIRA_SNAPSHOT_PROMETHEUS_PORT="46660"
+KIRA_VALIDATOR_P2P_PORT="36656"
+KIRA_VALIDATOR_RPC_PORT="36657"
+KIRA_VALIDATOR_GRPC_PORT="39090"
+KIRA_VALIDATOR_PROMETHEUS_PORT="36660"
 
-[ -z "$KIRA_VALIDATOR_P2P_PORT" ] && KIRA_VALIDATOR_P2P_PORT="56656"
-[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
-[ -z "$KIRA_VALIDATOR_GRPC_PORT" ] && KIRA_VALIDATOR_GRPC_PORT="59090"
-[ -z "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && KIRA_VALIDATOR_PROMETHEUS_PORT="56660"
-
-[ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
+KIRA_REGISTRY_PORT="5000"
 
 KIRA_HOME="/home/$KIRA_USER"
 KIRA_DUMP="$KIRA_HOME/dump"
@@ -71,7 +64,7 @@ KIRA_CONFIGS="$KIRA_HOME/.kira"
 SETUP_LOG="$KIRA_DUMP/setup.log"
 
 echo "------------------------------------------------"
-echo "|      STARTED: INIT $SETUP_VER"
+echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
 echo "|  SKIP UPDATE: $SKIP_UPDATE"
 echo "|   START TIME: $START_TIME_INIT"
@@ -109,14 +102,15 @@ if [ -z "$SKIP_UPDATE" ]; then
     echo "MMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMM"
     echo "MMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMM"
     echo "MMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMM"
-    echo "M         KIRA NETWORK SETUP $SETUP_VER"
+    echo "M              KIRA NETWORK SETUP              M"
     echo -e "MMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
     sleep 3
 else
     echo "INFO: Initalizing setup script..."
 fi
 
-systemctl stop kiraup || echo "WARNING: KIRA update service could NOT be stopped, service might not exist yet!"
+systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
+systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
 
 echo -n ""
 set -x
@@ -172,16 +166,17 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
     KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
 
-    SEKAID_HOME="/root/.simapp"
+    SEKAID_HOME="/root/.sekaid"
 
     DOCKER_COMMON="/docker/shared/common"
     # read only common directory
     DOCKER_COMMON_RO="/docker/shared/common_ro"
+    GLOBAL_COMMON_RO="/docker/shared/common_ro/kiraglob"
 
     rm -rfv $KIRA_DUMP
-    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
+    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-19" | md5sum | awk '{ print $1 }' || echo -n "")
+    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-24" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
     if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
         echo "INFO: Installing Essential Packages & Env Variables..."
@@ -254,9 +249,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_CONFIGS=$KIRA_CONFIGS" --prefix="KIRA_CONFIGS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PUBLIC_PEERS=$KIRA_CONFIGS/public_peers" --prefix="PUBLIC_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PRIVATE_PEERS=$KIRA_CONFIGS/private_peers" --prefix="PRIVATE_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="PUBLIC_SEEDS=$KIRA_CONFIGS/public_seeds" --prefix="PUBLIC_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PRIVATE_SEEDS=$KIRA_CONFIGS/private_seeds" --prefix="PRIVATE_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -273,6 +266,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         
         CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="GLOBAL_COMMON_RO=$GLOBAL_COMMON_RO" --prefix="GLOBAL_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$DOCKER_COMMON_RO/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -287,26 +281,25 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
         CDHelper text lineswap --insert="KIRA_SEED_PROMETHEUS_PORT=$KIRA_SEED_PROMETHEUS_PORT" --prefix="KIRA_SEED_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SENTRY_PROMETHEUS_PORT=$KIRA_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_PROMETHEUS_PORT=$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_PRIV_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_PROMETHEUS_PORT=$KIRA_SNAPSHOT_PROMETHEUS_PORT" --prefix="KIRA_SNAPSHOT_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_PROMETHEUS_PORT=$KIRA_VALIDATOR_PROMETHEUS_PORT" --prefix="KIRA_VALIDATOR_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_INTERX_PORT=$KIRA_INTERX_PORT" --prefix="KIRA_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SENTRY_P2P_PORT=$KIRA_SENTRY_P2P_PORT" --prefix="KIRA_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_P2P_PORT=$KIRA_PRIV_SENTRY_P2P_PORT" --prefix="KIRA_PRIV_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        
         CDHelper text lineswap --insert="KIRA_SENTRY_RPC_PORT=$KIRA_SENTRY_RPC_PORT" --prefix="KIRA_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_RPC_PORT=$KIRA_PRIV_SENTRY_RPC_PORT" --prefix="KIRA_PRIV_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEED_RPC_PORT=$KIRA_SEED_RPC_PORT" --prefix="KIRA_SEED_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_RPC_PORT=$KIRA_SNAPSHOT_RPC_PORT" --prefix="KIRA_SNAPSHOT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_P2P_PORT=$KIRA_SNAPSHOT_P2P_PORT" --prefix="KIRA_SNAPSHOT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-
         CDHelper text lineswap --insert="KIRA_VALIDATOR_RPC_PORT=$KIRA_VALIDATOR_RPC_PORT" --prefix="KIRA_VALIDATOR_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        
+        CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SENTRY_P2P_PORT=$KIRA_SENTRY_P2P_PORT" --prefix="KIRA_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_P2P_PORT=$KIRA_VALIDATOR_P2P_PORT" --prefix="KIRA_VALIDATOR_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+
+        CDHelper text lineswap --insert="KIRA_SEED_GRPC_PORT=$KIRA_SEED_GRPC_PORT" --prefix="KIRA_SEED_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_GRPC_PORT=$KIRA_VALIDATOR_GRPC_PORT" --prefix="KIRA_VALIDATOR_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+        
 
         touch $KIRA_SETUP_ESSSENTIALS
     else
@@ -336,27 +329,29 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     exit 0
 fi
 
-CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
+SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
+[ -z "SETUP_VER" ] && echo -en "\e[31;1mERROR: Invalid setup release version!\e[0m" && exit 1
 
-CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SETUP_VER=\"$SETUP_VER\"" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_USER=\"$KIRA_USER\"" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
 
-CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INFRA_BRANCH=\"$INFRA_BRANCH\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+CDHelper text lineswap --insert="INFRA_REPO=\"$INFRA_REPO\"" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="SEKAI_REPO=\"$SEKAI_REPO\"" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="FRONTEND_REPO=\"$FRONTEND_REPO\"" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="INTERX_REPO=\"$INTERX_REPO\"" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+
+CDHelper text lineswap --insert="source \$KIRA_MANAGER/utils.sh" --suffix="/utils.sh" --path=$ETC_PROFILE --append-if-found-not=True
 
 echo "INFO: Startting cleanup..."
 apt-get autoclean || echo "WARNING: autoclean failed"
 apt-get clean || echo "WARNING: clean failed"
 apt-get autoremove || echo "WARNING: autoremove failed"
 journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
-
-find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
-find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
 
 $KIRA_MANAGER/setup/tools.sh
 

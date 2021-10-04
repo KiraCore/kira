@@ -21,20 +21,14 @@ while : ; do
 
     [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"
-    [ "$PORT" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && TYPE="P2P"
-    [ "$PORT" == "$KIRA_SNAPSHOT_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_VALIDATOR_P2P_PORT" ] && TYPE="P2P"
 
     [ "$PORT" == "$KIRA_SEED_RPC_PORT" ] && TYPE="RPC"
     [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
-    [ "$PORT" == "$KIRA_PRIV_SENTRY_RPC_PORT" ] && TYPE="RPC"
-    [ "$PORT" == "$KIRA_SNAPSHOT_RPC_PORT" ] && TYPE="RPC"
     [ "$PORT" == "$KIRA_VALIDATOR_RPC_PORT" ] && TYPE="RPC"
 
     [ "$PORT" == "$KIRA_SEED_PROMETHEUS_PORT" ] && TYPE="HTTP"
     [ "$PORT" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && TYPE="HTTP"
-    [ "$PORT" == "$KIRA_PRIV_SENTRY_PROMETHEUS_PORT" ] && TYPE="HTTP"
-    [ "$PORT" == "$KIRA_SNAPSHOT_PROMETHEUS_PORT" ] && TYPE="HTTP"
     [ "$PORT" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && TYPE="HTTP"
 
     PORT_TMP="${PORT}${WHITESPACE}"
@@ -172,5 +166,5 @@ echo -e "\e[37;1m--------------------------------------------------"
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 done

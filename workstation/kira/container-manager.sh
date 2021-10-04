@@ -5,6 +5,7 @@ source $KIRA_MANAGER/utils.sh
 
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 COMMON_LOGS="$COMMON_PATH/logs"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
@@ -20,10 +21,6 @@ CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
 WHITESPACE="                                                          "
 
-SNAP_STATUS="$KIRA_SNAP/status"
-SNAP_DONE="$SNAP_STATUS/done"
-SNAP_PROGRESS="$SNAP_STATUS/progress"
-SNAP_LATEST="$SNAP_STATUS/latest"
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
 KADDR_PATH="$TMP_DIR/kira-addr-$NAME" # kira address
 
@@ -41,8 +38,10 @@ LOADING="true"
 while : ; do
     START_TIME="$(date -u +%s)"
     NETWORKS=$(globGet "NETWORKS")
+    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK=$(globGet LATEST_BLOCK)
+    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
     [ "${NAME,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
@@ -52,7 +51,7 @@ while : ; do
         fi
     fi
 
-    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+    if [[ "${NAME,,}" =~ ^(interx|validator|sentry|seed)$ ]] ; then
         SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
         if [ "${NAME,,}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
@@ -91,6 +90,11 @@ while : ; do
     HOSTNAME=$(globGet "${NAME}_HOSTNAME")
     PORTS=$(globGet "${NAME}_PORTS")
 
+    # globs
+    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$COMMON_GLOB") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
+    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$COMMON_GLOB")
+    PRIVATE_MODE=$(globGet PRIVATE_MODE "$COMMON_GLOB")
+
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
         echo "WARNING: Container $NAME no longer exists, aborting container manager..."
@@ -122,6 +126,7 @@ while : ; do
         for port in $(echo $PORTS | sed "s/,/ /g" | xargs) ; do
             port_tmp="${port}${WHITESPACE}"
             port_tmp=$(echo "$port_tmp" | grep -oP "^0.0.0.0:\K.*" || echo "$port_tmp")
+            [[ $port_tmp == *":::"* ]] && continue
             echo "| Port Map: ${port_tmp:0:43} |"
         done
     fi
@@ -156,32 +161,23 @@ while : ; do
     elif [ "${NAME,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
-    elif [ "${NAME,,}" == "snapshot" ] && [ -f "$SNAP_LATEST" ] ; then
-        LAST_SNAP_FILE="$(tryCat $SNAP_LATEST)${WHITESPACE}"
-        LAST_SNAP_PROGRESS="$(tryCat $SNAP_PROGRESS 2> /dev/null || echo -n "") %"
-        [ -f "$SNAP_DONE" ] && LAST_SNAP_PROGRESS="done"
-        echo "|     Snap: ${LAST_SNAP_FILE:0:43} : $LAST_SNAP_PROGRESS"
-        echo "| Snap Dir: ${KIRA_SNAP}"
     fi
 
-    EX_ADDR=$(tryCat "$COMMON_PATH/external_address")
-    if [ ! -z "$EX_ADDR" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator|interx|frontend)$ ]] ; then
-        EX_ADDR_STATUS=$(tryCat "$COMMON_PATH/external_address_status" 2> /dev/null || echo "OFFLINE")
-
+    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|validator|interx|frontend)$ ]] ; then
         TARGET=""
-        [[ "${NAME,,}" =~ ^(sentry|seed|priv_sentry|validator)$ ]] && TARGET="(P2P)"
+        [[ "${NAME,,}" =~ ^(sentry|seed|validator)$ ]] && TARGET="(P2P)"
         [ "${NAME,,}" == "interx" ] && TARGET="(API)"
         [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
-        EX_ADDR="${EX_ADDR} ${TARGET} ${WHITESPACE}"
-        [ "${EX_ADDR_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EX_ADDR_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EX_ADDR_STATUS\e[36;1m"
+        EX_ADDR="${EXTERNAL_ADDRESS} ${TARGET} ${WHITESPACE}"
+        [ "${EXTERNAL_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EXTERNAL_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EXTERNAL_STATUS\e[36;1m"
         echo -e "| Ext.Addr: ${EX_ADDR:0:43} : $EX_ADDR_STATUS"
     fi
     
     [ ! -z "$KIRA_NODE_ID" ] && v="${KIRA_NODE_ID}${WHITESPACE}"  && echo "|  Node Id: ${v:0:43} |"
     if [ ! -z "$KIRA_NODE_BLOCK" ] ; then
         KIRA_NODE_BLOCK_TMP="${KIRA_NODE_BLOCK}${WHITESPACE}"
-        LATEST_BLOCK_TMP="${LATEST_BLOCK}${WHITESPACE}"
+        LATEST_BLOCK_TMP="${LATEST_BLOCK_HEIGHT}${WHITESPACE}"
         [ "${KIRA_NODE_CATCHING_UP,,}" == "true" ] && CATCHUP_TMP="catching up" || CATCHUP_TMP=""
         echo "|    Block: ${KIRA_NODE_BLOCK_TMP:0:11} Latest: ${LATEST_BLOCK_TMP:0:23} : $CATCHUP_TMP"
     fi
@@ -191,8 +187,12 @@ while : ; do
     [ "${EXISTS,,}" == "true" ]    && echo "| [I] | Try INSPECT container                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
     [ "${EXISTS,,}" == "true" ]    && echo "| [R] | RESTART container                               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     [ "$STATUS" == "exited" ]      && echo "| [S] | START container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [S] | STOP container                                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
-    [ "$STATUS" == "running" ]     && echo "| [P] | PAUSE container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+    if [ "$STATUS" == "running" ] ; then
+                                      echo "| [S] | STOP container                                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
+                                      echo "| [P] | PAUSE container                                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
+     [ "$PRIVATE_MODE" == "true" ] && echo "| [M] | Disable Private MODE (access via PUBLIC IP)     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    [ "$PRIVATE_MODE" == "false" ] && echo "| [M] | Enable Private MODE (access via LOCAL IP)       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
+    fi
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
     [ -f "$HALT_FILE" ]            && echo "| [K] | Un-HALT (revive) all processes                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
     [ ! -f "$HALT_FILE" ]          && echo "| [K] | KILL (halt) all processes                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
@@ -202,7 +202,7 @@ while : ; do
     [ "${EXISTS,,}" == "true" ]    && echo "| [D] | DUMP all container logs                         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     [ "${EXISTS,,}" == "true" ] && echo -e "| [X] | Exit __________________________________________ |\e[0m"
 
-    read -s -n 1 -t 6 OPTION || continue
+    read -s -n 1 -t 20 OPTION || continue
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
@@ -259,6 +259,17 @@ while : ; do
             $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "false"
         fi
         LOADING="true" && EXECUTED="true"
+    elif [ "${OPTION,,}" == "m" ] ; then
+        if [ "$PRIVATE_MODE" == "true" ] ; then
+            echoInfo "INFO: Disabling private mode..."
+            globSet PRIVATE_MODE "false" "$COMMON_GLOB"
+        else
+            echoInfo "INFO: Enabling private mode..."
+            globSet PRIVATE_MODE "true" "$COMMON_GLOB"
+        fi
+        echoInfo "INFO: Restarting container..."
+        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
+        LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "s" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Stopping container..."
         $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "stop"
@@ -291,6 +302,13 @@ while : ; do
                 cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $NAME container logs"
             fi
 
+            if [ "${SNAPSHOT_TARGET,,}" == "${NAME,,}" ] && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+                echoWarn "WARNING: Snapshot is ongoing, output logs will be included"
+                echo "--- SNAPSHOT LOG START ---" >> $TMP_DUMP
+                cat "$KIRA_SCAN/snapshot.log" >> $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $NAME container snapshot logs" >> $TMP_DUMP
+                echo "--- SNAPSHOT LOG END ---" >> $TMP_DUMP
+            fi
+
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
             ( [[ $LOG_LINES -gt $LINES_MAX ]] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
             [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
@@ -304,7 +322,7 @@ while : ; do
             if [ "${ACCEPT,,}" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $NAME logs..."
                 docker logs --follow --details --timestamps $ID || echoErr "ERROR: Failed to follow $NAME logs"
-                echoNErr "\nPress any key to continue..." && read -n 1 -s && echo ""
+                echoNErr "\nPress any key to continue..." && pressToContinue
             fi
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
@@ -338,7 +356,7 @@ while : ; do
             printf "\033c"
             echo "INFO: Please wait, reading $NAME ($ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
-            # docker inspect --format "{{json .State.Health }}" snapshot | jq '.Log[].Output'
+
             echo -e $(docker inspect --format "{{json .State.Health }}" "$ID" 2> /dev/null | jq '.Log[-1].Output' 2> /dev/null) > $TMP_DUMP || echo "" > $TMP_DUMP
             
             if [ -f "$HEALTH_LOGS" ]; then
@@ -386,7 +404,7 @@ while : ; do
 
     # trigger re-scan if loading requested
     [ "${LOADING,,}" == "true" ] && globSet IS_SCAN_DONE "false"
-    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 done
 
 echoInfo "INFO: Container Manager Stopped"

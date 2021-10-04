@@ -1,6 +1,7 @@
 #!/bin/bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
+# quick edit: FILE="${SELF_CONTAINER}/validator/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 echoInfo "INFO: Staring validator setup ..."
@@ -18,7 +19,8 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
-echo "OFFLINE" > "$COMMON_DIR/external_address_status"
+NEW_NETWORK=$(globGet NEW_NETWORK)
+globSet EXTERNAL_STATUS "OFFLINE"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then
     rm -rf $SEKAID_HOME
@@ -85,14 +87,14 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
         sekaid gentx-claim validator --keyring-backend=test --moniker="GENESIS VALIDATOR" --home=$SEKAID_HOME
         set -x
         # default chain properties
-        jq '.app_state.customgov.network_properties.proposal_end_time = "360"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.proposal_enactment_time = "300"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.mischance_confidence = "25"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.max_mischance = "50"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
+        jsonEdit "app_state.customgov.network_properties.proposal_end_time" "\"360\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.proposal_enactment_time" "\"300\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.mischance_confidence" "\"25\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.max_mischance" "\"50\"" $LOCAL_GENESIS $LOCAL_GENESIS
         # do not allow to unjail after 2 weeks of inactivity
-        jq '.app_state.customgov.network_properties.jail_max_time = "1209600"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-        jq '.app_state.customgov.network_properties.mischance_rank_decrease_amount = "1"' $LOCAL_GENESIS > "$LOCAL_GENESIS.tmp" && cp -afv "$LOCAL_GENESIS.tmp" "$LOCAL_GENESIS" && rm -fv "$LOCAL_GENESIS.tmp"
-    
+        jsonEdit "app_state.customgov.network_properties.jail_max_time" "\"1209600\"" $LOCAL_GENESIS $LOCAL_GENESIS
+        jsonEdit "app_state.customgov.network_properties.mischance_rank_decrease_amount" "\"1\"" $LOCAL_GENESIS $LOCAL_GENESIS
+
         echoInfo "INFO: New network was created, saving genesis to local directory..."
         cp -afv $LOCAL_GENESIS $COMMON_DIR/genesis.json
     else
@@ -108,28 +110,12 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     globSet START_TIME "$(date -u +%s)"
 fi
 
-echoInfo "INFO: Local genesis.json SHA256 checksum:"
+echoInfo "INFO: Local genesis.json, calculating SHA256 checksum..."
 sha256 $LOCAL_GENESIS
-
-if [ "${EXTERNAL_SYNC,,}" == "true" ] && [ "${DEPLOYMENT_MODE}" != "minimal" ]; then
-    echoInfo "INFO: External sync is expected from sentry or priv_sentry"
-    while : ; do
-        SENTRY_OPEN=$(isPortOpen sentry.local 26656)
-        PRIV_SENTRY_OPEN=$(isPortOpen priv-sentry.local 26656)
-        if [ "$SENTRY_OPEN" == "true" ] || [ "$PRIV_SENTRY_OPEN" == "true" ] ; then
-            echoInfo "INFO: Sentry or Private Sentry container is running!"
-            break
-        else
-            echoWarn "WARNINIG: Waiting for sentry ($SENTRY_OPEN) or private sentry ($PRIV_SENTRY_OPEN) to start..."
-            sleep 15
-        fi
-    done
-fi
 
 echoInfo "INFO: Loading configuration..."
 $SELF_CONTAINER/configure.sh
 rm -fv $CFG_CHECK
 
 echoInfo "INFO: Starting validator..."
-[ -z "$GRPC_ADDRESS" ] && sekaid start --home=$SEKAID_HOME --trace || \
-sekaid start --home=$SEKAID_HOME --grpc.address="$GRPC_ADDRESS" --trace
+sekaid start --home=$SEKAID_HOME --trace

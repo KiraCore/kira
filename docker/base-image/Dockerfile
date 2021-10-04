@@ -8,6 +8,7 @@ ENV BASHRC="/root/.bashrc"
 ENV JOURNAL_LOGS="/var/log/journal"
 ENV COMMON_DIR="/common"
 ENV COMMON_READ="/common_ro"
+ENV GLOBAL_COMMON_RO="/common_ro/kiraglob"
 ENV SNAP_DIR="/snap"
 
 # Env necessary for the individual child container setup
@@ -31,7 +32,9 @@ ENV FAILURE_END_FILE=${SELF_HOME}/failure_end
 ENV SUCCESS_START_FILE=${SELF_HOME}/success_start
 ENV SUCCESS_END_FILE=${SELF_HOME}/success_end
 ENV MAINTENANCE_FILE=${SELF_HOME}/maintenence
-ENV SEKAID_HOME=/root/.simapp
+ENV SEKAID_HOME=/root/.sekaid
+ENV SEKAID_CONFIG="${SEKAID_HOME}/config"
+ENV SEKAID_DATA="${SEKAID_HOME}/data"
 ENV FLUTTERROOT="/usr/lib/flutter"
 ENV GOROOT=/usr/local/go
 ENV GOPATH=/home/go
