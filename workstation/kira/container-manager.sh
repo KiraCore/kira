@@ -263,9 +263,11 @@ while : ; do
         if [ "$PRIVATE_MODE" == "true" ] ; then
             echoInfo "INFO: Disabling private mode..."
             globSet PRIVATE_MODE "false" "$COMMON_GLOB"
+            globSet PRIVATE_MODE "false"
         else
             echoInfo "INFO: Enabling private mode..."
             globSet PRIVATE_MODE "true" "$COMMON_GLOB"
+            globSet PRIVATE_MODE "true"
         fi
         echoInfo "INFO: Restarting container..."
         $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
