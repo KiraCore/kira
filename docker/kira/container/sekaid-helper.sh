@@ -7,7 +7,7 @@ function txQuery() {
 }
 
 function txAwait() {
-    START_TIME="$(date -u +%s)"
+    local START_TIME="$(date -u +%s)"
 
     if (! $(isTxHash "$1")) ; then
         RAW=$(cat)
@@ -79,13 +79,13 @@ function showAddress() {
 
 # tryGetPermissions validator
 function tryGetPermissions() {
-    ADDR=$(showAddress $1)
+    local ADDR=$(showAddress $1)
     echo $(sekaid query customgov permissions "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 function isPermBlacklisted() {
-    ADDR=$(showAddress "$1")
-    PERM=$2
+    local ADDR=$(showAddress "$1")
+    local PERM=$2
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
@@ -95,8 +95,8 @@ function isPermBlacklisted() {
 }
 
 function isPermWhitelisted() {
-    ADDR=$(showAddress "$1")
-    PERM=$2
+    local ADDR=$(showAddress "$1")
+    local PERM=$2
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
@@ -112,7 +112,7 @@ function isPermWhitelisted() {
 # e.g. tryGetValidator kiraXXXXXXXXXXX
 # e.g. tryGetValidator kiravaloperXXXXXXXXXXX
 function tryGetValidator() {
-    VAL_ADDR="${1,,}"
+    local VAL_ADDR="${1,,}"
     if [[ $VAL_ADDR == kiravaloper* ]] ; then
         VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
     elif [[ $VAL_ADDR == kira* ]] ; then
@@ -124,9 +124,9 @@ function tryGetValidator() {
 }
 
 function lastProposal() {
-    PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
+    local PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
     [ -z "$PROPOSALS" ] && echo 0 && return 1
-    LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
+    local LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
     (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
     [[ $LAST_PROPOSAL -le 0 ]] && echo 0 && return 3
     echo $LAST_PROPOSAL
@@ -135,22 +135,22 @@ function lastProposal() {
 
 # voteYes $(lastProposal) validator
 function voteYes() {
-    PROPOSAL=$1
-    ACCOUNT=$2
+    local PROPOSAL=$1
+    local ACCOUNT=$2
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
     sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 }
 
 # voteNo $(lastProposal) validator
 function voteNo() {
-    PROPOSAL=$1
-    ACCOUNT=$2
+    local PROPOSAL=$1
+    local ACCOUNT=$2
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
     sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
 }
 
 function networkProperties() {
-    NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
+    local NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
     [ -z "$NETWORK_PROPERTIES" ] && echo -n "" && return 1
     echo $NETWORK_PROPERTIES
     return 0
@@ -172,7 +172,7 @@ function showProposals() {
 
 # propAwait $(lastProposal) 
 function propAwait() {
-    START_TIME="$(date -u +%s)"
+    local START_TIME="$(date -u +%s)"
     if (! $(isNaturalNumber "$1")) ; then
         ID=$(cat) && STATUS=$1 && TIMEOUT=$2
     else
@@ -187,7 +187,7 @@ function propAwait() {
         (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=0
         [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
         while : ; do
-            ELAPSED=$(($(date -u +%s) - $START_TIME))
+            local ELAPSED=$(($(date -u +%s) - $START_TIME))
             RESULT=$(showProposal $ID 2> /dev/null | jq ".result" 2> /dev/null | xargs 2> /dev/null || echo -n "")
             [ -z "$STATUS" ] && ( [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ) && break
             [ ! -z "$STATUS" ] && [ "${RESULT,,}" == "${STATUS,,}" ] && break
@@ -204,9 +204,9 @@ function propAwait() {
 
 # e.g. whitelistValidator validator kiraXXXXXXXXXXX
 function whitelistValidator() {
-    ACC="$1"
-    ADDR=$(showAddress $2)
-    TIMEOUT=$3
+    local ACC="$1"
+    local ADDR=$(showAddress $2)
+    local TIMEOUT=$3
     ($(isNullOrEmpty $ACC)) && echoErr "ERROR: Account name was not defined " && return 1
     ($(isNullOrEmpty $ADDR)) && echoErr "ERROR: Validator address was not defined " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
@@ -240,9 +240,9 @@ function whitelistValidator() {
 # whitelistValidators <account> <file-name>
 # e.g.: whitelistValidators validator ./whitelist
 function whitelistValidators() {
-    ACCOUNT=$1
-    WHITELIST=$2
-    TIMEOUT=$3
+    local ACCOUNT=$1
+    local WHITELIST=$2
+    local TIMEOUT=$3
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if [ -f "$WHITELIST" ] ; then 
         echoInfo "INFO: List of validators was found ($WHITELIST)"
@@ -263,9 +263,9 @@ function whitelistValidators() {
 # claimValidatorSeat <account> <moniker> <timeout-seconds>
 # e.g.: claimValidatorSeat validator "BOB's NODE" 180
 function claimValidatorSeat() {
-    ACCOUNT=$1
-    MONIKER=$2
-    TIMEOUT=$3
+    local ACCOUNT=$1
+    local MONIKER=$2
+    local TIMEOUT=$3
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     ($(isNullOrEmpty $MONIKER)) && MONIKER=$(openssl rand -hex 16)
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
