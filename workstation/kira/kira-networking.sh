@@ -5,7 +5,6 @@ source $KIRA_MANAGER/utils.sh
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
-PORTS=$(globGet EXPOSED_PORTS)
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
 touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
@@ -27,6 +26,8 @@ echo -e "\e[37;1m--------------------------------------------------"
     i=-1
     LAST_SNAP=""
     PORTS_CNT=0
+    PORTS=$(globGet EXPOSED_PORTS)
+    PORTS=($PORTS) || PORTS=""
     for p in "${PORTS[@]}" ; do
         NAME=""
         
