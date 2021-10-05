@@ -8,7 +8,9 @@ function txQuery() {
 
 function txAwait() {
     local START_TIME="$(date -u +%s)"
-
+    local RAW=""
+    local TIMEOUT=""
+    
     if (! $(isTxHash "$1")) ; then
         RAW=$(cat)
         TIMEOUT=$1
@@ -20,9 +22,10 @@ function txAwait() {
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=0
     [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
 
+    local TXHASH=""
     if (! $(isTxHash "$RAW")) ; then
         # INPUT example: {"height":"0","txhash":"DF8BFCC9730FDBD33AEA184EC3D6C37B4311BC1C0E2296893BC020E4638A0D6F","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":""}
-        VAL=$(echo $RAW | jsonParse "" 2> /dev/null || echo "")
+        local VAL=$(echo $RAW | jsonParse "" 2> /dev/null || echo "")
         if [ -z "$VAL" ] ; then
             echoErr "ERROR: Failed to propagate transaction:"
             echoErr "$RAW"
@@ -43,13 +46,13 @@ function txAwait() {
     echoInfo "INFO: Please wait for tx confirmation, timeout will occur in $MAX_TIME seconds ..."
 
     while : ; do
-        ELAPSED=$(($(date -u +%s) - $START_TIME))
-        OUT=$(sekaid query tx $TXHASH --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "" 2> /dev/null || echo -n "")
+        local ELAPSED=$(($(date -u +%s) - $START_TIME))
+        local OUT=$(sekaid query tx $TXHASH --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "" 2> /dev/null || echo -n "")
         if [ ! -z "$OUT" ] ; then
             echoInfo "INFO: Transaction query response received received:"
             echo $OUT | jq
 
-            CODE=$(echo $OUT | jsonQuickParse "code" 2> /dev/null || echo -n "")
+            local CODE=$(echo $OUT | jsonQuickParse "code" 2> /dev/null || echo -n "")
             if [ "$CODE" == "0" ] ; then
                 echoInfo "INFO: Transaction was confirmed sucessfully!"
                 return 0
@@ -173,13 +176,17 @@ function showProposals() {
 # propAwait $(lastProposal) 
 function propAwait() {
     local START_TIME="$(date -u +%s)"
+    local ID=""
+    local STATUS=""
+    local TIMEOUT=""
     if (! $(isNaturalNumber "$1")) ; then
         ID=$(cat) && STATUS=$1 && TIMEOUT=$2
     else
         ID=$1 && STATUS=$2 && TIMEOUT=$3
     fi
     
-    PROP=$(showProposal $ID 2> /dev/null || echo -n "")
+    local PROP=$(showProposal $ID 2> /dev/null || echo -n "")
+    local RESULT=""
     if [ -z "$PROP" ] ; then
         echoErr "ERROR: Proposal $ID was NOT found"
     else
@@ -312,14 +319,14 @@ function showBlockHeight() {
 # awaitBlocks <number-of-blocks> <timeout-seconds>
 # e.g. awaitBlocks 5
 function awaitBlocks() {
-    BLOCKS=$1
+    local BLOCKS=$1
     (! $(isNaturalNumber $BLOCKS)) && echoErr "ERROR: Number of blocks to await was NOT defined" && return 1
-    SH_START_BLOCK=""
+    local SH_START_BLOCK=""
     while : ; do
-        SH_NEW_BLOCK=$(showBlockHeight)
+        local SH_NEW_BLOCK=$(showBlockHeight)
         (! $(isNaturalNumber $SH_NEW_BLOCK)) && sleep 1 && continue
         [ -z "$SH_START_BLOCK" ] && SH_START_BLOCK=$SH_NEW_BLOCK
-        SH_DELTA=$(($SH_NEW_BLOCK - $SH_START_BLOCK))
+        local SH_DELTA=$(($SH_NEW_BLOCK - $SH_START_BLOCK))
         [ $SH_DELTA -gt $BLOCKS ] && break
         sleep 1
     done
@@ -327,15 +334,15 @@ function awaitBlocks() {
 
 # e.g. showCatchingUp -> false
 function showCatchingUp() {
-    SH_CATCHING_UP=$(showStatus | jsonParse "SyncInfo.catching_up" 2>/dev/null || echo -n "")
+    local SH_CATCHING_UP=$(showStatus | jsonParse "SyncInfo.catching_up" 2>/dev/null || echo -n "")
     ($(isBoolean "$SH_CATCHING_UP")) && echo "${SH_CATCHING_UP,,}" || echo ""
 }
 
 # activateValidator <account> <timeout-seconds>
 # e.g. activateValidator validator 180
 function activateValidator() {
-    ACCOUNT=$1
-    TIMEOUT=$2
+    local ACCOUNT=$1
+    local TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     sekaid tx customslashing activate --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 1000ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
@@ -344,8 +351,8 @@ function activateValidator() {
 # pauseValidator <account> <timeout-seconds>
 # e.g. pauseValidator validator 180
 function pauseValidator() {
-    ACCOUNT=$1
-    TIMEOUT=$2
+    local ACCOUNT=$1
+    local TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     sekaid tx customslashing pause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
@@ -354,8 +361,8 @@ function pauseValidator() {
 # unpauseValidator <account> <timeout-seconds>
 # e.g. unpauseValidator validator 180
 function unpauseValidator() {
-    ACCOUNT=$1
-    TIMEOUT=$2
+    local ACCOUNT=$1
+    local TIMEOUT=$2
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
@@ -364,10 +371,10 @@ function unpauseValidator() {
 # whitelistPermission <account> <permission> <address> <timeout-seconds>
 # e.g. whitelistPermission validator 11 kiraXXX..YYY 180
 function whitelistPermission() {
-    KM_ACC=$1
-    PERM=$2
-    ADDR=$(showAddress $3)
-    TIMEOUT=$4
+    local KM_ACC=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
     ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
     ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
     (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
@@ -391,8 +398,8 @@ function showNextPlan() {
 # e.g. showIdentityRecord validator "mykey"
 # e.g. showIdentityRecord validator 15
 function showIdentityRecord() {
-    KM_ACC=$(showAddress $1)
-    KM_KEY=$2 && [ "$KM_KEY" == "*" ] && KM_KEY=""
+    local KM_ACC=$(showAddress $1)
+    local KM_KEY=$2 && [ "$KM_KEY" == "*" ] && KM_KEY=""
 
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name or address '$1' is invalid" && return 1
     if ($(isNullOrEmpty $KM_KEY)) ; then
@@ -409,10 +416,10 @@ function showIdentityRecord() {
 # upsertIdentityRecord <account> <key> <value> <timeout-seconds>
 # e.g. upsertIdentityRecord validator "mykey" "My Value" 180
 function upsertIdentityRecord() {
-    KM_ACC=$(showAddress $1)
-    IR_KEY=$2
-    IR_VAL=$3
-    TIMEOUT=$4
+    local KM_ACC=$(showAddress $1)
+    local IR_KEY=$2
+    local IR_VAL=$3
+    local TIMEOUT=$4
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
     ($(isNullOrEmpty $IR_KEY)) && echoErr "ERROR: Key was NOT defined " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
@@ -427,19 +434,19 @@ function upsertIdentityRecord() {
 # verifyIdentityRecord <account> <verifier-address> <one-or-many-comma-separated-keys/ids> <tip> <timeout>
 # e.g. verifyIdentityRecord validator $(showAddress test) "mykey,mykey2" "200ukex" 180
 function verifyIdentityRecord() {
-    KM_ACC=$1
-    KM_VER=$(showAddress $2)
-    KM_KEYS=$3
-    KM_TIP=$4
-    TIMEOUT=$5
+    local KM_ACC=$1
+    local KM_VER=$(showAddress $2)
+    local KM_KEYS=$3
+    local KM_TIP=$4
+    local TIMEOUT=$5
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
     ($(isNullOrEmpty $KM_VER)) && echoErr "ERROR: Verifier address '$2' is invalid" && return 1
     ($(isNullOrEmpty $KM_KEYS)) && echoErr "ERROR: Record keys to verify were NOT specified '$3'" && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
-    FINAL_IR_KEYS=""
+    local FINAL_IR_KEYS=""
     for irkey in $(echo $KM_KEYS | sed "s/,/ /g") ; do
-        irkey_id=$(showIdentityRecord $KM_ACC "${irkey,,}" | jsonParse ".id" 2> /dev/null || echo "")
+        local irkey_id=$(showIdentityRecord $KM_ACC "${irkey,,}" | jsonParse ".id" 2> /dev/null || echo "")
         ($(isNullOrEmpty $irkey_id)) && echoErr "ERROR: Key '$irkey' is invalid or was NOT found" && return 1
         [ ! -z "$FINAL_IR_KEYS" ] && FINAL_IR_KEYS="${FINAL_IR_KEYS},"
         FINAL_IR_KEYS="${FINAL_IR_KEYS}${irkey_id}"
@@ -453,8 +460,8 @@ function verifyIdentityRecord() {
 # showIdentityVerificationRequests <verifier-account/address> <requester-address>
 # e.g. showIdentityVerificationRequests validator $(showAddress test)
 function showIdentityVerificationRequests() {
-    KM_ACC=$(showAddress $1)
-    KM_REQ=$(showAddress $2)
+    local KM_ACC=$(showAddress $1)
+    local KM_REQ=$(showAddress $2)
 
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name or address '$1' is invalid" && return 1
     if ($(isNullOrEmpty $KM_REQ)) ; then
@@ -467,9 +474,9 @@ function showIdentityVerificationRequests() {
 # approveIdentityVerificationRequest <account> <id> <timeout>
 # e.g. approveIdentityVerificationRequest validator 1 180
 function approveIdentityVerificationRequest() {
-    KM_ACC=$1
-    KM_REQ=$2
-    TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    local KM_ACC=$1
+    local KM_REQ=$2
+    local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
@@ -479,9 +486,9 @@ function approveIdentityVerificationRequest() {
 # rejectIdentityVerificationRequest <account> <id> <timeout>
 # e.g. rejectIdentityVerificationRequest validator 1 180
 function rejectIdentityVerificationRequest() {
-    KM_ACC=$1
-    KM_REQ=$2
-    TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    local KM_ACC=$1
+    local KM_REQ=$2
+    local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
