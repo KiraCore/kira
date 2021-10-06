@@ -74,7 +74,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     sleep 15
 fi
 
-[ "${INFRA_MODE,,}" == "local" ] && CONTAINER_NAME="validator" || CONTAINER_NAME="${INFRA_MODE,,}"
+CONTAINER_NAME="${INFRA_MODE,,}"
 COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then

@@ -102,9 +102,7 @@ else
 fi
 
 echoInfo "INFO: Setting up essential environment variables..."
-if [ "${INFRA_MODE,,}" == "local" ] ; then
-    EXTERNAL_SYNC="false"
-elif [ "${INFRA_MODE,,}" == "seed" ] ; then
+if [ "${INFRA_MODE,,}" == "seed" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"

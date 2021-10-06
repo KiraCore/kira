@@ -2,9 +2,7 @@
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 
-if [ "${INFRA_MODE,,}" == "local" ]; then
-  title="Demo Mode (local testnet)"
-elif [ "${INFRA_MODE,,}" == "seed" ]; then
+if [ "${INFRA_MODE,,}" == "seed" ]; then
   title="Seed Mode"
 elif [ "${INFRA_MODE,,}" == "sentry" ]; then
   title="Sentry Mode"
@@ -90,9 +88,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-if [ "${INFRA_MODE,,}" == "local" ]; then
-    NEW_NETWORK="true"
-elif [ "${INFRA_MODE,,}" == "validator" ]; then
+if [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
     echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x

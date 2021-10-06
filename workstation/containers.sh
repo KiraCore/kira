@@ -61,7 +61,7 @@ elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     $KIRA_MANAGER/containers/start-sentry.sh || DEPLOYMENT_SUCCESS="false"
     $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
     $KIRA_MANAGER/containers/start-frontend.sh
-elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
+elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh || DEPLOYMENT_SUCCESS="false"
     $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"

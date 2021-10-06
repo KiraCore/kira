@@ -79,7 +79,7 @@ sekaid tx upgrade proposal-set-plan \
  --new-chain-id="$NETWORK_NAME" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a soft fork test upgrade" \
+ --upgrade-memo="This is a public testnet, planned soft fork upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 
 voteYes $(lastProposal) validator
