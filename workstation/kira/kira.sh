@@ -18,7 +18,6 @@ VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS=""
-CONTAINERS_COUNT="0"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
@@ -46,6 +45,7 @@ while : ; do
     UPDATE_FAIL=$(globGet UPDATE_FAIL)
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    CONTAINERS_COUNT=$(globGet CONTAINERS_COUNT)
     
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
@@ -65,11 +65,9 @@ while : ; do
         VALIDATOR_RUNNING="false"
         CONTAINERS=$(globGet CONTAINERS)
 
-        i=0
         for name in $CONTAINERS; do
             EXISTS_TMP=$(globGet "${name}_EXISTS")
-
-            [ "${EXISTS_TMP,,}" == "true" ] && i=$((i + 1)) || continue
+            [ "${EXISTS_TMP,,}" == "true" ] && continue
 
             SYNCING_TMP=$(globGet "${name}_SYNCING")
 
@@ -86,7 +84,6 @@ while : ; do
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
         done
-        CONTAINERS_COUNT="$i"
     fi
 
     printf "\033c"
@@ -181,7 +178,7 @@ while : ; do
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
         elif [[ $CONTAINERS_COUNT -le $INFRA_CONTAINERS_COUNT ]]; then
-            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
+            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m: ${CONTAINERS_COUNT}/${INFRA_CONTAINERS_COUNT}"
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
         elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
