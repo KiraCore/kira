@@ -65,8 +65,7 @@ while : ; do
         VALIDATOR_RUNNING="false"
         CONTAINERS=$(globGet CONTAINERS)
 
-        i=-1
-        CONTAINERS_COUNT=0
+        i=0
         for name in $CONTAINERS; do
             EXISTS_TMP=$(globGet "${name}_EXISTS")
 
@@ -87,7 +86,7 @@ while : ; do
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
         done
-        CONTAINERS_COUNT=$((i + 1))
+        CONTAINERS_COUNT="$i"
     fi
 
     printf "\033c"
@@ -181,7 +180,7 @@ while : ; do
 
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
-        elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINERS_COUNT ]]; then
+        elif [[ $CONTAINERS_COUNT -le $INFRA_CONTAINERS_COUNT ]]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m|"
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
@@ -224,7 +223,7 @@ while : ; do
     fi
 
     echo "|-----------------------------------------------|"
-    if [ "$CONTAINERS_COUNT" != "0" ] && [ "${SCAN_DONE,,}" == "true" ]; then
+    if [[ $CONTAINERS_COUNT -gt 0 ]] && [ "${SCAN_DONE,,}" == "true" ]; then
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p" ||
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"

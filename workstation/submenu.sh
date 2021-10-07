@@ -216,7 +216,7 @@ rm -fv $(globFile seed_SEKAID_STATUS)
 UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
 globSet UPGRADE_NAME "$UPGRADE_NAME"
 globSet UPGRADE_DONE "true"
-globSet UPGRADE_TIME "0"
+globSet UPGRADE_TIME "$(date2unix $(date))"
 globSet AUTO_UPGRADES "true"
 globSet PLAN_DONE "true"
 globSet PLAN_FAIL "false"

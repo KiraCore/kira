@@ -14,10 +14,9 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
     displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
     echo -e "|-----------------------------------------------|"
     displayAlign center $printWidth "Select Deployment Mode"
-    displayAlign left $printWidth " [1] | Demo Mode (local testnet only)"
-    displayAlign left $printWidth " [2] | Validator Mode (mainnet / testnet)"
-    displayAlign left $printWidth " [3] | Sentry Mode (mainnet / testnet)"
-    displayAlign left $printWidth " [4] | Seed Mode (mainnet / testnet)"
+    displayAlign left $printWidth " [1] | Validator Mode"
+    displayAlign left $printWidth " [2] | Sentry Mode"
+    displayAlign left $printWidth " [3] | Seed Mode"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [X] | Exit"
     echo -e "-------------------------------------------------\e[0m\c"
@@ -29,24 +28,18 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
       
       case ${KEY,,} in
       1*)
-        echo "INFO: Starting Demo Deployment..."
-        CDHelper text lineswap --insert="INFRA_MODE=local" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FIREWALL_ZONE=demo" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
-        break
-        ;;
-      2*)
         echo "INFO: Starting Validator Node Deployment..."
         CDHelper text lineswap --insert="INFRA_MODE=validator" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="FIREWALL_ZONE=validator" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
         break
         ;;
-      3*)
+      2*)
         echo "INFO: Starting Sentry Mode Deployment..."
         CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
         break
         ;;
-      4*)
+      3*)
         echo "INFO: Starting Seed Mode Deployment..."
         CDHelper text lineswap --insert="INFRA_MODE=seed" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="FIREWALL_ZONE=seed" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone

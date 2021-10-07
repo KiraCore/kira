@@ -41,7 +41,7 @@ firewall-cmd --get-zones
 firewall-cmd --permanent --zone=public --change-interface=$IFACE
 
 echoInfo "INFO: firewalld cleanup"
-DEFAULT_ZONES=(demo validator sentry seed)
+DEFAULT_ZONES=(validator sentry seed)
 for zone in "${DEFAULT_ZONES[@]}" ; do
     firewall-cmd --permanent --zone=$zone --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from $zone zone"
     firewall-cmd --permanent --delete-zone=$zone || echoInfo "INFO: Failed to delete $zone zone"

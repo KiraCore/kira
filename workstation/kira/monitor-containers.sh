@@ -36,6 +36,7 @@ LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber $LATE
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
+
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
     mkdir -p "$DOCKER_COMMON/$name"

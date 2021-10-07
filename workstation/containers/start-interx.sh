@@ -99,5 +99,3 @@ fi
 
 echoInfo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh
-
-systemctl restart kiraclean
