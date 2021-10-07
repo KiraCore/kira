@@ -54,28 +54,22 @@ DEPLOYMENT_SUCCESS="true"
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-seed.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-frontend.sh
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-frontend.sh
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    $KIRA_MANAGER/containers/start-frontend.sh
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
+    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     exit 1
 fi
-
-echoInfo "INFO: Creating snapshot..."
-[ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
-globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
-globSet SNAPSHOT_EXECUTE "true"
-globSet SNAPSHOT_UNHALT "true"
 
 PORTS="$DEFAULT_SSH_PORT"
 CONTAINERS_COUNT=0
@@ -111,7 +105,13 @@ if [ "${DEPLOYMENT_SUCCESS,,}" != "true" ] ; then
     globSet CONTAINERS_BUILD_SUCCESS "false"
     echoErr "ERROR: Failed to deploy one of the essential containers!" && exit 1
 else
+    echoInfo "INFO: Containers deployment suceeded..."
     globSet CONTAINERS_BUILD_SUCCESS "true"
+    echoInfo "INFO: Creating snapshot..."
+    [ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
+    globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
+    globSet SNAPSHOT_EXECUTE "true"
+    globSet SNAPSHOT_UNHALT "true"
 fi
 
 set +x
