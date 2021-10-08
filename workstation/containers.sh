@@ -49,25 +49,30 @@ globSet INFRA_CONTAINERS_COUNT "100"
 set -x
 set -e
 
-DEPLOYMENT_SUCCESS="true"
+globGet seed_STARTED "false"
+globGet sentry_STARTED "false"
+globGet validator_STARTED "false"
+globGet interx_STARTED "false"
+globGet frontend_STARTED "false"
 
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
-    $KIRA_MANAGER/containers/start-seed.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    $KIRA_MANAGER/containers/start-seed.sh
+    [ "$(globGet seed_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
+    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
-    $KIRA_MANAGER/containers/start-sentry.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    $KIRA_MANAGER/containers/start-sentry.sh
+    [ "$(globGet sentry_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
+    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
-    $KIRA_MANAGER/containers/start-validator.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-interx.sh || DEPLOYMENT_SUCCESS="false"
-    [ "${DEPLOYMENT_SUCCESS}" == "ture" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    $KIRA_MANAGER/containers/start-validator.sh
+    [ "$(globGet validator_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
+    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+    globSet CONTAINERS_BUILD_SUCCESS "false"
     exit 1
 fi
 
@@ -101,9 +106,22 @@ fi
 globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
 globSet EXPOSED_PORTS "$PORTS"
 
-if [ "${DEPLOYMENT_SUCCESS,,}" != "true" ] ; then
+seed_STARTED=$(globGet seed_STARTED)
+sentry_STARTED=$(globGet sentry_STARTED)
+validator_STARTED=$(globGet validator_STARTED)
+interx_STARTED=$(globGet interx_STARTED)
+frontend_STARTED=$(globGet frontend_STARTED)
+
+if [ "${interx_STARTED,,}" != "true" ] ; then
     globSet CONTAINERS_BUILD_SUCCESS "false"
-    echoErr "ERROR: Failed to deploy one of the essential containers!" && exit 1
+    set +x
+    echoErr "ERROR: Failed to deploy one of the essential containers!"
+    echoErr "ERROR:      Seed started: '$seed_STARTED'"
+    echoErr "ERROR:    Sentry started: '$sentry_STARTED'"
+    echoErr "ERROR: Validator started: '$validator_STARTED'"
+    echoErr "ERROR:    INTERX started: '$interx_STARTED'"
+    echoErr "ERROR:  Frontend started: '$frontend_STARTED'"
+    exit 1
 else
     echoInfo "INFO: Containers deployment suceeded..."
     globSet CONTAINERS_BUILD_SUCCESS "true"
