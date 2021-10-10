@@ -142,7 +142,7 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     rm -fv $GENESIS_EXPORT
 
     echoInfo "INFO: Exporting genesis!"
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME > \$COMMON_DIR/old-genesis-export.json"
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$COMMON_DIR/old-genesis-export.json"
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid new-genesis-from-exported \$COMMON_DIR/old-genesis-export.json \$COMMON_DIR/genesis-export.json"
 
     ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file was NOT exported or empty!" && sleep 10 && exit 1
