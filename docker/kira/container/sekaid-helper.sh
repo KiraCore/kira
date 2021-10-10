@@ -127,7 +127,7 @@ function tryGetValidator() {
 }
 
 function lastProposal() {
-    local PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
+    local PROPOSALS=$(sekaid query customgov proposals --limit=1 --reverse --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
     [ -z "$PROPOSALS" ] && echo 0 && return 1
     local LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
     (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
