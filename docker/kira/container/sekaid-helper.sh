@@ -127,12 +127,12 @@ function tryGetValidator() {
 }
 
 function lastProposal() {
-    local PROPOSALS=$(sekaid query customgov proposals --limit=1 --reverse --output=json --home=$SEKAID_HOME 2> /dev/null || echo "")
-    [ -z "$PROPOSALS" ] && echo 0 && return 1
-    local LAST_PROPOSAL=$(echo $PROPOSALS | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "") 
-    (! $(isNaturalNumber $LAST_PROPOSAL)) && echo 0 && return 2
-    [[ $LAST_PROPOSAL -le 0 ]] && echo 0 && return 3
-    echo $LAST_PROPOSAL
+    local BOTTOM_PROPOSALS=$(sekaid query customgov proposals --limit=1 --reverse --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
+    local TOP_PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
+    [ -z "$BOTTOM_PROPOSALS" ] && [ -z "$TOP_PROPOSALS" ] && echo 0 && return 1
+    (! $(isNaturalNumber $BOTTOM_PROPOSALS)) && (! $(isNaturalNumber $TOP_PROPOSALS)) && echo 0 && return 2
+    [[ $TOP_PROPOSALS -le 0 ]] && [[ $BOTTOM_PROPOSALS -le 0 ]] && echo 0 && return 3
+    [[ $TOP_PROPOSALS -gt $BOTTOM_PROPOSALS ]] && echo "$TOP_PROPOSALS" || echo "$BOTTOM_PROPOSALS"
     return 0
 }
 

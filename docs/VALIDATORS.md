@@ -41,4 +41,13 @@ kira10p4uaylvx7les2ara6unzl0tkkldt4h8xwjvzp
 kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
 
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
+
+
+e.g:
+
+whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
+whitelistValidator validator kira10p4uaylvx7les2ara6unzl0tkkldt4h8xwjvzp && \
+whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+
 ```
+
