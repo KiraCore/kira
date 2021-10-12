@@ -18,9 +18,6 @@ systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be sto
 systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 sleep 1
-globSet LATEST_BLOCK_HEIGHT 0
-globSet LATEST_BLOCK_TIME 0
-globSet MIN_HEIGHT 0
 
 timedatectl set-timezone "Etc/UTC"
 

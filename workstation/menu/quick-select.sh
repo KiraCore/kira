@@ -13,6 +13,7 @@ rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
 if [ "${NEW_NETWORK,,}" == "true" ]; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+    REINITALIZE_NODE="flase"
     CHAIN_ID="$NETWORK_NAME"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR=""
     GENSUM=""
@@ -21,6 +22,10 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
     MIN_HEIGHT="0"
+
+    globSet LATEST_BLOCK_HEIGHT 0
+    globSet LATEST_BLOCK_TIME 0
+    globSet MIN_HEIGHT 0
 
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
@@ -46,9 +51,10 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
 elif [ "${NEW_NETWORK,,}" == "false" ] ; then
     MIN_HEIGHT="0"
     while : ; do
-        if [ ! -z "$TRUSTED_NODE_ADDR" ] && [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] ; then 
+        if [ ! -z "$TRUSTED_NODE_ADDR" ] ; then 
             set +x
-            echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoInfo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
             echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
             set -x
             [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR || v1=$(resolveDNS "$v1")
@@ -61,9 +67,13 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
         [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
          
+        REINITALIZE_NODE="false"
         echoInfo "INFO: Please wait, testing connectivity..."
-        if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then 
-            echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" && continue
+        if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
+            echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
+            [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] && continue
+            echoNErr "Are you sure that you want to [R]einitalize existing node or prefer to [S]elect diffrent node address: " && pressToContinue r s && OPTION=($(globGet OPTION))
+            [ "${OPTION,,}" == "s" ] && continue || REINITALIZE_NODE="true"
         else
             echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
@@ -75,15 +85,21 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
             STATUS=$(timeout 15 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         fi
-        
+
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
-        if [ -z "$STATUS" ] || [ -z "${CHAIN_ID}" ] || [ "${STATUS,,}" == "null" ] || [ "${CHAIN_ID,,}" == "null" ] || [ "${NODE_ID,,}" == "null" ] || [ -z "${HEIGHT##*[!0-9]*}" ] ; then
+        if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
+            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
+            CHAIN_ID=$NETWORK_NAME
+        fi
+
+        if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
             echoWarn "WARNING: Could NOT read status, block height or chian-id"
             echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
             continue
         fi
+
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
@@ -213,7 +229,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                 set +x
                 [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)"
                 [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)"
-                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'"
+                [ "$SNAP_NETWORK" != "$CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_NETWORK' but got '$CHAIN_ID'" && [ "${REINITALIZE_NODE,,}" == "true" ] && CHAIN_ID="$SNAP_NETWORK" 
                 [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0"
                 [[ $SNAP_HEIGHT -gt $HEIGHT ]] && HEIGHT=$SNAP_HEIGHT
                 set -x
@@ -246,7 +262,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             wget $NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json -O $TMP_GENESIS_PATH || echoWarn "WARNING: Genesis download failed"
             GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
              
-            if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
+            if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] || ($(isNullOrWhitespaces "$GENESIS_NETWORK")) ; then
                 echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
                 continue
             fi
@@ -341,6 +357,9 @@ CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SN
 [ ! -z "$SNAPSHOT" ] && \
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$SNAPSUM\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 globSet MIN_HEIGHT $MIN_HEIGHT
+globSet LATEST_BLOCK_HEIGHT $MIN_HEIGHT
+globSet LATEST_BLOCK_TIME 0
+
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -349,7 +368,7 @@ rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 globSet GENESIS_SHA256 "$GENSUM"
 
-if [ "${NEW_NETWORK,,}" != "true" ] ; then
+if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
     while : ; do
         set +x
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
