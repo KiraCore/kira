@@ -60,20 +60,20 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR || v1=$(resolveDNS "$v1")
         else
             set +x
+            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
             echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
             set -x
         fi
 
         ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
         [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
+        [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
          
-        REINITALIZE_NODE="false"
+        
         echoInfo "INFO: Please wait, testing connectivity..."
         if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
             echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
-            [ "$TRUSTED_NODE_ADDR" != "0.0.0.0" ] && continue
-            echoNErr "Are you sure that you want to [R]einitalize existing node or prefer to [S]elect diffrent node address: " && pressToContinue r s && OPTION=($(globGet OPTION))
-            [ "${OPTION,,}" == "s" ] && continue || REINITALIZE_NODE="true"
+            continue
         else
             echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
