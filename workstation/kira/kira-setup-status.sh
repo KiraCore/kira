@@ -51,6 +51,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         set -x
     
         if [ "${VSEL,,}" == "r" ] ; then
+            set +x
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$SETUP_END_DT")) ; then
@@ -99,6 +100,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         set -x
     
         if [ "${VSEL,,}" == "r" ] ; then
+            set +x
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
