@@ -47,7 +47,7 @@ e.g:
 
 whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
 whitelistValidator validator kira10p4uaylvx7les2ara6unzl0tkkldt4h8xwjvzp && \
-whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
-
+whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
+whitelistValidator validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c
 ```
 

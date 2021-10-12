@@ -22,7 +22,7 @@ apt install -y bc dnsutils psmisc netcat default-jre default-jdk
 pip3 install ECPy
 
 ARCHITECTURE=$(uname -m)
-GO_VERSION="1.15.11"
+GO_VERSION="1.17.2"
 CDHELPER_VERSION="v0.6.51"
 FLUTTER_CHANNEL="stable"
 FLUTTER_VERSION="2.5.2-${FLUTTER_CHANNEL}"
@@ -86,7 +86,7 @@ tar -C /usr/local -xvf $GO_TAR &>/dev/null
 go version
 
 echoInfo "INFO: Setting up essential flutter dependencies..."
-wget https://storage.googleapis.com/flutter_infra/releases/$FLUTTER_CHANNEL/linux/$FLUTTER_TAR
+wget https://storage.googleapis.com/flutter_infra_release/releases/$FLUTTER_CHANNEL/linux/$FLUTTER_TAR
 mkdir -p /usr/lib # make sure flutter root directory exists
 tar -C /usr/lib -xvf ./$FLUTTER_TAR
 
