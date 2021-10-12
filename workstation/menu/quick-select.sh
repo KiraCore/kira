@@ -261,8 +261,9 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             rm -fv "$TMP_GENESIS_PATH" 
             wget $NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json -O $TMP_GENESIS_PATH || echoWarn "WARNING: Genesis download failed"
             GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+            GENESIS_TIME=$(date2unix $(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n ""))
              
-            if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] || ($(isNullOrWhitespaces "$GENESIS_NETWORK")) ; then
+            if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] || ($(isNullOrWhitespaces "$GENESIS_NETWORK")) || (! $(isNaturalNumber "$GENESIS_TIME")) ; then
                 echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
                 continue
             fi
@@ -356,9 +357,12 @@ NETWORK_NAME=$CHAIN_ID
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 [ ! -z "$SNAPSHOT" ] && \
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$SNAPSUM\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+
+NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
+
 globSet MIN_HEIGHT $MIN_HEIGHT
 globSet LATEST_BLOCK_HEIGHT $MIN_HEIGHT
-globSet LATEST_BLOCK_TIME 0
+globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
 
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True

@@ -78,6 +78,7 @@ CONTAINER_NAME="${INFRA_MODE,,}"
 COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
+    # SOFT FORK
     echoInfo "INFO: Started creating snapshoot, instate upgrade requested!"
 
     MIN_BLOCK=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
@@ -135,8 +136,8 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
 
     globSet UPGRADE_EXPORT_DONE "true"
 elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
+    # HARD FORK
     echoInfo "INFO: Started, creation of new genesis requested!"
-    
 
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
     rm -fv $GENESIS_EXPORT
@@ -154,8 +155,8 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     
     NEW_BLOCK_HEIGHT=$(jsonParse "initial_height" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     (! $(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
-    NEW_BLOCK_TIME=$(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n "")
-    [ -z "$NEW_BLOCK_TIME" ] && echoErr "ERROR: Could NOT identify new block time in the exported genesis file" && sleep 10 && exit 1
+    NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n ""))
+    (! $(isNaturalNumber "$NEW_BLOCK_TIME")) && echoErr "ERROR: Could NOT identify new block time in the exported genesis file" && sleep 10 && exit 1
 
     echoInfo "INFO: Upgrading network identifier, block height and global genesis files"
 
@@ -274,11 +275,14 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     globSet SETUP_REBOOT ""
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
-    systemctl daemon-reload
-
+    
     echoInfo "INFO: Dumping loggs before planned reboot & update..."
+    rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
     journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
-    systemctl start kiraup
+    
+    echoInfo "INFO: Restarting update daemon..."
+    systemctl daemon-reload
+    systemctl restart kiraup
 else
     echoInfo "INFO: Repos upgrade already done"
 fi
