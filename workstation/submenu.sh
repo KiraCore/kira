@@ -152,7 +152,9 @@ while :; do
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
+        echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
+        sleep 10
+        continue
     fi
     break
     ;;

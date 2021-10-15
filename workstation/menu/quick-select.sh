@@ -368,11 +368,12 @@ CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_N
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 
-rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
+    rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+    touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
+
     while : ; do
         set +x
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
@@ -410,6 +411,8 @@ if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; 
             break
         fi
     done
+else
+    touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 fi
 
 echoInfo "INFO: Finished quick select!"
