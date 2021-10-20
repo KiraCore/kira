@@ -20,13 +20,7 @@ sudo -s
 
 ### 3. Executes following command that will setup the environment by downloading setup file from github or other source, check integrity of the file, start it and install all essential dependencies
 
-```
-cd /tmp && wget https://raw.githubusercontent.com/KiraCore/kira/master/workstation/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && H=$(sha256sum ./i.sh | awk '{ print $1 }') && read -p "Is '$H' a [V]alid SHA256 ?: "$'\n' -n 1 V && \
- [ "${V,,}" != "v" ] && echo "Hash was NOT accepted by the user" || ./i.sh master
-```
-
-Demo Mode Example:
+Setup Command Example:
 
 ```
 cd /tmp && read -p "Input branch name: " BRANCH && \

@@ -24,6 +24,8 @@ echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
 set -x
 
+globSet "${CONTAINER_NAME}_STARTED" "false"
+
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -61,7 +63,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
         PING_TARGET="sentry.local"
         globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
-    elif [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "local" ] ; then
+    elif [ "${INFRA_MODE,,}" == "validator" ] ; then
         PING_TARGET="validator.local"
         globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
     else
@@ -100,17 +102,10 @@ fi
 echoInfo "INFO: Waiting for interx to start..."
 $KIRAMGR_SCRIPTS/await-interx-init.sh
 
-if [ "${INFRA_MODE,,}" == "local" ] ; then
-    while : ; do
-        FAUCET_ADDR=$(curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
-        echoInfo "INFO: Demo mode detected, attempting to transfer funds into INTERX account..."
-        FAILED="false" && docker exec -i validator sekaid tx bank send validator $FAUCET_ADDR 100000000ukex --gas=1000000000 --keyring-backend=test --chain-id "$NETWORK_NAME" --home=$SEKAID_HOME --fees 100ukex --yes || FAILED="true"
-        [ "${FAILED,,}" == "false" ] && echoInfo "INFO: Success, funds were sent to faucet account ($FAUCET_ADDR)" && break
-        echoWarn "WARNING: Failed to transfer funds into INTERX faucet account, retry in 10 seconds"
-        sleep 10
-    done
-else
-    echoWarn "WARNING: You are running in non-DEMO mode, you will have to fuel INTERX faucet address ($FAUCET_ADDR) on your own!"
-fi
+globSet "${CONTAINER_NAME}_STARTED" "true"
 
-systemctl restart kiraclean
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: STARTING $CONTAINER_NAME NODE"
+echoWarn "------------------------------------------------"
+set -x

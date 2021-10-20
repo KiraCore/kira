@@ -26,6 +26,8 @@ echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
 set -x
 
+globSet "${CONTAINER_NAME}_STARTED" "false"
+
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -58,7 +60,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
 
-    [ "${NEW_NETWORK,,}" == true ] && rm -fv "$COMMON_PATH/genesis.json"
+    [ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$COMMON_PATH/genesis.json"
 
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
@@ -139,7 +141,7 @@ else
 fi
 
 mkdir -p $INTERX_REFERENCE_DIR
-if [ "${NEW_NETWORK,,}" == true ] ; then
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
     chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
@@ -149,7 +151,7 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
 
-if [ "${NEW_NETWORK,,}" == true ] ; then
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
     chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
@@ -170,4 +172,10 @@ else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
 
-systemctl restart kiraclean
+globSet "${CONTAINER_NAME}_STARTED" "true"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: STARTING $CONTAINER_NAME NODE"
+echoWarn "------------------------------------------------"
+set -x

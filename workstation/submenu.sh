@@ -2,9 +2,7 @@
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 source $KIRA_MANAGER/utils.sh
 
-if [ "${INFRA_MODE,,}" == "local" ]; then
-  title="Demo Mode (local testnet)"
-elif [ "${INFRA_MODE,,}" == "seed" ]; then
+if [ "${INFRA_MODE,,}" == "seed" ]; then
   title="Seed Mode"
 elif [ "${INFRA_MODE,,}" == "sentry" ]; then
   title="Sentry Mode"
@@ -20,9 +18,6 @@ systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be sto
 systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 sleep 1
-globSet LATEST_BLOCK_HEIGHT 0
-globSet LATEST_BLOCK_TIME 0
-globSet MIN_HEIGHT 0
 
 timedatectl set-timezone "Etc/UTC"
 
@@ -90,9 +85,7 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
-if [ "${INFRA_MODE,,}" == "local" ]; then
-    NEW_NETWORK="true"
-elif [ "${INFRA_MODE,,}" == "validator" ]; then
+if [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
     echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
@@ -159,7 +152,9 @@ while :; do
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS" "$KIRA_SNAP_PATH" "$KIRA_SNAP/status/latest"
+        echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
+        sleep 10
+        continue
     fi
     break
     ;;
@@ -220,7 +215,7 @@ rm -fv $(globFile seed_SEKAID_STATUS)
 UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
 globSet UPGRADE_NAME "$UPGRADE_NAME"
 globSet UPGRADE_DONE "true"
-globSet UPGRADE_TIME "0"
+globSet UPGRADE_TIME "$(date2unix $(date))"
 globSet AUTO_UPGRADES "true"
 globSet PLAN_DONE "true"
 globSet PLAN_FAIL "false"

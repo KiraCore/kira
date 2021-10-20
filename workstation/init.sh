@@ -120,15 +120,15 @@ CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 
 if [[ $CPU_CORES -lt 2 ]] ; then
-    echo "ERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $CPU_CORES"
+    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $CPU_CORES\e[0m"
     echo "INFO: Recommended CPU is 4 cores"
-    exit 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 fi
 
 if [[ $RAM_MEMORY -lt 3145728 ]] ; then
-    echo "ERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $RAM_MEMORY kB"
+    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $RAM_MEMORY kB\e[0m"
     echo "INFO: Recommended RAM is 8GB"
-    exit 1
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 fi
 
 # All branches should have the same name across all repos to be considered compatible

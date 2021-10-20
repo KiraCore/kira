@@ -36,6 +36,7 @@ LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber $LATE
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
+
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
     mkdir -p "$DOCKER_COMMON/$name"
@@ -113,9 +114,12 @@ fi
 NEW_LATEST_BLOCK=0
 NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && NEW_LATEST_BLOCK_TIME=0
 NEW_LATEST_STATUS=0
+CONTAINERS_COUNT=0
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     PIDX=$(globGet "${name}_STATUS_PID")
+    EXISTS_TMP=$(globGet "${name}_EXISTS")
+    [ "${EXISTS_TMP,,}" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
 
     set +x
     while : ; do
@@ -162,7 +166,7 @@ for name in $CONTAINERS; do
     globSet "${name}_SYNCING" "$CATCHING_UP"
 done
 
-# save latest known block height
+globSet CONTAINERS_COUNT $CONTAINERS_COUNT
 
 if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] ; then
     echoInfo "INFO: Block height chaned to $NEW_LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"

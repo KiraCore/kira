@@ -25,6 +25,8 @@ echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
 set -x
 
+globSet "${CONTAINER_NAME}_STARTED" "false"
+
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
@@ -76,4 +78,10 @@ fi
 echoInfo "INFO: Waiting for frontend to start..."
 $KIRAMGR_SCRIPTS/await-frontend-init.sh
 
-systemctl restart kiraclean
+globSet "${CONTAINER_NAME}_STARTED" "true"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: STARTING $CONTAINER_NAME NODE"
+echoWarn "------------------------------------------------"
+set -x
