@@ -274,20 +274,24 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                     wget $GENESIS_SOURCE -O $TMP_GENESIS_PATH || echoErr "ERROR: Genesis download from external URL failed"
                 fi
 
-                GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+                GENESIS_NETWORK=$(jsonParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
                 GENESIS_TIME=$(date2unix $(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n ""))
-
-                if ($(isNullOrWhitespaces "$GENESIS_NETWORK")) || (! $(isNaturalNumber "$GENESIS_TIME")) ; then
+                GENESIS_HEIGHT=$(jsonParse "initial_height" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+                
+                if ($(isNullOrWhitespaces "$GENESIS_NETWORK")) || (! $(isNaturalNumber "$GENESIS_TIME")) || (! $(isNaturalNumber "$GENESIS_HEIGHT")) ; then
                     echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
                     continue
                 fi
 
                 if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
+                    set +x
                     echoNErr "Expected chain ID to be '$GENESIS_NETWORK' but got '$CHAIN_ID', do you want to [T]ry again or [C]hange chain id to '$CHAIN_ID' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
                     [ "${OPTION,,}" == "t" ] && continue
+                    set -x
                     CHAIN_ID=$GENESIS_NETWORK
                 fi
 
+                [[ $HEIGHT -lt $GENESIS_HEIGHT ]] && HEIGHT=$GENESIS_HEIGHT
                 echoInfo "INFO: Genesis file verification suceeded"
                 break
             done
