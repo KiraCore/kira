@@ -104,8 +104,8 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time" && exit 1
 
-[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
-    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
+#[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
+#    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
