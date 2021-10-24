@@ -285,7 +285,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
                 if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                     set +x
-                    echoNErr "Expected chain ID to be '$GENESIS_NETWORK' but got '$CHAIN_ID', do you want to [T]ry again or [C]hange chain id to '$CHAIN_ID' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
+                    echoNErr "Expected chain ID to be '$CHAIN_ID' but got '$GENESIS_NETWORK', do you want to [T]ry again or [C]hange chain id to '$GENESIS_NETWORK' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
                     [ "${OPTION,,}" == "t" ] && continue
                     set -x
                     CHAIN_ID=$GENESIS_NETWORK
