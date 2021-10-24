@@ -87,8 +87,8 @@ while : ; do
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
 
-    [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
-        echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly." && FAILURE="true"
+    #[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
+    #    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly." && FAILURE="true"
 
     NETWORK=$(echo $STATUS | jsonQuickParse "network" 2>/dev/null || echo -n "")
     [ "$NETWORK_NAME" != "$NETWORK" ] && \
