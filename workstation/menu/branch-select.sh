@@ -25,7 +25,7 @@ if [ "${USE_DEFAULTS,,}" != "true" ] ; then
     set +x
     echoErr "Select branches for each repository or press [ENTER] if default"
     read -p "Input SEKAI Branch (Default: $SEKAI_BRANCH_DEFAULT): " SEKAI_BRANCH
-    read -p "Input FRONTEND Branch (Default: $FRONTEND_BRANCH_DEFAULT): " FRONTEND_BRANCH
+    # read -p "Input FRONTEND Branch (Default: $FRONTEND_BRANCH_DEFAULT): " FRONTEND_BRANCH
     read -p "Input INTERX Branch (Default: $INTERX_BRANCH_DEFAULT): " INTERX_BRANCH
     set -x
 fi
@@ -36,11 +36,11 @@ fi
 
 set +x
 echoInfo "INFO: SEKAI branch '$SEKAI_BRANCH' was selected"
-echoInfo "INFO: FRONTEND branch '$FRONTEND_BRANCH' was selected"
+# echoInfo "INFO: FRONTEND branch '$FRONTEND_BRANCH' was selected"
 echoInfo "INFO: INTERX branch '$INTERX_BRANCH' was selected"
 [ "${USE_DEFAULTS,,}" != "true" ] && echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
 CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+# CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True

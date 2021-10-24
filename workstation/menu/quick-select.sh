@@ -36,7 +36,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
     echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
     echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
-    echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
+    # echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
     echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     
@@ -330,7 +330,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
         echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
-        echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
+        # echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
         echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
@@ -389,6 +389,10 @@ NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /de
 globSet MIN_HEIGHT $MIN_HEIGHT
 globSet LATEST_BLOCK_HEIGHT $MIN_HEIGHT
 globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
+
+globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
 
 CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
