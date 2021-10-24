@@ -58,6 +58,8 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 #        echoInfo "INFO: Success, faucet was found"
 #        break
 #    fi
+
+    break
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
