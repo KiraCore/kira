@@ -125,7 +125,7 @@ while :; do
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
     echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
     echo -e "|   Default interx Branch: $INTERX_BRANCH"
-    echo -e "| Default frontend Branch: $FRONTEND_BRANCH"
+    # echo -e "| Default frontend Branch: $FRONTEND_BRANCH"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"

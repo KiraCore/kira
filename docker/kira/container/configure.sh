@@ -443,7 +443,7 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [ "${NODE_TYPE,,}" == "validator" ] && [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
+if [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
     cat >$LOCAL_STATE <<EOL
 {

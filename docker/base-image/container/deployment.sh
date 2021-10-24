@@ -85,25 +85,27 @@ wget https://dl.google.com/go/$GO_TAR &>/dev/null
 tar -C /usr/local -xvf $GO_TAR &>/dev/null
 go version
 
-echoInfo "INFO: Setting up essential flutter dependencies..."
-wget https://storage.googleapis.com/flutter_infra_release/releases/$FLUTTER_CHANNEL/linux/$FLUTTER_TAR
-mkdir -p /usr/lib # make sure flutter root directory exists
-tar -C /usr/lib -xvf ./$FLUTTER_TAR
+# echoInfo "INFO: Setting up essential flutter dependencies..."
+# wget https://storage.googleapis.com/flutter_infra_release/releases/$FLUTTER_CHANNEL/linux/$FLUTTER_TAR
+# mkdir -p /usr/lib # make sure flutter root directory exists
+# tar -C /usr/lib -xvf ./$FLUTTER_TAR
+# 
+# echoInfo "INFO: Setting up essential dart dependencies..."
+# FLUTTER_CACHE=$FLUTTERROOT/bin/cache
+# rm -rfv $FLUTTER_CACHE/dart-sdk
+# mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
+# touch $FLUTTER_CACHE/.dartignore
+# touch $FLUTTER_CACHE/engine-dart-sdk.stamp
+# 
+# wget https://storage.googleapis.com/dart-archive/channels/$DART_CHANNEL_PATH/$DART_VERSION/sdk/$DART_ZIP
+# unzip ./$DART_ZIP -d $FLUTTER_CACHE
+# 
+# flutter config --enable-web
+# flutter doctor
+# 
+# rm -fv $DART_ZIP $FLUTTER_TAR $GO_TAR CDHelper-linux-$CDHELPER_ARCH.zip
 
-echoInfo "INFO: Setting up essential dart dependencies..."
-FLUTTER_CACHE=$FLUTTERROOT/bin/cache
-rm -rfv $FLUTTER_CACHE/dart-sdk
-mkdir -p $FLUTTER_CACHE # make sure flutter cache direcotry exists & essential files which prevent automatic update
-touch $FLUTTER_CACHE/.dartignore
-touch $FLUTTER_CACHE/engine-dart-sdk.stamp
-
-wget https://storage.googleapis.com/dart-archive/channels/$DART_CHANNEL_PATH/$DART_VERSION/sdk/$DART_ZIP
-unzip ./$DART_ZIP -d $FLUTTER_CACHE
-
-flutter config --enable-web
-flutter doctor
-
-rm -fv $DART_ZIP $FLUTTER_TAR $GO_TAR CDHelper-linux-$CDHELPER_ARCH.zip
+rm -fv CDHelper-linux-$CDHELPER_ARCH.zip
 
 echoInfo "INFO: Installing essential KIRA tools"
 
