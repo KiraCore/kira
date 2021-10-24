@@ -77,12 +77,16 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
-    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-    
-    if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
+
+    if (! $(isNaturalNumber "$HEIGHT")) ; then
         echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-        sleep 10 && PREVIOUS_HEIGHT=$HEIGHT && continue
+        sleep 10 && continue
     else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
+    
+    #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
+    #    echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+    #    sleep 10 && PREVIOUS_HEIGHT=$HEIGHT && continue
+    #else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -100,8 +104,8 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time" && exit 1
 
-[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
-    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
+#[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
+#    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
