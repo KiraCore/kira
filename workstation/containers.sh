@@ -40,7 +40,7 @@ echoInfo "INFO: Starting containers build..."
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
 globSet VALIDATOR_EXPOSED false
-globSet FRONTEND_EXPOSED true
+globSet FRONTEND_EXPOSED false
 globSet INTERX_EXPOSED true
 
 # setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
@@ -59,17 +59,17 @@ if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-seed.sh
     [ "$(globGet seed_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh
     [ "$(globGet sentry_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh
     [ "$(globGet validator_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
+    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     globSet CONTAINERS_BUILD_SUCCESS "false"
