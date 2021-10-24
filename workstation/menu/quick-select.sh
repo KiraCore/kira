@@ -199,7 +199,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
                 echoWarn "WARNING: Snapshot download failed or connection with the node is not stable ($SNAP_URL)"
-                OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+                echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=($(globGet OPTION))
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
@@ -257,18 +257,40 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
              
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
-            echoWarn "INFO: Genesis file was not found, downloading..."
-            rm -fv "$TMP_GENESIS_PATH" 
-            wget $NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json -O $TMP_GENESIS_PATH || echoWarn "WARNING: Genesis download failed"
-            GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
-            GENESIS_TIME=$(date2unix $(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n ""))
-             
-            if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] || ($(isNullOrWhitespaces "$GENESIS_NETWORK")) || (! $(isNaturalNumber "$GENESIS_TIME")) ; then
-                echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
-                continue
-            fi
-             
-            echoInfo "INFO: Genesis file verification suceeded"
+            while : ; do
+                GENESIS_SOURCE="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json"
+                set +x
+                echoWarn "WARNING: Genesis file was NOT found!"
+                echoInfo "INFO: Default genesis source file: $GENESIS_SOURCE"
+                echoNErr "Input URL to external genesis file, local PATH or press [ENTER] for default: " && read g1 && g1=$(echo "$g1" | xargs)
+                set -x
+
+                (! $(isNullOrWhitespaces "$GENESIS_SOURCE")) && GENESIS_SOURCE="$g1"
+                rm -fv "$TMP_GENESIS_PATH" 
+
+                if (! $(isFileEmpty "$GENESIS_SOURCE")) ; then
+                    cp -afv $GENESIS_SOURCE $TMP_GENESIS_PATH || echoErr "ERROR: Genesis copy from local PATH failed"
+                else
+                    wget $GENESIS_SOURCE -O $TMP_GENESIS_PATH || echoErr "ERROR: Genesis download from external URL failed"
+                fi
+
+                GENESIS_NETWORK=$(jsonQuickParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+                GENESIS_TIME=$(date2unix $(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n ""))
+
+                if ($(isNullOrWhitespaces "$GENESIS_NETWORK")) || (! $(isNaturalNumber "$GENESIS_TIME")) ; then
+                    echoWarn "WARNING: Genesis file served by '$NODE_ADDR' is corrupted, connect to diffrent node"
+                    continue
+                fi
+
+                if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
+                    echoNErr "Expected chain ID to be '$GENESIS_NETWORK' but got '$CHAIN_ID', do you want to [T]ry again or [C]hange chain id to '$CHAIN_ID' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
+                    [ "${OPTION,,}" == "t" ] && continue
+                    CHAIN_ID=$GENESIS_NETWORK
+                fi
+
+                echoInfo "INFO: Genesis file verification suceeded"
+                break
+            done
         fi
          
         echoInfo "INFO: Calculating genesis checksum..."
