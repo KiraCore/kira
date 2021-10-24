@@ -484,7 +484,7 @@ function isSubStr {
 }
 
 function isCommand {
-    if command "$1" 2> /dev/null ; then echo "true" ; else echo "false" ; fi
+    if ($(isNullOrEmpty "$1")) ; then echo "false" ; elif command -v "$1" &> /dev/null ; then echo "true" ; else echo "false" ; fi
 }
 
 function isServiceActive {
