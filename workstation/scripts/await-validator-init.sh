@@ -77,9 +77,8 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Awaiting first blocks to be synced or produced..."
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" || echo -n "")
-    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 
-    if [[ $HEIGHT -le 0 ]] ; then
+    if (! $(isNaturalNumber "$HEIGHT")) ; then
         echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
         sleep 10 && continue
     else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
