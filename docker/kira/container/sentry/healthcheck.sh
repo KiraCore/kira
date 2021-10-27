@@ -35,7 +35,7 @@ if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
     TIME_SPAN=$(timerSpan catching_up) && (! $(isNaturalNumber $TIME_SPAN)) && TIME_SPAN=0
     echoErr "ERROR: Block production or sync stopped more than $TIME_SPAN seconds ago"
     sleep 60
-    [[ $TIME_SPAN -gt 1800 ]] && exit 1
+    [[ $TIME_SPAN -gt 900 ]] && exit 1
 else
     echoInfo "INFO, Success, new blocks were created or synced: $HEIGHT"
 fi
