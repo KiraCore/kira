@@ -257,20 +257,20 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
              
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
             while : ; do
-                GENESIS_SOURCE="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/genesis.json"
+                GENESIS_SOURCE="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis"
                 set +x
                 echoWarn "WARNING: Genesis file was NOT found!"
                 echoInfo "INFO: Default genesis source file: $GENESIS_SOURCE"
                 echoNErr "Input URL to external genesis file, local PATH or press [ENTER] for default: " && read g1 && g1=$(echo "$g1" | xargs)
                 set -x
 
-                (! $(isNullOrWhitespaces "$GENESIS_SOURCE")) && GENESIS_SOURCE="$g1"
+                (! $(isNullOrWhitespaces "$g1")) && GENESIS_SOURCE="$g1"
                 rm -fv "$TMP_GENESIS_PATH" 
 
                 if (! $(isFileEmpty "$GENESIS_SOURCE")) ; then
                     cp -afv $GENESIS_SOURCE $TMP_GENESIS_PATH || echoErr "ERROR: Genesis copy from local PATH failed"
                 else
-                    wget $GENESIS_SOURCE -O $TMP_GENESIS_PATH || echoErr "ERROR: Genesis download from external URL failed"
+                    wget -v $GENESIS_SOURCE -O $TMP_GENESIS_PATH || echoErr "ERROR: Genesis download from external URL failed"
                 fi
 
                 GENESIS_NETWORK=$(jsonParse "chain_id" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
