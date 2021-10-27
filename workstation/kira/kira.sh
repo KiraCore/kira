@@ -27,7 +27,6 @@ timeout 30 systemctl daemon-reload || echoErr "ERROR: Failed to reload deamon"
 systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
 globSet IS_SCAN_DONE "false"
-PREVIOUS_BLOCK=0
 INFRA_CONTAINERS_COUNT=$(globGet INFRA_CONTAINERS_COUNT)
 set +x
 
@@ -133,10 +132,8 @@ while : ; do
         VAL_TOTAL=$(globGet VAL_TOTAL) && VALTOTAL="V.TOTAL: ${VAL_TOTAL}${WHITESPACE}"
         VAL_WAITING=$(globGet VAL_WAITING) && VALWAITING="WAITING: ${VAL_WAITING}${WHITESPACE}"
         
-        [ "$PREVIOUS_BLOCK" == "$LATEST_BLOCK_HEIGHT" ] && [ "${CONS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
+        [ "${CONS_STOPPED,,}" == "true" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m:\e[31;1m CONSENSUS HALTED\e[33;1m"
         [ "${CONS_STOPPED,,}" == "false" ] && echo -e "|\e[35;1m ${VALACTIVE:0:16}${VALTOTAL:0:16}${VALWAITING:0:13} \e[33;1m|"
-        
-        ($(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && PREVIOUS_BLOCK="$LATEST_BLOCK_HEIGHT"
     else
         LATEST_BLOCK_HEIGHT="???"
     fi
