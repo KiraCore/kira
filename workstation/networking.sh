@@ -4,7 +4,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart SETUP_NETWORKING
-PORTS=($KIRA_FRONTEND_PORT $KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SEED_RPC_PORT $KIRA_SENTRY_RPC_PORT $KIRA_VALIDATOR_RPC_PORT $KIRA_SEED_P2P_PORT $KIRA_VALIDATOR_P2P_PORT $KIRA_SEED_PROMETHEUS_PORT $KIRA_SENTRY_PROMETHEUS_PORT $KIRA_VALIDATOR_PROMETHEUS_PORT)
+PORTS=($KIRA_INTERX_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SEED_RPC_PORT $KIRA_SENTRY_RPC_PORT $KIRA_VALIDATOR_RPC_PORT $KIRA_SEED_P2P_PORT $KIRA_VALIDATOR_P2P_PORT $KIRA_SEED_PROMETHEUS_PORT $KIRA_SENTRY_PROMETHEUS_PORT $KIRA_VALIDATOR_PROMETHEUS_PORT)
 PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
@@ -53,9 +53,6 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface=$IFACE
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_FRONTEND_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_FRONTEND_PORT/tcp
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$KIRA_INTERX_PORT/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_INTERX_PORT/tcp

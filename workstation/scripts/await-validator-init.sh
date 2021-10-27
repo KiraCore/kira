@@ -213,11 +213,6 @@ EOL
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"interx\",\"git\":\"$INTERX_REPO\",\"checkout\":\"$INTERX_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
-    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-    $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$REPO_TMP" 555
-    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"frontend\",\"git\":\"$FRONTEND_REPO\",\"checkout\":\"$FRONTEND_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
-
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
 
     UPGRADE_PROPOSAL=$(cat <<EOL

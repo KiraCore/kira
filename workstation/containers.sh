@@ -40,7 +40,6 @@ echoInfo "INFO: Starting containers build..."
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
 globSet VALIDATOR_EXPOSED false
-globSet FRONTEND_EXPOSED false
 globSet INTERX_EXPOSED true
 
 # setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
@@ -53,23 +52,19 @@ globGet seed_STARTED "false"
 globGet sentry_STARTED "false"
 globGet validator_STARTED "false"
 globGet interx_STARTED "false"
-globGet frontend_STARTED "false"
 
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-seed.sh
     [ "$(globGet seed_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh
     [ "$(globGet sentry_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh
     [ "$(globGet validator_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
-    # [ "$(globGet interx_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-frontend.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     globSet CONTAINERS_BUILD_SUCCESS "false"
@@ -93,11 +88,6 @@ if [ "$(globGet VALIDATOR_EXPOSED)" == "true" ] ; then
     PORTS="$PORTS $KIRA_VALIDATOR_P2P_PORT $KIRA_VALIDATOR_RPC_PORT $KIRA_VALIDATOR_PROMETHEUS_PORT"
 fi
 
-if [ "$(globGet FRONTEND_EXPOSED)" == "true" ] ; then
-    CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
-    PORTS="$PORTS $KIRA_FRONTEND_PORT"
-fi
-
 if [ "$(globGet INTERX_EXPOSED)" == "true" ] ; then
     CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
     PORTS="$PORTS $KIRA_INTERX_PORT"
@@ -110,7 +100,6 @@ seed_STARTED=$(globGet seed_STARTED)
 sentry_STARTED=$(globGet sentry_STARTED)
 validator_STARTED=$(globGet validator_STARTED)
 interx_STARTED=$(globGet interx_STARTED)
-frontend_STARTED=$(globGet frontend_STARTED)
 
 if [ "${interx_STARTED,,}" != "true" ] ; then
     globSet CONTAINERS_BUILD_SUCCESS "false"
@@ -120,7 +109,6 @@ if [ "${interx_STARTED,,}" != "true" ] ; then
     echoErr "ERROR:    Sentry started: '$sentry_STARTED'"
     echoErr "ERROR: Validator started: '$validator_STARTED'"
     echoErr "ERROR:    INTERX started: '$interx_STARTED'"
-    echoErr "ERROR:  Frontend started: '$frontend_STARTED'"
     exit 1
 else
     echoInfo "INFO: Containers deployment suceeded..."

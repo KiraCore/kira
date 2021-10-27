@@ -48,5 +48,4 @@ KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
 KIRA_INTERX_DNS="interx.local"
-KIRA_FRONTEND_DNS="fontend.local"
 ```

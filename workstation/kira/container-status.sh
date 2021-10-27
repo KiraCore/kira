@@ -23,9 +23,6 @@ set -x
 if [ "${NAME,,}" == "interx" ]; then
     BRANCH="$INTERX_BRANCH"
     REPO="$INTERX_REPO"
-elif [ "${NAME,,}" == "frontend" ]; then
-    BRANCH="$FRONTEND_BRANCH"
-    REPO="$FRONTEND_REPO"
 elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "seed" ] ; then
     BRANCH="$SEKAI_BRANCH"
     REPO="$SEKAI_REPO"
@@ -72,7 +69,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
         globSet "${NAME}_STATUS" "backing up"
     elif [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
-    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|seed|interx|frontend)$ ]] ) ; then 
+    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|seed|interx)$ ]] ) ; then 
         globSet "${NAME}_STATUS" "configuring"
     else
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"

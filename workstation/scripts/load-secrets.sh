@@ -69,7 +69,6 @@ function MnemonicGenerator() {
 
 MnemonicGenerator "signer" "addr" # INTERX message signing key
 MnemonicGenerator "faucet" "addr" # INTERX faucet key
-MnemonicGenerator "frontend" "addr" # frontend key
 MnemonicGenerator "validator" "addr" # validator controller key
 MnemonicGenerator "test" "addr" # generic test key
 MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)

@@ -36,7 +36,6 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
     echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
     echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
-    # echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
     echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     
@@ -330,7 +329,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
         echoNInfo "CONFIG:              sekai git branch: " && echoErr $SEKAI_BRANCH
-        # echoNInfo "CONFIG:      KIRA Frontend git branch: " && echoErr $FRONTEND_BRANCH
         echoNInfo "CONFIG:             INTERX git branch: " && echoErr $INTERX_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done

@@ -19,8 +19,7 @@ set -x
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 cd /kira
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
-    echoInfo "INFO: Updating kira, Sekai, frontend, INTERX"
-    $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$KIRA_FRONTEND" &
+    echoInfo "INFO: Updating kira, sekai, INTERX"
     $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
     $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$KIRA_SEKAI" &
     $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &

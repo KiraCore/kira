@@ -163,11 +163,10 @@ while : ; do
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
     fi
 
-    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|validator|interx|frontend)$ ]] ; then
+    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${NAME,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
         TARGET=""
         [[ "${NAME,,}" =~ ^(sentry|seed|validator)$ ]] && TARGET="(P2P)"
         [ "${NAME,,}" == "interx" ] && TARGET="(API)"
-        [ "${NAME,,}" == "frontend" ] && TARGET="(HTTP)"
         
         EX_ADDR="${EXTERNAL_ADDRESS} ${TARGET} ${WHITESPACE}"
         [ "${EXTERNAL_STATUS,,}" == "online" ] && EX_ADDR_STATUS="\e[32;1m$EXTERNAL_STATUS\e[36;1m" || EX_ADDR_STATUS="\e[31;1m$EXTERNAL_STATUS\e[36;1m"
