@@ -66,7 +66,7 @@ while : ; do
 
         for name in $CONTAINERS; do
             EXISTS_TMP=$(globGet "${name}_EXISTS")
-            [ "${EXISTS_TMP,,}" == "true" ] && continue
+            [ "${EXISTS_TMP,,}" != "true" ] && continue
 
             SYNCING_TMP=$(globGet "${name}_SYNCING")
 
@@ -76,9 +76,10 @@ while : ; do
             STATUS_TMP=$(globGet "${name}_STATUS")
             HEALTH_TMP=$(globGet "${name}_HEALTH")
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
+            [ "${name,,}" == "registry" ] && continue
+
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
-            [ "${name,,}" == "registry" ] && continue
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
