@@ -23,7 +23,6 @@ KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
 KIRA_SEED_DNS="seed.local"
 KIRA_INTERX_DNS="interx.local"
-KIRA_FRONTEND_DNS="frontend.local"
 
 KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
 
@@ -65,7 +64,6 @@ if [ ! -f "$SETUP_CHECK" ]; then
     CDHelper text lineswap --insert="KIRA_SENTRY_DNS=\"$KIRA_SENTRY_DNS\"" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SEED_DNS=\"$KIRA_SEED_DNS\"" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_INTERX_DNS=\"$KIRA_INTERX_DNS\"" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=\"$KIRA_FRONTEND_DNS\"" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
 
     CDHelper text lineswap --insert="KIRA_REGISTRY_SUBNET=\"$KIRA_REGISTRY_SUBNET\"" --prefix="KIRA_REGISTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=\"$KIRA_SENTRY_SUBNET\"" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True

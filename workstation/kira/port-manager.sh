@@ -17,7 +17,6 @@ while : ; do
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
     
     [ "$PORT" == "$KIRA_INTERX_PORT" ] && TYPE="API"
-    [ "$PORT" == "$KIRA_FRONTEND_PORT" ] && TYPE="HTTP"
 
     [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
     [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"

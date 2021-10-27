@@ -36,7 +36,6 @@ DEFAULT_PROMETHEUS_PORT="26660"
 DEFAULT_GRPC_PORT="9090"
 DEFAULT_INTERX_PORT="11000"
 
-KIRA_FRONTEND_PORT="80"
 KIRA_INTERX_PORT="11000"
 
 KIRA_SEED_P2P_PORT="16656"
@@ -135,17 +134,14 @@ fi
 if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
     DEFAULT_BRANCH="$INFRA_BRANCH"
     SEKAI_BRANCH="$DEFAULT_BRANCH"
-    FRONTEND_BRANCH="$DEFAULT_BRANCH"
     INTERX_BRANCH="$DEFAULT_BRANCH"
 else
     DEFAULT_BRANCH="master"
     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
-    [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="$DEFAULT_BRANCH"
     [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
 fi
 
 [ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
-[ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
 [ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
 
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
@@ -156,7 +152,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
     KIRA_INFRA="$KIRA_REPOS/kira"
     KIRA_SEKAI="$KIRA_REPOS/sekai"
-    KIRA_FRONTEND="$KIRA_REPOS/frontend"
     KIRA_INTERX="$KIRA_REPOS/interx"
 
     KIRA_SETUP=/kira/setup
@@ -174,7 +169,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     GLOBAL_COMMON_RO="/docker/shared/common_ro/kiraglob"
 
     rm -rfv $KIRA_DUMP
-    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
+    mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
     ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-24" | md5sum | awk '{ print $1 }' || echo -n "")
     KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
@@ -258,7 +253,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
 
         CDHelper text lineswap --insert="KIRA_INFRA=$KIRA_INFRA" --prefix="KIRA_INFRA=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_SEKAI=$KIRA_SEKAI" --prefix="KIRA_SEKAI=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_FRONTEND=$KIRA_FRONTEND" --prefix="KIRA_FRONTEND=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_INTERX=$KIRA_INTERX" --prefix="KIRA_INTERX=" --path=$ETC_PROFILE --append-if-found-not=True
 
         CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -283,7 +277,6 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
         CDHelper text lineswap --insert="KIRA_SENTRY_PROMETHEUS_PORT=$KIRA_SENTRY_PROMETHEUS_PORT" --prefix="KIRA_SENTRY_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_VALIDATOR_PROMETHEUS_PORT=$KIRA_VALIDATOR_PROMETHEUS_PORT" --prefix="KIRA_VALIDATOR_PROMETHEUS_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
 
-        CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         CDHelper text lineswap --insert="KIRA_INTERX_PORT=$KIRA_INTERX_PORT" --prefix="KIRA_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
         
         CDHelper text lineswap --insert="KIRA_SENTRY_RPC_PORT=$KIRA_SENTRY_RPC_PORT" --prefix="KIRA_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
@@ -337,12 +330,10 @@ CDHelper text lineswap --insert="KIRA_USER=\"$KIRA_USER\"" --prefix="KIRA_USER="
 
 CDHelper text lineswap --insert="INFRA_BRANCH=\"$INFRA_BRANCH\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_BRANCH=\"$FRONTEND_BRANCH\"" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
 
 CDHelper text lineswap --insert="INFRA_REPO=\"$INFRA_REPO\"" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="SEKAI_REPO=\"$SEKAI_REPO\"" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_REPO=\"$FRONTEND_REPO\"" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 CDHelper text lineswap --insert="INTERX_REPO=\"$INTERX_REPO\"" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
 
 CDHelper text lineswap --insert="source \$KIRA_MANAGER/utils.sh" --suffix="/utils.sh" --path=$ETC_PROFILE --append-if-found-not=True

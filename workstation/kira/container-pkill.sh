@@ -18,9 +18,6 @@ timerStart
 if [ "${NAME,,}" == "interx" ]; then
     PROCESS="interxd"
     CODE="9"
-elif [ "${NAME,,}" == "frontend" ]; then
-    PROCESS="nginx"
-    CODE="9"
 elif [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
     PROCESS="sekaid"
     CODE="15"

@@ -22,11 +22,9 @@ sleep 1
 timedatectl set-timezone "Etc/UTC"
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
-FRONTEND_BRANCH_DEFAULT=$FRONTEND_BRANCH
 INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
 
 [ -z "$SEKAI_BRANCH_DEFAULT" ] && SEKAI_BRANCH_DEFAULT="master"
-[ -z "$FRONTEND_BRANCH_DEFAULT" ] && FRONTEND_BRANCH_DEFAULT="master"
 [ -z "$INTERX_BRANCH_DEFAULT" ] && INTERX_BRANCH_DEFAULT="master"
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
@@ -125,7 +123,6 @@ while :; do
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
     echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
     echo -e "|   Default interx Branch: $INTERX_BRANCH"
-    # echo -e "| Default frontend Branch: $FRONTEND_BRANCH"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"

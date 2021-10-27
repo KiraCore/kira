@@ -6,7 +6,6 @@ set -x
 
 IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/base-image" "base-image" || echo "error")
 if [ "${IMAGE_EXISTS,,}" == "false" ]; then
-    $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/frontend" "frontend"
     $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/interx" "interx"
     $KIRAMGR_SCRIPTS/delete-image.sh "$KIRA_DOCKER/kira" "kira"
 

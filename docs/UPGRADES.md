@@ -14,13 +14,12 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress val
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-93" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
+ --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
@@ -41,13 +40,12 @@ showNextPlan | jq
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-93" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
+ --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="newnet-2" \
@@ -67,13 +65,12 @@ showNextPlan | jq
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-93" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
+ --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
@@ -94,13 +91,12 @@ showNextPlan | jq
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
-FRONT_RES_TMP="{\"id\":\"frontend\",\"git\":\"https://github.com/KiraCore/kira-frontend\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
 UPGRADE_NAME_TMP="upgrade-93" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP},${FRONT_RES_TMP}]" \
+ --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time="1635028200" \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="testnet-6" \

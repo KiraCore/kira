@@ -32,7 +32,6 @@ echo -e "\e[37;1m--------------------------------------------------"
         NAME=""
         
         [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
         [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
