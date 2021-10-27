@@ -102,8 +102,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
-        SNAP_SIZE=$(urlContentLength "$SNAP_URL")
-        if ($(urlExists "$SNAP_URL")) && [[ $SNAP_SIZE -gt 0 ]]; then
+        if ($(urlExists "$SNAP_URL")) ; then
+            SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(e|l|a|d|c)$ ]]; do echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
