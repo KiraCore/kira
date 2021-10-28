@@ -27,7 +27,7 @@ URL_SNAPS="$ADDR:$DEFAULT_INTERX_PORT/download/snaps.txt"
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|   STARTING KIRA PUBLIC PEERS SCAN v0.2.2.3   |"
+echoWarn "|   STARTING KIRA PUBLIC PEERS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "|       SEED ADDRESS: $ADDR"
 echoWarn "|        OUTPUT PATH: $OUTPUT"
@@ -125,7 +125,7 @@ while : ; do
     fi
 
     STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/status"
-    STATUS=$(timeout 0.25 curl $STATUS_URL 2>/dev/null || echo -n "")
+    STATUS=$(timeout 3 curl $STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$STATUS")) ; then echoWarn "WARNING: INTERX status not found ($ip)" && continue ; fi
 
     if [ "${SNAPS_ONLY,,}" != "true" ] ; then
@@ -143,7 +143,7 @@ while : ; do
     if ! timeout 0.25 nc -z $ip $port ; then echoWarn "WARNING: Port '$port' closed ($ip)" && continue ; fi
 
     KIRA_STATUS_URL="$ip:$DEFAULT_INTERX_PORT/api/kira/status"
-    KIRA_STATUS=$(timeout 0.25 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
+    KIRA_STATUS=$(timeout 3 curl $KIRA_STATUS_URL 2>/dev/null || echo -n "")
     if ($(isNullOrEmpty "$KIRA_STATUS")) ; then echoWarn "WARNING: Node status not found ($ip)" && continue ; fi
     
     chain_id=$(echo "$STATUS" | jsonQuickParse "chain_id" || echo "")
