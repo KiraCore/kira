@@ -148,7 +148,7 @@ for name in $CONTAINERS; do
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
         fi
 
-        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ $NEW_LATEST_BLOCK_TIME -lt $LATEST_BLOCK_TIME ]] && [[ "${name,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
+        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ $NEW_LATEST_BLOCK_TIME -lt $LATEST_BLOCK_TIME ]] && [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NEW_LATEST_BLOCK="$LATEST_BLOCK"
             NEW_LATEST_BLOCK_TIME="$LATEST_BLOCK_TIME"
             NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"

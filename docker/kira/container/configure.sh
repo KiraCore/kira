@@ -30,10 +30,14 @@ LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
 
 LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
 PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
-LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
-MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO")
-CFG_timeout_commit=$(globGet CFG_timeout_commit)
 
+LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
+MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
+STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+
+[[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
+
+CFG_timeout_commit=$(globGet CFG_timeout_commit)
 CFG_pex=$(globGet CFG_pex)
 CFG_moniker=$(globGet CFG_moniker)
 CFG_allow_duplicate_ip=$(globGet CFG_allow_duplicate_ip)
@@ -85,14 +89,6 @@ globSet EXTERNAL_PORT "$EXTERNAL_P2P_PORT"
 echoInfo "INFO:    Local Addr: $LOCAL_IP"
 echoInfo "INFO:   Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
-
-echoInfo "INFO: Starting state file configuration..."
-STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
-(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
-(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
-(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
-[[ $MIN_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$MIN_HEIGHT
-[[ $STATE_HEIGHT -gt $LATEST_BLOCK_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
 echoInfo "INFO: Starting genesis configuration..."
 if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
@@ -443,11 +439,11 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
 CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
 
-if [[ $LATEST_BLOCK_HEIGHT -gt $STATE_HEIGHT ]] ; then
-    echoWarn "WARNING: Updating minimum state height, expected no less than $LATEST_BLOCK_HEIGHT but got $STATE_HEIGHT"
+if [[ $MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
+    echoWarn "WARNING: Updating minimum state height, expected no less than $MIN_HEIGHT but got $STATE_HEIGHT"
     cat >$LOCAL_STATE <<EOL
 {
-  "height": "$LATEST_BLOCK_HEIGHT",
+  "height": "$MIN_HEIGHT",
   "round": 0,
   "step": 0
 }
