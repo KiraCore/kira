@@ -26,6 +26,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     globSet LATEST_BLOCK_HEIGHT 0
     globSet LATEST_BLOCK_TIME 0
     globSet MIN_HEIGHT 0
+    globSet MIN_HEIGHT 0 $GLOBAL_COMMON_RO
 
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
