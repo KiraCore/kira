@@ -161,7 +161,7 @@ for name in $CONTAINERS; do
         CATCHING_UP="false"
     fi
     
-    [[ $MIN_HEIGHT -gt $LATEST_BLOCK_TIME ]] && CATCHING_UP="true"
+    [[ $MIN_HEIGHT -gt $LATEST_BLOCK ]] && CATCHING_UP="true"
     [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] && [ "${CATCHING_UP,,}" == "true" ] && NEW_CATCHING_UP="true"
     
     echoInfo "INFO: Saving status props..."
