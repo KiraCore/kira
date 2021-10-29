@@ -65,17 +65,19 @@ fi
 
 docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\""
 
-[ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'" && sleep 10 && exit 1
-
-KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
-CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-if [ "${SNAP_EXPOSE,,}" == "true" ]; then
-    echoInfo "INFO: Exposing snapshoot via INTERX"
-    ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
+if [ ! -f "$KIRA_SNAP_PATH" ] ; then
+    echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
 else
-    echoInfo "INFO: No need to expose snapshoot"
+    KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
+    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+
+    if [ "${SNAP_EXPOSE,,}" == "true" ]; then
+        echoInfo "INFO: Exposing snapshoot via INTERX"
+        ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
+    else
+        echoInfo "INFO: No need to expose snapshoot"
+    fi
 fi
 
 if [ "${SNAPSHOT_UNHALT,,}" == "true" ] ; then
