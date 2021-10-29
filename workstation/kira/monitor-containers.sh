@@ -111,10 +111,12 @@ else
     echoInfo "INFO: No new upgrade plans were found or are not expeted!"
 fi
 
-NEW_LATEST_BLOCK=0
+MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$MIN_HEIGHT")) && MIN_HEIGHT=0
 NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && NEW_LATEST_BLOCK_TIME=0
+NEW_LATEST_BLOCK=0
 NEW_LATEST_STATUS=0
 CONTAINERS_COUNT=0
+NEW_CATCHING_UP="false"
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     PIDX=$(globGet "${name}_STATUS_PID")
@@ -159,6 +161,9 @@ for name in $CONTAINERS; do
         CATCHING_UP="false"
     fi
     
+    [[ $MIN_HEIGHT -gt $LATEST_BLOCK_TIME ]] && CATCHING_UP="true"
+    [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] && [ "${CATCHING_UP,,}" == "true" ] && NEW_CATCHING_UP="true"
+    
     echoInfo "INFO: Saving status props..."
     PREVIOUS_BLOCK=$(globGet "${name}_BLOCK")
     globSet "${name}_BLOCK" "$LATEST_BLOCK"
@@ -167,6 +172,7 @@ for name in $CONTAINERS; do
 done
 
 globSet CONTAINERS_COUNT $CONTAINERS_COUNT
+globSet CATCHING_UP $NEW_CATCHING_UP
 
 if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] ; then
     echoInfo "INFO: Block height chaned to $NEW_LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
