@@ -54,24 +54,19 @@ while : ; do
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
+    CONTAINERS=$(globGet CONTAINERS)
+    CATCHING_UP=$(globGet CATCHING_UP)
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
         SUCCESS="true"
         ALL_CONTAINERS_PAUSED="true"
         ALL_CONTAINERS_STOPPED="true"
         ALL_CONTAINERS_HEALTHY="true"
-        CATCHING_UP="false"
         VALIDATOR_RUNNING="false"
-        CONTAINERS=$(globGet CONTAINERS)
 
         for name in $CONTAINERS; do
             EXISTS_TMP=$(globGet "${name}_EXISTS")
             [ "${EXISTS_TMP,,}" != "true" ] && continue
-
-            SYNCING_TMP=$(globGet "${name}_SYNCING")
-
-            # if some other node then snapshot is syncig then infra is not ready
-            [ "${SYNCING_TMP,,}" == "true" ] && CATCHING_UP="true"
 
             STATUS_TMP=$(globGet "${name}_STATUS")
             HEALTH_TMP=$(globGet "${name}_HEALTH")
@@ -157,7 +152,7 @@ while : ; do
     fi
 
     if [ "${SCAN_DONE,,}" == "true" ]; then
-        if [ ! -z "$VALIDATOR_ADDR" ]; then
+        if [ ! -z "$VALIDATOR_ADDR" ] && [ "${CATCHING_UP,,}" != "true" ] ; then
             if [ "${VALSTATUS,,}" == "active" ] ; then
                 echo -e "|\e[0m\e[32;1m    SUCCESS, VALIDATOR AND INFRA IS HEALTHY    \e[33;1m: $VALSTATUS"
             elif [ "${VALSTATUS,,}" == "inactive" ] ; then
@@ -175,7 +170,7 @@ while : ; do
 
         if [ "${CATCHING_UP,,}" == "true" ]; then
             echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
-        elif [[ $CONTAINERS_COUNT -le $INFRA_CONTAINERS_COUNT ]]; then
+        elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINERS_COUNT ]]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m: ${CONTAINERS_COUNT}/${INFRA_CONTAINERS_COUNT}"
         elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
             echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
@@ -204,8 +199,8 @@ while : ; do
 
             if [[ "${name,,}" =~ ^(validator|sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
                 LATEST_BLOCK=$(globGet "${name}_BLOCK") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
-                CATCHING_UP=$(globGet "${name}_SYNCING") && ($(isNullOrEmpty $CATCHING_UP)) && CATCHING_UP="false"
-                [ "${CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
+                TMP_CATCHING_UP=$(globGet "${name}_SYNCING")
+                [ "${TMP_CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
 
             NAME_TMP="${name}${WHITESPACE}"
@@ -242,7 +237,7 @@ while : ; do
             echo "| [U] | Enable Automated UPGRADES               |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u" ||
             echo "| [U] | Disable Automated UPGRADES              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}u"
 
-    if [ "${VALIDATOR_RUNNING,,}" == "true" ] ; then
+    if [ "${VALIDATOR_RUNNING,,}" == "true" ] && [ "${CATCHING_UP,,}" != "true" ] ; then
         [ "${VALSTATUS,,}" == "active" ]   && echo "| [M] | Enable MAINTENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
         [ "${VALSTATUS,,}" == "paused" ]   && echo "| [M] | Disable MAINTENANCE Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
         [ "${VALSTATUS,,}" == "inactive" ] && echo "| [A] | Re-ACTIVATE Jailed Validator            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
