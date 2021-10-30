@@ -350,10 +350,13 @@ fi
 
 set -x
 
+rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to remove old snapshots"
+
 if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
     SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
+
     mv -fv $TMP_SNAP_PATH $SNAPSHOT
 
     ($(isFileEmpty $SNAPSHOT)) && echoErr "ERROR: Failed to copy snapshot file from temp directory '$TMP_SNAP_PATH' to destination '$SNAPSHOT'"

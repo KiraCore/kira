@@ -4,6 +4,7 @@ source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-snapshot.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kirascan && journalctl -u kirascan -f --output cat
 # cat $KIRA_SCAN/snapshot.log
+# cat $KIRA_DUMP/kirascan/snapshot.log
 set -x
 
 timerStart SNAP_MONITOR
@@ -63,7 +64,7 @@ else
     rm -fv $KIRA_SNAP/*.zip
 fi
 
-docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\""
+docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" || rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
 
 if [ ! -f "$KIRA_SNAP_PATH" ] ; then
     echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
