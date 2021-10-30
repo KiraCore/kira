@@ -31,6 +31,7 @@ echoNErr "Do you want to continue and create a new [B]ackup, or [E]xit: " && pre
 
 [ "${SELECT,,}" == "e" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 3 && exit 0
 
+globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
 globSet SNAPSHOT_TARGET $SNAPSHOT_TARGET
 globSet SNAPSHOT_EXECUTE true
 

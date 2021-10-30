@@ -37,7 +37,7 @@ cp -afv "$LOCAL_ADDRBOOK" $ADDRBOOK_DESTINATION_FILE
 
 # to prevent appending root path we must zip all from within the target data folder
 cd $SEKAID_DATA
-zip -9 -r "$SNAP_DESTINATION_FILE" . *
+zip -0 -r "$SNAP_DESTINATION_FILE" . *
 [ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
 echoInfo "INFO: Finished container upgrade sequence..."
