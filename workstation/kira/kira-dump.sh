@@ -51,7 +51,7 @@ cat $(globGet UPDATE_CONTAINERS_LOG) > "$KIRA_DUMP/kiraup-containers-dump.log.tx
 echoInfo "INFO: Compresing all dumped files..."
 ZIP_FILE="$KIRA_DUMP/kira.zip"
 rm -fv $ZIP_FILE
-zip -9 -r -v $ZIP_FILE $KIRA_DUMP
+zip -0 -r -v $ZIP_FILE $KIRA_DUMP
 
 set +x
 echoInfo "INFO: All dump files were exported to $ZIP_FILE"

@@ -228,7 +228,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
             $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
             [ "${DOWNLOAD_SUCCESS,,}" == "false" ] && echoErr "ERROR: Failed to pull '$repository' from  '$checkout' branch." && sleep 10 && exit 1
             echoInfo "INFO: Repo '$repository' pull from branch '$checkout' suceeded, navigating to '$REPO_TMP' and compressing source into '$REPO_ZIP'..."
-            cd "$REPO_TMP" && zip -9 -r -v "$REPO_ZIP" .* || DOWNLOAD_SUCCESS="false"
+            cd "$REPO_TMP" && zip -0 -r -v "$REPO_ZIP" .* || DOWNLOAD_SUCCESS="false"
         else
             echoInfo "INFO: Checkour branch was not found, downloading '$joid' repository from external file..."
             wget "$repository" -O $REPO_ZIP || DOWNLOAD_SUCCESS="false"
