@@ -243,7 +243,7 @@ while : ; do
         [ "${VALSTATUS,,}" == "inactive" ] && echo "| [A] | Re-ACTIVATE Jailed Validator            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
     fi
 
-    [ "${VALSTATUS,,}" == "waiting" ] && \
+    [ "${VALSTATUS,,}" == "waiting" ] && [ "${CATCHING_UP,,}" != "true" ] && \
     echo "| [J] | JOIN Validator Set                      |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}j"
     echo "| [D] | DUMP All Loggs                          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
     echo "| [N] | Manage NETWORKING & Firewall            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}n"
@@ -381,7 +381,7 @@ while : ; do
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && activateValidator validator" || \
             echoErr "ERROR: Failed to confirm activate tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
-            sleep 5
+            sleep 60
         else
             echoWarn "WARNINIG: Unknown validator status '$VALSTATUS'"
         fi
