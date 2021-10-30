@@ -64,8 +64,8 @@ if [ "${EXISTS,,}" == "true" ] ; then
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"
     jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echoErr "ERROR: Failed to parsing docker networks"
 
-    if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] && [ "${SNAPSHOT_TARGET}" == "${NAME,,}" ] ; then
-        globSet "${NAME}_STATUS" "configuring"
+    IS_SYNCING=$(globGet "${SNAPSHOT_TARGET}_SYNCING")
+    if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] && [ "${SNAPSHOT_TARGET}" == "${NAME,,}" ] && [ "${IS_SYNCING,,}" != "true" ] ; then
         globSet "${NAME}_STATUS" "backing up"
     elif [ -f "$HALT_FILE" ] ; then
         globSet "${NAME}_STATUS" "halted"
