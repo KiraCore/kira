@@ -37,10 +37,10 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-93" && \
+INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-8\",\"checksum\":\"\"}" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-8\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-8\",\"checksum\":\"\"}" && \
+UPGRADE_NAME_TMP="upgrade-94" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
@@ -88,18 +88,18 @@ showNextPlan | jq
 > Latest Public testnet Hard Fork (2010-10-23 10:30 PM)
 
 ```
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-6\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-93" && \
+UPGRADE_NAME_TMP="upgrade-93" && UPGRADE_BRANCH="testnet-8" && UPGRADE_TIME="1635028200" && \
+INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
  --skip-handler=true \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
- --min-upgrade-time="1635028200" \
+ --min-upgrade-time="$UPGRADE_TIME" \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="testnet-6" \
+ --new-chain-id="$UPGRADE_BRANCH" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a planned hard fork of the public testnet" \

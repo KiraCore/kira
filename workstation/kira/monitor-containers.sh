@@ -182,10 +182,9 @@ if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] ; then
     globSet LATEST_BLOCK_HEIGHT "$NEW_LATEST_BLOCK" $GLOBAL_COMMON_RO
 
     OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
-    if [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
-        globSet MIN_HEIGHT "$NEW_LATEST_BLOCK"
-        globSet MIN_HEIGHT "$NEW_LATEST_BLOCK" $GLOBAL_COMMON_RO
-    fi
+    OLD_MIN_HEIGHT_GLOB=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO) && (! $(isNaturalNumber "$OLD_MIN_HEIGHT_GLOB")) && OLD_MIN_HEIGHT_GLOB=$OLD_MIN_HEIGHT
+    [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] && globSet MIN_HEIGHT "$NEW_LATEST_BLOCK"
+    [[ $OLD_MIN_HEIGHT_GLOB -lt $NEW_LATEST_BLOCK ]] && globSet MIN_HEIGHT "$NEW_LATEST_BLOCK" $GLOBAL_COMMON_RO
 else
     echoWarn "WARNING: New latest block was NOT found!"
 fi
