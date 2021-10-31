@@ -19,7 +19,7 @@ systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be 
 systemctl stop kiraclean || echoWarn "WARNING: KIRA cleanup service could NOT be stopped"
 sleep 1
 
-timedatectl set-timezone "Etc/UTC"
+timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone to UTC, ensure to do that manually after setup is finalized!" && sleep 10 )
 
 SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
 INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
