@@ -115,6 +115,7 @@ else
     globSet CONTAINERS_BUILD_SUCCESS "true"
     echoInfo "INFO: Creating snapshot..."
     [ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
+    globSet IS_SCAN_DONE "false"
     globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
     globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
     globSet SNAPSHOT_EXECUTE "true"
