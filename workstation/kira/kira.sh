@@ -240,7 +240,7 @@ while : ; do
     if [ "${VALIDATOR_RUNNING,,}" == "true" ] && [ "${CATCHING_UP,,}" != "true" ] ; then
         [ "${VALSTATUS,,}" == "active" ]   && echo "| [M] | Enable MAINTENANCE Mode                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
         [ "${VALSTATUS,,}" == "paused" ]   && echo "| [M] | Disable MAINTENANCE Mode                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
-        [ "${VALSTATUS,,}" == "inactive" ] && echo "| [A] | Re-ACTIVATE Jailed Validator            |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
+        [ "${VALSTATUS,,}" == "inactive" ] && echo "| [A] | Re-ACTIVATE Inactive Validator          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}a"
     fi
 
     [ "${VALSTATUS,,}" == "waiting" ] && [ "${CATCHING_UP,,}" != "true" ] && \

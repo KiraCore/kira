@@ -19,6 +19,9 @@ SNAPSHOT_UNHALT=$(globGet SNAPSHOT_UNHALT)
 SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
 
+COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+HALT_FILE="$COMMON_PATH/halt"
+
 
 set +x
 echoWarn "------------------------------------------------"
@@ -41,7 +44,7 @@ CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "
 sleep 15
 
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
-[ "${IS_SYNCING,,}" == "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' is still catching up!" && sleep 10 && exit 1
+[ ! -f $HALT_FILE ] && [ "${IS_SYNCING,,}" == "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' is NOT halted and is still catching up!" && sleep 10 && exit 1
 [ "${SNAPSHOT_EXECUTE,,}" != "true" ] && echoErr "ERROR: Snapshoot was not requested and will not be processed, aborting..." && sleep 10 && exit 1
 
 [ $LATEST_BLOCK_HEIGHT -lt $CONTAINER_BLOCK_HEIGHT ] && LATEST_BLOCK_HEIGHT=$CONTAINER_BLOCK_HEIGHT
