@@ -48,7 +48,7 @@ sekaid tx upgrade proposal-set-plan \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="newnet-2" \
+ --new-chain-id="newnet-8" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a hard fork test upgrade" \
@@ -65,7 +65,7 @@ showNextPlan | jq
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-93" && \
+UPGRADE_NAME_TMP="upgrade-94" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
@@ -88,7 +88,7 @@ showNextPlan | jq
 > Latest Public testnet Hard Fork (2010-10-23 10:30 PM)
 
 ```
-UPGRADE_NAME_TMP="upgrade-93" && UPGRADE_BRANCH="testnet-8" && UPGRADE_TIME="1635028200" && \
+UPGRADE_NAME_TMP="upgrade-94" && UPGRADE_BRANCH="testnet-8" && UPGRADE_TIME=$(date2unix "2021-11-06T16:30:00Z") && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
@@ -101,7 +101,7 @@ sekaid tx upgrade proposal-set-plan \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$UPGRADE_BRANCH" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
- --max-enrollment-duration=60 \
+ --max-enrollment-duration=90 \
  --upgrade-memo="This is a planned hard fork of the public testnet" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 
