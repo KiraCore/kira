@@ -307,8 +307,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         while : ; do
             TMP_MIN_HEIGHT=""
             echo "INFO: Default minmum block height is $HEIGHT"
-            echoNErr "Input minimum block height or press [ENTER] for (default): " && read TMP_MIN_HEIGHT 
-            [ -z "$TMP_MIN_HEIGHT" ] && TMP_MIN_HEIGHT=0 || TMP_MIN_HEIGHT=$HEIGHT
+            echoNErr "Input minimum block height or press [ENTER] for (default): " && read TMP_MIN_HEIGHT && [ -z "$TMP_MIN_HEIGHT" ] && TMP_MIN_HEIGHT=$HEIGHT
+            (! $(isNaturalNumber "$TMP_MIN_HEIGHT")) && TMP_MIN_HEIGHT=0
             [[ $TMP_MIN_HEIGHT -lt $HEIGHT ]] && echo "INFO: Minimum block height must be greater or equal to $HEIGHT, but was $TMP_MIN_HEIGHT" && continue
             NEW_MIN_HEIGHT="$TMP_MIN_HEIGHT" && break
         done
