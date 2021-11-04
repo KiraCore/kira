@@ -3,13 +3,13 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 exec 2>&1
 set -x
 
+mkdir -p $GLOB_STORE_DIR
 KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
 KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
 
 echoInfo "Staring INTERX $KIRA_SETUP_VER setup..."
-cd $SEKAI/INTERX
 
-mkdir -p $GLOB_STORE_DIR
+cd $SEKAI/INTERX
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 HALT_CHECK="${COMMON_DIR}/halt"

@@ -8,6 +8,7 @@ mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
+MIN_HEIGHT="0"
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
@@ -21,12 +22,6 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     DOWNLOAD_SUCCESS="false"
     TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
-    MIN_HEIGHT="0"
-
-    globSet LATEST_BLOCK_HEIGHT 0
-    globSet LATEST_BLOCK_TIME 0
-    globSet MIN_HEIGHT 0
-    globSet MIN_HEIGHT 0 $GLOBAL_COMMON_RO
 
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
@@ -43,14 +38,19 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
 
+    globSet LATEST_BLOCK_HEIGHT 0
+    globSet LATEST_BLOCK_TIME 0
+    globSet MIN_HEIGHT 0
+    globSet MIN_HEIGHT 0 $GLOBAL_COMMON_RO
+
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"
         source $KIRA_MANAGER/submenu.sh
         exit 0
     fi
 elif [ "${NEW_NETWORK,,}" == "false" ] ; then
-    MIN_HEIGHT="0"
     while : ; do
+        MIN_HEIGHT="0"
         if [ ! -z "$TRUSTED_NODE_ADDR" ] ; then 
             set +x
             echoInfo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
@@ -299,24 +299,19 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
          
         echoInfo "INFO: Calculating genesis checksum..."
         GENSUM=$(sha256 "$TMP_GENESIS_PATH")
+
+        set +x
+        echoErr "IMORTANT: To prevent node from double signing and creating snapshot while syncing you MUST define a minimum block height below which new blocks will NOT be produced!"
          
-        if [ "${INFRA_MODE,,}" == "validator" ] ; then
-            set +x
-            echoInfo "INFO: Validator mode detected, last parameter to setup..."
-            echoErr "IMORTANT: To prevent validator from double signing you MUST define a minimum block height below which new blocks will NOT be produced!"
-         
-            while : ; do
-                set +x
-                echo "INFO: Default minmum block height is $HEIGHT"
-                echoNErr "Input minimum block height or press [ENTER] for (default): " && read MIN_HEIGHT
-                [ -z "$MIN_HEIGHT" ] && MIN_HEIGHT=$HEIGHT
-                ( (! $(isNaturalNumber "$MIN_HEIGHT")) || [[ $MIN_HEIGHT -lt $HEIGHT ]] ) && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
-                set -x
-                break
-            done
-        else
-            MIN_HEIGHT=$HEIGHT
-        fi
+        NEW_MIN_HEIGHT="0"
+        while : ; do
+            echo "INFO: Default minmum block height is $HEIGHT"
+            echoNErr "Input minimum block height or press [ENTER] for (default): " && read TMP_MIN_HEIGHT && (! $(isNaturalNumber "$TMP_MIN_HEIGHT")) && TMP_MIN_HEIGHT=0 || TMP_MIN_HEIGHT=0
+            [[ $TMP_MIN_HEIGHT -lt $HEIGHT ]] && echo "INFO: Minimum block height must be greater or equal to $HEIGHT" && continue
+            NEW_MIN_HEIGHT="$TMP_MIN_HEIGHT" && break
+        done
+
+        ($(isNaturalNumber "$NEW_MIN_HEIGHT")) && MIN_HEIGHT=$NEW_MIN_HEIGHT
 
         set +x
         echo "INFO: Startup configuration was finalized"
@@ -388,8 +383,8 @@ CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SN
 
 NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
 
-globSet MIN_HEIGHT $MIN_HEIGHT
-globSet LATEST_BLOCK_HEIGHT $MIN_HEIGHT
+globSet MIN_HEIGHT "$MIN_HEIGHT"
+globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT"
 globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
 
 globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
