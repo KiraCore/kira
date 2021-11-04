@@ -33,6 +33,7 @@ for name in $CONTAINERS; do
     [ "${name,,}" == "registry" ] && continue
     $KIRA_SCRIPTS/container-delete.sh "$name"
     rm -rfv "$DOCKER_COMMON/${name}"
+    globDel "${name}_SEKAID_STATUS"
 done
 
 echoInfo "INFO: KIRA Scan service cleanup..."
@@ -125,7 +126,6 @@ MIN_HEIGHT=$(globGet MIN_HEIGHT)
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
 globSet INFRA_MODE "$INFRA_MODE"
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
-globSet MIN_HEIGHT "$MIN_HEIGHT"
 
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO
 globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
