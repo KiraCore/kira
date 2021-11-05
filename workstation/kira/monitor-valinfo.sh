@@ -116,11 +116,19 @@ VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev
 CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???"
 CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
 
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+CONS_STOPPED_HEIGHT=$(globGet CONS_STOPPED_HEIGHT) && (! $(isNaturalNumber "$CONS_STOPPED_HEIGHT")) && CONS_STOPPED_HEIGHT=0
+
+if [ "$CONS_STOPPED_HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] ; then
+    CONS_STOPPED="false"
+    globSet CONS_STOPPED_HEIGHT "$LATEST_BLOCK_HEIGHT"
+fi
+
 globSet VAL_ACTIVE $VAL_ACTIVE
 globSet VAL_TOTAL $VAL_TOTAL
 globSet VAL_WAITING $VAL_WAITING
-globSet CONS_STOPPED $CONS_STOPPED
 globSet CONS_BLOCK_TIME $CONS_BLOCK_TIME
+globSet CONS_STOPPED $CONS_STOPPED
 
 set +x
 echoWarn "------------------------------------------------"
