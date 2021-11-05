@@ -21,19 +21,19 @@ function txAwait() {
 
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=0
     [[ $TIMEOUT -le 0 ]] && MAX_TIME="∞" || MAX_TIME="$TIMEOUT"
-
+    
     local TXHASH=""
     if (! $(isTxHash "$RAW")) ; then
         # INPUT example: {"height":"0","txhash":"DF8BFCC9730FDBD33AEA184EC3D6C37B4311BC1C0E2296893BC020E4638A0D6F","codespace":"","code":0,"data":"","raw_log":"","logs":[],"info":"","gas_wanted":"0","gas_used":"0","tx":null,"timestamp":""}
         local VAL=$(echo $RAW | jsonParse "" 2> /dev/null || echo "")
-        if [ -z "$VAL" ] ; then
+        if ($(isNullOrEmpty "$VAL")) ; then
             echoErr "ERROR: Failed to propagate transaction:"
             echoErr "$RAW"
             return 1
         fi
 
         TXHASH=$(echo $VAL | jsonQuickParse "txhash" 2> /dev/null || echo "")
-        if [ -z "$VAL" ] ; then
+        if ($(isNullOrEmpty "$TXHASH")) ; then
             echoErr "ERROR: Transaction hash 'txhash' was NOT found in the tx propagation response:"
             echoErr "$RAW"
             return 1
@@ -129,7 +129,7 @@ function tryGetValidator() {
 function lastProposal() {
     local BOTTOM_PROPOSALS=$(sekaid query customgov proposals --limit=1 --reverse --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
     local TOP_PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
-    [ -z "$BOTTOM_PROPOSALS" ] && [ -z "$TOP_PROPOSALS" ] && echo 0 && return 1
+    ($(isNullOrEmpty "$BOTTOM_PROPOSALS")) && ($(isNullOrEmpty "$TOP_PROPOSALS")) && echo 0 && return 1
     (! $(isNaturalNumber $BOTTOM_PROPOSALS)) && (! $(isNaturalNumber $TOP_PROPOSALS)) && echo 0 && return 2
     [[ $TOP_PROPOSALS -le 0 ]] && [[ $BOTTOM_PROPOSALS -le 0 ]] && echo 0 && return 3
     [[ $TOP_PROPOSALS -gt $BOTTOM_PROPOSALS ]] && echo "$TOP_PROPOSALS" || echo "$BOTTOM_PROPOSALS"
@@ -154,7 +154,7 @@ function voteNo() {
 
 function networkProperties() {
     local NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
-    [ -z "$NETWORK_PROPERTIES" ] && echo -n "" && return 1
+    ($(isNullOrEmpty "$NETWORK_PROPERTIES")) && echo -n "" && return 1
     echo $NETWORK_PROPERTIES
     return 0
 }
@@ -187,7 +187,8 @@ function propAwait() {
     
     local PROP=$(showProposal $ID 2> /dev/null || echo -n "")
     local RESULT=""
-    if [ -z "$PROP" ] ; then
+    
+    if ($(isNullOrEmpty "$PROP")) ; then
         echoErr "ERROR: Proposal $ID was NOT found"
     else
         echoInfo "INFO: Waiting for proposal $ID to be finalized"
@@ -196,8 +197,8 @@ function propAwait() {
         while : ; do
             local ELAPSED=$(($(date -u +%s) - $START_TIME))
             RESULT=$(showProposal $ID 2> /dev/null | jq ".result" 2> /dev/null | xargs 2> /dev/null || echo -n "")
-            [ -z "$STATUS" ] && ( [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ) && break
-            [ ! -z "$STATUS" ] && [ "${RESULT,,}" == "${STATUS,,}" ] && break
+            ($(isNullOrEmpty "$STATUS")) && ( [ "${RESULT,,}" == "vote_pending" ] || [ "${RESULT,,}" == "vote_result_enactment" ] ) && break
+            (! $(isNullOrEmpty "$STATUS")) && [ "${RESULT,,}" == "${STATUS,,}" ] && break
             if [[ $TIMEOUT -gt 0 ]] && [[ $ELAPSED -gt $TIMEOUT ]] ; then
                 echoErr "ERROR: Timeout, failed to finalize proposal '$ID' within ${TIMEOUT} s limit"
                 return 1
@@ -255,7 +256,7 @@ function whitelistValidators() {
         echoInfo "INFO: List of validators was found ($WHITELIST)"
         while read key ; do
             key=$(echo "$key" | xargs || echo -n "")
-            if [ -z "$key" ] ; then
+            if ($(isNullOrEmpty "$key")) ; then
                 echoWarn "INFO: Invalid key $key"
                 continue
             fi
@@ -300,7 +301,7 @@ function sendTokens() {
     local DENOM="$4"
     echoInfo "INFO: Sending $AMOUNT $DENOM | $SOURCE -> $DESTINATION"
     OLD_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $OLD_BALANCE)) && OLD_BALANCE=0
-    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes | txAwait $TIMEOUT
+    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --output=json --yes | txAwait $TIMEOUT
     NEW_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $NEW_BALANCE)) && NEW_BALANCE=0
     echoInfo "INFO: Balance change $DESTINATION | $OLD_BALANCE $DENOM -> $NEW_BALANCE $DENOM"
 }
@@ -325,7 +326,7 @@ function awaitBlocks() {
     while : ; do
         local SH_NEW_BLOCK=$(showBlockHeight)
         (! $(isNaturalNumber $SH_NEW_BLOCK)) && sleep 1 && continue
-        [ -z "$SH_START_BLOCK" ] && SH_START_BLOCK=$SH_NEW_BLOCK
+        (! $(isNaturalNumber "$SH_START_BLOCK")) && SH_START_BLOCK=$SH_NEW_BLOCK
         local SH_DELTA=$(($SH_NEW_BLOCK - $SH_START_BLOCK))
         [ $SH_DELTA -gt $BLOCKS ] && break
         sleep 1
@@ -424,7 +425,7 @@ function upsertIdentityRecord() {
     ($(isNullOrEmpty $IR_KEY)) && echoErr "ERROR: Key was NOT defined " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
 
-    if [ -z "$IR_VAL" ] ; then
+    if ($(isNullOrEmpty $IR_VAL)) ; then
         sekaid tx customgov delete-identity-records --keys="$IR_KEY" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     else
         sekaid tx customgov register-identity-records --infos-json="{\"$IR_KEY\":\"$IR_VAL\"}" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
