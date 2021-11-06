@@ -141,7 +141,7 @@ function voteYes() {
     local PROPOSAL=$1
     local ACCOUNT=$2
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
+    sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
 
 # voteNo $(lastProposal) validator
@@ -149,7 +149,7 @@ function voteNo() {
     local PROPOSAL=$1
     local ACCOUNT=$2
     echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait
+    sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
 
 function networkProperties() {
@@ -224,10 +224,10 @@ function whitelistValidator() {
     else
         echoInfo "INFO: Adding $ADDR to the validator set"
         echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
-        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async | txAwait $TIMEOUT
+        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
         echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --description="Adding Validator via KIRA Manager" --fees=100ukex --yes --log_format=json --broadcast-mode=async | txAwait $TIMEOUT
+        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --description="Adding Validator via KIRA Manager" --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
         echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
         LAST_PROPOSAL=$(lastProposal) 
@@ -277,7 +277,7 @@ function claimValidatorSeat() {
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined " && return 1
     ($(isNullOrEmpty $MONIKER)) && MONIKER=$(openssl rand -hex 16)
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    sekaid tx customstaking claim-validator-seat --from "$ACCOUNT" --keyring-backend=test --home=$SEKAID_HOME --moniker="$MONIKER" --chain-id=$NETWORK_NAME --broadcast-mode=async --fees=100ukex --yes | txAwait $TIMEOUT
+    sekaid tx customstaking claim-validator-seat --from "$ACCOUNT" --keyring-backend=test --home=$SEKAID_HOME --moniker="$MONIKER" --chain-id=$NETWORK_NAME --broadcast-mode=async --fees=100ukex --yes --output=json | txAwait $TIMEOUT
 }
 
 # e.g. showBalance validator
@@ -384,6 +384,24 @@ function whitelistPermission() {
         echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
     else
         sekaid tx customgov permission whitelist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    fi
+}
+
+# blacklisttPermission <account> <permission> <address> <timeout-seconds>
+# e.g. blacklisttPermission validator 11 kiraXXX..YYY 180
+function blacklistPermission() {
+    local KM_ACC=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermBlacklisted $ADDR $PERM)) ; then
+        echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
+    else
+        sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
 
