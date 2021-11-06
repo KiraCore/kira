@@ -164,7 +164,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="ukex" \
  --title="Upsert KEX icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async | txAwait 180
+ --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
 EOL
 )
 
@@ -177,7 +177,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="test" \
  --title="Upsert Test TestCoin icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async | txAwait 180
+ --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
 EOL
 )
 
@@ -190,7 +190,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="samolean" \
  --title="Upsert Samolean TestCoin icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async | txAwait 180
+ --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json  | txAwait 180
 EOL
 )
 
@@ -227,7 +227,7 @@ sekaid tx upgrade proposal-set-plan \
  --rollback-memo="${UPGRADE_NAME}-roll" \
  --max-enrollment-duration=666 \
  --upgrade-memo="Genesis setup plan" \
- --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
+ --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180
 EOL
 )
 
