@@ -60,11 +60,11 @@ sekaid tx upgrade proposal-set-plan \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time="$UPGRADE_TIME" \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="newnet-13" \
+ --new-chain-id="newnet-15" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a hard fork test upgrade" \
- --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --output="json" --yes | txAwait 180
+ --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --output=json --yes | txAwait 180
 
 voteYes $(lastProposal) validator
 
