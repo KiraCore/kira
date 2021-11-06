@@ -24,9 +24,9 @@ blacklistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7r
 
 ```
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-93" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+UPGRADE_NAME_TMP="upgrade-94" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=true \
@@ -38,7 +38,7 @@ sekaid tx upgrade proposal-set-plan \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a soft fork test upgrade" \
- --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
+ --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator
 

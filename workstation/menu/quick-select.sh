@@ -68,7 +68,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
         [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
         [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
-         
         
         echoInfo "INFO: Please wait, testing connectivity..."
         if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
@@ -78,20 +77,18 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
 
-        STATUS_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status"
-        STATUS=$(timeout 15 curl $STATUS_URL 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+        STATUS=$(timeout 15 curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
 
-        if [ -z "$STATUS" ] || [ "${STATUS,,}" == "null" ] ; then
-            STATUS_URL="$NODE_ADDR:$DEFAULT_RPC_PORT/status"
-            STATUS=$(timeout 15 curl --fail $STATUS_URL 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-        fi
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_SEED_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_VALIDATOR_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_SENTRY_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
 
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
         if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
             HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-            CHAIN_ID=$NETWORK_NAME
+            CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
         fi
 
         if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
@@ -99,7 +96,6 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
             continue
         fi
-
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
