@@ -347,7 +347,8 @@ fi
 
 set -x
 
-rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to remove old snapshots"
+rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
+rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 
 if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"

@@ -64,7 +64,8 @@ if [ "${SNAPSHOT_KEEP_OLD,,}" == "true" ] ; then
     rm -fv $KIRA_SNAP_PATH
 else
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-    rm -fv $KIRA_SNAP/*.zip
+    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
+    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 fi
 
 docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" || rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
