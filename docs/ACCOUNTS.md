@@ -15,3 +15,5 @@ kira1munw5tl85u83du0zdtzm29n0ql0p4dsst8jylq
 
 sendTokens validator kira1ytnqwv8dwu2ejphzfpdnewv5ehjfvs04a7205x 500000000000 ukex
 sendTokens validator kira1munw5tl85u83du0zdtzm29n0ql0p4dsst8jylq 500000000000 ukex
+
+sendTokens validator kira1ytnqwv8dwu2ejphzfpdnewv5ehjfvs04a7205x 1 ukex
