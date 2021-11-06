@@ -387,6 +387,24 @@ function whitelistPermission() {
     fi
 }
 
+# blacklisttPermission <account> <permission> <address> <timeout-seconds>
+# e.g. blacklisttPermission validator 11 kiraXXX..YYY 180
+function blacklistPermission() {
+    local KM_ACC=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $KM_ACC)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermBlacklisted $ADDR $PERM)) ; then
+        echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
+    else
+        sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    fi
+}
+
 function showCurrentPlan() {
     sekaid query upgrade current-plan --output=json --chain-id=$NETWORK_NAME --home=$SEKAID_HOME
 }

@@ -16,6 +16,8 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ejck5umkhdyl
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c 180 && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads 180
 
+
+blacklistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c 180
 ```
 
 > Creating Soft Fork Update Plan
