@@ -49,10 +49,10 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-UPGRADE_NAME_TMP="upgrade-95" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900)) && \
+UPGRADE_NAME_TMP="upgrade-96" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900)) && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \

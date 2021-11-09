@@ -514,3 +514,18 @@ function rejectIdentityVerificationRequest() {
     sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
+## createRole <account> <id> <timeout-seconds>
+## e.g. createRole validator 1 180
+#function createRole() {
+#    local FROM_ACCOUNT=$1
+#    local ROLE_ID=$2
+#    local TIMEOUT=$3
+#    ($(isNullOrEmpty $FROM_ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+#    (! $(isNaturalNumber $ROLE_ID)) && echoInfo "INFO: Invalid role id '$ROLE_ID' " && return 1
+#    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+#    # if ($(isPermWhitelisted $ADDR $PERM)) ; then
+#    #     echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
+#    # else
+#        sekaid tx customgov role create $ROLE_ID --from "$FROM_ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+#    # fi
+#}
