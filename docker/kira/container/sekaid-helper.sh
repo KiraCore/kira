@@ -80,8 +80,8 @@ function showAddress() {
     ($(isKiraAddress "$1")) && echo "$1" || echo $(sekaid keys show "$1" --keyring-backend=test --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
 }
 
-# tryGetPermissions validator
-function tryGetPermissions() {
+# showPermissions validator
+function showPermissions() {
     local ADDR=$(showAddress $1)
     echo $(sekaid query customgov permissions "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
@@ -92,7 +92,7 @@ function isPermBlacklisted() {
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
-        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
+        INDEX=$(showPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
         ($(isNaturalNumber $INDEX)) && echo "true" || echo "false"
     fi
 }
@@ -103,7 +103,7 @@ function isPermWhitelisted() {
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
-        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
+        INDEX=$(showPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
         if ($(isNaturalNumber $INDEX)) && (! $(isPermBlacklisted $ADDR $PERM)) ; then
             echo "true" 
         else
@@ -398,10 +398,30 @@ function blacklistPermission() {
     ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
     (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    if ($(isPermBlacklisted $ADDR $PERM)) ; then
-        echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
-    else
+    #if ($(isPermBlacklisted $ADDR $PERM)) ; then
+    #    echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
+   # else
         sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    #fi
+}
+
+# clearPermission <account> <permission> <address> <timeout-seconds>
+# e.g. clearPermission validator 11 kiraXXX..YYY 180
+function clearPermission() {
+    local ACCOUNT=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermBlacklisted $ADDR $PERM)) ; then
+        sekaid tx customgov permission remove-blacklisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    elif ($(isPermWhitelisted $ADDR $PERM)) ; then
+        sekaid tx customgov permission remove-whitelisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    else
+        echoInfo "INFO: Permission '$PERM' was never present or already cleared."
     fi
 }
 
