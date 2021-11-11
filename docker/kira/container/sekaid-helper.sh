@@ -369,6 +369,28 @@ function unpauseValidator() {
     sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
+# clearPermission <account> <permission> <address> <timeout-seconds>
+# e.g. clearPermission validator 11 kiraXXX..YYY 180
+function clearPermission() {
+    local ACCOUNT=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermBlacklisted $ADDR $PERM)) ; then
+        echoInfo "INFO: Permission '$PERM' is blacklisted and will be removed from the blacklist, please wait..."
+        sekaid tx customgov permission remove-blacklisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    elif ($(isPermWhitelisted $ADDR $PERM)) ; then
+        echoInfo "INFO: Permission '$PERM' is whitelisted and will be removed from the whitelist, please wait..."
+        sekaid tx customgov permission remove-whitelisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    else
+        echoInfo "INFO: Permission '$PERM' was never present or already cleared."
+    fi
+}
+
 # whitelistPermission <account> <permission> <address> <timeout-seconds>
 # e.g. whitelistPermission validator 11 kiraXXX..YYY 180
 function whitelistPermission() {
@@ -383,6 +405,11 @@ function whitelistPermission() {
     if ($(isPermWhitelisted $ADDR $PERM)) ; then
         echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
     else
+        if ($(isPermBlacklisted $ADDR $PERM)) ; then
+            echoWarn "WARNING: Address '$ADDR' has blacklisted permission '$PERM', attempting to clear..."
+            clearPermission $KM_ACC $PERM $ADDR $TIMEOUT
+        fi
+
         sekaid tx customgov permission whitelist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
@@ -398,30 +425,15 @@ function blacklistPermission() {
     ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
     (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    #if ($(isPermBlacklisted $ADDR $PERM)) ; then
-    #    echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
-   # else
-        sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
-    #fi
-}
-
-# clearPermission <account> <permission> <address> <timeout-seconds>
-# e.g. clearPermission validator 11 kiraXXX..YYY 180
-function clearPermission() {
-    local ACCOUNT=$1
-    local PERM=$2
-    local ADDR=$(showAddress $3)
-    local TIMEOUT=$4
-    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
-    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
-    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if ($(isPermBlacklisted $ADDR $PERM)) ; then
-        sekaid tx customgov permission remove-blacklisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
-    elif ($(isPermWhitelisted $ADDR $PERM)) ; then
-        sekaid tx customgov permission remove-whitelisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+        echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
     else
-        echoInfo "INFO: Permission '$PERM' was never present or already cleared."
+        if ($(isPermWhitelisted $ADDR $PERM)) ; then
+            echoWarn "WARNING: Address '$ADDR' has whitelisted permission '$PERM', attempting to clear..."
+            clearPermission $KM_ACC $PERM $ADDR $TIMEOUT
+        fi
+
+        sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
 
