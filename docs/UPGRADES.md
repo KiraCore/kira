@@ -46,7 +46,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-UPGRADE_NAME_TMP="upgrade-101" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900)) && \
+UPGRADE_NAME_TMP="upgrade-102" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900)) && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
@@ -57,7 +57,7 @@ sekaid tx upgrade proposal-set-plan \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time="$UPGRADE_TIME" \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="devnet-7" \
+ --new-chain-id="devnet-8" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a hard fork test upgrade" \
