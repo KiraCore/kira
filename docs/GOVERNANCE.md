@@ -87,3 +87,17 @@ voteYes $(lastProposal) validator
 
 networkProperties | jq
 ```
+
+## Change Data Registrar
+
+```
+whitelistPermission validator $PermCreateUpsertDataRegistryProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUpsertDataRegistryProposal $(showAddress validator) 
+
+upsertDataRegistry validator "code_of_conduct" "https://raw.githubusercontent.com/KiraCore/sekai/master/env.sh" "text"
+
+voteYes $(lastProposal) validator
+
+# To Query all Data Registry Keys
+sekaid query customgov all-data-reference-keys --page-key 100000 --output=json | jq
+```

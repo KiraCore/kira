@@ -525,25 +525,50 @@ function showIdentityVerificationRequests() {
 # approveIdentityVerificationRequest <account> <id> <timeout>
 # e.g. approveIdentityVerificationRequest validator 1 180
 function approveIdentityVerificationRequest() {
-    local KM_ACC=$1
+    local ACCOUNT=$1
     local KM_REQ=$2
     local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
-    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$ACCOUNT --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # rejectIdentityVerificationRequest <account> <id> <timeout>
 # e.g. rejectIdentityVerificationRequest validator 1 180
 function rejectIdentityVerificationRequest() {
-    local KM_ACC=$1
+    local ACCOUNT=$1
     local KM_REQ=$2
     local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was NOT defined " && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
-    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$ACCOUNT --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+# upsertDataRegistry <account> <key> <value> <file-type>
+# e.g: upsertDataRegistry validator "code_of_conduct" "https://raw.githubusercontent.com/KiraCore/sekai/master/env.sh" "text"
+function upsertDataRegistry() {
+    local ACCOUNT=$1
+    local KEY=$2
+    local VALUE=$3
+    local FILETYPE=$4
+
+    local DOWNLOAD_SUCCESS="true"
+    local TMP_FILE="/tmp/data-registry.tmp"
+    rm -fv $TMP_FILE
+    wget "$VALUE" -O $TMP_FILE || DOWNLOAD_SUCCESS="false"
+
+    if [ "${DOWNLOAD_SUCCESS,,}" != "true" ] ; then
+        echoErr "ERROR: Resource '$VALUE' was NOT found, failed to create proposal"
+        return 1
+    else
+        echoInfo "SUCCESS: Resource '$VALUE' was found."
+        local CHECKSUM=$(sha256 $TMP_FILE)
+        local SIZE=$(fileSize $TMP_FILE)
+        echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
+        sekaid tx customgov proposal upsert-data-registry "$KEY" "$CHECKSUM" "$VALUE" "$FILETYPE" "$SIZE" --title="Upserting Data Registry key '$KEY'" --description="Assign value '$VALUE' to key '$KEY'" --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    fi
 }
 
 ## createRole <account> <id> <timeout-seconds>

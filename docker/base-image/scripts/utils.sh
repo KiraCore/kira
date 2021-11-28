@@ -101,7 +101,6 @@ function date2unix() {
     ($(isNaturalNumber "$kg_date_tmp")) && echo "$kg_date_tmp" || echo "0"
 }
 
-
 function isPortOpen() {
     kg_addr=$1 && kg_port=$2 && kg_timeout=$3
     (! $(isNaturalNumber $kg_timeout)) && kg_timeout=1
