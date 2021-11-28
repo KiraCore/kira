@@ -571,6 +571,14 @@ function upsertDataRegistry() {
     fi
 }
 
+function showDataRegistryKeys() {
+    sekaid query customgov data-registry-keys --page-key 1000000 --output=json | jq ".keys"
+}
+
+function showDataRegistryKey() {
+    sekaid query customgov data-registry "$1" --page-key 1000000 --output=json 2> /dev/null || echo ""
+}
+
 ## createRole <account> <id> <timeout-seconds>
 ## e.g. createRole validator 1 180
 #function createRole() {
