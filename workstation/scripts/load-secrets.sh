@@ -52,7 +52,7 @@ function MnemonicGenerator() {
         
         if [ ! -f "$keyidPath" ] || [ ! -f "$nodekeyPath" ] ; then # node keys are only re-generated if any of keystore files is not present
             rm -fv "$keyidPath" "$nodekeyPath"
-            priv-key-gen --mnemonic="$mnemonic" --valkey=/dev/null --nodekey="$nodekeyPath" --keyid="$keyidPath"
+            priv-key-gen --mnemonic="$mnemonic" --valkey=/tmp/temp_valkey.tmp --nodekey="$nodekeyPath" --keyid="$keyidPath"
         fi
     
         newNodeId=$(cat $keyidPath)
