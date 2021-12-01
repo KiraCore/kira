@@ -1,66 +1,122 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
-
-echo "INFO: Loading secrets..."
-
-set +x
-source $KIRAMGR_SCRIPTS/load-secrets.sh
+# quick edit: FILE="$KIRA_MANAGER/containers/start-validator.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="validator"
-CONTAINER_NETWORK="$KIRA_VALIDATOR_NETWORK"
+CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
+COMMON_GLOB="$COMMON_PATH/kiraglob"
 HALT_FILE="$COMMON_PATH/halt"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 2 )" | bc)
+RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 2 ) / 1024 " | bc)m"
 
-rm -rfv $COMMON_PATH
-mkdir -p "$COMMON_LOGS" "$DOCKER_COMMON/tmp" "$DOCKER_COMMON/sentry" "$DOCKER_COMMON/priv_sentry" "$DOCKER_COMMON/snapshot"
-
-echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
-echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
-echo "$VALIDATOR_ADDR_MNEMONIC" > $COMMON_PATH/validator_addr_mnemonic.key
-echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
-cp -a $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
-cp -a $KIRA_SECRETS/validator_node_key.json $COMMON_PATH/node_key.json
-set -e
-
-echo "------------------------------------------------"
-echo "| STARTING $CONTAINER_NAME NODE"
-echo "|-----------------------------------------------"
-echo "|   NETWORK: $CONTAINER_NETWORK"
-echo "|   NODE ID: $VALIDATOR_NODE_ID"
-echo "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
-echo "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
-echo "|   MAX RAM: $RAM_RESERVED"
-echo "------------------------------------------------"
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTING $CONTAINER_NAME NODE"
+echoWarn "|-----------------------------------------------"
+echoWarn "|   NETWORK: $CONTAINER_NETWORK"
+echoWarn "|   NODE ID: $VALIDATOR_NODE_ID"
+echoWarn "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
+echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
+echoWarn "|   MAX RAM: $RAM_RESERVED"
+echoWarn "------------------------------------------------"
 set -x
 
-rm -fv "$COMMON_LOGS/start.log" "$COMMON_PATH/executed"
+globSet "${CONTAINER_NAME}_STARTED" "false"
 
 if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-    PRIV_SENTRY_SEED=$(echo "${PRIV_SENTRY_NODE_ID}@$KIRA_PRIV_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
-    if [ "${NEW_NETWORK,,}" == true ] ; then
-        rm -fv "$COMMON_PATH/genesis.json"
-    fi
 
-    CFG_seeds=""
-    CFG_persistent_peers="tcp://$SENTRY_SEED,tcp://$PRIV_SENTRY_SEED"
-    
+    chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
+    # globGet validator_health_log_old
+    tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
+    # globGet validator_start_log_old
+    tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
+    rm -rfv "$COMMON_PATH"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
+
+    echoInfo "INFO: Ensuring base images exist..."
+    $KIRA_MANAGER/setup/registry.sh
+    $KIRAMGR_SCRIPTS/update-base-image.sh
+    $KIRAMGR_SCRIPTS/update-kira-image.sh
+
+    echoInfo "INFO: Loading secrets..."
+    set +e
+    set +x
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
+    echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
+    echo "$VALIDATOR_ADDR_MNEMONIC" > $COMMON_PATH/validator_addr_mnemonic.key
+    echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
+    cp -afv $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
+    cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
+    set -x
+    set -e
+
+    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
+
+    [ "${NEW_NETWORK,,}" == "true" ] && rm -fv "$COMMON_PATH/genesis.json"
+
+    touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
+
+    cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
+    cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+    #cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
+
+    EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
+
+    globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
+    globSet CFG_pex "true" $COMMON_GLOB
+    # true
+    globSet CFG_allow_duplicate_ip "true" $COMMON_GLOB
+    globSet CFG_addr_book_strict "false" $COMMON_GLOB
+    globSet CFG_fastsync "true" $COMMON_GLOB
+    globSet CFG_fastsync_version "v1" $COMMON_GLOB
+
+    globSet CFG_handshake_timeout "60s" $COMMON_GLOB
+    globSet CFG_dial_timeout "30s" $COMMON_GLOB
+    globSet CFG_trust_period "87600h" $COMMON_GLOB
+    globSet CFG_max_txs_bytes "131072000" $COMMON_GLOB
+    globSet CFG_max_tx_bytes "131072" $COMMON_GLOB
+    globSet CFG_send_rate "65536000" $COMMON_GLOB
+    globSet CFG_recv_rate "65536000" $COMMON_GLOB
+    globSet CFG_max_packet_msg_payload_size "131072" $COMMON_GLOB
+    globSet CFG_cors_allowed_origins "*" $COMMON_GLOB
+    globSet CFG_snapshot_interval "1000" $COMMON_GLOB
+    globSet CFG_statesync_enable "true" $COMMON_GLOB
+    globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB
+    globSet CFG_timeout_commit "5000ms" $COMMON_GLOB
+    globSet CFG_create_empty_blocks_interval "10s" $COMMON_GLOB
+    globSet CFG_max_num_outbound_peers "32" $COMMON_GLOB
+    globSet CFG_max_num_inbound_peers "128" $COMMON_GLOB
+    globSet CFG_prometheus "true" $COMMON_GLOB
+    globSet CFG_seed_mode "false" $COMMON_GLOB
+    globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
+
+    globSet CFG_private_peer_ids "" $COMMON_GLOB
+    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
+    globSet CFG_persistent_peers "" $COMMON_GLOB
+    globSet CFG_seeds "" $COMMON_GLOB
+    globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
+    globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
+    globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
+
+    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $COMMON_GLOB
+    globSet NEW_NETWORK "$NEW_NETWORK" $COMMON_GLOB
+
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
+    -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
+    -p $KIRA_VALIDATOR_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
@@ -70,68 +126,44 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
     -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
-    -e CFG_moniker="KIRA ${CONTAINER_NAME^^} NODE" \
-    -e CFG_grpc_laddr="tcp://0.0.0.0:$DEFAULT_GRPC_PORT" \
-    -e CFG_rpc_laddr="tcp://0.0.0.0:$DEFAULT_RPC_PORT" \
-    -e CFG_p2p_laddr="tcp://0.0.0.0:$DEFAULT_P2P_PORT" \
-    -e CFG_private_peer_ids="$SENTRY_NODE_ID,$PRIV_SENTRY_NODE_ID" \
-    -e CFG_seeds="$CFG_seeds" \
-    -e CFG_persistent_peers="$CFG_persistent_peers" \
-    -e CFG_unconditional_peer_ids="$SNAPSHOT_NODE_ID,$PRIV_SENTRY_NODE_ID,$SEED_NODE_ID,$SENTRY_NODE_ID" \
-    -e CFG_max_num_outbound_peers="2" \
-    -e CFG_max_num_inbound_peers="4" \
-    -e CFG_timeout_commit="5s" \
-    -e CFG_create_empty_blocks_interval="10s" \
-    -e CFG_addr_book_strict="false" \
-    -e CFG_seed_mode="false" \
-    -e CFG_skip_timeout_commit="false" \
-    -e CFG_allow_duplicate_ip="true" \
-    -e CFG_handshake_timeout="30s" \
-    -e CFG_dial_timeout="15s" \
-    -e CFG_max_txs_bytes="131072000" \
-    -e CFG_send_rate="65536000" \
-    -e CFG_recv_rate="65536000" \
-    -e CFG_max_tx_bytes="131072" \
-    -e CFG_max_packet_msg_payload_size="131072" \
-    -e SETUP_VER="$KIRA_SETUP_VER" \
-    -e CFG_pex="false" \
+    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
-    -e NEW_NETWORK="$NEW_NETWORK" \
-    -e EXTERNAL_SYNC="$EXTERNAL_SYNC" \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NODE_ID="$VALIDATOR_NODE_ID" \
-    -e MIN_HEIGHT="$(globGet MIN_HEIGHT)" \
-    --env-file "$KIRA_MANAGER/containers/sekaid.env" \
     -v $COMMON_PATH:/common \
+    -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     kira:latest
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
 mkdir -p $INTERX_REFERENCE_DIR
-if [ "${NEW_NETWORK,,}" == true ] ; then
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
 fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
-$KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID" || exit 1
+$KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
 
-if [ "${NEW_NETWORK,,}" == true ] ; then
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
     chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
-    CDHelper text lineswap --insert="GENESIS_SHA256=\"$GENESIS_SHA256\"" --prefix="GENESIS_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    globSet GENESIS_SHA256 "$GENESIS_SHA256"
 fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
+GENESIS_SHA256=$(globGet GENESIS_SHA256)
 TEST_SHA256=$(docker exec -i "$CONTAINER_NAME" /bin/bash -c ". /etc/profile;sha256 \$SEKAID_HOME/config/genesis.json" || echo -n "")
 if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
     echoErr "ERROR: Expected genesis checksum to be '$GENESIS_SHA256' but got '$TEST_SHA256'"
@@ -139,3 +171,11 @@ if [ -z "$TEST_SHA256" ] || [ "$TEST_SHA256" != "$GENESIS_SHA256" ] ; then
 else
     echoInfo "INFO: Genesis checksum '$TEST_SHA256' was verified sucessfully!"
 fi
+
+globSet "${CONTAINER_NAME}_STARTED" "true"
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| FINISHED: STARTING $CONTAINER_NAME NODE"
+echoWarn "------------------------------------------------"
+set -x

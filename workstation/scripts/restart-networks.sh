@@ -32,8 +32,8 @@ if [ -z "$TARGET" ] && [ "${RECONNECT,,}" != "true" ] ; then
     docker network prune --force || echo "WARNING: Failed to prune dangling networks"
 fi
 
-declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
-declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
+declare -a networks=("sentrynet" "servicenet" "regnet")
+declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
 for (( i=0; i<${len}; i++ )) ; do

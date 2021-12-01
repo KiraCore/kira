@@ -7,12 +7,12 @@ set -x
 REGISTRY_VERSION="2.7.1"
 CONTAINER_NAME="registry"
 CONTAINER_REACHABLE="true"
-UPDATE_CHECK_IMAGES="images-build-1-$KIRA_SETUP_VER"
 curl --fail --max-time 3 "$KIRA_REGISTRY/v2/_catalog" || CONTAINER_REACHABLE="false"
+docker exec -i registry bin/registry --version || CONTAINER_REACHABLE="false"
 
 # ensure docker registry exists 
 ESSENTIALS_HASH=$(echo "$REGISTRY_VERSION-$CONTAINER_NAME-$KIRA_REGISTRY_DNS-$KIRA_REGISTRY_PORT-$KIRA_REGISTRY_NETWORK-$KIRA_HOME-" | md5)
-SETUP_CHECK="$KIRA_SETUP/registry-2-$ESSENTIALS_HASH" 
+SETUP_CHECK="$KIRA_SETUP/registry-3-$ESSENTIALS_HASH" 
 
 if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     echoInfo "INFO: Container '$CONTAINER_NAME' does NOT exist or is not reachable, update is required recreating registry..."
@@ -40,8 +40,8 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${CONTAINER_REACHABLE,,}" != "true" ] ; then
     echoInfo "INFO: Starting registry container..."
     CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
     RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-    CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 6 )" | bc)
-    RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 6 ) / 1024 " | bc)m"
+    CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 4 )" | bc)
+    RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 4 ) / 1024 " | bc)m"
 
     docker run -d \
         --cpus="$CPU_RESERVED" \
@@ -92,7 +92,6 @@ EOL
 
     #$KIRAMGR_SCRIPTS/restart-networks.sh "true" "$KIRA_REGISTRY_NETWORK"
     $KIRA_MANAGER/scripts/update-ifaces.sh
-    rm -fv "$KIRA_UPDATE/$UPDATE_CHECK_IMAGES"
     touch $SETUP_CHECK
 else
     echoInfo "INFO: Container 'registry' already exists."

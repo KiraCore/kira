@@ -14,8 +14,8 @@ echoWarn "|    TARGET: $TARGET"
 echoWarn "------------------------------------------------"
 set -x
 
-declare -a networks=("kiranet" "sentrynet" "servicenet" "regnet")
-declare -a subnets=("$KIRA_VALIDATOR_SUBNET" "$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
+declare -a networks=("sentrynet" "servicenet" "regnet")
+declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET" "$KIRA_REGISTRY_SUBNET")
 len=${#networks[@]}
 
 echo "INFO: Updating DNS names of all containers in the local hosts file"
@@ -28,7 +28,7 @@ for (( i=0; i<${len}; i++ )) ; do
       echo "INFO: Checking $container network info"
       id=$($KIRA_SCRIPTS/container-id.sh "$container")
       ip=$(timeout 8 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${network}.IPAddress" || echo -n "")
-      dns="${container,,}.${network,,}.local"
+      dns=$(echo "${container,,}.local" | tr _ -)
 
       currentDNS=$(getent hosts $dns | awk '{ print $1 }' || echo -n "")
       if [ "$currentDNS" == "$ip" ] ; then

@@ -14,7 +14,6 @@ source $MNEMONICS
 REGEN_PRIV_VALIDATOR_KEYS="false"
 REGEN_VALIDATOR_NODE_KEYS="false"
 REGEN_SENTRY_NODE_KEYS="false"
-REGEN_SNAPSHOT_NODE_KEYS="false"
 
 function MnemonicGenerator() {
     set +e && source "/etc/profile" &>/dev/null && set -e
@@ -30,10 +29,12 @@ function MnemonicGenerator() {
     keyidPath="$KIRA_SECRETS/${1,,}_node_id.key"
 
     mnemonic="${!mnemonicVariableName}"
+    mnemonic=$(echo "$mnemonic" | xargs || echo -n "")
 
-    if [ -z "$mnemonic" ] ; then # if mnemonic is not present then generate new one
+    if (! $(isMnemonic "$mnemonic")) ; then # if mnemonic is not present then generate new one
         echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
-        mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jsonParse '[0].mnemonic')"
+        mnemonic=$(echo ${mnemonic//,/ } | xargs || echo -n "")
+        (! $(isMnemonic "$mnemonic")) && mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jsonParse '[0].mnemonic')"
         CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
     fi
 
@@ -68,13 +69,10 @@ function MnemonicGenerator() {
 
 MnemonicGenerator "signer" "addr" # INTERX message signing key
 MnemonicGenerator "faucet" "addr" # INTERX faucet key
-MnemonicGenerator "frontend" "addr" # frontend key
 MnemonicGenerator "validator" "addr" # validator controller key
 MnemonicGenerator "test" "addr" # generic test key
 MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
-MnemonicGenerator "priv_sentry" "node" # private sentry node key
 MnemonicGenerator "seed" "node" # seed node key
-MnemonicGenerator "snapshot" "node" # snapshot sentry node key (snapshot_node_key.json, snapshot_node_id.key -> SNAPSHOT_NODE_ID)
 MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
 # NOTE: private validator key is generated from the separate mnemonic then node key or address !!!
 MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)

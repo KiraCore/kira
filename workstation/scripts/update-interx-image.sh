@@ -19,3 +19,9 @@ else
     echoErr "ERROR: Failed to test if interx image exists: '$IMAGE_EXISTS'"
     exit 1
 fi
+
+IMAGE_EXISTS=$($KIRAMGR_SCRIPTS/image-updated.sh "$KIRA_DOCKER/interx" "interx" "latest" "$INTERX_INTEGRITY" || echo "error")
+if [ "${IMAGE_EXISTS,,}" != "true" ] ; then
+    echoErr "ERROR: Failed to create interx image ($IMAGE_EXISTS)"
+    exit 1
+fi

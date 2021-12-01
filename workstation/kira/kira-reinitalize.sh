@@ -65,7 +65,7 @@ if [ "${SUCCESS_DOWNLOAD,,}" == "true" ] ; then
         else
             echoInfo "INFO: Hash verification was skipped"
             echoWarn "WARNING: Always verify integrity of scripts, otherwise you might be executing malicious code"
-            echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+            echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
             SUCCESS_HASH_CHECK="true"
             break
         fi
@@ -78,7 +78,7 @@ fi
 
 if [ "${SUCCESS_HASH_CHECK,,}" != "true" ] || [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
     echoInfo "INFO: Re-initialization failed or was aborted"
-    echoErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 else
     echoInfo "INFO: Hash verification was sucessfull, ready to re-initalize environment"
     ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Proceed to [R]einstall all dependencies or [C]ontinue partial reinitialization: " && read -d'' -s -n1 ACCEPT && echo ""; done
@@ -92,14 +92,12 @@ else
         if [[ $NEW_BRANCH == mainnet* ]] || [[ $NEW_BRANCH == testnet* ]] ; then
             DEFAULT_BRANCH="$NEW_BRANCH"
             SEKAI_BRANCH="$DEFAULT_BRANCH"
-            FRONTEND_BRANCH="$DEFAULT_BRANCH"
             INTERX_BRANCH="$DEFAULT_BRANCH"
         fi
 
-        CDHelper text lineswap --insert="INFRA_BRANCH=$NEW_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="INFRA_BRANCH=\"$NEW_BRANCH\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+        CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
     fi
     source $INIT_SCRIPT_OUT "$NEW_BRANCH"
 fi

@@ -7,14 +7,24 @@ set -x
 
 # find largest file: du -a / 2>/dev/null | sort -n -r | head -n 20
 
-timerStart
-echoInfo "INFO: Started kira cleanup service $KIRA_SETUP_VER"
-
 while : ; do
-    journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum failed"
-    find "/var/log" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate system logs"
-    find "/var/log/journal" -type f -size +8M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate journal"
+    timerStart CLEANUP_SERVICE
+    set +e && source "/etc/profile" &>/dev/null && set -e
 
-    echoInfo "INFO: Cleanup was finalized, elapsed $(timerSpan) seconds"
+    set +x
+    echoWarn "------------------------------------------------"
+    echoWarn "| STARTING KIRA CLEANUP SERVICE $KIRA_SETUP_VER"
+    echoWarn "------------------------------------------------"
+    set -x
+
+    journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
+    find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
+
+    set +x
+    echoWarn "------------------------------------------------"
+    echoWarn "| FINISHED: KIRA CLEANUP SERVICE               |"
+    echoWarn "|  ELAPSED: $(timerSpan CLEANUP_SERVICE) seconds"
+    echoWarn "------------------------------------------------"
+    set -x
     sleep 600
 done

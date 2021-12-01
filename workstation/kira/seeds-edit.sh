@@ -24,9 +24,9 @@ cat $DESTINATION > $FILE
 while : ; do
     echo -e "INFO: Listing all ${TARGET^^}, please wait...\n"
     i=0
-    echo -e "\e[0m\e[33;1m-----------------------------------------------------------"
-                    echo "| ID. |  STATUS |                 ADDRESS                 @"
-                 echo -e "|-----|---------|------------------------------------------\e[0m"
+    echo -e "\e[0m\e[33;1m-------------------------------------------------------------------"
+                    echo "| ID |  STATUS |  PING  |                 ADDRESS                 @"
+                 echo -e "|----|---------|--------|------------------------------------------\e[0m"
     while read addr ; do
         [ -z "$addr" ] && continue # only display non-empty lines
         i=$((i + 1))
@@ -39,22 +39,34 @@ while : ; do
         p2=${addrArr2[0],,}
         p3=${addrArr2[1],,}
 
+        p2=$(resolveDNS $p2)
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
-        ($(isDnsOrIp "$p2")) && dns="$p2" || dns=""
-        if ! timeout 1 nc -z $p2 $p3 &>/dev/null ; then STATUS="OFFLINE" ; else STATUS="ONLINE" ; fi
-        [ "${STATUS,,}" == "online" ] && if ! timeout 1 nc -z $dns $p3 &>/dev/null ; then STATUS="OFFLINE" ; fi
+        PING_TIME=$(tmconnect handshake --address="$p1@$p2:$p3" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "0")
+        (! $(isNaturalNumber $PING_TIME)) && PING_TIME=0
+
+        if [[ $PING_TIME -ge 1 ]] && [[ $PING_TIME -le 999 ]] ; then
+            PING="$PING_TIME ms"
+            STATUS="ONLINE" 
+        elif [[ $PING_TIME -le 0 ]] ; then
+            PING="???? "
+            STATUS="OFFLINE" 
+        else
+            PING="> 1 s"
+            STATUS="ONLINE" 
+        fi
              
-        INDEX_TMP=$(echo "${WHITESPACE}${i}." | tail -c 4)
+        INDEX_TMP=$(echo "${WHITESPACE}${i}" | tail -c 4)
+        PING_TMP=$(echo "${WHITESPACE}${PING}" | tail -c 7)
         STATUS_TMP="${STATUS}${WHITESPACE}"
         TG="\e[0m\e[33;1m|\e[32;1m"
         TR="\e[0m\e[33;1m|\e[31;1m"
          
-        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m$TG ${INDEX_TMP} $TG ${STATUS_TMP:0:7} $TG $addr\e[0m"
-        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m$TR ${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR $addr\e[0m"
+        [ "${STATUS,,}" == "online" ] && echo -e "\e[0m\e[32;1m${TG}${INDEX_TMP} $TG ${STATUS_TMP:0:7} $TG ${PING_TMP} $TG $addr\e[0m"
+        [ "${STATUS,,}" == "offline" ] && echo -e "\e[0m\e[31;1m${TR}${INDEX_TMP} $TR ${STATUS_TMP:0:7} $TR ${PING_TMP} $TR $addr\e[0m"
     done < $FILE
-    echo -e "\e[0m\e[33;1m-----------------------------------------------------------\e[0m\n"
-    echo "INFO: All $i ${TARGET^^} were displayed"
-         
+    echo -e "\e[0m\e[33;1m------------------------------------------------------------------\e[0m\n"
+    echoInfo "INFO: All $i ${TARGET^^} were displayed"
+    echoInfo "INFO: Remeber to [S]ave changes after you finish!"
     SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|d|w|r|s|e)$ ]] ; do echoNErr "Choose to [A]dd, [D]elete, [W]ipe, [R]efresh, [S]ave changes to the $TARGET list or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
     [ "${SELECT,,}" == "r" ] && continue
     [ "${SELECT,,}" == "e" ] && exit 0
@@ -125,40 +137,38 @@ while : ; do
                 port=""
             fi
 
-            seed_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/seed_node_id" || echo -n "")
-            sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/sentry_node_id" || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:11000/api/kira/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
-            ( ! $(isNodeId "$sentry_node_id")) && sentry_node_id=$(timeout 1 curl ${dnsStandalone}:$DEFAULT_RPC_PORT/status 2>/dev/null | jsonQuickParse "id" 2>/dev/null || echo -n "")
-            priv_sentry_node_id=$(timeout 1 curl -f "$dns:$DEFAULT_INTERX_PORT/download/priv_sentry_node_id" || echo -n "")
+            seed_node_id=$(tmconnect id --address="$dns:$KIRA_SEED_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            sentry_node_id=$(tmconnect id --address="$dns:$KIRA_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            validator_node_id=$(tmconnect id --address="$dns:$KIRA_VALIDATOR_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is not exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SEED_P2P_PORT is NOT accepting P2P connections" ; 
             fi
 
             if ($(isNodeId "$sentry_node_id")) && timeout 1 nc -z $dns $KIRA_SENTRY_P2P_PORT ; then 
                 tmp_addr="${sentry_node_id}@${dns}:$KIRA_SENTRY_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_SENTRY_P2P_PORT is NOT accepting P2P connections" ; 
             fi
 
-            if ($(isNodeId "$priv_sentry_node_id")) && timeout 1 nc -z $dns $KIRA_PRIV_SENTRY_P2P_PORT ; then 
-                tmp_addr="${priv_sentry_node_id}@${dns}:$KIRA_PRIV_SENTRY_P2P_PORT"
+            if ($(isNodeId "$validator_node_id")) && timeout 1 nc -z $dns $KIRA_VALIDATOR_P2P_PORT ; then 
+                tmp_addr="${validator_node_id}@${dns}:$KIRA_VALIDATOR_P2P_PORT"
                 [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
-                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is exposed as '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is exposed" ; 
             else 
-                echoInfo "INFO: Port $KIRA_PRIV_SENTRY_P2P_PORT is not exposed by '$dns'" ; 
+                echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is NOT accepting P2P connections" ; 
             fi
         else
             DETECTED_NODES="${nodeId}@${dns}:${port}"
         fi
 
-        [ -z "$DETECTED_NODES" ] && echoErr "ERROR: '$addr' is NOT valid or not exposed ${TARGET^^} address" && continue
+        [ -z "$DETECTED_NODES" ] && echoErr "ERROR: '$addr' is NOT valid or NOT exposed ${TARGET^^} address" && continue
         
         for nodeAddress in $(echo $DETECTED_NODES | sed "s/,/ /g") ; do
             nodeAddress=$(echo "$nodeAddress" | xargs) # trim whitespace characters

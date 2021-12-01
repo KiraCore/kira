@@ -1,8 +1,12 @@
 #!/bin/bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_SCRIPTS/docker-stop.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
 
-(! $(isCommand "docker")) && echo "INFO: No need to stop docker, command was NOT found" && exit 0
+if (! $(isCommand "docker")); then 
+    echo "INFO: No need to stop docker, command was NOT found" 
+    exit 0
+fi
 
 STATUS=$(systemctl is-active docker || echo -n "") && [ -z "$STATUS" ] && STATUS="undefined"
 

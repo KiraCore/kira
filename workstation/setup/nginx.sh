@@ -5,11 +5,10 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 RESTART=$(service nginx restart || echo "error")
-ACTIVE=$(systemctl is-active nginx || echo "inactive")
 VERSION=$(nginx -v || echo "error")
 KIRA_SETUP_NGINX="$KIRA_SETUP/nginx-v0.0.1"
 
-if [ ! -f "$KIRA_SETUP_NGINX" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ]  ; then
+if [ ! -f "$KIRA_SETUP_NGINX" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceActive "nginx"))  ; then
     echo "INFO: Removing NGINX..."
     service nginx stop || echo "WARNING: Failed to stop nginx servce"
     apt-get remove --purge nginx -y || echo "WARNING: Failed to remove nginx"

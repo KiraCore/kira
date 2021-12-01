@@ -10,17 +10,15 @@ UNHALT=$4
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 HALT_FILE="$COMMON_PATH/halt"
 EXIT_FILE="$COMMON_PATH/exit"
-SCRIPT_START_TIME="$(date -u +%s)"
+
+timerStart
 
 [ -z "$NAME" ] && echoErr "ERROR: Missing 'NAME' parameter (1)" && exit 1
 
 if [ "${NAME,,}" == "interx" ]; then
     PROCESS="interxd"
     CODE="9"
-elif [ "${NAME,,}" == "frontend" ]; then
-    PROCESS="nginx"
-    CODE="9"
-elif [[ "${NAME,,}" =~ ^(validator|sentry|priv_sentry|snapshot|seed)$ ]] ; then
+elif [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
     PROCESS="sekaid"
     CODE="15"
 else
@@ -91,6 +89,6 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: CONTAINER PROCESS TERMINATOR"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

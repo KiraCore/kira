@@ -5,7 +5,6 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 SCRIPT_START_TIME="$(date -u +%s)"
-VALADDR_SCAN_PATH="$KIRA_SCAN/valaddr"
 VALIDATORS64_SCAN_PATH="$KIRA_SCAN/validators64"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
@@ -16,20 +15,22 @@ VALIDATORS_SCAN_PATH="$KIRA_SCAN/validators"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
 
+INFRA_MODE=$(globGet INFRA_MODE)
+
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|    STARTING KIRA VALIDATORS SCAN $KIRA_SETUP_VER    |"
+echoWarn "| STARTING KIRA VALIDATORS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
+echoWarn "|          INFRA_MODE: $INFRA_MODE"
 echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
 echoWarn "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
-echoWarn "|   VALADDR_SCAN_PATH: $VALADDR_SCAN_PATH"
 echoWarn "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
 echoWarn "------------------------------------------------"
 set -x
 
 sleep 1
-touch "$VALADDR_SCAN_PATH" "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
+touch "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echoInfo "INFO: Saving valopers info..."
 (curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
@@ -40,33 +41,27 @@ echoInfo "INFO: Saving valopers info..."
 ($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
 
 if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
-    echoInfo "INFO: Scanning validator info..."
+    echoInfo "INFO: Fetching validator address.."
+    VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
+    ($(isKiraAddress "$VALIDATOR_ADDR")) && globSet VALIDATOR_ADDR "$VALIDATOR_ADDR" || VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 else
     echoInfo "INFO: Validator info will NOT be scanned..."
     echo -n "" > $VALINFO_SCAN_PATH
-    echo -n "" > $VALADDR_SCAN_PATH
     echo -n "" > $VALSTATUS_SCAN_PATH
-    exit 0
+    globDel VALIDATOR_ADDR
+    VALIDATOR_ADDR=""
 fi
 
-echoInfo "INFO: Fetching validator address.."
-VALADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
-if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
-    echo "$VALADDR" > $VALADDR_SCAN_PATH
-else
-    VALADDR=$(tryCat $VALADDR_SCAN_PATH "")
-fi
-
-echoInfo "INFO: Fetching validator status ($VALADDR) ..."
+echoInfo "INFO: Fetching validator status ($VALIDATOR_ADDR) ..."
 VALSTATUS=""
-if [ ! -z "$VALADDR" ] && [[ $VALADDR == kira* ]] ; then
-    VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query validator --addr=$VALADDR --output=json)" | jsonParse "" || echo -n "")
+if ($(isKiraAddress "$VALIDATOR_ADDR")) ; then
+    VALSTATUS=$(timeout 30 echo "$(docker exec -i validator sekaid query customstaking validator --addr=$VALIDATOR_ADDR --output=json)" | jsonParse "" || echo -n "")
 fi
 
 if [ -z "$VALSTATUS" ] ; then
     echoErr "ERROR: Validator address or status was not found, checking waiting list..."
     WAITING=$(jsonParse "waiting" $VALOPERS_COMM_RO_PATH || echo -n "" )
-    if [ ! -z "$VALADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALADDR" ]]; then
+    if [ ! -z "$VALIDATOR_ADDR" ] && [ ! -z "$WAITING" ] && [[ $WAITING =~ "$VALIDATOR_ADDR" ]]; then
         VALSTATUS="{ \"status\": \"WAITING\" }"
     else
         echoErr "ERROR: Validator does NOT have a WAITING status"
@@ -100,7 +95,7 @@ else
         sleep 0.1
             vobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
             vaddr=$(echo "$vobj" | jsonQuickParse "address" 2> /dev/null || echo -n "")
-            if [ "$VALADDR" == "$vaddr" ] ; then
+            if [ "$VALIDATOR_ADDR" == "$vaddr" ] ; then
                 echoInfo "INFO: Validator info was found"
                 echo "$vobj" > $VALINFO_SCAN_PATH
                 VALOPER_FOUND="true"
@@ -110,10 +105,30 @@ else
     fi
 
     if [ "${VALOPER_FOUND,,}" != "true" ] ; then
-        echoInfo "INFO: Validator '$VALADDR' was NOT found in the valopers querry"
+        echoInfo "INFO: Validator '$VALIDATOR_ADDR' was NOT found in the valopers querry"
         echo -n "" > $VALINFO_SCAN_PATH
     fi
 fi
+
+VAL_ACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_ACTIVE")) && VAL_ACTIVE="???"
+VAL_TOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_TOTAL")) && VAL_TOTAL="???"
+VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_WAITING")) && VAL_WAITING="???"
+CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???"
+CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
+
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+CONS_STOPPED_HEIGHT=$(globGet CONS_STOPPED_HEIGHT) && (! $(isNaturalNumber "$CONS_STOPPED_HEIGHT")) && CONS_STOPPED_HEIGHT=0
+
+if [ "$CONS_STOPPED_HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] ; then
+    CONS_STOPPED="false"
+    globSet CONS_STOPPED_HEIGHT "$LATEST_BLOCK_HEIGHT"
+fi
+
+globSet VAL_ACTIVE $VAL_ACTIVE
+globSet VAL_TOTAL $VAL_TOTAL
+globSet VAL_WAITING $VAL_WAITING
+globSet CONS_BLOCK_TIME $CONS_BLOCK_TIME
+globSet CONS_STOPPED $CONS_STOPPED
 
 set +x
 echoWarn "------------------------------------------------"

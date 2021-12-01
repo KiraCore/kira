@@ -101,12 +101,12 @@ while : ; do
             
             if [ "${UNZIP_FAILED,,}" == "true" ] || ($(isNullOrEmpty "$SNAP_NETWORK")) || [ $SNAP_HEIGHT -le 0 ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"
-                rm -f -v -r $TMP_SNAP_DIR
+                rm -rfv $TMP_SNAP_DIR
                 continue
             else
                 echoInfo "INFO: Success, snapshot was downloaded"
                 GENSUM=$(sha256 "$DATA_GENESIS")
-                rm -f -v -r "$TMP_SNAP_DIR/test"
+                rm -rfv "$TMP_SNAP_DIR/test"
             fi
         fi
 
@@ -118,15 +118,14 @@ while : ; do
 
         if [ "${OPTION,,}" == "n" ] ; then
             echoInfo "INFO: User rejected checksums, downloaded file will be removed"
-            rm -fv $TMP_SNAP_PATH
+            rm -rfv $TMP_SNAP_PATH
             continue
         fi
 
         echoInfo "INFO: User apprived checksum, snapshot will be added to the archive directory '$KIRA_SNAP'"
         SNAP_FILENAME="${SNAP_NETWORK}-${SNAP_HEIGHT}-$(date -u +%s).zip"
         SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
-        rm -fv "$SNAPSHOT" && zip -FF $TMP_SNAP_PATH --out $SNAPSHOT -fz
-        rm -fv $TMP_SNAP_PATH
+        mv -fv $TMP_SNAP_PATH $SNAPSHOT
         break
     fi
 
@@ -138,7 +137,7 @@ while : ; do
     if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
       set +x
       echoWarn "WARNING: No snapshots were found in the '$KIRA_SNAP' direcory, state recovery will be aborted"
-      echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+      echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
       set -x
       exit 0
     fi
@@ -179,8 +178,8 @@ SNAPSUM=$(sha256 "$SNAPSHOT")
 set +x
 echoInfo "INFO: Snapshot '$SNAPSHOT' was selected and will be set as latest state"
 echoWarn "WARNING: This is last chance to ensure following snapshot checksum is valid: $SNAPSUM"
-echoNErr "Press any key to continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
 CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP=$DEFAULT_SNAP_DIR" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+CDHelper text lineswap --insert="KIRA_SNAP=\"$DEFAULT_SNAP_DIR\"" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True

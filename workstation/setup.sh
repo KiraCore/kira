@@ -19,8 +19,7 @@ set -x
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 cd /kira
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
-    echoInfo "INFO: Updating kira, Sekai, frontend, INTERX"
-    $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$KIRA_FRONTEND" &
+    echoInfo "INFO: Updating kira, sekai, INTERX"
     $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
     $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$KIRA_SEKAI" &
     $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &
@@ -76,6 +75,27 @@ Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
+Restart=always
+RestartSec=5
+LimitNOFILE=4096
+[Install]
+WantedBy=default.target
+EOL
+
+echoInfo "INFO: Updating kira upgrade plan service..."
+cat > /etc/systemd/system/kiraplan.service << EOL
+[Unit]
+Description=KIRA Upgrade Plan Service
+After=network.target
+[Service]
+CPUWeight=100
+CPUQuota=100%
+IOWeight=100
+MemorySwapMax=0
+Type=simple
+User=root
+WorkingDirectory=$KIRA_HOME
+ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
 Restart=always
 RestartSec=5
 LimitNOFILE=4096

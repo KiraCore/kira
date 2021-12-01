@@ -5,19 +5,13 @@ source $KIRA_MANAGER/utils.sh
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 WHITESPACE="                                                     "
-
-if [ "${INFRA_MODE,,}" == "sentry" ] ; then
-    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_SEED_P2P_PORT $KIRA_INTERX_PORT)
-else
-    PORTS=($KIRA_FRONTEND_PORT $KIRA_SENTRY_GRPC_PORT $KIRA_SENTRY_P2P_PORT $KIRA_SENTRY_RPC_PORT $KIRA_PRIV_SENTRY_P2P_PORT $KIRA_INTERX_PORT)
-fi
-
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
-touch "$PUBLIC_PEERS" "$PRIVATE_PEERS" "$PUBLIC_SEEDS" "$PRIVATE_SEEDS"
+touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
 
 while : ; do
     set +e && source "/etc/profile" &>/dev/null && set -e
+    PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
     printf "\033c"
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
@@ -31,22 +25,36 @@ echo -e "\e[37;1m--------------------------------------------------"
            echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') -------------| [config]"
     i=-1
     LAST_SNAP=""
+    PORTS_CNT=0
+    PORTS=$(globGet EXPOSED_PORTS)
+    PORTS=($PORTS) || PORTS=""
     for p in "${PORTS[@]}" ; do
-        i=$((i + 1))
         NAME=""
-        [ "$p" == "$KIRA_SENTRY_GRPC_PORT" ] && NAME="Public Sentry" && TYPE="GRPC"
-        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC"
-        [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P"
-        [ "$p" == "$KIRA_PRIV_SENTRY_P2P_PORT" ] && NAME="Private Sentry" && TYPE="P2P"
-        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P"
-        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API"
-        [ "$p" == "$KIRA_FRONTEND_PORT" ] && NAME="KIRA Frontend" && TYPE="HTTP"
-        PORT_EXPOSURE="PORT_EXPOSURE_${p}" && PORT_EXPOSURE="${!PORT_EXPOSURE}"
+        
+        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API" && PORTS_CNT=$((PORTS_CNT + 1))
+
+        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+
+        [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+
+        [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+
+        i=$((i + 1))
+        [ -z "$NAME" ] && continue
+
+        PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_${p}")
         [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
         P_TMP="${p}${WHITESPACE}"
         NAME_TMP="${NAME}${WHITESPACE}"
         TYPE_TMP="${TYPE}${WHITESPACE}"
-        echo "| [$i] | ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:22} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
+        INDEX="[$i]${WHITESPACE}"
+        echo "| ${INDEX:0:5}| ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:21} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
     done
        echo "|------------------------------------------------|"
        [ "${PORTS_EXPOSURE,,}" != "enabled" ] && \
@@ -63,12 +71,18 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "| [F] | Reload FIREWALL Settings                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}f"
        echo "| [R] | RELOAD Networking                        |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
     echo -e "| [X] | Exit ___________________________________ |\e[0m"
-    OPTION="" && read -s -n 1 -t 10 OPTION || OPTION=""
+
+    if [[ $PORTS_CNT -le 9 ]] ; then
+        OPTION="" && read -s -n 1 -t 30 OPTION || OPTION=""
+    else
+        OPTION="" && read -n 2 -t 30 OPTION || OPTION=""
+    fi
+
     [ -z "$OPTION" ] && continue
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|n)$ ]] ; do echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && read -d'' -s -n1 ACCEPT && echo ""; done
+        echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && pressToContinue y n && ACCEPT=($(globGet OPTION))
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo -n ""
     fi
@@ -85,16 +99,13 @@ echo -e "\e[37;1m--------------------------------------------------"
     
     if [ "${OPTION,,}" == "d" ]; then
         echoInfo "INFO: Disabling all ports..."
-        PORTS_EXPOSURE="disabled"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "disabled"
     elif [ "${OPTION,,}" == "e" ]; then
         echoInfo "INFO: Enabling all ports..."
-        PORTS_EXPOSURE="enabled"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "enabled"
     elif [ "${OPTION,,}" == "c" ]; then
         echoInfo "INFO: Enabling custom ports configuration..."
-        PORTS_EXPOSURE="custom"
-        CDHelper text lineswap --insert="PORTS_EXPOSURE=$PORTS_EXPOSURE" --prefix="PORTS_EXPOSURE=" --path=$ETC_PROFILE --append-if-found-not=True
+        globSet PORTS_EXPOSURE "custom"
     elif [ "${OPTION,,}" == "i" ]; then
         echoInfo "INFO: Starting network interface selection menu..."
         IFACE_OLD="$IFACE"
@@ -109,11 +120,13 @@ echo -e "\e[37;1m--------------------------------------------------"
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(p|v)$ ]] ; do echoNErr "Choose to list [P]ublic or Pri[V]ate $TARGET: " && read -d'' -s -n1 SELECT && echo ""; done
-        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS && EXPOSURE="public" && CONTAINER="sentry"
-        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "s" ] && FILE=$PRIVATE_SEEDS && EXPOSURE="private" && CONTAINER="priv_sentry"
-        [ "${SELECT,,}" == "p" ] && [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS && EXPOSURE="public" && CONTAINER="sentry"
-        [ "${SELECT,,}" == "v" ] && [ "${OPTION,,}" == "p" ] && FILE=$PRIVATE_PEERS && EXPOSURE="private" && CONTAINER="priv_sentry"
+
+        [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
+        [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
+        EXPOSURE="public"
+        [ "${INFRA_MODE,,}" == "validator" ] && CONTAINER="validator"
+        [ "${INFRA_MODE,,}" == "sentry" ] && CONTAINER="sentry"
+        [ "${INFRA_MODE,,}" == "seed" ] && CONTAINER="seed"
 
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
@@ -122,10 +135,10 @@ echo -e "\e[37;1m--------------------------------------------------"
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
-        echoInfo "INFO: To apply changes you will have to restart your $EXPOSURE facing $CONTAINER container"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]]  ; do echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
+        echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT=($(globGet OPTION))
         [ "${SELECT,,}" == "c" ] && continue
-        
+
         echoInfo "INFO: Re-starting $CONTAINER container..."
         $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER" "true" "restart"
     elif [ "${OPTION,,}" == "f" ]; then
@@ -146,12 +159,12 @@ echo -e "\e[37;1m--------------------------------------------------"
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        SELECT="." && while ! [[ "${SELECT,,}" =~ ^(r|c)$ ]] ; do echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && read -d'' -s -n1 SELECT && echo ""; done
+        echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT=($(globGet OPTION)) 
         [ "${SELECT,,}" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi
 
-    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && read -n 1 -s && echo ""
+    [ ! -z $OPTION ] && echoNErr "Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 done
 
