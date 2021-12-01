@@ -310,7 +310,7 @@ function jsonObjEdit() {
     fi
 }
 
-# e.g. urlExists "18.168.78.192:11000/download/peers.txt"
+# e.g. urlExists "18.168.78.192:11000/download/peers.txt" 
 function urlExists() {
     if ($(isNullOrEmpty "$1")) ; then echo "false"
     elif curl -r0-0 --fail --silent "$1" >/dev/null; then echo "true"

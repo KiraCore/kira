@@ -82,8 +82,8 @@ function showAddress() {
 
 # showPermissions validator
 function showPermissions() {
-    local ADDR=$(showAddress $1)
-    echo $(sekaid query customgov permissions "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    local ADDRESS=$(showAddress $1)
+    echo $(sekaid query customgov permissions "$ADDRESS" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 function isPermBlacklisted() {
@@ -152,7 +152,7 @@ function voteNo() {
     sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
 
-function networkProperties() {
+function showNetworkProperties() {
     local NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
     ($(isNullOrEmpty "$NETWORK_PROPERTIES")) && echo -n "" && return 1
     echo $NETWORK_PROPERTIES
@@ -576,21 +576,44 @@ function showDataRegistryKeys() {
 }
 
 function showDataRegistryKey() {
-    sekaid query customgov data-registry "$1" --page-key 1000000 --output=json 2> /dev/null || echo ""
+    sekaid query customgov data-registry "$1" --output=json 2> /dev/null || echo ""
 }
 
-## createRole <account> <id> <timeout-seconds>
-## e.g. createRole validator 1 180
-#function createRole() {
-#    local FROM_ACCOUNT=$1
-#    local ROLE_ID=$2
-#    local TIMEOUT=$3
-#    ($(isNullOrEmpty $FROM_ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
-#    (! $(isNaturalNumber $ROLE_ID)) && echoInfo "INFO: Invalid role id '$ROLE_ID' " && return 1
-#    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-#    # if ($(isPermWhitelisted $ADDR $PERM)) ; then
-#    #     echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
-#    # else
-#        sekaid tx customgov role create $ROLE_ID --from "$FROM_ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
-#    # fi
-#}
+# setNetworkProperty <key> <value>
+# e.g: setNetworkProperty validator "MIN_TX_FEE" "99"
+function setNetworkProperty() {
+    local ACCOUNT=$1
+    local KEY=$2
+    local VALUE=$3
+
+    sekaid tx customgov proposal set-network-property "${KEY^^}" "$VALUE" --title="Upserting Network Property '$KEY'" --description="Assign value '$VALUE' to property '$KEY'" --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# createRole <account> <role-name> <role-description>
+# e.g. createRole validator validator "Role enabling to claim validator seat and perform essential gov. functions"
+function createRole() {
+    local ACCOUNT=$1
+    local NAME=$2
+    local DESCRIPTION=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $NAME)) && echoInfo "INFO: Invalid role name '$NAME' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    sekaid tx customgov role create "$NAME" "$DESCRIPTION" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+# showRoles <account-or-address>
+# e.g. showRoles validator 
+function showRoles() {
+    local ADDRESS=$(showAddress $1)
+    if ($(isNullOrEmpty $ADDRESS)) ; then
+        echo $(sekaid query customgov all-roles --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    else
+        echo $(sekaid query customgov roles $ADDRESS --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    fi
+}
+
+function showRole() {
+    local NAME=$2
+    echo $(sekaid query customgov role $NAME --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
