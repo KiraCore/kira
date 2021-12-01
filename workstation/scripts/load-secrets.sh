@@ -38,11 +38,12 @@ function MnemonicGenerator() {
         CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
     fi
 
+    TMP_DUMP="/tmp/priv-key-gen.dump.tmp"
     if [ "${2,,}" == "val" ] ; then
         echoInfo "INFO: Ensuring $1 private key is generated"
         if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
             rm -fv "$valkeyPath"
-            priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=/dev/null --keyid=/dev/null
+            priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=$TMP_DUMP --keyid=$TMP_DUMP
         fi
     elif [ "${2,,}" == "node" ] ; then
         echoInfo "INFO: Ensuring $1 nodekey files are generated"
@@ -52,7 +53,7 @@ function MnemonicGenerator() {
         
         if [ ! -f "$keyidPath" ] || [ ! -f "$nodekeyPath" ] ; then # node keys are only re-generated if any of keystore files is not present
             rm -fv "$keyidPath" "$nodekeyPath"
-            priv-key-gen --mnemonic="$mnemonic" --valkey=/dev/null --nodekey="$nodekeyPath" --keyid="$keyidPath"
+            priv-key-gen --mnemonic="$mnemonic" --valkey=$TMP_DUMP --nodekey="$nodekeyPath" --keyid="$keyidPath"
         fi
     
         newNodeId=$(cat $keyidPath)
@@ -65,6 +66,7 @@ function MnemonicGenerator() {
         echoErr "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
         exit 1
     fi
+    rm -fv $TMP_DUMP
 }
 
 MnemonicGenerator "signer" "addr" # INTERX message signing key
