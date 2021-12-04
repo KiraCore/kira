@@ -617,3 +617,19 @@ function showRole() {
     local NAME=$2
     echo $(sekaid query customgov role $NAME --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
+
+# setProposalsDurations <account> <comma-separated-proposals> <comma-separated-time-values>
+# e.g: setProposalsDurations validator "UpsertDataRegistry,SetNetworkProperty" "300,300"
+function setProposalsDurations() {
+    local ACCOUNT=$1
+    local PROPOSALS=$2
+    local DURATIONS=$3
+    ($(isNullOrEmpty $PROPOSALS)) && echoInfo "INFO: Proposals were NOT defined '$2'" && return 1
+    ($(isNullOrEmpty $DURATIONS)) && echoInfo "INFO: Durations were NOT defined '$3'" && return 1
+
+    sekaid tx customgov proposal set-proposal-durations-proposal "$PROPOSALS" "$DURATIONS" --title="Update proposals duration " --description="Set durations of '[$PROPOSALS]' to '[$DURATIONS]' seconds" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+function showProposalsDurations() {
+    echo $(sekaid query customgov all-proposal-durations --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}

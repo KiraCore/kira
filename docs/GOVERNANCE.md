@@ -93,3 +93,17 @@ voteYes $(lastProposal) validator
 # To Query all Data Registry Keys
 sekaid query customgov all-data-reference-keys --page-key 100000 --output=json | jq
 ```
+
+## Change Proposals Duration
+
+```
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetProposalDurationProposal $(showAddress validator) 
+
+setProposalsDurations validator "UpsertDataRegistry,SetNetworkProperty" "300,300"
+
+voteYes $(lastProposal) validator
+
+# To Query all Proposals Durations
+showProposalsDurations
+```
