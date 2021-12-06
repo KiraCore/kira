@@ -107,3 +107,28 @@ voteYes $(lastProposal) validator
 # To Query all Proposals Durations
 showProposalsDurations
 ```
+
+## Set Poor Network Messages
+
+```
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetPoorNetworkMessagesProposal  $(showAddress validator) 
+
+setPoorNetworkMessages validator "submit_evidence,submit-proposal,vote-proposal,claim-councilor,set-network-properties,claim-validator,activate,pause,unpause" 
+
+voteYes $(lastProposal) validator
+
+# To Poor Network Messages
+showPoorNetworkMessages
+```
+
+## ReSet Ranks of All Validators
+
+```
+whitelistPermission validator $PermCreateResetWholeValidatorRankProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteResetWholeValidatorRankProposal  $(showAddress validator) 
+
+resetRanks validator
+
+voteYes $(lastProposal) validator
+```

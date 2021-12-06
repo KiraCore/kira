@@ -136,20 +136,24 @@ function lastProposal() {
     return 0
 }
 
+# voteProposal validator $(lastProposal) 0
+function voteProposal() {
+    local ACCOUNT=$1
+    local PROPOSAL=$2
+    local VOTE=$3
+    
+    echoInfo "INFO: Voting '$VOTE' on proposal '$PROPOSAL' with account '$ACCOUNT'"
+    sekaid tx customgov proposal vote $PROPOSAL $VOTE --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
 # voteYes $(lastProposal) validator
 function voteYes() {
-    local PROPOSAL=$1
-    local ACCOUNT=$2
-    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    voteProposal "$2" "$1" "1"
 }
 
 # voteNo $(lastProposal) validator
 function voteNo() {
-    local PROPOSAL=$1
-    local ACCOUNT=$2
-    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    voteProposal "$2" "$1" "0"
 }
 
 function showNetworkProperties() {
@@ -632,4 +636,52 @@ function setProposalsDurations() {
 
 function showProposalsDurations() {
     echo $(sekaid query customgov all-proposal-durations --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+function showPoorNetworkMessages() {
+    echo $(sekaid query customgov poor-network-messages --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+# setPoorNetworkMessages <account> <comma-transaction-types>
+# e.g: setPoorNetworkMessages validator "submit_evidence,submit-proposal,vote-proposal,claim-councilor,set-network-properties,claim-validator,activate,pause,unpause"
+function setPoorNetworkMessages() {
+    local ACCOUNT=$1
+    local MESSAGES=$2
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $MESSAGES)) && echoInfo "INFO: Allowed network messages were NOT defined '$2'" && return 1
+
+    sekaid tx customgov proposal set-poor-network-msgs "$MESSAGES" --title="Update poor network messages" --description="Allowing submission of '[$MESSAGES]' during poor network conditions" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# showExecutionFee <transaction-type>
+# e.g.: showExecutionFee <transaction-type>
+function showExecutionFee() {
+    local TRANSACTION_TYPE=$1
+    echo $(sekaid query customgov execution-fee "$TRANSACTION_TYPE" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+# setExecutionFee <account> <tx-type> <execution-fee> <failure-fee> <tx-timeout>
+# e.g.: setExecutionFee validator pause 100 200 60
+function setExecutionFee() {
+    local ACCOUNT=$1
+    local TX_TYPE=$2
+    local EXECUTION_FEE=$3
+    local FAILURE_FEE=$4
+    local TX_TIMEOUT=$5
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $TX_TYPE)) && echoInfo "INFO: Transaction type was NOT defined '$2'" && return 1
+    (! $(isNaturalNumber $EXECUTION_FEE)) && echoInfo "INFO: Invalid execution fee amount '$3'" && return 1
+    (! $(isNaturalNumber $FAILURE_FEE)) && echoInfo "INFO: Invalid failure fee amount '$4'" && return 1
+    (! $(isNaturalNumber $TX_TIMEOUT)) && echoInfo "INFO: Invalid tx timeout '$5'" && return 1
+
+    sekaid tx customgov set-execution-fee --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --transaction_type="$TX_TYPE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# resetRanks <account>
+# e.g: resetRanks validator
+function resetRanks() {
+    local ACCOUNT=$1
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+
+    sekaid tx customslashing proposal-reset-whole-validator-rank --title="Ranks reset" --description="Reseting ranks or all validator nodes" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
