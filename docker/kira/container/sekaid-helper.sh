@@ -112,20 +112,6 @@ function isPermWhitelisted() {
     fi
 }
 
-# e.g. tryGetValidator kiraXXXXXXXXXXX
-# e.g. tryGetValidator kiravaloperXXXXXXXXXXX
-function tryGetValidator() {
-    local VAL_ADDR="${1,,}"
-    if [[ $VAL_ADDR == kiravaloper* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
-    elif [[ $VAL_ADDR == kira* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
-    else
-        VAL_STATUS=""
-    fi
-    echo $VAL_STATUS
-}
-
 function lastProposal() {
     local BOTTOM_PROPOSALS=$(sekaid query customgov proposals --limit=1 --reverse --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
     local TOP_PROPOSALS=$(sekaid query customgov proposals --limit=1 --output=json --home=$SEKAID_HOME | jq -cr '.proposals | last | .proposal_id' 2> /dev/null || echo "")
@@ -684,4 +670,19 @@ function resetRanks() {
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
 
     sekaid tx customslashing proposal-reset-whole-validator-rank --title="Ranks reset" --description="Reseting ranks or all validator nodes" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# showValidator <account/kira-address/val-address>
+# e.g. showValidator validator
+# e.g. showValidator kiraXXXXXXXXXXX
+# e.g. showValidator kiravaloperXXXXXXXXXXX
+function showValidator() {
+    local VAL_ADDR="${1,,}"
+    if [[ $VAL_ADDR == kiravaloper* ]] ; then
+        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+    else
+        local ADDRESS=$(showAddress $VAL_ADDR)
+        VAL_STATUS=$(sekaid query customstaking validator --addr="$ADDRESS" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+    fi
+    echo $VAL_STATUS
 }
