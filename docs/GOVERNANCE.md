@@ -132,3 +132,34 @@ resetRanks validator
 
 voteYes $(lastProposal) validator
 ```
+
+
+## Set Token Rates
+
+```
+whitelistPermission validator $PermCreateUpsertTokenRateProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUpsertTokenRateProposal $(showAddress validator) 
+
+setTokenRate validator lol 2 true
+
+voteYes $(lastProposal) validator
+```
+
+## Set Token Transfers Black/White List
+
+```
+whitelistPermission validator $PermCreateTokensWhiteBlackChangeProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteTokensWhiteBlackChangeProposal $(showAddress validator) 
+
+transfersWhitelistAddTokens validator "samolean"
+transfersWhitelistRemoveTokens validator "samolean"
+transfersBlacklistAddTokens validator "samolean"
+transfersBlacklistRemoveTokens validator "samolean"
+
+voteYes $(lastProposal) validator
+
+# query whitelist/blacklist
+showTokenTransferBlackWhiteList
+```
+
+
