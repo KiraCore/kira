@@ -209,6 +209,7 @@ globSet PORTS_EXPOSURE "enabled"
 rm -fv $(globFile validator_SEKAID_STATUS)
 rm -fv $(globFile sentry_SEKAID_STATUS)
 rm -fv $(globFile seed_SEKAID_STATUS)
+rm -fv $(globFile interx_SEKAID_STATUS)
 
 UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
 globSet UPGRADE_NAME "$UPGRADE_NAME"

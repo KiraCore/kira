@@ -38,10 +38,13 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
 
-    globSet LATEST_BLOCK_HEIGHT 0
-    globSet LATEST_BLOCK_TIME 0
-    globSet MIN_HEIGHT 0
-    globSet MIN_HEIGHT 0 $GLOBAL_COMMON_RO
+    globSet MIN_HEIGHT "$MIN_HEIGHT"
+    globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT"
+    globSet LATEST_BLOCK_TIME "0"
+
+    globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
 
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"

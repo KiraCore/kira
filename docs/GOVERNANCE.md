@@ -93,3 +93,83 @@ voteYes $(lastProposal) validator
 # To Query all Data Registry Keys
 sekaid query customgov all-data-reference-keys --page-key 100000 --output=json | jq
 ```
+
+## Change Proposals Duration
+
+```
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetProposalDurationProposal $(showAddress validator) 
+
+setProposalsDurations validator "UpsertDataRegistry,SetNetworkProperty" "300,300"
+
+voteYes $(lastProposal) validator
+
+# To Query all Proposals Durations
+showProposalsDurations
+```
+
+## Set Poor Network Messages
+
+```
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetPoorNetworkMessagesProposal  $(showAddress validator) 
+
+setPoorNetworkMessages validator "submit_evidence,submit-proposal,vote-proposal,claim-councilor,set-network-properties,claim-validator,activate,pause,unpause" 
+
+voteYes $(lastProposal) validator
+
+# To Poor Network Messages
+showPoorNetworkMessages
+```
+
+## ReSet Ranks of All Validators
+
+```
+whitelistPermission validator $PermCreateResetWholeValidatorRankProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteResetWholeValidatorRankProposal  $(showAddress validator) 
+
+resetRanks validator
+
+voteYes $(lastProposal) validator
+```
+
+
+## Set Token Rates
+
+```
+whitelistPermission validator $PermCreateUpsertTokenRateProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUpsertTokenRateProposal $(showAddress validator) 
+
+setTokenRate validator lol 2 true
+
+voteYes $(lastProposal) validator
+```
+
+## Set Token Transfers Black/White List
+
+```
+whitelistPermission validator $PermCreateTokensWhiteBlackChangeProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteTokensWhiteBlackChangeProposal $(showAddress validator) 
+
+transfersWhitelistAddTokens validator "samolean"
+transfersWhitelistRemoveTokens validator "samolean"
+transfersBlacklistAddTokens validator "samolean"
+transfersBlacklistRemoveTokens validator "samolean"
+
+voteYes $(lastProposal) validator
+
+# query whitelist/blacklist
+showTokenTransferBlackWhiteList
+```
+
+## Unjailing Validator
+```
+whitelistPermission validator $PermCreateUnjailValidatorProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUnjailValidatorProposal $(showAddress validator)
+
+unjail validator "kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c"
+
+voteYes $(lastProposal) validator
+```
+
+
