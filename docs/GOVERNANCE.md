@@ -162,4 +162,14 @@ voteYes $(lastProposal) validator
 showTokenTransferBlackWhiteList
 ```
 
+## Unjailing Validator
+```
+whitelistPermission validator $PermCreateUnjailValidatorProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUnjailValidatorProposal $(showAddress validator)
+
+unjail validator "kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c"
+
+voteYes $(lastProposal) validator
+```
+
 

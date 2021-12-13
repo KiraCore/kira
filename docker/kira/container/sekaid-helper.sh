@@ -725,7 +725,6 @@ function setTokenRate() {
     sekaid tx tokens proposal-upsert-rate --denom="$DENOM" --rate="$RATE" --fee_payments="$FEE_PAYMENT" --title="Set exchange rate of '$DENOM'" --description="Fee payments will be set at the rate of $RATE $DENOM == 1 KEX. Set '$FEE_PAYMENT' to indicate if $DENOM is a payment method." --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
 
-
 function setTokensBlackWhiteList() {
     local ACCOUNT=$1
     local IS_BLACKLIST=$2
@@ -760,3 +759,14 @@ function showTokenTransferBlackWhiteList() {
     echo $(sekaid query tokens token-black-whites --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
 }
 
+function unjail() {
+    local ACCOUNT=$1
+    local ADDRESS=$2
+    local REFERENCE=$3
+    ADDRESS=$(showValidator "$ADDRESS" | jsonParse "val_key" 2> /dev/null || echo -n "");
+
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDRESS)) && echoInfo "INFO: Validator Address to unjail was NOT defined or could NOT be found '$2'" && return 1
+    # ($(isNullOrEmpty $REFERENCE)) && echoInfo "INFO: Unjail reference should NOT be empty '$3'" && return 1
+    sekaid tx customstaking proposal proposal-unjail-validator "$ADDRESS" "$REFERENCE" --title="Unjail validator '$ADDRESS'" --description="Proposal to unjail '$ADDRESS' due to his unintentional fault" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
