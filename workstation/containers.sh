@@ -48,10 +48,10 @@ globSet INFRA_CONTAINERS_COUNT "100"
 set -x
 set -e
 
-globGet seed_STARTED "false"
-globGet sentry_STARTED "false"
-globGet validator_STARTED "false"
-globGet interx_STARTED "false"
+globSet seed_STARTED false
+globSet sentry_STARTED false
+globSet validator_STARTED false
+globSet interx_STARTED false
 
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
