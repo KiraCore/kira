@@ -36,6 +36,8 @@ fi
 globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
+systemctl start docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
+sleep 3
 
 globSet SEED_EXPOSED false
 globSet SENTRY_EXPOSED false
