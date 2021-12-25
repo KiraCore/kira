@@ -315,6 +315,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     globSet SETUP_REBOOT ""
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
+    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
     
     echoInfo "INFO: Dumping loggs before planned reboot & update..."
     rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
@@ -322,6 +323,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     
     echoInfo "INFO: Restarting update daemon..."
     systemctl daemon-reload
+    systemctl restart docker
     systemctl restart kiraup
 else
     echoInfo "INFO: Repos upgrade already done"

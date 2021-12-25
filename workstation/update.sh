@@ -70,6 +70,8 @@ if [ ! -f "$UPDATE_CHECK" ]; then
         exit 0
     else
         echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."
+        systemctl start docker || echoWarn "WARNINIG: Failed to start docker"
+        sleep 3
     fi
 
     set -x
@@ -161,6 +163,8 @@ if [ ! -f "$UPDATE_CHECK" ]; then
     fi
 else
     echoInfo "INFO: Docker containers were already updated ($UPDATE_CHECK_CONTAINERS)"
+    systemctl start docker || echoWarn "WARNINIG: Failed to start docker"
+    sleep 3
 fi
 
 set -x
