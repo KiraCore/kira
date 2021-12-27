@@ -56,7 +56,7 @@ sekaid tx upgrade proposal-set-plan \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time="$UPGRADE_TIME" \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="devnet-21" \
+ --new-chain-id="devnet-23" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a hard fork test upgrade" \
