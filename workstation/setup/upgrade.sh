@@ -194,9 +194,9 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file conversion failed!" && sleep 10 && exit 1
 
     echoInfo "INFO: Saving upgrade evidence into temporary debug directory"
-    mkdir -p "/tmp/debug"
-    cp -afv $GENESIS_EXPORT_OLD "/tmp/debug/old-genesis-export.json"
-    cp -afv $GENESIS_EXPORT "/tmp/debug/genesis-export.json"
+    mkdir -p /debug
+    cp -afv $GENESIS_EXPORT_OLD "/debug/old-genesis-export.json"
+    cp -afv $GENESIS_EXPORT "/debug/genesis-export.json"
 
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $GENESIS_EXPORT)
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
