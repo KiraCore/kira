@@ -45,7 +45,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-UPGRADE_NAME_TMP="upgrade-117" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 800)) && \
+UPGRADE_NAME_TMP="upgrade-118" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 800)) && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
