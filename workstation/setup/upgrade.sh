@@ -193,6 +193,11 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid new-genesis-from-exported \$COMMON_DIR/old-genesis-export.json \$COMMON_DIR/genesis-export.json || rm -fv \$COMMON_DIR/genesis-export.json"
     ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file conversion failed!" && sleep 10 && exit 1
 
+    echoInfo "INFO: Saving upgrade evidence into temporary debug directory"
+    mkdir -p /debug
+    cp -afv $GENESIS_EXPORT_OLD "/debug/old-genesis-export.json"
+    cp -afv $GENESIS_EXPORT "/debug/genesis-export.json"
+
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $GENESIS_EXPORT)
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
     ($(isNullOrEmpty $NEW_NETWORK_NAME)) && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
