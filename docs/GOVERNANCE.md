@@ -4,7 +4,7 @@
 ## Query Permissions
 
 ```
-( read -p "INPUT ADDRESS: " ADDR || ADDR=$VALIDATOR_ADDR ) && sekaid query customgov permissions $VALIDATOR_ADDR
+(read -p "INPUT ADDRESS: " ADDR) && showPermissions $ADDR
 ```
 
 
@@ -22,6 +22,16 @@ sekaid tx customgov permission whitelist-permission --from validator --keyring-b
 sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 
 sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+```
+
+## Claim Permissions as Sudo To Upsert Roles
+```
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermUpsertRole --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
+
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
+
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json  | txAwait 180
+
 ```
 
 # Proposals
@@ -57,77 +67,109 @@ voteYes $(lastProposal) validator
 LAST_PROPOSAL=$(lastProposal) && sekaid query customgov votes $LAST_PROPOSAL --output json | jq && sekaid query customgov proposal $LAST_PROPOSAL --output json | jq && echo "Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 ```
 
-## Change Proposals Speed
-```
-sekaid tx customgov proposal set-network-property PROPOSAL_END_TIME 15 --title="Proposal End Time set to 15 seconds" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
-
-sekaid tx customgov proposal set-network-property PROPOSAL_ENACTMENT_TIME 16 --title="Proposal Enactment Time set to 16 seconds" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait && voteYes $(lastProposal) validator
-```
-
 ## Change Network Property
 
 ```
-sekaid tx customgov proposal set-network-property MISCHANCE_CONFIDENCE 100 --title="100 Blocks Confidence" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait
+whitelistPermission validator $PermCreateSetNetworkPropertyProposal  $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetNetworkPropertyProposal  $(showAddress validator) 
+
+setNetworkProperty validator "MIN_TX_FEE" "99"
 
 voteYes $(lastProposal) validator
 
-sekaid tx customgov proposal set-network-property MAX_MISCHANCE 200 --title="200 Blocks Mischance" --description="testing commands" --from validator --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async | txAwait 
+showNetworkProperties | jq
+```
+
+## Change Data Registrar
+
+```
+whitelistPermission validator $PermCreateUpsertDataRegistryProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUpsertDataRegistryProposal $(showAddress validator) 
+
+upsertDataRegistry validator "code_of_conduct" "https://raw.githubusercontent.com/KiraCore/sekai/master/env.sh" "text"
 
 voteYes $(lastProposal) validator
 
-networkProperties | jq
-```
-## Network Updates
-
-```
-sekaid tx upgrade set-plan \
- --resource-id=1 \
- --resource-git=1 \
- --resource-checkout=1 \
- --resource-checksum=1 \
- --min-halt-time=1 \
- --old-chain-id=$NETWORK_NAME \
- --new-chain-id=1 \
- --rollback-memo=1 \
- --max-enrollment-duration=1 
- --upgrade-memo=1 
- --from=validator 
- --keyring-backend=test 
- --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_level=debug --yes --broadcast-mode=async | txAwait 
-
+# To Query all Data Registry Keys
+sekaid query customgov all-data-reference-keys --page-key 100000 --output=json | jq
 ```
 
+## Change Proposals Duration
+
 ```
-{
-    "resources": [ {
-            "id": "kira",
-            "git": "<url-string>",
-            "checkout": "<branch-or-tag-string>",
-            "checksum": "sha256-string"
-        }, {
-            "id": "chain",
-            "git": ...
-        }, { ... }, ...
-    ],
-    "min_halt_time": <uint>,
-    "old_chain_id": <string>,
-    "new_chain_id": <string>,
-    "rollback_checksum": <sha256-string>,
-    "max_enrolment_duration": <uint>,
-    "memo": <string>
-}
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetProposalDurationProposal $(showAddress validator) 
+
+setProposalsDurations validator "UpsertDataRegistry,SetNetworkProperty" "300,300"
+
+voteYes $(lastProposal) validator
+
+# To Query all Proposals Durations
+showProposalsDurations
+```
+
+## Set Poor Network Messages
+
+```
+whitelistPermission validator $PermCreateSetProposalDurationProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteSetPoorNetworkMessagesProposal  $(showAddress validator) 
+
+setPoorNetworkMessages validator "submit_evidence,submit-proposal,vote-proposal,claim-councilor,set-network-properties,claim-validator,activate,pause,unpause" 
+
+voteYes $(lastProposal) validator
+
+# To Poor Network Messages
+showPoorNetworkMessages
+```
+
+## ReSet Ranks of All Validators
+
+```
+whitelistPermission validator $PermCreateResetWholeValidatorRankProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteResetWholeValidatorRankProposal  $(showAddress validator) 
+
+resetRanks validator
+
+voteYes $(lastProposal) validator
 ```
 
 
-[ {
-            "id": "sekai",
-            "git": "https://github.com/KiraCore/sekai",
-            "checkout": "master",
-            "checksum": "sha256-string"
-        }, {
-            "id": "interx",
-            "git": "https://github.com/KiraCore/sekai",
-            "checkout": "master",
-            "checksum": "sha256-string"
-        }
-    ]
+## Set Token Rates
+
+```
+whitelistPermission validator $PermCreateUpsertTokenRateProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUpsertTokenRateProposal $(showAddress validator) 
+
+setTokenRate validator lol 2 true
+
+voteYes $(lastProposal) validator
+```
+
+## Set Token Transfers Black/White List
+
+```
+whitelistPermission validator $PermCreateTokensWhiteBlackChangeProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteTokensWhiteBlackChangeProposal $(showAddress validator) 
+
+transfersWhitelistAddTokens validator "samolean"
+transfersWhitelistRemoveTokens validator "samolean"
+transfersBlacklistAddTokens validator "samolean"
+transfersBlacklistRemoveTokens validator "samolean"
+
+voteYes $(lastProposal) validator
+
+# query whitelist/blacklist
+showTokenTransferBlackWhiteList
+```
+
+## Unjailing Validator
+```
+whitelistPermission validator $PermCreateUnjailValidatorProposal $(showAddress validator) && \
+whitelistPermission validator $PermVoteUnjailValidatorProposal $(showAddress validator)
+
+unjail validator "kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c"
+
+voteYes $(lastProposal) validator
+```
+
+

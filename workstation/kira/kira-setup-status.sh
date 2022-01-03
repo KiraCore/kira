@@ -14,6 +14,7 @@ UPDATE_FAIL=$(globGet UPDATE_FAIL)
 PLAN_DONE=$(globGet PLAN_DONE)
 PLAN_FAIL=$(globGet PLAN_FAIL)
 UPGRADE_DONE=$(globGet UPGRADE_DONE)
+CONTAINERS=$(globGet CONTAINERS)
 
 set +x
 echoWarn "------------------------------------------------"
@@ -31,7 +32,7 @@ set -x
 
 while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
 
-    while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] ; do
+    while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespace "$CONTAINERS")) ; do
         set +x
         set +e && source "$ETC_PROFILE" &>/dev/null && set -e
         source $KIRA_MANAGER/utils.sh
@@ -39,6 +40,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         SETUP_START_DT=$(globGet SETUP_START_DT)
         UPDATE_DONE=$(globGet UPDATE_DONE)
         UPDATE_FAIL=$(globGet UPDATE_FAIL)
+        CONTAINERS=$(globGet CONTAINERS)
     
         if [ "${UPDATE_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
@@ -60,17 +62,18 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
             else
                 echoInfo "INFO: Printing update tools logs:"
                 cat $(globGet UPDATE_TOOLS_LOG) || echoErr "ERROR: Tools Update Log was NOT found!"
-                echoInfo "INFO: Printing update cleanup logs:"
+                echoInfo "INFO: Finished update tools logs." && echoInfo "INFO: Printing update cleanup logs:"
                 cat $(globGet UPDATE_CLEANUP_LOG) || echoErr "ERROR: Cleanup Update Log was NOT found!"
-                echoInfo "INFO: Printing update containers logs:"
+                echoInfo "INFO: Finished Printing update cleanup logs." && echoInfo "INFO: Printing update containers logs:"
                 cat $(globGet UPDATE_CONTAINERS_LOG) || echoErr "ERROR: Containers Update Log was NOT found!"
-                echoInfo "INFO: Printing update service logs:"
+                echoInfo "INFO: Finished Printing update containers logs." && echoInfo "INFO: Printing update service logs:"
                 sleep 2
                 if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
                     journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
                 else
                     tryCat "$KIRA_DUMP/kiraup-done.log.txt"
                 fi
+                echoInfo "INFO: Finished printing update service logs."
             fi
         elif [ "${VSEL,,}" == "d" ] ; then
             $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"

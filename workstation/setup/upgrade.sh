@@ -48,7 +48,35 @@ else
     echoInfo "INFO: Success upgrade plan file was found"
 fi
 
+
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
+    echoInfo "INFO: Reading repos info..."
+
+    globDel "NEXT_SEKAI_BRANCH" "NEXT_SEKAI_REPO"
+    while IFS="" read -r row || [ -n "$row" ] ; do
+        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
+        joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
+
+        repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$repository")) && echoErr "ERROR: Repository of the plan '$joid' was undefined" && sleep 10 && exit 1
+        checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
+        if ($(isNullOrWhitespaces "$checkout")) && ($(isNullOrWhitespaces "$checksum")) ; then
+            echoErr "ERROR: Checkout ('$checkout') or Checksum ('$checksum') was undefined"
+            sleep 10
+            exit 1
+        fi
+
+        if ($(isLetters "$joid")) ; then
+            globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
+            globSet "NEXT_${joid^^}_BRANCH" "$checkout"
+            globSet "NEXT_${joid^^}_REPO" "$repository"
+        else
+            echoWarn "WARNING: Unknown plan id '$joid'"
+        fi
+    done < $UPGRADE_PLAN_RES64_FILE
+
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
         UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
         if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
@@ -141,13 +169,34 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     echoInfo "INFO: Started, creation of new genesis requested!"
 
     GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
-    rm -fv $GENESIS_EXPORT
+    GENESIS_EXPORT_OLD="$COMMON_PATH/old-genesis-export.json"
+    rm -fv $GENESIS_EXPORT $GENESIS_EXPORT_OLD
 
     echoInfo "INFO: Exporting genesis!"
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$COMMON_DIR/old-genesis-export.json"
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid new-genesis-from-exported \$COMMON_DIR/old-genesis-export.json \$COMMON_DIR/genesis-export.json"
+    ($(isFileEmpty $GENESIS_EXPORT_OLD)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1
 
-    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file was NOT exported or empty!" && sleep 10 && exit 1
+    echoInfo "INFO: Updating sekai repository..."
+    SEKAI_BRANCH=$(globGet "NEXT_SEKAI_BRANCH")
+    SEKAI_REPO=$(globGet "NEXT_SEKAI_REPO")
+
+    if (! $(isNullOrEmpty "$SEKAI_BRANCH")) && (! $(isNullOrEmpty "$SEKAI_BRANCH")) ; then
+        echoInfo "INFO: SEKAI Repo upgrade detected, cloning new resources..."
+        docker exec -i $CONTAINER_NAME /bin/bash -c "sekaid version"
+        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && rm -rfv \$SEKAI && mkdir -p \$SEKAI && git clone $SEKAI_REPO \$SEKAI && cd \$SEKAI && git checkout $SEKAI_BRANCH"
+        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && cd \$SEKAI && make install"
+        echoInfo "INFO: SEKAI Repo was updated..."
+        docker exec -i $CONTAINER_NAME /bin/bash -c "sekaid version"
+    fi
+
+    echoInfo "INFO: Converting genesis!"
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid new-genesis-from-exported \$COMMON_DIR/old-genesis-export.json \$COMMON_DIR/genesis-export.json || rm -fv \$COMMON_DIR/genesis-export.json"
+    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file conversion failed!" && sleep 10 && exit 1
+
+    echoInfo "INFO: Saving upgrade evidence into temporary debug directory"
+    mkdir -p /debug
+    cp -afv $GENESIS_EXPORT_OLD "/debug/old-genesis-export.json"
+    cp -afv $GENESIS_EXPORT "/debug/genesis-export.json"
 
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $GENESIS_EXPORT)
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
@@ -208,15 +257,9 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         # kira repo is processed during plan setup, so ony other repost must be upgraded
         [ "$joid" == "kira" ] && echoInfo "INFO: Infra repo was already upgraded..." && continue
 
-        repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$repository")) && echoErr "ERROR: Repository of the plan '$joid' was undefined" && sleep 10 && exit 1
-        checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
-        checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
-        if ($(isNullOrWhitespaces "$checkout")) && ($(isNullOrWhitespaces "$checksum")) ; then
-            echoErr "ERROR: Checkout ('$checkout') or Checksum ('$checksum') was undefined"
-            sleep 10
-            exit 1
-        fi
+        checksum=$(globGet "NEXT_${joid^^}_CHECKSUM")
+        checkout=$(globGet "NEXT_${joid^^}_BRANCH")
+        repository=$(globGet "NEXT_${joid^^}_REPO")
 
         REPO_ZIP="/tmp/repo.zip"
         REPO_TMP="/tmp/repo"
@@ -260,7 +303,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         if ($(isLetters "$joid")) ; then
             CDHelper text lineswap --insert="${joid^^}_CHECKSUM=\"$checksum\"" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
             CDHelper text lineswap --insert="${joid^^}_BRANCH=\"$checkout\"" --prefix="${joid^^}_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=\"$checksum\"" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
+            CDHelper text lineswap --insert="${joid^^}_REPO=\"$repository\"" --prefix="${joid^^}_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
         else
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi
@@ -277,6 +320,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     globSet SETUP_REBOOT ""
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
+    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
+    rm -rfv "$KIRA_UPDATE" || echoWarn "WARNING: Failed to removed kira update directory"
     
     echoInfo "INFO: Dumping loggs before planned reboot & update..."
     rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
@@ -284,6 +329,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     
     echoInfo "INFO: Restarting update daemon..."
     systemctl daemon-reload
+    systemctl restart docker
     systemctl restart kiraup
 else
     echoInfo "INFO: Repos upgrade already done"

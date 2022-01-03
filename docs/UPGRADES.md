@@ -4,20 +4,16 @@
 > Propose & Vote on Upgrade Proposals
 
 ```
-whitelistPermission validator $PermCreateSoftwareUpgradeProposal $(showAddress validator)
+whitelistPermission validator $PermCreateSoftwareUpgradeProposal $(showAddress validator) && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) 
 
 
 whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
 whitelistValidator validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
-whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
-
+whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 180 && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c 180 && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads 180
-
-
-blacklistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c 180
 ```
 
 > Creating Soft Fork Update Plan
@@ -49,10 +45,10 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-UPGRADE_NAME_TMP="upgrade-95" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900)) && \
+UPGRADE_NAME_TMP="upgrade-118" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 800)) && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
+SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
+INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME_TMP" \
  --instate-upgrade=false \
@@ -60,7 +56,7 @@ sekaid tx upgrade proposal-set-plan \
  --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
  --min-upgrade-time="$UPGRADE_TIME" \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="newnet-15" \
+ --new-chain-id="devnet-24" \
  --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a hard fork test upgrade" \
@@ -121,4 +117,18 @@ voteYes $(lastProposal) validator
 
 showCurrentPlan | jq
 showNextPlan | jq
+ ```
+
+ # Halt services to simulate missing validators
+
+ ```
+systemctl stop kiraup && systemctl stop kiraplan && systemctl stop kirascan && \
+ echo "INFO: Successfully stopped all services" || echo "WARNING: Failed to stop all services"
+ ```
+
+# Unhalt services to reboot missing validators
+
+ ```
+systemctl start kiraup && systemctl start kiraplan && systemctl start kirascan && \
+ echo "INFO: Successfully started all services" || echo "WARNING: Failed to start all services"
  ```

@@ -80,10 +80,10 @@ function showAddress() {
     ($(isKiraAddress "$1")) && echo "$1" || echo $(sekaid keys show "$1" --keyring-backend=test --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "address" 2> /dev/null || echo -n "")
 }
 
-# tryGetPermissions validator
-function tryGetPermissions() {
-    local ADDR=$(showAddress $1)
-    echo $(sekaid query customgov permissions "$ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+# showPermissions validator
+function showPermissions() {
+    local ADDRESS=$(showAddress $1)
+    echo $(sekaid query customgov permissions "$ADDRESS" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 function isPermBlacklisted() {
@@ -92,7 +92,7 @@ function isPermBlacklisted() {
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
-        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
+        INDEX=$(showPermissions $ADDR 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
         ($(isNaturalNumber $INDEX)) && echo "true" || echo "false"
     fi
 }
@@ -103,27 +103,13 @@ function isPermWhitelisted() {
     if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ADDR)) ; then
         echo "false"
     else
-        INDEX=$(tryGetPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
+        INDEX=$(showPermissions $ADDR 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
         if ($(isNaturalNumber $INDEX)) && (! $(isPermBlacklisted $ADDR $PERM)) ; then
             echo "true" 
         else
             echo "false"
         fi
     fi
-}
-
-# e.g. tryGetValidator kiraXXXXXXXXXXX
-# e.g. tryGetValidator kiravaloperXXXXXXXXXXX
-function tryGetValidator() {
-    local VAL_ADDR="${1,,}"
-    if [[ $VAL_ADDR == kiravaloper* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
-    elif [[ $VAL_ADDR == kira* ]] ; then
-        VAL_STATUS=$(sekaid query customstaking validator --addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
-    else
-        VAL_STATUS=""
-    fi
-    echo $VAL_STATUS
 }
 
 function lastProposal() {
@@ -136,23 +122,27 @@ function lastProposal() {
     return 0
 }
 
+# voteProposal validator $(lastProposal) 0
+function voteProposal() {
+    local ACCOUNT=$1
+    local PROPOSAL=$2
+    local VOTE=$3
+    
+    echoInfo "INFO: Voting '$VOTE' on proposal '$PROPOSAL' with account '$ACCOUNT'"
+    sekaid tx customgov proposal vote $PROPOSAL $VOTE --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
 # voteYes $(lastProposal) validator
 function voteYes() {
-    local PROPOSAL=$1
-    local ACCOUNT=$2
-    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 1 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    voteProposal "$2" "$1" "1"
 }
 
 # voteNo $(lastProposal) validator
 function voteNo() {
-    local PROPOSAL=$1
-    local ACCOUNT=$2
-    echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
-    sekaid tx customgov proposal vote $PROPOSAL 0 --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    voteProposal "$2" "$1" "0"
 }
 
-function networkProperties() {
+function showNetworkProperties() {
     local NETWORK_PROPERTIES=$(sekaid query customgov network-properties --output=json --home=$SEKAID_HOME 2> /dev/null || echo "" | jq -rc 2> /dev/null || echo "")
     ($(isNullOrEmpty "$NETWORK_PROPERTIES")) && echo -n "" && return 1
     echo $NETWORK_PROPERTIES
@@ -293,17 +283,33 @@ function showBalance() {
     echo $RESULT
 }
 
-# e.g. sendTokens faucet kiraXXX...XXX 1000 ukex
+# e.g. sendTokens faucet kiraXXX...XXX 1000 ukex 100 ukex
 function sendTokens() {
     local SOURCE=$1
     local DESTINATION=$(showAddress $2)
     local AMOUNT="$3"
     local DENOM="$4"
+    local FEE_AMOUNT="$5"
+    local FEE_DENOM="$6"
+
+    ($(isNullOrEmpty $FEE_AMOUNT)) && FEE_AMOUNT=100
+    ($(isNullOrEmpty $FEE_DENOM)) && FEE_DENOM="ukex"
+
     echoInfo "INFO: Sending $AMOUNT $DENOM | $SOURCE -> $DESTINATION"
-    OLD_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $OLD_BALANCE)) && OLD_BALANCE=0
-    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --output=json --yes | txAwait $TIMEOUT
-    NEW_BALANCE=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $NEW_BALANCE)) && NEW_BALANCE=0
-    echoInfo "INFO: Balance change $DESTINATION | $OLD_BALANCE $DENOM -> $NEW_BALANCE $DENOM"
+    OLD_BALANCE_SRC=$(showBalance "$SOURCE" "$DENOM") && (! $(isNaturalNumber $OLD_BALANCE_SRC)) && OLD_BALANCE_SRC=0
+    OLD_BALANCE_SRC_FEE=$(showBalance "$SOURCE" "$FEE_DENOM") && (! $(isNaturalNumber $OLD_BALANCE_SRC_FEE)) && OLD_BALANCE_SRC_FEE=0
+    OLD_BALANCE_DEST=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $OLD_BALANCE_DEST)) && OLD_BALANCE_DEST=0
+
+    sekaid tx bank send $SOURCE $DESTINATION "${AMOUNT}${DENOM}" --keyring-backend=test --chain-id=$NETWORK_NAME --fees "${FEE_AMOUNT}${FEE_DENOM}" --output=json --yes | txAwait 180
+
+    NEW_BALANCE_SRC=$(showBalance "$SOURCE" "$DENOM") && (! $(isNaturalNumber $NEW_BALANCE_SRC)) && NEW_BALANCE_SRC=0
+    NEW_BALANCE_SRC_FEE=$(showBalance "$SOURCE" "$FEE_DENOM") && (! $(isNaturalNumber $NEW_BALANCE_SRC_FEE)) && NEW_BALANCE_SRC_FEE=0
+    NEW_BALANCE_DEST=$(showBalance "$DESTINATION" "$DENOM") && (! $(isNaturalNumber $NEW_BALANCE_DEST)) && NEW_BALANCE_DEST=0
+
+    [ "$OLD_BALANCE_SRC" != "$NEW_BALANCE_SRC" ] && echoInfo "INFO:  SRC. balance change $(showAddress $1) | $OLD_BALANCE_SRC $DENOM -> $NEW_BALANCE_SRC $DENOM"
+    [ "$OLD_BALANCE_SRC_FEE" != "$NEW_BALANCE_SRC_FEE" ] && [ "$DENOM" != "$FEE_DENOM" ] && \
+    echoInfo "INFO:  SRC. balance change $(showAddress $1) | $OLD_BALANCE_SRC_FEE $FEE_DENOM -> $NEW_BALANCE_SRC_FEE $FEE_DENOM"
+    [ "$OLD_BALANCE_DEST" != "$NEW_BALANCE_DEST" ] && echoInfo "INFO: DEST. balance change $DESTINATION | $OLD_BALANCE_DEST $DENOM -> $NEW_BALANCE_DEST $DENOM"
 }
 
 # e.g. showStatus -> { ... }
@@ -369,6 +375,28 @@ function unpauseValidator() {
     sekaid tx customslashing unpause --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test --home=$SEKAID_HOME --fees 100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
+# clearPermission <account> <permission> <address> <timeout-seconds>
+# e.g. clearPermission validator 11 kiraXXX..YYY 180
+function clearPermission() {
+    local ACCOUNT=$1
+    local PERM=$2
+    local ADDR=$(showAddress $3)
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDR)) && echoInfo "INFO: Address name was not defined '$3'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isPermBlacklisted $ADDR $PERM)) ; then
+        echoInfo "INFO: Permission '$PERM' is blacklisted and will be removed from the blacklist, please wait..."
+        sekaid tx customgov permission remove-blacklisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    elif ($(isPermWhitelisted $ADDR $PERM)) ; then
+        echoInfo "INFO: Permission '$PERM' is whitelisted and will be removed from the whitelist, please wait..."
+        sekaid tx customgov permission remove-whitelisted-permission --from "$ACCOUNT" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    else
+        echoInfo "INFO: Permission '$PERM' was never present or already cleared."
+    fi
+}
+
 # whitelistPermission <account> <permission> <address> <timeout-seconds>
 # e.g. whitelistPermission validator 11 kiraXXX..YYY 180
 function whitelistPermission() {
@@ -383,6 +411,11 @@ function whitelistPermission() {
     if ($(isPermWhitelisted $ADDR $PERM)) ; then
         echoWarn "WARNING: Address '$ADDR' already has assigned permission '$PERM'"
     else
+        if ($(isPermBlacklisted $ADDR $PERM)) ; then
+            echoWarn "WARNING: Address '$ADDR' has blacklisted permission '$PERM', attempting to clear..."
+            clearPermission $KM_ACC $PERM $ADDR $TIMEOUT
+        fi
+
         sekaid tx customgov permission whitelist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
@@ -401,6 +434,11 @@ function blacklistPermission() {
     if ($(isPermBlacklisted $ADDR $PERM)) ; then
         echoWarn "WARNING: Address '$ADDR' already has blacklisted permission '$PERM'"
     else
+        if ($(isPermWhitelisted $ADDR $PERM)) ; then
+            echoWarn "WARNING: Address '$ADDR' has whitelisted permission '$PERM', attempting to clear..."
+            clearPermission $KM_ACC $PERM $ADDR $TIMEOUT
+        fi
+
         sekaid tx customgov permission blacklist-permission --from "$KM_ACC" --keyring-backend=test --permission="$PERM" --addr="$ADDR" --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
@@ -493,24 +531,242 @@ function showIdentityVerificationRequests() {
 # approveIdentityVerificationRequest <account> <id> <timeout>
 # e.g. approveIdentityVerificationRequest validator 1 180
 function approveIdentityVerificationRequest() {
-    local KM_ACC=$1
+    local ACCOUNT=$1
     local KM_REQ=$2
     local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was NOT defined '$1'" && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
-    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="true" --from=$ACCOUNT --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # rejectIdentityVerificationRequest <account> <id> <timeout>
 # e.g. rejectIdentityVerificationRequest validator 1 180
 function rejectIdentityVerificationRequest() {
-    local KM_ACC=$1
+    local ACCOUNT=$1
     local KM_REQ=$2
     local TIMEOUT=$3 && (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    ($(isNullOrEmpty $KM_ACC)) && echoErr "ERROR: Account name was NOT defined " && return 1
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was NOT defined " && return 1
     (! $(isNaturalNumber $KM_REQ)) && echoErr "ERROR: Request Id must be a valid natural number, but got '$KM_REQ'" && return 1
     
-    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$KM_ACC --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    sekaid tx customgov handle-identity-records-verify-request $KM_REQ --approve="false" --from=$ACCOUNT --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
+# upsertDataRegistry <account> <key> <value> <file-type>
+# e.g: upsertDataRegistry validator "code_of_conduct" "https://raw.githubusercontent.com/KiraCore/sekai/master/env.sh" "text"
+function upsertDataRegistry() {
+    local ACCOUNT=$1
+    local KEY=$2
+    local VALUE=$3
+    local FILETYPE=$4
+
+    local DOWNLOAD_SUCCESS="true"
+    local TMP_FILE="/tmp/data-registry.tmp"
+    rm -fv $TMP_FILE
+    wget "$VALUE" -O $TMP_FILE || DOWNLOAD_SUCCESS="false"
+
+    if [ "${DOWNLOAD_SUCCESS,,}" != "true" ] ; then
+        echoErr "ERROR: Resource '$VALUE' was NOT found, failed to create proposal"
+        return 1
+    else
+        echoInfo "SUCCESS: Resource '$VALUE' was found."
+        local CHECKSUM=$(sha256 $TMP_FILE)
+        local SIZE=$(fileSize $TMP_FILE)
+        echoInfo "INFO: Voting YES on proposal $PROPOSAL with account $ACCOUNT"
+        sekaid tx customgov proposal upsert-data-registry "$KEY" "$CHECKSUM" "$VALUE" "$FILETYPE" "$SIZE" --title="Upserting Data Registry key '$KEY'" --description="Assign value '$VALUE' to key '$KEY'" --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    fi
+}
+
+function showDataRegistryKeys() {
+    sekaid query customgov data-registry-keys --page-key 1000000 --output=json | jq ".keys"
+}
+
+function showDataRegistryKey() {
+    sekaid query customgov data-registry "$1" --output=json 2> /dev/null || echo ""
+}
+
+# setNetworkProperty <key> <value>
+# e.g: setNetworkProperty validator "MIN_TX_FEE" "99"
+function setNetworkProperty() {
+    local ACCOUNT=$1
+    local KEY=$2
+    local VALUE=$3
+
+    sekaid tx customgov proposal set-network-property "${KEY^^}" "$VALUE" --title="Upserting Network Property '$KEY'" --description="Assign value '$VALUE' to property '$KEY'" --from=$ACCOUNT --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# createRole <account> <role-name> <role-description>
+# e.g. createRole validator validator "Role enabling to claim validator seat and perform essential gov. functions"
+function createRole() {
+    local ACCOUNT=$1
+    local NAME=$2
+    local DESCRIPTION=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $NAME)) && echoInfo "INFO: Invalid role name '$NAME' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    sekaid tx customgov role create "$NAME" "$DESCRIPTION" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+# showRoles <account-or-address>
+# e.g. showRoles validator 
+function showRoles() {
+    local ADDRESS=$(showAddress $1)
+    if ($(isNullOrEmpty $ADDRESS)) ; then
+        echo $(sekaid query customgov all-roles --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    else
+        echo $(sekaid query customgov roles $ADDRESS --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    fi
+}
+
+function showRole() {
+    local NAME=$2
+    echo $(sekaid query customgov role $NAME --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+# setProposalsDurations <account> <comma-separated-proposals> <comma-separated-time-values>
+# e.g: setProposalsDurations validator "UpsertDataRegistry,SetNetworkProperty" "300,300"
+function setProposalsDurations() {
+    local ACCOUNT=$1
+    local PROPOSALS=$2
+    local DURATIONS=$3
+    ($(isNullOrEmpty $PROPOSALS)) && echoInfo "INFO: Proposals were NOT defined '$2'" && return 1
+    ($(isNullOrEmpty $DURATIONS)) && echoInfo "INFO: Durations were NOT defined '$3'" && return 1
+
+    sekaid tx customgov proposal set-proposal-durations-proposal "$PROPOSALS" "$DURATIONS" --title="Update proposals duration " --description="Set durations of '[$PROPOSALS]' to '[$DURATIONS]' seconds" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+function showProposalsDurations() {
+    echo $(sekaid query customgov all-proposal-durations --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+function showPoorNetworkMessages() {
+    echo $(sekaid query customgov poor-network-messages --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+# setPoorNetworkMessages <account> <comma-transaction-types>
+# e.g: setPoorNetworkMessages validator "submit_evidence,submit-proposal,vote-proposal,claim-councilor,set-network-properties,claim-validator,activate,pause,unpause"
+function setPoorNetworkMessages() {
+    local ACCOUNT=$1
+    local MESSAGES=$2
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $MESSAGES)) && echoInfo "INFO: Allowed network messages were NOT defined '$2'" && return 1
+
+    sekaid tx customgov proposal set-poor-network-msgs "$MESSAGES" --title="Update poor network messages" --description="Allowing submission of '[$MESSAGES]' during poor network conditions" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# showExecutionFee <transaction-type>
+# e.g.: showExecutionFee <transaction-type>
+function showExecutionFee() {
+    local TRANSACTION_TYPE=$1
+    echo $(sekaid query customgov execution-fee "$TRANSACTION_TYPE" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+}
+
+# setExecutionFee <account> <tx-type> <execution-fee> <failure-fee> <tx-timeout>
+# e.g.: setExecutionFee validator pause 100 200 60
+function setExecutionFee() {
+    local ACCOUNT=$1
+    local TX_TYPE=$2
+    local EXECUTION_FEE=$3
+    local FAILURE_FEE=$4
+    local TX_TIMEOUT=$5
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $TX_TYPE)) && echoInfo "INFO: Transaction type was NOT defined '$2'" && return 1
+    (! $(isNaturalNumber $EXECUTION_FEE)) && echoInfo "INFO: Invalid execution fee amount '$3'" && return 1
+    (! $(isNaturalNumber $FAILURE_FEE)) && echoInfo "INFO: Invalid failure fee amount '$4'" && return 1
+    (! $(isNaturalNumber $TX_TIMEOUT)) && echoInfo "INFO: Invalid tx timeout '$5'" && return 1
+
+    sekaid tx customgov set-execution-fee --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --transaction_type="$TX_TYPE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# resetRanks <account>
+# e.g: resetRanks validator
+function resetRanks() {
+    local ACCOUNT=$1
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+
+    sekaid tx customslashing proposal-reset-whole-validator-rank --title="Ranks reset" --description="Reseting ranks or all validator nodes" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# showValidator <account/kira-address/val-address>
+# e.g. showValidator validator
+# e.g. showValidator kiraXXXXXXXXXXX
+# e.g. showValidator kiravaloperXXXXXXXXXXX
+function showValidator() {
+    local VAL_ADDR="${1,,}"
+    if [[ $VAL_ADDR == kiravaloper* ]] ; then
+        VAL_STATUS=$(sekaid query customstaking validator --val-addr="$VAL_ADDR" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "")
+    else
+        local ADDRESS=$(showAddress $VAL_ADDR)
+        VAL_STATUS=$(sekaid query customstaking validator --addr="$ADDRESS" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+    fi
+    echo $VAL_STATUS
+}
+
+function showTokenAliases() {
+    echo $(sekaid query tokens all-aliases --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+}
+
+function showTokenRates() {
+    echo $(sekaid query tokens all-rates --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+}
+
+# setTokenRate <account> <denom> <rate> <is-fee-token>
+function setTokenRate() {
+    local ACCOUNT=$1
+    local DENOM=$2
+    local RATE=$3
+    local FEE_PAYMENT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $DENOM)) && echoInfo "INFO: Token Denom was NOT defined '$2'" && return 1
+    ($(isNullOrEmpty $RATE)) && echoInfo "INFO: Token Exchange Rate was NOT defined '$3'" && return 1
+    (! $(isBoolean $FEE_PAYMENT)) && echoInfo "INFO: It must be indicated if token is or is NOT a payment method, but got '$4'" && return 1
+
+    sekaid tx tokens proposal-upsert-rate --denom="$DENOM" --rate="$RATE" --fee_payments="$FEE_PAYMENT" --title="Set exchange rate of '$DENOM'" --description="Fee payments will be set at the rate of $RATE $DENOM == 1 KEX. Set '$FEE_PAYMENT' to indicate if $DENOM is a payment method." --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+function setTokensBlackWhiteList() {
+    local ACCOUNT=$1
+    local IS_BLACKLIST=$2
+    local IS_ADD=$3
+    local TOKENS=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    (! $(isBoolean $IS_BLACKLIST)) && echoInfo "INFO: Is Blacklist parameter must be a boolean, but got '$2'" && return 1
+    (! $(isBoolean $IS_ADD)) && echoInfo "INFO: Is Add parameter must be a boolean, but got '$3'" && return 1
+    ($(isNullOrEmpty $TOKENS)) && echoInfo "INFO: Tokens to add/remove from black/white list were NOT defined '$4'" && return 1
+
+    sekaid tx tokens proposal-update-tokens-blackwhite --is_add="$IS_ADD" --is_blacklist="$IS_BLACKLIST" --tokens="$TOKENS" --title="Update Tokens Black/White-list" --description="Is Blacklist: '$IS_BLACKLIST', Is Add: $IS_ADD, Tokens: '$TOKENS'" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# whitelistAddTokenTransfers <account> <tokens>
+function transfersWhitelistAddTokens() {
+    setTokensBlackWhiteList "$1" "false" "true" "$2"
+}
+
+function transfersWhitelistRemoveTokens() {
+    setTokensBlackWhiteList "$1" "false" "false" "$2"
+}
+
+function transfersBlacklistAddTokens() {
+    setTokensBlackWhiteList "$1" "true" "true" "$2"
+}
+
+function transfersBlacklistRemoveTokens() {
+    setTokensBlackWhiteList "$1" "true" "false" "$2"
+}
+
+function showTokenTransferBlackWhiteList() {
+    echo $(sekaid query tokens token-black-whites --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") 
+}
+
+function unjail() {
+    local ACCOUNT=$1
+    local ADDRESS=$2
+    local REFERENCE=$3
+    ADDRESS=$(showValidator "$ADDRESS" | jsonParse "val_key" 2> /dev/null || echo -n "");
+
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account was NOT defined '$1'" && return 1
+    ($(isNullOrEmpty $ADDRESS)) && echoInfo "INFO: Validator Address to unjail was NOT defined or could NOT be found '$2'" && return 1
+    # ($(isNullOrEmpty $REFERENCE)) && echoInfo "INFO: Unjail reference should NOT be empty '$3'" && return 1
+    sekaid tx customstaking proposal proposal-unjail-validator "$ADDRESS" "$REFERENCE" --title="Unjail validator '$ADDRESS'" --description="Proposal to unjail '$ADDRESS' due to his unintentional fault" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}

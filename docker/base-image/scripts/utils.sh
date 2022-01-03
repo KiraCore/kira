@@ -101,7 +101,6 @@ function date2unix() {
     ($(isNaturalNumber "$kg_date_tmp")) && echo "$kg_date_tmp" || echo "0"
 }
 
-
 function isPortOpen() {
     kg_addr=$1 && kg_port=$2 && kg_timeout=$3
     (! $(isNaturalNumber $kg_timeout)) && kg_timeout=1
@@ -311,7 +310,7 @@ function jsonObjEdit() {
     fi
 }
 
-# e.g. urlExists "18.168.78.192:11000/download/peers.txt"
+# e.g. urlExists "18.168.78.192:11000/download/peers.txt" 
 function urlExists() {
     if ($(isNullOrEmpty "$1")) ; then echo "false"
     elif curl -r0-0 --fail --silent "$1" >/dev/null; then echo "true"
