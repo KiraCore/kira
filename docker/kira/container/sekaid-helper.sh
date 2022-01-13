@@ -200,64 +200,6 @@ function propAwait() {
     fi
 }
 
-# e.g. whitelistValidator validator kiraXXXXXXXXXXX
-function whitelistValidator() {
-    local ACC="$1"
-    local ADDR=$(showAddress $2)
-    local TIMEOUT=$3
-    ($(isNullOrEmpty $ACC)) && echoErr "ERROR: Account name was not defined " && return 1
-    ($(isNullOrEmpty $ADDR)) && echoErr "ERROR: Validator address was not defined " && return 1
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-
-    if ($(isPermWhitelisted $ADDR $PermClaimValidator)) ; then
-        echoWarn "WARNING: Address $ADDR was already whitelisted as validator"
-    else
-        echoInfo "INFO: Adding $ADDR to the validator set"
-        echoInfo "INFO: Fueling address $ADDR with funds from $ACC"
-        sekaid tx bank send $ACC $ADDR "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
-
-        echoInfo "INFO: Assigning PermClaimValidator ($PermClaimValidator) permission"
-        sekaid tx customgov proposal assign-permission $PermClaimValidator --addr=$ADDR --from=$ACC --keyring-backend=test --chain-id=$NETWORK_NAME --title="Adding Testnet Validator $ADDR" --description="Adding Validator via KIRA Manager" --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
-
-        echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
-        LAST_PROPOSAL=$(lastProposal) 
-        voteYes $LAST_PROPOSAL validator
-
-        echoInfo "INFO: Showing proposal $LAST_PROPOSAL votes"
-        showVotes $LAST_PROPOSAL | jq
-
-        echoInfo "INFO: Showing proposal $LAST_PROPOSAL status"
-        showProposal $LAST_PROPOSAL | jq
-
-        echoErr "Date Time Now: $(date '+%Y-%m-%dT%H:%M:%S')"
-        echoInfo "INFO: Validator $ADDR will be added to the set after proposal $LAST_PROPOSAL passes"
-        #proposalAwait $(lastProposal)
-    fi
-}
-
-# whitelistValidators <account> <file-name>
-# e.g.: whitelistValidators validator ./whitelist
-function whitelistValidators() {
-    local ACCOUNT=$1
-    local WHITELIST=$2
-    local TIMEOUT=$3
-    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    if [ -f "$WHITELIST" ] ; then 
-        echoInfo "INFO: List of validators was found ($WHITELIST)"
-        while read key ; do
-            key=$(echo "$key" | xargs || echo -n "")
-            if ($(isNullOrEmpty "$key")) ; then
-                echoWarn "INFO: Invalid key $key"
-                continue
-            fi
-            echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
-            whitelistValidator validator $key $TIMEOUT || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
-        done < $WHITELIST
-    else
-        echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
-    fi
-}
-
 # claimValidatorSeat <account> <moniker> <timeout-seconds>
 # e.g.: claimValidatorSeat validator "BOB's NODE" 180
 function claimValidatorSeat() {
@@ -620,8 +562,7 @@ function showRoles() {
 }
 
 function showRole() {
-    local NAME=$2
-    echo $(sekaid query customgov role $NAME --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    echo $(sekaid query customgov role "$1" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
 }
 
 # setProposalsDurations <account> <comma-separated-proposals> <comma-separated-time-values>
@@ -769,4 +710,269 @@ function unjail() {
     ($(isNullOrEmpty $ADDRESS)) && echoInfo "INFO: Validator Address to unjail was NOT defined or could NOT be found '$2'" && return 1
     # ($(isNullOrEmpty $REFERENCE)) && echoInfo "INFO: Unjail reference should NOT be empty '$3'" && return 1
     sekaid tx customstaking proposal proposal-unjail-validator "$ADDRESS" "$REFERENCE" --title="Unjail validator '$ADDRESS'" --description="Proposal to unjail '$ADDRESS' due to his unintentional fault" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+}
+
+# showPermissions validator
+function showRolePermissions() {
+    echo $(sekaid query customgov role "$1" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "permissions" 2> /dev/null || echo -n "") && echo -n ""
+}
+
+function isRolePermBlacklisted() {
+    local ROLE=$1
+    local PERM=$2
+    if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ROLE)) ; then
+        echo "false"
+    else
+        INDEX=$(showRolePermissions $ROLE 2> /dev/null | jq ".blacklist | index($PERM)" 2> /dev/null || echo -n "")
+        ($(isNaturalNumber $INDEX)) && echo "true" || echo "false"
+    fi
+}
+
+function isRolePermWhitelisted() {
+    local ROLE=$1
+    local PERM=$2
+    if (! $(isNaturalNumber $PERM)) || ($(isNullOrEmpty $ROLE)) ; then
+        echo "false"
+    else
+        INDEX=$(showRolePermissions $ROLE 2> /dev/null | jq ".whitelist | index($PERM)" 2> /dev/null || echo -n "")
+        if ($(isNaturalNumber $INDEX)) && (! $(isRolePermBlacklisted $ROLE $PERM)) ; then
+            echo "true" 
+        else
+            echo "false"
+        fi
+    fi
+}
+
+# roleClearPermission <account> <role> <permission> <timeout-seconds>
+# e.g. roleClearPermission validator validator 2 180
+function roleClearPermission() {
+    local ACCOUNT=$1
+    local ROLE=$2
+    local PERM=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$ACCOUNT'" && return 1
+    ($(isNullOrEmpty $ROLE)) && echoInfo "INFO: Role name was not defined '$ROLE'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isRolePermBlacklisted "$ROLE" "$PERM")) ; then
+        echoInfo "INFO: Permission '$PERM' is blacklisted and will be removed from the '$ROLE' role blacklist, please wait..."
+        sekaid tx customgov role remove-blacklisted-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    elif ($(isRolePermWhitelisted "$ROLE" "$PERM")) ; then
+        echoInfo "INFO: Permission '$PERM' is whitelisted and will be removed from the '$ROLE' role whitelist, please wait..."
+        sekaid tx customgov role remove-whitelisted-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    else
+        echoInfo "INFO: Permission '$PERM' was never present in the '$ROLE' role blacklist/whitelist or was already cleared."
+    fi
+}
+
+## roleWhitelistPermission <account> <role> <permission> <timeout-seconds>
+## e.g. roleWhitelistPermission validator validator 29 kiraXXX..YYY 180
+function roleWhitelistPermission() {
+    local ACCOUNT=$1
+    local ROLE=$2
+    local PERM=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ROLE)) && echoInfo "INFO: Role name was not defined '$ROLE'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isRolePermWhitelisted "$ROLE" "$PERM")) ; then
+        echoWarn "WARNING: Role '$ROLE' whitelist already has assigned permission '$PERM'"
+    else
+        if ($(isRolePermBlacklisted "$ROLE" "$PERM")) ; then
+            echoWarn "WARNING: Role '$ROLE' has blacklisted permission '$PERM', attempting to clear..."
+            roleClearPermission $ACCOUNT $ROLE $PERM $TIMEOUT
+        fi
+
+        sekaid tx customgov role whitelist-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    fi
+}
+
+## roleBlacklistPermission <account> <role> <permission> <timeout-seconds>
+## e.g. roleBlacklistPermission validator validator 29 kiraXXX..YYY 180
+function roleBlacklistPermission() {
+    local ACCOUNT=$1
+    local ROLE=$2
+    local PERM=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $ROLE)) && echoInfo "INFO: Role name was not defined '$ROLE'" && return 1
+    (! $(isNaturalNumber $PERM)) && echoInfo "INFO: Invalid permission id '$PERM' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if ($(isRolePermBlacklisted "$ROLE" "$PERM")) ; then
+        echoWarn "WARNING: Role '$ROLE' blacklist already has assigned permission '$PERM'"
+    else
+        if ($(isRolePermWhitelisted "$ROLE" "$PERM")) ; then
+            echoWarn "WARNING: Role '$ROLE' has whitelisted permission '$PERM', attempting to clear..."
+            roleClearPermission $ACCOUNT $ROLE $PERM $TIMEOUT
+        fi
+
+        sekaid tx customgov role blacklist-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    fi
+}
+
+# createRoleProposal <account> <role-name> <role-description>
+# e.g. createRoleProposal validator validator "Role enabling to claim validator seat and perform essential gov. functions"
+function createRoleProposal() {
+    local ACCOUNT=$1
+    local NAME=$2
+    local DESCRIPTION=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $NAME)) && echoInfo "INFO: Invalid role name '$NAME' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    sekaid tx customgov proposal create-role "$NAME" "$DESCRIPTION" --title="Upsert Governance Role '$NAME'" --description="Role description: '$DESCRIPTION'" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+# isRoleAssigned <role-name> <address/account>
+# eg.: isRoleAssigned sudo test
+function isRoleAssigned() {
+    local ROLE=$(showRole "$1" 2> /dev/null | jq ".id" 2> /dev/null || echo -n "")
+    local ADDRESS=$(showAddress $2)
+    
+    if (! $(isNaturalNumber $ROLE)) || ($(isNullOrEmpty $ADDRESS)) ; then
+        echo "false"
+    else
+        INDEX=$(showRoles "$ADDRESS" 2> /dev/null | jq ".roleIds | index($ROLE)" 2> /dev/null || echo -n "")
+        (! $(isNaturalNumber $INDEX)) && INDEX=$(showRoles "$ADDRESS" 2> /dev/null | jq ".roleIds | index(\"$ROLE\")" 2> /dev/null || echo -n "")
+        ($(isNaturalNumber $INDEX)) && echo "true" || echo "false"
+    fi
+}
+
+# assignRole <account> <role-name> <address> <timeout>
+# e.g.: assignRole validator sudo test 180
+function assignRole() {
+    local ACCOUNT="$1"
+    local ROLE=$(showRole "$2" 2> /dev/null | jq ".id" 2> /dev/null || echo -n "")
+    local ADDRESS=$(showAddress $3)
+    
+    local TIMEOUT=$4
+
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was not defined " && return 1
+    ($(isNullOrEmpty $ADDRESS)) && echoErr "ERROR: Assignement address was not defined " && return 1
+    (! $(isNaturalNumber $ROLE)) && echoErr "ERROR: Unknown or undefined role '$2'" && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+
+    if ($(isRoleAssigned "$ROLE" "$ADDRESS")) ; then
+        echoWarn "WARNING: Role '$2' was already assigned to account '$ADDRESS'"
+    else
+        echoInfo "INFO: Adding role '$2' to account '$ADDRESS'"
+        sekaid tx customgov role assign-role "$ROLE" --addr=$ADDRESS --from=$ACCOUNT --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
+    fi
+}
+
+# removeRole <account> <role-name> <address> <timeout>
+# e.g.: removeRole validator sudo test 180
+function removeRole() {
+    local ACCOUNT="$1"
+    local ROLE=$(showRole "$2" 2> /dev/null | jq ".id" 2> /dev/null || echo -n "")
+    local ADDRESS=$(showAddress $3)
+    local TIMEOUT=$4
+
+    ($(isNullOrEmpty $ACCOUNT)) && echoErr "ERROR: Account name was not defined " && return 1
+    ($(isNullOrEmpty $ADDRESS)) && echoErr "ERROR: Assignement address was not defined " && return 1
+    (! $(isNaturalNumber $ROLE)) && echoErr "ERROR: Unknown or undefined role '$2'" && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+
+    if (! $(isRoleAssigned "$ROLE" "$ADDRESS")) ; then
+        echoWarn "WARNING: Role '$2' was already removed or never assigned to account '$ADDRESS'"
+    else
+        echoInfo "INFO: Removing role '$2' from account '$ADDRESS'"
+        sekaid tx customgov role remove "$ROLE" --addr=$ADDRESS --from=$ACCOUNT --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
+    fi
+}
+
+# whitelistValidators <account> <file-name>
+# e.g.: whitelistValidators validator ./whitelist
+function whitelistValidators() {
+    local ACCOUNT=$1
+    local WHITELIST=$2
+    local TIMEOUT=$3
+
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if [ -f "$WHITELIST" ] ; then 
+        echoInfo "INFO: List of validators was found ($WHITELIST)"
+        while read key ; do
+            key=$(echo "$key" | xargs || echo -n "")
+            if ($(isNullOrEmpty "$key")) ; then
+                echoWarn "INFO: Invalid key $key"
+                continue
+            fi
+
+            echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
+            sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+
+            echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
+            assignRole "$ACCOUNT" validator "$key" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
+        done < $WHITELIST
+    elif ($(isKiraAddress $WHITELIST)) ; then
+        echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
+        sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+
+        assignRole "$ACCOUNT" validator "$WHITELIST" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
+    else
+        echoErr "ERROR: List of validators was NOT found ($WHITELIST)"
+    fi
+}
+
+# unjailValidators <account> <file-name>
+# e.g.: unjailValidators validator ./jailed
+# curl -s https://testnet-rpc.kira.network/api/valopers?all=true | jq '.validators | .[] | select(.status=="JAILED")'  | grep -o '".*"' | sed 's/"//g' | grep -o '\bkira1\w*' | uniq > ./jailed
+function unjailValidators() {
+    local ACCOUNT=$1
+    local ADDRESSES=$2
+    local TIMEOUT=$3
+
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if [ -f "$ADDRESSES" ] ; then 
+        echoInfo "INFO: List of validators was found ($ADDRESSES)"
+        while read key ; do
+            key=$(echo "$key" | xargs || echo -n "")
+            if ($(isNullOrEmpty "$key")) ; then
+                echoWarn "INFO: Invalid key $key"
+                continue
+            fi
+            echoInfo "INFO: Unjailing '$key' using account '$ACCOUNT'"
+            unjail $ACCOUNT "$key" || echoErr "ERROR: Failed to unjail $key within ${TIMEOUT}s"
+
+            echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
+            voteYes $(lastProposal) $ACCOUNT  || echoErr "ERROR: Failed to vote yes on the last proposal"
+        done < $ADDRESSES
+    elif ($(isKiraAddress $ADDRESSES)) ; then
+        echoInfo "INFO: Unjailing '$key' using account '$ACCOUNT'"
+        unjail $ACCOUNT "$key" || echoErr "ERROR: Failed to unjail $key within ${TIMEOUT}s"
+
+        echoInfo "INFO: Searching for the last proposal submitted on-chain and voting YES"
+        voteYes $(lastProposal) $ACCOUNT  || echoErr "ERROR: Failed to vote yes on the last proposal"
+    else
+        echoErr "ERROR: List of validators was NOT found ($ADDRESSES)"
+    fi
+}
+
+# clearPermissions <account> <permission> <addresses-file>
+# e.g.: clearPermissions validator 29 ./whitelist
+function clearPermissions() {
+    local ACCOUNT=$1
+    local PERMISSION=$2
+    local ADDRESSES=$3
+    local TIMEOUT=$3
+
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    if [ -f "$ADDRESSES" ] ; then 
+        echoInfo "INFO: List of validators was found ($ADDRESSES)"
+        while read key ; do
+            key=$(echo "$key" | xargs || echo -n "")
+            if ($(isNullOrEmpty "$key")) ; then
+                echoWarn "INFO: Invalid key $key"
+                continue
+            fi
+            echoInfo "INFO: Clearing permission '$PERMISSION' for account '$key' using account '$ACCOUNT'"
+            clearPermission $ACCOUNT $PERMISSION "$key" $TIMEOUT || echoErr "ERROR: Failed cearing permission '$PERMISSION' for account '$key' using account '$ACCOUNT'"
+        done < $ADDRESSES
+    elif ($(isKiraAddress $ADDRESSES)) ; then
+        echoInfo "INFO: Clearing permission '$PERMISSION' for account '$key' using account '$ACCOUNT'"
+        clearPermission $ACCOUNT $PERMISSION "$key" $TIMEOUT || echoErr "ERROR: Failed cearing permission '$PERMISSION' for account '$key' using account '$ACCOUNT'"
+    else
+        echoErr "ERROR: List of validators was NOT found ($ADDRESSES)"
+    fi
 }
