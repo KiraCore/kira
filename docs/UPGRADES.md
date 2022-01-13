@@ -8,9 +8,9 @@ whitelistPermission validator $PermCreateSoftwareUpgradeProposal $(showAddress v
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) 
 
 
-whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
-whitelistValidator validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
-whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
+whitelistValidators validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
+whitelistValidators validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
+whitelistValidators validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 180 && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c 180 && \
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads 180
@@ -93,10 +93,10 @@ showCurrentPlan | jq
 showNextPlan | jq
  ```
 
-> Latest Public testnet Hard Fork (2010-10-23 10:30 PM)
+> Latest Public testnet Hard Fork 668
 
 ```
-UPGRADE_NAME_TMP="upgrade-94" && UPGRADE_BRANCH="testnet-8" && UPGRADE_TIME=$(date2unix "2021-11-06T16:30:00Z") && \
+UPGRADE_NAME_TMP="upgrade-118" && UPGRADE_BRANCH="testnet-9" && UPGRADE_TIME=$(date2unix "2022-01-07T16:30:00Z") && \
 INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
 SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
 INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \

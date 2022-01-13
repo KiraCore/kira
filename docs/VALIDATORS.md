@@ -36,13 +36,13 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 
 ## Adding Validators On Testnet
 ```
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators validator $ADDR
 
 e.g:
 
-whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
-whitelistValidator validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
-whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+whitelistValidators validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
+whitelistValidators validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
+whitelistValidators validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
 ```
 
 ## Importing DEMO Keys to Test Instances
