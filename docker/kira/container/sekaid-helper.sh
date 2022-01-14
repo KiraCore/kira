@@ -900,14 +900,14 @@ function whitelistValidators() {
             fi
 
             echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
-            sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+            sekaid tx bank send $ACCOUNT $key "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
             echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
             assignRole "$ACCOUNT" validator "$key" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
         done < $WHITELIST
     elif ($(isKiraAddress $WHITELIST)) ; then
         echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
-        sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+        sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
         assignRole "$ACCOUNT" validator "$WHITELIST" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
     else
