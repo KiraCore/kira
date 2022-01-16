@@ -4,7 +4,6 @@ source $KIRA_MANAGER/utils.sh
 set -x
 
 IS_STARTED="false"
-FAUCET_ADDR=""
 INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -46,19 +45,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         echoWarn "WARNING: $CONTAINER_NAME is not started yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
         continue
     fi
-
-#    echoInfo "INFO: Awaiting $CONTAINER_NAME faucet to initalize..."
-#    FAUCET_ADDR=$(docker exec -t "$CONTAINER_NAME" curl --fail 0.0.0.0:$DEFAULT_INTERX_PORT/api/faucet 2>/dev/null | jsonQuickParse "address" || echo -n "")
-#
-#    if [ -z "${FAUCET_ADDR}" ] || [ "$FAUCET_ADDR" == "null" ] ; then
-#        sleep 30
-#        echoWarn "WARNING: $CONTAINER_NAME faucet is initalized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-#        continue
-#    else
-#        echoInfo "INFO: Success, faucet was found"
-#        break
-#    fi
-
+    
     break
 done
 

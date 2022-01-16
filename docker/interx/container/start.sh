@@ -60,7 +60,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     validator_node_id=$(globGet validator_node_id)
 
     interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
-      --signing_mnemonic="$COMMON_DIR/signing.mnemonic" --faucet_mnemonic="$COMMON_DIR/faucet.mnemonic" \
+      --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
       --seed_node_id="$seed_node_id" \
       --sentry_node_id="$sentry_node_id" \
       --validator_node_id="$validator_node_id" \

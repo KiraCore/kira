@@ -48,7 +48,6 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set +e
     source $KIRAMGR_SCRIPTS/load-secrets.sh
     echo "$SIGNER_ADDR_MNEMONIC" > "$COMMON_PATH/signing.mnemonic"
-    echo "$FAUCET_ADDR_MNEMONIC" > "$COMMON_PATH/faucet.mnemonic"
     set -e
     set -x
 
