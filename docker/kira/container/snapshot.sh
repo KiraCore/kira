@@ -24,7 +24,7 @@ LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") && (! $(i
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNaturalNumber "$STATE_HEIGHT")) && MIN_BLOCK="0"
 [[ $LATEST_BLOCK_HEIGHT -lt $STATE_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
-($(isNullOrWhitespace $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).zip"
+($(isNullOrWhitespaces $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).zip"
 SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echoInfo "INFO: Creating '$SNAP_FILENAME' backup package..."
