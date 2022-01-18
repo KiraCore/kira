@@ -50,7 +50,6 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set +x
     source $KIRAMGR_SCRIPTS/load-secrets.sh
     echo "$SIGNER_ADDR_MNEMONIC" > $COMMON_PATH/signer_addr_mnemonic.key
-    echo "$FAUCET_ADDR_MNEMONIC" > $COMMON_PATH/faucet_addr_mnemonic.key
     echo "$VALIDATOR_ADDR_MNEMONIC" > $COMMON_PATH/validator_addr_mnemonic.key
     echo "$TEST_ADDR_MNEMONIC" > $COMMON_PATH/test_addr_mnemonic.key
     cp -afv $KIRA_SECRETS/priv_validator_key.json $COMMON_PATH/priv_validator_key.json
@@ -90,7 +89,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet CFG_snapshot_interval "1000" $COMMON_GLOB
     globSet CFG_statesync_enable "true" $COMMON_GLOB
     globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB
-    globSet CFG_timeout_commit "5000ms" $COMMON_GLOB
+    globSet CFG_timeout_commit "7500ms" $COMMON_GLOB
     globSet CFG_create_empty_blocks_interval "10s" $COMMON_GLOB
     globSet CFG_max_num_outbound_peers "32" $COMMON_GLOB
     globSet CFG_max_num_inbound_peers "128" $COMMON_GLOB

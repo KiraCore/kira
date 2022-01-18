@@ -99,14 +99,12 @@ elif [ "${NODE_TYPE,,}" == "validator" ] ; then
     validatorAddr=$(sekaid keys show -a validator --keyring-backend=test --home=$SEKAID_HOME || echo "")
     testAddr=$(sekaid keys show -a test --keyring-backend=test --home=$SEKAID_HOME || echo "")
     signerAddr=$(sekaid keys show -a signer --keyring-backend=test --home=$SEKAID_HOME || echo "")
-    faucetAddr=$(sekaid keys show -a faucet --keyring-backend=test --home=$SEKAID_HOME || echo "")
     valoperAddr=$(sekaid val-address $validatorAddr || echo "")
     consPubAddr=$(sekaid tendermint show-validator || echo "")
     
     [ "$VALIDATOR_ADDR" != "$validatorAddr" ] && CDHelper text lineswap --insert="VALIDATOR_ADDR=\"$validatorAddr\"" --prefix="VALIDATOR_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$TEST_ADDR" != "$testAddr" ]           && CDHelper text lineswap --insert="TEST_ADDR=\"$testAddr\"" --prefix="TEST_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$SIGNER_ADDR" != "$signerAddr" ]       && CDHelper text lineswap --insert="SIGNER_ADDR=\"$signerAddr\"" --prefix="SIGNER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-    [ "$FAUCET_ADDR" != "$faucetAddr" ]       && CDHelper text lineswap --insert="FAUCET_ADDR=\"$faucetAddr\"" --prefix="FAUCET_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$VALOPER_ADDR" != "$valoperAddr" ]     && CDHelper text lineswap --insert="VALOPER_ADDR=\"$valoperAddr\"" --prefix="VALOPER_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
     [ "$CONSPUB_ADDR" != "$consPubAddr" ]     && CDHelper text lineswap --insert="CONSPUB_ADDR=\"$consPubAddr\"" --prefix="CONSPUB_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True    
 fi

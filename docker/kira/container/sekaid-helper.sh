@@ -756,10 +756,10 @@ function roleClearPermission() {
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
     if ($(isRolePermBlacklisted "$ROLE" "$PERM")) ; then
         echoInfo "INFO: Permission '$PERM' is blacklisted and will be removed from the '$ROLE' role blacklist, please wait..."
-        sekaid tx customgov role remove-blacklisted-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+        sekaid tx customgov role remove-blacklisted-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     elif ($(isRolePermWhitelisted "$ROLE" "$PERM")) ; then
         echoInfo "INFO: Permission '$PERM' is whitelisted and will be removed from the '$ROLE' role whitelist, please wait..."
-        sekaid tx customgov role remove-whitelisted-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+        sekaid tx customgov role remove-whitelisted-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     else
         echoInfo "INFO: Permission '$PERM' was never present in the '$ROLE' role blacklist/whitelist or was already cleared."
     fi
@@ -784,7 +784,7 @@ function roleWhitelistPermission() {
             roleClearPermission $ACCOUNT $ROLE $PERM $TIMEOUT
         fi
 
-        sekaid tx customgov role whitelist-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+        sekaid tx customgov role whitelist-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
 
@@ -807,7 +807,7 @@ function roleBlacklistPermission() {
             roleClearPermission $ACCOUNT $ROLE $PERM $TIMEOUT
         fi
 
-        sekaid tx customgov role blacklist-role-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+        sekaid tx customgov role blacklist-permission "$ROLE" "$PERM" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
     fi
 }
 
@@ -857,7 +857,7 @@ function assignRole() {
         echoWarn "WARNING: Role '$2' was already assigned to account '$ADDRESS'"
     else
         echoInfo "INFO: Adding role '$2' to account '$ADDRESS'"
-        sekaid tx customgov role assign-role "$ROLE" --addr=$ADDRESS --from=$ACCOUNT --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
+        sekaid tx customgov role assign "$ROLE" --addr=$ADDRESS --from=$ACCOUNT --keyring-backend=test --chain-id=$NETWORK_NAME --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
     fi
 }
 
@@ -900,14 +900,14 @@ function whitelistValidators() {
             fi
 
             echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
-            sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+            sekaid tx bank send $ACCOUNT $key "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
             echoInfo "INFO: Whitelisting '$key' using account '$ACCOUNT'"
             assignRole "$ACCOUNT" validator "$key" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
         done < $WHITELIST
     elif ($(isKiraAddress $WHITELIST)) ; then
         echoInfo "INFO: Fueling address $WHITELIST with funds from $ACCOUNT"
-        sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json |
+        sekaid tx bank send $ACCOUNT $WHITELIST "954321ukex" --keyring-backend=test --chain-id=$NETWORK_NAME --fees 100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait $TIMEOUT
 
         assignRole "$ACCOUNT" validator "$WHITELIST" "$TIMEOUT" || echoErr "ERROR: Failed to whitelist $key within ${TIMEOUT}s"
     else
