@@ -39,7 +39,7 @@ echoWarn "|         KEEP OLD SNAPS: $SNAPSHOT_KEEP_OLD"
 echoWarn "------------------------------------------------"
 set -x
 
-($(isNullOrWhitespace $CONTAINER_NAME)) && echoErr "ERROR: Target container '$CONTAINER_NAME' was NOT defined" && sleep 10 && exit 1
+($(isNullOrWhitespaces $CONTAINER_NAME)) && echoErr "ERROR: Target container '$CONTAINER_NAME' was NOT defined" && sleep 10 && exit 1
 CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
 
