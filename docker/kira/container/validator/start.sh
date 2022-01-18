@@ -11,7 +11,7 @@ CFG_CHECK="${COMMON_DIR}/configuring"
 
 SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
 SNAP_NAME_FILE="$COMMON_DIR/snap_name"
-SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
+SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 DATA_DIR="$SEKAID_HOME/data"

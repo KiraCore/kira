@@ -24,17 +24,18 @@ LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") && (! $(i
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNaturalNumber "$STATE_HEIGHT")) && MIN_BLOCK="0"
 [[ $LATEST_BLOCK_HEIGHT -lt $STATE_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
-($(isNullOrWhitespaces $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).zip"
+($(isNullOrWhitespaces $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).tar"
 SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echoInfo "INFO: Creating '$SNAP_FILENAME' backup package..."
 cp -afv "$LOCAL_GENESIS" $DATA_GENESIS
 echo "{\"height\":$LATEST_BLOCK_HEIGHT}" >"$SNAP_INFO"
 
-# to prevent appending root path we must zip all from within the target data folder
-echoInfo "INFO: Please wait compressing chain state..."
+# to prevent appending root path we must package all from within the target data folder
 cd $SEKAID_DATA
-zip -0 -r "$SNAP_DESTINATION_FILE" . *
-[ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
+
+echoInfo "INFO: Please wait, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
+tar -cvf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
+( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
 echoInfo "INFO: Finished snapshot"

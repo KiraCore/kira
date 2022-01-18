@@ -17,7 +17,7 @@ CONTAINER_BLOCK_HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK") && (! $(isNaturalNum
 IS_SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
 SNAPSHOT_UNHALT=$(globGet SNAPSHOT_UNHALT)
 SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
-INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 HALT_FILE="$COMMON_PATH/halt"
@@ -56,23 +56,29 @@ CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "
 sleep 15
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 
-SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).zip"
+SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).tar"
 KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 
 if [ "${SNAPSHOT_KEEP_OLD,,}" == "true" ] ; then
     echoInfo "INFO: Old snapshots will NOT be persisted"
     rm -fv $KIRA_SNAP_PATH
+    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 else
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
+    rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar files from '$KIRA_SNAP' directory"
+    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 fi
 
-docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" || rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
+docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" && SUCCESS="true" || SUCCESS="false"
 
-if [ ! -f "$KIRA_SNAP_PATH" ] ; then
+if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
+    rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
+    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
+    sleep 30
 else
+    echoInfo "INFO: Success, new snapshot '$KIRA_SNAP_PATH' was created"
     KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
     CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
