@@ -8,7 +8,7 @@ echoInfo "INFO: Staring $NODE_TYPE setup..."
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
 
-SNAP_FILE_INPUT="$COMMON_READ/snap.zip"
+SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
 DATA_DIR="$SEKAID_HOME/data"

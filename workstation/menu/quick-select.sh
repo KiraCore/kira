@@ -7,7 +7,7 @@ set -x
 mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
-TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
+TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
 MIN_HEIGHT="0"
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
@@ -106,7 +106,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
         if ($(urlExists "$SNAP_URL")) ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
@@ -127,8 +127,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             echoInfo "INFO: Snapshot exposed by $NODE_ADDR peer will be used to bootstrap blockchain state"
             SNAP_AVAILABLE="true"
         elif [ "${VSEL,,}" == "l" ] ; then
-            # get all zip files in the snap directory
-            SNAPSHOTS=`ls $KIRA_SNAP/*.zip` || SNAPSHOTS=""
+            # get all tar files in the snap directory
+            SNAPSHOTS=`ls $KIRA_SNAP/*.tar` || SNAPSHOTS=""
             SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
             SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
 
@@ -182,7 +182,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                 echoInfo "INFO: Snapshot peer was found"
                 addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
                 addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.tar"
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"
@@ -220,10 +220,10 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
             echoInfo "INFO: Snapshot archive was found, testing integrity..."
             mkdir -p "$TMP_SNAP_DIR/test"
-            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-            unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
-            unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
+            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json" && rm -fv ./genesis.json
+            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json" && rm -fv ./snapinfo.json
+            tar -xvf $TMP_SNAP_PATH ./genesis.json && mv -fv ./genesis.json $DATA_GENESIS || echo -n "" > "$DATA_GENESIS"
+            tar -xvf $TMP_SNAP_PATH ./snapinfo.json && mv -fv ./snapinfo.json $SNAP_INFO || echo -n "" > "$SNAP_INFO"
                 
             SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
             SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
@@ -351,12 +351,13 @@ fi
 
 set -x
 
-rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
+rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar files from '$KIRA_SNAP' directory"
+rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip files from '$KIRA_SNAP' directory"
 rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 
 if [ "${DOWNLOAD_SUCCESS,,}" == "true" ] ; then
     echo "INFO: Cloning tmp snapshot into snap directory"
-    SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).zip"
+    SNAP_FILENAME="${CHAIN_ID}-latest-$(date -u +%s).tar"
     SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
 
     mv -fv $TMP_SNAP_PATH $SNAPSHOT

@@ -18,7 +18,7 @@ VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS=""
-INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.zip"
+INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -328,7 +328,7 @@ while : ; do
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             globSet SNAP_EXPOSE "true"
             ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
-                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.zip" || \
+                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.tar" || \
                 echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."

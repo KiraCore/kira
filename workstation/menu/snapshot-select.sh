@@ -35,7 +35,7 @@ while : ; do
         NODE_ADDR=""
         if [ "${SELECT,,}" == "e" ] ; then
             set +x
-            echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshot.zip' as your URL"
+            echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshot.tar' as your URL"
             echoNErr "Input URL to download blockchain state from: " && read SNAP_URL && SNAP_URL=$(echo "$SNAP_URL" | xargs)
             set -x
         else
@@ -60,10 +60,10 @@ while : ; do
                 echoInfo "INFO: Snapshot peer was found"
                 addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
                 addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.tar"
             else
                 echoWarn "INFO: No snapshot peers were found"
-                SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.zip"
+                SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
             fi
         fi
 
@@ -74,7 +74,7 @@ while : ; do
         
         echoInfo "INFO: Resource was found, attempting download"
         TMP_SNAP_DIR="$KIRA_SNAP/tmp"
-        TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.zip"
+        TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
         rm -f -v -r $TMP_SNAP_DIR
         mkdir -p "$TMP_SNAP_DIR" "$TMP_SNAP_DIR/test"
         SUCCESS="true"
@@ -89,17 +89,16 @@ while : ; do
             rm -f -v -r $TMP_SNAP_DIR
             continue
         else
-            UNZIP_FAILED="false" && unzip -t $TMP_SNAP_PATH || UNZIP_FAILED="true"
-            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json"
-            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json"
-            unzip -p $TMP_SNAP_PATH genesis.json > "$DATA_GENESIS" || echo -n "" > "$DATA_GENESIS"
-            unzip -p $TMP_SNAP_PATH snapinfo.json > "$SNAP_INFO" || echo -n "" > "$SNAP_INFO"
+            DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json" && rm -fv ./genesis.json
+            SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json" && rm -fv ./snapinfo.json
+            tar -xvf $TMP_SNAP_PATH ./genesis.json && mv -fv ./genesis.json $DATA_GENESIS || echo -n "" > "$DATA_GENESIS"
+            tar -xvf $TMP_SNAP_PATH ./snapinfo.json && mv -fv ./snapinfo.json $SNAP_INFO || echo -n "" > "$SNAP_INFO"
                 
             SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
             SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
             (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
             
-            if [ "${UNZIP_FAILED,,}" == "true" ] || ($(isNullOrEmpty "$SNAP_NETWORK")) || [ $SNAP_HEIGHT -le 0 ] ; then
+            if ($(isNullOrEmpty "$SNAP_NETWORK")) || [ $SNAP_HEIGHT -le 0 ] ; then
                 echoErr "ERROR: Download failed, snapshot is malformed, genesis was not found or is invalid"
                 rm -rfv $TMP_SNAP_DIR
                 continue
@@ -123,14 +122,14 @@ while : ; do
         fi
 
         echoInfo "INFO: User apprived checksum, snapshot will be added to the archive directory '$KIRA_SNAP'"
-        SNAP_FILENAME="${SNAP_NETWORK}-${SNAP_HEIGHT}-$(date -u +%s).zip"
+        SNAP_FILENAME="${SNAP_NETWORK}-${SNAP_HEIGHT}-$(date -u +%s).tar"
         SNAPSHOT="$KIRA_SNAP/$SNAP_FILENAME"
         mv -fv $TMP_SNAP_PATH $SNAPSHOT
         break
     fi
 
-    # get all zip files in the snap directory
-    SNAPSHOTS=`ls $KIRA_SNAP/*.zip` || SNAPSHOTS=""
+    # get all tar files in the snap directory
+    SNAPSHOTS=`ls $KIRA_SNAP/*.tar` || SNAPSHOTS=""
     SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
     

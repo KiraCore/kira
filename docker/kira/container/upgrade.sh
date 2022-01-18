@@ -35,9 +35,11 @@ echo "{\"height\":$MIN_BLOCK}" >"$SNAP_INFO"
 cp -afv "$LOCAL_ADDRBOOK" $ADDRBOOK_DESTINATION_FILE
 [ ! -f "$ADDRBOOK_DESTINATION_FILE" ] && echoErr "ERROR: Failed to save addr, file '$ADDRBOOK_DESTINATION_FILE' was not found" && sleep 5 && exit 1
 
-# to prevent appending root path we must zip all from within the target data folder
+# to prevent appending root path we must package  all from within the target data folder
 cd $SEKAID_DATA
-zip -0 -r "$SNAP_DESTINATION_FILE" . *
-[ ! -f "$SNAP_DESTINATION_FILE" ] && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
+
+echoInfo "INFO: Please wait, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
+tar -cf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
+( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
 echoInfo "INFO: Finished container upgrade sequence..."

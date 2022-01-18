@@ -112,10 +112,11 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     MIN_BLOCK=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
 
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
+    rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar files from '$KIRA_SNAP' directory"
+    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
     
-    SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).zip"
+    SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).tar"
     ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
     KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 
@@ -222,6 +223,7 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
     
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar file from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 
