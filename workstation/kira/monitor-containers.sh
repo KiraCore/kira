@@ -138,6 +138,7 @@ for name in $CONTAINERS; do
     set -x
 
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
+    NODE_STATUS=$(globGet ${name}_STATUS)
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00")
@@ -161,7 +162,9 @@ for name in $CONTAINERS; do
     fi
     
     [[ $MIN_HEIGHT -gt $LATEST_BLOCK ]] && CATCHING_UP="true"
+    ( [ "${NODE_STATUS,,}" == "halted" ] || [ "${NODE_STATUS,,}" == "backing up" ] ) && CATCHING_UP="false"
     [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] && [ "${CATCHING_UP,,}" == "true" ] && NEW_CATCHING_UP="true"
+    
     
     echoInfo "INFO: Saving status props..."
     PREVIOUS_BLOCK=$(globGet "${name}_BLOCK")
