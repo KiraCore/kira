@@ -28,8 +28,9 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNatura
 [[ $MIN_BLOCK -lt $STATE_HEIGHT ]] && MIN_BLOCK=$STATE_HEIGHT
  
 echoInfo "INFO: Creating backup package..."
-cp -afv "$LOCAL_GENESIS" $DATA_GENESIS
-
+rm -fv "$DATA_GENESIS"
+# dereference symlink
+cp -fL "$LOCAL_GENESIS" $DATA_GENESIS
 echo "{\"height\":$MIN_BLOCK}" >"$SNAP_INFO"
 
 cp -afv "$LOCAL_ADDRBOOK" $ADDRBOOK_DESTINATION_FILE

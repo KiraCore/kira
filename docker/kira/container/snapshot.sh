@@ -28,7 +28,9 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNatura
 SNAP_DESTINATION_FILE="$SNAP_DIR/$SNAP_FILENAME"
 
 echoInfo "INFO: Creating '$SNAP_FILENAME' backup package..."
-cp -afv "$LOCAL_GENESIS" $DATA_GENESIS
+rm -fv "$DATA_GENESIS"
+# dereference symlink
+cp -fL "$LOCAL_GENESIS" $DATA_GENESIS
 echo "{\"height\":$LATEST_BLOCK_HEIGHT}" >"$SNAP_INFO"
 
 # to prevent appending root path we must package all from within the target data folder
