@@ -54,7 +54,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     if (! $(isFileEmpty "$SNAP_FILE_INPUT")); then
         echoInfo "INFO: Snap file was found, attepting integrity verification and data recovery..."
         cd $DATA_DIR && timerStart SNAP_EXTRACT
-        jar xvf $SNAP_FILE_INPUT || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
+        tar -xvf $SNAP_FILE_INPUT -C ./ || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
         echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
         cd $SEKAID_HOME
     
