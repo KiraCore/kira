@@ -33,9 +33,10 @@ echo "{\"height\":$LATEST_BLOCK_HEIGHT}" >"$SNAP_INFO"
 
 # to prevent appending root path we must package all from within the target data folder
 cd $SEKAID_DATA
-
+timerStart SNAPSHOT
 echoInfo "INFO: Please wait, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
-tar -cvf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
+tar -cf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
+echoInfo "INFO: Elapsed: $(timerSpan SNAPSHOT) seconds"
 ( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
 echoInfo "INFO: Finished snapshot"

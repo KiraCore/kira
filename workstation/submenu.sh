@@ -118,8 +118,6 @@ while :; do
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
-    [ "${NEW_NETWORK,,}" != "true" ] && [ ! -z "$KIRA_SNAP_SHA256" ] && \
-    echo -e "|       Snapshot Checksum: $KIRA_SNAP_SHA256"
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
     echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
     echo -e "|   Default interx Branch: $INTERX_BRANCH"

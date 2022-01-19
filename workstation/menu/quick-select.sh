@@ -241,6 +241,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             else
                 echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
                 cp -afv $DATA_GENESIS $TMP_GENESIS_PATH
+                echoInfo "INFO: Calculating snapshot checksum, be patient, this might take..."
                 SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
                 DOWNLOAD_SUCCESS="true"
             fi

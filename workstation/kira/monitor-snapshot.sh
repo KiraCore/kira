@@ -22,11 +22,11 @@ INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 HALT_FILE="$COMMON_PATH/halt"
 
-
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA SNAPSHOT SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
+echoWarn "|      SNAPSHOT SCAN PID: $(globGet SNAPSHOT_SCAN_PID)"
 echoWarn "|         KIRA_SNAP_PATH: $KIRA_SNAP_PATH"
 echoWarn "|         CONTAINER NAME: $CONTAINER_NAME"
 echoWarn "|       CONTAINER UNHALT: $SNAPSHOT_UNHALT"
@@ -38,6 +38,13 @@ echoWarn "|     SNAPSHOT REQUESTED: $SNAPSHOT_EXECUTE"
 echoWarn "|         KEEP OLD SNAPS: $SNAPSHOT_KEEP_OLD"
 echoWarn "------------------------------------------------"
 set -x
+
+if [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ; then
+    echoInfo "INFO: Updating snpashot '$KIRA_SNAP_PATH' checksum..."
+    KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
+    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    echoInfo "SUCCESS: New checksum calculated!" && sleep 10 && exit 0
+fi
 
 ($(isNullOrWhitespaces $CONTAINER_NAME)) && echoErr "ERROR: Target container '$CONTAINER_NAME' was NOT defined" && sleep 10 && exit 1
 CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
@@ -79,8 +86,7 @@ if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     sleep 30
 else
     echoInfo "INFO: Success, new snapshot '$KIRA_SNAP_PATH' was created"
-    KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
-    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
     CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     if [ "${SNAP_EXPOSE,,}" == "true" ]; then
@@ -91,15 +97,15 @@ else
     fi
 fi
 
+globSet SNAPSHOT_EXECUTE "false"
+globSet SNAPSHOT_TARGET ""
+
 if [ "${SNAPSHOT_UNHALT,,}" == "true" ] ; then
     echoInfo "INFO: Restarting and unhalting '$CONTAINER_NAME' container..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 else
     echoInfo "INFO: No need to unhalt '$CONTAINER_NAME' container, container was requested to remain stopped"
 fi
-
-globSet SNAPSHOT_EXECUTE "false"
-globSet SNAPSHOT_TARGET ""
 
 set +x
 echoWarn "------------------------------------------------"

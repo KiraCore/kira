@@ -76,17 +76,17 @@ while : ; do
         echo "INFO: Starting valinfo monitor..."
         LOG_FILE="$VALINFO_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
-        timeout 600 $KIRA_MANAGER/kira/monitor-valinfo.sh &> $LOG_FILE &
+        timeout 3600 $KIRA_MANAGER/kira/monitor-valinfo.sh &> $LOG_FILE &
         globSet VALINFO_SCAN_PID "$!"
     else
         sleep 1
     fi
 
-    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && ( [ "${SNAPSHOT_EXECUTE,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ) ; then
         echo "INFO: Starting snapshot monitor..."
         LOG_FILE="$SNAPSHOT_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
-        timeout 600 $KIRA_MANAGER/kira/monitor-snapshot.sh &> $LOG_FILE &
+        timeout 86400 $KIRA_MANAGER/kira/monitor-snapshot.sh &> $LOG_FILE &
         globSet SNAPSHOT_SCAN_PID "$!"
     else
         sleep 1
@@ -96,7 +96,7 @@ while : ; do
         echo "INFO: Starting peers monitor..."
         LOG_FILE="$PEERS_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
-        timeout 21600 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
+        timeout 86400 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
         globSet PEERS_SCAN_PID "$!"
     else
         sleep 1
