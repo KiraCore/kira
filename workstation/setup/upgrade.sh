@@ -122,12 +122,14 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
 
     rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
 
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME"
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME" || echoErr "ERROR: Failures occured during container upgrade process!"
 
     [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create address book file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
-    [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" && sleep 10 && exit 1
 
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    # snapshots might fail due to lack of disk space
+    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
+    [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" || \
+        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
 
     echoInfo "INFO: Recovering seed & peer nodes..."
     SEEDS_DUMP="/tmp/seedsdump"

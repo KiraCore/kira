@@ -32,9 +32,11 @@ rm -fv "$DATA_GENESIS"
 # dereference symlink
 cp -fL "$LOCAL_GENESIS" $DATA_GENESIS
 echo "{\"height\":$MIN_BLOCK}" >"$SNAP_INFO"
-
+chmod -v 666 "$DATA_GENESIS" "$SNAP_INFO"
 cp -afv "$LOCAL_ADDRBOOK" $ADDRBOOK_DESTINATION_FILE
+
 [ ! -f "$ADDRBOOK_DESTINATION_FILE" ] && echoErr "ERROR: Failed to save addr, file '$ADDRBOOK_DESTINATION_FILE' was not found" && sleep 5 && exit 1
+
 
 # to prevent appending root path we must package  all from within the target data folder
 cd $SEKAID_DATA
@@ -43,6 +45,10 @@ echoInfo "INFO: Please wait, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FIL
 tar -cf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
 echoInfo "INFO: Elapsed: $(timerSpan SNAPSHOT) seconds"
 
-( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
+if [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ; then
+    echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found"
+    rm -fv "$SNAP_DESTINATION_FILE" || echoErr "ERROR: Failed to delete snapshot desitnation file"
+    exit 1
+fi
 
 echoInfo "INFO: Finished container upgrade sequence..."

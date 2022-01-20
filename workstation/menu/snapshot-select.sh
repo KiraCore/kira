@@ -91,9 +91,11 @@ while : ; do
         else
             DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json" && rm -fv ./genesis.json
             SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json" && rm -fv ./snapinfo.json
-            tar -xvf $TMP_SNAP_PATH ./genesis.json && mv -fv ./genesis.json $DATA_GENESIS || echo -n "" > "$DATA_GENESIS"
-            tar -xvf $TMP_SNAP_PATH ./snapinfo.json && mv -fv ./snapinfo.json $SNAP_INFO || echo -n "" > "$SNAP_INFO"
-                
+            tar -xvf $TMP_SNAP_PATH ./genesis.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
+            tar -xvf $TMP_SNAP_PATH ./snapinfo.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
+            mv -fv ./genesis.json $DATA_GENESIS || echo -n "" > "$DATA_GENESIS"
+            mv -fv ./snapinfo.json $SNAP_INFO || echo -n "" > "$SNAP_INFO"
+            
             SNAP_NETWORK=$(jsonQuickParse "chain_id" $DATA_GENESIS 2> /dev/null || echo -n "")
             SNAP_HEIGHT=$(jsonQuickParse "height" $SNAP_INFO 2> /dev/null || echo -n "")
             (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0

@@ -32,13 +32,14 @@ rm -fv "$DATA_GENESIS"
 # dereference symlink
 cp -fL "$LOCAL_GENESIS" $DATA_GENESIS
 echo "{\"height\":$LATEST_BLOCK_HEIGHT}" >"$SNAP_INFO"
+chmod -v 666 "$DATA_GENESIS" "$SNAP_INFO"
 
 # to prevent appending root path we must package all from within the target data folder
 cd $SEKAID_DATA
 timerStart SNAPSHOT
-echoInfo "INFO: Please wait, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
+echoInfo "INFO: Please wait, this might take a while, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
 tar -cf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
 echoInfo "INFO: Elapsed: $(timerSpan SNAPSHOT) seconds"
 ( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
-echoInfo "INFO: Finished snapshot"
+echoInfo "INFO: Success, snapshot compleated!"
