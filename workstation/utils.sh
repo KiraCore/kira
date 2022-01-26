@@ -318,7 +318,7 @@ function urlExists() {
 }
 
 # TODO: Investigate 0 output
-# urlContentLength 18.168.78.192:11000/download/snapshot.tar 
+# urlContentLength 18.168.78.192:11000/api/snapshot
 function urlContentLength() {
     local VAL=$(curl --fail $1 --dump-header /dev/fd/1 --silent 2> /dev/null | grep -i Content-Length -m 1 2> /dev/null | awk '{print $2}' 2> /dev/null || echo -n "")
     # remove invisible whitespace characters

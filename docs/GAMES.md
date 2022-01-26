@@ -1,0 +1,17 @@
+# Useful Games Commands
+
+```
+
+# whitelist permission to assign claimValidator permission
+
+whitelistPermission validator $PermSetClaimValidatorPermission bob 
+
+# Assign claimValidator permission to account
+
+whitelistPermission bob 2 ana 
+
+sekaid tx customgov permission whitelist-permission --from bob --permission="2" --addr="kira18rfg8h6y8npvfxpes28fnuh0xzwd78hr2frc2d" --keyring-backend=test  --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json 
+
+sendTokens bob ana 1000 ukex
+
+```

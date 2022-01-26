@@ -35,7 +35,7 @@ while : ; do
         NODE_ADDR=""
         if [ "${SELECT,,}" == "e" ] ; then
             set +x
-            echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/download/snapshot.tar' as your URL"
+            echoInfo "INFO: To find latest snapshot from the public nodes you can often use '<IP>:$DEFAULT_INTERX_PORT/api/snapshot' as your URL"
             echoNErr "Input URL to download blockchain state from: " && read SNAP_URL && SNAP_URL=$(echo "$SNAP_URL" | xargs)
             set -x
         else
@@ -60,10 +60,10 @@ while : ; do
                 echoInfo "INFO: Snapshot peer was found"
                 addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
                 addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/api/snapshot"
             else
                 echoWarn "INFO: No snapshot peers were found"
-                SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+                SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/snapshot"
             fi
         fi
 
