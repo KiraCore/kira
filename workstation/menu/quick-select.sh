@@ -106,7 +106,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/snapshot"
         if ($(urlExists "$SNAP_URL")) ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
@@ -182,7 +182,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
                 echoInfo "INFO: Snapshot peer was found"
                 addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
                 addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/api/snapshot"
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"

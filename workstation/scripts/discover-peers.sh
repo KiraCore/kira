@@ -169,7 +169,7 @@ while : ; do
         continue 
     fi
 
-    SNAP_URL="$ip:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+    SNAP_URL="$ip:$DEFAULT_INTERX_PORT/api/snapshot"
     if [ "${SNAPS_ONLY,,}" == "true" ] ; then
         if (! $(urlExists "$SNAP_URL")) ; then
             echoWarn "WARNING: Peer is not exposing snapshots ($ip)"
