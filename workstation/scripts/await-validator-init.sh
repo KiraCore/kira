@@ -110,21 +110,21 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSetPermissionsProposal validator 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermWhitelistAccountPermissionProposal validator 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateUpsertTokenAliasProposal validator 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSoftwareUpgradeProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSetPermissionProposal validator 180"
+    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteWhitelistAccountPermissionProposal validator 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteUpsertTokenAliasProposal validator 180"
     docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSoftwareUpgradeProposal validator 180"
 
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateSetPermissionsProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateSetPermissionsProposal'" && exit 1
+    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermWhitelistAccountPermissionProposal")
+    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermWhitelistAccountPermissionProposal'" && exit 1
     PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateSoftwareUpgradeProposal")
     [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateSoftwareUpgradeProposal'" && exit 1
     PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateUpsertTokenAliasProposal")
     [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateUpsertTokenAliasProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteSetPermissionProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteSetPermissionProposal'" && exit 1
+    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteWhitelistAccountPermissionProposal")
+    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteWhitelistAccountPermissionProposal'" && exit 1
     PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteUpsertTokenAliasProposal")
     [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteUpsertTokenAliasProposal'" && exit 1
     PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteSoftwareUpgradeProposal")

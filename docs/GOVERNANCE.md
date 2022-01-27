@@ -11,9 +11,9 @@
 ## Claim Permissions as Sudo to add new Validators
 
 ```
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateSetPermissionsProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteSetPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
 ## Claim Permissions as Sudo to Change Token Alias
