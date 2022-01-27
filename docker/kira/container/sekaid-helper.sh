@@ -821,7 +821,20 @@ function createRoleProposal() {
     ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
     ($(isNullOrEmpty $NAME)) && echoInfo "INFO: Invalid role name '$NAME' " && return 1
     (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
-    sekaid tx customgov proposal create-role "$NAME" "$DESCRIPTION" --title="Upsert Governance Role '$NAME'" --description="Role description: '$DESCRIPTION'" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+    sekaid tx customgov proposal role create "$NAME" "$DESCRIPTION" --title="Upsert Governance Role '$NAME'" --description="Role description: '$DESCRIPTION'" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
+}
+
+# removeRoleProposal <account> <role-name> <role-description>
+# e.g. removeRoleProposal validator validator "Role enabling to claim validator seat and perform essential gov. functions"
+function removeRoleProposal() {
+    local ACCOUNT=$1
+    local NAME=$2
+    local DESCRIPTION=$3
+    local TIMEOUT=$4
+    ($(isNullOrEmpty $ACCOUNT)) && echoInfo "INFO: Account name was not defined '$1'" && return 1
+    ($(isNullOrEmpty $NAME)) && echoInfo "INFO: Invalid role name '$NAME' " && return 1
+    (! $(isNaturalNumber $TIMEOUT)) && TIMEOUT=180
+    sekaid tx customgov proposal role remove "$NAME" "$DESCRIPTION" --title="Remove Governance Role '$NAME'" --description="Role description: '$DESCRIPTION'" --from "$ACCOUNT" --keyring-backend=test --chain-id=$NETWORK_NAME --home=$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --log_format=json --output=json | txAwait $TIMEOUT
 }
 
 # isRoleAssigned <role-name> <address/account>
