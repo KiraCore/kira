@@ -11,26 +11,26 @@
 ## Claim Permissions as Sudo to add new Validators
 
 ```
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermVoteWhitelistAccountPermissionProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
 ## Claim Permissions as Sudo to Change Token Alias
 
 ```
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermCreateUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermVoteUpsertTokenAliasProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes | jq
 ```
 
 ## Claim Permissions as Sudo To Upsert Roles
 ```
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermUpsertRole --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermUpsertRole --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
 
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json | txAwait 180
 
-sekaid tx customgov permission whitelist-permission --from validator --keyring-backend=test --permission=$PermVoteCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json  | txAwait 180
+sekaid tx customgov permission whitelist --from validator --keyring-backend=test --permission=$PermVoteCreateRoleProposal --addr=$VALIDATOR_ADDR --chain-id=$NETWORK_NAME --fees=100ukex --yes --output=json  | txAwait 180
 
 ```
 
