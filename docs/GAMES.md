@@ -14,4 +14,13 @@ sekaid tx customgov permission whitelist --from bob --permission="2" --addr="kir
 
 sendTokens bob ana 1000 ukex
 
+# PermChangeTxFee == 7
+whitelistPermission validator 7 validator 
+
+addAccount bob
+sendTokens validator bob 1000 ukex 100 ukex
+
+setExecutionFee validator "set-execution-fee" 200 200 60
+showExecutionFee "set-execution-fee"
+
 ```
