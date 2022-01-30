@@ -600,7 +600,10 @@ function setPoorNetworkMessages() {
 # e.g.: showExecutionFee <transaction-type>
 function showExecutionFee() {
     local TRANSACTION_TYPE=$1
-    echo $(sekaid query customgov execution-fee "$TRANSACTION_TYPE" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse 2> /dev/null || echo -n "") && echo -n ""
+    local MIN_TX_FEE=$(showNetworkProperties | jsonParse "properties.min_tx_fee")
+    local EXECUTION_FEE=$(sekaid query customgov execution-fee "$TRANSACTION_TYPE" --output=json --home=$SEKAID_HOME 2> /dev/null | jsonParse "fee.execution_fee" 2> /dev/null || echo -n "")
+    (! $(isNaturalNumber $EXECUTION_FEE)) && EXECUTION_FEE=$MIN_TX_FEE
+    [ $MIN_TX_FEE -gt $EXECUTION_FEE ] && echo "$MIN_TX_FEE" || echo "$EXECUTION_FEE" 
 }
 
 # setExecutionFee <account> <tx-type> <execution-fee> <failure-fee> <tx-timeout>
@@ -616,8 +619,8 @@ function setExecutionFee() {
     (! $(isNaturalNumber $EXECUTION_FEE)) && echoInfo "INFO: Invalid execution fee amount '$3'" && return 1
     (! $(isNaturalNumber $FAILURE_FEE)) && echoInfo "INFO: Invalid failure fee amount '$4'" && return 1
     (! $(isNaturalNumber $TX_TIMEOUT)) && echoInfo "INFO: Invalid tx timeout '$5'" && return 1
-
-    sekaid tx customgov set-execution-fee --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --transaction_type="$TX_TYPE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=100ukex --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    local TX_FEE="$(showExecutionFee 'set-execution-fee')ukex"
+    sekaid tx customgov set-execution-fee --transaction_type="$TX_TYPE" --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=$TX_FEE --yes --log_format=json --broadcast-mode=async --output=json | txAwait
 }
 
 # resetRanks <account>
@@ -976,3 +979,21 @@ function clearPermissions() {
         echoErr "ERROR: List of validators was NOT found ($ADDRESSES)"
     fi
 }
+
+function isAccount() {
+    local ACCOUNT=$1
+    ACCOUNT=$(echo "${ACCOUNT,,}" | xargs || echo -n "")
+    local ACCOUNT_NAME=$(sekaid keys show "$ACCOUNT" --keyring-backend=test --output=json 2> /dev/null | jsonParse "name" 2> /dev/null || echo "")
+    ( [ "${ACCOUNT,,}" == "${ACCOUNT_NAME,,}" ] && (! $(isNullOrEmpty "$ACCOUNT_NAME")) ) && echo "true" || echo "false"
+}
+
+function addAccount() {
+    local ACCOUNT=$1
+    ACCOUNT=$(echo "${ACCOUNT,,}" | xargs || echo -n "")
+    ($(isAccount "$ACCOUNT")) && echoErr "ERROR: Account '$ACCOUNT' already exists" && return 1
+    (! $(isAlphanumeric "$ACCOUNT")) && echoErr "ERROR: Account name must be alphanumeric, but got '$ACCOUNT'" && return 1
+    sekaid keys add "$ACCOUNT" --keyring-backend=test --home=$SEKAID_HOME --output=json | jq
+}
+
+
+
