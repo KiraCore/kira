@@ -8,6 +8,7 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
 # find top largest files: find / -xdev -type f -size +100M -exec ls -la {} \; | sort -nk 5
+# find top largest files: du -aBM 2>/dev/null | sort -nr | head -n 50 | more
 
 set +x
 echoWarn "------------------------------------------------"

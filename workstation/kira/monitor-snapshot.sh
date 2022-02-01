@@ -71,10 +71,11 @@ if [ "${SNAPSHOT_KEEP_OLD,,}" == "true" ] ; then
     rm -fv $KIRA_SNAP_PATH
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 else
-    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    echoInfo "INFO: Wiping all known snapshoots..."
     rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
+    rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
 fi
 
 docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" && SUCCESS="true" || SUCCESS="false"

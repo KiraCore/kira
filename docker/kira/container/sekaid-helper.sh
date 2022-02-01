@@ -620,7 +620,7 @@ function setExecutionFee() {
     (! $(isNaturalNumber $FAILURE_FEE)) && echoInfo "INFO: Invalid failure fee amount '$4'" && return 1
     (! $(isNaturalNumber $TX_TIMEOUT)) && echoInfo "INFO: Invalid tx timeout '$5'" && return 1
     local TX_FEE="$(showExecutionFee 'set-execution-fee')ukex"
-    sekaid tx customgov set-execution-fee --transaction_type="$TX_TYPE" --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=$TX_FEE --yes --log_format=json --broadcast-mode=async --output=json | txAwait
+    sekaid tx customgov set-execution-fee --transaction_type="$TX_TYPE" --execution_fee="$EXECUTION_FEE" --failure_fee="$FAILURE_FEE" --timeout="$TX_TIMEOUT" --from "$ACCOUNT" --chain-id=$NETWORK_NAME --keyring-backend=test  --fees=$TX_FEE --yes --log_format=json --broadcast-mode=async --output=json | txAwait 180
 }
 
 # resetRanks <account>
