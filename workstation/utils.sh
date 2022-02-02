@@ -380,54 +380,66 @@ function globDel {
 }
 
 function timerStart() {
-    [ "${1,,}" == "-v" ] && kg_NAME=$2 || kg_NAME=$1
-    [ -z "$kg_NAME" ] && kg_NAME="${BASH_SOURCE}"
-    kg_TIME="$(date -u +%s)"
-    globSet "timer_start_${kg_NAME}" "$kg_TIME"
-    globSet "timer_stop_${kg_NAME}" ""
-    [ "${1,,}" == "-v" ] && echo "$kg_TIME"
+    local NAME=$1 && ($(isNullOrEmpty "$NAME")) && NAME="${BASH_SOURCE}"
+    globSet "timer_start_${NAME}" "$(date -u +%s)"
+    globSet "timer_stop_${NAME}" ""
+    globSet "timer_elapsed_${NAME}" ""
     return 0
 }
 
-function timerStop() {
-    [ "${1,,}" == "-v" ] && kg_NAME=$2 || kg_NAME=$1
-    [ -z "$kg_NAME" ] && kg_NAME="$BASH_SOURCE"
-    kg_NAME="timer_stop_${kg_NAME}"
-    ($(globEmpty "$NAME")) && globSet "$kg_NAME" "$(date -u +%s)"
-    [ "${1,,}" == "-v" ] && globGet "$kg_NAME"
-    return 0
-}
-
-# if VMAX is set then time left until VMAX is calculated
+# if TIMEOUT is set then time left until TIMEOUT is calculated
 function timerSpan() {
-    kg_NAME=$1 && [ -z "$kg_NAME" ] && kg_NAME="$BASH_SOURCE"
-    kg_VMAX=$2
-    ($(isNaturalNumber $kg_VMAX)) && kg_CALC_TIME_LEFT="true" || kg_CALC_TIME_LEFT="false"
-    kg_START_TIME=$(globGet "timer_start_${kg_NAME}")
-    kg_END_TIME=$(globGet "timer_stop_${kg_NAME}")
-    if (! $(isNaturalNumber "$kg_START_TIME")) ; then
-        kg_ELAPSED=0
-    elif (! $(isNaturalNumber "$kg_END_TIME")) ; then 
-        kg_ELAPSED="$(($(date -u +%s) - $kg_START_TIME))"
+    local TIME="$(date -u +%s)"
+    local NAME=$1 && ($(isNullOrEmpty "$NAME")) && NAME="${BASH_SOURCE}"
+    local TIMEOUT=$2
+    local START_TIME=$(globGet "timer_start_${NAME}") && (! $(isNaturalNumber "$START_TIME")) && START_TIME="$TIME"
+    local END_TIME=$(globGet "timer_stop_${NAME}") && (! $(isNaturalNumber "$END_TIME")) && END_TIME="$TIME"
+    local ELAPSED=$(globGet "timer_elapsed_${NAME}") && (! $(isNaturalNumber "$ELAPSED")) && ELAPSED="0"
+    local SPAN="$(($END_TIME - $START_TIME))" && [[ $SPAN -lt 0 ]] && SPAN="0"
+    SPAN="$(($SPAN + $ELAPSED))" 
+    
+    if ($(isNaturalNumber $TIMEOUT)) ; then
+        local DELTA=$(($TIMEOUT - $SPAN))
+        [[ $DELTA -lt 0 ]] && echo "0" || echo "$DELTA"
     else
-        kg_ELAPSED="$(($kg_END_TIME - $kg_START_TIME))"
+        echo $SPAN
     fi
+    return 0
+}
 
-    if ($(isNaturalNumber $kg_VMAX)) ; then
-        kg_TDELTA=$(($kg_VMAX - $kg_ELAPSED))
-        [[ $kg_TDELTA -lt 0 ]] && kg_TDELTA=0
-        echo $kg_TDELTA
-    else
-        echo $kg_ELAPSED
+function timerPause() {
+    local TIME="$(date -u +%s)"
+    local NAME=$1 && ($(isNullOrEmpty "$NAME")) && NAME="${BASH_SOURCE}"
+    local END_TIME=$(globGet "timer_stop_${NAME}")
+
+    if (! $(isNaturalNumber "$END_TIME")) ; then
+        globSet "timer_stop_${NAME}" "$TIME"
+        local OLD_ELAPSED=$(globGet "timer_elapsed_${NAME}") && (! $(isNaturalNumber "$OLD_ELAPSED")) && OLD_ELAPSED="0"
+        local START_TIME=$(globGet "timer_start_${NAME}") && (! $(isNaturalNumber "$START_TIME")) && START_TIME="$TIME"
+        local END_TIME=$(globGet "timer_stop_${NAME}") && (! $(isNaturalNumber "$END_TIME")) && END_TIME="$TIME"
+        local NOW_ELAPSED="$(($END_TIME - $START_TIME))" && [[ $NOW_ELAPSED -lt 0 ]] && NOW_ELAPSED="0"
+        globSet "timer_start_${NAME}" "$TIME"
+        globSet "timer_elapsed_${NAME}" "$(($NOW_ELAPSED + $OLD_ELAPSED))"
+    fi
+    return 0
+}
+
+function timerUnpause() {
+    local NAME=$1 && ($(isNullOrEmpty "$NAME")) && NAME="${BASH_SOURCE}"
+    local END_TIME=$(globGet "timer_stop_${NAME}")
+
+    if ($(isNaturalNumber "$END_TIME")) ; then
+        globSet "timer_start_${NAME}" "$(date -u +%s)"
+        globSet "timer_stop_${NAME}" ""
     fi
     return 0
 }
 
 function timerDel() {
     if [ -z "$@" ] ; then
-        kg_var="$BASH_SOURCE"
-        globSet "timer_start_${kg_var}" ""
-        globSet "timer_stop_${kg_var}" ""
+        local NAME="$BASH_SOURCE"
+        globSet "timer_start_${NAME}" ""
+        globSet "timer_stop_${NAME}" ""
     else
         for kg_var in "$@" ; do
             [ -z "$kg_var" ] && kg_var="$BASH_SOURCE"

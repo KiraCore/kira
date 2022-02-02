@@ -56,7 +56,7 @@ echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
+    echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"
     exit 1
 fi
 

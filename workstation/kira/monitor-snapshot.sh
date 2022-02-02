@@ -83,6 +83,7 @@ if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
     rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
+    rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
     sleep 30
 else
     echoInfo "INFO: Success, new snapshot '$KIRA_SNAP_PATH' was created"

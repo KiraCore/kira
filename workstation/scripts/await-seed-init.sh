@@ -42,6 +42,14 @@ while : ; do
         else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
+        if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
+            timerPause $TIMER_NAME
+            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
+        else
+            timerUnpause $TIMER_NAME
+        fi
+
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
@@ -77,7 +85,7 @@ while : ; do
 
     FAILURE="false"
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-        echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time"
+        echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
 

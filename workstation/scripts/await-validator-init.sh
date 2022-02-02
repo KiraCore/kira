@@ -45,6 +45,15 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     else echoInfo "INFO: Success, container $CONTAINER_NAME was found" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
+    if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
+        timerPause $TIMER_NAME
+        cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
+    else
+        timerUnpause $TIMER_NAME
+    fi
+
+    echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
         cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
@@ -102,7 +111,7 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
     echoErr "ERROR: Container $CONTAINER_NAME Node Id check failed! Expected '$VALIDATOR_NODE_ID', but got '$NODE_ID'" && exit 1
 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
-    echoErr "ERROR: $CONTAINER_NAME was not started sucessfully within defined time" && exit 1
+    echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status" && exit 1
 
 #[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
 #    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1

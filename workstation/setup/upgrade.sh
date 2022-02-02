@@ -228,6 +228,7 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar file from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
+    rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
 
     globSet LATEST_BLOCK $NEW_BLOCK_HEIGHT
     globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
