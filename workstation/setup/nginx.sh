@@ -1,7 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
 set -x
 
 RESTART=$(service nginx restart || echo "error")

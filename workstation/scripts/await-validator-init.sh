@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 set -x
 
 VALIDATOR_NODE_ID=$1

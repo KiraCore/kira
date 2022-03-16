@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 set -x
 

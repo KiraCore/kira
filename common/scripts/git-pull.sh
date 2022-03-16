@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 # Local Update Shortcut:

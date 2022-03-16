@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 exec 2>&1
 set -e
 # quick edit: FILE="$KIRA_SCRIPTS/container-healthy.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE

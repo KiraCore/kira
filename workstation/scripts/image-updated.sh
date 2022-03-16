@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 exec 2>&1
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 
 IMAGE_DIR=$1
 IMAGE_NAME=$2

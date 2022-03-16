@@ -1,7 +1,6 @@
 
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 set -x
 
 GO_VERSION="1.15.11"

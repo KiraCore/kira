@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 # quick edit: FILE="${SELF_CONTAINER}/validator/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE

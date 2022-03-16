@@ -1,8 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
-
-echo "INFO: Loading secrets..."
+echoInfo "INFO: Loading secrets..."
 
 MNEMONICS="$KIRA_SECRETS/mnemonics.env"
 
@@ -17,8 +15,6 @@ REGEN_SENTRY_NODE_KEYS="false"
 
 function MnemonicGenerator() {
     set +e && source "/etc/profile" &>/dev/null && set -e
-    source $KIRA_MANAGER/utils.sh
-
     MNEMONICS="$KIRA_SECRETS/mnemonics.env"
     source $MNEMONICS
 

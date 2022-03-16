@@ -1,7 +1,6 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/update.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kiraup && journalctl -u kiraup -f --output cat
 

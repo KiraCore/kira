@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-setup-status.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
@@ -35,7 +34,6 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
     while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; do
         set +x
         set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-        source $KIRA_MANAGER/utils.sh
         SETUP_END_DT=$(globGet SETUP_END_DT)
         SETUP_START_DT=$(globGet SETUP_START_DT)
         UPDATE_DONE=$(globGet UPDATE_DONE)
@@ -85,7 +83,6 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
     while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPGRADE_DONE,,}" != "true" ] ; do
         set +x
         set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-        source $KIRA_MANAGER/utils.sh
         PLAN_END_DT=$(globGet PLAN_END_DT)
         PLAN_START_DT=$(globGet PLAN_START_DT)
         PLAN_DONE=$(globGet PLAN_DONE)

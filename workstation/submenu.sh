@@ -1,6 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 
 if [ "${INFRA_MODE,,}" == "seed" ]; then
   title="Seed Mode"
