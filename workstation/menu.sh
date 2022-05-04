@@ -2,8 +2,7 @@
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 set +x
 
-SKIP_SELECTION=$1
-[ -z "$SKIP_SELECTION" ] && SKIP_SELECTION="true"
+SKIP_SELECTION="$1" && [ -z "$SKIP_SELECTION" ] && SKIP_SELECTION="true"
 
 if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] ) ; then
     printf "\033c"
@@ -28,20 +27,20 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
       case ${KEY,,} in
       1*)
         echo "INFO: Starting Validator Node Deployment..."
-        CDHelper text lineswap --insert="INFRA_MODE=validator" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FIREWALL_ZONE=validator" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
+        INFRA_MODE="validator"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        FIREWALL_ZONE="validator" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
         break
         ;;
       2*)
         echo "INFO: Starting Sentry Mode Deployment..."
-        CDHelper text lineswap --insert="INFRA_MODE=sentry" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FIREWALL_ZONE=sentry" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
+        INFRA_MODE="sentry"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        FIREWALL_ZONE="sentry" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
         break
         ;;
       3*)
         echo "INFO: Starting Seed Mode Deployment..."
-        CDHelper text lineswap --insert="INFRA_MODE=seed" --prefix="INFRA_MODE=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="FIREWALL_ZONE=seed" --prefix="FIREWALL_ZONE=" --path=$ETC_PROFILE --append-if-found-not=True # firewall zone
+        INFRA_MODE="seed"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        FIREWALL_ZONE="seed" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
         break
         ;;
       x*)

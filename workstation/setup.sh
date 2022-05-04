@@ -17,6 +17,7 @@ set -x
 [ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 cd /kira
+
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Updating kira, sekai, INTERX"
     $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
@@ -51,7 +52,6 @@ timeout 60 systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan se
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh
-$KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
 

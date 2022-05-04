@@ -6,9 +6,6 @@ SETUP_CHECK="$KIRA_SETUP/network-v0.0.12"
 if [ ! -f "$SETUP_CHECK" ] ; then
     echo "INFO: Setting up networking dependencies..."
     apt-get update -y
-    echo "INFO: Installing DUC dependencies..."
-    apt-get install -y autoconf libtool fuse nasm net-tools perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
-
     echo "INFO: Cleaning up generic network dependencies..."
     apt-get remove -y ufw firewalld
     echo "INFO: Installing generic dependencies..."

@@ -387,10 +387,10 @@ if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
 fi
 
 rm -rfv $TMP_SNAP_DIR
-NETWORK_NAME=$CHAIN_ID
-CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-[ ! -z "$SNAPSHOT" ] && \
-    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$SNAPSUM\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+NETWORK_NAME="$CHAIN_ID"        && setGlobEnv NETWORK_NAME "$NETWORK_NAME"
+KIRA_SNAP_PATH="$SNAPSHOT"      && setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
+TRUSTED_NODE_ADDR="$NODE_ADDR"  && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
+[ ! -z "$SNAPSHOT" ]            && setGlobEnv KIRA_SNAP_SHA256 "$SNAPSUM"
 
 NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
 
@@ -401,10 +401,6 @@ globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
 globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
 globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
 globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
-
-CDHelper text lineswap --insert="NETWORK_NAME=\"$CHAIN_ID\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_SNAP_SHA256=\"\"" --prefix="INTERX_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
 
 globSet GENESIS_SHA256 "$GENSUM"
 

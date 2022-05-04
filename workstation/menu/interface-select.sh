@@ -28,7 +28,7 @@ set +x
 echoInfo "INFO: NETWORK interface '$IFACE' was selected"
 echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
-CDHelper text lineswap --insert="IFACE=\"$IFACE\"" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
+setGlobEnv IFACE "$IFACE"
 
 echoInfo "INFO: MTU Value Discovery..."
 MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")

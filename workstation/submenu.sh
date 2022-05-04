@@ -49,7 +49,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
             continue
         fi
 
-        CDHelper text lineswap --insert="VALIDATOR_ADDR_MNEMONIC=\"$VALIDATOR_ADDR_MNEMONIC\"" --prefix="VALIDATOR_ADDR_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        setVar VALIDATOR_ADDR_MNEMONIC "$VALIDATOR_ADDR_MNEMONIC" "$MNEMONICS" 1> /dev/null
         break
     done
     
@@ -69,7 +69,7 @@ if [ "${INFRA_MODE,,}" == "validator" ] ; then
             continue
         fi
 
-        CDHelper text lineswap --insert="VALIDATOR_VAL_MNEMONIC=\"$VALIDATOR_VAL_MNEMONIC\"" --prefix="VALIDATOR_VAL_MNEMONIC=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        setVar VALIDATOR_VAL_MNEMONIC "$VALIDATOR_VAL_MNEMONIC" "$MNEMONICS" 1> /dev/null
         break
     done
     set -x
@@ -91,14 +91,14 @@ else
     NEW_NETWORK="false"
 fi
 
-CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
+setGlobEnv NEW_NETWORK "$NEW_NETWORK"
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE) && (! $(isBoolean "$PRIVATE_MODE")) && PRIVATE_MODE="false" && globSet PRIVATE_MODE "$PRIVATE_MODE"
 
 while :; do
-    set +e && source $ETC_PROFILE &>/dev/null && set -e
+    loadGlobEnvs
     set +x
     printf "\033c"
 
@@ -140,8 +140,8 @@ while :; do
   s*)
     echo "INFO: Starting Quick Setup..."
     echo "NETWORK interface: $IFACE"
-    CDHelper text lineswap --insert="IFACE=\"$IFACE\"" --prefix="IFACE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    setGlobEnv IFACE "$IFACE"
+    setGlobEnv KIRA_SNAP_PATH ""
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
@@ -159,7 +159,7 @@ while :; do
   2*)
     DEFAULT_SSH_PORT="." && while (! $(isPort "$DEFAULT_SSH_PORT")); do echoNErr "Input SSH port number to expose: " && read DEFAULT_SSH_PORT ; done
     set -x
-    CDHelper text lineswap --insert="DEFAULT_SSH_PORT=\"$DEFAULT_SSH_PORT\"" --prefix="DEFAULT_SSH_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
+    setGlobEnv DEFAULT_SSH_PORT "$DEFAULT_SSH_PORT"
     continue
     ;;
   3*)

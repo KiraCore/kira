@@ -93,4 +93,3 @@ fi
 
 echoInfo "INFO: Cleaning up dangling volumes..."
 docker volume ls -qf dangling=true | xargs -r docker volume rm || echoWarn "WARNING: Failed to remove dangling vomues!"
-

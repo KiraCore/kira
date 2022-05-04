@@ -6,7 +6,7 @@ set -x
 
 apt-get update -y
 apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common curl wget git nginx apt-transport-https
+    software-properties-common curl wget git apt-transport-https
 
 echoInfo "INFO: APT Update, Update and Intall..."
 apt-get update -y --fix-missing
@@ -63,73 +63,3 @@ if [ "$FILE_HASH" != "$CDHELPER_EXPECTED_HASH" ]; then
 else
     echoInfo "INFO: CDHelper tool was already downloaded"
 fi
- 
-INSTALL_DIR="/usr/local/bin/CDHelper"
-rm -rfv $INSTALL_DIR
-mkdir -pv $INSTALL_DIR
-unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
-chmod -R -v 555 $INSTALL_DIR
- 
-ls -l /bin/CDHelper || echoWarn "INFO: Symlink not found"
-rm /bin/CDHelper || echoWarn "INFO: Failed to remove old symlink"
-ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echoWarn "INFO: CDHelper symlink already exists"
- 
-CDHelper version
-
-CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
-
-echoInfo "INFO: Installing latest go $GOLANG_ARCH version $GO_VERSION https://golang.org/doc/install ..."
-cd /tmp
-
-wget https://dl.google.com/go/$GO_TAR &>/dev/null
-tar -C /usr/local -xvf $GO_TAR &>/dev/null
-go version
-
-rm -fv CDHelper-linux-$CDHELPER_ARCH.zip
-
-echoInfo "INFO: Installing essential KIRA tools"
-
-cd $SELF_HOME
-TOOLS_DIR="$SELF_HOME/tools"
-KMS_KEYIMPORT_DIR="$TOOLS_DIR/tmkms-key-import"
-PRIV_KEYGEN_DIR="$TOOLS_DIR/priv-validator-key-gen"
-TMCONNECT_DIR="$TOOLS_DIR/tmconnect"
-
-git clone "https://github.com/KiraCore/tools.git" $TOOLS_DIR
-cd $TOOLS_DIR
-git checkout main
-chmod -R 555 $TOOLS_DIR
-FILE_HASH=$(CDHelper hash SHA256 -p="$TOOLS_DIR" -x=true -r=true --silent=true -i="$TOOLS_DIR/.git,$TOOLS_DIR/.gitignore")
-
-echoInfo "INFO: Tools checkout finalized, directory hash: $FILE_HASH"
-
-#TOOLS_EXPECTED_HASH="cbe7369e16260943354ad830607bf9618d7f90acb9f9903ca7dc1d305fc22c6b"
-TOOLS_EXPECTED_HASH=""
-
-if [ ! -z "$TOOLS_EXPECTED_HASH" ] && [ "$FILE_HASH" != "$TOOLS_EXPECTED_HASH" ]; then
-    echoErr "ERROR: Failed to check integrity hash of the KIRA tools!"
-    echoErr "ERROR: Expected hash: $TOOLS_EXPECTED_HASH, but got $FILE_HASH"
-    exit 1
-fi
-
-cd $KMS_KEYIMPORT_DIR
-ls -l /bin/tmkms-key-import || echoWarn "WARNING: tmkms-key-import symlink not found"
-rm -fv /bin/tmkms-key-import || echoWarn "WARNING: failed removing old tmkms-key-import symlink"
-ln -s $KMS_KEYIMPORT_DIR/start.sh /bin/tmkms-key-import || echoErr "WARNING: tmkms-key-import symlink already exists"
-
-echoInfo "INFO: Navigating to '$PRIV_KEYGEN_DIR' and building priv-key-gen tool..."
-cd $PRIV_KEYGEN_DIR
-export HOME="$SELF_HOME";
-go build
-make install
-
-ls -l /bin/priv-key-gen || echoWarn "WARNING: priv-validator-key-gen symlink not found"
-rm -fv /bin/priv-key-gen || echoWarn "WARNING: Removing old priv-validator-key-gen symlink"
-ln -s $PRIV_KEYGEN_DIR/priv-validator-key-gen /bin/priv-key-gen || echoErr "WARNING: priv-validator-key-gen symlink already exists"
-
-cd $TMCONNECT_DIR
-go build
-make install
-ls -l /bin/tmconnect || echoWarn "WARNING: tmconnect symlink not found"
-rm -fv /bin/tmconnect || echoWarn "WARNING: Removing old tmconnect symlink"
-ln -s $TMCONNECT_DIR/tmconnect /bin/tmconnect || echoErr "WARNING: tmconnect symlink already exists"

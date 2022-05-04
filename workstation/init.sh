@@ -2,11 +2,12 @@
 set +e && chmod 555 /etc/profile && source /etc/profile &>/dev/null && set -e
 
 INFRA_BRANCH="${1,,}"
-SKIP_UPDATE=$2
+SKIP_UPDATE="$2"
 START_TIME_INIT=$3
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
+[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
 if [ "$KIRA_USER" == "root" ]; then
@@ -19,119 +20,125 @@ if [ "${USER,,}" != root ]; then
     exit 1
 fi
 
-CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
-RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
-
-if [[ $CPU_CORES -lt 2 ]] ; then
-    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $CPU_CORES\e[0m"
-    echo "INFO: Recommended CPU is 4 cores"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-fi
-
-if [[ $RAM_MEMORY -lt 3145728 ]] ; then
-    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $RAM_MEMORY kB\e[0m"
-    echo "INFO: Recommended RAM is 8GB"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-fi
-
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
+KIRA_BASE_VERSION="v0.10.3"
+TOOLS_VERSION="v0.1.5"
+COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
 UTILS_VERSION=$(utilsVersion 2> /dev/null || echo "")
-ARCHITECTURE=$(uname -m)
 
 set +x
 echo "------------------------------------------------"
 echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
-echo "|  SKIP UPDATE: $SKIP_UPDATE"
-echo "|   START TIME: $START_TIME_INIT"
-echo "| INFRA BRANCH: $INFRA_BRANCH"
-echo "|    KIRA USER: $KIRA_USER"
-echo "| ARCHITECTURE: $ARCHITECTURE"
+echo "|      SKIP UPDATE: $SKIP_UPDATE"
+echo "|       START TIME: $START_TIME_INIT"
+echo "|     INFRA BRANCH: $INFRA_BRANCH"
+echo "|        KIRA USER: $KIRA_USER"
+echo "|    TOOLS VERSION: $TOOLS_VERSION"
+echo "| CDHELPER VERSION: $CDHELPER_VERSION"
 echo "------------------------------------------------"
-set -x
-
-set +x
-if [ -z "$SKIP_UPDATE" ]; then
-    echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMMM"
-    echo             "MMMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMMM"
-    echo             "MMW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNMM"
-    echo             "MMWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXMM"
-    echo             "MMW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXMM"
-    echo             "MMMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXMM"
-    echo             "MMMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXMM"
-    echo             "MMMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXMM"
-    echo             "MMMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXMM"
-    echo             "MMMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WMM"
-    echo             "MMMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMMM"
-    echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMMM"
-    echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMMM"
-    echo             "MMMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMMM"
-    echo             "MMM              KIRA NETWORK SETUP              MMM"
-    echo -e          "MMMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
-    sleep 3
-else
-    echoInfo "INFO: Initalizing setup script..."
-fi
+echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMMM"
+echo             "MMMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMMM"
+echo             "MMW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNMM"
+echo             "MMWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXMM"
+echo             "MMW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXMM"
+echo             "MMMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXMM"
+echo             "MMMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXMM"
+echo             "MMMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXMM"
+echo             "MMMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXMM"
+echo             "MMMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WMM"
+echo             "MMMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMMM"
+echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMMM"
+echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMMM"
+echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMMM"
+echo             "MMMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMMM"
+echo             "MMM              KIRA NETWORK SETUP              MMM"
+echo -e          "MMMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
+sleep 3
 
 systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
 systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
 
 echo -n ""
 set -x
+# this is essential to remove any inpropper output redirections to /dev/null while silencing output
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
-# Installing utils is essential to simplify the setup steps
-if [[ $(versionToNumber "$UTILS_VERSION" || echo "0") -ge $(versionToNumber "v0.0.15" || echo "1") ]] ; then
-    echo "INFO: KIRA utils were NOT installed on the system, setting up..." && sleep 2
-    KIRA_UTILS_BRANCH="v0.0.3" && cd /tmp && rm -fv ./i.sh && \
-    wget https://raw.githubusercontent.com/KiraCore/tools/$KIRA_UTILS_BRANCH/bash-utils/install.sh -O ./i.sh && \
-    chmod 555 ./i.sh && ./i.sh "$KIRA_UTILS_BRANCH" "/var/kiraglob" && . /etc/profile && loadGlobEnvs
+ARCH=$(uname -m) && ( [[ "${ARCH,,}" == *"arm"* ]] || [[ "${ARCH,,}" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
+PLATFORM=$(uname) && PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
+
+if [ "${ARCH}" == "arm64" ] ; then
+    COSIGN_HASH="2448231e6bde13722aad7a17ac00789d187615a24c7f82739273ea589a42c94b"
 else
-    echoInfo "INFO: KIRA utils are up to date, latest version $UTILS_VERSION" && sleep 2
+    COSIGN_HASH="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
 fi
+
+COSIGN_INSTALLED=$(isCommand cosign &> /dev/null || echo "false")
+KEYS_DIR="/usr/keys"
+KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
+
+if [ "$COSIGN_INSTALLED" != "true" ] ; then
+    echo "INFO: Installing cosign"
+    FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}" | tr '[:upper:]' '[:lower:]')
+    wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
+    FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
+    if [ "$FILE_HASH" != "$COSIGN_HASH" ] ; then
+        echoErr "ERROR: Failed to download cosign tool, expected checksum to be '$COSIGN_HASH', but got '$FILE_HASH'"
+        exit 1
+    fi
+
+    mv -fv ./$FILE_NAME /usr/local/bin/cosign
+    cosign version
+    
+    mkdir -p $KEYS_DIR
+    cat > $KIRA_COSIGN_PUB << EOL
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/IrzBQYeMwvKa44/DF/HB7XDpnE+
+f+mU9F/Qbfq25bBWV2+NlYMJv3KvKHNtu3Jknt6yizZjUV4b8WGfKBzFYw==
+-----END PUBLIC KEY-----
+EOL
+
+fi
+
+FILE_NAME="bash-utils.sh" && \
+ wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}" -O ./$FILE_NAME && \
+ wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}.sig" -O ./${FILE_NAME}.sig && \
+ cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
+ chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" && . /etc/profile && \
+ echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
+
+if [[ $(getCpuCores) -lt 2 ]] ; then
+    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $(getCpuCores)\e[0m"
+    echo "INFO: Recommended CPU is 4 cores"
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+fi
+
+if [[ $(getRamTotal) -lt 3145728 ]] ; then
+    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $(getRamTotal) kB\e[0m"
+    echo "INFO: Recommended RAM is 8GB"
+    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+fi
+
+cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+
+setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
+setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
+setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
+setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
-[ -z "$ETC_PROFILE" ] && ETC_PROFILE="/etc/profile" && setGlobEnv ETC_PROFILE "$ETC_PROFILE"
-
 [ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
-[ -z "$DEFAULT_SSH_PORT" ] && DEFAULT_SSH_PORT="22" && setGlobEnv DEFAULT_SSH_PORT "$DEFAULT_SSH_PORT"
-
-DEFAULT_P2P_PORT="26656"        && setGlobEnv DEFAULT_P2P_PORT "$DEFAULT_P2P_PORT"
-DEFAULT_RPC_PORT="26657"        && setGlobEnv DEFAULT_RPC_PORT "$DEFAULT_RPC_PORT"
-DEFAULT_PROMETHEUS_PORT="26660" && setGlobEnv DEFAULT_PROMETHEUS_PORT "$DEFAULT_PROMETHEUS_PORT"
-DEFAULT_GRPC_PORT="9090"        && setGlobEnv DEFAULT_GRPC_PORT "$DEFAULT_GRPC_PORT"
-DEFAULT_INTERX_PORT="11000"     && setGlobEnv DEFAULT_INTERX_PORT "$DEFAULT_INTERX_PORT"
-        
-KIRA_REGISTRY_PORT="5000"   && setGlobEnv KIRA_REGISTRY_PORT "$KIRA_REGISTRY_PORT"
-KIRA_INTERX_PORT="11000"    && setGlobEnv KIRA_INTERX_PORT "$KIRA_INTERX_PORT"
-
-KIRA_SEED_P2P_PORT="16656"              && setGlobEnv KIRA_SEED_P2P_PORT "$KIRA_SEED_P2P_PORT"
-KIRA_SEED_RPC_PORT="16657"              && setGlobEnv KIRA_SEED_RPC_PORT "$KIRA_SEED_RPC_PORT"
-KIRA_SEED_GRPC_PORT="19090"             && setGlobEnv KIRA_SEED_GRPC_PORT "$KIRA_SEED_GRPC_PORT"
-KIRA_SEED_PROMETHEUS_PORT="16660"       && setGlobEnv KIRA_SEED_PROMETHEUS_PORT "$KIRA_SEED_PROMETHEUS_PORT"
-
-KIRA_SENTRY_RPC_PORT="26657"            && setGlobEnv KIRA_SENTRY_RPC_PORT "$KIRA_SENTRY_RPC_PORT"
-KIRA_SENTRY_P2P_PORT="26656"            && setGlobEnv KIRA_SENTRY_P2P_PORT "$KIRA_SENTRY_P2P_PORT"
-KIRA_SENTRY_GRPC_PORT="29090"           && setGlobEnv KIRA_SENTRY_GRPC_PORT "$KIRA_SENTRY_GRPC_PORT"
-KIRA_SENTRY_PROMETHEUS_PORT="26660"     && setGlobEnv KIRA_SENTRY_PROMETHEUS_PORT "$KIRA_SENTRY_PROMETHEUS_PORT"
-
-KIRA_VALIDATOR_P2P_PORT="36656"         && setGlobEnv KIRA_VALIDATOR_P2P_PORT "$KIRA_VALIDATOR_P2P_PORT"
-KIRA_VALIDATOR_RPC_PORT="36657"         && setGlobEnv KIRA_VALIDATOR_RPC_PORT "$KIRA_VALIDATOR_RPC_PORT"
-KIRA_VALIDATOR_GRPC_PORT="39090"        && setGlobEnv KIRA_VALIDATOR_GRPC_PORT "$KIRA_VALIDATOR_GRPC_PORT"
-KIRA_VALIDATOR_PROMETHEUS_PORT="36660"  && setGlobEnv KIRA_VALIDATOR_PROMETHEUS_PORT "$KIRA_VALIDATOR_PROMETHEUS_PORT"
 
 setGlobEnv KIRA_USER "$KIRA_USER"
 KIRA_HOME="/home/$KIRA_USER"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
@@ -187,68 +194,23 @@ INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_R
 SEKAI_REPO="https://github.com/KiraCore/sekai" && setGlobEnv SEKAI_REPO "$SEKAI_REPO"
 INTERX_REPO="https://github.com/KiraCore/sekai" && setGlobEnv INTERX_REPO "$INTERX_REPO"
 
-CDHELPER_VERSION_OLD=$(CDHelper version --silent=true 2> /dev/null || echo "")
-
-if [ "$CDHELPER_VERSION_OLD" != "$CDHELPER_VERSION" ] ; then
-    echoInfo "INFO: Installing CDHelper '$CDHELPER_VERSION_OLD' -> '$CDHELPER_VERSION'"
-    cd /tmp
-
-    if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
-        CDHELPER_ARCH="arm64"
-        EXPECTED_HASH="c2e40c7143f4097c59676f037ac6eaec68761d965bd958889299ab32f1bed6b3"
-    else
-        CDHELPER_ARCH="x64"
-        EXPECTED_HASH="082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7"
-    fi
-
-    FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo -n "")
-
-    if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-        rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
-        wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
-        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
-
-        if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-            set +x
-            echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-            SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
-            [ "${SELECT,,}" == "x" ] && exit
-            echo "DANGER: You decided to disregard a potential vulnerability !!!"
-            echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-            set -x
-        fi
-    else
-        echo "INFO: CDHelper tool was already downloaded"
-    fi
-
-    INSTALL_DIR="/usr/local/bin/CDHelper"
-    rm -rfv $INSTALL_DIR
-    mkdir -pv $INSTALL_DIR
-    unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
-    chmod -R -v 555 $INSTALL_DIR
-
-    ls -l /bin/CDHelper || echo "Symlink not found"
-    rm -fv /bin/CDHelper || echo "Removing old symlink"
-    ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
-
-    CDHelper version
-else
-    echoInfo "INFO: CDHelper $CDHELPER_VERSION_OLD is already installed"
-fi
-
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
-setGlobEnv DOTNET_SYSTEM_GLOBALIZATION_INVARIANT 1
 loadGlobEnvs
 
-apt-get update -y
-apt-get install -y --fix-missing --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-    software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential \
-    nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude \
-    zip unzip p7zip-full 
+apt-get update -y --fix-missing
+apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+    software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential htop ccze sysstat \
+    nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude zip unzip p7zip-full \
+    python python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm net-tools \
+    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
+
+pip3 install ECPy
+
+apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r` || echoErr "ERROR: Failed to install monitoring tools"
     
 apt update -y
-apt install -y bc dnsutils psmisc netcat nmap parallel
+apt install -y bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
 
 ln -s /usr/bin/git /bin/git || echoWarn "WARNING: Git symlink already exists"
 git config --add --global core.autocrlf input || echoWarn "WARNING: Failed to set global autocrlf"
@@ -282,9 +244,9 @@ KIRA_SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
 
 echo "INFO: Startting cleanup..."
-apt-get autoclean || echo "WARNING: autoclean failed"
-apt-get clean || echo "WARNING: clean failed"
-apt-get autoremove || echo "WARNING: autoremove failed"
+apt-get autoclean -y || echo "WARNING: autoclean failed"
+apt-get clean -y || echo "WARNING: clean failed"
+apt-get autoremove -y || echo "WARNING: autoremove failed"
 journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
 
 $KIRA_MANAGER/setup/tools.sh

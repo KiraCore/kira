@@ -5,8 +5,8 @@ set -x
 USE_DEFAULTS=$1
 [ -z "$USE_DEFAULTS" ] && USE_DEFAULTS="true"
 
-SEKAI_BRANCH_DEFAULT=$SEKAI_BRANCH
-INTERX_BRANCH_DEFAULT=$INTERX_BRANCH
+SEKAI_BRANCH_DEFAULT="$SEKAI_BRANCH"
+INTERX_BRANCH_DEFAULT="$INTERX_BRANCH"
 
 # All branches should have the same name across all repos to be considered compatible
 if [ "$INFRA_BRANCH" == "master" ] || [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
@@ -26,8 +26,8 @@ if [ "${USE_DEFAULTS,,}" != "true" ] ; then
     set -x
 fi
 
-[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH=$SEKAI_BRANCH_DEFAULT
-[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH=$INTERX_BRANCH_DEFAULT
+[ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$SEKAI_BRANCH_DEFAULT"
+[ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$INTERX_BRANCH_DEFAULT"
 
 set +x
 echoInfo "INFO: SEKAI branch '$SEKAI_BRANCH' was selected"
@@ -35,5 +35,5 @@ echoInfo "INFO: INTERX branch '$INTERX_BRANCH' was selected"
 [ "${USE_DEFAULTS,,}" != "true" ] && echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
-CDHelper text lineswap --insert="SEKAI_BRANCH=\"$SEKAI_BRANCH\"" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_BRANCH=\"$INTERX_BRANCH\"" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
+setGlobEnv INTERX_BRANCH "$INTERX_BRANCH"

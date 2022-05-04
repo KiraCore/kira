@@ -7,14 +7,12 @@ MNEMONICS="$KIRA_SECRETS/mnemonics.env"
 mkdir -p "$KIRA_SECRETS"
 touch $MNEMONICS
 
-source $MNEMONICS
-
 REGEN_PRIV_VALIDATOR_KEYS="false"
 REGEN_VALIDATOR_NODE_KEYS="false"
 REGEN_SENTRY_NODE_KEYS="false"
 
 function MnemonicGenerator() {
-    set +e && source "/etc/profile" &>/dev/null && set -e
+    loadGlobEnvs
     MNEMONICS="$KIRA_SECRETS/mnemonics.env"
     source $MNEMONICS
 
@@ -30,16 +28,16 @@ function MnemonicGenerator() {
     if (! $(isMnemonic "$mnemonic")) ; then # if mnemonic is not present then generate new one
         echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
         mnemonic=$(echo ${mnemonic//,/ } | xargs || echo -n "")
-        (! $(isMnemonic "$mnemonic")) && mnemonic="$(hd-wallet-derive --gen-words=24 --gen-key --format=jsonpretty -g | jsonParse '[0].mnemonic')"
-        CDHelper text lineswap --insert="$mnemonicVariableName=\"$mnemonic\"" --prefix="$mnemonicVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+        (! $(isMnemonic "$mnemonic")) && mnemonic="$(bip39gen mnemonic --length=24 --verbose=false)"
+        setVar "$mnemonicVariableName" "$mnemonic" "$MNEMONICS" 1> /dev/null
     fi
 
-    TMP_DUMP="/tmp/priv-key-gen.dump.tmp"
+    TMP_DUMP="/tmp/validator-key-gen.dump.tmp"
     if [ "${2,,}" == "val" ] ; then
         echoInfo "INFO: Ensuring $1 private key is generated"
         if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
             rm -fv "$valkeyPath"
-            priv-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=$TMP_DUMP --keyid=$TMP_DUMP
+            validator-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=$TMP_DUMP --keyid=$TMP_DUMP
         fi
     elif [ "${2,,}" == "node" ] ; then
         echoInfo "INFO: Ensuring $1 nodekey files are generated"
@@ -49,12 +47,12 @@ function MnemonicGenerator() {
         
         if [ ! -f "$keyidPath" ] || [ ! -f "$nodekeyPath" ] ; then # node keys are only re-generated if any of keystore files is not present
             rm -fv "$keyidPath" "$nodekeyPath"
-            priv-key-gen --mnemonic="$mnemonic" --valkey=$TMP_DUMP --nodekey="$nodekeyPath" --keyid="$keyidPath"
+            validator-key-gen --mnemonic="$mnemonic" --valkey=$TMP_DUMP --nodekey="$nodekeyPath" --keyid="$keyidPath"
         fi
     
         newNodeId=$(cat $keyidPath)
         if [ -z "$nodeId" ] || [ "$nodeId" != "$newNodeId" ] ; then
-            CDHelper text lineswap --insert="$nodeIdVariableName=\"$newNodeId\"" --prefix="$nodeIdVariableName=" --path=$MNEMONICS --append-if-found-not=True --silent=true
+            setVar "$nodeIdVariableName" "$newNodeId" "$MNEMONICS" 1> /dev/null
         fi
     elif [ "${2,,}" == "addr" ] ; then
         echoInfo "INFO: $1 address key does not require any kestore files"

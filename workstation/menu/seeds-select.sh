@@ -14,7 +14,7 @@ fi
 
 while : ; do
     set +x
-    set +e && source $ETC_PROFILE &>/dev/null && set -e
+    loadGlobEnvs
     echoInfo "INFO: Current list of peers:"
     (! $(isFileEmpty $PUBLIC_PEERS )) && cat $PUBLIC_PEERS || echo "none"
     echoInfo "INFO: Current list of seeds:"
@@ -40,7 +40,7 @@ while : ; do
 
         [ -z "$NODE_ADDR" ] && NODE_ADDR=$TRUSTED_NODE_ADDR
         (! $(isDnsOrIp "$NODE_ADDR")) && echoErr "ERROR: Invalid IPv4 address or DNS name" && continue
-        CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+        TRUSTED_NODE_ADDR="$NODE_ADDR" && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
 
         echoInfo "INFO: Downloading seeds list & attempting discovery of active nodes..."
         TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 

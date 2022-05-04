@@ -65,7 +65,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-    #cp -afv "$DOCKER_COMMON_RO/addrbook.json" "$COMMON_PATH/addrbook.json"
+    cp -afv "$KIRA_INFRA" "$COMMON_PATH"
 
     EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
@@ -133,7 +133,7 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
-    kira:latest
+    ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"

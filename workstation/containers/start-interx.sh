@@ -32,7 +32,6 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     echoInfo "INFO: Ensuring base images exist..."
     $KIRA_MANAGER/setup/registry.sh
-    $KIRAMGR_SCRIPTS/update-base-image.sh
     $KIRAMGR_SCRIPTS/update-interx-image.sh
 
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
@@ -52,24 +51,9 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -x
 
     CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
-    globSet seed_node_id "" $COMMON_GLOB
-    globSet sentry_node_id "" $COMMON_GLOB
-    globSet validator_node_id "" $COMMON_GLOB
-
-    if [ "${INFRA_MODE,,}" == "seed" ] ; then
-        PING_TARGET="seed.local"
-        globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
-    elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
-        PING_TARGET="sentry.local"
-        globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
-    elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-        PING_TARGET="validator.local"
-        globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
-    else
-        echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
-        exit 1
-    fi
-
+    globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
+    globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
+    globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
     globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
@@ -87,12 +71,12 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
-    -e PING_TARGET="$PING_TARGET" \
+    -e PING_TARGET="${INFRA_MODE,,}.local" \
     -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
     -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
-    $CONTAINER_NAME:latest
+    ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
