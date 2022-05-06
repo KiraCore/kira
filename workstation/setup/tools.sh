@@ -91,9 +91,12 @@ SYSCTRL_BOOTED="true"
 systemctl daemon-reload || SYSCTRL_BOOTED="false"
 
 if [ "${SYSCTRL_BOOTED,,}" != "true" ] ; then
-  safeWget /usr/bin/systemctl \
+  BIN_DEST=/usr/bin/systemctl
+  safeWget $BIN_DEST \
    https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/9cbe1a00eb4bdac6ff05b96ca34ec9ed3d8fc06c/files/docker/systemctl.py \
    "e02e90c6de6cd68062dadcc6a20078c34b19582be0baf93ffa7d41f5ef0a1fdd"
+
+  chmod 555 $BIN_DEST
 else
   echoInfo "INFO:            Booted systemctl: " && systemctl --version
 fi
