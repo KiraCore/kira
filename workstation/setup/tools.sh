@@ -7,7 +7,7 @@ $KIRA_MANAGER/setup/envs.sh
 
 loadGlobEnvs
 
-cd /tmp
+mkdir -p $KIRA_BIN && cd $KIRA_BIN
 
 BIN_DEST="/usr/local/bin/bash-utils.sh" && \
   safeWget ./bash-utils.sh "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/bash-utils.sh" \
