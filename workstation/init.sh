@@ -115,7 +115,7 @@ FILE_NAME="bash-utils.sh" && \
  wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}" -O ./$FILE_NAME && \
  wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}.sig" -O ./${FILE_NAME}.sig && \
  cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
- chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" && . /etc/profile && \
+ chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" && . /$FILE_NAME && \
  echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
 if [[ $(getCpuCores) -lt 2 ]] ; then
@@ -136,13 +136,17 @@ setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
 setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
+setGlobEnv KIRA_USER "$KIRA_USER"
+setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
 [ -z "$INFRA_BRANCH" ] && echoErr "ERROR: Infra branch was undefined!" && exit 1
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 
-setGlobEnv KIRA_USER "$KIRA_USER"
+# NOTE: Glob envs can be loaded only AFTER init provided variabes are set
+loadGlobEnvs
+
 KIRA_HOME="/home/$KIRA_USER"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
 KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
 KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
@@ -187,14 +191,13 @@ mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_S
 #     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
 #     [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
 # fi
-
-setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
-setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
-setGlobEnv INTERX_BRANCH "$INTERX_BRANCH"
-
-INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_REPO"
-SEKAI_REPO="https://github.com/KiraCore/sekai" && setGlobEnv SEKAI_REPO "$SEKAI_REPO"
-INTERX_REPO="https://github.com/KiraCore/sekai" && setGlobEnv INTERX_REPO "$INTERX_REPO"
+# setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
+# setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
+# setGlobEnv INTERX_BRANCH "$INTERX_BRANCH"
+# 
+# INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_REPO"
+# SEKAI_REPO="https://github.com/KiraCore/sekai" && setGlobEnv SEKAI_REPO "$SEKAI_REPO"
+# INTERX_REPO="https://github.com/KiraCore/sekai" && setGlobEnv INTERX_REPO "$INTERX_REPO"
 
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"

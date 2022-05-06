@@ -49,7 +49,7 @@ EOF
 # Setup Example
 
 ```
-BRANCH="feature/ci-cd-v1" && \
+BRANCH="feature/ci-cd-v1" && rm -fv ./i.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
  chmod 555 -v ./i.sh && ./i.sh "$BRANCH"
 ```
