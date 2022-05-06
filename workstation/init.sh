@@ -137,7 +137,7 @@ setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
-[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
+[ -z "$INFRA_BRANCH" ] && echoErr "ERROR: Infra branch was undefined!" && exit 1
 [ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 
 setGlobEnv KIRA_USER "$KIRA_USER"
@@ -175,16 +175,16 @@ rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-# All branches should have the same name across all repos to be considered compatible
-if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
-    DEFAULT_BRANCH="$INFRA_BRANCH"
-    SEKAI_BRANCH="$DEFAULT_BRANCH"
-    INTERX_BRANCH="$DEFAULT_BRANCH"
-else
-    DEFAULT_BRANCH="master"
-    [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
-    [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
-fi
+# # All branches should have the same name across all repos to be considered compatible
+# if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
+#     DEFAULT_BRANCH="$INFRA_BRANCH"
+#     SEKAI_BRANCH="$DEFAULT_BRANCH"
+#     INTERX_BRANCH="$DEFAULT_BRANCH"
+# else
+#     DEFAULT_BRANCH="master"
+#     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
+#     [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
+# fi
 
 setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
 setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
@@ -207,8 +207,6 @@ apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --a
 
 pip3 install ECPy
 
-apt-get install -y linux-tools-common linux-tools-generic linux-tools-`uname -r` || echoErr "ERROR: Failed to install monitoring tools"
-    
 apt update -y
 apt install -y bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
 
