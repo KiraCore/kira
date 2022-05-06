@@ -21,6 +21,7 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
+KIRA_MANAGER_VERSION="v0.0.1"
 KIRA_BASE_VERSION="v0.10.3"
 TOOLS_VERSION="v0.1.5"
 COSIGN_VERSION="v1.7.2"
@@ -31,12 +32,13 @@ set +x
 echo "------------------------------------------------"
 echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
-echo "|      SKIP UPDATE: $SKIP_UPDATE"
-echo "|       START TIME: $START_TIME_INIT"
-echo "|     INFRA BRANCH: $INFRA_BRANCH"
-echo "|        KIRA USER: $KIRA_USER"
-echo "|    TOOLS VERSION: $TOOLS_VERSION"
-echo "| CDHELPER VERSION: $CDHELPER_VERSION"
+echo "|       SKIP UPDATE: $SKIP_UPDATE"
+echo "|        START TIME: $START_TIME_INIT"
+echo "|      INFRA BRANCH: $INFRA_BRANCH"
+echo "|         KIRA USER: $KIRA_USER"
+echo "|     TOOLS VERSION: $TOOLS_VERSION"
+echo "|  CDHELPER VERSION: $CDHELPER_VERSION"
+echo "| KIRA MNG. VERSION: $KIRA_MANAGER_VERSION"
 echo "------------------------------------------------"
 echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
 echo             "MMMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMMM"
@@ -82,7 +84,7 @@ else
     COSIGN_HASH="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
 fi
 
-COSIGN_INSTALLED=$(isCommand cosign &> /dev/null || echo "false")
+COSIGN_INSTALLED=$(isCommand cosign || echo "false")
 KEYS_DIR="/usr/keys"
 KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
 
@@ -219,20 +221,20 @@ git config --add --global http.sslVersion "tlsv1.2" || echoWarn "WARNING: Failed
 
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
     echoInfo "INFO: Updating kira Repository..."
-    rm -rfv $KIRA_INFRA
-    mkdir -p $KIRA_INFRA
+    rm -rfv "$KIRA_INFRA" "$KIRA_MANAGER"
+    mkdir -p "$KIRA_INFRA" "$KIRA_MANAGER"
+
     git clone --branch $INFRA_BRANCH $INFRA_REPO $KIRA_INFRA
     cd $KIRA_INFRA
     git describe --all --always
     chmod -R 555 $KIRA_INFRA
 
     # update old processes
-    rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
     cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
     echoInfo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
+    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "true" "$START_TIME_INIT"
     echoInfo "INFO: Init script restart finished."
     exit 0
 fi
