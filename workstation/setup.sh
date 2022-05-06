@@ -58,7 +58,7 @@ $KIRA_MANAGER/setup/docker.sh
 $KIRA_SCRIPTS/docker-restart.sh
 echoInfo "INFO: Waiting for all containers to start..."
 sleep 120
-$KIRA_MANAGER/setup/registry.sh
+#$KIRA_MANAGER/setup/registry.sh
 
 echoInfo "INFO: Updating kira update service..."
 cat > /etc/systemd/system/kiraup.service << EOL

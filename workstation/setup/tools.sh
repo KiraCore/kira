@@ -108,4 +108,3 @@ systemctl restart kirascan || echoWarn "WARNING: Failed to restart KIRA scan ser
 systemctl restart kiraclean || echoWarn "WARNING: Failed to restart KIRA cleanup service"
   
 cd $KIRA_HOME
-touch $SETUP_CHECK

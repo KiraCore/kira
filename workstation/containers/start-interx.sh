@@ -31,7 +31,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
 
     echoInfo "INFO: Ensuring base images exist..."
-    $KIRA_MANAGER/setup/registry.sh
+    #$KIRA_MANAGER/setup/registry.sh
     $KIRAMGR_SCRIPTS/update-interx-image.sh
 
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"

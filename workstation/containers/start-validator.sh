@@ -41,7 +41,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
 
     echoInfo "INFO: Ensuring base images exist..."
-    $KIRA_MANAGER/setup/registry.sh
+    #$KIRA_MANAGER/setup/registry.sh
     $KIRAMGR_SCRIPTS/update-base-image.sh
     $KIRAMGR_SCRIPTS/update-kira-image.sh
 
