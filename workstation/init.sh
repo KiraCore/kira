@@ -138,6 +138,7 @@ setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"
 setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
+setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
