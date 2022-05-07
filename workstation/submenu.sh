@@ -112,7 +112,9 @@ while :; do
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
     [ "${NEW_NETWORK,,}" == "true" ] && \
-    echo -e "|        NEW Network Name: ${NETWORK_NAME}"
+    echo -e "|        NEW Network Name: ${NEW_NETWORK_NAME}"
+    [ "${NEW_NETWORK,,}" != "true" ] && \
+    echo -e "|            Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
@@ -274,11 +276,23 @@ systemctl enable kiraup
 systemctl enable kiraplan
 systemctl restart kiraup
 systemctl stop kiraplan || echoWarn "WARNING: Failed to stop KIRA Plan!"
+systemctl restart systemd-journald
 
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
-journalctl --since "$SETUP_START_DT" -u kiraup -f --no-pager --output cat
+
+KIRA_UP_ACTIVE=$(isServiceActive kiraup)
+
+if [ "${KIRA_UP_ACTIVE,,}" == "true" ] ; then
+  journalctl --since "$SETUP_START_DT" -u kiraup --no-pager --output cat
+else
+  systemctl status kiraup
+  echoErr "ERROR: Failed to launch kiraup service!"
+fi
 
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0
+
+# systemctl status kiraup
+# journalctl -u kiraup 
