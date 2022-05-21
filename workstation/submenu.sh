@@ -247,6 +247,8 @@ ExecStart=/bin/bash $KIRA_MANAGER/update.sh
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
+StandardOutput=append:$KIRA_LOGS/kiraup.log
+StandardError=append:$KIRA_LOGS/kiraup.log
 [Install]
 WantedBy=default.target
 EOL
@@ -267,14 +269,19 @@ ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
+StandardOutput=append:$KIRA_LOGS/kiraplan.log
+StandardError=append:$KIRA_LOGS/kiraplan.log
 [Install]
 WantedBy=default.target
 EOL
 
+rm -rfv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+
 systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan
-systemctl restart kiraup
+systemctl start kiraup
 systemctl stop kiraplan || echoWarn "WARNING: Failed to stop KIRA Plan!"
 systemctl restart systemd-journald
 
@@ -284,15 +291,13 @@ sleep 2
 KIRA_UP_ACTIVE=$(isServiceActive kiraup)
 
 if [ "${KIRA_UP_ACTIVE,,}" == "true" ] ; then
-  journalctl --since "$SETUP_START_DT" -u kiraup --no-pager --output cat
+  cat $KIRA_LOGS/kiraup.log
 else
   systemctl status kiraup
   echoErr "ERROR: Failed to launch kiraup service!"
+  exit 1
 fi
 
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0
-
-# systemctl status kiraup
-# journalctl -u kiraup 

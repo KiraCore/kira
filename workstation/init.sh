@@ -149,6 +149,7 @@ echoInfo "INFO: Setting up essential ENV variables & constant..."
 loadGlobEnvs
 
 KIRA_HOME="/home/$KIRA_USER"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
+KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
 KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
 KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
 KIRA_SCAN="$KIRA_HOME/kirascan"             && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
@@ -180,7 +181,7 @@ GLOBAL_COMMON_RO="/docker/shared/common_ro/kiraglob"    && setGlobEnv GLOBAL_COM
 LOCAL_GENESIS_PATH="$DOCKER_COMMON_RO/genesis.json"     && setGlobEnv LOCAL_GENESIS_PATH "$LOCAL_GENESIS_PATH"
 
 rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
+mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
 # # All branches should have the same name across all repos to be considered compatible

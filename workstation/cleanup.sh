@@ -25,11 +25,7 @@ systemctl restart docker || ( echoErr "ERROR: Failed to restart docker service" 
 sleep 3
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
-
-i=-1
 for name in $CONTAINERS; do
-    i=$((i + 1)) # dele all containers except registry
-    [ "${name,,}" == "registry" ] && continue
     $KIRA_SCRIPTS/container-delete.sh "$name"
     rm -rfv "$DOCKER_COMMON/${name}"
     globDel "${name}_SEKAID_STATUS"

@@ -56,7 +56,8 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$SETUP_END_DT")) ; then
                 echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
-                sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
+                # sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
+                sleep 2 && tail -f $KIRA_LOGS/kiraup.log
             else
                 echoInfo "INFO: Printing update tools logs:"
                 cat $(globGet UPDATE_TOOLS_LOG) || echoErr "ERROR: Tools Update Log was NOT found!"
@@ -67,7 +68,8 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
                 echoInfo "INFO: Finished Printing update containers logs." && echoInfo "INFO: Printing update service logs:"
                 sleep 2
                 if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
-                    journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
+                    # journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
+                    cat $KIRA_LOGS/kiraup.log
                 else
                     tryCat "$KIRA_DUMP/kiraup-done.log.txt"
                 fi
@@ -105,11 +107,13 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
                 echoInfo "INFO: Starting plan logs preview, to exit type Ctrl+c"
-                sleep 2 && journalctl --since "$PLAN_START_DT" -u kiraplan -f --output cat
+                # sleep 2 && journalctl --since "$PLAN_START_DT" -u kiraplan -f --output cat
+                sleep 2 && tail -f $KIRA_LOGS/kiraplan.log
             else
                 echoInfo "INFO: Printing plan logs:"
                 if ($(isFileEmpty "$KIRA_DUMP/kiraplan-done.log.txt")) && [ ! -z "$PLAN_END_DT"] ; then
-                    journalctl --since "$PLAN_START_DT" --until "$PLAN_END_DT" -u kiraplan -b --no-pager --output cat
+                    # journalctl --since "$PLAN_START_DT" --until "$PLAN_END_DT" -u kiraplan -b --no-pager --output cat
+                    cat $KIRA_LOGS/kiraplan.log
                 else
                     tryCat "$KIRA_DUMP/kiraplan-done.log.txt"
                 fi

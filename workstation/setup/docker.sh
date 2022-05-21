@@ -8,6 +8,13 @@ $KIRA_SCRIPTS/docker-restart.sh
 sleep 5
 VERSION=$(docker -v || echo "error")
 
+# NOTE: WSL requires docker desktop running on the host machine 
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+if [ "${IS_WSL,,}" == "true" ] ; then
+    setGlobEnv DOCKER_HOST "tcp://localhost:2375"
+    setGlobEnv DOCKER_BUILDKIT "1"
+fi
+
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"

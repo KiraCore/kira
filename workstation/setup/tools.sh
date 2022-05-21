@@ -60,6 +60,8 @@ Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
+StandardOutput=append:$KIRA_LOGS/kirascan.log
+StandardError=append:$KIRA_LOGS/kirascan.log
 Restart=always
 RestartSec=5
 LimitNOFILE=4096
@@ -80,6 +82,8 @@ Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/kira/cleanup.sh
+StandardOutput=append:$KIRA_LOGS/kiraclean.log
+StandardError=append:$KIRA_LOGS/kiraclean.log
 Restart=always
 RestartSec=30
 LimitNOFILE=4096
@@ -100,6 +104,9 @@ if [ "${SYSCTRL_BOOTED,,}" != "true" ] ; then
 else
   echoInfo "INFO:            Booted systemctl: " && systemctl --version
 fi
+
+rm -fv $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
+touch $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
 
 systemctl daemon-reload
 systemctl enable kirascan
