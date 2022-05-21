@@ -25,6 +25,9 @@ fi
 SETUP_START_DT=$(globGet SETUP_START_DT)
 # marks if system was rebooted before tools setup started (this is required in case of docker deamon malfunction)
 SETUP_REBOOT=$(globGet SETUP_REBOOT)
+# do not reboot if KM is run in WSL mode
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+[ "${IS_WSL,,}" == "true" ] && SETUP_REBOOT="true"
 
 if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."

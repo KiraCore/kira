@@ -47,10 +47,11 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceAct
     apt autoremove -y containerd || echoWarn "WARNING: Failed containerd autoremove"
 
     groupdel docker || echoWarn "WARNING: Failed to delete docker group"
-    rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock"
-    rm -rfv "/var/lib/containerd"
+    umount /var/lib/docker/aufs || echoWarn "WARNING: Failed to unmount /var/lib/docker/aufs"
+    umount /var/lib/docker || echoWarn "WARNING: Failed to unmount /var/lib/docker"
+    rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock" "/var/lib/containerd"
 
-    if ! timeout 2 ping -c1 "download.docker.com" &>/dev/null ; then
+    if ! timeout 2 ping -c1 "download.docker.com" &>/dev/null && [ "${IS_WSL,,}" != "true" ] ; then
         firewall-cmd --permanent --delete-zone=docker || echoWarn "WARNING: Failed to delete docker zone"
         firewall-cmd --set-default-zone=public || echoWarn "INFO: WARNING to set default zone"
         firewall-cmd --reload

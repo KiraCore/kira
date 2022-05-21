@@ -56,9 +56,9 @@ $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
 
 $KIRA_SCRIPTS/docker-restart.sh
-echoInfo "INFO: Waiting for all containers to start..."
-sleep 120
-#$KIRA_MANAGER/setup/registry.sh
+# echoInfo "INFO: Waiting for all containers to start..."
+# sleep 120
+# $KIRA_MANAGER/setup/registry.sh
 
 echoInfo "INFO: Updating kira update service..."
 cat > /etc/systemd/system/kiraup.service << EOL
@@ -102,9 +102,7 @@ LimitNOFILE=4096
 WantedBy=default.target
 EOL
 
-touch /tmp/rs_manager
-touch /tmp/rs_git_manager
-touch /tmp/rs_container_manager
+touch /tmp/rs_manager /tmp/rs_git_manager /tmp/rs_container_manager
 
 set +x
 echoWarn "------------------------------------------------"
