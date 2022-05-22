@@ -166,7 +166,6 @@ KIRA_INTERX="$KIRA_REPOS/interx"    && setGlobEnv KIRA_INTERX "$KIRA_INTERX"
 
 KIRA_BIN="/kira/bin"                && setGlobEnv KIRA_BIN "$KIRA_BIN"
 KIRA_SETUP="/kira/setup"            && setGlobEnv KIRA_SETUP "$KIRA_SETUP"
-KIRA_UPDATE="/kira/update"          && setGlobEnv KIRA_UPDATE "$KIRA_UPDATE"
 KIRA_MANAGER="/kira/manager"        && setGlobEnv KIRA_MANAGER "$KIRA_MANAGER"
 
 KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"     && setGlobEnv KIRA_SCRIPTS "$KIRA_SCRIPTS"

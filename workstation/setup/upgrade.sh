@@ -326,7 +326,6 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
     rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
-    rm -rfv "$KIRA_UPDATE" || echoWarn "WARNING: Failed to removed kira update directory"
     
     echoInfo "INFO: Dumping loggs before planned reboot & update..."
     rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
