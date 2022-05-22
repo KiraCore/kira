@@ -54,7 +54,7 @@ mkdir -p $UPDATE_DUMP
 
 [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was not found! ($LOCAL_GENESIS_PATH)" && sleep 60 && exit 1
 
-if [ $(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER") != "true" ]; then
+if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     echoInfo "INFO: Installing essential tools and dependecies"
 
     if [ -z "$SETUP_REBOOT" ] ; then
@@ -94,7 +94,7 @@ else
     echoInfo "INFO: Essential tools and dependecies were already installed"
 fi
 
-if [ $(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER") != "true" ]; then
+if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     echoInfo "INFO: Cleaning up environment & containers"
     set -x
     UPDATE_DONE="false"
@@ -127,7 +127,7 @@ else
     echoInfo "INFO: Reboot was already performed, setup will continue..."
 fi
 
-if [ $(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER") != "true" ]; then
+if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     echoInfo "INFO: Building docker containers"
     set -x
     UPDATE_DONE="false"
