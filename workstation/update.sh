@@ -65,7 +65,7 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         exit 0
     else
         echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."
-        systemctl start docker || echoWarn "WARNINIG: Failed to start docker"
+        systemctl restart docker || echoWarn "WARNINIG: Failed to start docker"
         sleep 3
     fi
 
@@ -153,7 +153,7 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     fi
 else
     echoInfo "INFO: Docker containers were already updated"
-    systemctl start docker || echoWarn "WARNINIG: Failed to start docker"
+    systemctl restart docker || echoWarn "WARNINIG: Failed to start docker"
     sleep 3
 fi
 

@@ -42,8 +42,8 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     echoInfo "INFO: Ensuring base images exist..."
     #$KIRA_MANAGER/setup/registry.sh
-    $KIRAMGR_SCRIPTS/update-base-image.sh
-    $KIRAMGR_SCRIPTS/update-kira-image.sh
+    #$KIRAMGR_SCRIPTS/update-base-image.sh
+    #$KIRAMGR_SCRIPTS/update-kira-image.sh
 
     echoInfo "INFO: Loading secrets..."
     set +e

@@ -36,7 +36,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     echoInfo "INFO: Ensuring base images exist..."
     #$KIRA_MANAGER/setup/registry.sh
-    $KIRAMGR_SCRIPTS/update-kira-image.sh
+    #$KIRAMGR_SCRIPTS/update-kira-image.sh
 
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
     # globGet sentry_health_log_old
