@@ -17,13 +17,13 @@ if [ ! -f "$SETUP_CHECK" ] ; then
 case \"\$1\" in
     resume)
         rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
-        systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
-        systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
-        firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
-        systemctl restart docker || echo \"ERROR: Failed to restart docker\"
-        systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
-        systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
-        systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"
+        timeout 60 systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
+        timeout 60 systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
+        timeout 60 firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
+        timeout 60 systemctl restart docker || echo \"ERROR: Failed to restart docker\"
+        timeout 60 systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
+        timeout 60 systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
+        timeout 60 systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"
 esac
 exit 0"
 

@@ -275,8 +275,7 @@ StandardError=append:$KIRA_LOGS/kiraplan.log
 WantedBy=default.target
 EOL
 
-rm -rfv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
-touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+rm -rfv $KIRA_LOGS && mkdir -p $KIRA_LOGS
 
 systemctl daemon-reload
 systemctl enable kiraup

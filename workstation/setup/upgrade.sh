@@ -333,8 +333,8 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     
     echoInfo "INFO: Restarting update daemon..."
     systemctl daemon-reload
-    systemctl restart docker
-    systemctl restart kiraup
+    timeout 60 systemctl restart docker
+    timeout 60 systemctl restart kiraup
 else
     echoInfo "INFO: Repos upgrade already done"
 fi
