@@ -82,7 +82,8 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         echoInfo "INFO: Sucessfully finalized essentials update"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "true"
         systemctl daemon-reload
-        timeout 60 systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
+        systemctl enable kiraup
+        systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
         globSet SETUP_REBOOT ""
         exit 0
     else
@@ -117,7 +118,7 @@ else
     echoInfo "INFO: Environment cleanup was already executed"
 fi
 
-if [ -z "$SETUP_REBOOT" ] ; then
+if [ -z "$SETUP_REBOOT" ] && [ "${IS_WSL,,}" != "true" ] ; then
     echoInfo "INFO: Reboot is required before setup can continue..." && sleep 3
     echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
     globSet SETUP_REBOOT "done"
