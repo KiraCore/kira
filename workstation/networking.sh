@@ -16,6 +16,7 @@ PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +trie
 ( ! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo -n "")
 LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo -n "")
 ( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo "0.0.0.0")
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 
 set +x
 echoWarn "------------------------------------------------"
@@ -29,14 +30,20 @@ echoWarn "|        LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
+if [ "${IS_WSL,,}" == "true" ] ; then
+    echoWarn "WARNING: Firewall & advanced networking is not supported on WSL!" && sleep 5
+    exit 0
+fi
+
 echoInfo "INFO: Stopping docker & restaring firewall..."
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
 $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
+
+service dbus start || echoWarn "WARNING: Failed to start dbus service"
 timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld service"
 
 echoInfo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 firewall-cmd --get-zones
-
 firewall-cmd --permanent --zone=public --change-interface=$IFACE
 
 echoInfo "INFO: firewalld cleanup"
@@ -92,6 +99,12 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$KIRA_SENTRY_PR
 # required for SSH
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
+
+# required for WSL/docker
+if [ "${IS_WSL,,}" == "true" ] ; then
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=2375/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=2375/tcp
+fi
 
 if [ "$DEFAULT_SSH_PORT" != "22" ] && ($(isPort "$DEFAULT_SSH_PORT")) ; then
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_SSH_PORT/tcp

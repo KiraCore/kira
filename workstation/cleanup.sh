@@ -72,7 +72,6 @@ for (( i=0; i<${len}; i++ )) ; do
     docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
 done
 
-# $KIRAMGR_SCRIPTS/restart-networks.sh "false" # restarts all network without re-connecting containers
 $KIRA_MANAGER/scripts/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
