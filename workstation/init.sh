@@ -118,6 +118,9 @@ FILE_NAME="bash-utils.sh" && \
  chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" && . /$FILE_NAME && \
  echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
+source /etc/profile
+
+set +x
 if [[ $(getCpuCores) -lt 2 ]] ; then
     echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $(getCpuCores)\e[0m"
     echo "INFO: Recommended CPU is 4 cores"
@@ -129,7 +132,9 @@ if [[ $(getRamTotal) -lt 3145728 ]] ; then
     echo "INFO: Recommended RAM is 8GB"
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 fi
+set -x
 
+echoInfo "INFO: Veryfying kira base image integrity..."
 cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 
 setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
