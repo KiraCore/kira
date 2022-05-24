@@ -64,6 +64,7 @@ StandardOutput=append:$KIRA_LOGS/kirascan.log
 StandardError=append:$KIRA_LOGS/kirascan.log
 StartLimitIntervalSec=0
 Restart=always
+SuccessExitStatus=on-failure
 RestartSec=5
 LimitNOFILE=4096
 [Install]
@@ -87,6 +88,7 @@ StandardOutput=append:$KIRA_LOGS/kiraclean.log
 StandardError=append:$KIRA_LOGS/kiraclean.log
 StartLimitIntervalSec=0
 Restart=always
+SuccessExitStatus=on-failure
 RestartSec=30
 LimitNOFILE=4096
 [Install]

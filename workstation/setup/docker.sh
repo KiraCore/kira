@@ -61,7 +61,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceAct
         echoErr "ERROR: System must be rebooted, no connection with 'download.docker.com'"
         if [ ! -f $SETUP_CHECK_REBOOT ] ; then
             touch $SETUP_CHECK_REBOOT
-            reboot
+            [ "${IS_WSL,,}" != "true" ] && reboot
         else
             sleep 10
             exit 1

@@ -76,6 +76,7 @@ WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
 StartLimitIntervalSec=0
 Restart=always
+SuccessExitStatus=on-failure
 RestartSec=5
 LimitNOFILE=4096
 [Install]
@@ -98,6 +99,7 @@ WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
 StartLimitIntervalSec=0
 Restart=always
+SuccessExitStatus=on-failure
 RestartSec=5
 LimitNOFILE=4096
 [Install]
