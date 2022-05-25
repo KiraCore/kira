@@ -244,7 +244,6 @@ Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-StartLimitIntervalSec=0
 Restart=always
 SuccessExitStatus=on-failure
 RestartSec=5
@@ -268,7 +267,6 @@ Type=simple
 User=root
 WorkingDirectory=$KIRA_HOME
 ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
-StartLimitIntervalSec=0
 Restart=always
 SuccessExitStatus=on-failure
 RestartSec=5
@@ -308,3 +306,5 @@ exit 0
 # systemctl status kiraup
 # journalctl -u kiraup 
 # cat $KIRA_LOGS/kiraup.log
+
+# systemctl restart kiraup && journalctl -u kiraup -f --output cat
