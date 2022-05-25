@@ -45,7 +45,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     set -e
     set -x
 
-    cp -arfv "$KIRA_INFRA/kira" "$COMMON_PATH"
+    cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
     CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
     globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB

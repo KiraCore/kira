@@ -52,7 +52,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-    cp -arfv "$KIRA_INFRA/kira" "$COMMON_PATH"
+    cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
     cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
     EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"

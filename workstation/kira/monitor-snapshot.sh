@@ -76,7 +76,7 @@ else
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
 fi
 
-docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/snapshot.sh \"$SNAP_FILENAME\"" && SUCCESS="true" || SUCCESS="false"
+docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$COMMON_DIR/snapshot.sh \"$SNAP_FILENAME\"" && SUCCESS="true" || SUCCESS="false"
 
 if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
