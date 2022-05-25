@@ -11,7 +11,6 @@ CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"
-HALT_FILE="$COMMON_PATH/halt"
 
 set +x
 echoWarn "------------------------------------------------"

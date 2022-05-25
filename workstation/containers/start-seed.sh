@@ -7,8 +7,6 @@ CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"
-HALT_FILE="$COMMON_PATH/halt"
-EXIT_FILE="$COMMON_PATH/exit"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")

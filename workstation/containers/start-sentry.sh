@@ -6,8 +6,7 @@ CONTAINER_NAME="sentry"
 CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-COMMON_GLOB="$COMMON_PATH/kiraglob"
-HALT_FILE="$COMMON_PATH/halt"
+GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -40,7 +39,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet sentry_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
+    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON"
 
     echoInfo "INFO: Loading secrets..."
     set +x
@@ -58,42 +57,42 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
     NODE_ID="$SENTRY_NODE_ID"
 
-    globSet CFG_pex "true" $COMMON_GLOB
-    globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
+    globSet CFG_pex "true" $GLOBAL_COMMON
+    globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
     #true
-    globSet CFG_allow_duplicate_ip "true" $COMMON_GLOB
-    globSet CFG_addr_book_strict "false" $COMMON_GLOB
-    globSet CFG_fastsync "true" $COMMON_GLOB
-    globSet CFG_fastsync_version "v1" $COMMON_GLOB
+    globSet CFG_allow_duplicate_ip "true" $GLOBAL_COMMON
+    globSet CFG_addr_book_strict "false" $GLOBAL_COMMON
+    globSet CFG_fastsync "true" $GLOBAL_COMMON
+    globSet CFG_fastsync_version "v1" $GLOBAL_COMMON
 
-    globSet CFG_handshake_timeout "60s" $COMMON_GLOB
-    globSet CFG_dial_timeout "30s" $COMMON_GLOB
-    globSet CFG_trust_period "87600h" $COMMON_GLOB
-    globSet CFG_max_txs_bytes "131072000" $COMMON_GLOB
-    globSet CFG_max_tx_bytes "131072" $COMMON_GLOB
-    globSet CFG_send_rate "65536000" $COMMON_GLOB
-    globSet CFG_recv_rate "65536000" $COMMON_GLOB
-    globSet CFG_max_packet_msg_payload_size "131072" $COMMON_GLOB
-    globSet CFG_cors_allowed_origins "*" $COMMON_GLOB
-    globSet CFG_snapshot_interval "1000" $COMMON_GLOB
-    globSet CFG_statesync_enable "true" $COMMON_GLOB
-    globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB
-    globSet CFG_timeout_commit "7500ms" $COMMON_GLOB
-    globSet CFG_create_empty_blocks_interval "10s" $COMMON_GLOB
-    globSet CFG_max_num_outbound_peers "32" $COMMON_GLOB
-    globSet CFG_max_num_inbound_peers "128" $COMMON_GLOB
-    globSet CFG_prometheus "true" $COMMON_GLOB
-    globSet CFG_seed_mode "false" $COMMON_GLOB
-    globSet CFG_skip_timeout_commit "false" $COMMON_GLOB
-    globSet CFG_private_peer_ids "" $COMMON_GLOB
-    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
-    globSet CFG_persistent_peers "" $COMMON_GLOB
-    globSet CFG_seeds "" $COMMON_GLOB
-    globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $COMMON_GLOB
-    globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
-    globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
+    globSet CFG_handshake_timeout "60s" $GLOBAL_COMMON
+    globSet CFG_dial_timeout "30s" $GLOBAL_COMMON
+    globSet CFG_trust_period "87600h" $GLOBAL_COMMON
+    globSet CFG_max_txs_bytes "131072000" $GLOBAL_COMMON
+    globSet CFG_max_tx_bytes "131072" $GLOBAL_COMMON
+    globSet CFG_send_rate "65536000" $GLOBAL_COMMON
+    globSet CFG_recv_rate "65536000" $GLOBAL_COMMON
+    globSet CFG_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
+    globSet CFG_cors_allowed_origins "*" $GLOBAL_COMMON
+    globSet CFG_snapshot_interval "1000" $GLOBAL_COMMON
+    globSet CFG_statesync_enable "true" $GLOBAL_COMMON
+    globSet CFG_statesync_temp_dir "/tmp" $GLOBAL_COMMON
+    globSet CFG_timeout_commit "7500ms" $GLOBAL_COMMON
+    globSet CFG_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+    globSet CFG_max_num_outbound_peers "32" $GLOBAL_COMMON
+    globSet CFG_max_num_inbound_peers "128" $GLOBAL_COMMON
+    globSet CFG_prometheus "true" $GLOBAL_COMMON
+    globSet CFG_seed_mode "false" $GLOBAL_COMMON
+    globSet CFG_skip_timeout_commit "false" $GLOBAL_COMMON
+    globSet CFG_private_peer_ids "" $GLOBAL_COMMON
+    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+    globSet CFG_persistent_peers "" $GLOBAL_COMMON
+    globSet CFG_seeds "" $GLOBAL_COMMON
+    globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $GLOBAL_COMMON
+    globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+    globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
 
-    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $COMMON_GLOB
+    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

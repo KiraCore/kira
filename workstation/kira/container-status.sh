@@ -50,7 +50,7 @@ globSet "${NAME}_BRANCH" $BRANCH
 
 if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"
-    HALT_FILE="$COMMON_PATH/halt"
+    GLOBAL_COMMON="$COMMON_PATH/kiraglob"
     CONFIG_FILE="$COMMON_PATH/configuring"
     EXECUTED_CHECK="$COMMON_PATH/executed"
     
@@ -64,9 +64,9 @@ if [ "${EXISTS,,}" == "true" ] ; then
     jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echoErr "ERROR: Failed to parsing docker networks"
 
     IS_SYNCING=$(globGet "${SNAPSHOT_TARGET}_SYNCING")
-    if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] && [ "${SNAPSHOT_TARGET}" == "${NAME,,}" ] && ( [ "${IS_SYNCING,,}" != "true" ] || [ -f "$HALT_FILE" ] ) ; then
+    if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] && [ "${SNAPSHOT_TARGET}" == "${NAME,,}" ] && ( [ "${IS_SYNCING,,}" != "true" ] || [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ) ; then
         globSet "${NAME}_STATUS" "backing up"
-    elif [ -f "$HALT_FILE" ] ; then
+    elif [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ; then
         globSet "${NAME}_STATUS" "halted"
     elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|seed|interx)$ ]] ) ; then 
         globSet "${NAME}_STATUS" "configuring"

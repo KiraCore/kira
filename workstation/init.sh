@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 set -e
 
-INFRA_BRANCH="${1,,}"
-SKIP_UPDATE="$2"
+INFRA_BRANCH=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+SKIP_UPDATE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
 START_TIME_INIT=$3
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
@@ -85,11 +85,11 @@ else
     COSIGN_HASH="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
 fi
 
-COSIGN_INSTALLED=$(isCommand cosign || echo "false")
+COSIGN_NOT_INSTALLED=$(cosign version || echo "true")
 KEYS_DIR="/usr/keys"
 KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
 
-if [ "$COSIGN_INSTALLED" != "true" ] ; then
+if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
     echo "INFO: Installing cosign"
     FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}" | tr '[:upper:]' '[:lower:]')
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME

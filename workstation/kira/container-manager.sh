@@ -4,10 +4,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NAME=$1
 COMMON_PATH="$DOCKER_COMMON/$NAME"
-COMMON_GLOB="$COMMON_PATH/kiraglob"
+GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 COMMON_LOGS="$COMMON_PATH/logs"
-HALT_FILE="$COMMON_PATH/halt"
-EXIT_FILE="$COMMON_PATH/exit"
 START_LOGS="$COMMON_LOGS/start.log"
 HEALTH_LOGS="$COMMON_LOGS/health.log"
 
@@ -90,9 +88,10 @@ while : ; do
     PORTS=$(globGet "${NAME}_PORTS")
 
     # globs
-    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$COMMON_GLOB") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
-    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$COMMON_GLOB")
-    PRIVATE_MODE=$(globGet PRIVATE_MODE "$COMMON_GLOB")
+    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
+    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON")
+    PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
+    IS_HALTING=$(globGet HALT_TASK $GLOBAL_COMMON)
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -193,8 +192,8 @@ while : ; do
     [ "$PRIVATE_MODE" == "false" ] && echo "| [M] | Enable Private MODE (access via LOCAL IP)       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}m"
     fi
     [ "$STATUS" == "paused" ]      && echo "| [P] | Un-PAUSE container                              |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-    [ -f "$HALT_FILE" ]            && echo "| [K] | Un-HALT (revive) all processes                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
-    [ ! -f "$HALT_FILE" ]          && echo "| [K] | KILL (halt) all processes                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
+    [ "$IS_HALTING" == "true" ]    && echo "| [K] | Un-HALT (revive) all processes                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
+    [ "$IS_HALTING" != "true" ]    && echo "| [K] | KILL (halt) all processes                       |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}k"
                                       echo "|-------------------------------------------------------|"
     [ "${EXISTS,,}" == "true" ]    && echo "| [L] | Show container LOGS                             |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}l"
     [ "${EXISTS,,}" == "true" ]    && echo "| [H] | Show HEALTHCHECK logs                           |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}h"
@@ -238,7 +237,7 @@ while : ; do
             [ "${FAILURE,,}" == "true" ] && echo "WARNING: Failed to inspect $NAME container"
         fi
         
-        [ -f "$HALT_FILE" ] && echo "INFO: Applications running within your container were halted, you will have to choose Un-HALT option to start them again!"
+        [ "$IS_HALTING" == "true" ] && echo "INFO: Applications running within your container were halted, you will have to choose Un-HALT option to start them again!"
         OPTION=""
         EXECUTED="true"
     elif [ "${OPTION,,}" == "d" ] ; then
@@ -250,7 +249,7 @@ while : ; do
         $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart"
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "k" ] ; then
-        if [ -f "$HALT_FILE" ] ; then
+        if [ "$IS_HALTING" == "true" ] ; then
             echo "INFO: Removing halt file"
             $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "true" "restart" "true"
         else
@@ -261,11 +260,11 @@ while : ; do
     elif [ "${OPTION,,}" == "m" ] ; then
         if [ "$PRIVATE_MODE" == "true" ] ; then
             echoInfo "INFO: Disabling private mode..."
-            globSet PRIVATE_MODE "false" "$COMMON_GLOB"
+            globSet PRIVATE_MODE "false" "$GLOBAL_COMMON"
             globSet PRIVATE_MODE "false"
         else
             echoInfo "INFO: Enabling private mode..."
-            globSet PRIVATE_MODE "true" "$COMMON_GLOB"
+            globSet PRIVATE_MODE "true" "$GLOBAL_COMMON"
             globSet PRIVATE_MODE "true"
         fi
         echoInfo "INFO: Restarting container..."
@@ -281,7 +280,7 @@ while : ; do
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
-        rm -fv $HALT_FILE
+        globSet HALT_TASK "false" $GLOBAL_COMMON
         $KIRA_SCRIPTS/container-pause.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "paused" ] ; then
