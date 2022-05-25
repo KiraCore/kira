@@ -26,6 +26,7 @@ KIRA_BASE_VERSION="v0.10.3"
 TOOLS_VERSION="v0.1.5"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
+INFRA_REPO="https://github.com/KiraCore/kira"
 UTILS_VERSION=$(utilsVersion 2> /dev/null || echo "")
 
 set +x
@@ -143,6 +144,7 @@ setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"
 setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
+setGlobEnv INFRA_REPO "$INFRA_REPO"
 setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
@@ -202,7 +204,7 @@ mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_S
 # setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
 # setGlobEnv INTERX_BRANCH "$INTERX_BRANCH"
 # 
-# INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_REPO"
+#INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_REPO"
 # SEKAI_REPO="https://github.com/KiraCore/sekai" && setGlobEnv SEKAI_REPO "$SEKAI_REPO"
 # INTERX_REPO="https://github.com/KiraCore/sekai" && setGlobEnv INTERX_REPO "$INTERX_REPO"
 
