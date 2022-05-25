@@ -55,6 +55,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
+    cp -arfv "$KIRA_INFRA/kira" "$COMMON_PATH"
 
     globSet CFG_pex "true" $COMMON_GLOB
     globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB

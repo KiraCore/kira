@@ -122,7 +122,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
 
     rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
 
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$SELF_CONTAINER/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME" || echoErr "ERROR: Failures occured during container upgrade process!"
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$COMMON_DIR/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME" || echoErr "ERROR: Failures occured during container upgrade process!"
 
     [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create address book file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
 

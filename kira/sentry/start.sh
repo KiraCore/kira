@@ -81,7 +81,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 fi
 
 echoInfo "INFO: Loading configuration..."
-$SELF_CONTAINER/configure.sh
+$COMMON_DIR/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 rm -fv $CFG_CHECK
 

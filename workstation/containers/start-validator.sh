@@ -59,7 +59,7 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
-    cp -afv "$KIRA_INFRA" "$COMMON_PATH"
+    cp -arfv "$KIRA_INFRA/kira" "$COMMON_PATH"
 
     EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT"
 
