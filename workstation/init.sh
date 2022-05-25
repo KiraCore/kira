@@ -135,8 +135,10 @@ if [[ $(getRamTotal) -lt 3145728 ]] ; then
 fi
 set -x
 
-echoInfo "INFO: Veryfying kira base image integrity..."
-cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+if [ "${SKIP_UPDATE,,}" != "true" ]; then
+    echoInfo "INFO: Veryfying kira base image integrity..."
+    cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+fi
 
 setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
