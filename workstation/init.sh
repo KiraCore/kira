@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set +e && chmod 555 /etc/profile && source /etc/profile &>/dev/null && set -e
+set -e
 
 INFRA_BRANCH="${1,,}"
 SKIP_UPDATE="$2"
@@ -115,10 +115,10 @@ FILE_NAME="bash-utils.sh" && \
  wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}" -O ./$FILE_NAME && \
  wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}.sig" -O ./${FILE_NAME}.sig && \
  cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
- chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" && . /$FILE_NAME && \
- echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
+ chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob" 
 
-source /etc/profile
+source $FILE_NAME
+echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
 set +x
 if [[ $(getCpuCores) -lt 2 ]] ; then
