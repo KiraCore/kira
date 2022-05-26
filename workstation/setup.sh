@@ -54,11 +54,7 @@ $KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
-
 $KIRA_SCRIPTS/docker-restart.sh
-# echoInfo "INFO: Waiting for all containers to start..."
-# sleep 120
-# $KIRA_MANAGER/setup/registry.sh
 
 echoInfo "INFO: Updating kira update service..."
 cat > /etc/systemd/system/kiraup.service << EOL
@@ -66,9 +62,9 @@ cat > /etc/systemd/system/kiraup.service << EOL
 Description=KIRA Update And Setup Service
 After=network.target
 [Service]
-CPUWeight=100
-CPUQuota=100%
-IOWeight=100
+CPUWeight=20
+CPUQuota=85%
+IOWeight=20
 MemorySwapMax=0
 Type=simple
 User=root
@@ -78,6 +74,8 @@ Restart=always
 SuccessExitStatus=on-failure
 RestartSec=5
 LimitNOFILE=4096
+StandardOutput=append:$KIRA_LOGS/kiraup.log
+StandardError=append:$KIRA_LOGS/kiraup.log
 [Install]
 WantedBy=default.target
 EOL
@@ -100,6 +98,8 @@ Restart=always
 SuccessExitStatus=on-failure
 RestartSec=5
 LimitNOFILE=4096
+StandardOutput=append:$KIRA_LOGS/kiraplan.log
+StandardError=append:$KIRA_LOGS/kiraplan.log
 [Install]
 WantedBy=default.target
 EOL

@@ -76,7 +76,6 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         echoInfo "INFO: Sucessfully finalized essentials update"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "true"
         systemctl daemon-reload
-        systemctl enable kiraup
         systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
         globSet SETUP_REBOOT ""
         exit 0

@@ -29,10 +29,6 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     setVar "LogDenied" "all" $FIREWALLD_CONF
     # NOTE: To preview denied packets you can use command: dmesg | grep -i REJECT
 
-    # RESOLV_CFG="/etc/resolv.conf" && E=!
-    # CDHelper text lineswap --insert="nameserver $KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT" --regex="^nameserver ${KIRA_REGISTRY_DNS}:\d+" --path=$RESOLV_CFG --append-if-found-not=True
-    # CDHelper text lineswap --insert="nameserver $KIRA_REGISTRY_DNS" --regex="^nameserver ${KIRA_REGISTRY_DNS}(?$E:)" --path=$RESOLV_CFG --append-if-found-not=True
-
     systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
     systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
     
