@@ -22,7 +22,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 KIRA_MANAGER_VERSION="v0.0.1"
-KIRA_BASE_VERSION="v0.10.3"
+KIRA_BASE_VERSION="v0.10.4"
 TOOLS_VERSION="v0.1.5"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
