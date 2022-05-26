@@ -120,8 +120,7 @@ while :; do
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
-    echo -e "|    Default sekai Branch: $SEKAI_BRANCH"
-    echo -e "|   Default interx Branch: $INTERX_BRANCH"
+    echo -e "|      Base Image Version: $KIRA_BASE_VERSION"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
