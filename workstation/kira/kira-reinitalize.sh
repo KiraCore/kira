@@ -100,4 +100,3 @@ else
     fi
     source $INIT_SCRIPT_OUT "$NEW_BRANCH"
 fi
-

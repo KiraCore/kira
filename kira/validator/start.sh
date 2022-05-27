@@ -2,9 +2,20 @@
 exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 # quick edit: FILE="${COMMON_DIR}/validator/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-set -x
 
-echoInfo "INFO: Staring validator setup ..."
+NEW_NETWORK=$(globGet NEW_NETWORK)
+PRIVATE_MODE=$(globGet PRIVATE_MODE)
+
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "|-----------------------------------------------"
+echoWarn "|  BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|  SEKAID HOME: $SEKAID_HOME"
+echoWarn "|  NEW NETWORK: $NEW_NETWORK"
+echoWarn "| PRIVATE MODE: $PRIVATE_MODE"
+echoWarn "------------------------------------------------"
+set -x
 
 EXECUTED_CHECK="$COMMON_DIR/executed"
 CFG_CHECK="${COMMON_DIR}/configuring"
@@ -19,7 +30,7 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
-NEW_NETWORK=$(globGet NEW_NETWORK)
+
 globSet EXTERNAL_STATUS "OFFLINE"
 
 if [ ! -f "$EXECUTED_CHECK" ]; then

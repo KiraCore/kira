@@ -8,6 +8,7 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
+NEW_NETWORK=$(globGet NEW_NETWORK)
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 2 )" | bc)

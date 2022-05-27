@@ -8,6 +8,7 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
 MIN_HEIGHT="0"
+NEW_NETWORK=$(globGet NEW_NETWORK)
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
@@ -37,12 +38,12 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
     set -x
 
-    globSet MIN_HEIGHT "$MIN_HEIGHT"
-    globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT"
+    globSet MIN_HEIGHT "0"
+    globSet LATEST_BLOCK_HEIGHT "0"
     globSet LATEST_BLOCK_TIME "0"
 
-    globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-    globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+    globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
 
     if [ "${OPTION,,}" == "r" ] ; then

@@ -315,7 +315,6 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     done < $UPGRADE_PLAN_RES64_FILE
 
     NEW_NETWORK="false"
-    CDHelper text lineswap --insert="NEW_NETWORK=\"$NEW_NETWORK\"" --prefix="NEW_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
     globSet NEW_NETWORK "$NEW_NETWORK"
 
     echoInfo "INFO: Starting update service..."

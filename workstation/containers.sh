@@ -5,6 +5,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 timerStart
 cd $KIRA_HOME
 
+NEW_NETWORK=$(globGet NEW_NETWORK)
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
 
 set +x

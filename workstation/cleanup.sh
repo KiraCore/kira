@@ -3,6 +3,8 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/cleanup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart
+
+NEW_NETWORK=$(globGet NEW_NETWORK)
 TMP_GENESIS_PATH="/tmp/genesis.json"
 cd $KIRA_HOME
 
@@ -115,8 +117,6 @@ fi
 [ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$INFRA_MODE' mode"
 [ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$INFRA_MODE' mode"
 
-MIN_HEIGHT=$(globGet MIN_HEIGHT)
-
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
 globSet INFRA_MODE "$INFRA_MODE"
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
@@ -124,9 +124,6 @@ globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO
 globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER" $GLOBAL_COMMON_RO
-globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-
-globSet NEW_NETWORK "$NEW_NETWORK"
 
 set +x
 echoWarn "------------------------------------------------"

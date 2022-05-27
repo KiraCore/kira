@@ -9,6 +9,7 @@ UPDATE_DONE="true"
 UPDATE_DUMP="$KIRA_DUMP/kiraup"
 MAX_FAILS=3
 
+NEW_NETWORK=$(globGet NEW_NETWORK)
 UPDATE_FAILS=$(globGet UPDATE_FAIL_COUNTER)
 SETUP_START_DT=$(globGet SETUP_START_DT)
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")

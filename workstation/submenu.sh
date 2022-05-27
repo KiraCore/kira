@@ -91,7 +91,6 @@ else
     NEW_NETWORK="false"
 fi
 
-setGlobEnv NEW_NETWORK "$NEW_NETWORK"
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 
@@ -219,6 +218,16 @@ globSet PLAN_FAIL "false"
 globSet PLAN_FAIL_COUNT "0"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
+
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
+  globSet MIN_HEIGHT "0"
+  globSet LATEST_BLOCK_HEIGHT "0"
+  globSet LATEST_BLOCK_TIME "0"
+
+  globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
+  globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
+  globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
+fi
 
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 
