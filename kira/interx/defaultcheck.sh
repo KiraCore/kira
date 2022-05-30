@@ -4,11 +4,6 @@ set -x
 
 timerStart HEALTHCHECK
 
-COMMON_CONSENSUS="$COMMON_READ/consensus"
-
-HALT_CHECK="${COMMON_DIR}/halt"
-EXIT_CHECK="${COMMON_DIR}/exit"
-
 LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
 PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 
@@ -21,27 +16,8 @@ echoWarn "|  LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
-if [ -f "$EXIT_CHECK" ]; then
-  echo "INFO: Ensuring interxd process is killed"
-  touch $HALT_CHECK
-  pkill -15 interxd || echo "WARNING: Failed to kill interxd"
-  rm -fv $EXIT_CHECK
-fi
-
-if [ -f "$HALT_CHECK" ]; then
-    echoWarn "INFO: Contianer is halted!"
-    globSet EXTERNAL_STATUS "OFFLINE"
-    sleep 5
-    exit 0
-fi
-
 echoInfo "INFO: Healthcheck => START"
 sleep 15 # rate limit
-
-find "$SELF_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate self logs"
-find "$COMMON_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate common logs"
-journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
-find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
 
 VERSION_EXT=$(timeout 8 curl --fail $PUBLIC_IP:$EXTERNAL_API_PORT/api/kira/status | jsonQuickParse "interx_version" || echo -n "")
 VERSION_INT=$(timeout 8 curl --fail $LOCAL_IP:$EXTERNAL_API_PORT/api/kira/status | jsonQuickParse "interx_version" || echo -n "")

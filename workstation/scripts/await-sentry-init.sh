@@ -21,9 +21,10 @@ set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
-echoWarn "| COMMON DIR: $COMMON_PATH"
-echoWarn "|    TIMEOUT: $TIMEOUT seconds"
-echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|       COMMON DIR: $COMMON_PATH"
+echoWarn "|          TIMEOUT: $TIMEOUT seconds"
+echoWarn "|         RPC PORT: $RPC_PORT"
+echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|-------------------------------------------------"
 set -x
 

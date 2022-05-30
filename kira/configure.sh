@@ -4,9 +4,6 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 exec 2>&1
 set -x
 
-CFG_CHECK="${COMMON_DIR}/configuring"
-touch $CFG_CHECK
-
 echoInfo "INFO: Starting $NODE_TYPE node configuration..."
 
 CFG="$SEKAID_HOME/config/config.toml"
@@ -446,6 +443,4 @@ echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 
 echoInfo "INFO: Finished node configuration."
-rm -fv $CFG_CHECK
-
-
+globSet CFG_TASK "false"

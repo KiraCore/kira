@@ -3,10 +3,19 @@ set +e && source $ETC_PROFILE &>/dev/null && set -e
 exec 2>&1
 set -x
 
-echoInfo "INFO: Staring $NODE_TYPE setup..."
+KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
+PRIVATE_MODE=$(globGet PRIVATE_MODE)
 
-EXECUTED_CHECK="$COMMON_DIR/executed"
-CFG_CHECK="${COMMON_DIR}/configuring"
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "|-----------------------------------------------"
+echoWarn "| SEKAI VERSION: $(sekaid version)"
+echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|   SEKAID HOME: $SEKAID_HOME"
+echoWarn "|  PRIVATE MODE: $PRIVATE_MODE"
+echoWarn "------------------------------------------------"
+set -x
 
 SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
@@ -18,7 +27,7 @@ DATA_GENESIS="$DATA_DIR/genesis.json"
 
 globSet EXTERNAL_STATUS "OFFLINE"
 
-while [ ! -f "$EXECUTED_CHECK" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
+while [ "$(globGet INIT_DONE)" != "true" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
     sleep 5
 done
@@ -27,8 +36,6 @@ LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
 PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC "$GLOBAL_COMMON_RO")
 INFRA_MODE=$(globGet INFRA_MODE "$GLOBAL_COMMON_RO")
-
-PRIVATE_MODE=$(globGet PRIVATE_MODE)
 
 while [ -z "$LOCAL_IP" ] && [ "${PRIVATE_MODE,,}" == "true" ] ; do
    echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
@@ -46,7 +53,7 @@ done
 
 echoInfo "INFO: Sucess, genesis file was found!"
 
-if [ ! -f "$EXECUTED_CHECK" ]; then
+if [ "$(globGet INIT_DONE)" != "true" ]; then
     rm -rfv $SEKAID_HOME
     mkdir -p $SEKAID_HOME/config/  
     sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
@@ -75,7 +82,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
 
     rm -rfv $LOCAL_GENESIS
     ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
-    touch $EXECUTED_CHECK
+    globSet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
 fi
@@ -83,7 +90,7 @@ fi
 echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
-rm -fv $CFG_CHECK
+globSet CFG_TASK "false"
 
 echoInfo "INFO: Starting sekaid..."
 sekaid start --home=$SEKAID_HOME --trace 

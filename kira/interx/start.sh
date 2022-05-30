@@ -4,20 +4,23 @@ exec 2>&1
 set -x
 
 KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
-KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
 
-echoInfo "Staring INTERX $KIRA_SETUP_VER setup..."
+set +x
+echoWarn "------------------------------------------------"
+echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "|-----------------------------------------------"
+echoWarn "| SEKAI VERSION: $(interxd version)"
+echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|   INTERX HOME: $INTERX_HOME"
+echoWarn "------------------------------------------------"
+set -x
+
+KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
 
 cd $SEKAI/INTERX
 
-EXECUTED_CHECK="$COMMON_DIR/executed"
-HALT_CHECK="${COMMON_DIR}/halt"
-EXIT_CHECK="${COMMON_DIR}/exit"
 CONFIG_PATH="$SEKAI/INTERX/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
-CFG_CHECK="${COMMON_DIR}/configuring"
-
-touch $CFG_CHECK
 
 globSet EXTERNAL_STATUS "OFFLINE"
 
@@ -27,23 +30,12 @@ if ($(isNaturalNumber $RESTART_COUNTER)) ; then
     globSet RESTART_TIME "$(date -u +%s)"
 fi
 
-while [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ]; do
-    if [ -f "$EXIT_CHECK" ]; then
-        echoInfo "INFO: Ensuring interxd process is killed"
-        touch $HALT_CHECK
-        pkill -9 interxd || echoWarn "WARNING: Failed to kill interx"
-        rm -fv $EXIT_CHECK
-    fi
-    echoInfo "INFO: Container halted (`date`)"
-    sleep 30
-done
-
 while ! ping -c1 $PING_TARGET &>/dev/null ; do
     echoInfo "INFO: Waiting for ping response form $PING_TARGET ... ($(date))"
     sleep 5
 done
 
-if [ ! -f "$EXECUTED_CHECK" ]; then
+if [ "$(globGet INIT_DONE)" != "true" ]; then
     mkdir -p $CACHE_DIR
     rm -fv $CONFIG_PATH
 
@@ -70,13 +62,14 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
       --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex" \
       --version="$KIRA_SETUP_VER"
 
-    touch $EXECUTED_CHECK
+    globGet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
 fi
 
+globSet CFG_TASK "false"
+
 echoInfo "INFO: Starting INTERX service..."
-rm -fv $CFG_CHECK
 EXIT_CODE=0 && interxd start --config="$CONFIG_PATH" || EXIT_CODE="$?"
 
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"

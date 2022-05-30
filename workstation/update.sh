@@ -81,6 +81,10 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         globSet SETUP_REBOOT ""
         exit 0
     else
+        set +x
+        echoErr "--- ERROR LOG STAR '$LOG_FILE' ---"
+        cat $LOG_FILE || echoErr "ERROR: Faile to print error log file"
+        echoErr "--- ERROR LOG END '$LOG_FILE' ---"
         echoErr "ERROR: Failed installing essential tools and dependecies"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
         sleep 5 && exit 1
@@ -104,6 +108,10 @@ if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         echoInfo "INFO: Sucessfully finalized update cleanup"
         globSet "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "true"
     else
+        set +x
+        echoErr "--- ERROR LOG STAR '$LOG_FILE' ---"
+        cat $LOG_FILE || echoErr "ERROR: Faile to print error log file"
+        echoErr "--- ERROR LOG END '$LOG_FILE' ---"
         echoErr "ERROR: Failed cleaning up environment"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
         sleep 5 && exit 1
@@ -138,6 +146,10 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         echoInfo "INFO: Sucessfully finalized containers update"
         globSet "CONTAINERS_UPDATED_$KIRA_SETUP_VER" "true"
     else
+        set +x
+        echoErr "--- ERROR LOG STAR '$LOG_FILE' ---"
+        cat $LOG_FILE || echoErr "ERROR: Faile to print error log file"
+        echoErr "--- ERROR LOG END '$LOG_FILE' ---"
         echoErr "ERROR: Failed docker containers build"
         globSet "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "false"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "false"

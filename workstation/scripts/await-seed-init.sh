@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 CONTAINER_NAME=$1
-SEED_NODE_ID=$2
+EXPECTED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IFACES_RESTARTED="false"
@@ -15,9 +15,10 @@ set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
-echoWarn "| COMMON DIR: $COMMON_PATH"
-echoWarn "|    TIMEOUT: $TIMEOUT seconds"
-echoWarn "|   RPC PORT: $RPC_PORT"
+echoWarn "|       COMMON DIR: $COMMON_PATH"
+echoWarn "|          TIMEOUT: $TIMEOUT seconds"
+echoWarn "|         RPC PORT: $RPC_PORT"
+echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -88,9 +89,9 @@ while : ; do
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
 
-    if [ "$NODE_ID" != "$SEED_NODE_ID" ] ; then
+    if [ "$NODE_ID" != "$EXPECTED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
-        echoErr "ERROR: Expected '$SEED_NODE_ID', but got '$NODE_ID'"
+        echoErr "ERROR: Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
 

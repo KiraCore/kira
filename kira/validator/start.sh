@@ -10,15 +10,13 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|  BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|  SEKAID HOME: $SEKAID_HOME"
-echoWarn "|  NEW NETWORK: $NEW_NETWORK"
-echoWarn "| PRIVATE MODE: $PRIVATE_MODE"
+echoWarn "| SEKAI VERSION: $(sekaid version)"
+echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|   SEKAID HOME: $SEKAID_HOME"
+echoWarn "|   NEW NETWORK: $NEW_NETWORK"
+echoWarn "|  PRIVATE MODE: $PRIVATE_MODE"
 echoWarn "------------------------------------------------"
 set -x
-
-EXECUTED_CHECK="$COMMON_DIR/executed"
-CFG_CHECK="${COMMON_DIR}/configuring"
 
 SNAP_HEIGHT_FILE="$COMMON_DIR/snap_height"
 SNAP_NAME_FILE="$COMMON_DIR/snap_name"
@@ -30,10 +28,9 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
-
 globSet EXTERNAL_STATUS "OFFLINE"
 
-if [ ! -f "$EXECUTED_CHECK" ]; then
+if [ "$(globGet INIT_DONE)" != "true" ]; then
     rm -rf $SEKAID_HOME
     mkdir -p $SEKAID_HOME/config
     cd $SEKAID_HOME/config
@@ -113,7 +110,7 @@ if [ ! -f "$EXECUTED_CHECK" ]; then
     fi
   
     rm -fv $SIGNER_KEY $VALIDATOR_KEY $TEST_KEY
-    touch $EXECUTED_CHECK
+    globSet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
 fi
@@ -123,7 +120,8 @@ sha256 $LOCAL_GENESIS
 
 echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
-rm -fv $CFG_CHECK
+set +e && source "$ETC_PROFILE" &>/dev/null && set -e
+globSet CFG_TASK "false"
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace

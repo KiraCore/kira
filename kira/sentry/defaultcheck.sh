@@ -11,11 +11,7 @@ echoWarn "|    DATE: $(date)"
 echoWarn "------------------------------------------------"
 set -x
 
-HALT_CHECK="${COMMON_DIR}/halt"
-EXIT_CHECK="${COMMON_DIR}/exit"
-CFG_CHECK="${COMMON_DIR}/configuring"
 STATUS_SCAN="${COMMON_DIR}/status"
-EXECUTED_CHECK="$COMMON_DIR/executed"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
 
 VALOPERS_FILE="$COMMON_READ/valopers"
@@ -26,52 +22,31 @@ rm -rfv $STATUS_SCAN
 LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
 PREVIOUS_HEIGHT=$(globGet previous_height)
 
-echoInfo "INFO: Logs cleanup..."
-find "$SELF_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate self logs"
-find "$COMMON_LOGS" -type f -size +16M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate common logs"
-journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
-find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
-echoInfo "INFO: Logs cleanup finalized"
-
 FAILED="false"
-if [ -f "$HALT_CHECK" ] || [ -f "$EXIT_CHECK" ] || [ -f "$CFG_CHECK" ] ; then
-    if [ -f "$EXIT_CHECK" ]; then
-        echoInfo "INFO: Ensuring sekaid process is killed"
-        touch $HALT_CHECK
-        pkill -15 sekaid || echoWarn "WARNING: Failed to kill sekaid"
-        rm -fv $EXIT_CHECK
-    elif [ -f "$CFG_CHECK" ] ; then
-        echoInfo "INFO: Waiting for container configuration to be finalized..."
-    else
-        echoInfo "INFO: Health check => STOP (halted)"
-    fi
-elif [ ! -f "$EXECUTED_CHECK" ] ; then
-    echoWarn "WARNING: Setup of the '$NODE_TYPE' node was not finalized yet, no health data available"
-else
-    echoInfo "INFO: Checking node status..."
-    CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
-    echo $(timeout 6 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
-    CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_SCAN || echo -n "")
-    HEIGHT=$(jsonQuickParse "latest_block_height" $STATUS_SCAN || echo -n "")
-    (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
-    (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
-    (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
-    [[ $HEIGHT -ge 1 ]] && globSet previous_height "$HEIGHT"
 
-    if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ; then
-        echoInfo "INFO: Success, node is catching up ($CATCHING_UP), previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
-        timerStart "catching_up"
-        globSet previous_height "$HEIGHT"
+echoInfo "INFO: Checking node status..."
+CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
+echo $(timeout 6 curl --fail 0.0.0.0:$INTERNAL_RPC_PORT/status 2>/dev/null || echo -n "") > $STATUS_SCAN
+CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_SCAN || echo -n "")
+HEIGHT=$(jsonQuickParse "latest_block_height" $STATUS_SCAN || echo -n "")
+(! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
+(! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+[[ $HEIGHT -ge 1 ]] && globSet previous_height "$HEIGHT"
+
+if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ; then
+    echoInfo "INFO: Success, node is catching up ($CATCHING_UP), previous block height was $PREVIOUS_HEIGHT, now $HEIGHT"
+    timerStart "catching_up"
+    globSet previous_height "$HEIGHT"
+else
+    echoInfo "INFO: Starting healthcheck..."
+    if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
+        $COMMON_DIR/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
+    elif [ "${NODE_TYPE,,}" == "validator" ]; then
+        $COMMON_DIR/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
     else
-        echoInfo "INFO: Starting healthcheck..."
-        if [ "${NODE_TYPE,,}" == "sentry" ] || [ "${NODE_TYPE,,}" == "seed" ]; then
-            $COMMON_DIR/sentry/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
-        elif [ "${NODE_TYPE,,}" == "validator" ]; then
-            $COMMON_DIR/validator/healthcheck.sh "$LATEST_BLOCK_HEIGHT" "$PREVIOUS_HEIGHT" "$HEIGHT" "$CATCHING_UP" "$CONSENSUS_STOPPED" || FAILED="true"
-        else
-            echoErr "ERROR: Unknown node type '$NODE_TYPE'"
-            FAILED="true"
-        fi
+        echoErr "ERROR: Unknown node type '$NODE_TYPE'"
+        FAILED="true"
     fi
 fi
 

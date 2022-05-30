@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
-VALIDATOR_NODE_ID=$1
+EXPECTED_NODE_ID="$1"
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
@@ -20,10 +20,11 @@ set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
-echoWarn "|   COMMON DIR: $COMMON_PATH"
-echoWarn "|      TIMEOUT: $TIMEOUT seconds"
-echoWarn "|     RPC PORT: $RPC_PORT"
-echoWarn "| UPGRADE NAME: $UPGRADE_NAME"
+echoWarn "|       COMMON DIR: $COMMON_PATH"
+echoWarn "|          TIMEOUT: $TIMEOUT seconds"
+echoWarn "|         RPC PORT: $RPC_PORT"
+echoWarn "|     UPGRADE NAME: $UPGRADE_NAME"
+echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -92,11 +93,6 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
         sleep 10 && continue
     else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
-    
-    #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-    #    echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-    #    sleep 10 && PREVIOUS_HEIGHT=$HEIGHT && continue
-    #else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing or producing new blocks" && break ; fi
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -108,37 +104,32 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && \
     echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node" && exit 1
 
-[ "$NODE_ID" != "$VALIDATOR_NODE_ID" ] && \
-    echoErr "ERROR: Container $CONTAINER_NAME Node Id check failed! Expected '$VALIDATOR_NODE_ID', but got '$NODE_ID'" && exit 1
+[ "$NODE_ID" != "$EXPECTED_NODE_ID" ] && \
+    echoErr "ERROR: Container $CONTAINER_NAME Node Id check failed! Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'" && exit 1
 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status" && exit 1
 
-#[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
-#    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up or prodcing new blocks, check node configuration, peers or if seed nodes function correctly." && exit 1
-
 if [ "${NEW_NETWORK,,}" == "true" ] ; then 
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSetPermissionsProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateUpsertTokenAliasProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermCreateSoftwareUpgradeProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSetPermissionProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteUpsertTokenAliasProposal validator 180"
-    docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$PermVoteSoftwareUpgradeProposal validator 180"
+    declare -a perms=(
+        "PermWhitelistAccountPermissionProposal" 
+        "PermRemoveWhitelistedAccountPermissionProposal" 
+        "PermCreateUpsertTokenAliasProposal"
+        "PermCreateSoftwareUpgradeProposal",
+        "PermVoteWhitelistAccountPermissionProposal",
+        "PermVoteRemoveWhitelistedAccountPermissionProposal",
+        "PermVoteUpsertTokenAliasProposal",
+        "PermVoteSoftwareUpgradeProposal")
 
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateSetPermissionsProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateSetPermissionsProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateSoftwareUpgradeProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateSoftwareUpgradeProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermCreateUpsertTokenAliasProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermCreateUpsertTokenAliasProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteSetPermissionProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteSetPermissionProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteUpsertTokenAliasProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteUpsertTokenAliasProposal'" && exit 1
-    PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$PermVoteSoftwareUpgradeProposal")
-    [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist 'PermVoteSoftwareUpgradeProposal'" && exit 1
+    for p in "${perms[@]}" ; do
+        PERM_ID="${!p}"
+        echoInfo "INFO: Whitelisting permission '$p' ($PERM_ID)..."
+        docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$$p validator 180"
+        PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$$p")
+        [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist '$p' ($PERM_ID)" && exit 1
+    done
 
     echoInfo "INFO: Loading secrets..."
     set +e
@@ -158,7 +149,7 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest1\" \"<iframe src=javascript:alert(1)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest2\" \"<img/src=x a='' onerror=alert(2)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest3\" \"<img src=1 onerror=alert(3)>\" 180"
-    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180"
+    docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$EXPECTED_NODE_ID\" 180"
 
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"test\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord signer \"username\" \"faucet\" 180"

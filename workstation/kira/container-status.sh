@@ -51,9 +51,7 @@ globSet "${NAME}_BRANCH" $BRANCH
 if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"
     GLOBAL_COMMON="$COMMON_PATH/kiraglob"
-    CONFIG_FILE="$COMMON_PATH/configuring"
-    EXECUTED_CHECK="$COMMON_PATH/executed"
-    
+
     DOCKER_STATE=$(globFile "${NAME}_DOCKER_STATE")
     DOCKER_NETWORKS=$(globFile "${NAME}_DOCKER_NETWORKS")
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
@@ -68,7 +66,7 @@ if [ "${EXISTS,,}" == "true" ] ; then
         globSet "${NAME}_STATUS" "backing up"
     elif [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ; then
         globSet "${NAME}_STATUS" "halted"
-    elif [ -f "$CONFIG_FILE" ] || ( [ ! -f "$EXECUTED_CHECK" ] && [[ "${NAME,,}" =~ ^(validator|sentry|seed|interx)$ ]] ) ; then 
+    elif [ "$(globGet CFG_TASK $GLOBAL_COMMON)" == "true" ] || ( [ "$(globGet INIT_DONE $GLOBAL_COMMON)" != "true" ] && [[ "${NAME,,}" =~ ^(validator|sentry|seed|interx)$ ]] ) ; then 
         globSet "${NAME}_STATUS" "configuring"
     else
         echo $(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "") | globSet "${NAME}_STATUS"
