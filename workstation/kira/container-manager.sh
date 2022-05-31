@@ -77,8 +77,6 @@ while : ; do
     
     ID=$(globGet "${NAME}_ID")
     EXISTS=$(globGet "${NAME}_EXISTS")
-    REPO=$(globGet "${NAME}_REPO")
-    BRANCH=$(globGet "${NAME}_BRANCH")
     STATUS=$(globGet "${NAME}_STATUS")
     HEALTH=$(globGet "${NAME}_HEALTH")
     RESTARTING=$(globGet "${NAME}_RESTARTING")
@@ -88,6 +86,7 @@ while : ; do
     PORTS=$(globGet "${NAME}_PORTS")
 
     # globs
+    RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
     EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
     EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON")
     PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
@@ -103,14 +102,8 @@ while : ; do
     NAME_TMP="${NAME} $(echo $ID | head -c 8)...$(echo $ID | tail -c 9)${WHITESPACE}"
         echo "| Con.Name: ${NAME_TMP:0:43} |"
 
-    if [ ! -z "$REPO" ] ; then
-        VTMP=$(echo "$REPO" | sed -E 's/^\s*.*:\/\///g')
-        VTMP="${VTMP}${WHITESPACE}"
-        echo "|     Repo: ${VTMP:0:43} : $BRANCH"
-    fi
-
-    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && \
-        echo "|     Host: ${v:0:43} |"
+    [ ! -z "$RUNTIME_VERSION" ] && v="${RUNTIME_VERSION}${WHITESPACE}" && echo "|  Runtime: ${v:0:43} |"
+    [ ! -z "$HOSTNAME" ] && v="${HOSTNAME}${WHITESPACE}" && echo "|     Host: ${v:0:43} |"
 
     i=-1 ; for net in $NETWORKS ; do i=$((i+1))
         TMP_IP=$(globGet "${NAME}_IP_${net}")

@@ -48,9 +48,9 @@ if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
     CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
-    globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
-    globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
-    globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
+    [ "${INFRA_MODE,,}" == "seed" ] && globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
+    [ "${INFRA_MODE,,}" == "sentry" ] && globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
+    [ "${INFRA_MODE,,}" == "validator" ] && globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
     globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
@@ -65,6 +65,7 @@ docker run -d \
     --net=$CONTAINER_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    -e NODE_TYPE="$CONTAINER_NAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \

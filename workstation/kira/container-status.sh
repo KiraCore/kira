@@ -18,21 +18,6 @@ echoWarn "|       NETWORKS: $NETWORKS"
 echoWarn "|-------------------------------------------------"
 set -x
 
-# define global variables
-if [ "${NAME,,}" == "interx" ]; then
-    BRANCH="$INTERX_BRANCH"
-    REPO="$INTERX_REPO"
-elif [ "${NAME,,}" == "sentry" ] || [ "${NAME,,}" == "seed" ] ; then
-    BRANCH="$SEKAI_BRANCH"
-    REPO="$SEKAI_REPO"
-elif [ "${NAME,,}" == "validator" ]; then
-    BRANCH="$SEKAI_BRANCH"
-    REPO="$SEKAI_REPO"
-elif [ "${NAME,,}" == "registry" ]; then
-    BRANCH="https://github.com/docker/distribution"
-    REPO="master"
-fi
-
 DOCKER_INSPECT=$(globFile "${NAME}_DOCKER_INSPECT")
 ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
@@ -45,8 +30,6 @@ fi
 
 globSet "${NAME}_ID" $ID
 globSet "${NAME}_EXISTS" $EXISTS
-globSet "${NAME}_REPO" $REPO
-globSet "${NAME}_BRANCH" $BRANCH
 
 if [ "${EXISTS,,}" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$NAME"

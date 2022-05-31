@@ -122,6 +122,7 @@ echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
 set +e && source "$ETC_PROFILE" &>/dev/null && set -e
 globSet CFG_TASK "false"
+globSet RUNTIME_VERSION "sekaid $(sekaid version)"
 
 echoInfo "INFO: Starting validator..."
 sekaid start --home=$SEKAID_HOME --trace

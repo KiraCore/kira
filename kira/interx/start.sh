@@ -68,6 +68,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
 fi
 
 globSet CFG_TASK "false"
+globSet INTERXD_VERSION "interxd $(interxd version)"
 
 echoInfo "INFO: Starting INTERX service..."
 EXIT_CODE=0 && interxd start --config="$CONFIG_PATH" || EXIT_CODE="$?"
