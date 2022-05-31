@@ -16,10 +16,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
-
-cd $SEKAI/INTERX
-
-CONFIG_PATH="$SEKAI/INTERX/config.json"
+CONFIG_PATH="$COMMON_DIR/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
 
 globSet EXTERNAL_STATUS "OFFLINE"
