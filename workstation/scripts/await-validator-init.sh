@@ -110,7 +110,7 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status" && exit 1
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then 
+if [ "${NEW_NETWORK,,}" == "true" ] ; then
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
     declare -a perms=(
@@ -124,11 +124,10 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
         "PermVoteSoftwareUpgradeProposal")
 
     for p in "${perms[@]}" ; do
-        PERM_ID="${!p}"
-        echoInfo "INFO: Whitelisting permission '$p' ($PERM_ID)..."
+        echoInfo "INFO: Whitelisting permission '$p'..."
         docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$$p validator 180"
         PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$$p")
-        [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist '$p' ($PERM_ID)" && exit 1
+        [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist '$p'" && exit 1
     done
 
     echoInfo "INFO: Loading secrets..."

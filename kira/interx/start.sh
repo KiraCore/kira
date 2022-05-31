@@ -62,7 +62,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
       --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex" \
       --version="$KIRA_SETUP_VER"
 
-    globGet INIT_DONE "true" 
+    globSet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
 fi
