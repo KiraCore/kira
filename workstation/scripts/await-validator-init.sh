@@ -117,10 +117,10 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
         "PermWhitelistAccountPermissionProposal" 
         "PermRemoveWhitelistedAccountPermissionProposal" 
         "PermCreateUpsertTokenAliasProposal"
-        "PermCreateSoftwareUpgradeProposal",
-        "PermVoteWhitelistAccountPermissionProposal",
-        "PermVoteRemoveWhitelistedAccountPermissionProposal",
-        "PermVoteUpsertTokenAliasProposal",
+        "PermCreateSoftwareUpgradeProposal"
+        "PermVoteWhitelistAccountPermissionProposal"
+        "PermVoteRemoveWhitelistedAccountPermissionProposal"
+        "PermVoteUpsertTokenAliasProposal"
         "PermVoteSoftwareUpgradeProposal")
 
     for p in "${perms[@]}" ; do
@@ -149,7 +149,6 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest2\" \"<img/src=x a='' onerror=alert(2)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"pentest3\" \"<img src=1 onerror=alert(3)>\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$EXPECTED_NODE_ID\" 180"
-
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord test \"username\" \"test\" 180"
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord signer \"username\" \"faucet\" 180"
 
@@ -203,15 +202,7 @@ EOL
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 
-    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-    $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$REPO_TMP" 555
-    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"sekai\",\"git\":\"$SEKAI_REPO\",\"checkout\":\"$SEKAI_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
-
-    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-    $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$REPO_TMP" 555
-    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"interx\",\"git\":\"$INTERX_REPO\",\"checkout\":\"$INTERX_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
+    # UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
 
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
 
@@ -246,7 +237,6 @@ EOL
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
     
-
     docker exec -i validator bash -c "source /etc/profile && $TEST_UPSERT"
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
@@ -270,8 +260,6 @@ EOL
     LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
-
-    
 
     echoInfo "INFO: Success, all initial proposals were raised and voted on"
 else
