@@ -9,7 +9,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| SEKAI VERSION: $(interxd version)"
+echoWarn "| SEKAI VERSION: $(interx version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|   INTERX HOME: $INTERX_HOME"
 echoWarn "------------------------------------------------"
@@ -47,7 +47,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
     sentry_node_id=$(globGet sentry_node_id)
     validator_node_id=$(globGet validator_node_id)
 
-    interxd init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
+    interx init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
       --seed_node_id="$seed_node_id" \
       --sentry_node_id="$sentry_node_id" \
@@ -65,10 +65,10 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
 fi
 
 globSet CFG_TASK "false"
-globSet INTERXD_VERSION "interxd $(interxd version)"
+globSet RUNTIME_VERSION "interx $(interx version)"
 
 echoInfo "INFO: Starting INTERX service..."
-EXIT_CODE=0 && interxd start --config="$CONFIG_PATH" || EXIT_CODE="$?"
+EXIT_CODE=0 && interx start --config="$CONFIG_PATH" || EXIT_CODE="$?"
 
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
 sleep 3

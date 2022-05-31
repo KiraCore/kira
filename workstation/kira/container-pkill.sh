@@ -14,7 +14,7 @@ timerStart
 [ -z "$NAME" ] && echoErr "ERROR: Missing 'NAME' parameter (1)" && exit 1
 
 if [ "${NAME,,}" == "interx" ]; then
-    PROCESS="interxd"
+    PROCESS="interx"
     CODE="9"
 elif [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
     PROCESS="sekaid"
