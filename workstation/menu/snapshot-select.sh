@@ -12,7 +12,7 @@ while : ; do
     
     if [ "${SELECT,,}" == "s" ] ; then
         echoInfo "INFO: Blockchain state will NOT be recovered from the snapshot"
-        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        setGlobEnv KIRA_SNAP_PATH ""
         exit 0 
     fi
 
@@ -49,7 +49,7 @@ while : ; do
                 continue
             fi
 
-            CDHelper text lineswap --insert="TRUSTED_NODE_ADDR=\"$NODE_ADDR\"" --prefix="TRUSTED_NODE_ADDR=" --path=$ETC_PROFILE --append-if-found-not=True
+            setGlobEnv TRUSTED_NODE_ADDR "$NODE_ADDR"
 
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
@@ -181,5 +181,5 @@ echoWarn "WARNING: This is last chance to ensure following snapshot checksum is 
 echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
 
-CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$SNAPSHOT\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_SNAP=\"$DEFAULT_SNAP_DIR\"" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
+setGlobEnv KIRA_SNAP_PATH "$SNAPSHOT"
+setGlobEnv KIRA_SNAP "$DEFAULT_SNAP_DIR"

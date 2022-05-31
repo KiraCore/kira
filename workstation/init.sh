@@ -193,23 +193,12 @@ rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-# # All branches should have the same name across all repos to be considered compatible
-# if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
-#     DEFAULT_BRANCH="$INFRA_BRANCH"
-#     SEKAI_BRANCH="$DEFAULT_BRANCH"
-#     INTERX_BRANCH="$DEFAULT_BRANCH"
-# else
-#     DEFAULT_BRANCH="master"
-#     [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
-#     [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
-# fi
-# setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
-# setGlobEnv SEKAI_BRANCH "$SEKAI_BRANCH"
-# setGlobEnv INTERX_BRANCH "$INTERX_BRANCH"
-# 
-#INFRA_REPO="https://github.com/KiraCore/kira" && setGlobEnv INFRA_REPO "$INFRA_REPO"
-# SEKAI_REPO="https://github.com/KiraCore/sekai" && setGlobEnv SEKAI_REPO "$SEKAI_REPO"
-# INTERX_REPO="https://github.com/KiraCore/sekai" && setGlobEnv INTERX_REPO "$INTERX_REPO"
+#SEKAI_BRANCH
+#INTERX_BRANCH
+#INTERX_REPO
+#SEKAI_REPO
+#INFRA_REPO
+#INFRA_BRANCH
 
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"

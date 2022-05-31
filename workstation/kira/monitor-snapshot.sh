@@ -41,7 +41,7 @@ set -x
 if [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ; then
     echoInfo "INFO: Updating snpashot '$KIRA_SNAP_PATH' checksum..."
     KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
-    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"$KIRA_SNAP_SHA256\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
+    setGlobEnv KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
     echoInfo "SUCCESS: New checksum calculated!" && sleep 10 && exit 0
 fi
 
@@ -86,8 +86,8 @@ if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     sleep 30
 else
     echoInfo "INFO: Success, new snapshot '$KIRA_SNAP_PATH' was created"
-    CDHelper text lineswap --insert="KIRA_SNAP_SHA256=\"\"" --prefix="KIRA_SNAP_SHA256=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+    setGlobEnv KIRA_SNAP_SHA256 ""
+    setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 
     if [ "${SNAP_EXPOSE,,}" == "true" ]; then
         echoInfo "INFO: Exposing snapshoot via INTERX"

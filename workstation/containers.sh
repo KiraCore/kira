@@ -58,23 +58,23 @@ globSet interx_STARTED false
 if [ "${INFRA_MODE,,}" == "seed" ] ; then
     globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-seed.sh
-    #[ "$(globGet seed_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh
-    #[ "$(globGet sentry_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh
-    #[ "$(globGet validator_STARTED)" == "true" ] && $KIRA_MANAGER/containers/start-interx.sh
 else
     echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
     globSet CONTAINERS_BUILD_SUCCESS "false"
     exit 1
 fi
 
+if [ "$(globGet seed_STARTED)" == "true" ] || [ "$(globGet sentry_STARTED)" == "true" ] || [ "$(globGet validator_STARTED)" == "true" ] ; then
+    $KIRA_MANAGER/containers/start-interx.sh
+fi
+
 PORTS="$DEFAULT_SSH_PORT"
-#CONTAINERS_COUNT=1
 CONTAINERS_COUNT=0
 if [ "$(globGet SEED_EXPOSED)" == "true" ] ; then
     CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))

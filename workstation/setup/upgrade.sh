@@ -129,7 +129,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true"
     # snapshots might fail due to lack of disk space
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
     [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" || \
-        CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"$KIRA_SNAP_PATH\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
+        setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 
     echoInfo "INFO: Recovering seed & peer nodes..."
     SEEDS_DUMP="/tmp/seedsdump"
@@ -221,9 +221,9 @@ elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false
     GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
     globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
-    CDHelper text lineswap --insert="NETWORK_NAME=\"$NEW_NETWORK_NAME\"" --prefix="NETWORK_NAME=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SNAP_PATH=\"\"" --prefix="KIRA_SNAP_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    
+    setGlobEnv NETWORK_NAME "$NEW_NETWORK_NAME"
+    setGlobEnv KIRA_SNAP_PATH ""
+
     echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
     rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar file from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
@@ -306,9 +306,9 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         fi
 
         if ($(isLetters "$joid")) ; then
-            CDHelper text lineswap --insert="${joid^^}_CHECKSUM=\"$checksum\"" --prefix="${joid^^}_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="${joid^^}_BRANCH=\"$checkout\"" --prefix="${joid^^}_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-            CDHelper text lineswap --insert="${joid^^}_REPO=\"$repository\"" --prefix="${joid^^}_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+            setGlobEnv "${joid^^}_CHECKSUM" "$checksum"
+            setGlobEnv "${joid^^}_BRANCH" "$checkout"
+            setGlobEnv "${joid^^}_REPO" "$repository"
         else
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi
