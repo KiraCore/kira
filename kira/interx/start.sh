@@ -16,7 +16,6 @@ echoWarn "------------------------------------------------"
 set -x
 
 KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
-CONFIG_PATH="$COMMON_DIR/config.json"
 CACHE_DIR="$COMMON_DIR/cache"
 
 globSet EXTERNAL_STATUS "OFFLINE"
@@ -33,8 +32,7 @@ while ! ping -c1 $PING_TARGET &>/dev/null ; do
 done
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
-    mkdir -p $CACHE_DIR
-    rm -fv $CONFIG_PATH
+    mkdir -p "$CACHE_DIR" "$INTERX_HOME"
 
     CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
@@ -43,21 +41,17 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
     setGlobEnv CFG_rpc "$CFG_rpc"
     setGlobEnv PING_TARGET "$PING_TARGET"
 
-    seed_node_id=$(globGet seed_node_id)
-    sentry_node_id=$(globGet sentry_node_id)
-    validator_node_id=$(globGet validator_node_id)
-
-    interx init --cache_dir="$CACHE_DIR" --config="$CONFIG_PATH" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
+    interx init --cache_dir="$CACHE_DIR" --home="$INTERX_HOME" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
-      --seed_node_id="$seed_node_id" \
-      --sentry_node_id="$sentry_node_id" \
-      --validator_node_id="$validator_node_id" \
-      --addrbook="$KIRA_ADDRBOOK_FILE" \
+      --node_type="$INFRA_MODE" \
+      --seed_node_id="$(globGet seed_node_id)" \
+      --sentry_node_id="$(globGet sentry_node_id)" \
+      --validator_node_id="$(globGet validator_node_id)" \
+      --addrbook="$(globFile KIRA_ADDRBOOK)" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
       --faucet_minimum_amounts="1000ukex,50000test,250000000000000samolean,1lol" \
-      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex, lol 100ukex" \
-      --version="$KIRA_SETUP_VER"
+      --fee_amounts="ukex 1000ukex,test 500ukex,samolean 250ukex,lol 100ukex"
 
     globSet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
@@ -68,9 +62,8 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "interx $(interx version)"
 
 echoInfo "INFO: Starting INTERX service..."
-EXIT_CODE=0 && interx start --config="$CONFIG_PATH" || EXIT_CODE="$?"
-
+EXIT_CODE=0 && interx start --home="$INTERX_HOME" || EXIT_CODE="$?"
+set +x
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
 sleep 3
 exit 1
-

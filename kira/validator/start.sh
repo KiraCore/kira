@@ -125,4 +125,8 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "sekaid $(sekaid version)"
 
 echoInfo "INFO: Starting validator..."
-sekaid start --home=$SEKAID_HOME --trace
+EXIT_CODE=0 && sekaid start --home=$SEKAID_HOME --trace || EXIT_CODE="$?"
+set +x
+echoErr "ERROR: SEKAID process failed with the exit code $EXIT_CODE"
+sleep 3
+exit 1
