@@ -11,7 +11,7 @@ echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| SEKAI VERSION: $(interx version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|   INTERX HOME: $INTERX_HOME"
+echoWarn "|   INTERX HOME: $INTERXD_HOME"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -32,7 +32,7 @@ while ! ping -c1 $PING_TARGET &>/dev/null ; do
 done
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
-    mkdir -p "$CACHE_DIR" "$INTERX_HOME"
+    mkdir -p "$CACHE_DIR" "$INTERXD_HOME"
 
     CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
@@ -41,7 +41,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
     setGlobEnv CFG_rpc "$CFG_rpc"
     setGlobEnv PING_TARGET "$PING_TARGET"
 
-    interx init --cache_dir="$CACHE_DIR" --home="$INTERX_HOME" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
+    interxd init --cache_dir="$CACHE_DIR" --home="$INTERXD_HOME" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
       --node_type="$INFRA_MODE" \
       --seed_node_id="$(globGet seed_node_id)" \
@@ -62,7 +62,7 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "interx $(interx version)"
 
 echoInfo "INFO: Starting INTERX service..."
-EXIT_CODE=0 && interx start --home="$INTERX_HOME" || EXIT_CODE="$?"
+EXIT_CODE=0 && interx start --home="$INTERXD_HOME" || EXIT_CODE="$?"
 set +x
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
 sleep 3

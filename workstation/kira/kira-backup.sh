@@ -24,8 +24,8 @@ else
     globSet SNAPSHOT_UNHALT "false"
 fi
 
-echoWarn "WARNING: The '$SNAPSHOT_TARGET' container will be halted in order to safely backup blockchain state !!!"
-[ "${SNAPSHOT_TARGET,,}" == "validator" ] && echoWarn "WARNING: IT IS RECCOMENDED THAT YOU ENABLE MAINTENANCE MODE BEFORE YOU PROCEED !!!"
+echoWarn "WARNING: The '$SNAPSHOT_TARGET' container will be forcefully halted in order to safely backup blockchain state!"
+[ "${SNAPSHOT_TARGET,,}" == "validator" ] && echoWarn "WARNING: IT IS RECCOMENDED THAT YOU ENABLE MAINTENANCE MODE BEFORE YOU PROCEED!"
 echoNErr "Do you want to continue and create a new [B]ackup, or [E]xit: " && pressToContinue b e && SELECT=($(globGet OPTION))
 
 [ "${SELECT,,}" == "e" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 3 && exit 0

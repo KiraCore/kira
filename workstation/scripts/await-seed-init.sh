@@ -95,9 +95,6 @@ while : ; do
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
 
-    #[[ $HEIGHT -le $PREVIOUS_HEIGHT ]] && \
-    #    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly." && FAILURE="true"
-
     NETWORK=$(echo $STATUS | jsonQuickParse "network" 2>/dev/null || echo -n "")
     [ "$NETWORK_NAME" != "$NETWORK" ] && \
         echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'" && FAILURE="true"
@@ -113,65 +110,6 @@ while : ; do
         sleep 30 && exit 1
     else echoInfo "INFO: $CONTAINER_NAME launched sucessfully" && break ; fi
 done
-
-#if [ "${EXTERNAL_SYNC,,}" == "true" ] ; then
-#    echoInfo "INFO: External state synchronisation detected, $CONTAINER_NAME must be fully synced before setup can proceed"
-#
-#    i=0
-#    PREVIOUS_HEIGHT=0
-#    BLOCKS_LEFT_OLD=0
-#    timerStart BLOCK_HEIGHT_SPAN
-#    while : ; do
-#        echoInfo "INFO: Awaiting node status..."
-#
-#        globDel "${CONTAINER_NAME}_STATUS"
-#        timerStart STATUS_AWAIT
-#        set +x
-#        while : ; do
-#            STATUS_SPAN=$(timerSpan STATUS_AWAIT)
-#            STATUS=$(globGet "${CONTAINER_NAME}_STATUS") && [ -z "$STATUS" ] && STATUS="undefined"
-#            [ "${STATUS,,}" == "running" ] && break
-#            echoInfo "INFO: Waiting for $CONTAINER_NAME container to change status from $STATUS to running, elapsed $STATUS_SPAN/900 seconds..."
-#            sleep 10
-#            if (! $(isServiceActive "kirascan")) || [[ $STATUS_SPAN -gt 900 ]] ; then
-#                echoErr "ERROR: Your 'kirascan' monitoring service is NOT running or timed out $STATUS_SPAN/900 seconds when awaiting status change."
-#                exit 1
-#            fi
-#        done
-#        set -x
-#
-#        PREVIOUS_HEIGHT=$HEIGHT
-#        HEIGHT=$(globGet "${CONTAINER_NAME}_BLOCK") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-#        SYNCING=$(globGet "${CONTAINER_NAME}_SYNCING")
-#        LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
-#        MIN_HEIGH=$(globGet MIN_HEIGHT)
-#        DELTA_TIME=$(timerSpan BLOCK_HEIGHT_SPAN)
-#        
-#        [[ $PREVIOUS_HEIGHT -lt $HEIGHT ]] && timerStart BLOCK_HEIGHT_SPAN
-#        [[ $LATEST_BLOCK_HEIGHT -gt $MIN_HEIGH ]] && MIN_HEIGH=$LATEST_BLOCK_HEIGHT
-#        [[ $HEIGHT -ge $MIN_HEIGH ]] && echoInfo "INFO: Node finished catching up." && break
-#        
-#        BLOCKS_LEFT=$(($MIN_HEIGH - $HEIGHT))
-#        DELTA_HEIGHT=$(($BLOCKS_LEFT_OLD - $BLOCKS_LEFT))
-#        BLOCKS_LEFT_OLD=$BLOCKS_LEFT
-#
-#        if [[ $DELTA_TIME -gt $TIMEOUT ]] ; then
-#            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
-#            echoErr "ERROR: $CONTAINER_NAME failed to catch up new blocks for over 30 minutes!"
-#            exit 1
-#        fi
-#        
-#        set +x
-#        if [[ $BLOCKS_LEFT -gt 0 ]] && [[ $DELTA_HEIGHT -gt 0 ]] && [[ $DELTA_TIME -gt 0 ]] ; then
-#            TIME_LEFT=$((($BLOCKS_LEFT * $DELTA_TIME) / $DELTA_HEIGHT))
-#            echoInfo "INFO: Estimated time left until catching up with min.height: $(prettyTime $TIME_LEFT)"
-#        fi
-#        echoInfo "INFO: Minimum height: $MIN_HEIGH, current height: $HEIGHT, catching up: $SYNCING ($DELTA_HEIGHT)"
-#        echoInfo "INFO: Do NOT close your terminal, waiting for '$CONTAINER_NAME' to finish catching up..."
-#        set -x
-#        sleep 30
-#    done
-#fi
 
 set +x
 echoWarn "------------------------------------------------"
