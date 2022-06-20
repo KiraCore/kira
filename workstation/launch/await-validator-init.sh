@@ -96,7 +96,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 done
 
 echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
-docker inspect --format "{{json .State.Health }}" $($KIRA_SCRIPTS/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
+docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
 cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
@@ -198,7 +198,7 @@ EOL
     REPO_TMP="/tmp/repo"
 
     rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-    $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$REPO_TMP" 555
+    $KIRA_COMMON/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$REPO_TMP" 555
     CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
     UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
 

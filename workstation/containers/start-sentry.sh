@@ -28,10 +28,10 @@ set -x
 
 globSet "${CONTAINER_NAME}_STARTED" "false"
 
-if (! $($KIRA_SCRIPTS/container-healthy.sh "$CONTAINER_NAME")) ; then
+if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources..."
-    $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+    $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
 
     chattr -iR $COMMON_PATH || echoWarn "WARNING: Failed to remove integrity protection from $COMMON_PATH"
     # globGet sentry_health_log_old

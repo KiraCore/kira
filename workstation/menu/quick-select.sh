@@ -174,7 +174,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 0 || echoErr "ERROR: Peers discovery scan failed"
+            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 0 || echoErr "ERROR: Peers discovery scan failed"
             SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
             if [ ! -z "$SNAP_PEER" ]; then
                 echoInfo "INFO: Snapshot peer was found"
@@ -424,7 +424,7 @@ if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; 
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/scripts/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
+            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
             if (! $(isFileEmpty "$TMP_PEERS")) ; then
                 echoInfo "INFO: Saving extra peers..."
                 cat $TMP_PEERS >> $PUBLIC_SEEDS

@@ -19,7 +19,7 @@ echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
 systemctl daemon-reload || echoWarn "WARNINIG: Failed systemctl daemon-reload"
-$KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNINIG: Failed to stop docker service"
+$KIRA_COMMON/docker-stop.sh || echoWarn "WARNINIG: Failed to stop docker service"
 ifaces=( $ifaces_iterate )
 
 for f in $ifaces_iterate ; do

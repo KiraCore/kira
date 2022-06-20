@@ -145,8 +145,8 @@ echo -e "\e[37;1m--------------------------------------------------"
         $KIRA_MANAGER/networking.sh
     elif [ "${OPTION,,}" == "r" ]; then
         echoInfo "INFO: Restarting network interfaces..."
-        # $KIRA_MANAGER/scripts/restart-networks.sh
-        $KIRA_MANAGER/scripts/update-ifaces.sh
+        # $KIRA_MANAGER/launch/restart-networks.sh
+        $KIRA_MANAGER/launch/update-ifaces.sh
     elif [ "${OPTION,,}" == "x" ]; then
         echoInfo "INFO: Stopping kira networking manager..."
         break

@@ -20,8 +20,8 @@ cd /kira
 
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Updating kira, sekai, INTERX"
-    $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
-    $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &
+    $KIRA_COMMON/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
+    $KIRA_COMMON/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &
     wait < <(jobs -p)
 
     # we must ensure that recovery files can't be destroyed in the update process and cause a deadlock
@@ -45,7 +45,7 @@ rm /bin/kira || echoWarn "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
-$KIRA_SCRIPTS/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
+$KIRA_COMMON/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
 timeout 60 systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
 
 $KIRA_MANAGER/setup/envs.sh
@@ -53,7 +53,7 @@ $KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
-$KIRA_SCRIPTS/docker-restart.sh
+$KIRA_COMMON/docker-restart.sh
 
 echoInfo "INFO: Updating kira update service..."
 cat > /etc/systemd/system/kiraup.service << EOL

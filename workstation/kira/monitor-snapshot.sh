@@ -46,7 +46,7 @@ if [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ; then
 fi
 
 ($(isNullOrWhitespaces $CONTAINER_NAME)) && echoErr "ERROR: Target container '$CONTAINER_NAME' was NOT defined" && sleep 10 && exit 1
-CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
+CONTAINER_EXISTS=$($KIRA_COMMON/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
 
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
@@ -58,7 +58,7 @@ sleep 15
 echoInfo "INFO: Restarting '$CONTAINER_NAME' container and ensuring all processes are killed."
 $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "false"
 
-CONTAINER_EXISTS=$($KIRA_SCRIPTS/container-exists.sh "$CONTAINER_NAME" || echo "error")
+CONTAINER_EXISTS=$($KIRA_COMMON/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
 [ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 

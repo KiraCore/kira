@@ -48,14 +48,14 @@ if [ ! -z "$NAME" ] && [ ! -z "$PROCESS" ] && ( [ "${TASK,,}" == "restart" ] || 
     echoInfo "INFO: Sending pkill command to container..."
     docker exec -i $NAME /bin/bash -c "pkill -$CODE $PROCESS || echo 'WARNING: Failed to pkill $PROCESS ($CODE)'" || echoWarn "WARNING: Failed to pkill $PROCESS ($CODE)"
     
-    RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
+    RUNNING=$($KIRA_COMMON/container-running.sh $NAME)
     if [ "${AWAIT,,}" == "true" ] && [ "${RUNNING,,}" == "true" ] ; then
         cntr=0
         while [ "$(globGet EXIT_TASK $GLOBAL_COMMON)" == "true" ] && [[ $cntr -lt 30 ]] ; do
             cntr=$(($cntr + 1))
             echoInfo "INFO: Waiting for container '$NAME' to halt ($cntr/30) ..."
             sleep 5
-            RUNNING=$($KIRA_SCRIPTS/container-running.sh $NAME)
+            RUNNING=$($KIRA_COMMON/container-running.sh $NAME)
             [ "${RUNNING,,}" == "false" ] && break
         done
         [ "$(globGet EXIT_TASK $GLOBAL_COMMON)" == "false" ] && echoInfo "INFO: Container '$NAME' stopped sucessfully" || echoWarn "WARNING: Failed to gracefully stop container '$NAME'"
@@ -71,15 +71,15 @@ if [ "${TASK,,}" == "unpause" ] && [ "${UNHALT,,}" == "true" ]  ; then
 fi
 
 if [ "${TASK,,}" == "pause" ] ; then
-    $KIRA_SCRIPTS/container-pause.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    $KIRA_COMMON/container-pause.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
 elif [ "${TASK,,}" == "unpause" ] ; then
-    $KIRA_SCRIPTS/container-unpause.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    $KIRA_COMMON/container-unpause.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
 elif [ "${TASK,,}" == "start" ] ; then
-    $KIRA_SCRIPTS/container-start.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    $KIRA_COMMON/container-start.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
 elif [ "${TASK,,}" == "stop" ] ; then
-    $KIRA_SCRIPTS/container-stop.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    $KIRA_COMMON/container-stop.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
 elif [ "${TASK,,}" == "restart" ] ; then
-    $KIRA_SCRIPTS/container-restart.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
+    $KIRA_COMMON/container-restart.sh $NAME || echoWarn "WARNING: Failed to $TASK contianer $NAME"
 else
     echoInfo "INFO: No container execution tasks were requested"
 fi

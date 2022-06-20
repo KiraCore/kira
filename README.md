@@ -38,13 +38,11 @@ cd /tmp && read -p "Input branch name: " BRANCH && \
 ### Internal DNS Names & Subnets
 
 ```
-KIRA_REGISTRY_SUBNET="10.1.0.0/16"
 KIRA_SENTRY_SUBNET="10.2.0.0/16"
 KIRA_SERVICE_SUBNET="10.3.0.0/16"
 ```
 
 ```
-#KIRA_REGISTRY_DNS="registry.local"
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
 KIRA_INTERX_DNS="interx.local"

@@ -19,7 +19,7 @@ echoWarn "|-------------------------------------------------"
 set -x
 
 DOCKER_INSPECT=$(globFile "${NAME}_DOCKER_INSPECT")
-ID=$($KIRA_SCRIPTS/container-id.sh "$NAME" 2> /dev/null || echo -n "")
+ID=$($KIRA_COMMON/container-id.sh "$NAME" 2> /dev/null || echo -n "")
 
 if (! $(isNullOrEmpty "$ID")) ; then
     echo $(timeout 4 docker inspect "$ID" 2> /dev/null || echo -n "") | globSet "${NAME}_DOCKER_INSPECT"

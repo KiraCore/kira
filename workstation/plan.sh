@@ -87,7 +87,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
                       
         if (! $(isNullOrWhitespaces "$checkout")) ; then
             echoInfo "INFO: Fetching KIRA Manager repository from git..."
-            $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
+            $KIRA_COMMON/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
             cd "$KM_TMP" 
             zip -0 -r -v "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
         else
@@ -126,7 +126,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
                 CDHelper text lineswap --insert="INFRA_CHECKSUM=\"$checksum\"" --prefix="INFRA_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
                 
                 echoInfo "INFO: Updating setup version..."
-                SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
+                SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
                 [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
                 CDHelper text lineswap --insert="KIRA_SETUP_VER=\"$SETUP_VER\"" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
                       

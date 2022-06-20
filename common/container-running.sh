@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 exec 2>&1
 set -e
-# quick edit: FILE="$KIRA_SCRIPTS/container-running.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_COMMON/container-running.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
 
 # NOTE: $1 (arg 1) must be a valid container id
 if [ -z "$1" ] ; then

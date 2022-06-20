@@ -55,7 +55,7 @@ while : ; do
         echoInfo "INFO: Starting hosts update..."
         LOG_FILE="$HOSTS_SCAN_PATH.log"
         (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
-        timeout 600 $KIRA_MANAGER/scripts/update-hosts.sh &> $LOG_FILE &
+        timeout 600 $KIRA_MANAGER/launch/update-hosts.sh &> $LOG_FILE &
         globSet HOSTS_SCAN_PID "$!"
     else
         sleep 1

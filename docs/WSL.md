@@ -46,6 +46,12 @@ default=asmodat
 EOF
 ```
 
+# Docker Containers & Images Cleanup
+```
+docker rm -vf $(docker ps -aq)
+docker rmi -f $(docker images -aq)
+```
+
 # Setup Example
 
 ```

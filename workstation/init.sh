@@ -178,7 +178,7 @@ KIRA_BIN="/kira/bin"                && setGlobEnv KIRA_BIN "$KIRA_BIN"
 KIRA_SETUP="/kira/setup"            && setGlobEnv KIRA_SETUP "$KIRA_SETUP"
 KIRA_MANAGER="/kira/manager"        && setGlobEnv KIRA_MANAGER "$KIRA_MANAGER"
 
-KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"     && setGlobEnv KIRA_SCRIPTS "$KIRA_SCRIPTS"
+KIRA_COMMON="${KIRA_INFRA}/common"              && setGlobEnv KIRA_COMMON "$KIRA_COMMON"
 KIRA_WORKSTATION="${KIRA_INFRA}/workstation"    && setGlobEnv KIRA_WORKSTATION "$KIRA_WORKSTATION"
 
 SEKAID_HOME="/root/.sekaid"             && setGlobEnv SEKAID_HOME "$SEKAID_HOME"
@@ -243,7 +243,7 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     exit 0
 fi
 
-KIRA_SETUP_VER=$(cat $KIRA_INFRA/version || echo "")
+KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
 [ -z "KIRA_SETUP_VER" ] && echo -en "\e[31;1mERROR: Invalid setup release version!\e[0m" && exit 1
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
 

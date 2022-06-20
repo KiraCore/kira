@@ -274,11 +274,11 @@ while : ; do
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "running" ] ; then
         echo "INFO: Pausing container..."
         globSet HALT_TASK "false" $GLOBAL_COMMON
-        $KIRA_SCRIPTS/container-pause.sh $NAME
+        $KIRA_COMMON/container-pause.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "p" ] && [ "$STATUS" == "paused" ] ; then
         echo "INFO: UnPausing container..."
-        $KIRA_SCRIPTS/container-unpause.sh $NAME
+        $KIRA_COMMON/container-unpause.sh $NAME
         LOADING="true" && EXECUTED="true"
     elif [ "${OPTION,,}" == "l" ] ; then
         LOG_LINES=10

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_SCRIPTS/docker-stop.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_COMMON/docker-stop.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
 
 if (! $(isCommand "docker")); then 
     echo "INFO: No need to stop docker, command was NOT found" 

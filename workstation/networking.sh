@@ -37,7 +37,7 @@ fi
 
 echoInfo "INFO: Stopping docker & restaring firewall..."
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
-$KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
+$KIRA_COMMON/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"
 
 service dbus start || echoWarn "WARNING: Failed to start dbus service"
 timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld service"
@@ -223,7 +223,7 @@ firewall-cmd --get-active-zones
 firewall-cmd --zone=$FIREWALL_ZONE --list-all
 
 echoInfo "INFO: Stopping docker, then removing and recreating all docker-created network interfaces"
-$KIRA_MANAGER/scripts/update-ifaces.sh
+$KIRA_MANAGER/launch/update-ifaces.sh
 
 set +x
 echoWarn "------------------------------------------------"

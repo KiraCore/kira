@@ -247,7 +247,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
     for name in $CONTAINERS; do
         [ "${name,,}" == "registry" ] && continue
         echoInfo "INFO: Removing '$name' container and cleaning up resources..."
-        $KIRA_SCRIPTS/container-delete.sh "$CONTAINER_NAME"
+        $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
 
         # chattr -i
         rm -rfv "$DOCKER_COMMON/${name}"
@@ -275,7 +275,7 @@ if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "
         DOWNLOAD_SUCCESS="true"
         if (! $(isNullOrWhitespaces "$checkout")) ; then
             echoInfo "INFO: Fetching '$joid' repository from git..."
-            $KIRA_SCRIPTS/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
+            $KIRA_COMMON/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
             [ "${DOWNLOAD_SUCCESS,,}" == "false" ] && echoErr "ERROR: Failed to pull '$repository' from  '$checkout' branch." && sleep 10 && exit 1
             echoInfo "INFO: Repo '$repository' pull from branch '$checkout' suceeded, navigating to '$REPO_TMP' and compressing source into '$REPO_ZIP'..."
             cd "$REPO_TMP" && zip -0 -r -v "$REPO_ZIP" .* || DOWNLOAD_SUCCESS="false"

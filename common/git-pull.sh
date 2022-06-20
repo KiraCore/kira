@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 
 # Local Update Shortcut:
-# (rm -fv $KIRA_SCRIPTS/git-pull.sh) && nano $KIRA_SCRIPTS/git-pull.sh && chmod 777 $KIRA_SCRIPTS/git-pull.sh
+# (rm -fv $KIRA_COMMON/git-pull.sh) && nano $KIRA_COMMON/git-pull.sh && chmod 777 $KIRA_COMMON/git-pull.sh
 
 REPO=$1
 BRANCH=$2

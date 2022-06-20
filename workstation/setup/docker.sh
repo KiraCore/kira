@@ -4,7 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/setup/docker.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-$KIRA_SCRIPTS/docker-restart.sh
+$KIRA_COMMON/docker-restart.sh
 sleep 5
 VERSION=$(docker -v || echo "error")
 
@@ -21,7 +21,7 @@ SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceActive "docker")) ; then
     echoInfo "INFO: Attempting to remove old docker..."
     docker system prune -f || echoWarn "WARNING: failed to prune docker system"
-    $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
+    $KIRA_COMMON/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
 
     echoInfo "INFO: Removing hanging docker-network interfaces..."
     ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
@@ -89,7 +89,7 @@ EOL
 
     systemctl enable --now docker
     sleep 5
-    $KIRA_SCRIPTS/docker-restart.sh
+    $KIRA_COMMON/docker-restart.sh
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v

@@ -28,7 +28,7 @@ sleep 3
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 for name in $CONTAINERS; do
-    $KIRA_SCRIPTS/container-delete.sh "$name"
+    $KIRA_COMMON/container-delete.sh "$name"
     rm -rfv "$DOCKER_COMMON/${name}"
     globDel "${name}_SEKAID_STATUS"
 done
@@ -74,7 +74,7 @@ for (( i=0; i<${len}; i++ )) ; do
     docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
 done
 
-$KIRA_MANAGER/scripts/update-ifaces.sh
+$KIRA_MANAGER/launch/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
