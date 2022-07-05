@@ -193,19 +193,9 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    UPGRADE_RESOURCES=""
-    REPO_ZIP="/tmp/repo.zip"
-    REPO_TMP="/tmp/repo"
-
-    rm -fv $REPO_ZIP && cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-    $KIRA_COMMON/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$REPO_TMP" 555
-    CHECKSUM=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-    UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"$CHECKSUM\"}"
-
-    # UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
-
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"\"}"
+    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
-
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan \
  --name="$UPGRADE_NAME" \
