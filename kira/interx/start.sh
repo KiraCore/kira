@@ -59,10 +59,10 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
 fi
 
 globSet CFG_TASK "false"
-globSet RUNTIME_VERSION "interx $(interx version)"
+globSet RUNTIME_VERSION "interxd $(interxd version)"
 
 echoInfo "INFO: Starting INTERX service..."
-EXIT_CODE=0 && interx start --home="$INTERXD_HOME" || EXIT_CODE="$?"
+EXIT_CODE=0 && interxd start --home="$INTERXD_HOME" || EXIT_CODE="$?"
 set +x
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
 sleep 3
