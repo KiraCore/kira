@@ -153,6 +153,7 @@ if [ "${NEW_NETWORK,,}" == "true" ] ; then
     docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord signer \"username\" \"faucet\" 180"
 
     echoInfo "INFO: Creating initial upsert token aliases proposals and voting on them..."
+    set -x
 
     KEX_UPSERT=$(cat <<EOL
 sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
@@ -163,7 +164,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="ukex" \
  --title="Upsert KEX icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
+ --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME  --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
 EOL
 )
 
@@ -176,7 +177,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="test" \
  --title="Upsert Test TestCoin icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
+ --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --output=json | txAwait 180
 EOL
 )
 
@@ -189,7 +190,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
  --denoms="samolean" \
  --title="Upsert Samolean TestCoin icon URL link" \
  --description="Initial Setup From KIRA Manager" \
- --chain-id=\$NETWORK_NAME --fees=100ukex --yes --broadcast-mode=async --output=json  | txAwait 180
+ --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --yes --broadcast-mode=async --output=json  | txAwait 180
 EOL
 )
 
@@ -197,7 +198,7 @@ EOL
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL
-sekaid tx upgrade proposal-set-plan \
+sekaid tx upgrade proposal-set-plan --from=validator --keyring-backend=test \
  --name="$UPGRADE_NAME" \
  --instate-upgrade=true \
  --skip-handler=true \
@@ -208,7 +209,7 @@ sekaid tx upgrade proposal-set-plan \
  --rollback-memo="${UPGRADE_NAME}-roll" \
  --max-enrollment-duration=666 \
  --upgrade-memo="Genesis setup plan" \
- --from=validator --keyring-backend=test --chain-id=\$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180
+ --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180
 EOL
 )
 
