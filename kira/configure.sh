@@ -317,16 +317,19 @@ echoInfo "----------------------------------"
 echoInfo "INFO: Starting sekai & tendermint configs setup..."
 set -x
 
-[ ! -z "$CFG_moniker" ] && CDHelper text lineswap --insert="moniker = \"$CFG_moniker\"" --prefix="moniker =" --path=$CFG
-[ ! -z "$CFG_pex" ] && CDHelper text lineswap --insert="pex = $CFG_pex" --prefix="pex =" --path=$CFG
-[ ! -z "$CFG_persistent_peers" ] && CDHelper text lineswap --insert="persistent_peers = \"$CFG_persistent_peers\"" --prefix="persistent_peers =" --path=$CFG
-[ ! -z "$CFG_private_peer_ids" ] && CDHelper text lineswap --insert="private_peer_ids = \"$CFG_private_peer_ids\"" --prefix="private_peer_ids =" --path=$CFG
-[ ! -z "$CFG_seeds" ] && CDHelper text lineswap --insert="seeds = \"$CFG_seeds\"" --prefix="seeds =" --path=$CFG
-[ ! -z "$CFG_unconditional_peer_ids" ] && CDHelper text lineswap --insert="unconditional_peer_ids = \"$CFG_unconditional_peer_ids\"" --prefix="unconditional_peer_ids =" --path=$CFG
+[ ! -z "$CFG_moniker" ] && setTomlVar "" moniker "$CFG_moniker" $CFG
+[ ! -z "$CFG_pex" ] && setTomlVar "" pex "$CFG_pex" $CFG
+[ ! -z "$CFG_persistent_peers" ] && setTomlVar "" persistent_peers "$CFG_persistent_peers" $CFG
+[ ! -z "$CFG_private_peer_ids" ] && setTomlVar "" private_peer_ids "$CFG_private_peer_ids" $CFG
+[ ! -z "$CFG_seeds" ] && setTomlVar "" seeds "$CFG_seeds" $CFG
+[ ! -z "$CFG_unconditional_peer_ids" ] && setTomlVar "" unconditional_peer_ids "$CFG_unconditional_peer_ids" $CFG
 # addr_book_strict -> set true for strict address routability rules ; set false for private or local networks
-[ ! -z "$CFG_addr_book_strict" ] && CDHelper text lineswap --insert="addr_book_strict = $CFG_addr_book_strict" --prefix="addr_book_strict =" --path=$CFG
+[ ! -z "$CFG_addr_book_strict" ] && setTomlVar "" addr_book_strict "$CFG_addr_book_strict" $CFG
 # P2P Address to advertise to peers for them to dial, If empty, will use the same port as the laddr, and will introspect on the listener or use UPnP to figure out the address.
-[ ! -z "$EXTERNAL_ADDRESS" ] && CDHelper text lineswap --insert="external_address = \"$EXTERNAL_ADDRESS\"" --prefix="external_address =" --path=$CFG
+[ ! -z "$EXTERNAL_ADDRESS" ] && setTomlVar "" external_address "$EXTERNAL_ADDRESS" $CFG
+
+
+
 [ ! -z "$CFG_rpc_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_rpc_laddr\"" --prefix="laddr = \"tcp://127.0.0.1:26657\"" --path=$CFG
 [ ! -z "$CFG_p2p_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_p2p_laddr\"" --prefix="laddr = \"tcp://0.0.0.0:26656\"" --path=$CFG
 #[ ! -z "$CFG_grpc_laddr" ] && CDHelper text lineswap --insert="grpc_laddr = \"$CFG_grpc_laddr\"" --prefix="grpc_laddr =" --path=$CFG
