@@ -125,6 +125,11 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "sekaid $(sekaid version)"
 
 echoInfo "INFO: Starting validator..."
+kill -9 $(sudo lsof -t -i:9090) || echoWarn "WARNING: Nothing running on port 9090, or failed to kill processes"
+kill -9 $(sudo lsof -t -i:6060) || echoWarn "WARNING: Nothing running on port 6060, or failed to kill processes"
+kill -9 $(sudo lsof -t -i:26656) || echoWarn "WARNING: Nothing running on port 26656, or failed to kill processes"
+kill -9 $(sudo lsof -t -i:26657) || echoWarn "WARNING: Nothing running on port 26657, or failed to kill processes"
+kill -9 $(sudo lsof -t -i:26658) || echoWarn "WARNING: Nothing running on port 26658, or failed to kill processes"
 EXIT_CODE=0 && sekaid start --home=$SEKAID_HOME --trace || EXIT_CODE="$?"
 set +x
 echoErr "ERROR: SEKAID process failed with the exit code $EXIT_CODE"

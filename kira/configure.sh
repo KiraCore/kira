@@ -391,7 +391,8 @@ set -x
 
 # TCP or UNIX socket address for the gRPC server to listen on
 # NOTE: This server only supports /broadcast_tx_commit, default ("")
-[ ! -z "$CFG_grpc_laddr" ]              && setTomlVar "[rpc]" grpc_laddr "$CFG_grpc_laddr" $CFG
+# NOTE: THE grpc_laddr SHOULD BE ALWAYS "" OTHERWISE THE STARTUP WILL FAIL!
+# [ ! -z "$CFG_grpc_laddr" ]              && setTomlVar "[rpc]" grpc_laddr "$CFG_grpc_laddr" $CFG
 
 #######################################################
 ###         Consensus Configuration Options         ###
