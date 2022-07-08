@@ -317,66 +317,127 @@ echoInfo "----------------------------------"
 echoInfo "INFO: Starting sekai & tendermint configs setup..."
 set -x
 
-[ ! -z "$CFG_moniker" ] && setTomlVar "" moniker "$CFG_moniker" $CFG
-[ ! -z "$CFG_pex" ] && setTomlVar "" pex "$CFG_pex" $CFG
-[ ! -z "$CFG_persistent_peers" ] && setTomlVar "" persistent_peers "$CFG_persistent_peers" $CFG
-[ ! -z "$CFG_private_peer_ids" ] && setTomlVar "" private_peer_ids "$CFG_private_peer_ids" $CFG
-[ ! -z "$CFG_seeds" ] && setTomlVar "" seeds "$CFG_seeds" $CFG
-[ ! -z "$CFG_unconditional_peer_ids" ] && setTomlVar "" unconditional_peer_ids "$CFG_unconditional_peer_ids" $CFG
-# addr_book_strict -> set true for strict address routability rules ; set false for private or local networks
-[ ! -z "$CFG_addr_book_strict" ] && setTomlVar "" addr_book_strict "$CFG_addr_book_strict" $CFG
-# P2P Address to advertise to peers for them to dial, If empty, will use the same port as the laddr, and will introspect on the listener or use UPnP to figure out the address.
-[ ! -z "$EXTERNAL_ADDRESS" ] && setTomlVar "" external_address "$EXTERNAL_ADDRESS" $CFG
+#######################################################################
+###                   Main Base Config Options                      ###
+#######################################################################
+
+# A custom human readable name for this node
+[ ! -z "$CFG_moniker" ]     && setTomlVar "" moniker "$CFG_moniker" $CFG
+# If this node is many blocks behind the tip of the chain, FastSync
+# allows them to catchup quickly by downloading blocks in parallel
+# and verifying their commits. Default (true)
+[ ! -z "$CFG_fastsync" ]    && setTomlVar "" fast_sync "$CFG_fastsync" $CFG
 
 
+#######################################################
+###           P2P Configuration Options             ###
+#######################################################
+# [p2p]
 
-[ ! -z "$CFG_rpc_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_rpc_laddr\"" --prefix="laddr = \"tcp://127.0.0.1:26657\"" --path=$CFG
-[ ! -z "$CFG_p2p_laddr" ] && CDHelper text lineswap --insert="laddr = \"$CFG_p2p_laddr\"" --prefix="laddr = \"tcp://0.0.0.0:26656\"" --path=$CFG
-#[ ! -z "$CFG_grpc_laddr" ] && CDHelper text lineswap --insert="grpc_laddr = \"$CFG_grpc_laddr\"" --prefix="grpc_laddr =" --path=$CFG
-[ ! -z "$CFG_double_sign_check_height" ] && CDHelper text lineswap --insert="double_sign_check_height = $CFG_double_sign_check_height" --prefix="double_sign_check_height =" --path=$CFG
-[ ! -z "$CFG_seed_mode" ] && CDHelper text lineswap --insert="seed_mode = $CFG_seed_mode" --prefix="seed_mode =" --path=$CFG
-[ ! -z "$CFG_skip_timeout_commit" ] && CDHelper text lineswap --insert="skip_timeout_commit = $CFG_skip_timeout_commit" --prefix="skip_timeout_commit =" --path=$CFG
-[ ! -z "$CFG_cors_allowed_origins" ] && CDHelper text lineswap --insert="cors_allowed_origins = [ \"$CFG_cors_allowed_origins\" ]" --prefix="cors_allowed_origins =" --path=$CFG
+# Address to listen for incoming connections
+[ ! -z "$CFG_p2p_laddr" ]                   && setTomlVar "[p2p]" laddr "$CFG_p2p_laddr" $CFG
+# Address to advertise to peers for them to dial
+# If empty, will use the same port as the laddr,
+# and will introspect on the listener or use UPnP
+# to figure out the address. ip and port are required
+# example: 159.89.10.97:26656
+[ ! -z "$EXTERNAL_ADDRESS" ]                && setTomlVar "[p2p]" external_address "$EXTERNAL_ADDRESS" $CFG
+# Comma separated list of seed nodes to connect to
+[ ! -z "$CFG_seeds" ]                       && setTomlVar "[p2p]" seeds "$CFG_seeds" $CFG
+# Comma separated list of nodes to keep persistent connections to
+[ ! -z "$CFG_persistent_peers" ]            && setTomlVar "[p2p]" persistent_peers "$CFG_persistent_peers" $CFG
 
-# Maximum number of inbound P2P peers that can dial your node and connect to it
-[ ! -z "$CFG_max_num_inbound_peers" ] && CDHelper text lineswap --insert="max_num_inbound_peers = $CFG_max_num_inbound_peers" --prefix="max_num_inbound_peers =" --path=$CFG
-# Maximum number of outbound P2P peers to connect to, excluding persistent peers
-[ ! -z "$CFG_max_num_outbound_peers " ] && CDHelper text lineswap --insert="max_num_outbound_peers = $CFG_max_num_outbound_peers" --prefix="max_num_outbound_peers =" --path=$CFG
-# Toggle to disable guard against peers connecting from the same ip
-[ ! -z "$CFG_allow_duplicate_ip" ] && CDHelper text lineswap --insert="allow_duplicate_ip = $CFG_allow_duplicate_ip" --prefix="allow_duplicate_ip =" --path=$CFG
-# How long we wait after commiting a block before starting on the new height
-[ ! -z "$CFG_timeout_commit" ] && CDHelper text lineswap --insert="timeout_commit = \"$CFG_timeout_commit\"" --prefix="timeout_commit =" --path=$CFG
+# Set true for strict address routability rules
+# Set false for private or local networks
+[ ! -z "$CFG_addr_book_strict" ]            && setTomlVar "[p2p]" addr_book_strict "$CFG_addr_book_strict" $CFG
+# Maximum number of inbound P2P peers that can dial your node and connect to it, default (40)
+[ ! -z "$CFG_max_num_inbound_peers" ]       && setTomlVar "[p2p]" max_num_inbound_peers "$CFG_max_num_inbound_peers" $CFG
+# Maximum number of outbound P2P peers to connect to, excluding persistent peers, default (10)
+[ ! -z "$CFG_max_num_outbound_peers" ]      && setTomlVar "[p2p]" max_num_outbound_peers "$CFG_max_num_outbound_peers" $CFG
+
+# Maximum size of a message packet payload, in bytes, default 1024, kira def. 131072
+[ ! -z "$CFG_max_packet_msg_payload_size" ] && setTomlVar "[p2p]" max_packet_msg_payload_size "$CFG_max_packet_msg_payload_size" $CFG
+# Rate at which packets can be sent, in bytes/second, default 5120000, kira def. 65536000
+[ ! -z "$CFG_send_rate" ]                   && setTomlVar "[p2p]" send_rate "$CFG_send_rate" $CFG
+# Rate at which packets can be received, in bytes/second, default 5120000, kira def. 65536000
+[ ! -z "$CFG_recv_rate" ]                   && setTomlVar "[p2p]" recv_rate "$CFG_recv_rate" $CFG
+# Set true to enable the peer-exchange reactor
+[ ! -z "$CFG_pex" ]                         && setTomlVar "[p2p]" pex "$CFG_pex" $CFG
+# Seed mode, in which node constantly crawls the network and looks for
+# peers. If another node asks it for addresses, it responds and disconnects.
+# Does not work if the peer-exchange reactor is disabled. Default (false)
+[ ! -z "$CFG_seed_mode" ]                   && setTomlVar "[p2p]" seed_mode "$CFG_seed_mode" $CFG
+# List of node IDs, to which a connection will be (re)established ignoring any existing limits
+[ ! -z "$CFG_unconditional_peer_ids" ]      && setTomlVar "[p2p]" unconditional_peer_ids "$CFG_unconditional_peer_ids" $CFG
+# Comma separated list of peer IDs to keep private (will not be gossiped to other peers)
+[ ! -z "$CFG_private_peer_ids" ]            && setTomlVar "[p2p]" private_peer_ids "$CFG_private_peer_ids" $CFG
+# Toggle to disable guard against peers connecting from the same ip, default (false)
+[ ! -z "$CFG_allow_duplicate_ip" ]          && setTomlVar "[p2p]" allow_duplicate_ip "$CFG_allow_duplicate_ip" $CFG
 # Peer connection configuration.
-[ ! -z "$CFG_handshake_timeout" ] && CDHelper text lineswap --insert="handshake_timeout = \"$CFG_handshake_timeout\"" --prefix="handshake_timeout =" --path=$CFG
-[ ! -z "$CFG_dial_timeout" ] && CDHelper text lineswap --insert="dial_timeout = \"$CFG_dial_timeout\"" --prefix="dial_timeout =" --path=$CFG
-[ ! -z "$CFG_create_empty_blocks_interval" ] && CDHelper text lineswap --insert="create_empty_blocks_interval = \"$CFG_create_empty_blocks_interval\"" --prefix="create_empty_blocks_interval =" --path=$CFG
+[ ! -z "$CFG_handshake_timeout" ]           && setTomlVar "[p2p]" handshake_timeout "$CFG_handshake_timeout" $CFG
+[ ! -z "$CFG_dial_timeout" ]                && setTomlVar "[p2p]" dial_timeout "$CFG_dial_timeout" $CFG
+
+#######################################################
+###       RPC Server Configuration Options          ###
+#######################################################
+# [rpc]
+
+# TCP or UNIX socket address for the RPC server to listen on, default ("tcp://127.0.0.1:26657")
+[ ! -z "$CFG_rpc_laddr" ]               && setTomlVar "[rpc]" laddr "$CFG_rpc_laddr" $CFG
+# A list of origins a cross-domain request can be executed from
+# Default value '[]' disables cors support
+# Use '["*"]' to allow any origin. Default ([])
+[ ! -z "$CFG_cors_allowed_origins" ]    && setTomlVar "[rpc]" laddr "$CFG_cors_allowed_origins" $CFG
+
+# TCP or UNIX socket address for the gRPC server to listen on
+# NOTE: This server only supports /broadcast_tx_commit, default ("")
+[ ! -z "$CFG_grpc_laddr" ]              && setTomlVar "[rpc]" grpc_laddr "$CFG_grpc_laddr" $CFG
+
+#######################################################
+###         Consensus Configuration Options         ###
+#######################################################
+# [consensus]
+
+# How long we wait after committing a block, before starting on the new
+# height (this gives us a chance to receive some more precommits, even
+# though we already have +2/3).
+[ ! -z "$CFG_timeout_commit" ]                  && setTomlVar "[consensus]" timeout_commit "$CFG_timeout_commit" $CFG
+
+# How many blocks to look back to check existence of the node's consensus votes before joining consensus
+# When non-zero, the node will panic upon restart
+# if the same consensus key was used to sign {double_sign_check_height} last blocks.
+# So, validators should stop the state machine, wait for some blocks, and then restart the state machine to avoid panic. Default (0)
+[ ! -z "$CFG_double_sign_check_height" ]        && setTomlVar "[consensus]" grpc_laddr "$CFG_double_sign_check_height" $CFG
+# Make progress as soon as we have all the precommits (as if TimeoutCommit = 0), default (false)
+[ ! -z "$CFG_skip_timeout_commit" ]             && setTomlVar "[consensus]" skip_timeout_commit "$CFG_skip_timeout_commit" $CFG
+# EmptyBlocks mode and possible interval between empty blocks
+[ ! -z "$CFG_create_empty_blocks_interval" ]    && setTomlVar "[consensus]" create_empty_blocks_interval "$CFG_create_empty_blocks_interval" $CFG
+
+#######################################################
+###          Mempool Configuration Option          ###
+#######################################################
+# [mempool]
 
 # Limit the total size of all txs in the mempool.
 # This only accounts for raw transactions (e.g. given 1MB transactions and
-# max_txs_bytes=5MB, mempool will only accept 5 transactions).
-# default: 1073741824, kira deg. 131072000 (1000 tx)
-[ ! -z "$CFG_max_txs_bytes" ] && CDHelper text lineswap --insert="max_txs_bytes = $CFG_max_txs_bytes" --prefix="max_txs_bytes =" --path=$CFG
-# Maximum size of a single transaction.
-# NOTE: the max size of a tx transmitted over the network is {max_tx_bytes}.
-# default: 1048576 (1MB), kira def. 131072 (128KB)
-[ ! -z "$CFG_max_tx_bytes" ] && CDHelper text lineswap --insert="max_tx_bytes = $CFG_max_tx_bytes" --prefix="max_tx_bytes =" --path=$CFG
+# max_txs_bytes=5MB, mempool will only accept 5 transactions). Default (1073741824)
+[ ! -z "$CFG_max_txs_bytes" ]        && setTomlVar "[mempool]" max_txs_bytes "$CFG_max_txs_bytes" $CFG
 
-# Rate at which packets can be sent, in bytes/second
-# default 5120000, kira def. 65536000
-[ ! -z "$CFG_send_rate" ] && CDHelper text lineswap --insert="send_rate = $CFG_send_rate" --prefix="send_rate =" --path=$CFG
-# Rate at which packets can be received, in bytes/second
-# default 5120000, kira def. 65536000
-[ ! -z "$CFG_recv_rate" ] && CDHelper text lineswap --insert="recv_rate = $CFG_recv_rate" --prefix="recv_rate =" --path=$CFG
-# Maximum size of a message packet payload, in bytes
-# default 1024, kira def. 131072
-[ ! -z "$CFG_max_packet_msg_payload_size" ] && CDHelper text lineswap --insert="max_packet_msg_payload_size = $CFG_max_packet_msg_payload_size" --prefix="max_packet_msg_payload_size =" --path=$CFG
+# Maximum size of a single transaction.
+# NOTE: the max size of a tx transmitted over the network is {max_tx_bytes}. Default (1048576)
+[ ! -z "$CFG_max_tx_bytes" ]        && setTomlVar "[mempool]" max_tx_bytes "$CFG_max_tx_bytes" $CFG
+
+#######################################################
+###       Instrumentation Configuration Options     ###
+#######################################################
+# [instrumentation]
 
 # When true, Prometheus metrics are served under /metrics on
 # PrometheusListenAddr.
-# Check out the documentation for the list of available metrics.
-[ ! -z "$CFG_prometheus" ] && CDHelper text lineswap --insert="prometheus = $CFG_prometheus" --prefix="prometheus =" --path=$CFG
-# Address to listen for Prometheus collector(s) connections
-[ ! -z "$CFG_prometheus_listen_addr" ] && CDHelper text lineswap --insert="prometheus_listen_addr = \"$CFG_prometheus_listen_addr\"" --prefix="prometheus_listen_addr =" --path=$CFG
+# Check out the documentation for the list of available metrics. Default (false)
+[ ! -z "$CFG_prometheus" ]              && setTomlVar "[instrumentation]" prometheus "$CFG_prometheus" $CFG
+# Address to listen for Prometheus collector(s) connections. Default (":26660")
+[ ! -z "$CFG_prometheus_listen_addr" ]  && setTomlVar "[instrumentation]" prometheus_listen_addr "$CFG_prometheus_listen_addr" $CFG
 
 #######################################################
 ###         State Sync Configuration Options        ###
@@ -387,7 +448,7 @@ if ( $(isNullOrEmpty $CFG_rpc_servers) ) ; then
     echoWarn "WARNING: NO live RPC servers were found, disabling statesync"
     CFG_statesync_enable="false"
     CFG_trust_height=0
-    CFG_trust_hash=""
+    CFG_trust_hash="\"\""
 fi
 
 mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync temp directory"
@@ -396,39 +457,58 @@ mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync 
 # snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
 # the network to take and serve state machine snapshots. State sync is not attempted if the node
 # has any local state (LastBlockHeight > 0). The node will have a truncated block history,
-# starting from the height of the snapshot.
-[ ! -z "$CFG_statesync_enable" ] && CDHelper text lineswap --insert="enable = $CFG_statesync_enable" --prefix="enable =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
-# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
-# Will create a new, randomly named directory within, and remove it when done.
-[ ! -z "$CFG_statesync_temp_dir" ] && CDHelper text lineswap --insert="temp_dir = \"$CFG_statesync_temp_dir\"" --prefix="temp_dir =" --after-regex="^\[statesync\]" --before-regex="^\[fastsync\]" --path=$CFG
+# starting from the height of the snapshot. Default (false)
+[ ! -z "$CFG_statesync_enable" ]    && setTomlVar "[statesync]" enable "$CFG_statesync_enable" $CFG
 
-[ ! -z "$CFG_rpc_servers" ] && CDHelper text lineswap --insert="rpc_servers = \"$CFG_rpc_servers\"" --prefix="rpc_servers =" --path=$CFG
-[ ! -z "$CFG_trust_height" ] && CDHelper text lineswap --insert="trust_height = $CFG_trust_height" --prefix="trust_height =" --path=$CFG
-[ ! -z "$CFG_trust_hash" ] && CDHelper text lineswap --insert="trust_hash = \"$CFG_trust_hash\"" --prefix="trust_hash =" --path=$CFG
+# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
+# Will create a new, randomly named directory within, and remove it when done. Default ("")
+[ ! -z "$CFG_statesync_temp_dir" ]  && setTomlVar "[statesync]" temp_dir "$CFG_statesync_temp_dir" $CFG
+
+# RPC servers (comma-separated) for light client verification of the synced state machine and
+# retrieval of state data for node bootstrapping. Also needs a trusted height and corresponding
+# header hash obtained from a trusted source, and a period during which validators can be trusted.
+#
+# For Cosmos SDK-based chains, trust_period should usually be about 2/3 of the unbonding time (~2
+# weeks) during which they can be financially punished (slashed) for misbehavior. Default ("")
+[ ! -z "$CFG_rpc_servers" ]         && setTomlVar "[statesync]" rpc_servers "$CFG_rpc_servers" $CFG
+# Default (0)
+[ ! -z "$CFG_trust_height" ]        && setTomlVar "[statesync]" trust_height "$CFG_trust_height" $CFG
+# Default ("")
+[ ! -z "$CFG_trust_hash" ]          && setTomlVar "[statesync]" trust_hash "$CFG_trust_hash" $CFG
+
 
 #######################################################
 ###       Fast Sync Configuration Connections       ###
 #######################################################
 # [fastsync]
 
-[ ! -z "$CFG_fastsync" ] && CDHelper text lineswap --insert="fast_sync = $CFG_fastsync" --prefix="fast_sync =" --path=$CFG
-
 # Fast Sync version to use:
 #   1) "v0" (default) - the legacy fast sync implementation
 #   2) "v1" - refactor of v0 version for better testability
-#   2) "v2" - complete redesign of v0, optimized for testability & readability
-[ ! -z "$CFG_fastsync_version" ] && CDHelper text lineswap --insert="version = \"$CFG_fastsync_version\"" --prefix="version =" --after-regex="^\[fastsync\]" --before-regex="^\[consensus\]" --path=$CFG
+#   2) "v2" - complete redesign of v0, optimized for testability & readability. Default (0)
+[ ! -z "$CFG_fastsync_version" ]    && setTomlVar "[fastsync]" version "$CFG_fastsync_version" $CFG
 
-##########################
-# app.toml configuration
-##########################
+
+###############################################################################
+###                app.toml - Base Configuration                            ###
+###############################################################################
+
+
+###############################################################################
+###                        State Sync Configuration                         ###
+###############################################################################
+# State sync snapshots allow other nodes to rapidly join the network without replaying historical
+# blocks, instead downloading and applying a snapshot of the application state at a given height.
+# [state-sync]
 
 # snapshot-interval specifies the block interval at which local state sync snapshots are
-# taken (0 to disable). Must be a multiple of pruning-keep-every.
-[ ! -z "$CFG_snapshot_interval" ] && CDHelper text lineswap --insert="snapshot-interval = $CFG_snapshot_interval" --prefix="snapshot-interval =" --after-regex="^\[state\-sync\]" --path=$APP
+# taken (0 to disable). Must be a multiple of pruning-keep-every. Default (0)
+[ ! -z "$CFG_snapshot_interval" ]    && setTomlVar "[state-sync]" "snapshot-interval" "$CFG_snapshot_interval" $APP
+
+##########################
 
 GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
-CDHelper text lineswap --insert="GRPC_ADDRESS=\"$GRPC_ADDRESS\"" --prefix="GRPC_ADDRESS=" --path=$ETC_PROFILE --append-if-found-not=True
+setGlobEnv GRPC_ADDRESS "$GRPC_ADDRESS"
 
 if [[ $MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $MIN_HEIGHT but got $STATE_HEIGHT"

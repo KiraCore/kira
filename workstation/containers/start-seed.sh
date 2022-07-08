@@ -72,7 +72,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet CFG_send_rate "65536000" $COMMON_GLOB
     globSet CFG_recv_rate "65536000" $COMMON_GLOB
     globSet CFG_max_packet_msg_payload_size "131072" $COMMON_GLOB
-    globSet CFG_cors_allowed_origins "*" $COMMON_GLOB
+    globSet CFG_cors_allowed_origins "[ \"*\" ]" $COMMON_GLOB
     globSet CFG_snapshot_interval "1000" $COMMON_GLOB
     globSet CFG_statesync_enable "true" $COMMON_GLOB
     globSet CFG_statesync_temp_dir "/tmp" $COMMON_GLOB

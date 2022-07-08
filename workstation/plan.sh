@@ -118,18 +118,18 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
                   
                 if (! $(isNullOrWhitespaces "$checkout")) ; then
                     echoInfo "INFO: Updating branch name and repository address..."
-                    CDHelper text lineswap --insert="INFRA_REPO=\"$repository\"" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-                    CDHelper text lineswap --insert="INFRA_BRANCH=\"$checkout\"" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+                    setGlobEnv INFRA_REPO "$repository"
+                    setGlobEnv INFRA_BRANCH "$checkout"
                     globSet "INFRA_REPO" "$repository"
                     globSet "INFRA_BRANCH" "$checkout"
                 fi
-                CDHelper text lineswap --insert="INFRA_CHECKSUM=\"$checksum\"" --prefix="INFRA_CHECKSUM=" --path=$ETC_PROFILE --append-if-found-not=True
-                
+                setGlobEnv INFRA_CHECKSUM "$checksum"
+
                 echoInfo "INFO: Updating setup version..."
                 SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
                 [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
-                CDHelper text lineswap --insert="KIRA_SETUP_VER=\"$SETUP_VER\"" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
-                      
+                setGlobEnv KIRA_SETUP_VER "$SETUP_VER"
+
                 globSet PLAN_DONE "true"
             fi
         else
