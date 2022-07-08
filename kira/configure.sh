@@ -318,7 +318,7 @@ echoInfo "INFO: Starting sekai & tendermint configs setup..."
 set -x
 
 #######################################################################
-###                   Main Base Config Options                      ###
+###    Main Base Config Options: $SEKAID_HOME/config/config.toml    ###
 #######################################################################
 
 # A custom human readable name for this node
@@ -387,7 +387,7 @@ set -x
 # A list of origins a cross-domain request can be executed from
 # Default value '[]' disables cors support
 # Use '["*"]' to allow any origin. Default ([])
-[ ! -z "$CFG_cors_allowed_origins" ]    && setTomlVar "[rpc]" laddr "$CFG_cors_allowed_origins" $CFG
+[ ! -z "$CFG_cors_allowed_origins" ]    && setTomlVar "[rpc]" cors_allowed_origins "$CFG_cors_allowed_origins" $CFG
 
 # TCP or UNIX socket address for the gRPC server to listen on
 # NOTE: This server only supports /broadcast_tx_commit, default ("")
@@ -407,7 +407,7 @@ set -x
 # When non-zero, the node will panic upon restart
 # if the same consensus key was used to sign {double_sign_check_height} last blocks.
 # So, validators should stop the state machine, wait for some blocks, and then restart the state machine to avoid panic. Default (0)
-[ ! -z "$CFG_double_sign_check_height" ]        && setTomlVar "[consensus]" grpc_laddr "$CFG_double_sign_check_height" $CFG
+[ ! -z "$CFG_double_sign_check_height" ]        && setTomlVar "[consensus]" double_sign_check_height "$CFG_double_sign_check_height" $CFG
 # Make progress as soon as we have all the precommits (as if TimeoutCommit = 0), default (false)
 [ ! -z "$CFG_skip_timeout_commit" ]             && setTomlVar "[consensus]" skip_timeout_commit "$CFG_skip_timeout_commit" $CFG
 # EmptyBlocks mode and possible interval between empty blocks
