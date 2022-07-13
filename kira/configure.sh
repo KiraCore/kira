@@ -270,8 +270,11 @@ for row in "${rows[@]}"; do
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
     name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
     # value can be set from env or from globs
-    val_target=$(echo "cfg_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs) && val="${!val_target}"
-    [ -z "$val" ] && val=$(globGet "$val_target")
+    val_target_1=$(echo "cfg_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    val_target_2=$(echo "$val_target_1" | sed -r 's/[-]+/_/g' | xargs)
+    val="${!val_target_2}"
+    [ -z "$val" ] && val=$(globGet "$val_target_1")
+    [ -z "$val" ] && val=$(globGet "$val_target_2")
     if [ ! -z "$val" ] ; then
         echoWarn "WARNING: Updating CFG value: [$tag] $name -> '$val' "
         setTomlVar "[$tag]" "$name" "$val" $CFG
@@ -290,8 +293,11 @@ for row in "${rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
     name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
-    val_target=$(echo "app_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs) && val="${!val_target}"
-    [ -z "$val" ] && val=$(globGet "$val_target")
+    val_target_1=$(echo "app_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    val_target_2=$(echo "$val_target_1" | sed -r 's/[-]+/_/g' | xargs)
+    val="${!val_target_2}"
+    [ -z "$val" ] && val=$(globGet "$val_target_1")
+    [ -z "$val" ] && val=$(globGet "$val_target_2")
     if [ ! -z "$val" ] ; then
         echoWarn "WARNING: Updating APP value: [$tag] $name -> '$val' "
         setTomlVar "[$tag]" "$name" "$val" $CFG
