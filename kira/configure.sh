@@ -262,10 +262,10 @@ echoInfo "$cfg_statesync_rpc_servers"
 echoInfo "INFO: Updating CFG file..."
 set -x
 getTomlVarNames $CFG > /tmp/cfg_names.tmp
-mapfile rows < /tmp/cfg_names.tmp
+mapfile cfg_rows < /tmp/cfg_names.tmp
 set +x
 
-for row in "${rows[@]}"; do
+for row in "${cfg_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
     name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
@@ -286,10 +286,10 @@ done
 echoInfo "INFO: Updating APP file..."
 set -x
 getTomlVarNames $APP > /tmp/app_names.tmp
-mapfile rows < /tmp/app_names.tmp
+mapfile app_rows < /tmp/app_names.tmp
 set +x
 
-for row in "${rows[@]}"; do
+for row in "${app_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
     name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
@@ -300,7 +300,7 @@ for row in "${rows[@]}"; do
     [ -z "$val" ] && val=$(globGet "$val_target_2")
     if [ ! -z "$val" ] ; then
         echoWarn "WARNING: Updating APP value: [$tag] $name -> '$val' "
-        setTomlVar "[$tag]" "$name" "$val" $CFG
+        setTomlVar "[$tag]" "$name" "$val" $APP
     else
         echoInfo "INFO: APP value: [$tag] $name will NOT change, glob val was NOT found"
     fi
