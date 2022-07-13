@@ -21,9 +21,9 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-KIRA_MANAGER_VERSION="v0.0.1"
-KIRA_BASE_VERSION="v0.11.2"
-TOOLS_VERSION="v0.2.12"
+KIRA_MANAGER_VERSION="v0.0.2"
+KIRA_BASE_VERSION="v0.11.3"
+TOOLS_VERSION="v0.2.14"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"

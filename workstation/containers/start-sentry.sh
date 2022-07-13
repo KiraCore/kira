@@ -58,40 +58,39 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
     NODE_ID="$SENTRY_NODE_ID"
 
-    globSet CFG_pex "true" $GLOBAL_COMMON
-    globSet CFG_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
+    globSet cfg_p2p_pex "true" $GLOBAL_COMMON
+    globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
     #true
-    globSet CFG_allow_duplicate_ip "true" $GLOBAL_COMMON
-    globSet CFG_addr_book_strict "false" $GLOBAL_COMMON
-    globSet CFG_fastsync "true" $GLOBAL_COMMON
-    globSet CFG_fastsync_version "v1" $GLOBAL_COMMON
+    globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
+    globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
+    globSet cfg_fast_sync "true" $GLOBAL_COMMON
+    globSet cfg_fastsync_version "v1" $GLOBAL_COMMON
 
-    globSet CFG_handshake_timeout "60s" $GLOBAL_COMMON
-    globSet CFG_dial_timeout "30s" $GLOBAL_COMMON
+    globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
+    globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
     globSet CFG_trust_period "87600h" $GLOBAL_COMMON
-    globSet CFG_max_txs_bytes "131072000" $GLOBAL_COMMON
-    globSet CFG_max_tx_bytes "131072" $GLOBAL_COMMON
-    globSet CFG_send_rate "65536000" $GLOBAL_COMMON
-    globSet CFG_recv_rate "65536000" $GLOBAL_COMMON
-    globSet CFG_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
-    globSet CFG_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
-    globSet CFG_snapshot_interval "1000" $GLOBAL_COMMON
-    globSet CFG_statesync_enable "true" $GLOBAL_COMMON
-    globSet CFG_statesync_temp_dir "/tmp" $GLOBAL_COMMON
-    globSet CFG_timeout_commit "7500ms" $GLOBAL_COMMON
-    globSet CFG_create_empty_blocks_interval "10s" $GLOBAL_COMMON
-    globSet CFG_max_num_outbound_peers "32" $GLOBAL_COMMON
-    globSet CFG_max_num_inbound_peers "128" $GLOBAL_COMMON
-    globSet CFG_prometheus "true" $GLOBAL_COMMON
-    globSet CFG_seed_mode "false" $GLOBAL_COMMON
-    globSet CFG_skip_timeout_commit "false" $GLOBAL_COMMON
-    globSet CFG_private_peer_ids "" $GLOBAL_COMMON
-    globSet CFG_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
-    globSet CFG_persistent_peers "" $GLOBAL_COMMON
-    globSet CFG_seeds "" $GLOBAL_COMMON
-    globSet CFG_grpc_laddr "tcp://0.0.0.0:$DEFAULT_GRPC_PORT" $GLOBAL_COMMON
-    globSet CFG_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
-    globSet CFG_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
+    globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
+    globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
+    globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
+    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
+    globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+    globSet cfg_statesync_enable "true" $GLOBAL_COMMON
+    globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
+    globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
+    globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
+    globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
+    globSet cfg_p2p_seed_mode "false" $GLOBAL_COMMON
+    globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
+    globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
+    globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+    globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
+    globSet cfg_p2p_seeds "" $GLOBAL_COMMON
+    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+    globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
 

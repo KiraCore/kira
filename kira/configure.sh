@@ -34,37 +34,11 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNatura
 
 [[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
 
-CFG_timeout_commit=$(globGet CFG_timeout_commit)
-CFG_pex=$(globGet CFG_pex)
-CFG_moniker=$(globGet CFG_moniker)
-CFG_allow_duplicate_ip=$(globGet CFG_allow_duplicate_ip)
-CFG_addr_book_strict=$(globGet CFG_addr_book_strict)
-CFG_fastsync=$(globGet CFG_fastsync)
-CFG_fastsync_version=$(globGet CFG_fastsync_version)
-CFG_handshake_timeout=$(globGet CFG_handshake_timeout)
-CFG_dial_timeout=$(globGet CFG_dial_timeout)
-CFG_trust_period=$(globGet CFG_trust_period)
-CFG_max_txs_bytes=$(globGet CFG_max_txs_bytes)
-CFG_max_tx_bytes=$(globGet CFG_max_tx_bytes)
-CFG_send_rate=$(globGet CFG_send_rate)
-CFG_recv_rate=$(globGet CFG_recv_rate)
-CFG_max_packet_msg_payload_size=$(globGet CFG_max_packet_msg_payload_size)
-CFG_cors_allowed_origins=$(globGet CFG_cors_allowed_origins)
-CFG_snapshot_interval=$(globGet CFG_snapshot_interval)
-CFG_statesync_enable=$(globGet CFG_statesync_enable)
-CFG_statesync_temp_dir=$(globGet CFG_statesync_temp_dir)
-CFG_create_empty_blocks_interval=$(globGet CFG_create_empty_blocks_interval)
-CFG_max_num_outbound_peers=$(globGet CFG_max_num_outbound_peers)
-CFG_max_num_inbound_peers=$(globGet CFG_max_num_inbound_peers)
-CFG_prometheus=$(globGet CFG_prometheus)
-CFG_seed_mode=$(globGet CFG_seed_mode)
-CFG_skip_timeout_commit=$(globGet CFG_skip_timeout_commit)
-CFG_unconditional_peer_ids=$(globGet CFG_unconditional_peer_ids)
-CFG_persistent_peers=$(globGet CFG_persistent_peers)
-CFG_seeds=$(globGet CFG_seeds)
-CFG_grpc_laddr=$(globGet CFG_grpc_laddr)
-CFG_rpc_laddr=$(globGet CFG_rpc_laddr)
-CFG_p2p_laddr=$(globGet CFG_p2p_laddr)
+cfg_statesync_enable=$(globGet cfg_statesync_enable)
+cfg_p2p_max_num_outbound_peers=$(globGet cfg_p2p_max_num_outbound_peers)
+cfg_p2p_unconditional_peer_ids=$(globGet cfg_p2p_unconditional_peer_ids)
+cfg_p2p_persistent_peers=$(globGet cfg_p2p_persistent_peers)
+cfg_p2p_seeds=$(globGet cfg_p2p_seeds)
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE)
 FORCE_EXTERNAL_DNS=$(globGet FORCE_EXTERNAL_DNS)
@@ -78,8 +52,9 @@ cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 
 [ "${PRIVATE_MODE,,}" == "true" ] && EXTERNAL_DNS="$LOCAL_IP" || EXTERNAL_DNS="$PUBLIC_IP"
 
-EXTERNAL_ADDRESS="tcp://$EXTERNAL_DNS:$EXTERNAL_P2P_PORT"
-globSet EXTERNAL_ADDRESS "$EXTERNAL_ADDRESS"
+cfg_p2p_external_address="tcp://$EXTERNAL_DNS:$EXTERNAL_P2P_PORT"
+globSet cfg_p2p_external_address "$cfg_p2p_external_address"
+globSet EXTERNAL_ADDRESS "$cfg_p2p_external_address"
 globSet EXTERNAL_DNS "$EXTERNAL_DNS"
 globSet EXTERNAL_PORT "$EXTERNAL_P2P_PORT"
 
@@ -104,8 +79,8 @@ if [ ! -s "$LOCAL_PEERS_PATH" ] ; then
     set +x
     while read peer ; do
         echoInfo "INFO: Adding extra peer '$peer' from the list"
-        [ ! -z "$CFG_persistent_peers" ] && CFG_persistent_peers="${CFG_persistent_peers},"
-        CFG_persistent_peers="${CFG_persistent_peers}${peer}"
+        [ ! -z "$cfg_p2p_persistent_peers" ] && cfg_p2p_persistent_peers="${cfg_p2p_persistent_peers},"
+        cfg_p2p_persistent_peers="${cfg_p2p_persistent_peers}${peer}"
     done < $LOCAL_PEERS_PATH
     set -x
 else echoWarn "WARNING: List of local peers is empty ($LOCAL_PEERS_PATH)" ; fi
@@ -116,8 +91,8 @@ if [ -f "$LOCAL_SEEDS_PATH" ] ; then
     set +x
     while read seed ; do
         echoInfo "INFO: Adding extra seed '$seed' from the list"
-        [ ! -z "$CFG_seeds" ] && CFG_seeds="${CFG_seeds},"
-        CFG_seeds="${CFG_seeds}${seed}"
+        [ ! -z "$cfg_p2p_seeds" ] && cfg_p2p_seeds="${cfg_p2p_seeds},"
+        cfg_p2p_seeds="${cfg_p2p_seeds}${seed}"
     done < "${LOCAL_SEEDS_PATH}.tmp"
     set -x
 else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
@@ -125,11 +100,11 @@ else echoWarn "WARNING: List of local peers is empty ($LOCAL_SEEDS_PATH)" ; fi
 rm -fv $LOCAL_RPC_PATH
 touch $LOCAL_RPC_PATH
 
-if [ ! -z "$CFG_seeds" ] ; then
+if [ ! -z "$cfg_p2p_seeds" ] ; then
     echoInfo "INFO: Seed configuration is available, testing..."
-    TMP_CFG_seeds=""
+    TMP_cfg_p2p_seeds=""
     i=0
-    for seed in $(echo $CFG_seeds | sed "s/,/ /g") ; do
+    for seed in $(echo $cfg_p2p_seeds | sed "s/,/ /g") ; do
         seed=$(echo "$seed" | sed 's/tcp\?:\/\///')
         set +x
         [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
@@ -143,7 +118,7 @@ if [ ! -z "$CFG_seeds" ] ; then
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Seed '$seed' PORT is invalid!" && continue
-        ($(isSubStr "$TMP_CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
+        ($(isSubStr "$TMP_cfg_p2p_seeds" "$nodeId")) && echoWarn "WARNINIG: Seed '$seed' can NOT be added, node-id already present in the config." && continue
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Seed '$seed' IP could NOT be resolved" && continue
         (! $(isPortOpen "$addr" "$port" "0.25")) && echoWarn "WARNINIG: Seed '$seed' is NOT reachable!" && continue
 
@@ -168,23 +143,23 @@ if [ ! -z "$CFG_seeds" ] ; then
         seed="tcp://${nodeId}@${ip}:${port}"
 
         i=$(($i + 1))
-        if [[ $i -ge $CFG_max_num_outbound_peers ]] ; then
-            echoWarn "INFO: Outbound seeds limit (${i}/${CFG_max_num_outbound_peers}) reached"
+        if [[ $i -ge $cfg_p2p_max_num_outbound_peers ]] ; then
+            echoWarn "INFO: Outbound seeds limit (${i}/${cfg_p2p_max_num_outbound_peers}) reached"
         else
             echoInfo "INFO: Adding extra seed '$seed' to new config"
-            [ ! -z "$TMP_CFG_seeds" ] && TMP_CFG_seeds="${TMP_CFG_seeds},"
-            TMP_CFG_seeds="${TMP_CFG_seeds}${seed}"
+            [ ! -z "$TMP_cfg_p2p_seeds" ] && TMP_cfg_p2p_seeds="${TMP_cfg_p2p_seeds},"
+            TMP_cfg_p2p_seeds="${TMP_cfg_p2p_seeds}${seed}"
         fi
         set -x
     done
-    CFG_seeds=$TMP_CFG_seeds
+    cfg_p2p_seeds=$TMP_cfg_p2p_seeds
 else echoWarn "WARNING: Seeds configuration is NOT available!" ; fi
 
-if [ ! -z "$CFG_persistent_peers" ] ; then
+if [ ! -z "$cfg_p2p_persistent_peers" ] ; then
     echoInfo "INFO: Peers configuration is available, testing..."
     
-    TMP_CFG_persistent_peers=""
-    for peer in $(echo $CFG_persistent_peers | sed "s/,/ /g") ; do
+    TMP_cfg_p2p_persistent_peers=""
+    for peer in $(echo $cfg_p2p_persistent_peers | sed "s/,/ /g") ; do
         peer=$(echo "$peer" | sed 's/tcp\?:\/\///')
         set +x
         [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
@@ -198,8 +173,8 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue
         (! $(isPort "$port")) && echoWarn "WARNINIG: Peer '$peer' PORT is invalid!" && continue
-        ($(isSubStr "$TMP_CFG_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the peers config." && continue
-        ($(isSubStr "$CFG_seeds" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the seeds config." && continue
+        ($(isSubStr "$TMP_cfg_p2p_persistent_peers" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the peers config." && continue
+        ($(isSubStr "$cfg_p2p_seeds" "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, node-id already present in the seeds config." && continue
         (! $(isIp "$ip")) && echoWarn "WARNINIG: Peer '$peer' IP could NOT be resolved" && continue
 
         rpc_port=$((port + 1))
@@ -220,22 +195,22 @@ if [ ! -z "$CFG_persistent_peers" ] ; then
         peer="tcp://${nodeId}@${addr}:${port}"
         echoInfo "INFO: Adding extra peer '$peer' to new config"
 
-        [ ! -z "$TMP_CFG_persistent_peers" ] && TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers},"
-        TMP_CFG_persistent_peers="${TMP_CFG_persistent_peers}${peer}"
+        [ ! -z "$TMP_cfg_p2p_persistent_peers" ] && TMP_cfg_p2p_persistent_peers="${TMP_cfg_p2p_persistent_peers},"
+        TMP_cfg_p2p_persistent_peers="${TMP_cfg_p2p_persistent_peers}${peer}"
 
-        if (! $(isSubStr "$CFG_unconditional_peer_ids" "$nodeId")) ; then
-            [ ! -z "$CFG_unconditional_peer_ids" ] && CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids},"
-            CFG_unconditional_peer_ids="${CFG_unconditional_peer_ids}${nodeId}"
+        if (! $(isSubStr "$cfg_p2p_unconditional_peer_ids" "$nodeId")) ; then
+            [ ! -z "$cfg_p2p_unconditional_peer_ids" ] && cfg_p2p_unconditional_peer_ids="${cfg_p2p_unconditional_peer_ids},"
+            cfg_p2p_unconditional_peer_ids="${cfg_p2p_unconditional_peer_ids}${nodeId}"
         fi
         set -x
     done
-    CFG_persistent_peers=$TMP_CFG_persistent_peers
+    cfg_p2p_persistent_peers=$TMP_cfg_p2p_persistent_peers
 else
     echoWarn "WARNING: Peers configuration is NOT available!"
 fi
 
 echoInfo "INFO: Final Peers List:"
-echoInfo "$CFG_persistent_peers"
+echoInfo "$cfg_p2p_persistent_peers"
 rpc_cntr=0
 
 if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
@@ -261,9 +236,9 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
     done < "$LOCAL_RPC_PATH"
 
     if [[ $rpc_cntr -ge 2 ]] ; then
-        CFG_trust_hash=$TRUST_HASH
-        CFG_rpc_servers=$RPC_SERVERS
-        CFG_trust_height="$LATEST_BLOCK_HEIGHT"
+        cfg_statesync_trust_hash=$TRUST_HASH
+        cfg_statesync_rpc_servers=$RPC_SERVERS
+        cfg_statesync_trust_height="$LATEST_BLOCK_HEIGHT"
     else
         echoWarn "WARNING: Insufficicent RPC nodes count ($rpc_cntr)"
     fi
@@ -271,245 +246,61 @@ else
     echoWarn "WARNING: Fast sync is NOT possible, RPC nodes NOT found"
 fi
 
-set +x
-echoInfo "INFO: Final Peers List:"
-echoInfo "$CFG_rpc_servers"
-
-echoInfo "INFO: Ensuring, that following config vars are set via global parameters:"
-echoInfo "----------------------------------"
-echoInfo "|                      CFG_moniker: $CFG_moniker"
-echoInfo "|                          CFG_pex: $CFG_pex"
-echoInfo "|           CFG_allow_duplicate_ip: $CFG_allow_duplicate_ip"
-echoInfo "|             CFG_addr_book_strict: $CFG_addr_book_strict"
-echoInfo "|                     CFG_fastsync: $CFG_fastsync"
-echoInfo "|             CFG_fastsync_version: $CFG_fastsync_version"
-echoInfo "|            CFG_handshake_timeout: $CFG_handshake_timeout"
-echoInfo "|                 CFG_dial_timeout: $CFG_dial_timeout"
-echoInfo "|                 CFG_trust_period: $CFG_trust_period"
-echoInfo "|                CFG_max_txs_bytes: $CFG_max_txs_bytes"
-echoInfo "|                 CFG_max_tx_bytes: $CFG_max_tx_bytes"
-echoInfo "|                    CFG_send_rate: $CFG_send_rate"
-echoInfo "|                    CFG_recv_rate: $CFG_recv_rate"
-echoInfo "|  CFG_max_packet_msg_payload_size: $CFG_max_packet_msg_payload_size"
-echoInfo "|         CFG_cors_allowed_origins: $CFG_cors_allowed_origins"
-echoInfo "|            CFG_snapshot_interval: $CFG_snapshot_interval"
-echoInfo "|             CFG_statesync_enable: $CFG_statesync_enable"
-echoInfo "|           CFG_statesync_temp_dir: $CFG_statesync_temp_dir"
-echoInfo "| CFG_create_empty_blocks_interval: $CFG_create_empty_blocks_interval"
-echoInfo "|               CFG_timeout_commit: $CFG_timeout_commit"
-echoInfo "|       CFG_max_num_outbound_peers: $CFG_max_num_outbound_peers"
-echoInfo "|        CFG_max_num_inbound_peers: $CFG_max_num_inbound_peers"
-echoInfo "|                   CFG_prometheus: $CFG_prometheus"
-echoInfo "|                    CFG_seed_mode: $CFG_seed_mode"
-echoInfo "|          CFG_skip_timeout_commit: $CFG_skip_timeout_commit"
-echoInfo "|             CFG_private_peer_ids: $CFG_private_peer_ids"
-echoInfo "|       CFG_unconditional_peer_ids: $CFG_unconditional_peer_ids"
-echoInfo "|             CFG_persistent_peers: $CFG_persistent_peers"
-echoInfo "|                        CFG_seeds: $CFG_seeds"
-echoInfo "|                   CFG_grpc_laddr: $CFG_grpc_laddr"
-echoInfo "|                    CFG_rpc_laddr: $CFG_rpc_laddr"
-echoInfo "|                    CFG_p2p_laddr: $CFG_p2p_laddr"
-echoInfo "----------------------------------"
-echoInfo "|                       MIN_HEIGHT: $MIN_HEIGHT"
-echoInfo "|                 EXTERNAL_ADDRESS: $EXTERNAL_ADDRESS"
-echoInfo "----------------------------------"
-
-echoInfo "INFO: Starting sekai & tendermint configs setup..."
-set -x
-
-#######################################################################
-###    Main Base Config Options: $SEKAID_HOME/config/config.toml    ###
-#######################################################################
-
-# A custom human readable name for this node
-[ ! -z "$CFG_moniker" ]     && setTomlVar "" moniker "$CFG_moniker" $CFG
-# If this node is many blocks behind the tip of the chain, FastSync
-# allows them to catchup quickly by downloading blocks in parallel
-# and verifying their commits. Default (true)
-[ ! -z "$CFG_fastsync" ]    && setTomlVar "" fast_sync "$CFG_fastsync" $CFG
-
-
-#######################################################
-###           P2P Configuration Options             ###
-#######################################################
-# [p2p]
-
-# Address to listen for incoming connections
-[ ! -z "$CFG_p2p_laddr" ]                   && setTomlVar "[p2p]" laddr "$CFG_p2p_laddr" $CFG
-# Address to advertise to peers for them to dial
-# If empty, will use the same port as the laddr,
-# and will introspect on the listener or use UPnP
-# to figure out the address. ip and port are required
-# example: 159.89.10.97:26656
-[ ! -z "$EXTERNAL_ADDRESS" ]                && setTomlVar "[p2p]" external_address "$EXTERNAL_ADDRESS" $CFG
-# Comma separated list of seed nodes to connect to
-[ ! -z "$CFG_seeds" ]                       && setTomlVar "[p2p]" seeds "$CFG_seeds" $CFG
-# Comma separated list of nodes to keep persistent connections to
-[ ! -z "$CFG_persistent_peers" ]            && setTomlVar "[p2p]" persistent_peers "$CFG_persistent_peers" $CFG
-
-# Set true for strict address routability rules
-# Set false for private or local networks
-[ ! -z "$CFG_addr_book_strict" ]            && setTomlVar "[p2p]" addr_book_strict "$CFG_addr_book_strict" $CFG
-# Maximum number of inbound P2P peers that can dial your node and connect to it, default (40)
-[ ! -z "$CFG_max_num_inbound_peers" ]       && setTomlVar "[p2p]" max_num_inbound_peers "$CFG_max_num_inbound_peers" $CFG
-# Maximum number of outbound P2P peers to connect to, excluding persistent peers, default (10)
-[ ! -z "$CFG_max_num_outbound_peers" ]      && setTomlVar "[p2p]" max_num_outbound_peers "$CFG_max_num_outbound_peers" $CFG
-
-# Maximum size of a message packet payload, in bytes, default 1024, kira def. 131072
-[ ! -z "$CFG_max_packet_msg_payload_size" ] && setTomlVar "[p2p]" max_packet_msg_payload_size "$CFG_max_packet_msg_payload_size" $CFG
-# Rate at which packets can be sent, in bytes/second, default 5120000, kira def. 65536000
-[ ! -z "$CFG_send_rate" ]                   && setTomlVar "[p2p]" send_rate "$CFG_send_rate" $CFG
-# Rate at which packets can be received, in bytes/second, default 5120000, kira def. 65536000
-[ ! -z "$CFG_recv_rate" ]                   && setTomlVar "[p2p]" recv_rate "$CFG_recv_rate" $CFG
-# Set true to enable the peer-exchange reactor
-[ ! -z "$CFG_pex" ]                         && setTomlVar "[p2p]" pex "$CFG_pex" $CFG
-# Seed mode, in which node constantly crawls the network and looks for
-# peers. If another node asks it for addresses, it responds and disconnects.
-# Does not work if the peer-exchange reactor is disabled. Default (false)
-[ ! -z "$CFG_seed_mode" ]                   && setTomlVar "[p2p]" seed_mode "$CFG_seed_mode" $CFG
-# List of node IDs, to which a connection will be (re)established ignoring any existing limits
-[ ! -z "$CFG_unconditional_peer_ids" ]      && setTomlVar "[p2p]" unconditional_peer_ids "$CFG_unconditional_peer_ids" $CFG
-# Comma separated list of peer IDs to keep private (will not be gossiped to other peers)
-[ ! -z "$CFG_private_peer_ids" ]            && setTomlVar "[p2p]" private_peer_ids "$CFG_private_peer_ids" $CFG
-# Toggle to disable guard against peers connecting from the same ip, default (false)
-[ ! -z "$CFG_allow_duplicate_ip" ]          && setTomlVar "[p2p]" allow_duplicate_ip "$CFG_allow_duplicate_ip" $CFG
-# Peer connection configuration.
-[ ! -z "$CFG_handshake_timeout" ]           && setTomlVar "[p2p]" handshake_timeout "$CFG_handshake_timeout" $CFG
-[ ! -z "$CFG_dial_timeout" ]                && setTomlVar "[p2p]" dial_timeout "$CFG_dial_timeout" $CFG
-
-#######################################################
-###       RPC Server Configuration Options          ###
-#######################################################
-# [rpc]
-
-# TCP or UNIX socket address for the RPC server to listen on, default ("tcp://127.0.0.1:26657")
-[ ! -z "$CFG_rpc_laddr" ]               && setTomlVar "[rpc]" laddr "$CFG_rpc_laddr" $CFG
-# A list of origins a cross-domain request can be executed from
-# Default value '[]' disables cors support
-# Use '["*"]' to allow any origin. Default ([])
-[ ! -z "$CFG_cors_allowed_origins" ]    && setTomlVar "[rpc]" cors_allowed_origins "$CFG_cors_allowed_origins" $CFG
-
-# TCP or UNIX socket address for the gRPC server to listen on
-# NOTE: This server only supports /broadcast_tx_commit, default ("")
-# NOTE: THE grpc_laddr SHOULD BE ALWAYS "" OTHERWISE THE STARTUP WILL FAIL!
-# [ ! -z "$CFG_grpc_laddr" ]              && setTomlVar "[rpc]" grpc_laddr "$CFG_grpc_laddr" $CFG
-
-#######################################################
-###         Consensus Configuration Options         ###
-#######################################################
-# [consensus]
-
-# How long we wait after committing a block, before starting on the new
-# height (this gives us a chance to receive some more precommits, even
-# though we already have +2/3).
-[ ! -z "$CFG_timeout_commit" ]                  && setTomlVar "[consensus]" timeout_commit "$CFG_timeout_commit" $CFG
-
-# How many blocks to look back to check existence of the node's consensus votes before joining consensus
-# When non-zero, the node will panic upon restart
-# if the same consensus key was used to sign {double_sign_check_height} last blocks.
-# So, validators should stop the state machine, wait for some blocks, and then restart the state machine to avoid panic. Default (0)
-[ ! -z "$CFG_double_sign_check_height" ]        && setTomlVar "[consensus]" double_sign_check_height "$CFG_double_sign_check_height" $CFG
-# Make progress as soon as we have all the precommits (as if TimeoutCommit = 0), default (false)
-[ ! -z "$CFG_skip_timeout_commit" ]             && setTomlVar "[consensus]" skip_timeout_commit "$CFG_skip_timeout_commit" $CFG
-# EmptyBlocks mode and possible interval between empty blocks
-[ ! -z "$CFG_create_empty_blocks_interval" ]    && setTomlVar "[consensus]" create_empty_blocks_interval "$CFG_create_empty_blocks_interval" $CFG
-
-#######################################################
-###          Mempool Configuration Option          ###
-#######################################################
-# [mempool]
-
-# Limit the total size of all txs in the mempool.
-# This only accounts for raw transactions (e.g. given 1MB transactions and
-# max_txs_bytes=5MB, mempool will only accept 5 transactions). Default (1073741824)
-[ ! -z "$CFG_max_txs_bytes" ]        && setTomlVar "[mempool]" max_txs_bytes "$CFG_max_txs_bytes" $CFG
-
-# Maximum size of a single transaction.
-# NOTE: the max size of a tx transmitted over the network is {max_tx_bytes}. Default (1048576)
-[ ! -z "$CFG_max_tx_bytes" ]        && setTomlVar "[mempool]" max_tx_bytes "$CFG_max_tx_bytes" $CFG
-
-#######################################################
-###       Instrumentation Configuration Options     ###
-#######################################################
-# [instrumentation]
-
-# When true, Prometheus metrics are served under /metrics on
-# PrometheusListenAddr.
-# Check out the documentation for the list of available metrics. Default (false)
-[ ! -z "$CFG_prometheus" ]              && setTomlVar "[instrumentation]" prometheus "$CFG_prometheus" $CFG
-# Address to listen for Prometheus collector(s) connections. Default (":26660")
-[ ! -z "$CFG_prometheus_listen_addr" ]  && setTomlVar "[instrumentation]" prometheus_listen_addr "$CFG_prometheus_listen_addr" $CFG
-
-#######################################################
-###         State Sync Configuration Options        ###
-#######################################################
-# [statesync]
-
-if ( $(isNullOrEmpty $CFG_rpc_servers) ) ; then
+if ( $(isNullOrEmpty $cfg_statesync_rpc_servers) ) ; then
     echoWarn "WARNING: NO live RPC servers were found, disabling statesync"
-    CFG_statesync_enable="false"
-    CFG_trust_height=0
-    CFG_trust_hash="\"\""
+    cfg_statesync_enable="false"
+    cfg_statesync_trust_height=0
+    cfg_statesync_trust_hash="\"\""
 fi
 
-mkdir -pv $CFG_statesync_temp_dir || echoErr "ERROR: Failed to create statesync temp directory"
+mkdir -pv "$(globGet cfg_statesync_temp_dir)" || echoErr "ERROR: Failed to create statesync temp directory"
 
-# State sync rapidly bootstraps a new node by discovering, fetching, and restoring a state machine
-# snapshot from peers instead of fetching and replaying historical blocks. Requires some peers in
-# the network to take and serve state machine snapshots. State sync is not attempted if the node
-# has any local state (LastBlockHeight > 0). The node will have a truncated block history,
-# starting from the height of the snapshot. Default (false)
-[ ! -z "$CFG_statesync_enable" ]    && setTomlVar "[statesync]" enable "$CFG_statesync_enable" $CFG
+set +x
+echoInfo "INFO: Final Peers List:"
+echoInfo "$cfg_statesync_rpc_servers"
 
-# Temporary directory for state sync snapshot chunks, defaults to the OS tempdir (typically /tmp).
-# Will create a new, randomly named directory within, and remove it when done. Default ("")
-[ ! -z "$CFG_statesync_temp_dir" ]  && setTomlVar "[statesync]" temp_dir "$CFG_statesync_temp_dir" $CFG
+echoInfo "INFO: Updating CFG file..."
+set -x
+getTomlVarNames $CFG > /tmp/cfg_names.tmp
+mapfile rows < /tmp/cfg_names.tmp
+set +x
 
-# RPC servers (comma-separated) for light client verification of the synced state machine and
-# retrieval of state data for node bootstrapping. Also needs a trusted height and corresponding
-# header hash obtained from a trusted source, and a period during which validators can be trusted.
-#
-# For Cosmos SDK-based chains, trust_period should usually be about 2/3 of the unbonding time (~2
-# weeks) during which they can be financially punished (slashed) for misbehavior. Default ("")
-[ ! -z "$CFG_rpc_servers" ]         && setTomlVar "[statesync]" rpc_servers "$CFG_rpc_servers" $CFG
-# Default (0)
-[ ! -z "$CFG_trust_height" ]        && setTomlVar "[statesync]" trust_height "$CFG_trust_height" $CFG
-# Default ("")
-[ ! -z "$CFG_trust_hash" ]          && setTomlVar "[statesync]" trust_hash "$CFG_trust_hash" $CFG
+for row in "${rows[@]}"; do
+    ( $(isNullOrWhitespaces $row) ) && continue
+    tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    # value can be set from env or from globs
+    val_target=$(echo "cfg_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs) && val="${!val_target}"
+    [ -z "$val" ] && val=$(globGet "$val_target")
+    if [ ! -z "$val" ] ; then
+        echoWarn "WARNING: Updating CFG value: [$tag] $name -> '$val' "
+        setTomlVar "[$tag]" "$name" "$val" $CFG
+    else
+        echoInfo "INFO: CFG value: [$tag] $name will NOT change, glob val NOT found"
+    fi
+done
 
+echoInfo "INFO: Updating APP file..."
+set -x
+getTomlVarNames $APP > /tmp/app_names.tmp
+mapfile rows < /tmp/app_names.tmp
+set +x
 
-#######################################################
-###       Fast Sync Configuration Connections       ###
-#######################################################
-# [fastsync]
+for row in "${rows[@]}"; do
+    ( $(isNullOrWhitespaces $row) ) && continue
+    tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    name=$(echo $row | cut -d' ' -f2 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
+    val_target=$(echo "app_${tag}_${name}" | tr -d '\011\012\013\014\015\040\133\135' | xargs) && val="${!val_target}"
+    [ -z "$val" ] && val=$(globGet "$val_target")
+    if [ ! -z "$val" ] ; then
+        echoWarn "WARNING: Updating APP value: [$tag] $name -> '$val' "
+        setTomlVar "[$tag]" "$name" "$val" $CFG
+    else
+        echoInfo "INFO: APP value: [$tag] $name will NOT change, glob val was NOT found"
+    fi
+done
 
-# Fast Sync version to use:
-#   1) "v0" (default) - the legacy fast sync implementation
-#   2) "v1" - refactor of v0 version for better testability
-#   2) "v2" - complete redesign of v0, optimized for testability & readability. Default (0)
-[ ! -z "$CFG_fastsync_version" ]    && setTomlVar "[fastsync]" version "$CFG_fastsync_version" $CFG
-
-
-###############################################################################
-###                app.toml - Base Configuration                            ###
-###############################################################################
-
-
-###############################################################################
-###                        State Sync Configuration                         ###
-###############################################################################
-# State sync snapshots allow other nodes to rapidly join the network without replaying historical
-# blocks, instead downloading and applying a snapshot of the application state at a given height.
-# [state-sync]
-
-# snapshot-interval specifies the block interval at which local state sync snapshots are
-# taken (0 to disable). Must be a multiple of pruning-keep-every. Default (0)
-[ ! -z "$CFG_snapshot_interval" ]    && setTomlVar "[state-sync]" "snapshot-interval" "$CFG_snapshot_interval" $APP
-
-##########################
-
-GRPC_ADDRESS=$(echo "$CFG_grpc_laddr" | sed 's/tcp\?:\/\///')
-setGlobEnv GRPC_ADDRESS "$GRPC_ADDRESS"
+set -x
 
 if [[ $MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $MIN_HEIGHT but got $STATE_HEIGHT"
