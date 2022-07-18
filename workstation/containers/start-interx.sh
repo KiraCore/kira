@@ -47,7 +47,6 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    CONTAINER_NETWORK="$KIRA_INTERX_NETWORK"
     [ "${INFRA_MODE,,}" == "seed" ] && globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
     [ "${INFRA_MODE,,}" == "sentry" ] && globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
     [ "${INFRA_MODE,,}" == "validator" ] && globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
@@ -62,7 +61,7 @@ docker run -d \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$CONTAINER_NETWORK \
+    --net=$KIRA_DOCEKR_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NODE_TYPE="$CONTAINER_NAME" \

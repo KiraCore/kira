@@ -3,7 +3,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/containers/start-seed.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="seed"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 COMMON_GLOB="$COMMON_PATH/kiraglob"
@@ -18,7 +17,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SEED_NODE_ID"
-echoWarn "|   NETWORK: $CONTAINER_NETWORK"
+echoWarn "|   NETWORK: $KIRA_DOCEKR_NETWORK"
 echoWarn "|  HOSTNAME: $KIRA_SEED_DNS"
 echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -103,12 +102,11 @@ docker run -d \
     --hostname $KIRA_SEED_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$CONTAINER_NETWORK \
+    --net=$KIRA_DOCEKR_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_SEED_DNS" \
-    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SEED_NODE_ID" \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \

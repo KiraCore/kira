@@ -60,19 +60,10 @@ set -e
 set -x
 
 echoInfo "INFO: Recreating docker networks..."
-declare -a networks=("sentrynet" "servicenet")
-declare -a subnets=("$KIRA_SENTRY_SUBNET" "$KIRA_SERVICE_SUBNET")
-len=${#networks[@]}
-
-MTU=$(globGet MTU)
-
-for (( i=0; i<${len}; i++ )) ; do
-    network=${networks[$i]}
-    subnet=${subnets[$i]}
-    echoInfo "INFO: Recreating $network network and $subnet subnet..."
-    docker network rm $network || echoWarn "WARNING: Failed to remove $network network"
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$subnet $network || echoWarn "WARNING: Failed to create $network network"
-done
+# MTU=$(globGet MTU)
+# echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network and $KIRA_DOCEKR_SUBNET subnet..."
+# docker network rm $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
+# docker network create --opt com.docker.network.driver.mtu=$MTU --subnet=$KIRA_DOCEKR_SUBNET $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to create $KIRA_DOCEKR_NETWORK network"
 
 $KIRA_MANAGER/launch/update-ifaces.sh
 

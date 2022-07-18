@@ -3,7 +3,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/containers/start-validator.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 CONTAINER_NAME="validator"
-CONTAINER_NETWORK="$KIRA_SENTRY_NETWORK"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
@@ -18,7 +17,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
-echoWarn "|   NETWORK: $CONTAINER_NETWORK"
+echoWarn "|   NETWORK: $KIRA_DOCEKR_NETWORK"
 echoWarn "|   NODE ID: $VALIDATOR_NODE_ID"
 echoWarn "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -113,12 +112,11 @@ docker run -d \
     --hostname "$KIRA_VALIDATOR_DNS" \
     --restart=always \
     --name "$CONTAINER_NAME" \
-    --net="$CONTAINER_NETWORK" \
+    --net="$KIRA_DOCEKR_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
-    -e CONTAINER_NETWORK="$CONTAINER_NETWORK" \
     -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
