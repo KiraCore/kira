@@ -63,7 +63,8 @@ while : ; do
     printf "\033c"
     
     echo -e "\e[36;1m---------------------------------------------------------"
-    echo "|            KIRA CONTAINER MANAGER $KIRA_SETUP_VER            |"
+    BANER="          KIRA CONTAINER MANAGER ${KIRA_SETUP_VER}${WHITESPACE}"
+    echo "|${BANER:0:55}|"
     echo "|---------------- $(date '+%d/%m/%Y %H:%M:%S') ------------------|"
 
     if [ "${LOADING,,}" == "true" ] ; then

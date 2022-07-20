@@ -23,7 +23,7 @@ fi
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 KIRA_MANAGER_VERSION="v0.0.2"
 KIRA_BASE_VERSION="v0.11.3"
-TOOLS_VERSION="v0.2.15"
+TOOLS_VERSION="v0.2.16"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
@@ -80,12 +80,6 @@ rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 ARCH=$(uname -m) && ( [[ "${ARCH,,}" == *"arm"* ]] || [[ "${ARCH,,}" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
 PLATFORM=$(uname) && PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
 
-if [ "${ARCH}" == "arm64" ] ; then
-    COSIGN_HASH="2448231e6bde13722aad7a17ac00789d187615a24c7f82739273ea589a42c94b"
-else
-    COSIGN_HASH="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
-fi
-
 COSIGN_NOT_INSTALLED=$(cosign version || echo "true")
 KEYS_DIR="/usr/keys"
 KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
@@ -95,7 +89,9 @@ if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
     FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}" | tr '[:upper:]' '[:lower:]')
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
     FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
-    if [ "$FILE_HASH" != "$COSIGN_HASH" ] ; then
+    COSIGN_HASH_ARM="2448231e6bde13722aad7a17ac00789d187615a24c7f82739273ea589a42c94b"
+    COSIGN_HASH_AMD="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
+    if [ "$FILE_HASH" != "$COSIGN_HASH_ARM" ] && [ "$FILE_HASH" != "$COSIGN_HASH_AMD" ] ; then
         echoErr "ERROR: Failed to download cosign tool, expected checksum to be '$COSIGN_HASH', but got '$FILE_HASH'"
         exit 1
     fi
