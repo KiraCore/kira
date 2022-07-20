@@ -57,7 +57,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
 fi
 
 echoInfo "INFO: Loading configuration..."
-$SELF_CONTAINER/configure.sh
+$COMMON_DIR/interx/configure.sh
 
 globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "interxd $(interxd version)"
