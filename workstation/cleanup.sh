@@ -60,7 +60,7 @@ set -e
 set -x
 
 echoInfo "INFO: Recreating docker networks..."
-if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] ; then
+if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then
     MTU=$(globGet MTU)
     echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
     docker network rm $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
