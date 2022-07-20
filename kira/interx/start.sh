@@ -26,16 +26,18 @@ if ($(isNaturalNumber $RESTART_COUNTER)) ; then
     globSet RESTART_TIME "$(date -u +%s)"
 fi
 
-PING_ADDR=""
-while ! ping -c1 $PING_ADDR &>/dev/null ; do
-    PING_ADDR=$(globGet "$PING_TARGET" $GLOBAL_COMMON_RO)
+PING_ADDR=$(globGet "$PING_TARGET" $GLOBAL_COMMON_RO)
+PING_ADDR_RES=$(resolveDNS "$PING_TARGET")
+
+if [ -z "$PING_ADDR_RES" ] ; then
+    echoWarn "WARNING: Could NOT resolve '$PING_TARGET', the DNS will be replaced with address '$PING_ADDR'."
+    PING_TARGET=$PING_ADDR
+fi
+
+while ! ping -c1 $PING_TARGET &>/dev/null ; do    
     echoInfo "INFO: Waiting for ping response form $PING_TARGET ($PING_ADDR) ... ($(date))"
     sleep 5
 done
-
-setLastLineBySubStrOrAppend "$PING_ADDR" "" $HOSTS_PATH
-setLastLineBySubStrOrAppend "$PING_TARGET" "$PING_ADDR $PING_TARGET" $HOSTS_PATH
-sort -u $HOSTS_PATH -o $HOSTS_PATH
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
     mkdir -p "$CACHE_DIR" "$INTERXD_HOME"

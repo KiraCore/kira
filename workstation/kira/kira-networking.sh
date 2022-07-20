@@ -40,6 +40,10 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
 
+        [ "$p" == "$KIRA_SEED_GRPC_PORT" ] && NAME="Seed Node" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_SENTRY_GRPC_PORT" ] && NAME="Public Sentry" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$KIRA_VALIDATOR_GRPC_PORT" ] && NAME="Validator Node" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
+
         [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
         [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))

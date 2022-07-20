@@ -62,9 +62,9 @@ set -x
 echoInfo "INFO: Recreating docker networks..."
 if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] ; then
     MTU=$(globGet MTU)
-    echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '10.1.0.0/16' subnet..."
+    echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
     docker network rm $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="10.1.0.0/16" $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to create $KIRA_DOCEKR_NETWORK network"
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to create $KIRA_DOCEKR_NETWORK network"
 fi
 
 $KIRA_MANAGER/launch/update-ifaces.sh
