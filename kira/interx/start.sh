@@ -9,9 +9,9 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| SEKAI VERSION: $(interx version)"
-echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|   INTERX HOME: $INTERXD_HOME"
+echoWarn "| INTERX VERSION: $(interxd version)"
+echoWarn "|    BASH SOURCE: ${BASH_SOURCE[0]}"
+echoWarn "|    INTERX HOME: $INTERXD_HOME"
 echoWarn "------------------------------------------------"
 set -x
 
