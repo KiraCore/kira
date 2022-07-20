@@ -26,27 +26,25 @@ if ($(isNaturalNumber $RESTART_COUNTER)) ; then
     globSet RESTART_TIME "$(date -u +%s)"
 fi
 
-while ! ping -c1 $PING_TARGET &>/dev/null ; do
-    echoInfo "INFO: Waiting for ping response form $PING_TARGET ... ($(date))"
+PING_ADDR=""
+while ! ping -c1 $PING_ADDR &>/dev/null ; do
+    PING_ADDR=$(globGet "$PING_TARGET" $GLOBAL_COMMON_RO)
+    echoInfo "INFO: Waiting for ping response form $PING_TARGET ($PING_ADDR) ... ($(date))"
     sleep 5
 done
 
+setLastLineBySubStrOrAppend "$PING_ADDR" "" $HOSTS_PATH
+setLastLineBySubStrOrAppend "$PING_TARGET" "$PING_ADDR $PING_TARGET" $HOSTS_PATH
+sort -u $HOSTS_PATH -o $HOSTS_PATH
+
 if [ "$(globGet INIT_DONE)" != "true" ]; then
     mkdir -p "$CACHE_DIR" "$INTERXD_HOME"
+    grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
+    rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
 
-    CFG_grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
-    CFG_rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
-
-    setGlobEnv CFG_grpc "$CFG_grpc"
-    setGlobEnv CFG_rpc "$CFG_rpc"
-    setGlobEnv PING_TARGET "$PING_TARGET"
-
-    interxd init --cache_dir="$CACHE_DIR" --home="$INTERXD_HOME" --grpc="$CFG_grpc" --rpc="$CFG_rpc" --port="$INTERNAL_API_PORT" \
+    interxd init --cache_dir="$CACHE_DIR" --home="$INTERXD_HOME" --grpc="$grpc" --rpc="$rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
       --node_type="$INFRA_MODE" \
-      --seed_node_id="$(globGet seed_node_id)" \
-      --sentry_node_id="$(globGet sentry_node_id)" \
-      --validator_node_id="$(globGet validator_node_id)" \
       --addrbook="$(globFile KIRA_ADDRBOOK)" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
@@ -57,6 +55,9 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
 fi
+
+echoInfo "INFO: Loading configuration..."
+$SELF_CONTAINER/configure.sh
 
 globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "interxd $(interxd version)"

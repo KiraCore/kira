@@ -47,9 +47,10 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    [ "${INFRA_MODE,,}" == "seed" ] && globSet seed_node_id "$SEED_NODE_ID" $COMMON_GLOB
-    [ "${INFRA_MODE,,}" == "sentry" ] && globSet sentry_node_id "$SENTRY_NODE_ID" $COMMON_GLOB
-    [ "${INFRA_MODE,,}" == "validator" ] && globSet validator_node_id "$VALIDATOR_NODE_ID" $COMMON_GLOB
+    globSet "cfg_node_node_type" "$INFRA_MODE" $GLOBAL_COMMON
+    [ "${INFRA_MODE,,}" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
+    [ "${INFRA_MODE,,}" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
+    [ "${INFRA_MODE,,}" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
     globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
