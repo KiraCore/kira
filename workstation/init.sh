@@ -257,7 +257,7 @@ echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT runni
 echoNErr "Press any key to accept terms & continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
 echoInfo "INFO: Launching setup menu..."
 set -x
-source $KIRA_MANAGER/menu.sh "true"
+source $KIRA_MANAGER/menu/menu.sh "true"
 
 set +x
 echoInfo "------------------------------------------------"

@@ -73,7 +73,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
     globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
-    globSet CFG_trust_period "87600h" $GLOBAL_COMMON
+    globSet cfg_trust_period "87600h" $GLOBAL_COMMON
     globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
     globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
     globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON

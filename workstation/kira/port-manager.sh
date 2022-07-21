@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 PORT=$1
 WHITESPACE="                                        "
+FIREWALL_ZONE=$(globGet INFRA_MODE)
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 WHITELIST="$PORT_CFG_DIR/whitelist"
 BLACKLIST="$PORT_CFG_DIR/blacklist"

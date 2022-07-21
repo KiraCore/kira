@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 # ports have 3 diffrent configuration states, public, disabled & custom
+FIREWALL_ZONE=$(globGet INFRA_MODE)
 WHITESPACE="                                                     "
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"

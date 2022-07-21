@@ -121,8 +121,8 @@ else
     globSet IS_SCAN_DONE "false"
     globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
     globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"
-    globSet SNAPSHOT_EXECUTE "true"
-    globSet SNAPSHOT_UNHALT "true"
+    [ -z "$(globGet SNAPSHOT_EXECUTE)" ] && globSet SNAPSHOT_EXECUTE "true"
+    [ -z "$(globGet SNAPSHOT_UNHALT)" ] && globSet SNAPSHOT_UNHALT "true"
 fi
 
 set +x

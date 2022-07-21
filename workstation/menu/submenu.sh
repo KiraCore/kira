@@ -88,6 +88,7 @@ fi
 
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
+[ -z "$(globGet SNAPSHOT_EXECUTE)" ] && globSet SNAPSHOT_EXECUTE "true"
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE) && (! $(isBoolean "$PRIVATE_MODE")) && PRIVATE_MODE="false" && globSet PRIVATE_MODE "$PRIVATE_MODE"
 
@@ -111,6 +112,7 @@ while :; do
     echo -e "|            Network Name: ${NETWORK_NAME}"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
+    echo -e "|       Snapshots Enabled: $(globGet SNAPSHOT_EXECUTE)"
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
     echo -e "|     Current kira Branch: $INFRA_BRANCH"
@@ -119,8 +121,9 @@ while :; do
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
     displayAlign left $printWidth " [3] | Change Default Branches"
-    displayAlign left $printWidth " [4] | Change Infrastructure Mode"
+    displayAlign left $printWidth " [4] | Change Node Type (sentry/seed/validator)"
     displayAlign left $printWidth " [5] | Change Network Exposure (privacy) Mode"
+    displayAlign left $printWidth " [6] | Change Snapshots Configuration"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
     displayAlign left $printWidth " [X] | Exit"
@@ -162,7 +165,7 @@ while :; do
     continue
     ;;
   4*)
-    $KIRA_MANAGER/menu.sh "false"
+    $KIRA_MANAGER/menu/menu.sh "false"
     exit 0
     ;;
   5*)
@@ -173,6 +176,10 @@ while :; do
 
     [ "${MODE,,}" == "p" ] && globSet PRIVATE_MODE "false"
     [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
+    ;;
+  6*)
+    $KIRA_MANAGER/kira/kira-backup.sh
+    continue
     ;;
   x*)
     exit 0
@@ -190,7 +197,6 @@ globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "i
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
-globSet SNAPSHOT_EXECUTE "false"
 globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"

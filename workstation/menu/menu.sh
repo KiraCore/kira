@@ -27,20 +27,17 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
       case ${KEY,,} in
       1*)
         echo "INFO: Starting Validator Node Deployment..."
-        INFRA_MODE="validator"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
-        FIREWALL_ZONE="validator" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
+        INFRA_MODE="validator"  && setGlobEnv INFRA_MODE "$INFRA_MODE"
         break
         ;;
       2*)
         echo "INFO: Starting Sentry Mode Deployment..."
-        INFRA_MODE="sentry"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
-        FIREWALL_ZONE="sentry" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
+        INFRA_MODE="sentry"     && setGlobEnv INFRA_MODE "$INFRA_MODE"
         break
         ;;
       3*)
         echo "INFO: Starting Seed Mode Deployment..."
-        INFRA_MODE="seed"    && setGlobEnv INFRA_MODE "$INFRA_MODE"
-        FIREWALL_ZONE="seed" && setGlobEnv FIREWALL_ZONE "$FIREWALL_ZONE"
+        INFRA_MODE="seed"       && setGlobEnv INFRA_MODE "$INFRA_MODE"
         break
         ;;
       x*)
@@ -55,4 +52,8 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
     set -x
 fi
 
-source $KIRA_MANAGER/submenu.sh
+loadGlobEnvs
+globSet SNAPSHOT_TARGET "$INFRA_MODE"
+globSet FIREWALL_ZONE "$INFRA_MODE"
+
+source $KIRA_MANAGER/menu/submenu.sh

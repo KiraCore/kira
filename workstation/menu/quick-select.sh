@@ -46,7 +46,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
 
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"
-        source $KIRA_MANAGER/submenu.sh
+        source $KIRA_MANAGER/menu/submenu.sh
         exit 0
     fi
 elif [ "${NEW_NETWORK,,}" == "false" ] ; then
@@ -241,7 +241,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             else
                 echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
                 cp -afv $DATA_GENESIS $TMP_GENESIS_PATH
-                echoInfo "INFO: Calculating snapshot checksum, be patient, this might take..."
+                echoInfo "INFO: Calculating snapshot checksum, be patient, this might take a while..."
                 SNAPSUM=$(sha256 "$TMP_SNAP_PATH")
                 DOWNLOAD_SUCCESS="true"
             fi
