@@ -54,42 +54,56 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
     cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
-    EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT"
-    NODE_ID="$SENTRY_NODE_ID"
-
-    globSet cfg_p2p_pex "true" $GLOBAL_COMMON
+    ####################################################################################
+    # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
+    # APP [state_sync]
+    globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+    globSet app_base_pruning "custom" $GLOBAL_COMMON
+    globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
+    globSet app_base_pruning_keep_every "1000" $GLOBAL_COMMON
+    globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+    ####################################################################################
+    # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
+    # CFG [base]
     globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
-    #true
-    globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
-    globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
-    globSet cfg_fast_sync "true" $GLOBAL_COMMON
+    globSet cfg_base_fast_sync "true" $GLOBAL_COMMON
+    # CFG [FASTSYNC]
     globSet cfg_fastsync_version "v1" $GLOBAL_COMMON
-
-    globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
-    globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
-    globSet CFG_trust_period "87600h" $GLOBAL_COMMON
+    # CFG [TRUST]
+    globSet cfg_trust_period "87600h" $GLOBAL_COMMON
+    # CFG [MEMPOOL]
     globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
     globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
-    globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
-    globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
-    globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
-    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
-    globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+    # CFG [STATESYNC]
     globSet cfg_statesync_enable "true" $GLOBAL_COMMON
     globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
+    # CFG [CONSENSUS]
     globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
     globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
-    globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
-    globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
-    globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
-    globSet cfg_p2p_seed_mode "false" $GLOBAL_COMMON
     globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
+    # CFG [INSTRUMENTATION]
+    globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
+    # CFG [P2P]
+    globSet cfg_p2p_pex "true" $GLOBAL_COMMON
     globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
     globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
     globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
     globSet cfg_p2p_seeds "" $GLOBAL_COMMON
-    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
     globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
+    globSet cfg_p2p_seed_mode "false" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
+    globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
+    globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
+    globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
+    globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
+    globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
+    # CFG [RPC]
+    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
+    ####################################################################################
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
 
@@ -110,8 +124,8 @@ docker run -d \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_SENTRY_DNS" \
     -e NODE_TYPE=$CONTAINER_NAME \
-    -e NODE_ID="$NODE_ID" \
-    -e EXTERNAL_P2P_PORT="$EXTERNAL_P2P_PORT" \
+    -e NODE_ID="$SENTRY_NODE_ID" \
+    -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \
@@ -124,7 +138,7 @@ else
 fi
 
 echo "INFO: Waiting for $CONTAINER_NAME to start..."
-$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$NODE_ID" "true"
+$KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "true"
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 GENESIS_SHA256=$(globGet GENESIS_SHA256)

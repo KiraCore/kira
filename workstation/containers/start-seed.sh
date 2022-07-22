@@ -5,7 +5,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 CONTAINER_NAME="seed"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-COMMON_GLOB="$COMMON_PATH/kiraglob"
+GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -37,7 +37,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet seed_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
+    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON"
 
     echo "INFO: Loading secrets..."
     set +e
@@ -49,47 +49,62 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
     cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
 
-    SENTRY_SEED=$(echo "${SENTRY_NODE_ID}@$KIRA_SENTRY_DNS:$DEFAULT_P2P_PORT" | xargs | tr -d '\n' | tr -d '\r')
-
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    globSet cfg_p2p_pex "true" $COMMON_GLOB
-    globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $COMMON_GLOB
-    globSet cfg_p2p_allow_duplicate_ip "true" $COMMON_GLOB
-    globSet cfg_p2p_addr_book_strict "false" $COMMON_GLOB
-    globSet cfg_fast_sync "true" $COMMON_GLOB
-    globSet cfg_fastsync_version "v1" $COMMON_GLOB
+    ####################################################################################
+    # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
+    # APP [state_sync]
+    globSet app_base_pruning "custom" $GLOBAL_COMMON
+    globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
+    globSet app_base_pruning_keep_every "1000" $GLOBAL_COMMON
+    globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+    ####################################################################################
+    # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
+    # CFG [base]
+    globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
+    globSet cfg_base_fast_sync "true" $GLOBAL_COMMON
+    # CFG [FASTSYNC]
+    globSet cfg_fastsync_version "v1" $GLOBAL_COMMON
+    # CFG [TRUST]
+    globSet cfg_trust_period "87600h" $GLOBAL_COMMON
+    # CFG [MEMPOOL]
+    globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
+    globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
+    # CFG [STATESYNC]
+    globSet cfg_statesync_enable "true" $GLOBAL_COMMON
+    globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
+    # CFG [CONSENSUS]
+    globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
+    globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+    globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
+    # CFG [INSTRUMENTATION]
+    globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
+    # CFG [P2P]
+    globSet cfg_p2p_pex "true" $GLOBAL_COMMON
+    globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
+    globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+    globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
+    globSet cfg_p2p_seeds "" $GLOBAL_COMMON
+    globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
+    globSet cfg_p2p_seed_mode "true" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
+    globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
+    globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
+    globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
+    globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
+    globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
+    globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
+    globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
+    # CFG [RPC]
+    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
+    ####################################################################################
 
-    globSet cfg_p2p_handshake_timeout "60s" $COMMON_GLOB
-    globSet cfg_p2p_dial_timeout "30s" $COMMON_GLOB
-    globSet CFG_trust_period "87600h" $COMMON_GLOB
-    globSet cfg_mempool_max_txs_bytes "131072000" $COMMON_GLOB
-    globSet cfg_mempool_max_tx_bytes "131072" $COMMON_GLOB
-    globSet cfg_p2p_send_rate "65536000" $COMMON_GLOB
-    globSet cfg_p2p_recv_rate "65536000" $COMMON_GLOB
-    globSet cfg_p2p_max_packet_msg_payload_size "131072" $COMMON_GLOB
-    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $COMMON_GLOB
-    globSet app_state_sync_snapshot_interval "1000" $COMMON_GLOB
-    globSet cfg_statesync_enable "true" $COMMON_GLOB
-    globSet cfg_statesync_temp_dir "/tmp" $COMMON_GLOB
-    globSet cfg_consensus_timeout_commit "7500ms" $COMMON_GLOB
-    globSet cfg_consensus_create_empty_blocks_interval "10s" $COMMON_GLOB
-    globSet cfg_p2p_max_num_outbound_peers "32" $COMMON_GLOB
-    globSet cfg_p2p_max_num_inbound_peers "512" $COMMON_GLOB
-    globSet cfg_instrumentation_prometheus "true" $COMMON_GLOB
-    globSet cfg_p2p_seed_mode "true" $COMMON_GLOB
-    globSet cfg_consensus_skip_timeout_commit "false" $COMMON_GLOB
-    globSet cfg_p2p_private_peer_ids "" $COMMON_GLOB
-    globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $COMMON_GLOB
-    globSet cfg_p2p_persistent_peers "" $COMMON_GLOB
-    globSet cfg_p2p_seeds "" $COMMON_GLOB
-    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $COMMON_GLOB
-    globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $COMMON_GLOB
-
-    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $COMMON_GLOB
+    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

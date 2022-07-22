@@ -34,14 +34,10 @@ STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNatura
 
 [[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
 
-cfg_statesync_enable=$(globGet cfg_statesync_enable)
 cfg_p2p_max_num_outbound_peers=$(globGet cfg_p2p_max_num_outbound_peers)
 cfg_p2p_unconditional_peer_ids=$(globGet cfg_p2p_unconditional_peer_ids)
 cfg_p2p_persistent_peers=$(globGet cfg_p2p_persistent_peers)
 cfg_p2p_seeds=$(globGet cfg_p2p_seeds)
-
-PRIVATE_MODE=$(globGet PRIVATE_MODE)
-FORCE_EXTERNAL_DNS=$(globGet FORCE_EXTERNAL_DNS)
 
 echoInfo "INFO: Setting up node key..."
 cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
@@ -50,7 +46,7 @@ cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
     echoInfo "INFO: Setting up priv validator key..." && \
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
-[ "${PRIVATE_MODE,,}" == "true" ] && EXTERNAL_DNS="$LOCAL_IP" || EXTERNAL_DNS="$PUBLIC_IP"
+[ "$(globGet PRIVATE_MODE)" == "true" ] && EXTERNAL_DNS="$LOCAL_IP" || EXTERNAL_DNS="$PUBLIC_IP"
 
 cfg_p2p_external_address="tcp://$EXTERNAL_DNS:$EXTERNAL_P2P_PORT"
 globSet cfg_p2p_external_address "$cfg_p2p_external_address"
@@ -264,7 +260,6 @@ set -x
 getTomlVarNames $CFG > /tmp/cfg_names.tmp
 mapfile cfg_rows < /tmp/cfg_names.tmp
 set +x
-
 for row in "${cfg_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
@@ -288,7 +283,6 @@ set -x
 getTomlVarNames $APP > /tmp/app_names.tmp
 mapfile app_rows < /tmp/app_names.tmp
 set +x
-
 for row in "${app_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
@@ -322,6 +316,5 @@ fi
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
-
 echoInfo "INFO: Finished node configuration."
 globSet CFG_TASK "false"
