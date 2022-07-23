@@ -1,10 +1,6 @@
 #!/usr/bin/env bash
 set -e
 
-INFRA_BRANCH=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-SKIP_UPDATE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
-START_TIME_INIT=$3
-
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
@@ -33,9 +29,6 @@ set +x
 echo "------------------------------------------------"
 echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
-echo "|       SKIP UPDATE: $SKIP_UPDATE"
-echo "|        START TIME: $START_TIME_INIT"
-echo "|      INFRA BRANCH: $INFRA_BRANCH"
 echo "|         KIRA USER: $KIRA_USER"
 echo "|     TOOLS VERSION: $TOOLS_VERSION"
 echo "|  CDHELPER VERSION: $CDHELPER_VERSION"
@@ -131,6 +124,15 @@ if [[ $(getRamTotal) -lt 3145728 ]] ; then
     echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
 fi
 set -x
+
+
+#############################
+
+INFRA_BRANCH=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+SKIP_UPDATE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
+START_TIME_INIT=$3
+
+#############################
 
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
     echoInfo "INFO: Veryfying kira base image integrity..."

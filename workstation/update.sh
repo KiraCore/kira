@@ -71,7 +71,7 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     LOG_FILE="$KIRA_LOGS/kiraup-essentials-$KIRA_SETUP_VER.log" && globSet UPDATE_TOOLS_LOG "$LOG_FILE" 
 
     rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized essentials update"
@@ -93,7 +93,7 @@ else
     echoInfo "INFO: Essential tools and dependecies were already installed"
 fi
 
-if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
+if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] || [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Cleaning up environment & containers"
     set -x
     UPDATE_DONE="false"
@@ -102,7 +102,7 @@ if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     LOG_FILE="$KIRA_LOGS/kiraup-cleanup-$KIRA_SETUP_VER.log" && globSet UPDATE_CLEANUP_LOG "$LOG_FILE" 
 
     rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/cleanup.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    SUCCESS="true" && $KIRA_MANAGER/cleanup.sh "true" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized update cleanup"
@@ -130,7 +130,7 @@ else
     echoInfo "INFO: Reboot was already performed, setup will continue..."
 fi
 
-if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
+if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Building docker containers"
     set -x
     UPDATE_DONE="false"
@@ -139,7 +139,7 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
 
     rm -fv $LOG_FILE && touch $LOG_FILE
     globSet CONTAINERS_BUILD_SUCCESS "false"
-    $KIRA_MANAGER/containers.sh "true" | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || echoErr "ERROR: Containers build logs pipe failed!"
+    $KIRA_MANAGER/containers.sh "true" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || echoErr "ERROR: Containers build logs pipe failed!"
     CONTAINERS_BUILD_SUCCESS=$(globGet CONTAINERS_BUILD_SUCCESS)
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
     if [ "${CONTAINERS_BUILD_SUCCESS,,}" == "true" ] ; then

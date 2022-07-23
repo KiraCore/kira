@@ -2,13 +2,13 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
-SETUP_CHECK="$KIRA_SETUP/network-v0.0.12" 
-if [ ! -f "$SETUP_CHECK" ] ; then
-    echo "INFO: Setting up networking dependencies..."
+#SETUP_CHECK="$KIRA_SETUP/network-v0.0.12" 
+#if [ ! -f "$SETUP_CHECK" ] ; then
+    echoInfo "INFO: Setting up networking dependencies..."
     apt-get update -y
-    echo "INFO: Cleaning up generic network dependencies..."
-    apt-get remove -y ufw firewalld
-    echo "INFO: Installing generic dependencies..."
+    #echo "INFO: Cleaning up generic network dependencies..."
+    #apt-get remove -y ufw firewalld
+    echoInfo "INFO: Installing generic dependencies..."
     apt-get install -y ufw firewalld
 
     # resolve firewalld service restart conflicts
@@ -29,11 +29,11 @@ if [ ! -f "$SETUP_CHECK" ] ; then
     setVar "LogDenied" "all" $FIREWALLD_CONF
     # NOTE: To preview denied packets you can use command: dmesg | grep -i REJECT
 
-    systemctl enable firewalld || echo "INFO: Failed to disable firewalld"
-    systemctl restart firewalld || echo "INFO: Failed to stop firewalld"
+    systemctl enable firewalld || echoWarn "WARNING: Failed to disable firewalld"
+    systemctl restart firewalld || echoWarn "WARNING: Failed to restart firewalld"
     
-    touch $SETUP_CHECK
-else
-    echo "INFO: Networking dependencies were setup"
-fi
+#    touch $SETUP_CHECK
+#else
+#    echo "INFO: Networking dependencies were setup"
+#fi
 

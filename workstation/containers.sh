@@ -37,6 +37,7 @@ globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
 systemctl restart docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
+echoInfo "INFO: Recreating docker networks..."
 sleep 3
 
 globSet SEED_EXPOSED false
