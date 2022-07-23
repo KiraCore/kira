@@ -93,7 +93,7 @@ else
     echoInfo "INFO: Essential tools and dependecies were already installed"
 fi
 
-if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] || [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
+if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Cleaning up environment & containers"
     set -x
     UPDATE_DONE="false"

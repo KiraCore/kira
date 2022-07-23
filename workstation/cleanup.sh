@@ -67,7 +67,7 @@ if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" 
     NETWORKS=$(timeout 10 docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "")
     for net in $NETWORKS ; do
         SUBNET=$(timeout 10 docker network inspect $net | jsonParse "[0].IPAM.Config.[0].Subnet" 2> /dev/null || echo -n "")
-        if [ ! -z "$SUBNET" ] && [ "$SUBNET" == "$KIRA_DOCEKR_NETWORK" ] ; then
+        if [ ! -z "$SUBNET" ] && [ "$SUBNET" == "$KIRA_DOCEKR_SUBNET" ] ; then
             echoInfo "INFO: Found network '$net' with overlapping subnet '$KIRA_DOCEKR_SUBNET', attempting to remove..."
             docker network rm $net || echoWarn "WARNING: Failed to remove $net network"
         fi
