@@ -63,7 +63,7 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             with:
               branch: ${{ env.RELEASE_BRANCH }}
-              sha: $GITHUB_SHA
+              sha: ${{ GITHUB_SHA }}
           - name: Create PR from feature to version branch
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
