@@ -2,6 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
+PROMPT_SOURCE=$1
+
 SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET) && [ -z "$SNAPSHOT_TARGET" ] && SNAPSHOT_TARGET="${INFRA_MODE,,}"
 echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=($(globGet OPTION))
 
@@ -40,7 +42,9 @@ else
     globSet SNAPSHOT_UNHALT "false"
 fi
 
-echoNErr "Do you want to [E]nable creation of a new backup after sync, [D]isable or e[X]it without making changes: " && pressToContinue b e && SELECT=($(globGet OPTION))
+[ "$PROMPT_SOURCE" == "submenu" ] && \ 
+    echoNErr "Do you want to [E]nable creation of a new backup after sync, [D]isable or e[X]it without making changes: " && \
+    pressToContinue b e && SELECT=($(globGet OPTION))
 
 [ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 2 && exit 0
 

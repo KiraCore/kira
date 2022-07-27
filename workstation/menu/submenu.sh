@@ -178,7 +178,7 @@ while :; do
     [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
     ;;
   6*)
-    $KIRA_MANAGER/kira/kira-backup.sh
+    $KIRA_MANAGER/kira/kira-backup.sh "submenu"
     continue
     ;;
   x*)

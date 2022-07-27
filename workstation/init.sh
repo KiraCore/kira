@@ -17,13 +17,11 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-KIRA_MANAGER_VERSION="v0.0.2"
 KIRA_BASE_VERSION="v0.11.4"
 TOOLS_VERSION="v0.2.17"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
 INFRA_REPO="https://github.com/KiraCore/kira"
-UTILS_VERSION=$(utilsVersion 2> /dev/null || echo "")
 
 set +x
 echo "------------------------------------------------"
@@ -32,7 +30,6 @@ echo "|-----------------------------------------------"
 echo "|         KIRA USER: $KIRA_USER"
 echo "|     TOOLS VERSION: $TOOLS_VERSION"
 echo "|  CDHELPER VERSION: $CDHELPER_VERSION"
-echo "| KIRA MNG. VERSION: $KIRA_MANAGER_VERSION"
 echo "| BASE IMG. VERSION: $KIRA_BASE_VERSION"
 echo "------------------------------------------------"
 echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"

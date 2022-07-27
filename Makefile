@@ -1,0 +1,3 @@
+publish:
+	./scripts/publish.sh
+	
