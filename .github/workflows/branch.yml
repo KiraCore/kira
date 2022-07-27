@@ -37,11 +37,9 @@ jobs:
               echo "DEFAULT_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
               echo "MASTER_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
               echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
-              echo "SOURCE_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME $SOURCE_BRANCH | awk '{ print $1}')" >> $GITHUB_ENV
+              echo "SOURCE_REF=$(git rev-parse --short $GITHUB_SHA)" >> $GITHUB_ENV
               git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
               ( git show-branch "origin/$RELEASE_BRANCH" || git show-branch "remotes/origin/$RELEASE_BRANCH" ) && echo "TARGET_BRANCH_EXISTS=true" >> $GITHUB_ENV || echo "TARGET_BRANCH_EXISTS=false" >> $GITHUB_ENV
-              echo "Listing envs:"
-              cat $GITHUB_ENV
           - name: Print debug data before publishing
             run: |
               echo "Repository name: ${{ env.REPOSITORY_NAME }}"
