@@ -36,6 +36,8 @@ jobs:
               echo "SOURCE_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
               echo "DEFAULT_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
               echo "MASTER_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
+              echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
+              echo "SOURCE_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME $SOURCE_BRANCH | awk '{ print $1}')" >> $GITHUB_ENV
               git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
               ( git show-branch "origin/$RELEASE_BRANCH" || git show-branch "remotes/origin/$RELEASE_BRANCH" ) && echo "TARGET_BRANCH_EXISTS=true" >> $GITHUB_ENV || echo "TARGET_BRANCH_EXISTS=false" >> $GITHUB_ENV
           - name: Print debug data before publishing
@@ -44,13 +46,15 @@ jobs:
               echo "  Source branch: ${{ env.SOURCE_BRANCH }}"
               echo " Default branch: ${{ env.DEFAULT_BRANCH }}"
               echo "  Master refer.: ${{ env.MASTER_REF }}"
+              echo "  Latest refer.: ${{ env.LATEST_REF }}"
+              echo "  Source refer.: ${{ env.SOURCE_REF }}"
               echo "Release version: ${{ env.RELEASE_VER }}"
               echo " Release branch: ${{ env.RELEASE_BRANCH }}"
               echo " Release exists: ${{ env.RELEASE_EXISTS }}"
               echo "     Event name: ${{ github.event_name }}"
               echo "  Target Exists: ${{ env.TARGET_BRANCH_EXISTS }}"
           # ref.: https://github.com/peterjgrainger/action-create-branch, v2.2.0
-          - name: Create version branch from master
+          - name: Create version branch from source
             uses: peterjgrainger/action-create-branch@c2800a3a9edbba2218da6861fa46496cf8f3195a
             if: |
                ( env.TARGET_BRANCH_EXISTS == false || env.TARGET_BRANCH_EXISTS == 'false' ) &&
@@ -60,7 +64,7 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             with:
               branch: ${{ env.RELEASE_BRANCH }}
-              sha: ${{ env.MASTER_REF }}
+              sha: ${{ env.SOURCE_REF }}
           - name: Create PR from feature to version branch
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926

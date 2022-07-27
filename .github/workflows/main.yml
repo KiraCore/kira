@@ -65,11 +65,10 @@ jobs:
               echo "(current dir): $PWD" && ls -l ./
               cd ../ && tar -czvf src.tar.gz -C ./kira . && cp ./src.tar.gz ./kira/src.tar.gz
               cd ./kira
-              flutter --version
               echo "Bash Utils Version: $(bash-utils bashUtilsVersion)"
               echo "     Source branch: ${{ env.SOURCE_BRANCH }}"
               echo "Destination branch: ${{ env.DESTINATION_BRANCH }}"
-              cho "     Release branch: ${{ env.RELEASE_BRANCH }}"
+              echo "    Release branch: ${{ env.RELEASE_BRANCH }}"
               echo "        Event name: ${{ github.event_name }}"
               echo "   Repository name: ${{ env.REPOSITORY_NAME }}"
               echo "   Release version: ${{ env.RELEASE_VER }}"
