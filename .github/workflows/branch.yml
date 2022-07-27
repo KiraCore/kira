@@ -37,6 +37,7 @@ jobs:
               echo "DEFAULT_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
               echo "MASTER_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
               echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
+              echo "SOURCE_REF=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
               git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
               ( git show-branch "origin/$RELEASE_BRANCH" || git show-branch "remotes/origin/$RELEASE_BRANCH" ) && echo "TARGET_BRANCH_EXISTS=true" >> $GITHUB_ENV || echo "TARGET_BRANCH_EXISTS=false" >> $GITHUB_ENV
           - name: Print debug data before publishing
@@ -63,7 +64,7 @@ jobs:
               GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
             with:
               branch: ${{ env.RELEASE_BRANCH }}
-              sha: ${{ GITHUB_SHA }}
+              sha: ${{ env.SOURCE_REF }}
           - name: Create PR from feature to version branch
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
