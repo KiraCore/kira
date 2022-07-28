@@ -45,6 +45,7 @@ jobs:
 
               git gc
               git fetch origin
+              git branch -r --contains HEAD || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 0"
               git branch -r --contains $SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 1"
               git branch -r --contains origin/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 2"
               git branch -r --contains remotes/origin/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 2.5"
@@ -59,6 +60,8 @@ jobs:
                 SOURCE_ORIGIN=$(git branch -r --contains remotes/origin/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
               [ -z "$SOURCE_ORIGIN" ] && \
                 SOURCE_ORIGIN=$(git branch -r --contains refs/heads/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
+              [ -z "$SOURCE_ORIGIN" ] && \
+                SOURCE_ORIGIN=$(git branch -r --contains HEAD~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
 
               [ -z "$SOURCE_ORIGIN" ] && SOURCE_ORIGIN="master"
               echo "SOURCE_ORIGIN=$SOURCE_ORIGIN" >> "$GITHUB_ENV"
