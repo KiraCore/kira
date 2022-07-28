@@ -42,10 +42,18 @@ jobs:
               echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
               echo "SOURCE_REF=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
 
-              git branch -r --contains origin/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin"
-              git branch -r --contains refs/heads/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin"
+              git branch -r --contains $SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 1"
+              git branch -r --contains origin/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 2"
+              git branch -r --contains refs/heads/$SOURCE_BRANCH~1 || echo "WARNING: Failed to find '$SOURCE_BRANCH' origin 3"
 
-              SOURCE_ORIGIN=$(git branch -r --contains origin/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
+              git ls-remote https://github.com/kiracore/$REPOSITORY_NAME
+
+              SOURCE_ORIGIN=$(git branch -r --contains $SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
+              [ -z "$SOURCE_ORIGIN" ] && \
+                SOURCE_ORIGIN=$(git branch -r --contains origin/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
+              [ -z "$SOURCE_ORIGIN" ] && \
+                SOURCE_ORIGIN=$(git branch -r --contains refs/heads/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
+
               [ -z "$SOURCE_ORIGIN" ] && SOURCE_ORIGIN="master"
               echo "SOURCE_ORIGIN=$SOURCE_ORIGIN" >> "$GITHUB_ENV"
               echo "SOURCE_ORIGIN_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME $SOURCE_ORIGIN | awk '{ print $1}')" >> $GITHUB_ENV
