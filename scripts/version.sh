@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-echo "v0.9.4-rc.4"
+echo "v0.9.5-rc.5"

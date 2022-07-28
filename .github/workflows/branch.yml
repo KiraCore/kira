@@ -42,7 +42,7 @@ jobs:
               echo "SOURCE_REF=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
               SOURCE_ORIGIN=$(git branch -r --contains origin/$SOURCE_BRANCH~1  | sed -n -e '2{p;q}' | tr -d '\011\012\013\014\015\040' || echo "")
               [ -z "$SOURCE_ORIGIN" ] && SOURCE_ORIGIN="master"
-              echo "$SOURCE_ORIGIN" >> "$SOURCE_ORIGIN"
+              echo "SOURCE_ORIGIN=$SOURCE_ORIGIN" >> "$GITHUB_ENV"
               echo "SOURCE_ORIGIN_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME $SOURCE_ORIGIN | awk '{ print $1}')" >> $GITHUB_ENV
 
               git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
