@@ -29,7 +29,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
     echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-    echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
+    echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
     echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     
@@ -329,7 +329,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
         echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-        echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
+        echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
         echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
         OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done

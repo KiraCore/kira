@@ -74,64 +74,32 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
     KIRA_PLAN=$(globGet KIRA_PLAN)
     if (! $(isNullOrWhitespaces "$KIRA_PLAN")) ; then
         echoInfo "INFO: KIRA Manager upgrade plan was found!"
-        repository=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
-        checkout=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        source=$(echo "$KIRA_PLAN" | jsonParse "url" 2> /dev/null || echo -n "")
         checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
-                     
+
         DOWNLOAD_SUCCESS="true"
-        KM_ZIP="/tmp/kira.zip"
-        KM_TMP="/tmp${KIRA_INFRA}"
-        rm -fv $KM_ZIP
-        cd $HOME && rm -rfv $KM_TMP
-        mkdir -p $KM_TMP && cd "$KM_TMP" 
-                      
-        if (! $(isNullOrWhitespaces "$checkout")) ; then
-            echoInfo "INFO: Fetching KIRA Manager repository from git..."
-            $KIRA_COMMON/git-pull.sh "$repository" "$checkout" "$KM_TMP" 555 || DOWNLOAD_SUCCESS="false"
-            cd "$KM_TMP" 
-            zip -0 -r -v "$KM_ZIP" .* || DOWNLOAD_SUCCESS="false"
-        else
-            echoInfo "INFO: Downloading KIRA Manager repository from external file..."
-            wget "$repository" -O $KM_ZIP || DOWNLOAD_SUCCESS="false"
-        fi
-             
-        if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$KM_ZIP" ]; then
-            echoInfo "INFO: Download or Fetch suceeded, veryfying checksum..."
-            cd $HOME && rm -rfv $KM_TMP && mkdir -p $KM_TMP
-            unzip -o -: $KM_ZIP -d $KM_TMP
-            chmod -R -v 555 $KM_TMP
-            REPO_HASH=$(CDHelper hash SHA256 -p="$KM_TMP" -x=true -r=true --silent=true -i="$KM_TMP/.git,$KM_TMP/.gitignore")
-            rm -rfv $KM_TMP
-              
-            if (! $(isNullOrWhitespaces "$checksum")) && [ "$checksum" != "$REPO_HASH" ] ; then
-                echoErr "ERROR: Checksum verificaion failed, invalid SHA256 hash, expected '$checksum', but got '$REPO_HASH'"
-                globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))
-            else
-                echoInfo "INFO: Success, checksum verified, unzipping..."
-                cd $HOME && rm -rfv $KIRA_INFRA && mkdir -p "$KIRA_INFRA"
-                unzip -o -: $KM_ZIP -d $KIRA_INFRA
-                chmod -R -v 555 $KIRA_INFRA
-                      
-                rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
-                cp -rfv "$KIRA_INFRA/workstation/." $KIRA_MANAGER
-                chmod -R 555 $KIRA_MANAGER
-                  
-                if (! $(isNullOrWhitespaces "$checkout")) ; then
-                    echoInfo "INFO: Updating branch name and repository address..."
-                    setGlobEnv INFRA_REPO "$repository"
-                    setGlobEnv INFRA_BRANCH "$checkout"
-                    globSet "INFRA_REPO" "$repository"
-                    globSet "INFRA_BRANCH" "$checkout"
-                fi
-                setGlobEnv INFRA_CHECKSUM "$checksum"
+        safeWget ./kira.zip "$source/kira.zip" "$checksum" || DOWNLOAD_SUCCESS="false"
 
-                echoInfo "INFO: Updating setup version..."
-                SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
-                [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
-                setGlobEnv KIRA_SETUP_VER "$SETUP_VER"
+        if [ "$DOWNLOAD_SUCCESS" == "true" ] ; then
+            echoInfo "INFO: Download suceeded..."
+            rm -rfv $KIRA_INFRA && mkdir -p $KIRA_INFRA
+            unzip ./kira.zip -d $KIRA_INFRA
+            rm -rfv ./kira.zip
+            chmod -R 555 $KIRA_INFRA
 
-                globSet PLAN_DONE "true"
-            fi
+            # update old processes
+            rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
+            cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
+            chmod -R 555 $KIRA_MANAGER
+
+            setGlobEnv INFRA_SRC "$source"
+
+            echoInfo "INFO: Updating setup version..."
+            SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
+            [ -z "SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && sleep 10 && exit 1
+            setGlobEnv KIRA_SETUP_VER "$SETUP_VER"
+
+            globSet PLAN_DONE "true"
         else
             echoErr "ERROR: Failed downloading or fetching KIRA Manager repo!"
             globSet PLAN_FAIL_COUNT $(($PLAN_FAIL_COUNT + 1))

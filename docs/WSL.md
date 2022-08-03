@@ -59,3 +59,17 @@ BRANCH="feature/ci-cd-v1" && rm -fv ./i.sh && \
  wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
  chmod 555 -v ./i.sh && ./i.sh "$BRANCH"
 ```
+
+
+```
+BRANCH="feature/ci-cd-v1" && rm -fv ./i.sh && \
+ wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
+ chmod 555 -v ./i.sh && ./i.sh "$BRANCH"
+```
+
+
+read -p "INPUT INFRA IPFS HASH: " HASH && rm -fv ./i.sh && \
+ INFRA_SRC="https://ipfs.kira.network/ipfs/$HASH" && \
+ wget $INFRA_SRC/init.sh -O ./i.sh && \
+ chmod 555 -v ./i.sh && ./i.sh "$INFRA_SRC"
+

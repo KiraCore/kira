@@ -59,6 +59,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
         ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
 
         repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
+        source=$(echo "$jobj" | jsonParse "url" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$repository")) && echoErr "ERROR: Repository of the plan '$joid' was undefined" && sleep 10 && exit 1
         checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
         checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
@@ -72,6 +73,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
             globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
             globSet "NEXT_${joid^^}_BRANCH" "$checkout"
             globSet "NEXT_${joid^^}_REPO" "$repository"
+            globSet "NEXT_${joid^^}_SRC" "$source"
         else
             echoWarn "WARNING: Unknown plan id '$joid'"
         fi
@@ -245,74 +247,10 @@ UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
 if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ]; then
     echoInfo "INFO: Wiping all unused containers..."
     for name in $CONTAINERS; do
-        [ "${name,,}" == "registry" ] && continue
         echoInfo "INFO: Removing '$name' container and cleaning up resources..."
         $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
-
-        # chattr -i
         rm -rfv "$DOCKER_COMMON/${name}"
     done
-
-    echoInfo "INFO: Starting repos upgrade..."
-    while IFS="" read -r row || [ -n "$row" ] ; do
-        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
-
-        # kira repo is processed during plan setup, so ony other repost must be upgraded
-        [ "$joid" == "kira" ] && echoInfo "INFO: Infra repo was already upgraded..." && continue
-
-        checksum=$(globGet "NEXT_${joid^^}_CHECKSUM")
-        checkout=$(globGet "NEXT_${joid^^}_BRANCH")
-        repository=$(globGet "NEXT_${joid^^}_REPO")
-
-        REPO_ZIP="/tmp/repo.zip"
-        REPO_TMP="/tmp/repo"
-        rm -fv $REPO_ZIP
-        cd $HOME && rm -rfv $REPO_TMP
-        mkdir -p $REPO_TMP && cd "$REPO_TMP"
-
-        DOWNLOAD_SUCCESS="true"
-        if (! $(isNullOrWhitespaces "$checkout")) ; then
-            echoInfo "INFO: Fetching '$joid' repository from git..."
-            $KIRA_COMMON/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
-            [ "${DOWNLOAD_SUCCESS,,}" == "false" ] && echoErr "ERROR: Failed to pull '$repository' from  '$checkout' branch." && sleep 10 && exit 1
-            echoInfo "INFO: Repo '$repository' pull from branch '$checkout' suceeded, navigating to '$REPO_TMP' and compressing source into '$REPO_ZIP'..."
-            cd "$REPO_TMP" && zip -0 -r -v "$REPO_ZIP" .* || DOWNLOAD_SUCCESS="false"
-        else
-            echoInfo "INFO: Checkour branch was not found, downloading '$joid' repository from external file..."
-            wget "$repository" -O $REPO_ZIP || DOWNLOAD_SUCCESS="false"
-        fi
-
-        if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$REPO_ZIP" ]; then
-            echoInfo "INFO: Download or Fetch of '$joid' repository suceeded"
-            if (! $(isNullOrWhitespaces "$checksum")) ; then
-                cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-                unzip -o -: $KM_ZIP -d $REPO_TMP
-                chmod -R -v 555 $REPO_TMP
-                REPO_HASH=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-                rm -rfv $REPO_TMP
-
-                if [ "$REPO_HASH" != "$checksum" ] ; then
-                    echoInfo "INFO: Checksum verification suceeded"
-                else
-                    echoErr "ERROR: Chcecksum verification failed, expected '$checksum', but got '$REPO_HASH'"
-                    sleep 10
-                    exit 1
-                fi
-            fi
-        else
-            echoErr "ERROR: Failed to download ($DOWNLOAD_SUCCESS) or package '$joid' repository" && sleep 10 && exit 1
-        fi
-
-        if ($(isLetters "$joid")) ; then
-            setGlobEnv "${joid^^}_CHECKSUM" "$checksum"
-            setGlobEnv "${joid^^}_BRANCH" "$checkout"
-            setGlobEnv "${joid^^}_REPO" "$repository"
-        else
-            echoWarn "WARNING: Unknown plan id '$joid'"
-        fi
-    done < $UPGRADE_PLAN_RES64_FILE
 
     NEW_NETWORK="false"
     globSet NEW_NETWORK "$NEW_NETWORK"

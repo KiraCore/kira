@@ -194,7 +194,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"\"}"
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC/kira.zip\"}"
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL

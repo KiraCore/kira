@@ -21,7 +21,6 @@ KIRA_BASE_VERSION="v0.11.4"
 TOOLS_VERSION="v0.2.17"
 COSIGN_VERSION="v1.7.2"
 CDHELPER_VERSION="v0.6.51"
-INFRA_REPO="https://github.com/KiraCore/kira"
 
 set +x
 echo "------------------------------------------------"
@@ -125,7 +124,7 @@ set -x
 
 #############################
 
-INFRA_BRANCH=$(echo "$1" | tr '[:upper:]' '[:lower:]')
+INFRA_SRC=$(echo "$1" | tr '[:upper:]' '[:lower:]')
 SKIP_UPDATE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
 START_TIME_INIT=$3
 
@@ -136,19 +135,22 @@ if [ "${SKIP_UPDATE,,}" != "true" ]; then
     cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 fi
 
+if (! $(urlExists "$INFRA_SRC/kira.zip")) ; then
+    echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!"
+    exit 1
+fi
+
+[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
+
+echoInfo "INFO: Setting up essential ENV variables & constant..."
+
 setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
 setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"
-setGlobEnv INFRA_BRANCH "$INFRA_BRANCH"
-setGlobEnv INFRA_REPO "$INFRA_REPO"
+setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
-
-echoInfo "INFO: Setting up essential ENV variables & constant..."
-
-[ -z "$INFRA_BRANCH" ] && echoErr "ERROR: Infra branch was undefined!" && exit 1
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
@@ -190,7 +192,6 @@ mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_S
 
 #SEKAI_BRANCH
 #INTERX_BRANCH
-#INTERX_REPO
 #SEKAI_REPO
 #INFRA_REPO
 #INFRA_BRANCH
@@ -218,22 +219,23 @@ git config --add --global core.filemode false || echoWarn "WARNING: Failed to se
 git config --add --global pager.branch false || echoWarn "WARNING: Failed to disable branch pager"
 git config --add --global http.sslVersion "tlsv1.2" || echoWarn "WARNING: Failed to set ssl version"
 
+# $INFRA_BRANCH 
+# $INFRA_REPO
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
     echoInfo "INFO: Updating kira Repository..."
-    rm -rfv "$KIRA_INFRA" "$KIRA_MANAGER"
-    mkdir -p "$KIRA_INFRA" "$KIRA_MANAGER"
-
-    git clone --branch $INFRA_BRANCH $INFRA_REPO $KIRA_INFRA
-    cd $KIRA_INFRA
-    git describe --all --always
+    
+    safeWget ./kira.zip "$INFRA_SRC/kira.zip"
+    rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
+    unzip ./kira.zip -d $KIRA_INFRA
     chmod -R 555 $KIRA_INFRA
 
     # update old processes
+    rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
     cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
     echoInfo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "true" "$START_TIME_INIT"
+    source $KIRA_MANAGER/init.sh "$INFRA_SRC" "true" "$START_TIME_INIT"
     echoInfo "INFO: Init script restart finished."
     exit 0
 fi

@@ -20,13 +20,16 @@ cd /kira
 
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Updating kira, sekai, INTERX"
-    $KIRA_COMMON/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
-    $KIRA_COMMON/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &
-    wait < <(jobs -p)
 
-    # we must ensure that recovery files can't be destroyed in the update process and cause a deadlock
-    rm -rfv "$KIRA_MANAGER" && mkdir -p "$KIRA_MANAGER"
-    cp -rfv "$KIRA_WORKSTATION/." "$KIRA_MANAGER"
+    safeWget ./kira.zip "$INFRA_SRC/kira.zip"
+    rm -rfv $KIRA_INFRA && mkdir -p $KIRA_INFRA
+    unzip ./kira.zip -d $KIRA_INFRA
+    rm -rfv ./kira.zip
+    chmod -R 555 $KIRA_INFRA
+
+    # update old processes
+    rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
+    cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
     echoInfo "INFO: Restarting setup and skipping update..."
