@@ -224,7 +224,7 @@ git config --add --global http.sslVersion "tlsv1.2" || echoWarn "WARNING: Failed
 if [ "${SKIP_UPDATE,,}" != "true" ]; then
     echoInfo "INFO: Updating kira Repository..."
     
-    safeWget ./kira.zip "$INFRA_SRC/kira.zip"
+    safeWget ./kira.zip "$INFRA_SRC/kira.zip" $KIRA_COSIGN_PUB
     rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
     unzip ./kira.zip -d $KIRA_INFRA
     chmod -R 555 $KIRA_INFRA

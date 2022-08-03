@@ -77,6 +77,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
         source=$(echo "$KIRA_PLAN" | jsonParse "url" 2> /dev/null || echo -n "")
         checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
 
+        [ -z "$checksum" ] && checksum="$KIRA_COSIGN_PUB"
         DOWNLOAD_SUCCESS="true"
         safeWget ./kira.zip "$source/kira.zip" "$checksum" || DOWNLOAD_SUCCESS="false"
 
