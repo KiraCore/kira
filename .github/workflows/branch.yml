@@ -43,7 +43,9 @@ jobs:
               echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
               echo "SOURCE_REF=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
 
-              git fetch
+              git checkout $SOURCE_BRANCH || git checkout -b $SOURCE_BRANCH
+              git pull
+
               echo "Parent branches:"
               git --no-pager log --decorate --simplify-by-decoration --oneline
               echo "Parent branches pt2:"
