@@ -129,7 +129,9 @@ set -x
 echoInfo "INFO: Processing input arguments..."
 INFRA_SRC="" && infra_src=""
 INIT_MODE="" && init_mode=""
-getArgs "$1" "$2" "$3" "$4" "$5"
+arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
+arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
+getArgs "$arg1" "$arg2"
 [ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
 [ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE="interactive"
 
