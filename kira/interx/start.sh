@@ -40,6 +40,7 @@ while ! ping -c1 $PING_TARGET &>/dev/null ; do
 done
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
+    rm -rfv $INTERXD_HOME/*
     mkdir -p "$CACHE_DIR" "$INTERXD_HOME"
     grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"

@@ -16,7 +16,7 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 
-rm -rf $SEKAID_HOME
+rm -rf $SEKAID_HOME/*
 mkdir -p $SEKAID_HOME/config
 cd $SEKAID_HOME/config
   

@@ -11,7 +11,7 @@ LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 
-rm -rfv $SEKAID_HOME
+rm -rfv $SEKAID_HOME/*
 mkdir -p $SEKAID_HOME/config/  
 sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
 
