@@ -42,10 +42,11 @@ jobs:
               echo "MASTER_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | head -1 | sed 's/HEAD//')" >> $GITHUB_ENV
               echo "LATEST_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME latest | awk '{ print $1}')" >> $GITHUB_ENV
               echo "SOURCE_REF=$(echo $GITHUB_SHA)" >> $GITHUB_ENV
-              PARENT_BRANCH=$(git --no-pager log --decorate --simplify-by-decoration --oneline  | grep -v "(HEAD"  | head -n1   | sed 's/.* (\(.*\)) .*/\1/' | sed 's/\(.*\), .*/\1/' | sed 's/origin\///' || echo "")
+              PARENT_BRANCH=$(git --no-pager log --decorate --simplify-by-decoration --oneline  | grep -v "(HEAD"  | head -n1   | sed 's/.* (\(.*\)) .*/\1/' | sed 's/\(.*\), .*/\1/' | sed 's/origin\///' | cut -d ',' -f 1 || echo "")
               [ -z "$PARENT_BRANCH" ] && PARENT_BRANCH="master"
               echo "PARENT_BRANCH=$PARENT_BRANCH" >> "$GITHUB_ENV"
               echo "PARENT_BRANCH_REF=$(git ls-remote https://github.com/kiracore/$REPOSITORY_NAME $PARENT_BRANCH | awk '{ print $1}' | head -n1)" >> $GITHUB_ENV
+              [ -z "$PARENT_BRANCH_REF" ] && PARENT_BRANCH_REF="$MASTER_REF" && PARENT_BRANCH="master"
               git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
               ( git show-branch "origin/$RELEASE_BRANCH" || git show-branch "remotes/origin/$RELEASE_BRANCH" ) && echo "TARGET_BRANCH_EXISTS=true" >> $GITHUB_ENV || echo "TARGET_BRANCH_EXISTS=false" >> $GITHUB_ENV
           - name: Print debug data before publishing

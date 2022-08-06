@@ -312,9 +312,3 @@ fi
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0
-
-# systemctl status kiraup
-# journalctl -u kiraup 
-# cat $KIRA_LOGS/kiraup.log
-
-# systemctl restart kiraup && journalctl -u kiraup -f --output cat

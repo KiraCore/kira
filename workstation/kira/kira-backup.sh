@@ -42,11 +42,11 @@ else
     globSet SNAPSHOT_UNHALT "false"
 fi
 
-[ "$PROMPT_SOURCE" == "submenu" ] && \ 
-    echoNErr "Do you want to [E]nable creation of a new backup after sync, [D]isable or e[X]it without making changes: " && \
+if [ "$PROMPT_SOURCE" == "submenu" ] ; then
+    echoNErr "Do you want to [E]nable creation of a new backup after sync, [D]isable or e[X]it without making changes: "
     pressToContinue b e && SELECT=($(globGet OPTION))
-
-[ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 2 && exit 0
+    [ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 2 && exit 0
+fi
 
 globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
 globSet SNAPSHOT_TARGET $SNAPSHOT_TARGET

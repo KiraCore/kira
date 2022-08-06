@@ -5,6 +5,7 @@ set -x
 CONTAINER_NAME=$1
 EXPECTED_NODE_ID=$2
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
@@ -54,6 +55,23 @@ while : ; do
             cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
+
+        # copy genesis from validator only if internal node syncing takes place
+        if [ $INIT_MODE == "upgrade" ] ; then 
+            echoInfo "INFO: Attempting to access genesis file of the new network..."
+            chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+            rm -fv $LOCAL_GENESIS_PATH
+            cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
+        fi
+
+        # make sure genesis is present in the destination path
+        if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+            echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+            sleep 12 && continue
+        else
+            echoInfo "INFO: Success, genesis file is present in $LOCAL_GENESIS_PATH"
+            chattr +i "$LOCAL_GENESIS_PATH"
+        fi
 
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 

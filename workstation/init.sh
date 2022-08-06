@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 set -e
 
+# Accepted arguments:
+# --infra-src="<url>"
+# --init-mode="interactive/upgrade"
+
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 
 [ "$KIRA_USER" == "root" ] && KIRA_USER=$(logname)
 if [ "$KIRA_USER" == "root" ]; then
@@ -123,24 +126,22 @@ set -x
 
 
 #############################
-
-INFRA_SRC=$(echo "$1" | tr '[:upper:]' '[:lower:]')
-SKIP_UPDATE=$(echo "$2" | tr '[:upper:]' '[:lower:]')
-START_TIME_INIT=$3
+echoInfo "INFO: Processing input arguments..."
+INFRA_SRC="" && infra_src=""
+INIT_MODE="" && init_mode=""
+getArgs "$1" "$2" "$3" "$4" "$5"
+[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
+[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE="interactive"
 
 #############################
 
-if [ "${SKIP_UPDATE,,}" != "true" ]; then
-    echoInfo "INFO: Veryfying kira base image integrity..."
-    cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
-fi
+echoInfo "INFO: Veryfying kira base image integrity..."
+cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 
-if (! $(urlExists "$INFRA_SRC/kira.zip")) ; then
+if (! $(urlExists "$INFRA_SRC")) ; then
     echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!"
     exit 1
 fi
-
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
@@ -150,6 +151,7 @@ setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"
 setGlobEnv INFRA_SRC "$INFRA_SRC"
+setGlobEnv INIT_MODE "$INIT_MODE"
 setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
@@ -178,8 +180,10 @@ KIRA_MANAGER="/kira/manager"        && setGlobEnv KIRA_MANAGER "$KIRA_MANAGER"
 KIRA_COMMON="${KIRA_INFRA}/common"              && setGlobEnv KIRA_COMMON "$KIRA_COMMON"
 KIRA_WORKSTATION="${KIRA_INFRA}/workstation"    && setGlobEnv KIRA_WORKSTATION "$KIRA_WORKSTATION"
 
-SEKAID_HOME="/root/.sekaid"             && setGlobEnv SEKAID_HOME "$SEKAID_HOME"
+SEKAID_HOME="/root/.sekai"          && setGlobEnv SEKAID_HOME "$SEKAID_HOME"
+INTERXD_HOME="/root/.interx"        && setGlobEnv INTERXD_HOME "$INTERXD_HOME"
 
+DOCKER_HOME="/docker/shared/home"   && setGlobEnv DOCKER_HOME "$DOCKER_HOME"
 DOCKER_COMMON="/docker/shared/common"   && setGlobEnv DOCKER_COMMON "$DOCKER_COMMON"
 # read only common directory
 DOCKER_COMMON_RO="/docker/shared/common_ro"             && setGlobEnv DOCKER_COMMON_RO "$DOCKER_COMMON_RO"
@@ -191,10 +195,7 @@ mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" 
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
 #SEKAI_BRANCH
-#INTERX_BRANCH
 #SEKAI_REPO
-#INFRA_REPO
-#INFRA_BRANCH
 
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
@@ -212,58 +213,53 @@ pip3 install ECPy
 apt update -y
 apt install -y bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
 
-ln -s /usr/bin/git /bin/git || echoWarn "WARNING: Git symlink already exists"
-git config --add --global core.autocrlf input || echoWarn "WARNING: Failed to set global autocrlf"
-git config --unset --global core.filemode || echoWarn "WARNING: Failed to unset global filemode"
-git config --add --global core.filemode false || echoWarn "WARNING: Failed to set global filemode"
-git config --add --global pager.branch false || echoWarn "WARNING: Failed to disable branch pager"
-git config --add --global http.sslVersion "tlsv1.2" || echoWarn "WARNING: Failed to set ssl version"
-
-# $INFRA_BRANCH 
-# $INFRA_REPO
-if [ "${SKIP_UPDATE,,}" != "true" ]; then
-    echoInfo "INFO: Updating kira Repository..."
+echoInfo "INFO: Updating kira Repository..."
     
-    safeWget ./kira.zip "$INFRA_SRC/kira.zip" $KIRA_COSIGN_PUB
-    rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
-    unzip ./kira.zip -d $KIRA_INFRA
-    chmod -R 555 $KIRA_INFRA
+safeWget /tmp/kira.zip "$INFRA_SRC" $KIRA_COSIGN_PUB
+rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
+unzip /tmp/kira.zip -d $KIRA_INFRA
+chmod -R 555 $KIRA_INFRA
 
-    # update old processes
-    rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
-    cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
-    chmod -R 555 $KIRA_MANAGER
-
-    echoInfo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_SRC" "true" "$START_TIME_INIT"
-    echoInfo "INFO: Init script restart finished."
-    exit 0
-fi
+# update old processes
+rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
+cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
+chmod -R 555 $KIRA_MANAGER
 
 KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
-[ -z "KIRA_SETUP_VER" ] && echo -en "\e[31;1mERROR: Invalid setup release version!\e[0m" && exit 1
+[ -z "KIRA_SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && exit 1
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
 
-echo "INFO: Startting cleanup..."
-apt-get autoclean -y || echo "WARNING: autoclean failed"
-apt-get clean -y || echo "WARNING: clean failed"
-apt-get autoremove -y || echo "WARNING: autoremove failed"
-journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
+echoInfo "INFO: Startting cleanup..."
+timeout 60 apt-get autoclean -y || echoWarn "WARNING: autoclean failed"
+timeout 60 apt-get clean -y || echoWarn "WARNING: clean failed"
+timeout 60 apt-get autoremove -y || echoWarn "WARNING: autoremove failed"
+timeout 60 journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum failed"
 
 $KIRA_MANAGER/setup/tools.sh
 
-set +x
-echoInfo "INFO: Your host environment was initialized"
-echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
-echoNErr "Press any key to accept terms & continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
-echoInfo "INFO: Launching setup menu..."
-set -x
-source $KIRA_MANAGER/menu/menu.sh "true"
+if [ $INIT_MODE == "interactive" ] ; then
+    set +x
+    echoInfo "INFO: Your host environment was initialized"
+    echoWarn "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
+    echoNErr "Press any key to accept terms & continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoInfo "INFO: Launching setup menu..."
+    set -x
+    source $KIRA_MANAGER/menu/menu.sh "true"
+elif [ $INIT_MODE == "upgrade" ] ; then
+    echoIngo "INFO: Starting upgrade & restarting update daemon..."
+
+    globSet NEW_NETWORK "false"
+
+    systemctl daemon-reload
+    systemctl restart docker
+    timeout 60 systemctl restart kiraup
+else
+    echoErr "ERROR: Unknown init-mode flag '$INIT_MODE'"
+    exit 1
+fi
 
 set +x
 echoInfo "------------------------------------------------"
 echoInfo "| FINISHED: INIT                               |"
-echoInfo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_INIT)) seconds"
 echoInfo "------------------------------------------------"
 set -x
-exit 0

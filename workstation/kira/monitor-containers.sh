@@ -88,7 +88,6 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         globSet PLAN_FAIL "false"
         globSet PLAN_FAIL_COUNT "0"
         globSet UPGRADE_DONE "false"
-        globSet UPGRADE_REPOS_DONE "false"
         globSet UPGRADE_EXPORT_DONE "false"
         globSet UPGRADE_PAUSE_ATTEMPTED "false"
         globSet UPGRADE_UNPAUSE_ATTEMPTED "false"

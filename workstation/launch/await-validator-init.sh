@@ -6,6 +6,7 @@ EXPECTED_NODE_ID="$1"
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
@@ -62,11 +63,11 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "${NEW_NETWORK,,}" == "true" ] ; then 
+    if [ "${NEW_NETWORK,,}" == "true" ] || [ $INIT_MODE == "upgrade" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
         chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
         rm -fv $LOCAL_GENESIS_PATH
-        cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
+        cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
     fi
 
     # make sure genesis is present in the destination path
@@ -194,7 +195,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC/kira.zip\"}"
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC\"}"
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL

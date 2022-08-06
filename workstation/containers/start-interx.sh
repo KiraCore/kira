@@ -34,15 +34,13 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
     # globGet interx_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
-    rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
+    rm -rfv "$COMMON_PATH" "$APP_HOME"
+    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB" "$APP_HOME"
 
     echoInfo "INFO: Loading secrets..."
     set +x
-    set +e
     source $KIRAMGR_SCRIPTS/load-secrets.sh
     echo "$SIGNER_ADDR_MNEMONIC" > "$COMMON_PATH/signing.mnemonic"
-    set -e
     set -x
 
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
@@ -76,6 +74,7 @@ docker run -d \
     -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
+    -v $APP_HOME:/$INTERXD_HOME \
     ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."

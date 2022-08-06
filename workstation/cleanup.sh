@@ -29,7 +29,6 @@ sleep 3
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 for name in $CONTAINERS; do
     $KIRA_COMMON/container-delete.sh "$name"
-    rm -rfv "$DOCKER_COMMON/${name}"
     globDel "${name}_SEKAID_STATUS"
 done
 
@@ -45,7 +44,8 @@ echoInfo "INFO: Docker common directories cleanup..."
 rm -fv $TMP_GENESIS_PATH
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
 chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
+[ "${NEW_NETWORK,,}" == "true" ] && rm -rfv "$DOCKER_COMMON"
+rm -rfv "$DOCKER_COMMON_RO"
 rm -fv $LOCAL_GENESIS_PATH
 mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" 
 [ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
@@ -79,14 +79,12 @@ $KIRA_MANAGER/launch/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
-i=0 && LOCAL_IP="" && PUBLIC_IP=""
-while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
+i=0 && globDel PUBLIC_IP LOCAL_IP
+while ( (! $(isIp $(globGet LOCAL_IP))) && (! $(isPublicIp $(globGet PUBLIC_IP))) ) ; do
     i=$((i + 1))
-    PUBLIC_IP=$(globGet "PUBLIC_IP")
-    LOCAL_IP=$(globGet "LOCAL_IP")
-    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
+    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($(globGet PUBLIC_IP)) or Local IPv4 ($(globGet LOCAL_IP)) address could not be found. Setup CAN NOT continue!" && exit 1 
     echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
-    sleep 30
+    sleep 10
 done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."

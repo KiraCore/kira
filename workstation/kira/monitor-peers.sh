@@ -47,7 +47,9 @@ for name in $CONTAINERS; do
     if [[ "${name,,}" =~ ^(validator|sentry|seed)$ ]] ; then
         echoInfo "INFO: Fetching address book..."
         TMP_BOOK_DUMP=$(globFile TMP_BOOK_DUMP)
-        timeout 60 docker cp "$name:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+
+        APP_HOME="$DOCKER_HOME/$name/config/addrbook.json" 
+        cp -fv $APP_HOME $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 
         if (! $(isFileEmpty $TMP_BOOK_DUMP)) ; then
             COMMON_PATH="$DOCKER_COMMON/interx"
@@ -63,11 +65,11 @@ done
 
 echoInfo "INFO: Starting address discovery..."
 rm -fv $TMP_BOOK_DUMP
-timeout 60 docker cp "seed:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+cp -fv "$DOCKER_HOME/seed/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
-timeout 60 docker cp "sentry:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+cp -fv "$DOCKER_HOME/sentry/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
-timeout 60 docker cp "validator:$SEKAID_HOME/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
+cp -fv "$DOCKER_HOME/validator/config/addrbook.json" $TMP_BOOK_DUMP || echo "" > $TMP_BOOK_DUMP
 echo $(cat "$TMP_BOOK_DUMP" | grep -Eo '"ip"[^,]*' | grep -Eo '[^:]*$' || echo "") >> $TMP_BOOK && rm -fv $TMP_BOOK_DUMP
 
 PUBLIC_IP=$(globGet "PUBLIC_IP")

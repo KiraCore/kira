@@ -59,7 +59,7 @@ echoInfo "INFO:   Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
 
 echoInfo "INFO: Starting genesis configuration..."
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] ; then
+if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] && [ "$UPGRADE_MODE" == "none" ] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
 elif [ "${NODE_TYPE,,}" == "validator" ] ; then
