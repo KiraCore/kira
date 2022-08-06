@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="sentry"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
@@ -37,7 +38,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
     # globGet sentry_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
-    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON"
+    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON" "$APP_HOME"
 
     echoInfo "INFO: Loading secrets..."
     set +x

@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="seed"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
@@ -59,7 +60,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         fi
     else
         rm -rfv "$COMMON_LOGS" "$GLOBAL_COMMON"
-        mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON"
+        mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON" "$APP_HOME"
 
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
