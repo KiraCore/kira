@@ -124,26 +124,25 @@ if [[ $(getRamTotal) -lt 3145728 ]] ; then
 fi
 set -x
 
-
 #############################
 echoInfo "INFO: Processing input arguments..."
-INFRA_SRC="" && infra_src=""
-INIT_MODE="" && init_mode=""
+INFRA_SRC="" && infra_src="" && infrasrc=""
+INIT_MODE="" && init_mode="" && initmode=""
 arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
 arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
 getArgs "$arg1" "$arg2"
-[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
-[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE="interactive"
-
-#############################
-
-echoInfo "INFO: Veryfying kira base image integrity..."
-cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src && [ -z $INFRA_SRC ] && INFRA_SRC=$infrasrc
+[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE=$initmode
+[ -z $INIT_MODE ] && INIT_MODE="interactive"
 
 if (! $(urlExists "$INFRA_SRC")) ; then
     echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!"
     exit 1
 fi
+#############################
+
+echoInfo "INFO: Veryfying kira base image integrity..."
+cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
 
