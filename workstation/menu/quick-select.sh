@@ -33,6 +33,10 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
     set -x
 
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+    rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
+    mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
+
     globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
@@ -110,8 +114,6 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue l a d c && VSEL=($(globGet OPTION))
             set -x
         fi
-
-        # curl 127.0.0.1:11000/api/pub_p2p_list?peers_only=true
 
         SNAP_AVAILABLE="false"
         DOWNLOAD_SUCCESS="false"
@@ -311,11 +313,14 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             NEW_MIN_HEIGHT="$TMP_MIN_HEIGHT" && break
         done
 
+        NEW_BLOCK_TIME=$(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
+
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
+        echoNInfo "CONFIG:   Minimum expected block time: " && echoErr $NEW_BLOCK_TIME
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
@@ -330,11 +335,14 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             continue
         fi
 
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+        rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
+        mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
+
         TRUSTED_NODE_ADDR=$NODE_ADDR
-        NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
         globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-        globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_TIME "$(date2unix $NEW_BLOCK_TIME)" $GLOBAL_COMMON_RO
         globSet GENESIS_SHA256 "$GENSUM"
         break
     done
@@ -362,9 +370,7 @@ else
     SNAPSHOT=""
 fi
 
-rm -fvr "$KIRA_SNAP/status"
-chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -fv "$LOCAL_GENESIS_PATH" "$TMP_SNAP_PATH"
+rm -fvr "$KIRA_SNAP/status" "$TMP_SNAP_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
     echoInfo "INFO: New genesis found, replacing"

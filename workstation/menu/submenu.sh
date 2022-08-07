@@ -196,7 +196,6 @@ globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "i
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
-globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
 
@@ -217,20 +216,6 @@ globSet PLAN_FAIL "false"
 globSet PLAN_FAIL_COUNT "0"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
-
-if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
-  globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
-  globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
-  globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
-fi
-
-set +e && source $ETC_PROFILE &>/dev/null && set -e
-
-echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
-(! $(isNaturalNumber $MTU)) && MTU=1500
-(($MTU < 100)) && MTU=900
-globSet MTU $MTU
 
 rm -rfv "$KIRA_DUMP/kiraup-done.log.txt" "$KIRA_DUMP/kirascan-done.log.txt"
 
@@ -292,9 +277,7 @@ systemctl restart systemd-journald
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
 
-KIRA_UP_ACTIVE=$(isServiceActive kiraup)
-
-if [ "${KIRA_UP_ACTIVE,,}" == "true" ] ; then
+if [ "$(isServiceActive kiraup)" == "true" ] ; then
   cat $KIRA_LOGS/kiraup.log
 else
   systemctl status kiraup
