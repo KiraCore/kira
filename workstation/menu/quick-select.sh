@@ -30,7 +30,7 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
     echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-    echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
+    echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
     set -x
 
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
@@ -106,12 +106,12 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
-            echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue e l a d c && VSEL=($(globGet OPTION))
+            echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue e l a d c && VSEL=$(globGet OPTION)
             set -x
         else
             set +x
             echoWarn "WARNINIG: Node '$NODE_ADDR' is NOT exposing snapshot files! It might take you a VERY long time to sync your node!"
-            echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue l a d c && VSEL=($(globGet OPTION))
+            echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue l a d c && VSEL=$(globGet OPTION)
             set -x
         fi
 
@@ -196,7 +196,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
                 echoWarn "WARNING: Snapshot download failed or connection with the node is not stable ($SNAP_URL)"
-                echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=($(globGet OPTION))
+                echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=$(globGet OPTION)
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
@@ -247,7 +247,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
             set +x
             echoErr "ERROR: Snapshot could not be found, file was corrupted or created by outdated node"
-            echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=($(globGet OPTION))
+            echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=$(globGet OPTION)
             set -x
             rm -rfv $TMP_SNAP_DIR
             if [ "${OPTION,,}" == "d" ] ; then
@@ -285,7 +285,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
 
                 if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                     set +x
-                    echoNErr "Expected chain ID to be '$CHAIN_ID' but got '$GENESIS_NETWORK', do you want to [T]ry again or [C]hange chain id to '$GENESIS_NETWORK' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
+                    echoNErr "Expected chain ID to be '$CHAIN_ID' but got '$GENESIS_NETWORK', do you want to [T]ry again or [C]hange chain id to '$GENESIS_NETWORK' and continue?" && pressToContinue t c && OPTION=$(globGet OPTION)
                     [ "${OPTION,,}" == "t" ] && continue
                     set -x
                     CHAIN_ID=$GENESIS_NETWORK
@@ -327,7 +327,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
         echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-        echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
+        echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
         set -x
 
         if [ "${OPTION,,}" == "r" ] ; then
@@ -396,7 +396,7 @@ if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false
 
     while : ; do
         set +x
-        echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && pressToContinue a m && OPTION=($(globGet OPTION))
+        echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && pressToContinue a m && OPTION=$(globGet OPTION)
         set -x
 
         SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")

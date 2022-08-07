@@ -86,7 +86,7 @@ echo -e "\e[37;1m--------------------------------------------------"
     [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
 
     if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
-        echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && pressToContinue y n && ACCEPT=($(globGet OPTION))
+        echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && pressToContinue y n && ACCEPT=$(globGet OPTION)
         [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo -n ""
     fi
@@ -140,7 +140,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
-        echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT=($(globGet OPTION))
+        echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT=$(globGet OPTION)
         [ "${SELECT,,}" == "c" ] && continue
 
         echoInfo "INFO: Re-starting $CONTAINER container..."
@@ -162,7 +162,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT=($(globGet OPTION)) 
+        echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT=$(globGet OPTION)
         [ "${SELECT,,}" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
