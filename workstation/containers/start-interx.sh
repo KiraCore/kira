@@ -11,7 +11,7 @@ CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-COMMON_GLOB="$COMMON_PATH/kiraglob"
+GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -36,7 +36,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     # globGet interx_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
     rm -rfv "$COMMON_PATH" "$APP_HOME"
-    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB" "$APP_HOME"
+    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON" "$APP_HOME"
 
     echoInfo "INFO: Loading secrets..."
     set +x
@@ -50,7 +50,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     [ "${INFRA_MODE,,}" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
-    globSet KIRA_ADDRBOOK "" $COMMON_GLOB
+    globSet KIRA_ADDRBOOK "" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

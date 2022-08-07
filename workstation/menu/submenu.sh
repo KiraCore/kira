@@ -178,7 +178,7 @@ while :; do
     [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
     ;;
   6*)
-    $KIRA_MANAGER/kira/kira-backup.sh "submenu"
+    $KIRA_MANAGER/kira/kira-backup.sh
     continue
     ;;
   x*)
@@ -210,8 +210,6 @@ rm -fv $(globFile sentry_SEKAID_STATUS)
 rm -fv $(globFile seed_SEKAID_STATUS)
 rm -fv $(globFile interx_SEKAID_STATUS)
 
-UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
-globSet UPGRADE_NAME "$UPGRADE_NAME"
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date2unix $(date))"
 globSet AUTO_UPGRADES "true"

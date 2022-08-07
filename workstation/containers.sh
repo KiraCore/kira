@@ -71,6 +71,9 @@ else
     exit 1
 fi
 
+globSet UPGRADE_DONE "true"
+globSet UPGRADE_TIME "$(date2unix $(date))"
+
 if [ "$(globGet seed_STARTED)" == "true" ] || [ "$(globGet sentry_STARTED)" == "true" ] || [ "$(globGet validator_STARTED)" == "true" ] ; then
     $KIRA_MANAGER/containers/start-interx.sh
 fi

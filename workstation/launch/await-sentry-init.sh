@@ -96,13 +96,6 @@ while : ; do
             echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             sleep 10 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
-
-        #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-        #    echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-        #    [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
-        #    sleep 10
-        #    continue
-        #else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
     done
 
     echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
@@ -122,11 +115,6 @@ while : ; do
         echoErr "ERROR: Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
-
-    #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-    #    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
-    #    FAILURE="true"
-    #fi
 
     NETWORK=$(echo "$STATUS" | jsonQuickParse "network" || echo -n "")
     if [ "$NETWORK_NAME" != "$NETWORK" ] ; then

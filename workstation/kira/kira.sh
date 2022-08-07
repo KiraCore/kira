@@ -299,8 +299,6 @@ while : ; do
         fi
     done
 
-    
-
     if [ "${OPTION,,}" == "d" ]; then
         $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"
         EXECUTED="true"
@@ -328,7 +326,7 @@ while : ; do
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             globSet SNAP_EXPOSE "true"
             ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
-                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/api/snapshot" || \
+                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.tar" || \
                 echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."

@@ -43,11 +43,10 @@ while : ; do
         (! $(isDnsOrIp "$NODE_ADDR")) && echoErr "ERROR: Invalid IPv4 address or DNS name" && continue
         TRUSTED_NODE_ADDR="$NODE_ADDR" && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
 
-        echoInfo "INFO: Downloading seeds list & attempting discovery of active nodes..."
+        echoInfo "INFO: Downloading seeds list..."
         TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-        $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Active seeds discovery scan failed"
-        SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
-        if [ ! -z "$SNAP_PEER" ]; then
+        wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || echoErr "ERROR: Active seeds discovery scan failed"
+        if (! $(isFileEmpty "$TMP_PEERS")) ; then
             echoInfo "INFO: List of active public seeds was found, saving changes to $PUBLIC_SEEDS"
             cat $TMP_PEERS > $PUBLIC_SEEDS
         else

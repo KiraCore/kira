@@ -14,7 +14,6 @@ RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
-UPGRADE_NAME=$(globGet UPGRADE_NAME)
 TIMEOUT=3600
 
 set +x
@@ -24,12 +23,9 @@ echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
-echoWarn "|     UPGRADE NAME: $UPGRADE_NAME"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|-------------------------------------------------"
 set -x
-
-($(isNullOrEmpty $UPGRADE_NAME)) && echoErr "ERROR: Invalid upgrade name!" && exit 1
 
 NODE_ID=""
 PREVIOUS_HEIGHT=0
@@ -200,14 +196,14 @@ EOL
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan --from=validator --keyring-backend=test \
- --name="$UPGRADE_NAME" \
+ --name="genesis" \
  --instate-upgrade=true \
  --skip-handler=true \
  --resources='[$UPGRADE_RESOURCES]' \
  --min-upgrade-time=$UPGRADE_TIME \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
- --rollback-memo="${UPGRADE_NAME}-roll" \
+ --rollback-memo="genesis" \
  --max-enrollment-duration=666 \
  --upgrade-memo="Genesis setup plan" \
  --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180

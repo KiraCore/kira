@@ -87,12 +87,6 @@ while : ; do
             echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             sleep 10 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
-
-        #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-        #    echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-        #    [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
-        #    sleep 30 && continue
-        #else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
     done
 
     echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."

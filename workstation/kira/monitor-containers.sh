@@ -11,8 +11,6 @@ STATUS_SCAN_PATH="$KIRA_SCAN/status"
 SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
-
-UPGRADE_NAME=$(globGet UPGRADE_NAME)
 UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
 NEW_UPGRADE_PLAN=""
@@ -24,7 +22,6 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
-echoWarn "| OLD UPGRADE NAME: $UPGRADE_NAME"
 echoWarn "| OLD UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
@@ -70,16 +67,14 @@ done
 
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     echoInfo "INFO: Upgrade plan was found!"
-    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     TMP_OLD_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
     TMP_NEW_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt 0 ]] && [ "${UPGRADE_NAME,,}" != "${TMP_UPGRADE_NAME,,}" ] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) && (! $(isNullOrEmpty "$TMP_UPGRADE_NAME")) ; then
-        echoInfo "INFO: New upgrade plan was found! $TMP_UPGRADE_NAME -> $TMP_UPGRADE_NAME"
+    if [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt 0 ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
+        echoInfo "INFO: New upgrade plan was found!"
 
-        globSet UPGRADE_NAME "$TMP_UPGRADE_NAME"
         globSet UPGRADE_TIME "$TMP_UPGRADE_TIME"
         globSet UPGRADE_INSTATE "$TMP_UPGRADE_INSTATE"
         globSet UPGRADE_PLAN "$NEW_UPGRADE_PLAN"
@@ -98,7 +93,6 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         systemctl start kiraplan
     else
         echoWarn "WARNING:     Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
-        echoWarn "WARNING:     Upgrade Name: $UPGRADE_NAME -> $TMP_UPGRADE_NAME"
         echoWarn "WARNING: Upgrade Chain Id: $TMP_OLD_CHAIN_ID -> $TMP_NEW_CHAIN_ID"
         echoWarn "WARNING:  Upgrade Instate: $TMP_UPGRADE_INSTATE"
         echoWarn "WARNING:  Upgrade plan will NOT be changed!"

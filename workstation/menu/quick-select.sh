@@ -103,7 +103,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/snapshot"
+        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
         if ($(urlExists "$SNAP_URL")) ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
@@ -116,6 +116,8 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|l|d|c)$ ]]; do echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
             set -x
         fi
+
+        # curl 127.0.0.1:11000/api/pub_p2p_list?peers_only=true
 
         SNAP_AVAILABLE="false"
         DOWNLOAD_SUCCESS="false"
@@ -172,14 +174,12 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             DOWNLOAD_SUCCESS="true"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 0 || echoErr "ERROR: Peers discovery scan failed"
-            SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
-            if [ ! -z "$SNAP_PEER" ]; then
+            TMP_SNAPS="/tmp/snaps.txt" && rm -fv "$TMP_SNAPS" 
+            wget $NODE_ADDR:11000/api/snap_list?ip_only=true -O $TMP_SNAPS || echoErr "ERROR: Snapshot discovery scan failed"
+            if (! $(isFileEmpty "$TMP_SNAPS")) ; then
                 echoInfo "INFO: Snapshot peer was found"
-                addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
-                addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/api/snapshot"
+                SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
+                SNAP_URL="$SNAP_PEER:$DEFAULT_INTERX_PORT/download/snapshot.tar"
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"
@@ -400,6 +400,10 @@ globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
 globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
+
+    # wget 127.0.0.1:11000/api/pub_p2p_list?peers_only=true -O ./nim
+    # curl 127.0.0.1:11000/api/pub_p2p_list?peers_only=true | sed -n '1p'
+
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 
@@ -421,8 +425,8 @@ if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; 
 
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
+            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS"
+            wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || echoErr "ERROR: Peers discovery scan failed"
             if (! $(isFileEmpty "$TMP_PEERS")) ; then
                 echoInfo "INFO: Saving extra peers..."
                 cat $TMP_PEERS >> $PUBLIC_SEEDS
