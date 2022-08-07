@@ -311,8 +311,6 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             NEW_MIN_HEIGHT="$TMP_MIN_HEIGHT" && break
         done
 
-        ($(isNaturalNumber "$NEW_MIN_HEIGHT")) && MIN_HEIGHT=$NEW_MIN_HEIGHT
-
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID

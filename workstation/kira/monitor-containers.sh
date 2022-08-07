@@ -28,9 +28,6 @@ echoWarn "------------------------------------------------"
 sleep 1
 set -x
 
-LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
-(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0 && globSet LATEST_BLOCK_HEIGHT "0" "$GLOBAL_COMMON_RO"
-
 mkdir -p "$INTERX_REFERENCE_DIR"
 
 for name in $CONTAINERS; do
@@ -103,8 +100,8 @@ else
     echoInfo "INFO: No new upgrade plans were found or are not expeted!"
 fi
 
-MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$MIN_HEIGHT")) && MIN_HEIGHT=0
-NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && NEW_LATEST_BLOCK_TIME=0
+MIN_HEIGHT=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO)
+NEW_LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO)
 NEW_LATEST_BLOCK=0
 NEW_LATEST_STATUS=0
 CONTAINERS_COUNT=0
@@ -141,12 +138,12 @@ for name in $CONTAINERS; do
         if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
-        fi
 
-        if [[ $NEW_LATEST_BLOCK -lt $LATEST_BLOCK ]] && [[ $NEW_LATEST_BLOCK_TIME -lt $LATEST_BLOCK_TIME ]] && [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
-            NEW_LATEST_BLOCK="$LATEST_BLOCK"
-            NEW_LATEST_BLOCK_TIME="$LATEST_BLOCK_TIME"
-            NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"
+            if [[ $LATEST_BLOCK -gt $NEW_LATEST_BLOCK ]] && [[ $LATEST_BLOCK_TIME -gt $NEW_LATEST_BLOCK_TIME ]] ; then
+                NEW_LATEST_BLOCK="$LATEST_BLOCK"
+                NEW_LATEST_BLOCK_TIME="$LATEST_BLOCK_TIME"
+                NEW_LATEST_STATUS="$(tryCat $STATUS_PATH)"
+            fi
         fi
     else
         LATEST_BLOCK="0"
@@ -169,14 +166,15 @@ done
 globSet CONTAINERS_COUNT $CONTAINERS_COUNT
 globSet CATCHING_UP $NEW_CATCHING_UP
 
-LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
-if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt $LATEST_BLOCK_TIME ]] ; then
+MIN_HEIGHT=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO)
+LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO)
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT $GLOBAL_COMMON_RO)
+if [[ $NEW_LATEST_BLOCK -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt 0 ]] && [[ $NEW_LATEST_BLOCK_TIME -gt $LATEST_BLOCK_TIME ]] && [[ $NEW_LATEST_BLOCK -gt $LATEST_BLOCK_HEIGHT ]] ; then
     echoInfo "INFO: Block height chaned to $NEW_LATEST_BLOCK ($NEW_LATEST_BLOCK_TIME)"
     globSet LATEST_BLOCK_TIME "$NEW_LATEST_BLOCK_TIME" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_HEIGHT "$NEW_LATEST_BLOCK" $GLOBAL_COMMON_RO
-
-    OLD_MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$OLD_MIN_HEIGHT")) && OLD_MIN_HEIGHT=0
-    if [[ $OLD_MIN_HEIGHT -lt $NEW_LATEST_BLOCK ]] ; then
+    
+    if [[ $NEW_LATEST_BLOCK -gt $MIN_HEIGHT ]] ; then
         globSet MIN_HEIGHT "$NEW_LATEST_BLOCK" $GLOBAL_COMMON_RO
     fi
 else
