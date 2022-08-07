@@ -114,6 +114,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     fi
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
+    globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

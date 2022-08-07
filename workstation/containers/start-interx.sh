@@ -50,7 +50,10 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     [ "${INFRA_MODE,,}" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+
     globSet KIRA_ADDRBOOK "" $GLOBAL_COMMON
+    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
+    globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \

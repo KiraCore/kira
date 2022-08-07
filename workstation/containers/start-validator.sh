@@ -8,8 +8,6 @@ APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
-
-NEW_NETWORK=$(globGet NEW_NETWORK)
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
 CPU_RESERVED=$(echo "scale=2; ( $CPU_CORES / 2 )" | bc)
@@ -50,7 +48,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
     set -x
 
-    if [ "${NEW_NETWORK,,}" == "true" ] ; then
+    if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
         rm -fv "$COMMON_PATH/genesis.json"
     fi
 
@@ -125,7 +123,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     fi
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
-    globSet NEW_NETWORK "$NEW_NETWORK" $GLOBAL_COMMON
+    globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
     echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
 docker run -d \
@@ -160,7 +158,7 @@ else
 fi
 
 mkdir -p $INTERX_REFERENCE_DIR
-if [ "${NEW_NETWORK,,}" == "true" ] || [ $INIT_MODE == "upgrade" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "true" ] || [ $INIT_MODE == "upgrade" ] ; then
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
     chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
     rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
@@ -170,7 +168,7 @@ $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
     echoInfo "INFO: New network was created, saving genesis to common read only directory..."
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
     chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"

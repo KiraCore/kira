@@ -77,13 +77,12 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
+NEW_NETWORK="false"
 if [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
     echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
     [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
-else
-    NEW_NETWORK="false"
 fi
 
 globSet NEW_NETWORK "$NEW_NETWORK"

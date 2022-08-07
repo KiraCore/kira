@@ -24,11 +24,6 @@ sekaid init --overwrite --chain-id="$NETWORK_NAME" "KIRA VALIDATOR NODE" --home=
   
 echoInfo "INFO: Importing priv key from common storage..."
 cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
-
-# if ($(isFileJson "$COMMON_DIR/addrbook.json")) ; then
-#     echoInfo "INFO: Importing external addrbook file..."
-#     cp -afv "$COMMON_DIR/addrbook.json" $SEKAID_HOME/config/addrbook.json
-# fi
   
 if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
     echoInfo "INFO: Snap file or directory was found, attepting integrity verification and data recovery..."

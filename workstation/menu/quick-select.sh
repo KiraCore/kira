@@ -400,10 +400,6 @@ globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
 globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
-
-    # wget 127.0.0.1:11000/api/pub_p2p_list?peers_only=true -O ./nim
-    # curl 127.0.0.1:11000/api/pub_p2p_list?peers_only=true | sed -n '1p'
-
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 
