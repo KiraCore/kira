@@ -319,7 +319,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
+        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $NEW_MIN_HEIGHT
         echoNInfo "CONFIG:   Minimum expected block time: " && echoErr $NEW_BLOCK_TIME
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
@@ -340,8 +340,8 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
 
         TRUSTED_NODE_ADDR=$NODE_ADDR
-        globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-        globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet MIN_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_TIME "$(date2unix $NEW_BLOCK_TIME)" $GLOBAL_COMMON_RO
         globSet GENESIS_SHA256 "$GENSUM"
         break
