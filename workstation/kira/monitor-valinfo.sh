@@ -115,7 +115,7 @@ VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev
 CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???"
 CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
 
-LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 CONS_STOPPED_HEIGHT=$(globGet CONS_STOPPED_HEIGHT) && (! $(isNaturalNumber "$CONS_STOPPED_HEIGHT")) && CONS_STOPPED_HEIGHT=0
 
 if [ "$CONS_STOPPED_HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] ; then

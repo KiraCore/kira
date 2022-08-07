@@ -219,10 +219,6 @@ globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
 if [ "${NEW_NETWORK,,}" == "true" ] ; then
-  globSet MIN_HEIGHT "0"
-  globSet LATEST_BLOCK_HEIGHT "0"
-  globSet LATEST_BLOCK_TIME "0"
-
   globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
   globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
   globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO

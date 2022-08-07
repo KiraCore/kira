@@ -31,10 +31,7 @@ if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
     tar -xvf $SNAP_FILE_INPUT -C ./ || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
     echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
     cd $SEKAID_HOME/config
-  
-    SNAP_HEIGHT=$(cat $SNAP_INFO | jsonQuickParse "height" || echo "0")
-    echoInfo "INFO: Snap height: $SNAP_HEIGHT, minimum height: $MIN_HEIGHT"
-  
+
     if [ -f "$DATA_GENESIS" ] ; then
         echoInfo "INFO: Genesis file was found within the snapshot folder, veryfying checksum..."
         SHA256_DATA_GENESIS=$(sha256 $DATA_GENESIS)

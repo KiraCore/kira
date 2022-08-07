@@ -31,8 +31,8 @@ PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
 MIN_HEIGHT=$(globGet MIN_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
-
 [[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
+[[ $MIN_HEIGHT -lt $STATE_HEIGHT ]] && MIN_HEIGHT=$STATE_HEIGHT
 
 cfg_p2p_max_num_outbound_peers=$(globGet cfg_p2p_max_num_outbound_peers)
 cfg_p2p_unconditional_peer_ids=$(globGet cfg_p2p_unconditional_peer_ids)
@@ -215,10 +215,10 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
     RPC_SERVERS=""
     while read rpc ; do
         set +x
-        BLOCK_INFO=$(timeout 3 curl --fail $rpc/block?height=$LATEST_BLOCK_HEIGHT 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        BLOCK_INFO=$(timeout 3 curl --fail $rpc/block?height=$MIN_HEIGHT 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         [ -z "$BLOCK_INFO" ] && echoWarn "WARNING: Failed to fetch block info from '$rpc'" && continue
         HEIGHT=$(echo "$BLOCK_INFO" | jsonParse "block.header.height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber $HEIGHT)) && HEIGHT=0
-        [ "$HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] && echoWarn "INFO: RPC height is $HEIGHT but expected $LATEST_BLOCK_HEIGHT" && continue
+        [ "$HEIGHT" != "$MIN_HEIGHT" ] && echoWarn "INFO: RPC height is $HEIGHT but expected $MIN_HEIGHT" && continue
         NEW_TRUST_HASH=$(echo "$BLOCK_INFO" | jsonParse "block_id.hash" 2>/dev/null || echo -n "")
         [ -z "$TRUST_HASH" ] && TRUST_HASH=$NEW_TRUST_HASH
         [ "$NEW_TRUST_HASH" != "$TRUST_HASH" ] && echoWarn "WARNING: Got block hash '$NEW_TRUST_HASH' but expected '$TRUST_HASH'" && continue
@@ -234,7 +234,7 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
     if [[ $rpc_cntr -ge 2 ]] ; then
         cfg_statesync_trust_hash=$TRUST_HASH
         cfg_statesync_rpc_servers=$RPC_SERVERS
-        cfg_statesync_trust_height="$LATEST_BLOCK_HEIGHT"
+        cfg_statesync_trust_height="$MIN_HEIGHT"
     else
         echoWarn "WARNING: Insufficicent RPC nodes count ($rpc_cntr)"
     fi
@@ -315,6 +315,5 @@ fi
 
 STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
-echoInfo "INFO: Latest known height is set to $LATEST_BLOCK_HEIGHT"
 echoInfo "INFO: Finished node configuration."
 globSet CFG_TASK "false"

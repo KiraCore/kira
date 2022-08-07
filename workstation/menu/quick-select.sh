@@ -26,16 +26,12 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-    echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
+    echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
     echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
     echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
     set -x
-
-    globSet MIN_HEIGHT "0"
-    globSet LATEST_BLOCK_HEIGHT "0"
-    globSet LATEST_BLOCK_TIME "0"
 
     globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
@@ -90,7 +86,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
         if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
+            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
             CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
         fi
 
@@ -386,10 +382,6 @@ TRUSTED_NODE_ADDR="$NODE_ADDR"  && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_A
 [ ! -z "$SNAPSHOT" ]            && setGlobEnv KIRA_SNAP_SHA256 "$SNAPSUM"
 
 NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
-
-globSet MIN_HEIGHT "$MIN_HEIGHT"
-globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT"
-globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
 
 globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
 globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO

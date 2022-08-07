@@ -49,7 +49,7 @@ while : ; do
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
+    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
@@ -89,7 +89,7 @@ while : ; do
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
     if [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then # plan in action
-        LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
         [ "${UPGRADE_INSTATE,,}" == "true" ] && UPGRADE_INSTATE="SOFT" || UPGRADE_INSTATE="HARD"
