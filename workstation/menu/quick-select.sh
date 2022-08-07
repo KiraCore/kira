@@ -333,6 +333,11 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         fi
 
         TRUSTED_NODE_ADDR=$NODE_ADDR
+        NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
+        globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
+        globSet GENESIS_SHA256 "$GENSUM"
         break
     done
 else
@@ -380,14 +385,6 @@ NETWORK_NAME="$CHAIN_ID"        && setGlobEnv NETWORK_NAME "$NETWORK_NAME"
 KIRA_SNAP_PATH="$SNAPSHOT"      && setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 TRUSTED_NODE_ADDR="$NODE_ADDR"  && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
 [ ! -z "$SNAPSHOT" ]            && setGlobEnv KIRA_SNAP_SHA256 "$SNAPSUM"
-
-NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
-
-globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
-
-globSet GENESIS_SHA256 "$GENSUM"
 
 if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
