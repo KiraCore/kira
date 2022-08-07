@@ -3,9 +3,6 @@ exec 2>&1
 set +e && source $ETC_PROFILE &>/dev/null && set -e
 # quick edit: FILE="${COMMON_DIR}/validator/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-NEW_NETWORK=$(globGet NEW_NETWORK)
-PRIVATE_MODE=$(globGet PRIVATE_MODE)
-
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
@@ -13,8 +10,8 @@ echoWarn "|-----------------------------------------------"
 echoWarn "| SEKAI VERSION: $(sekaid version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|   SEKAID HOME: $SEKAID_HOME"
-echoWarn "|   NEW NETWORK: $NEW_NETWORK"
-echoWarn "|  PRIVATE MODE: $PRIVATE_MODE"
+echoWarn "|   NEW NETWORK: $(globGet NEW_NETWORK)"
+echoWarn "|  PRIVATE MODE: $(globGet PRIVATE_MODE)"
 echoWarn "------------------------------------------------"
 set -x
 

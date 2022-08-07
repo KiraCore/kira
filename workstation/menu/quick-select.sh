@@ -8,13 +8,12 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
 MIN_HEIGHT="0"
-NEW_NETWORK=$(globGet NEW_NETWORK)
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
-if [ "${NEW_NETWORK,,}" == "true" ]; then
+if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-    REINITALIZE_NODE="flase"
+    REINITALIZE_NODE="false"
     CHAIN_ID="$NEW_NETWORK_NAME"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR=""
     GENSUM=""
@@ -28,11 +27,10 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
-    echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
+    echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
     echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-    
-    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+    echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
     set -x
 
     globSet MIN_HEIGHT "0"
@@ -48,7 +46,7 @@ if [ "${NEW_NETWORK,,}" == "true" ]; then
         source $KIRA_MANAGER/menu/submenu.sh
         exit 0
     fi
-elif [ "${NEW_NETWORK,,}" == "false" ] ; then
+elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
     while : ; do
         MIN_HEIGHT="0"
         if [ ! -z "$TRUSTED_NODE_ADDR" ] ; then 
@@ -108,12 +106,12 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(e|l|a|d|c)$ ]]; do echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue e l a d c && VSEL=($(globGet OPTION))
             set -x
         else
             set +x
             echoWarn "WARNINIG: Node '$NODE_ADDR' is NOT exposing snapshot files! It might take you a VERY long time to sync your node!"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|l|d|c)$ ]]; do echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue l a d c && VSEL=($(globGet OPTION))
             set -x
         fi
 
@@ -251,7 +249,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
             set +x
             echoErr "ERROR: Snapshot could not be found, file was corrupted or created by outdated node"
-            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+            echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=($(globGet OPTION))
             set -x
             rm -rfv $TMP_SNAP_DIR
             if [ "${OPTION,,}" == "d" ] ; then
@@ -327,10 +325,10 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
-        echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
+        echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
         echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+        echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=($(globGet OPTION))
         set -x
 
         if [ "${OPTION,,}" == "r" ] ; then
@@ -376,7 +374,7 @@ if [ -f "$TMP_GENESIS_PATH" ] ; then
 fi
 
 # Make sure genesis already exists if joining exisitng network was initiated
-if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
     echoErr "ERROR: Genesis file is missing despite attempt to join existing network"
     exit 1
 fi
@@ -399,13 +397,13 @@ globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
 
 globSet GENESIS_SHA256 "$GENSUM"
 
-if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
+if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 
     while : ; do
         set +x
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
+        echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && pressToContinue a m && OPTION=($(globGet OPTION))
         set -x
 
         SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")

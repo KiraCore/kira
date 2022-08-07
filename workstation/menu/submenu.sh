@@ -104,7 +104,7 @@ while :; do
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
-    echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
+    echo -e "|  NEW Network Deployment: $(globGet NEW_NETWORK)"
     [ "${NEW_NETWORK,,}" == "true" ] && \
     echo -e "|        NEW Network Name: ${NEW_NETWORK_NAME}"
     [ "${NEW_NETWORK,,}" != "true" ] && \
