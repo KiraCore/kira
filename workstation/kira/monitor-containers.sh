@@ -13,6 +13,7 @@ NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
 UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
+IS_SYNCING=$(globGet "${INFRA_MODE,,}_SYNCING")
 NEW_UPGRADE_PLAN=""
 
 set +x
@@ -22,6 +23,7 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
+echoWarn "|       IS SYNCING: $IS_SYNCING"
 echoWarn "| OLD UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
@@ -63,7 +65,7 @@ for name in $CONTAINERS; do
     fi
 done
 
-if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
+if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$IS_SYNCING" == "false" ] ; then
     echoInfo "INFO: Upgrade plan was found!"
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
