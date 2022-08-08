@@ -49,3 +49,4 @@ INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"    && setGlobEnv IN
 rm -f /var/crash/*
 mkdir -p "/etc/default" && touch /etc/default/apport
 setLastLineByPrefixOrAppend "enabled=" "enabled=0" /etc/default/apport
+

@@ -19,19 +19,19 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r
 > Creating Soft Fork Update Plan
 
 ```
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-94" && \
+HASH="bafybeiac6qdrwkpnyfjn4gpqnm5nwwalql56grwaovrzqigal77f45jurq" && \
+KIRA_BASE_VERSION="v0.11.4" && \
+RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
+RES2="{\"id\":\"base-image\",\"git\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}" && \
 sekaid tx upgrade proposal-set-plan \
- --name="$UPGRADE_NAME_TMP" \
+ --name="Soft Fork - Test Upgrade" \
  --instate-upgrade=true \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
+ --resources="[${RES1},${RES2}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
- --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
+ --rollback-memo="roll" \
  --max-enrollment-duration=60 \
  --upgrade-memo="This is a soft fork test upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
@@ -41,6 +41,13 @@ voteYes $(lastProposal) validator
 showCurrentPlan | jq
 showNextPlan | jq
 ```
+
+
+
+
+
+
+
 
 > Creating Hard Fork Update Plan
 

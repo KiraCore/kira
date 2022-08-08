@@ -71,11 +71,11 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
     if (! $(isNullOrWhitespaces "$KIRA_PLAN")) ; then
         echoInfo "INFO: KIRA Manager upgrade plan was found!"
         url=$(echo "$KIRA_PLAN" | jsonParse "url" 2> /dev/null || echo -n "")
-        [ -z "$KIRA_PLAN" ] && url=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$url")) && url=$(echo "$KIRA_PLAN" | jsonParse "git" 2> /dev/null || echo -n "")
         version=$(echo "$KIRA_PLAN" | jsonParse "version" 2> /dev/null || echo -n "")
         checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
-        [ -z "$checksum" ] && checksum=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
-        [ -z "$checksum" ] && checksum=$KIRA_COSIGN_PUB
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$KIRA_COSIGN_PUB
 
         DOWNLOAD_SUCCESS="true"
         safeWget ./kira.zip "$url" "$checksum" || DOWNLOAD_SUCCESS="false"
@@ -138,8 +138,6 @@ PLAN_FAIL_COUNT=$(globGet PLAN_FAIL_COUNT)
 if [[ $PLAN_FAIL_COUNT -ge 10 ]] ; then
     echoErr "ERROR: Plan failed $PLAN_FAIL_COUNT / 10 times, stopping kiraplan service..."
     globSet PLAN_FAIL "true"
-    
-    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
     systemctl stop kiraplan
 fi
 

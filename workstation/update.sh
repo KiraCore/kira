@@ -23,11 +23,6 @@ if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
     globSet UPDATE_FAIL "true"
     globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
-    echoInfo "INFO: Dumping service logs..."
-    if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
-        cat $KIRA_LOGS/kiraup.log > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
-        cat $KIRA_LOGS/kirascan.log > "$KIRA_DUMP/kirascan-done.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
-    fi
     echoErr "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
     sleep 5 && systemctl stop kiraup
     exit 1
@@ -166,11 +161,6 @@ set -x
 
 if [ "${UPDATE_DONE,,}" == "true" ] ; then
     echoInfo "INFO: Update & Setup was sucessfully finalized"
-    if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
-        cat $KIRA_LOGS/kiraup.log > "$KIRA_DUMP/kiraup-done.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
-        cat $KIRA_LOGS/kirascan.log > "$KIRA_DUMP/kirascan-done.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
-    fi
-    
     globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet UPDATE_DONE "true"
     set +x

@@ -87,8 +87,9 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
         globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
         globSet PLAN_END_DT ""
         
-        rm -fv $KIRA_DUMP/kiraplan-done.log.txt || echoInfo "INFO: plan log dump could not be wipred before plan service start"
-        systemctl start kiraplan
+        rm -fv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log || echoInfo "INFO: plan log dump could not be wipred before plan service start"
+        touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+        systemctl restart kiraplan
     else
         echoWarn "WARNING:     Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
         echoWarn "WARNING: Upgrade Chain Id: $TMP_OLD_CHAIN_ID -> $TMP_NEW_CHAIN_ID"

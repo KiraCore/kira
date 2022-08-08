@@ -203,10 +203,8 @@ SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
 globSet PORTS_EXPOSURE "enabled"
 
-rm -fv $(globFile validator_SEKAID_STATUS)
-rm -fv $(globFile sentry_SEKAID_STATUS)
-rm -fv $(globFile seed_SEKAID_STATUS)
-rm -fv $(globFile interx_SEKAID_STATUS)
+rm -fv $(globFile validator_SEKAID_STATUS) $(globFile sentry_SEKAID_STATUS) 
+rm -fv $(globFile seed_SEKAID_STATUS) $(globFile interx_SEKAID_STATUS)
 
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date2unix $(date))"
@@ -217,56 +215,11 @@ globSet PLAN_FAIL_COUNT "0"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
-rm -rfv "$KIRA_DUMP/kiraup-done.log.txt" "$KIRA_DUMP/kirascan-done.log.txt"
+rm -fv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log || echoInfo "INFO: plan log dump could not be wipred before plan service start"
+touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
 
-cat > /etc/systemd/system/kiraup.service << EOL
-[Unit]
-Description=KIRA Update And Setup Service
-After=network.target
-[Service]
-CPUWeight=20
-CPUQuota=85%
-IOWeight=20
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=5
-LimitNOFILE=4096
-StandardOutput=append:$KIRA_LOGS/kiraup.log
-StandardError=append:$KIRA_LOGS/kiraup.log
-[Install]
-WantedBy=default.target
-EOL
-
-cat > /etc/systemd/system/kiraplan.service << EOL
-[Unit]
-Description=KIRA Upgrade Plan Service
-After=network.target
-[Service]
-CPUWeight=100
-CPUQuota=100%
-IOWeight=100
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=5
-LimitNOFILE=4096
-StandardOutput=append:$KIRA_LOGS/kiraplan.log
-StandardError=append:$KIRA_LOGS/kiraplan.log
-[Install]
-WantedBy=default.target
-EOL
-
-rm -rfv $KIRA_LOGS && mkdir -p $KIRA_LOGS
-
+$KIRA_MANAGER/setup/services.sh
+mkdir -p $KIRA_LOGS
 systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan

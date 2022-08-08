@@ -128,16 +128,14 @@ echo -e "\e[37;1m--------------------------------------------------"
         [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
         [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
         EXPOSURE="public"
-        [ "${INFRA_MODE,,}" == "validator" ] && CONTAINER="validator"
-        [ "${INFRA_MODE,,}" == "sentry" ] && CONTAINER="sentry"
-        [ "${INFRA_MODE,,}" == "seed" ] && CONTAINER="seed"
 
         echoInfo "INFO: Starting $TYPE editor..."
         $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
 
+        CONTAINER="${INFRA_MODE,,}"
         COMMON_PATH="$DOCKER_COMMON/$CONTAINER" && mkdir -p "$COMMON_PATH"
         echoInfo "INFO: Copying $TYPE configuration to the $CONTAINER container common directory..."
-        cp -a -v -f "$FILE" "$COMMON_PATH/$TYPE"
+        cp -afv "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
         echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT=$(globGet OPTION)

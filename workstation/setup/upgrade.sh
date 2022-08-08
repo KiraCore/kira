@@ -61,11 +61,11 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
         ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Invalid plan id '$joid'" && continue
 
         url=$(echo "$jobj" | jsonParse "url" 2> /dev/null || echo -n "")
-        [ -z "$url" ] && url=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$url")) && url=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
         version=$(echo "$jobj" | jsonParse "version" 2> /dev/null || echo -n "")
         checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
-        [ -z "$checksum" ] && checksum=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
-        [ -z "$checksum" ] && checksum=$KIRA_COSIGN_PUB
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$KIRA_COSIGN_PUB
 
         globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
         globSet "NEXT_${joid^^}_VERSION" "$version"
@@ -129,10 +129,6 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
     rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
-    
-    echoInfo "INFO: Dumping loggs before planned reboot & update..."
-    rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
-    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
 else
     echoInfo "INFO: Upgrade xports already done!"
 fi
