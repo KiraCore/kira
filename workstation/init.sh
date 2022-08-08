@@ -23,7 +23,6 @@ fi
 KIRA_BASE_VERSION="v0.11.4"
 TOOLS_VERSION="v0.2.17"
 COSIGN_VERSION="v1.7.2"
-CDHELPER_VERSION="v0.6.51"
 
 set +x
 echo "------------------------------------------------"
@@ -31,7 +30,6 @@ echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
 echo "|         KIRA USER: $KIRA_USER"
 echo "|     TOOLS VERSION: $TOOLS_VERSION"
-echo "|  CDHELPER VERSION: $CDHELPER_VERSION"
 echo "| BASE IMG. VERSION: $KIRA_BASE_VERSION"
 echo "------------------------------------------------"
 echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
@@ -142,14 +140,14 @@ fi
 #############################
 
 echoInfo "INFO: Veryfying kira base image integrity..."
-cosign verify --key $KIRA_COSIGN_PUB ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+BASE_IMAGE_URL="ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION"
+cosign verify --key $KIRA_COSIGN_PUB $BASE_IMAGE_URL || \
+ ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key $KIRA_COSIGN_PUB $BASE_IMAGE_URL )
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
-
 setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
 setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
-setGlobEnv CDHELPER_VERSION "$CDHELPER_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"
 setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"

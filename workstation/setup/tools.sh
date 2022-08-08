@@ -13,11 +13,6 @@ BIN_DEST="/usr/local/bin/bash-utils.sh" && \
   safeWget ./bash-utils.sh "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/bash-utils.sh" \
   "$KIRA_COSIGN_PUB" && chmod -v 755 ./bash-utils.sh && ./bash-utils.sh bashUtilsSetup && chmod -v 755 $BIN_DEST && . /etc/profile
 
-BIN_DEST="/usr/local/bin/CDHelper" && \
-  safeWget ./cdhelper.zip "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$(getArch).zip" \
-  "c2e40c7143f4097c59676f037ac6eaec68761d965bd958889299ab32f1bed6b3,082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7" && \
-  unzip -o ./cdhelper.zip -d "CDHelper" && cp -rfv ./CDHelper "$(dirname $BIN_DEST)" && chmod -Rv 755 $BIN_DEST && setGlobPath "$BIN_DEST"
-
 # tmconnect handshake --address="e27b3a9d952f3863eaeb7141114c253edd03905d@167.99.54.200:26656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=60 --verbose
 # tmconnect id --address="167.99.54.200:26656" --node_key="$COMMON_DIR/node_key.json" --timeout=1
 # tmconnect network --address="78.46.241.36:36656" --node_key="$KIRA_SECRETS/sentry_node_key.json" --timeout=1
@@ -40,7 +35,6 @@ BIN_DEST="/usr/local/bin/bip39gen" && \
   safeWget ./bip39gen.deb "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/bip39gen-linux-$(getArch).deb" \
   "$KIRA_COSIGN_PUB" && dpkg-deb -x ./bip39gen.deb ./bip39gen && cp -fv "$KIRA_BIN/bip39gen/bin/bip39gen" $BIN_DEST && chmod -v 755 $BIN_DEST
 
-echoInfo "INFO:          Installed CDHelper: " && CDHelper version
 echoInfo "INFO:        Installed bash-utils: " && bashUtilsVersion
 echoInfo "INFO:         Installed tmconnect: " && tmconnect version
 echoInfo "INFO: Installed validator-key-gen: " && validator-key-gen --version

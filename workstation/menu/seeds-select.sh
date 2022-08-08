@@ -48,7 +48,8 @@ while : ; do
         wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || echoErr "ERROR: Active seeds discovery scan failed"
         if (! $(isFileEmpty "$TMP_PEERS")) ; then
             echoInfo "INFO: List of active public seeds was found, saving changes to $PUBLIC_SEEDS"
-            cat $TMP_PEERS > $PUBLIC_SEEDS
+            cat $TMP_PEERS >> $PUBLIC_SEEDS
+            sort -u $PUBLIC_SEEDS -o $PUBLIC_SEEDS
         else
             echoWarn "INFO: List of active public seeds was NOT found"
         fi

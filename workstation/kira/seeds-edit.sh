@@ -108,8 +108,8 @@ while : ; do
 
         if [ "${SELECT,,}" == "d" ] ; then
             if [ "${dns}" == "${addr}" ] || [ "${nodeId}" == "${addr}" ] ; then
-                echoInfo "INFO: Removing all '$addr' address from the ${TARGET^^} list..."
-                CDHelper text lineswap --insert="" --regex="$addr" --path=$FILE --append-if-found-not=True --silent=True
+                echoInfo "INFO: Removing last occurence of '$addr' address from the ${TARGET^^} list..."
+                setLastLineBySubStrOrAppend "$addr" "" $FILE
                 i=$((i + 1))
                 continue
             fi
@@ -183,10 +183,10 @@ while : ; do
                     [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$nodeAddress' will NOT be added to ${TARGET^^} list" && continue
                     
                     echoInfo "INFO: Adding address to the ${TARGET^^} list..."
-                    CDHelper text lineswap --insert="$nodeAddress" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
+                    setLastLineBySubStrOrAppend "$nodeId" "$nodeAddress" $FILE
                 else
-                    echoInfo "INFO: Removing address from the ${TARGET^^} list..."
-                    CDHelper text lineswap --insert="" --regex="$nodeId" --path=$FILE --append-if-found-not=True --silent=True
+                    echoInfo "INFO: Removing last address from the ${TARGET^^} list..."
+                    setLastLineBySubStrOrAppend "$nodeId" "" $files
                 fi
                 i=$((i + 1))
             else

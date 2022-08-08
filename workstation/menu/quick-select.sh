@@ -417,6 +417,7 @@ if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false
             if (! $(isFileEmpty "$TMP_PEERS")) ; then
                 echoInfo "INFO: Saving extra peers..."
                 cat $TMP_PEERS >> $PUBLIC_SEEDS
+                sort -u $PUBLIC_SEEDS -o $PUBLIC_SEEDS
             else
                 echoInfo "INFO: No extra public peers were found!"
                 continue
