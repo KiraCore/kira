@@ -19,12 +19,12 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r
 > Creating Soft Fork Update Plan
 
 ```
-HASH="bafybeiac6qdrwkpnyfjn4gpqnm5nwwalql56grwaovrzqigal77f45jurq" && \
+HASH="bafybeihauh2jfsmugo37er7lyfnjxeazd7vbujtkxjs4zuikvlztldcwge" && \
 KIRA_BASE_VERSION="v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 RES2="{\"id\":\"base-image\",\"git\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}" && \
 sekaid tx upgrade proposal-set-plan \
- --name="Soft Fork - Test Upgrade" \
+ --name="Soft Fork - Test Upgrade - $(date)" \
  --instate-upgrade=true \
  --skip-handler=true \
  --resources="[${RES1},${RES2}]" \

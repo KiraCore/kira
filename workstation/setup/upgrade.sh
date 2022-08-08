@@ -9,9 +9,11 @@ PLAN_START_DT=$(globGet PLAN_START_DT)
 UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 CONTAINERS=$(globGet CONTAINERS)
-UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
-OLD_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
-NEW_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
+UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
+UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
+UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
+OLD_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "old_chain_id" || echo "")
+NEW_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "new_chain_id" || echo "")
 CONTAINER_NAME="${INFRA_MODE,,}"
 COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
@@ -35,10 +37,6 @@ set -x
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
 [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && \
     echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
-
-UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
-UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
-UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
 
 echoInfo "INFO: Extracting resources from the upgrade plan..."
 jsonParse "resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
@@ -100,14 +98,16 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
     rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
     rm -fv "$GENESIS_EXPORT" "$APP_HOME/addrbook-export.json" "$APP_HOME/priv_validator_state-export.json" "$APP_HOME/old-genesis.json" "$APP_HOME/new-genesis.json" "$APP_HOME/genesis.json"
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
-    rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
     setGlobEnv KIRA_SNAP_PATH ""
 
     echoInfo "INFO: Exporting genesis!"
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$SEKAID_HOME/genesis-export.json"
     ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1
+
+    # delete old genesis after export is complete
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
+    rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
 
     setGlobEnv NETWORK_NAME "$NEW_CHAIN_ID"
 
