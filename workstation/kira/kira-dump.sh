@@ -43,9 +43,6 @@ cat $KIRA_LOGS/kiraup.log > "$KIRA_DUMP/kiraup-dump.log.txt" || echoErr "ERROR: 
 cat $KIRA_LOGS/kiraplan.log > "$KIRA_DUMP/kiraplan-dump.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
 cat $KIRA_LOGS/kirascan.log > "$KIRA_DUMP/kirascan-dump.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
 cat $KIRA_LOGS/kiraclean.log > "$KIRA_DUMP/kiraclean-dump.log.txt" || echoErr "ERROR: Failed to dump kira clean service log"
-# journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-dump.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
-# journalctl --since "$SETUP_START_DT" -u kiraup -b --no-pager --output cat > "$KIRA_DUMP/kiraup-dump.log.txt" || echoErr "ERROR: Failed to dump kira update service log"
-# journalctl --since "$SETUP_START_DT" -u kirascan -b --no-pager --output cat > "$KIRA_DUMP/kirascan-dump.log.txt" || echoErr "ERROR: Failed to dump kira scan service log"
 
 cat $(globGet UPDATE_TOOLS_LOG) > "$KIRA_DUMP/kiraup-tools-dump.log.txt" || echoErr "ERROR: Tools Update Log was NOT found!"
 cat $(globGet UPDATE_CLEANUP_LOG) > "$KIRA_DUMP/kiraup-cleanup-dump.log.txt" || echoErr "ERROR: Cleanup Update Log was NOT found!"

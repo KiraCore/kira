@@ -108,27 +108,18 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
     chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
     rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
-
-    setGlobEnv NETWORK_NAME "$NEW_CHAIN_ID"
-
     echoInfo "INFO: Finished upgrade export!"
 
-    echoInfo "INFO: Wiping all unused containers..."
-    for name in $CONTAINERS; do
-        echoInfo "INFO: Removing '$name' container and cleaning up resources..."
-        $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
-    done
-
-    $KIRA_MANAGER/init.sh --infra-src="$NEW_INFRA_SRC" --init-mode="upgrade"
-
     echoInfo "INFO: Starting update service..."
+    setGlobEnv NETWORK_NAME "$NEW_CHAIN_ID"
     globSet UPGRADE_EXPORT_DONE "true"
     globSet UPDATE_FAIL_COUNTER "0"
     globSet UPDATE_DONE "false"
     globSet SETUP_REBOOT ""
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
-    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
+
+    $KIRA_MANAGER/init.sh --infra-src="$INFRA_SRC" --init-mode="upgrade"
 else
     echoInfo "INFO: Upgrade xports already done!"
 fi

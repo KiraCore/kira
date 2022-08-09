@@ -111,7 +111,8 @@ fi
 
 if [ "${PLAN_DONE,,}" == "true" ] && [ "${UPGRADE_DONE,,}" == "false" ] ; then
     echoInfo "INFO: Plan was alredy executed, starting upgrade..."
-    UPSUCCESS="true" && $KIRA_MANAGER/setup/upgrade.sh || UPSUCCESS="false" 
+    UPSUCCESS="true"
+    $KIRA_MANAGER/setup/upgrade.sh || UPSUCCESS="false" 
     if [ "${UPSUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Upgrade round was sucessfull!"
     else

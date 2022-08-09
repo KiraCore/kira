@@ -59,9 +59,6 @@ echo             "MMM              KIRA NETWORK SETUP              MMM"
 echo -e          "MMMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
 sleep 3
 
-systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
-systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
-
 echo -n ""
 set -x
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
@@ -108,20 +105,6 @@ FILE_NAME="bash-utils.sh" && \
 source $FILE_NAME
 echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
-set +x
-if [[ $(getCpuCores) -lt 2 ]] ; then
-    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $(getCpuCores)\e[0m"
-    echo "INFO: Recommended CPU is 4 cores"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-fi
-
-if [[ $(getRamTotal) -lt 3145728 ]] ; then
-    echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $(getRamTotal) kB\e[0m"
-    echo "INFO: Recommended RAM is 8GB"
-    echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-fi
-set -x
-
 #############################
 echoInfo "INFO: Processing input arguments..."
 INFRA_SRC="" && infra_src="" && infrasrc=""
@@ -138,6 +121,25 @@ if (! $(urlExists "$INFRA_SRC")) ; then
     exit 1
 fi
 #############################
+
+if [ $INIT_MODE == "interactive" ] ; then
+    systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
+    systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
+
+    set +x
+    if [[ $(getCpuCores) -lt 2 ]] ; then
+        echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $(getCpuCores)\e[0m"
+        echo "INFO: Recommended CPU is 4 cores"
+        echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    fi
+
+    if [[ $(getRamTotal) -lt 3145728 ]] ; then
+        echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $(getRamTotal) kB\e[0m"
+        echo "INFO: Recommended RAM is 8GB"
+        echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    fi
+    set -x
+fi
 
 echoInfo "INFO: Veryfying kira base image integrity..."
 BASE_IMAGE_URL="ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION"
@@ -193,9 +195,6 @@ rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
-#SEKAI_BRANCH
-#SEKAI_REPO
-
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
 loadGlobEnvs
@@ -205,15 +204,11 @@ apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --a
     software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential htop ccze sysstat \
     nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude zip unzip p7zip-full \
     python python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm net-tools \
-    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl
+    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
 
 pip3 install ECPy
 
-apt update -y
-apt install -y bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
-
 echoInfo "INFO: Updating kira Repository..."
-    
 safeWget /tmp/kira.zip "$INFRA_SRC" $KIRA_COSIGN_PUB
 rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
 unzip /tmp/kira.zip -d $KIRA_INFRA
@@ -245,12 +240,11 @@ if [ $INIT_MODE == "interactive" ] ; then
     set -x
     source $KIRA_MANAGER/menu/menu.sh "true"
 elif [ $INIT_MODE == "upgrade" ] ; then
-    echoIngo "INFO: Starting upgrade & restarting update daemon..."
-
+    echoInfo "INFO: Starting upgrade & restarting update daemon..."
+    globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER"
+    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
     globSet NEW_NETWORK "false"
-
     systemctl daemon-reload
-    systemctl restart docker
     timeout 60 systemctl restart kiraup
 else
     echoErr "ERROR: Unknown init-mode flag '$INIT_MODE'"
