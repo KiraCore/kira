@@ -215,11 +215,11 @@ globSet PLAN_FAIL_COUNT "0"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
-rm -fv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log || echoInfo "INFO: plan log dump could not be wipred before plan service start"
-touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+mkdir -p $KIRA_LOGS
+echo -n "" > $KIRA_LOGS/kiraup.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraup.log'"
+echo -n "" > $KIRA_LOGS/kiraplan.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraplan.log'"
 
 $KIRA_MANAGER/setup/services.sh
-mkdir -p $KIRA_LOGS
 systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan

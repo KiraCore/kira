@@ -35,79 +35,22 @@ BIN_DEST="/usr/local/bin/bip39gen" && \
   safeWget ./bip39gen.deb "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/bip39gen-linux-$(getArch).deb" \
   "$KIRA_COSIGN_PUB" && dpkg-deb -x ./bip39gen.deb ./bip39gen && cp -fv "$KIRA_BIN/bip39gen/bin/bip39gen" $BIN_DEST && chmod -v 755 $BIN_DEST
 
+SYSCTRL_BOOTED="true"
+systemctl daemon-reload || SYSCTRL_BOOTED="false"
+if [ "${SYSCTRL_BOOTED,,}" != "true" ] ; then
+    BIN_DEST=/usr/bin/systemctl
+    safeWget $BIN_DEST \
+        https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/9cbe1a00eb4bdac6ff05b96ca34ec9ed3d8fc06c/files/docker/systemctl.py \
+        "e02e90c6de6cd68062dadcc6a20078c34b19582be0baf93ffa7d41f5ef0a1fdd"
+
+  chmod 555 $BIN_DEST
+fi
+
 echoInfo "INFO:        Installed bash-utils: " && bashUtilsVersion
 echoInfo "INFO:         Installed tmconnect: " && tmconnect version
 echoInfo "INFO: Installed validator-key-gen: " && validator-key-gen --version
 echoInfo "INFO:  Installed tmkms-key-import: " && tmkms-key-import version
 echoInfo "INFO:          Installed bip39gen: " && bip39gen version
-
-    cat > /etc/systemd/system/kirascan.service << EOL
-[Unit]
-Description=KIRA Console UI Monitoring Service
-After=network.target
-[Service]
-CPUWeight=100
-CPUQuota=100%
-IOWeight=100
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/kira/monitor.sh
-StandardOutput=append:$KIRA_LOGS/kirascan.log
-StandardError=append:$KIRA_LOGS/kirascan.log
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=5
-LimitNOFILE=4096
-[Install]
-WantedBy=default.target
-EOL
-
-    cat > /etc/systemd/system/kiraclean.service << EOL
-[Unit]
-Description=KIRA Cleanup Service
-After=network.target
-[Service]
-CPUWeight=5
-CPUQuota=5%
-IOWeight=5
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/kira/cleanup.sh
-StandardOutput=append:$KIRA_LOGS/kiraclean.log
-StandardError=append:$KIRA_LOGS/kiraclean.log
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=30
-LimitNOFILE=4096
-[Install]
-WantedBy=default.target
-EOL
-
-SYSCTRL_BOOTED="true"
-systemctl daemon-reload || SYSCTRL_BOOTED="false"
-
-if [ "${SYSCTRL_BOOTED,,}" != "true" ] ; then
-  BIN_DEST=/usr/bin/systemctl
-  safeWget $BIN_DEST \
-   https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/9cbe1a00eb4bdac6ff05b96ca34ec9ed3d8fc06c/files/docker/systemctl.py \
-   "e02e90c6de6cd68062dadcc6a20078c34b19582be0baf93ffa7d41f5ef0a1fdd"
-
-  chmod 555 $BIN_DEST
-else
-  echoInfo "INFO:            Booted systemctl: " && systemctl --version
-fi
-
-rm -fv $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
-touch $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
-
-systemctl daemon-reload
-systemctl enable kirascan
-systemctl enable kiraclean
-systemctl restart kirascan || echoWarn "WARNING: Failed to restart KIRA scan service"
-systemctl restart kiraclean || echoWarn "WARNING: Failed to restart KIRA cleanup service"
+echoInfo "INFO:            Booted systemctl: " && systemctl --version
   
 cd $KIRA_HOME

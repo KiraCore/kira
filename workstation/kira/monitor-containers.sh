@@ -5,16 +5,12 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 echo "INFO: Started kira network contianers monitor..."
-
 timerStart MONITOR_CONTAINERS
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
-UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
-UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
 IS_SYNCING=$(globGet "${INFRA_MODE,,}_SYNCING")
-NEW_UPGRADE_PLAN=""
 
 set +x
 echoWarn "------------------------------------------------"
@@ -24,7 +20,6 @@ echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
 echoWarn "|       IS SYNCING: $IS_SYNCING"
-echoWarn "| OLD UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "------------------------------------------------"
 sleep 1
@@ -32,6 +27,7 @@ set -x
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
+globDel NEW_UPGRADE_PLAN
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
     mkdir -p "$DOCKER_COMMON/$name"
@@ -57,7 +53,7 @@ for name in $CONTAINERS; do
         echoInfo "INFO: Fetching upgrade plan..."
         TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "plan" || echo "")
         ($(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showCurrentPlan" | jsonParse "plan" || echo "")
-        (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$UPGRADE_PLAN" != "$TMP_UPGRADE_PLAN" ] && NEW_UPGRADE_PLAN=$TMP_UPGRADE_PLAN
+        (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$(globGet UPGRADE_PLAN)" != "$TMP_UPGRADE_PLAN" ] && globSet NEW_UPGRADE_PLAN "$TMP_UPGRADE_PLAN"
     elif [ "${name,,}" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
         echo $(timeout 3 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
@@ -65,14 +61,18 @@ for name in $CONTAINERS; do
     fi
 done
 
-if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$IS_SYNCING" == "false" ] ; then
+TIME_NOW="$(date2unix $(date))"
+UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+NEW_UPGRADE_PLAN=$(globGet NEW_UPGRADE_PLAN)
+if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
     echoInfo "INFO: Upgrade plan was found!"
+    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     TMP_OLD_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
     TMP_NEW_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt 0 ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
+    if [ "${TMP_UPGRADE_NAME,,}" != "genesis" ] && [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt $TIME_NOW ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
         echoInfo "INFO: New upgrade plan was found!"
 
         globSet UPGRADE_TIME "$TMP_UPGRADE_TIME"
@@ -88,16 +88,15 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$IS_SYNCING" == "false" ] ; th
         globSet UPGRADE_UNPAUSE_ATTEMPTED "false"
         globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
         globSet PLAN_END_DT ""
-        
-        rm -fv $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log || echoInfo "INFO: plan log dump could not be wipred before plan service start"
-        touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log
+
+        echo -n "" > $KIRA_LOGS/kiraplan.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraplan.log'"
+        echo -n "" > $KIRA_LOGS/kiraup.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraup.log'"
         systemctl restart kiraplan
     else
         echoWarn "WARNING:     Upgrade Time: $UPGRADE_TIME -> $TMP_UPGRADE_TIME"
         echoWarn "WARNING: Upgrade Chain Id: $TMP_OLD_CHAIN_ID -> $TMP_NEW_CHAIN_ID"
         echoWarn "WARNING:  Upgrade Instate: $TMP_UPGRADE_INSTATE"
         echoWarn "WARNING:  Upgrade plan will NOT be changed!"
-        
     fi
 else
     echoInfo "INFO: No new upgrade plans were found or are not expeted!"

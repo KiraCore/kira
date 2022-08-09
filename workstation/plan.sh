@@ -37,7 +37,7 @@ set -x
 
 echoInfo "INFO: NEW Upgrade scheaduled!"
 if [ "${PLAN_DONE,,}" == "false" ] ; then
-    [[ $LATEST_BLOCK_TIME -lt $UPGRADE_TIME ]] && echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})" && sleep 10 && exit 0
+    [[ $LATEST_BLOCK_TIME -le $UPGRADE_TIME ]] && echoInfo "INFO: Waiting for upgrade time (${UPGRADE_TIME}/${LATEST_BLOCK_TIME})" && sleep 10 && exit 0
 
     mkdir -p $KIRA_INFRA
 

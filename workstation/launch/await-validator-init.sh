@@ -191,6 +191,7 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
+# NOTE: Only initial plan should be called genesis, plans with such name will NOT be executed!
     UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC\"}"
     UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
@@ -205,7 +206,7 @@ sekaid tx upgrade proposal-set-plan --from=validator --keyring-backend=test \
  --new-chain-id="\$NETWORK_NAME" \
  --rollback-memo="genesis" \
  --max-enrollment-duration=666 \
- --upgrade-memo="Genesis setup plan" \
+ --upgrade-memo="Genesis Setup Plan" \
  --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180
 EOL
 )
