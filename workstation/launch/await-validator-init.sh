@@ -14,6 +14,12 @@ RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
 
+if [ $INIT_MODE == "upgrade" ] ; then
+    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+else
+    UPGRADE_MODE="none"
+fi
+
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
@@ -22,6 +28,8 @@ echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
+echoWarn "|        INIT MODE: $INIT_MODE"
+echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -44,7 +52,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
         timerPause $TIMER_NAME
-        cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
     else
         timerUnpause $TIMER_NAME
@@ -52,12 +60,12 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-        cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
     else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "$(globGet NEW_NETWORK)" == "true" ] || [ "$INIT_MODE" == "upgrade" ] ; then 
+    if [ "$(globGet NEW_NETWORK)" == "true" ] || [ "$UPGRADE_MODE" == "hard" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
         chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
         chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
@@ -96,7 +104,7 @@ echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
 docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && \
     echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node" && exit 1

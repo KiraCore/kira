@@ -35,13 +35,13 @@ while : ; do
     elif [ "${SELECT,,}" == "a" ] ; then
         NODE_ADDR=""
         set +x
-        echo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+        echo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
         echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read NODE_ADDR && NODE_ADDR=$(echo "$NODE_ADDR" | xargs)
         set -x
 
-        [ -z "$NODE_ADDR" ] && NODE_ADDR=$TRUSTED_NODE_ADDR
+        [ -z "$NODE_ADDR" ] && NODE_ADDR=$(globGet TRUSTED_NODE_ADDR)
         (! $(isDnsOrIp "$NODE_ADDR")) && echoErr "ERROR: Invalid IPv4 address or DNS name" && continue
-        TRUSTED_NODE_ADDR="$NODE_ADDR" && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
+        globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
 
         echoInfo "INFO: Downloading seeds list..."
         TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 

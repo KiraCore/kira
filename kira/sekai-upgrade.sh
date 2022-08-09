@@ -14,7 +14,7 @@ ADDR_DUMP="/tmp/addrdump"
 ADDR_DUMP_ARR="/tmp/addrdumparr"
 ADDR_DUMP_BASE64="/tmp/addrdump64"
 rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64 $SEEDS_DUMP
-touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
+touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS $LOCAL_SEEDS_PATH
 jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
 (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
 
@@ -37,12 +37,13 @@ while IFS="" read -r row || [ -n "$row" ] ; do
 done < $ADDR_DUMP_BASE64
 
 cat $PUBLIC_SEEDS >> $SEEDS_DUMP
+cat $LOCAL_SEEDS_PATH >> $SEEDS_DUMP
 sed -i '/^$/d' $SEEDS_DUMP
 sort -u $SEEDS_DUMP -o $SEEDS_DUMP
 
 if (! $(isFileEmpty $SEEDS_DUMP)) ; then
     echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to LOCAL_SEEDS_PATH '$LOCAL_SEEDS_PATH'..."
-    cat $SEEDS_DUMP >> $LOCAL_SEEDS_PATH
+    cat $SEEDS_DUMP > $LOCAL_SEEDS_PATH
 else
     echoWarn "WARNING: NO new public seed nodes were found in the address book!"
 fi

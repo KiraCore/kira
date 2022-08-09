@@ -19,7 +19,6 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     GENSUM=""
     SNAPSUM=""
     DOWNLOAD_SUCCESS="false"
-    TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
 
     set +x
@@ -33,6 +32,12 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
     set -x
 
+    if [ "${OPTION,,}" == "r" ] ; then
+        echoInfo "INFO: Operation cancelled, try diffrent setup option"
+        source $KIRA_MANAGER/menu/submenu.sh
+        exit 0
+    fi
+
     chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
     rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
     mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
@@ -40,22 +45,17 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
-
-    if [ "${OPTION,,}" == "r" ] ; then
-        echoInfo "INFO: Operation cancelled, try diffrent setup option"
-        source $KIRA_MANAGER/menu/submenu.sh
-        exit 0
-    fi
+    globSet TRUSTED_NODE_ADDR "0.0.0.0"
 elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
     while : ; do
         MIN_HEIGHT="0"
-        if [ ! -z "$TRUSTED_NODE_ADDR" ] ; then 
+        if [ ! -z "$(globGet TRUSTED_NODE_ADDR)" ] ; then 
             set +x
-            echoInfo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoInfo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
             echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
             echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
             set -x
-            [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR || v1=$(resolveDNS "$v1")
+            [ -z "$v1" ] && v1=$(globGet TRUSTED_NODE_ADDR) || v1=$(resolveDNS "$v1")
         else
             set +x
             echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
@@ -171,7 +171,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_SNAPS="/tmp/snaps.txt" && rm -fv "$TMP_SNAPS" 
-            wget $NODE_ADDR:11000/api/snap_list?ip_only=true -O $TMP_SNAPS || echoErr "ERROR: Snapshot discovery scan failed"
+            wget $NODE_ADDR:11000/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
             if (! $(isFileEmpty "$TMP_SNAPS")) ; then
                 echoInfo "INFO: Snapshot peer was found"
                 SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
@@ -339,7 +339,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
         mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
 
-        TRUSTED_NODE_ADDR=$NODE_ADDR
+        globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
         globSet MIN_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_TIME "$(date2unix $NEW_BLOCK_TIME)" $GLOBAL_COMMON_RO
@@ -387,7 +387,6 @@ fi
 rm -rfv $TMP_SNAP_DIR
 NETWORK_NAME="$CHAIN_ID"        && setGlobEnv NETWORK_NAME "$NETWORK_NAME"
 KIRA_SNAP_PATH="$SNAPSHOT"      && setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
-TRUSTED_NODE_ADDR="$NODE_ADDR"  && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
 [ ! -z "$SNAPSHOT" ]            && setGlobEnv KIRA_SNAP_SHA256 "$SNAPSUM"
 
 if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
@@ -413,7 +412,7 @@ if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
             TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS"
-            wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || echoErr "ERROR: Peers discovery scan failed"
+            wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || ( echoErr "ERROR: Peers discovery scan failed" && sleep 1 )
             if (! $(isFileEmpty "$TMP_PEERS")) ; then
                 echoInfo "INFO: Saving extra peers..."
                 cat $TMP_PEERS >> $PUBLIC_SEEDS

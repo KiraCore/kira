@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-set +x
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/update.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # systemctl restart kiraup && journalctl -u kiraup -f --output cat
+# cat $KIRA_LOGS/kiraup.log
 
 SCRIPT_START_TIME="$(date -u +%s)"
 UPDATE_DONE="true"
@@ -28,6 +28,7 @@ if [[ $UPDATE_FAILS -ge $MAX_FAILS ]] ; then
     exit 1
 fi
 
+set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
@@ -39,6 +40,7 @@ echoWarn "| SETUP START DTATE: $SETUP_START_DT"
 echoWarn "|   SETUP END DTATE: $SETUP_END_DT"
 echoWarn "|      SETUP REBOOT: $(globGet SETUP_REBOOT)"
 echoWarn "------------------------------------------------"
+set -x
 
 mkdir -p $UPDATE_DUMP
 
@@ -57,7 +59,6 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         sleep 3
     fi
 
-    set -x
     UPDATE_DONE="false"
 
     echoInfo "INFO: Starting reinitalization process..."
@@ -80,6 +81,7 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         echoErr "--- ERROR LOG END '$LOG_FILE' ---"
         echoErr "ERROR: Failed installing essential tools and dependecies"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
+        set -x
         sleep 5 && exit 1
     fi
 else
@@ -88,7 +90,6 @@ fi
 
 if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Cleaning up environment & containers"
-    set -x
     UPDATE_DONE="false"
 
     echoInfo "INFO: Starting cleanup process..."
@@ -107,6 +108,7 @@ if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
         echoErr "--- ERROR LOG END '$LOG_FILE' ---"
         echoErr "ERROR: Failed cleaning up environment"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
+        set -x
         sleep 5 && exit 1
     fi
 else
@@ -125,7 +127,6 @@ fi
 
 if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Building docker containers"
-    set -x
     UPDATE_DONE="false"
     echoInfo "INFO: Starting build process..."
     LOG_FILE="$KIRA_LOGS/kiraup-containers-$KIRA_SETUP_VER.log" && globSet UPDATE_CONTAINERS_LOG "$LOG_FILE"
@@ -147,6 +148,7 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
         globSet "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "false"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "false"
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAILS + 1))
+        set -x
         sleep 5 && [ "${IS_WSL,,}" != "true" ] && reboot
     fi
 else
@@ -161,15 +163,14 @@ if [ "${UPDATE_DONE,,}" == "true" ] ; then
     echoInfo "INFO: Update & Setup was sucessfully finalized"
     globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet UPDATE_DONE "true"
-    set +x
     echoInfo "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
     sleep 5
     systemctl stop kiraup 
 else
-    set +x
     echoWarn "WARNING: Update & Setup is NOT finalized yet"
 fi
 
+set +x
 echoInfo "INFO: To preview logs see $KIRA_LOGS direcotry"
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: UPDATE SCRIPT $KIRA_SETUP_VER"

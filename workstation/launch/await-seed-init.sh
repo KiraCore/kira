@@ -53,14 +53,14 @@ while : ; do
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
             timerPause $TIMER_NAME
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
         else
             timerUnpause $TIMER_NAME
         fi
 
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
@@ -103,7 +103,7 @@ while : ; do
     docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
     echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-    cat $COMMON_LOGS/start.log | tail -n 150 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+    cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
     FAILURE="false"
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
