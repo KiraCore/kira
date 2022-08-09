@@ -157,26 +157,10 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
-mkdir -p $INTERX_REFERENCE_DIR
-if [ "$(globGet NEW_NETWORK)" == "true" ] || [ $INIT_MODE == "upgrade" ] ; then
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
-    rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-validator-init.sh "$VALIDATOR_NODE_ID"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created" && exit 1
-
-if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
-    echoInfo "INFO: New network was created, saving genesis to common read only directory..."
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
-    rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
-    ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-    chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
-    globSet GENESIS_SHA256 "$(sha256 $LOCAL_GENESIS_PATH)"
-fi
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 GENESIS_SHA256=$(globGet GENESIS_SHA256)

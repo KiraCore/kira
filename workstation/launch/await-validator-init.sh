@@ -12,8 +12,6 @@ IS_STARTED="false"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
-
-NEW_NETWORK=$(globGet NEW_NETWORK)
 TIMEOUT=3600
 
 set +x
@@ -59,10 +57,11 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "${NEW_NETWORK,,}" == "true" ] || [ $INIT_MODE == "upgrade" ] ; then 
+    if [ "$(globGet NEW_NETWORK)" == "true" ] || [ "$INIT_MODE" == "upgrade" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
-        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-        rm -fv $LOCAL_GENESIS_PATH
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+        chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+        rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
         cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
     fi
 
@@ -72,6 +71,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         sleep 12 && continue
     else
         chattr +i "$LOCAL_GENESIS_PATH"
+        globSet GENESIS_SHA256 "$(sha256 $LOCAL_GENESIS_PATH)"
         echoInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
     fi
 

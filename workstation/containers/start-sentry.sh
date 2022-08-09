@@ -152,14 +152,10 @@ else
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
-mkdir -p $INTERX_REFERENCE_DIR
-if [ $INIT_MODE == "upgrade" ] ; then
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
-    rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
-fi
 echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-sentry-init.sh "$CONTAINER_NAME" "$SENTRY_NODE_ID" "true"
+
+[ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created or NOT found" && exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 GENESIS_SHA256=$(globGet GENESIS_SHA256)

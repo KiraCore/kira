@@ -26,6 +26,14 @@ set -x
 
 globSet "${CONTAINER_NAME}_STARTED" "false"
 
+echoInfo "INFO: Updating genesis reference file..."
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
+ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
+chattr +i "$LOCAL_GENESIS_PATH"
+
 if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"

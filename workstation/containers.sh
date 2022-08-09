@@ -7,13 +7,23 @@ cd $KIRA_HOME
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
+UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+
+if [ $INIT_MODE == "upgrade" ] ; then
+    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+else
+    UPGRADE_MODE="none"
+fi
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CONTAINERS BUILD SCRIPT             |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|    INFRA MODE: $INFRA_MODE"
-echoWarn "| EXTERNAL SYNC: $EXTERNAL_SYNC"
+echoWarn "|      INFRA MODE: $INFRA_MODE"
+echoWarn "|       INIT MODE: $INIT_MODE"
+echoWarn "|    UPGRADE MODE: $UPGRADE_MODE"
+echoWarn "|   EXTERNAL SYNC: $EXTERNAL_SYNC"
+echoWarn "| UPGRADE INSTATE: $UPGRADE_INSTATE"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -22,13 +32,15 @@ chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the l
 chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
 rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
 
-if [ "${NEW_NETWORK,,}" == "false" ] || [ $INIT_MODE == "upgrade" ] ; then 
+if [ "${NEW_NETWORK,,}" == "false" ] && ( [ "$UPGRADE_MODE" == "none" ] || [ "$UPGRADE_MODE" == "soft" ] ) ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
     chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
+    chattr +i "$LOCAL_GENESIS_PATH"
     GENESIS_SHA256=$(sha256 "$LOCAL_GENESIS_PATH")
 else
+    echoInfo "INFO: Waiping local genesis, new network will be launched or upgrade executed!"
     rm -fv "$LOCAL_GENESIS_PATH"
     GENESIS_SHA256=""
 fi

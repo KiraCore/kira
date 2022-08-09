@@ -206,6 +206,7 @@ globSet PORTS_EXPOSURE "enabled"
 rm -fv $(globFile validator_SEKAID_STATUS) $(globFile sentry_SEKAID_STATUS) 
 rm -fv $(globFile seed_SEKAID_STATUS) $(globFile interx_SEKAID_STATUS)
 
+globDel UPGRADE_INSTATE
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date2unix $(date))"
 globSet AUTO_UPGRADES "true"

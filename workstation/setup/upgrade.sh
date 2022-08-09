@@ -102,14 +102,19 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
     echoInfo "INFO: Exporting genesis!"
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$SEKAID_HOME/genesis-export.json"
-    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1
+    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1 || echoInfo "INFO: Finished upgrade export!"
+    
 
     # delete old genesis after export is complete
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
-    rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
-    echoInfo "INFO: Finished upgrade export!"
-
+    if [ "$UPGRADE_INSTATE" == "false"] ; then
+        echoInfo "INFO: Deleting old genesis since new genesis is required"
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+        chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
+        rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
+    else
+        echoInfo "INFO: Upgrade does NOT require a new genesis file"
+    fi
+    
     echoInfo "INFO: Starting update service..."
     setGlobEnv NETWORK_NAME "$NEW_CHAIN_ID"
     globSet UPGRADE_EXPORT_DONE "true"

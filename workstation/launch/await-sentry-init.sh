@@ -17,6 +17,12 @@ RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
 
+if [ $INIT_MODE == "upgrade" ] ; then
+    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+else
+    UPGRADE_MODE="none"
+fi
+
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
@@ -25,6 +31,8 @@ echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
+echoWarn "|        INIT MODE: $INIT_MODE"
+echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -62,10 +70,11 @@ while : ; do
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
         # copy genesis from validator only if internal node syncing takes place
-        if [ $INIT_MODE == "upgrade" ] ; then 
+        if [ $UPGRADE_MODE == "hard" ] ; then 
             echoInfo "INFO: Attempting to access genesis file of the new network..."
-            chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-            rm -fv $LOCAL_GENESIS_PATH
+            chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+            chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+            rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
             cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
         fi
 
@@ -74,8 +83,9 @@ while : ; do
             echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             sleep 12 && continue
         else
-            echoInfo "INFO: Success, genesis file is present in $LOCAL_GENESIS_PATH"
             chattr +i "$LOCAL_GENESIS_PATH"
+            globSet GENESIS_SHA256 "$(sha256 $LOCAL_GENESIS_PATH)"
+            choInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
         fi
 
         echoInfo "INFO: Awaiting node status..."
@@ -106,9 +116,17 @@ while : ; do
 
     FAILURE="false"
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-        echoErr "ERROR: $CONTAINER_NAME did NOT acheive running statusy"
+        echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
+
+    # copy genesis from validator only if internal node syncing takes place
+    if [ "$INIT_MODE" == "upgrade" ] ; then 
+        echoInfo "INFO: Attempting to access genesis file of the new network..."
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+        rm -fv $LOCAL_GENESIS_PATH
+        cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
+    fi
 
     if [ "$NODE_ID" != "$EXPECTED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"
