@@ -30,7 +30,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
-
+    
     while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; do
         set +x
         set +e && source "$ETC_PROFILE" &>/dev/null && set -e
@@ -43,36 +43,30 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         if [ "${UPDATE_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         else
             echoWarn "WARNING: Your node initial setup is NOT compleated yet"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         fi
+        VSEL=$(globGet OPTION)
         set -x
-    
+        
         if [ "${VSEL,,}" == "r" ] ; then
             set +x
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$SETUP_END_DT")) ; then
-                echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c"
-                # sleep 2 && journalctl --since "$SETUP_START_DT" -u kiraup -f --output cat
-                sleep 2 && tail -f $KIRA_LOGS/kiraup.log
+                clear && echoInfo "INFO: Starting setup logs preview, to exit type Ctrl+c" && sleep 2
+                tail -f $KIRA_LOGS/kiraup.log
             else
-                echoInfo "INFO: Printing update tools logs:"
+                clear && echoInfo "INFO: Printing update tools logs:" && sleep 2
                 cat $(globGet UPDATE_TOOLS_LOG) || echoErr "ERROR: Tools Update Log was NOT found!"
                 echoInfo "INFO: Finished update tools logs." && echoInfo "INFO: Printing update cleanup logs:"
                 cat $(globGet UPDATE_CLEANUP_LOG) || echoErr "ERROR: Cleanup Update Log was NOT found!"
                 echoInfo "INFO: Finished Printing update cleanup logs." && echoInfo "INFO: Printing update containers logs:"
                 cat $(globGet UPDATE_CONTAINERS_LOG) || echoErr "ERROR: Containers Update Log was NOT found!"
                 echoInfo "INFO: Finished Printing update containers logs." && echoInfo "INFO: Printing update service logs:"
-                sleep 2
-                if ($(isFileEmpty "$KIRA_DUMP/kiraup-done.log.txt")) ; then
-                    # journalctl --since "$SETUP_START_DT" --until "$SETUP_END_DT" -u kiraup -b --no-pager --output cat
-                    cat $KIRA_LOGS/kiraup.log
-                else
-                    tryCat "$KIRA_DUMP/kiraup-done.log.txt"
-                fi
+                cat $KIRA_LOGS/kiraup.log || echoErr "ERROR: Update Log was NOT found! Please run 'journalctl -u kiraup -f --output cat' to see service issues"
                 echoInfo "INFO: Finished printing update service logs."
             fi
         elif [ "${VSEL,,}" == "d" ] ; then
@@ -94,29 +88,24 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         if [ "${PLAN_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node upgrade FAILED, its reccomended that you [D]ump all logs"
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         else
             echoWarn "WARNING: Your node upgrade setup is NOT compleated yet"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(v|r|k|d)$ ]]; do echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: "  && pressToContinue v r d k
         fi
+        VSEL=$(globGet OPTION)
         set -x
-    
+
         if [ "${VSEL,,}" == "r" ] ; then
             set +x
             source $KIRA_MANAGER/kira/kira-reinitalize.sh
         elif [ "${VSEL,,}" == "v" ] ; then
             if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
-                echoInfo "INFO: Starting plan logs preview, to exit type Ctrl+c"
-                # sleep 2 && journalctl --since "$PLAN_START_DT" -u kiraplan -f --output cat
+                clear && echoInfo "INFO: Starting plan logs preview, to exit type Ctrl+c"
                 sleep 2 && tail -f $KIRA_LOGS/kiraplan.log
             else
-                echoInfo "INFO: Printing plan logs:"
-                if ($(isFileEmpty "$KIRA_DUMP/kiraplan-done.log.txt")) && [ ! -z "$PLAN_END_DT"] ; then
-                    # journalctl --since "$PLAN_START_DT" --until "$PLAN_END_DT" -u kiraplan -b --no-pager --output cat
-                    cat $KIRA_LOGS/kiraplan.log
-                else
-                    tryCat "$KIRA_DUMP/kiraplan-done.log.txt"
-                fi
+                clear && echoInfo "INFO: Printing plan logs:" && sleep 2
+                cat $KIRA_LOGS/kiraplan.log || echoErr "ERROR: Plan Log was NOT found! Please run 'journalctl -u kiraplan -f --output cat' to see service issues"
             fi
         elif [ "${VSEL,,}" == "d" ] ; then
             $KIRA_MANAGER/kira/kira-dump.sh || echoErr "ERROR: Failed logs dump"

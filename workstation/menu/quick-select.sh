@@ -8,57 +8,54 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
 MIN_HEIGHT="0"
-NEW_NETWORK=$(globGet NEW_NETWORK)
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
-if [ "${NEW_NETWORK,,}" == "true" ]; then
+if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
-    REINITALIZE_NODE="flase"
-    CHAIN_ID="$NEW_NETWORK_NAME"
+    REINITALIZE_NODE="false"
+    CHAIN_ID="$(globGet NEW_NETWORK_NAME)"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR=""
     GENSUM=""
     SNAPSUM=""
     DOWNLOAD_SUCCESS="false"
-    TRUSTED_NODE_ADDR="0.0.0.0"
     SNAPSHOT=""
 
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-    echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
-    echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-    echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
-    echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
+    echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
+    echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
+    echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-    
-    OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+    echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
     set -x
-
-    globSet MIN_HEIGHT "0"
-    globSet LATEST_BLOCK_HEIGHT "0"
-    globSet LATEST_BLOCK_TIME "0"
-
-    globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
-    globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
-    globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
 
     if [ "${OPTION,,}" == "r" ] ; then
         echoInfo "INFO: Operation cancelled, try diffrent setup option"
         source $KIRA_MANAGER/menu/submenu.sh
         exit 0
     fi
-elif [ "${NEW_NETWORK,,}" == "false" ] ; then
+
+    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+    rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
+    mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
+
+    globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
+    globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
+    globSet TRUSTED_NODE_ADDR "0.0.0.0"
+elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
     while : ; do
         MIN_HEIGHT="0"
-        if [ ! -z "$TRUSTED_NODE_ADDR" ] ; then 
+        if [ ! -z "$(globGet TRUSTED_NODE_ADDR)" ] ; then 
             set +x
-            echoInfo "INFO: Previously trusted node address (default): $TRUSTED_NODE_ADDR"
+            echoInfo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
             echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
             echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
             set -x
-            [ -z "$v1" ] && v1=$TRUSTED_NODE_ADDR || v1=$(resolveDNS "$v1")
+            [ -z "$v1" ] && v1=$(globGet TRUSTED_NODE_ADDR) || v1=$(resolveDNS "$v1")
         else
             set +x
             echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
@@ -93,7 +90,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
         if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
+            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
             CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
         fi
 
@@ -104,17 +101,17 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/snapshot"
+        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
         if ($(urlExists "$SNAP_URL")) ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(e|l|a|d|c)$ ]]; do echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue e l a d c && VSEL=$(globGet OPTION)
             set -x
         else
             set +x
             echoWarn "WARNINIG: Node '$NODE_ADDR' is NOT exposing snapshot files! It might take you a VERY long time to sync your node!"
-            VSEL="." && while ! [[ "${VSEL,,}" =~ ^(a|l|d|c)$ ]]; do echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && read -d'' -s -n1 VSEL && echo ""; done
+            echoNErr "Select snap from [L]ocal direcotry, try snap [A]uto-discovery, choose [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue l a d c && VSEL=$(globGet OPTION)
             set -x
         fi
 
@@ -173,14 +170,12 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             DOWNLOAD_SUCCESS="true"
         elif [ "${VSEL,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" true false 0 || echoErr "ERROR: Peers discovery scan failed"
-            SNAP_PEER=$(sed "1q;d" $TMP_PEERS | xargs || echo "")
-            if [ ! -z "$SNAP_PEER" ]; then
+            TMP_SNAPS="/tmp/snaps.txt" && rm -fv "$TMP_SNAPS" 
+            wget $NODE_ADDR:11000/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
+            if (! $(isFileEmpty "$TMP_SNAPS")) ; then
                 echoInfo "INFO: Snapshot peer was found"
-                addrArr1=( $(echo $SNAP_PEER | tr "@" "\n") )
-                addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-                SNAP_URL="${addrArr2[0],,}:$DEFAULT_INTERX_PORT/api/snapshot"
+                SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
+                SNAP_URL="$SNAP_PEER:$DEFAULT_INTERX_PORT/download/snapshot.tar"
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"
@@ -201,7 +196,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
                 set +x
                 echoWarn "WARNING: Snapshot download failed or connection with the node is not stable ($SNAP_URL)"
-                echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=($(globGet OPTION))
+                echoNErr "Connect to [D]iffrent node or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=$(globGet OPTION)
                 set -x
                 if [ "${OPTION,,}" == "d" ] ; then
                     echoInfo "INFO: Operation cancelled after download failed, try connecting with diffrent node"
@@ -252,7 +247,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
         if [ "${DOWNLOAD_SUCCESS,,}" == "false" ] ; then
             set +x
             echoErr "ERROR: Snapshot could not be found, file was corrupted or created by outdated node"
-            OPTION="." && while ! [[ "${OPTION,,}" =~ ^(d|c)$ ]] ; do echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && read -d'' -s -n1 OPTION && echo ""; done
+            echoNErr "Connect to [D]iffrent node, select diffrent file or [C]ontinue without snapshot (slow sync): " && pressToContinue d c && OPTION=$(globGet OPTION)
             set -x
             rm -rfv $TMP_SNAP_DIR
             if [ "${OPTION,,}" == "d" ] ; then
@@ -290,7 +285,7 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
 
                 if [ "$GENESIS_NETWORK" != "$CHAIN_ID" ] ; then
                     set +x
-                    echoNErr "Expected chain ID to be '$CHAIN_ID' but got '$GENESIS_NETWORK', do you want to [T]ry again or [C]hange chain id to '$GENESIS_NETWORK' and continue?" && pressToContinue t c && OPTION=($(globGet OPTION))
+                    echoNErr "Expected chain ID to be '$CHAIN_ID' but got '$GENESIS_NETWORK', do you want to [T]ry again or [C]hange chain id to '$GENESIS_NETWORK' and continue?" && pressToContinue t c && OPTION=$(globGet OPTION)
                     [ "${OPTION,,}" == "t" ] && continue
                     set -x
                     CHAIN_ID=$GENESIS_NETWORK
@@ -318,21 +313,21 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             NEW_MIN_HEIGHT="$TMP_MIN_HEIGHT" && break
         done
 
-        ($(isNaturalNumber "$NEW_MIN_HEIGHT")) && MIN_HEIGHT=$NEW_MIN_HEIGHT
+        NEW_BLOCK_TIME=$(jsonParse "genesis_time" $TMP_GENESIS_PATH 2> /dev/null || echo -n "")
 
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
         echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
-        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $MIN_HEIGHT
+        echoNInfo "CONFIG: Minimum expected block height: " && echoErr $NEW_MIN_HEIGHT
+        echoNInfo "CONFIG:   Minimum expected block time: " && echoErr $NEW_BLOCK_TIME
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
-        echoNInfo "CONFIG:        New network deployment: " && echoErr $NEW_NETWORK
-        echoNInfo "CONFIG:   KIRA Manager git repository: " && echoErr $INFRA_REPO
-        echoNInfo "CONFIG:       KIRA Manager git branch: " && echoErr $INFRA_BRANCH
+        echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
+        echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|r)$ ]] ; do echoNErr "Choose to [A]pprove or [R]eject configuration: " && read -d'' -s -n1 OPTION && echo ""; done
+        echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
         set -x
 
         if [ "${OPTION,,}" == "r" ] ; then
@@ -340,7 +335,15 @@ elif [ "${NEW_NETWORK,,}" == "false" ] ; then
             continue
         fi
 
-        TRUSTED_NODE_ADDR=$NODE_ADDR
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+        rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
+        mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
+
+        globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
+        globSet MIN_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_TIME "$(date2unix $NEW_BLOCK_TIME)" $GLOBAL_COMMON_RO
+        globSet GENESIS_SHA256 "$GENSUM"
         break
     done
 else
@@ -367,9 +370,7 @@ else
     SNAPSHOT=""
 fi
 
-rm -fvr "$KIRA_SNAP/status"
-chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -fv "$LOCAL_GENESIS_PATH" "$TMP_SNAP_PATH"
+rm -fvr "$KIRA_SNAP/status" "$TMP_SNAP_PATH"
 
 if [ -f "$TMP_GENESIS_PATH" ] ; then
     echoInfo "INFO: New genesis found, replacing"
@@ -378,7 +379,7 @@ if [ -f "$TMP_GENESIS_PATH" ] ; then
 fi
 
 # Make sure genesis already exists if joining exisitng network was initiated
-if [ "${NEW_NETWORK,,}" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "false" ] && [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
     echoErr "ERROR: Genesis file is missing despite attempt to join existing network"
     exit 1
 fi
@@ -386,28 +387,15 @@ fi
 rm -rfv $TMP_SNAP_DIR
 NETWORK_NAME="$CHAIN_ID"        && setGlobEnv NETWORK_NAME "$NETWORK_NAME"
 KIRA_SNAP_PATH="$SNAPSHOT"      && setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
-TRUSTED_NODE_ADDR="$NODE_ADDR"  && setGlobEnv TRUSTED_NODE_ADDR "$TRUSTED_NODE_ADDR"
 [ ! -z "$SNAPSHOT" ]            && setGlobEnv KIRA_SNAP_SHA256 "$SNAPSUM"
 
-NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $LOCAL_GENESIS_PATH 2> /dev/null || echo -n ""))
-
-globSet MIN_HEIGHT "$MIN_HEIGHT"
-globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT"
-globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
-
-globSet MIN_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-globSet LATEST_BLOCK_HEIGHT "$MIN_HEIGHT" $GLOBAL_COMMON_RO
-globSet LATEST_BLOCK_TIME "$NEW_BLOCK_TIME" $GLOBAL_COMMON_RO
-
-globSet GENESIS_SHA256 "$GENSUM"
-
-if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
+if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
 
     while : ; do
         set +x
-        OPTION="." && while ! [[ "${OPTION,,}" =~ ^(a|m)$ ]] ; do echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && read -d'' -s -n1 OPTION && echo ""; done
+        echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && pressToContinue a m && OPTION=$(globGet OPTION)
         set -x
 
         SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
@@ -423,11 +411,12 @@ if [ "${NEW_NETWORK,,}" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false" ] ; 
 
         if [ "${OPTION,,}" == "a" ] ; then
             echoInfo "INFO: Downloading peers list & attempting public peers discovery..."
-            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" 
-            $KIRA_MANAGER/launch/discover-peers.sh "$NODE_ADDR" "$TMP_PEERS" false false 1024 || echoErr "ERROR: Peers discovery scan failed"
+            TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS"
+            wget $NODE_ADDR:11000/api/pub_p2p_list?peers_only=true -O $TMP_PEERS || ( echoErr "ERROR: Peers discovery scan failed" && sleep 1 )
             if (! $(isFileEmpty "$TMP_PEERS")) ; then
                 echoInfo "INFO: Saving extra peers..."
                 cat $TMP_PEERS >> $PUBLIC_SEEDS
+                sort -u $PUBLIC_SEEDS -o $PUBLIC_SEEDS
             else
                 echoInfo "INFO: No extra public peers were found!"
                 continue

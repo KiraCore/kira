@@ -38,7 +38,7 @@ while : ; do
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT)
+    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
     [ "${NAME,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then

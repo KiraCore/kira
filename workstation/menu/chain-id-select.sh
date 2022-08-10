@@ -5,7 +5,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 NEW_NETWORK_NAME=""
 
-echoInfo "INFO: Startnet network name selector!"
+echoInfo "INFO: Started network name selector!"
 while : ; do
     echoInfo "INFO: Network name (chai-id) should have format <name>-<number>, e.g. mynetwork-1"
     echoNErr "Input name of your NEW network (chain-id): " && read NEW_NETWORK_NAME
@@ -21,5 +21,5 @@ while : ; do
     break
 done
 
-setGlobEnv NEW_NETWORK_NAME "$NEW_NETWORK_NAME"
+globSet NEW_NETWORK_NAME "$NEW_NETWORK_NAME"
 echoInfo "INFO: Finished running network name selector"

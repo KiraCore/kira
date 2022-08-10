@@ -1,3 +1,3 @@
 Features:
 
-* Test release
+* First test release without automated upgrades support

@@ -21,6 +21,14 @@ while : ; do
     find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
     find "$KIRA_LOGS" -type f -size +1M -exec truncate --size=1k {} + || echoWarn "WARNING: Failed to truncate kira logs"
 
+    CONTAINERS=$(timeout 60 docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo "")
+    for name in $CONTAINERS; do
+        echoInfo "INFO: Cleaning '$name' container...."
+        COMMON_PATH="$DOCKER_COMMON/$name"
+        COMMON_LOGS="$COMMON_PATH/logs"
+        find "$COMMON_LOGS" -type f -size +5M -exec truncate --size=1M {} + || echoWarn "WARNING: Failed to truncate container logs"
+    done
+
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "| FINISHED: KIRA CLEANUP SERVICE               |"

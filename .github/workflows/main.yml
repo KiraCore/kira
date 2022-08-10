@@ -167,7 +167,7 @@ jobs:
           - name: Uploading artifacts
             uses: actions/upload-artifact@v3.0.0
             with:
-              name: saifu-sign-bin
+              name: kira-bin
               path: ./bin.tar.gz
           - name: Cleanup all resources
             if: always()
@@ -194,7 +194,7 @@ jobs:
           - name: Download artifacts
             uses: actions/download-artifact@v3.0.0
             with:
-              name: saifu-sign-bin
+              name: kira-bin
           - name: Inspecting & organizing artifacts
             run: |
               echo "(current dir): $PWD" && ls -l ./

@@ -88,7 +88,7 @@ echo -e "\e[37;1m--------------------------------------------------"
         echo "INFO: Enabling whitelist access to the port $PORT..."
         PORT_EXPOSURE="whitelist"
     elif [ "${OPTION,,}" == "c" ] ; then
-        echo "INFO: Enaling access blacklist to the port $PORT..."
+        echo "INFO: Enabling access blacklist to the port $PORT..."
         PORT_EXPOSURE="blacklist"
     elif [ "${OPTION,,}" == "d" ] ; then
         echo "INFO: Disabling access to the port $PORT..."
@@ -116,7 +116,7 @@ echo -e "\e[37;1m--------------------------------------------------"
                 echoWarn "#${i} -> $p"
             done < $FILE
             echoInfo "INFO: All $i ${TARGET}ED IP addresses were displayed"
-            SELECT="." && while ! [[ "${SELECT,,}" =~ ^(a|r|e)$ ]] ; do echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && read -d'' -s -n1 SELECT && echo ""; done
+            echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && pressToContinue a r e && SELECT=$(globGet OPTION)
             [ "${SELECT,,}" == "e" ] && break
             [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
             [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
@@ -133,8 +133,8 @@ echo -e "\e[37;1m--------------------------------------------------"
                 if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
                     ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
                     echoInfo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
-                    [ "${SELECT,,}" == "a" ] && CDHelper text lineswap --insert="$ipRange" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
-                    [ "${SELECT,,}" == "r" ] && CDHelper text lineswap --insert="" --regex="$ip" --path=$FILE --append-if-found-not=True --silent=True
+                    [ "${SELECT,,}" == "a" ] && setLastLineBySubStrOrAppend "$ip" "$ipRange" $FILE
+                    [ "${SELECT,,}" == "r" ] && setLastLineBySubStrOrAppend "$ip" "" $FILE
                     i=$((i + 1))
                 else
                     echoInfo "INFO: FAILURE, '$ip' is NOT a valid IP address and will NOT be $TARGET"
