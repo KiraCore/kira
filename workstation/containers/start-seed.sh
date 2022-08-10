@@ -116,33 +116,34 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
     globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
-    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
-docker run -d \
-    --cpus="$CPU_RESERVED" \
-    --memory="$RAM_RESERVED" \
-    --oom-kill-disable \
-    -p $KIRA_SEED_P2P_PORT:$DEFAULT_P2P_PORT \
-    -p $KIRA_SEED_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SEED_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
-    --hostname $KIRA_SEED_DNS \
-    --restart=always \
-    --name $CONTAINER_NAME \
-    --net=$KIRA_DOCEKR_NETWORK \
-    --log-opt max-size=5m \
-    --log-opt max-file=5 \
-    -e UPGRADE_MODE="$UPGRADE_MODE" \
-    -e NETWORK_NAME="$NETWORK_NAME" \
-    -e HOSTNAME="$KIRA_SEED_DNS" \
-    -e NODE_TYPE=$CONTAINER_NAME \
-    -e NODE_ID="$SEED_NODE_ID" \
-    -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
-    -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
-    -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
-    -v $COMMON_PATH:/common \
-    -v $KIRA_SNAP:/snap \
-    -v $DOCKER_COMMON_RO:/common_ro:ro \
-    -v $APP_HOME:/$SEKAID_HOME \
-    kira:latest
+    BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container from '$BASE_IMAGE_SRC'..."
+    docker run -d \
+        --cpus="$CPU_RESERVED" \
+        --memory="$RAM_RESERVED" \
+        --oom-kill-disable \
+        -p $KIRA_SEED_P2P_PORT:$DEFAULT_P2P_PORT \
+        -p $KIRA_SEED_RPC_PORT:$DEFAULT_RPC_PORT \
+        -p $KIRA_SEED_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
+        --hostname $KIRA_SEED_DNS \
+        --restart=always \
+        --name $CONTAINER_NAME \
+        --net=$KIRA_DOCEKR_NETWORK \
+        --log-opt max-size=5m \
+        --log-opt max-file=5 \
+        -e UPGRADE_MODE="$UPGRADE_MODE" \
+        -e NETWORK_NAME="$NETWORK_NAME" \
+        -e HOSTNAME="$KIRA_SEED_DNS" \
+        -e NODE_TYPE=$CONTAINER_NAME \
+        -e NODE_ID="$SEED_NODE_ID" \
+        -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \
+        -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
+        -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
+        -v $COMMON_PATH:/common \
+        -v $KIRA_SNAP:/snap \
+        -v $DOCKER_COMMON_RO:/common_ro:ro \
+        -v $APP_HOME:/$SEKAID_HOME \
+        $BASE_IMAGE_SRC
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"

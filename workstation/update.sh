@@ -40,7 +40,7 @@ set -x
 
 mkdir -p $UPDATE_DUMP
 
-if [ "$(globGet SYSTEM_REBOOT)" != "false" ] ; then
+if [ "$(globGet SYSTEM_REBOOT)" == "true" ] ; then
     echoInfo "INFO: Reboot is required before tools setup can continue..." && sleep 3
     echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
     globSet SYSTEM_REBOOT "false"
@@ -146,7 +146,6 @@ else
 fi
 
 set -x
-
 
 globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet UPDATE_DONE "true"

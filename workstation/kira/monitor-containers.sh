@@ -11,6 +11,8 @@ SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
 IS_SYNCING=$(globGet "${INFRA_MODE,,}_SYNCING")
+TIME_NOW="$(date2unix $(date))"
+UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 
 set +x
 echoWarn "------------------------------------------------"
@@ -21,11 +23,11 @@ echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
 echoWarn "|       IS SYNCING: $IS_SYNCING"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
+echoWarn "|         TIME NOW: $TIME_NOW"
+echoWarn "|     UPGRADE TIME: $UPGRADE_TIME"
 echoWarn "------------------------------------------------"
 sleep 1
 set -x
-
-mkdir -p "$INTERX_REFERENCE_DIR"
 
 globDel NEW_UPGRADE_PLAN
 for name in $CONTAINERS; do
@@ -61,10 +63,8 @@ for name in $CONTAINERS; do
     fi
 done
 
-TIME_NOW="$(date2unix $(date))"
-UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 NEW_UPGRADE_PLAN=$(globGet NEW_UPGRADE_PLAN)
-if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) ; then
+if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globSet UPDATE_DONE)" == "true" ] && [ "$(globSet UPGRADE_DONE)" == "true" ] && [ "$(globSet PLAN_DONE)" == "true" ] ; then
     echoInfo "INFO: Upgrade plan was found!"
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
@@ -139,6 +139,7 @@ for name in $CONTAINERS; do
 
         if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
+            mkdir -p "$INTERX_REFERENCE_DIR"
             ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
 
             if [[ $LATEST_BLOCK -gt $NEW_LATEST_BLOCK ]] && [[ $LATEST_BLOCK_TIME -gt $NEW_LATEST_BLOCK_TIME ]] ; then

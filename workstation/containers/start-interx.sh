@@ -63,31 +63,32 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
     globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
-    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
-docker run -d \
-    --cpus="$CPU_RESERVED" \
-    --memory="$RAM_RESERVED" \
-    --oom-kill-disable \
-    -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
-    --hostname $KIRA_INTERX_DNS \
-    --restart=always \
-    --name $CONTAINER_NAME \
-    --net=$KIRA_DOCEKR_NETWORK \
-    --log-opt max-size=5m \
-    --log-opt max-file=5 \
-    -e NODE_TYPE="$CONTAINER_NAME" \
-    -e NETWORK_NAME="$NETWORK_NAME" \
-    -e DOCKER_NETWORK="$KIRA_DOCEKR_NETWORK" \
-    -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
-    -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
-    -e INFRA_MODE="${INFRA_MODE,,}" \
-    -e PING_TARGET="${INFRA_MODE,,}.local" \
-    -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
-    -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
-    -v $COMMON_PATH:/common \
-    -v $DOCKER_COMMON_RO:/common_ro:ro \
-    -v $APP_HOME:/$INTERXD_HOME \
-    $(globGet BASE_IMAGE_SRC)
+    BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container from '$BASE_IMAGE_SRC'..."
+    docker run -d \
+        --cpus="$CPU_RESERVED" \
+        --memory="$RAM_RESERVED" \
+        --oom-kill-disable \
+        -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
+        --hostname $KIRA_INTERX_DNS \
+        --restart=always \
+        --name $CONTAINER_NAME \
+        --net=$KIRA_DOCEKR_NETWORK \
+        --log-opt max-size=5m \
+        --log-opt max-file=5 \
+        -e NODE_TYPE="$CONTAINER_NAME" \
+        -e NETWORK_NAME="$NETWORK_NAME" \
+        -e DOCKER_NETWORK="$KIRA_DOCEKR_NETWORK" \
+        -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
+        -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
+        -e INFRA_MODE="${INFRA_MODE,,}" \
+        -e PING_TARGET="${INFRA_MODE,,}.local" \
+        -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
+        -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
+        -v $COMMON_PATH:/common \
+        -v $DOCKER_COMMON_RO:/common_ro:ro \
+        -v $APP_HOME:/$INTERXD_HOME \
+        $BASE_IMAGE_SRC
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
