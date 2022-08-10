@@ -19,7 +19,7 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r
 > Creating Soft Fork Update Plan
 
 ```
-HASH="bafybeiac4m5ffk7olnaxhs6mlrzpu3merzjfwxlldg6tye3s4syrswibii" && \
+HASH="bafybeic2prkuzffxtmfkkwuhpedegsxwge2p2mn4fmkvxo7xfqz7ysdaai" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
@@ -45,14 +45,14 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-HASH="bafybeicr2tk7eyqaebe7rlb4yzy5lm2ti22m4knnjgymi4ms5g7b5fp7zu" && \
+HASH="bafybeic2prkuzffxtmfkkwuhpedegsxwge2p2mn4fmkvxo7xfqz7ysdaai" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
  --instate-upgrade=false \
- --skip-handler=false \
+ --skip-handler=true \
  --resources="[${RES1},${RES2}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
