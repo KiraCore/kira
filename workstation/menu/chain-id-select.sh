@@ -21,5 +21,5 @@ while : ; do
     break
 done
 
-globSet NEW_NETWORK_NAME"$NEW_NETWORK_NAME"
+globSet NEW_NETWORK_NAME "$NEW_NETWORK_NAME"
 echoInfo "INFO: Finished running network name selector"
