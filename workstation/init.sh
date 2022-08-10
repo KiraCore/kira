@@ -107,11 +107,11 @@ FILE_NAME="bash-utils.sh" && \
 source $FILE_NAME
 echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
-#############################
+#######################################################################################
 echoInfo "INFO: Processing input arguments..."
 INFRA_SRC="" && infra_src="" && arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
 IMAGE_SRC="" && image_src="" && arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
-INIT_MODE="" && init_mode="" && arg2="$3" && [ -z "$arg3" ] && arg3="--arg3=null"
+INIT_MODE="" && init_mode="" && arg3="$3" && [ -z "$arg3" ] && arg3="--arg3=null"
 getArgs "$arg1" "$arg2" "$arg3"
 [ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
 [ -z $IMAGE_SRC ] && IMAGE_SRC=$image_src && [ -z $IMAGE_SRC ] && IMAGE_SRC=$BASE_IMAGE_VERSION
@@ -123,7 +123,7 @@ getArgs "$arg1" "$arg2" "$arg3"
 
 ($(isVersion "$IMAGE_SRC")) && IMAGE_SRC="ghcr.io/kiracore/docker/base-image:$NEW_INFRA_SRC"
 (! $(urlExists "$IMAGE_SRC")) && echoErr "ERROR: Base Image URL '$IMAGE_SRC' does NOT contain image files!" && exit 1
-#############################
+#######################################################################################
 
 if [ $INIT_MODE == "interactive" ] ; then
     systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
