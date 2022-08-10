@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-echo "v0.9.9-rc.9"
+echo "v0.10.0"
