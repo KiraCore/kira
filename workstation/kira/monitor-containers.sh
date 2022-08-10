@@ -64,7 +64,7 @@ for name in $CONTAINERS; do
 done
 
 NEW_UPGRADE_PLAN=$(globGet NEW_UPGRADE_PLAN)
-if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globSet UPDATE_DONE)" == "true" ] && [ "$(globSet UPGRADE_DONE)" == "true" ] && [ "$(globSet PLAN_DONE)" == "true" ] ; then
+if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globGet UPDATE_DONE)" == "true" ] && [ "$(globGet UPGRADE_DONE)" == "true" ] && [ "$(globGet PLAN_DONE)" == "true" ] ; then
     echoInfo "INFO: Upgrade plan was found!"
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0

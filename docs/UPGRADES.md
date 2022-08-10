@@ -45,21 +45,21 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-HASH="bafybeiac4m5ffk7olnaxhs6mlrzpu3merzjfwxlldg6tye3s4syrswibii" && \
+HASH="bafybeicr2tk7eyqaebe7rlb4yzy5lm2ti22m4knnjgymi4ms5g7b5fp7zu" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
  --instate-upgrade=false \
- --skip-handler=true \
+ --skip-handler=false \
  --resources="[${RES1},${RES2}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
  --rollback-memo="roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a soft fork test upgrade" \
+ --upgrade-memo="This is a hard fork test upgrade" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator
