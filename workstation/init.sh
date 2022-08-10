@@ -2,8 +2,9 @@
 set -e
 
 # Accepted arguments:
-# --infra-src="<url>"
-# --init-mode="interactive/upgrade"
+# --infra-src="<url>"                   // source of the KM package
+# --image-src="<url>"                   // source of the base image (optional)
+# --init-mode="interactive/upgrade"     // initalization mode
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
@@ -20,17 +21,18 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-KIRA_BASE_VERSION="v0.11.4"
-TOOLS_VERSION="v0.2.17"
+BASE_IMAGE_VERSION="v0.11.4"
+TOOLS_VERSION="v0.2.18"
 COSIGN_VERSION="v1.7.2"
 
 set +x
 echo "------------------------------------------------"
 echo "|      STARTED: INIT"
 echo "|-----------------------------------------------"
-echo "|         KIRA USER: $KIRA_USER"
-echo "|     TOOLS VERSION: $TOOLS_VERSION"
-echo "| BASE IMG. VERSION: $KIRA_BASE_VERSION"
+echo "|            KIRA USER: $KIRA_USER"
+echo "|        TOOLS VERSION: $TOOLS_VERSION"
+echo "|       COSIGN VERSION: $COSIGN_VERSION"
+echo "| DEFAULT BASE VERSION: $BASE_IMAGE_VERSION"
 echo "------------------------------------------------"
 echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
 echo             "MMMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMMM"
@@ -107,19 +109,20 @@ echoInfo "INFO: Installed bash-utils $(bash-utils bashUtilsVersion)"
 
 #############################
 echoInfo "INFO: Processing input arguments..."
-INFRA_SRC="" && infra_src="" && infrasrc=""
-INIT_MODE="" && init_mode="" && initmode=""
-arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
-arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
-getArgs "$arg1" "$arg2"
-[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src && [ -z $INFRA_SRC ] && INFRA_SRC=$infrasrc
-[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE=$initmode
-[ -z $INIT_MODE ] && INIT_MODE="interactive"
+INFRA_SRC="" && infra_src="" && arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
+IMAGE_SRC="" && image_src="" && arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
+INIT_MODE="" && init_mode="" && arg2="$3" && [ -z "$arg3" ] && arg3="--arg3=null"
+getArgs "$arg1" "$arg2" "$arg3"
+[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
+[ -z $IMAGE_SRC ] && IMAGE_SRC=$image_src && [ -z $IMAGE_SRC ] && IMAGE_SRC=$BASE_IMAGE_VERSION
+[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE="interactive"
 
-if (! $(urlExists "$INFRA_SRC")) ; then
-    echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!"
-    exit 1
-fi
+($(isVersion "$INFRA_SRC")) && INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$INFRA_SRC/kira.zip"
+($(isCID "$INFRA_SRC")) && INFRA_SRC="https://ipfs.kira.network/ipfs/$INFRA_SRC/kira.zip"
+(! $(urlExists "$INFRA_SRC")) && echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!" && exit 1
+
+($(isVersion "$IMAGE_SRC")) && IMAGE_SRC="ghcr.io/kiracore/docker/base-image:$NEW_INFRA_SRC"
+(! $(urlExists "$IMAGE_SRC")) && echoErr "ERROR: Base Image URL '$IMAGE_SRC' does NOT contain image files!" && exit 1
 #############################
 
 if [ $INIT_MODE == "interactive" ] ; then
@@ -142,12 +145,11 @@ if [ $INIT_MODE == "interactive" ] ; then
 fi
 
 echoInfo "INFO: Veryfying kira base image integrity..."
-BASE_IMAGE_URL="ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION"
-cosign verify --key $KIRA_COSIGN_PUB $BASE_IMAGE_URL || \
- ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key $KIRA_COSIGN_PUB $BASE_IMAGE_URL )
+cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC || \
+ ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC )
 
 echoInfo "INFO: Setting up essential ENV variables & constant..."
-setGlobEnv KIRA_BASE_VERSION "$KIRA_BASE_VERSION"
+globSet BASE_IMAGE_SRC "$IMAGE_SRC"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
 setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
 setGlobEnv KIRA_USER "$KIRA_USER"

@@ -16,7 +16,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     if [ "${ACCEPT,,}" == "c" ] ; then
         read  -p "Input URL of the new infra source: " NEW_INFRA_SRC
         ($(isVersion "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$NEW_INFRA_SRC/kira.zip"
-        (! $(isDnsOrIp "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://ipfs.kira.network/ipfs/$NEW_INFRA_SRC/kira.zip"
+        ($(isCID "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://ipfs.kira.network/ipfs/$NEW_INFRA_SRC/kira.zip"
     else
         NEW_INFRA_SRC=$INFRA_SRC
     fi

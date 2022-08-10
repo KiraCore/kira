@@ -120,7 +120,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     globSet UPGRADE_EXPORT_DONE "true"
     globSet UPDATE_FAIL_COUNTER "0"
     globSet UPDATE_DONE "false"
-    globSet SETUP_REBOOT ""
+    globSet SYSTEM_REBOOT "true"
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
 

@@ -85,6 +85,7 @@ if [ "${INFRA_MODE,,}" == "validator" ]; then
     [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
 fi
 
+globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 [ -z "$(globGet SNAPSHOT_EXECUTE)" ] && globSet SNAPSHOT_EXECUTE "true"
@@ -106,22 +107,19 @@ while :; do
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: $(globGet NEW_NETWORK)"
     [ "${NEW_NETWORK,,}" == "true" ] && \
-    echo -e "|        NEW Network Name: ${NEW_NETWORK_NAME}"
-    [ "${NEW_NETWORK,,}" != "true" ] && \
-    echo -e "|            Network Name: ${NETWORK_NAME}"
+    echo -e "|        NEW Network Name: $(globGet NEW_NETWORK_NAME)"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     echo -e "|       Snapshots Enabled: $(globGet SNAPSHOT_EXECUTE)"
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
-    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
-    echo -e "|     Current kira Branch: $INFRA_BRANCH"
-    echo -e "|      Base Image Version: $KIRA_BASE_VERSION"
+    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH"
+    echo -e "|       Base Image Source: $(globGet NEW_BASE_IMAGE_SRC)"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
-    displayAlign left $printWidth " [3] | Change Default Branches"
+    displayAlign left $printWidth " [3] | Change Base Image URL"
     displayAlign left $printWidth " [4] | Change Node Type (sentry/seed/validator)"
-    displayAlign left $printWidth " [5] | Change Network Exposure (privacy) Mode"
+    displayAlign left $printWidth " [5] | Change Node Exposure (privacy) Mode"
     displayAlign left $printWidth " [6] | Change Snapshots Configuration"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
@@ -139,6 +137,7 @@ while :; do
     echo "NETWORK interface: $IFACE"
     setGlobEnv IFACE "$IFACE"
     setGlobEnv KIRA_SNAP_PATH ""
+    globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
@@ -160,7 +159,7 @@ while :; do
     continue
     ;;
   3*)
-    $KIRA_MANAGER/menu/branch-select.sh "false"
+    $KIRA_MANAGER/menu/base-image-select.sh
     continue
     ;;
   4*)
@@ -193,7 +192,7 @@ set -x
 
 globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER" UPGRADE_PLAN
 globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
-globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SYSTEM_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
 globSet UPDATE_DONE "false"

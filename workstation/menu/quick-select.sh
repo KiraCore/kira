@@ -14,7 +14,7 @@ rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     REINITALIZE_NODE="false"
-    CHAIN_ID="$NEW_NETWORK_NAME"
+    CHAIN_ID="$(globGet NEW_NETWORK_NAME)"
     SEED_NODE_ADDR="" && SENTRY_NODE_ADDR=""
     GENSUM=""
     SNAPSUM=""

@@ -87,7 +87,7 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     -v $APP_HOME:/$INTERXD_HOME \
-    ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+    $(globGet BASE_IMAGE_SRC)
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
