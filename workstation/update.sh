@@ -56,6 +56,7 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     echoInfo "INFO: Installing essential tools and dependecies"
     # increment fail counter in case of unexpected reboots
     globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAIL_COUNTER + 1))
+    globSet SYSTEM_REBOOT "true"
 
     echoInfo "INFO: Starting reinitalization process..."
     LOG_FILE="$KIRA_LOGS/kiraup-essentials-$KIRA_SETUP_VER.log" && globSet UPDATE_TOOLS_LOG "$LOG_FILE" 
@@ -69,7 +70,6 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
         globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAIL_COUNTER - 1))
         systemctl daemon-reload
         systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
-        globSet SYSTEM_REBOOT "true"
         exit 0
     else
         set +x

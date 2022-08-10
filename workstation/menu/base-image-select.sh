@@ -9,10 +9,10 @@ echoInfo "INFO: Started base image selection!"
 while : ; do
     echoInfo "INFO: Default base image: $(globGet BASE_IMAGE_SRC)"
     echoInfo "INFO: Base image should have a format of URL or release version, e.g. vX.X.X"
-    echoNErr "Input name of your NEW base-image, or press [ENTER] for default: " && read NEW_BASE_IMAGE_SRC
+    echoNErr "Input name of your NEW KIRA base-image, or press [ENTER] for default: " && read NEW_BASE_IMAGE_SRC
 
     [ -z "$NEW_BASE_IMAGE_SRC" ] && NEW_BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
-    ($(isVersion "$NEW_BASE_IMAGE_SRC")) && NEW_BASE_IMAGE_SRC="ghcr.io/kiracore/docker/base-image:$NEW_BASE_IMAGE_SRC"
+    ($(isVersion "$NEW_BASE_IMAGE_SRC")) && NEW_BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:$NEW_BASE_IMAGE_SRC"
 
     echoInfo "INFO: Veryfying base image, please wait..."
     SUCCESS="true"

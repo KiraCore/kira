@@ -22,7 +22,7 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r
 HASH="bafybeiac4m5ffk7olnaxhs6mlrzpu3merzjfwxlldg6tye3s4syrswibii" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
-RES2="{\"id\":\"base-image\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
+RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Soft Fork - Test Upgrade - $(date)" \
  --instate-upgrade=true \
@@ -48,7 +48,7 @@ showNextPlan | jq
 HASH="bafybeiac4m5ffk7olnaxhs6mlrzpu3merzjfwxlldg6tye3s4syrswibii" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.11.4" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
-RES2="{\"id\":\"base-image\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
+RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
  --instate-upgrade=false \
