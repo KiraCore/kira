@@ -18,12 +18,7 @@ echoWarn "------------------------------------------------"
 set -x
 
 SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
-SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
-
-DATA_DIR="$SEKAID_HOME/data"
-LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
-DATA_GENESIS="$DATA_DIR/genesis.json"
 
 globSet EXTERNAL_STATUS "OFFLINE"
 
@@ -54,34 +49,15 @@ done
 echoInfo "INFO: Sucess, genesis file was found!"
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
-    rm -rfv $SEKAID_HOME
-    mkdir -p $SEKAID_HOME/config/  
-    sekaid init --chain-id="$NETWORK_NAME" "KIRA SENTRY NODE" --home=$SEKAID_HOME
-
-    if (! $(isFileEmpty "$SNAP_FILE_INPUT")); then
-        echoInfo "INFO: Snap file was found, attepting integrity verification and data recovery..."
-        cd $DATA_DIR && timerStart SNAP_EXTRACT
-        tar -xvf $SNAP_FILE_INPUT -C ./ || ( echoErr "ERROR: Failed extracting '$SNAP_FILE_INPUT'" && sleep 10 && exit 1 )
-        echoInfo "INFO: Success, snapshot ($SNAP_FILE_INPUT) was extracted into data directory ($DATA_DIR), elapsed $(timerSpan SNAP_EXTRACT) seconds"
-        cd $SEKAID_HOME
-    
-        if [ -f "$DATA_GENESIS" ] ; then
-            echoInfo "INFO: Genesis file was found within the snapshot folder, attempting recovery..."
-            SHA256_DATA_GENESIS=$(sha256 $DATA_GENESIS)
-            SHA256_COMMON_GENESIS=$(sha256 $COMMON_GENESIS)
-            if [ -z "$SHA256_DATA_GENESIS" ] || [ "$SHA256_DATA_GENESIS" != "$SHA256_COMMON_GENESIS" ] ; then
-                echoErr "ERROR: Expected genesis checksum of the snapshot to be '$SHA256_DATA_GENESIS' but got '$SHA256_COMMON_GENESIS'"
-                exit 1
-            else
-                echoInfo "INFO: Genesis checksum '$SHA256_DATA_GENESIS' was verified sucessfully!"
-            fi
-        fi
-    else
-        echoWarn "WARNINIG: Node will launch in the slow sync mode"
+    if [ "$UPGRADE_MODE" == "soft" ] || [ "$UPGRADE_MODE" == "hard" ] ; then
+        $COMMON_DIR/sekai-upgrade.sh
+    elif [ "$UPGRADE_MODE" == "none" ] ; then
+        $COMMON_DIR/sentry/init.sh
+    else    
+        echoErr "ERROR: Unknown upgrade mode '$UPGRADE_MODE'"
+        sleep 10 && exit 1
     fi
 
-    rm -rfv $LOCAL_GENESIS
-    ln -sfv $COMMON_GENESIS $LOCAL_GENESIS
     globSet INIT_DONE "true" 
     globSet RESTART_COUNTER 0
     globSet START_TIME "$(date -u +%s)"
@@ -94,7 +70,13 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "sekaid $(sekaid version)"
 
 echoInfo "INFO: Starting sekaid..."
-EXIT_CODE=0 && sekaid start --home=$SEKAID_HOME --trace || EXIT_CODE="$?"
+kill -9 $(lsof -t -i:9090) || echoWarn "WARNING: Nothing running on port 9090, or failed to kill processes"
+kill -9 $(lsof -t -i:6060) || echoWarn "WARNING: Nothing running on port 6060, or failed to kill processes"
+kill -9 $(lsof -t -i:26656) || echoWarn "WARNING: Nothing running on port 26656, or failed to kill processes"
+kill -9 $(lsof -t -i:26657) || echoWarn "WARNING: Nothing running on port 26657, or failed to kill processes"
+kill -9 $(lsof -t -i:26658) || echoWarn "WARNING: Nothing running on port 26658, or failed to kill processes"
+EXIT_CODE=0
+sekaid start --home=$SEKAID_HOME --trace || EXIT_CODE="$?"
 set +x
 echoErr "ERROR: SEKAID process failed with the exit code $EXIT_CODE"
 sleep 3

@@ -4,6 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 CONTAINER_NAME="seed"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
@@ -36,77 +37,87 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
     # globGet seed_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
-    rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON"
 
     echo "INFO: Loading secrets..."
-    set +e
     set +x
     source $KIRAMGR_SCRIPTS/load-secrets.sh
+    cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
     set -x
-    set -e
 
     echoInfo "INFO: Setting up $CONTAINER_NAME config vars..."
-    cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
-
+    
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -afv "$PUBLIC_PEERS" "$COMMON_PATH/peers"
     cp -afv "$PUBLIC_SEEDS" "$COMMON_PATH/seeds"
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    ####################################################################################
-    # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
-    # APP [state_sync]
-    globSet app_base_pruning "custom" $GLOBAL_COMMON
-    globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
-    globSet app_base_pruning_keep_every "1000" $GLOBAL_COMMON
-    globSet app_base_pruning_interval "10" $GLOBAL_COMMON
-    ####################################################################################
-    # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
-    # CFG [base]
-    globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
-    globSet cfg_base_fast_sync "true" $GLOBAL_COMMON
-    # CFG [FASTSYNC]
-    globSet cfg_fastsync_version "v1" $GLOBAL_COMMON
-    # CFG [TRUST]
-    globSet cfg_trust_period "87600h" $GLOBAL_COMMON
-    # CFG [MEMPOOL]
-    globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
-    globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
-    # CFG [STATESYNC]
-    globSet cfg_statesync_enable "true" $GLOBAL_COMMON
-    globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
-    # CFG [CONSENSUS]
-    globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
-    globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
-    globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
-    # CFG [INSTRUMENTATION]
-    globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
-    # CFG [P2P]
-    globSet cfg_p2p_pex "true" $GLOBAL_COMMON
-    globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
-    globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
-    globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
-    globSet cfg_p2p_seeds "" $GLOBAL_COMMON
-    globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
-    globSet cfg_p2p_seed_mode "true" $GLOBAL_COMMON
-    globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
-    globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
-    globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
-    globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
-    globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
-    globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
-    globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
-    globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
-    globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
-    # CFG [RPC]
-    globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
-    globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
-    ####################################################################################
+    if [ $INIT_MODE == "upgrade" ] ; then
+        UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+        if [ "$UPGRADE_INSTATE" == "true" ] ; then
+            UPGRADE_MODE="soft"
+        else
+            UPGRADE_MODE="hard"
+        fi
+    else
+        rm -rfv "$COMMON_LOGS" "$GLOBAL_COMMON"
+        mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON" "$APP_HOME"
+
+        ####################################################################################
+        # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
+        # APP [state_sync]
+        globSet app_base_pruning "custom" $GLOBAL_COMMON
+        globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
+        globSet app_base_pruning_keep_every "1000" $GLOBAL_COMMON
+        globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+        ####################################################################################
+        # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
+        # CFG [base]
+        globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
+        globSet cfg_base_fast_sync "true" $GLOBAL_COMMON
+        # CFG [FASTSYNC]
+        globSet cfg_fastsync_version "v1" $GLOBAL_COMMON
+        # CFG [TRUST]
+        globSet cfg_trust_period "87600h" $GLOBAL_COMMON
+        # CFG [MEMPOOL]
+        globSet cfg_mempool_max_txs_bytes "131072000" $GLOBAL_COMMON
+        globSet cfg_mempool_max_tx_bytes "131072" $GLOBAL_COMMON
+        # CFG [STATESYNC]
+        globSet cfg_statesync_enable "true" $GLOBAL_COMMON
+        globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
+        # CFG [CONSENSUS]
+        globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
+        globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+        globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
+        # CFG [INSTRUMENTATION]
+        globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
+        # CFG [P2P]
+        globSet cfg_p2p_pex "true" $GLOBAL_COMMON
+        globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
+        globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+        globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
+        globSet cfg_p2p_seeds "" $GLOBAL_COMMON
+        globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
+        globSet cfg_p2p_seed_mode "true" $GLOBAL_COMMON
+        globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
+        globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
+        globSet cfg_p2p_send_rate "65536000" $GLOBAL_COMMON
+        globSet cfg_p2p_recv_rate "65536000" $GLOBAL_COMMON
+        globSet cfg_p2p_max_packet_msg_payload_size "131072" $GLOBAL_COMMON
+        globSet cfg_p2p_handshake_timeout "60s" $GLOBAL_COMMON
+        globSet cfg_p2p_dial_timeout "30s" $GLOBAL_COMMON
+        globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
+        globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
+        # CFG [RPC]
+        globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+        globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
+        ####################################################################################
+    fi
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
+    globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
 
-    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container from '$BASE_IMAGE_SRC'..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -120,6 +131,7 @@ docker run -d \
     --net=$KIRA_DOCEKR_NETWORK \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
+    -e UPGRADE_MODE="$UPGRADE_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
     -e HOSTNAME="$KIRA_SEED_DNS" \
     -e NODE_TYPE=$CONTAINER_NAME \
@@ -130,14 +142,17 @@ docker run -d \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
-    kira:latest
+    -v $APP_HOME:/$SEKAID_HOME \
+    $BASE_IMAGE_SRC
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
 fi
 
-echoInfo "INFO: Waiting for $CONTAINER_NAME to start..."
+echoInfo "INFO: Waiting for $CONTAINER_NAME to start and import or produce genesis..."
 $KIRAMGR_SCRIPTS/await-seed-init.sh "$CONTAINER_NAME" "$SEED_NODE_ID"
+
+[ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Genesis file was NOT created or NOT found" && exit 1
 
 echoInfo "INFO: Checking genesis SHA256 hash"
 GENESIS_SHA256=$(globGet GENESIS_SHA256)

@@ -167,7 +167,7 @@ jobs:
           - name: Uploading artifacts
             uses: actions/upload-artifact@v3.0.0
             with:
-              name: saifu-sign-bin
+              name: kira-bin
               path: ./bin.tar.gz
           - name: Cleanup all resources
             if: always()
@@ -194,7 +194,7 @@ jobs:
           - name: Download artifacts
             uses: actions/download-artifact@v3.0.0
             with:
-              name: saifu-sign-bin
+              name: kira-bin
           - name: Inspecting & organizing artifacts
             run: |
               echo "(current dir): $PWD" && ls -l ./
@@ -260,7 +260,7 @@ jobs:
               COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
             run: |
               echo "$KEY" > ../cosign.key
-              for FILE in *; do FILE_NAME=$(basename $FILE); cosign sign-blob --key=../cosign.key --output-signature=./${FILE_NAME}.sig ./$FILE_NAME; done
+              for FILE in *; do FILE_NAME=$(basename $FILE); [ -f ./$FILE_NAME ] && cosign sign-blob --key=../cosign.key --output-signature=./${FILE_NAME}.sig ./$FILE_NAME; done
               rm -fv ../cosign.key
           # ref: https://github.com/softprops/action-gh-release, v0.1.14
           # Release on merge only (push action) - this should run only once, do NOT release already existing releases

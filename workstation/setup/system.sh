@@ -12,6 +12,7 @@ WAKEUP_DIR="/usr/lib/pm-utils/sleep.d"
 WAKEUP_SCRIPT="${WAKEUP_DIR}/99ZZZ_KiraWakeup.sh"
 
 mkdir -p $KIRA_LOGS $WAKEUP_DIR
+touch $KIRA_LOGS/wakeup.log
 
 setLastLineByPrefixOrAppend "* hard nofile" "* hard nofile 999999" $LIMITS_CFG
 setLastLineByPrefixOrAppend "* soft nofile" "* soft nofile 999999" $LIMITS_CFG
@@ -36,6 +37,6 @@ esac
 exit 0"
 
 cat > $WAKEUP_SCRIPT <<< $WAKEUP_ENTRY
-chmod 555 $WAKEUP_SCRIPT
+chmod 555 $WAKEUP_SCRIPT $KIRA_LOGS/wakeup.log
 
 echoInfo "INFO: Your system has all pre-requisites set"
