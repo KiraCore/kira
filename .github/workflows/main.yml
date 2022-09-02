@@ -322,14 +322,14 @@ jobs:
               pr_title: "${{ env.SOURCE_BRANCH }} -> latest" 
               pr_label: "kira-automation,automerge"
               pr_allow_empty: true
-          - name: Auto-merge version branch to latest branch
-            uses: pascalgn/automerge-action@04dfc9eae2586d19b7362d4f6413c48135d9c25a
-            if: github.event_name == 'pull_request' && env.DESTINATION_BRANCH == 'latest' &&
-              ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
-            env:
-              MERGE_LABELS: "automerge"
-              GITHUB_TOKEN: "${{ secrets.REPO_ACCESS }}"
-              LOG: "TRACE"
+          #- name: Auto-merge version branch to latest branch
+          #  uses: pascalgn/automerge-action@04dfc9eae2586d19b7362d4f6413c48135d9c25a
+          #  if: github.event_name == 'pull_request' && env.DESTINATION_BRANCH == 'latest' &&
+          #    ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
+          #  env:
+          #    MERGE_LABELS: "automerge"
+          #    GITHUB_TOKEN: "${{ secrets.REPO_ACCESS }}"
+          #    LOG: "TRACE"
           - name: Comment PR's with IPFS
             # ref.: https://github.com/actions-cool/maintain-one-comment, v2.0.2
             uses: actions-cool/maintain-one-comment@cc0daaf4db77952f0b631bb2c1e169813d78a7fd

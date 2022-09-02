@@ -9,12 +9,11 @@ NEW_INFRA_SRC=""
 INFRA_SRC_OUT="/tmp/kira.zip"
 SUCCESS_DOWNLOAD="false"
 
-
 while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
     ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infrastructure URL or [C]hange source: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
 
     if [ "${ACCEPT,,}" == "c" ] ; then
-        read  -p "Input URL of the new infra source: " NEW_INFRA_SRC
+        read  -p "Input URL, version or CID hash of the new infrastructure source: " NEW_INFRA_SRC
         ($(isVersion "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$NEW_INFRA_SRC/kira.zip"
         ($(isCID "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://ipfs.kira.network/ipfs/$NEW_INFRA_SRC/kira.zip"
     else

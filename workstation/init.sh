@@ -21,8 +21,8 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-BASE_IMAGE_VERSION="v0.11.4"
-TOOLS_VERSION="v0.2.18"
+BASE_IMAGE_VERSION="v0.12.0"
+TOOLS_VERSION="v0.2.19"
 COSIGN_VERSION="v1.7.2"
 
 set +x

@@ -26,7 +26,7 @@ RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Soft Fork - Test Upgrade - $(date)" \
  --instate-upgrade=true \
- --skip-handler=true \
+ --skip-handler=false \
  --resources="[${RES1},${RES2}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
