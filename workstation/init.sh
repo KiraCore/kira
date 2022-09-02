@@ -104,7 +104,7 @@ FILE_NAME="bash-utils.sh" && \
  cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
  chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob"
 
-bash-utils loadGlobEnvs
+. /etc/profile
 echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
 
 #######################################################################################
