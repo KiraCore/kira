@@ -22,7 +22,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.12.0"
-TOOLS_VERSION="v0.2.19"
+TOOLS_VERSION="v0.2.20"
 COSIGN_VERSION="v1.7.2"
 
 set +x
@@ -103,7 +103,7 @@ FILE_NAME="bash-utils.sh" && \
  wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}.sig" -O ./${FILE_NAME}.sig && \
  cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
  chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob"
-
+#/usr/local/bin/bash-utils.sh 
 . /etc/profile
 echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
 
