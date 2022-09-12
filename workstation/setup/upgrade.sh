@@ -101,10 +101,10 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     setGlobEnv KIRA_SNAP_PATH ""
 
     echoInfo "INFO: Exporting genesis!"
+    cp -fv "$APP_HOME/config/genesis.json" "$APP_HOME/old-genesis.json"
     docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$SEKAID_HOME/genesis-export.json"
-    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1 || echoInfo "INFO: Finished upgrade export!"
+    (! $(isFileJson $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1 || echoInfo "INFO: Finished upgrade export!"
     
-
     # delete old genesis after export is complete
     if [ "$UPGRADE_INSTATE" == "false"] ; then
         echoInfo "INFO: Deleting old genesis since new genesis is required"

@@ -53,10 +53,11 @@ if [ "$UPGRADE_MODE" == "soft" ] ; then
 elif [ "$UPGRADE_MODE" == "hard" ] ; then
     echoInfo "INFO: Exporting configuration files..."
     [ ! -f $SEKAID_HOME/addrbook-export.json ] && cp -fv $SEKAID_HOME/config/addrbook.json $SEKAID_HOME/addrbook-export.json
-    [ ! -f $SEKAID_HOME/priv_validator_state-export.json ] && cp -fv $SEKAID_HOME/data/priv_validator_state.json $SEKAID_HOME/priv_validator_state-export.json 
+    [ ! -f $SEKAID_HOME/priv_validator_state-export.json ] && cp -fv $SEKAID_HOME/data/priv_validator_state.json $SEKAID_HOME/priv_validator_state-export.json
+
     echoInfo "INFO: Converting genesis file..."
-    [ ! -f $SEKAID_HOME/old-genesis.json ] && cp -fv $SEKAID_HOME/config/genesis.json $SEKAID_HOME/old-genesis.json
-    rm -rfv $SEKAID_HOME/new-genesis.json
+    sekaid unsafe-reset-all --home=$SEKAID_HOME
+    rm -fv "$SEKAID_HOME/new-genesis.json" "$SEKAID_HOME/config/genesis.json" 
     sekaid new-genesis-from-exported $SEKAID_HOME/genesis-export.json $SEKAID_HOME/new-genesis.json
 
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $SEKAID_HOME/new-genesis.json)
@@ -66,7 +67,6 @@ elif [ "$UPGRADE_MODE" == "hard" ] ; then
     
     echoInfo "INFO: Re-initalizing chain state..."
     cp -fv $SEKAID_HOME/new-genesis.json $SEKAID_HOME/config/genesis.json
-    sekaid unsafe-reset-all --home=$SEKAID_HOME
     cp -fv $SEKAID_HOME/addrbook-export.json $SEKAID_HOME/config/addrbook.json
     cp -fv $SEKAID_HOME/priv_validator_state-export.json $SEKAID_HOME/data/priv_validator_state.json
 else
