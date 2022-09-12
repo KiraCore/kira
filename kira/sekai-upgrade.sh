@@ -75,3 +75,4 @@ else
 fi
 
 echoInfo "INFO: Finished container upgrade sequence..."
+# jsonParse "chain_id" $SEKAID_HOME/config/genesis.json

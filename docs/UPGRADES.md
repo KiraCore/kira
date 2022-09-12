@@ -45,7 +45,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-HASH="bafybeifiixdxq4cli6qxib5zfiky7rilb6k66f336nymj4jty6tdsiixre" && \
+HASH="bafybeiboyy37sgbkg246rgslekdceemjgdcrfacrjsn3kiev2gcs6f2hka" && \
 BASE_IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:v0.12.0" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 RES2="{\"id\":\"kira-base\",\"git\":\"$BASE_IMAGE_SRC\"}" && \

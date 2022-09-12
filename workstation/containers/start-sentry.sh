@@ -119,6 +119,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
     globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
+    globSet INIT_DONE "false" $GLOBAL_COMMON
 
     BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
     echoInfo "INFO: Starting '$CONTAINER_NAME' container from '$BASE_IMAGE_SRC'..."

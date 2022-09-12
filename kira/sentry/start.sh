@@ -14,17 +14,23 @@ echoWarn "| SEKAI VERSION: $(sekaid version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|   SEKAID HOME: $SEKAID_HOME"
 echoWarn "|  PRIVATE MODE: $PRIVATE_MODE"
+echoWarn "|  UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "------------------------------------------------"
 set -x
 
 SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
+EXPORTED_GENESIS="$SEKAID_HOME/genesis-export.json"
 
 globSet EXTERNAL_STATUS "OFFLINE"
 
 while [ "$(globGet INIT_DONE)" != "true" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"
-    sleep 5
+    if [ "$UPGRADE_MODE" == "hard" ] && [ -f $EXPORTED_GENESIS ] ; then
+        break
+    else
+        sleep 5
+    fi
 done
 
 LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
