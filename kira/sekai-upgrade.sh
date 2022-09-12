@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set +e && source $ETC_PROFILE &>/dev/null && set -e
-# quick edit: FILE="${SELF_CONTAINER}/upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="/common/sekai-upgrade.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 echoInfo "INFO: Staring container upgrade sequence..."
@@ -69,7 +69,7 @@ elif [ "$UPGRADE_MODE" == "hard" ] ; then
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $SEKAID_HOME/new-genesis.json)
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $SEKAID_HOME/new-genesis.json 2> /dev/null || echo -n "")
     ($(isNullOrEmpty $NEW_NETWORK_NAME)) && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
-    [ "$NEW_NETWORK_NAME" != "$NEW_CHAIN_ID" ] && echoErr "ERROR: Invalid genesis chain id swap, expected '$NEW_CHAIN_ID', but got '$NEW_NETWORK_NAME'" && sleep 10 && exit 1
+    [ "$NEW_NETWORK_NAME" != "$NETWORK_NAME" ] && echoErr "ERROR: Invalid genesis chain id swap, expected '$NETWORK_NAME', but got '$NEW_NETWORK_NAME'" && sleep 10 && exit 1
     
     echoInfo "INFO: Re-initalizing chain state..."
     cp -fv $SEKAID_HOME/new-genesis.json $SEKAID_HOME/config/genesis.json
