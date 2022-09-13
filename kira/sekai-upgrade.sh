@@ -8,6 +8,16 @@ LOCAL_SEEDS_PATH="$SEKAID_HOME/config/seeds"
 PUBLIC_SEEDS="$COMMON_DIR/seeds"
 ADDRBOOK_FILE="$SEKAID_HOME/config/addrbook.json"
 ADDRBOOK_EXPORT="$SEKAID_HOME/addrbook-export.json"
+STATE_FILE="$SEKAID_HOME/data/priv_validator_state.json"
+STATE_EXPORT="$SEKAID_HOME/priv_validator_state-export.json"
+
+STATE_HEIGHT=$(jsonParse "height" $STATE_FILE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+
+echoInfo "INFO: Exporting configuration files..."
+# ensure address book exists or is copied from one of the possible source paths
+[ ! -f $ADDRBOOK_EXPORT ] && cp -fv $ADDRBOOK_FILE $ADDRBOOK_EXPORT
+[ ! -f $ADDRBOOK_FILE ] && cp -fv $ADDRBOOK_EXPORT $ADDRBOOK_FILE
+[ ! -f $STATE_EXPORT ] && cp -fv $STATE_FILE $STATE_EXPORT
 
 echoInfo "INFO: Exporting seeds from address book..."
 SEEDS_DUMP="/tmp/seedsdump"
@@ -16,10 +26,6 @@ ADDR_DUMP_ARR="/tmp/addrdumparr"
 ADDR_DUMP_BASE64="/tmp/addrdump64"
 rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64 $SEEDS_DUMP
 touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS $LOCAL_SEEDS_PATH
-
-# ensure address book exists or is copied from one of the possible source paths
-[ ! -f $ADDRBOOK_EXPORT ] && cp -fv $ADDRBOOK_FILE $ADDRBOOK_EXPORT
-[ ! -f $ADDRBOOK_FILE ] && cp -fv $ADDRBOOK_EXPORT $ADDRBOOK_FILE
 
 jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
 (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
@@ -57,10 +63,6 @@ fi
 if [ "$UPGRADE_MODE" == "soft" ] ; then
     echoInfo "INFO: Soft fork only requires app executable upgrade."
 elif [ "$UPGRADE_MODE" == "hard" ] ; then
-    echoInfo "INFO: Exporting configuration files..."
-    
-    [ ! -f $SEKAID_HOME/priv_validator_state-export.json ] && cp -fv $SEKAID_HOME/data/priv_validator_state.json $SEKAID_HOME/priv_validator_state-export.json
-
     echoInfo "INFO: Converting genesis file..."
     sekaid unsafe-reset-all --home=$SEKAID_HOME
     rm -fv "$SEKAID_HOME/new-genesis.json" "$SEKAID_HOME/config/genesis.json" 
@@ -73,8 +75,14 @@ elif [ "$UPGRADE_MODE" == "hard" ] ; then
     
     echoInfo "INFO: Re-initalizing chain state..."
     cp -fv $SEKAID_HOME/new-genesis.json $SEKAID_HOME/config/genesis.json
-    cp -fv $SEKAID_HOME/priv_validator_state-export.json $SEKAID_HOME/data/priv_validator_state.json
     cp -fv $ADDRBOOK_EXPORT $ADDRBOOK_FILE
+    cat >$STATE_FILE <<EOL
+{
+  "height": "$STATE_HEIGHT",
+  "round": 0,
+  "step": 0
+}
+EOL
 else
     echoErr "ERROR: Unknown upgrade mode '$UPGRADE_MODE'"
     exit 1

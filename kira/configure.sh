@@ -20,7 +20,7 @@ COMMON_GENESIS="$COMMON_READ/genesis.json"
 DATA_DIR="$SEKAID_HOME/data"
 DATA_GENESIS="$DATA_DIR/genesis.json"
 LOCAL_GENESIS="$SEKAID_HOME/config/genesis.json"
-LOCAL_STATE="$SEKAID_HOME/data/priv_validator_state.json"
+STATE_FILE="$SEKAID_HOME/data/priv_validator_state.json"
 
 [ -f "$COMMON_PEERS_PATH" ] && cp -afv "$COMMON_PEERS_PATH" "$LOCAL_PEERS_PATH"
 [ -f "$COMMON_SEEDS_PATH" ] && cp -afv "$COMMON_SEEDS_PATH" "$LOCAL_SEEDS_PATH"
@@ -30,7 +30,7 @@ PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 
 LATEST_BLOCK_HEIGHT=$(globGet latest_block_height $GLOBAL_COMMON_RO) && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
 MIN_HEIGHT=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO) && (! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
-STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
 [[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
 [[ $MIN_HEIGHT -lt $STATE_HEIGHT ]] && MIN_HEIGHT=$STATE_HEIGHT
 
@@ -304,7 +304,7 @@ set -x
 
 if [[ $MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
     echoWarn "WARNING: Updating minimum state height, expected no less than $MIN_HEIGHT but got $STATE_HEIGHT"
-    cat >$LOCAL_STATE <<EOL
+    cat >$STATE_FILE <<EOL
 {
   "height": "$MIN_HEIGHT",
   "round": 0,
@@ -313,7 +313,7 @@ if [[ $MIN_HEIGHT -gt $STATE_HEIGHT ]] ; then
 EOL
 fi
 
-STATE_HEIGHT=$(jsonQuickParse "height" $LOCAL_STATE || echo "")
+STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "")
 echoInfo "INFO: Minimum state height is set to $STATE_HEIGHT"
 echoInfo "INFO: Finished node configuration."
 globSet CFG_TASK "false"
