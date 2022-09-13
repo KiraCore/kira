@@ -126,7 +126,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
     $KIRA_MANAGER/init.sh --infra-src="$INFRA_SRC" --init-mode="upgrade"
 else
-    echoInfo "INFO: Upgrade xports already done!"
+    echoInfo "INFO: Upgrade exports already done!"
 fi
 
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)

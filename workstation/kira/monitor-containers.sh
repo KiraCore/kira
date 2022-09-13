@@ -79,6 +79,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globGet UPDATE_DONE)" == "tr
         globSet UPGRADE_INSTATE "$TMP_UPGRADE_INSTATE"
         globSet UPGRADE_PLAN "$NEW_UPGRADE_PLAN"
         globSet UPDATE_FAIL_COUNTER "0"
+        globSet UPDATE_FAIL "false"
         globSet PLAN_DONE "false"
         globSet PLAN_FAIL "false"
         globSet PLAN_FAIL_COUNT "0"
