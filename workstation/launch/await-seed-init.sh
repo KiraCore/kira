@@ -64,7 +64,7 @@ while : ; do
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
-        # copy genesis from validator only if internal node syncing takes place
+        # copy genesis from seed only if internal node syncing takes place
         if [ "$UPGRADE_MODE" == "hard" ] ; then 
             echoInfo "INFO: Attempting to access genesis file of the new network..."
             chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"

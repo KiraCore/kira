@@ -69,7 +69,7 @@ while : ; do
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
-        # copy genesis from validator only if internal node syncing takes place
+        # copy genesis from sentry only if internal node syncing takes place
         if [ $UPGRADE_MODE == "hard" ] ; then 
             echoInfo "INFO: Attempting to access genesis file of the new network..."
             chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
@@ -119,14 +119,6 @@ while : ; do
         echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
-
-    # copy genesis from validator only if internal node syncing takes place
-    if [ "$INIT_MODE" == "upgrade" ] ; then 
-        echoInfo "INFO: Attempting to access genesis file of the new network..."
-        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-        rm -fv $LOCAL_GENESIS_PATH
-        cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
-    fi
 
     if [ "$NODE_ID" != "$EXPECTED_NODE_ID" ] ; then
         echoErr "ERROR: $CONTAINER_NAME Node id check failed!"

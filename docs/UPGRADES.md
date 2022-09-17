@@ -5,9 +5,7 @@
 
 ```
 whitelistPermission validator $PermCreateSoftwareUpgradeProposal $(showAddress validator) && \
-whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) 
-
-
+whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) && \
 whitelistValidators validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
 whitelistValidators validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
 whitelistValidators validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
@@ -45,7 +43,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan
 
 ```
-HASH="bafybeiafthbkhxonxz5hl6hxpxk6zu2vsfwocfyfgjfeelop23cnynnjve" && \
+HASH="bafybeigx2qmj26n3q7ueqizjqwcorokzwmvodsnfx4gcljpthpqsqgl3zu" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
