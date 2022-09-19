@@ -2,10 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
-PROMPT_SOURCE=$1
-
 SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET) && [ -z "$SNAPSHOT_TARGET" ] && SNAPSHOT_TARGET="${INFRA_MODE,,}"
-echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=($(globGet OPTION))
+echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=$(globGet OPTION)
 
 if [ "${SELECT,,}" == "k" ] ; then
     echoInfo "INFO: Old snapshots will be disposed"
@@ -32,7 +30,7 @@ while : ; do
 done
 
 echoWarn "WARNING: The '$SNAPSHOT_TARGET' container will be forcefully halted in order to safely backup blockchain state!"
-echoNErr "Do you want to [U]n-halt '$SNAPSHOT_TARGET' container after backup is compleated or keep all processes [S]topped: " && pressToContinue u s && SELECT=($(globGet OPTION))
+echoNErr "Do you want to [U]n-halt '$SNAPSHOT_TARGET' container after backup is compleated or keep all processes [S]topped: " && pressToContinue u s && SELECT=$(globGet OPTION)
 
 if [ "${SELECT,,}" == "u" ] ; then
     echoInfo "INFO: Container will be unhalted after backup is complete"
@@ -42,15 +40,14 @@ else
     globSet SNAPSHOT_UNHALT "false"
 fi
 
-[ "$PROMPT_SOURCE" == "submenu" ] && \ 
-    echoNErr "Do you want to [E]nable creation of a new backup after sync, [D]isable or e[X]it without making changes: " && \
-    pressToContinue b e && SELECT=($(globGet OPTION))
-
-[ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup, snapshot will not be made..." && sleep 2 && exit 0
+echoWarn "WARNING: Snapshot creation will only be started afted node stopped syncing!"
+echoNErr "Do you want to [S]tart creation of a new backup, [D]isable or e[X]it without making changes: "
+pressToContinue s d x && SELECT=$(globGet OPTION)
+[ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
 
 globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
 globSet SNAPSHOT_TARGET $SNAPSHOT_TARGET
-[ "${SELECT,,}" == "e" ] && globSet SNAPSHOT_EXECUTE true
+[ "${SELECT,,}" == "s" ] && globSet SNAPSHOT_EXECUTE true
 [ "${SELECT,,}" == "d" ] && globSet SNAPSHOT_EXECUTE false
 setGlobEnv KIRA_SNAP $KIRA_SNAP
 

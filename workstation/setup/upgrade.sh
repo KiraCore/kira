@@ -7,12 +7,16 @@ set -x
 SCRIPT_START_TIME="$(date -u +%s)"
 PLAN_START_DT=$(globGet PLAN_START_DT)
 UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
-UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 CONTAINERS=$(globGet CONTAINERS)
-UPGRADE_PLAN=$(globGet UPGRADE_PLAN)
-OLD_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
-NEW_CHAIN_ID=$(echo "$UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
+UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
+UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
+UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
+OLD_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "old_chain_id" || echo "")
+NEW_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "new_chain_id" || echo "")
+CONTAINER_NAME="${INFRA_MODE,,}"
+COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -21,21 +25,18 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|         BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "|     PLAN START DATE: $PLAN_START_DT"
 echoWarn "| UPGRADE EXPORT DONE: $UPGRADE_EXPORT_DONE"
-echoWarn "|  UPGRADE REPOS DONE: $UPGRADE_REPOS_DONE"
 echoWarn "|     UPGRADE INSTATE: $UPGRADE_INSTATE"
 echoWarn "|        OLD CHAIN ID: $OLD_CHAIN_ID"
 echoWarn "|        NEW CHAIN ID: $NEW_CHAIN_ID"
+echoWarn "|    TARGET CONTAINER: $CONTAINER_NAME"
 echoWarn "|          CONTAINERS: $CONTAINERS"
 echoWarn "------------------------------------------------"
 set -x
 
+($(isNullOrEmpty "$NEW_CHAIN_ID")) && echoErr "ERROR: Failed to find new chain identifier in the upgrade plan!" && sleep 10 && exit 1
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
 [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && \
     echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
-
-UPGRADE_PLAN_FILE=$(globFile UPGRADE_PLAN)
-UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
-UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
 
 echoInfo "INFO: Extracting resources from the upgrade plan..."
 jsonParse "resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
@@ -48,33 +49,25 @@ else
     echoInfo "INFO: Success upgrade plan file was found"
 fi
 
-
 if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     echoInfo "INFO: Reading repos info..."
 
-    globDel "NEXT_SEKAI_BRANCH" "NEXT_SEKAI_REPO"
+    globDel "NEXT_KIRA_URL" "NEXT_KIRA_VERSION" "NEXT_KIRA_CHECKSUM"
     while IFS="" read -r row || [ -n "$row" ] ; do
         jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
         joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
+        ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Invalid plan id '$joid'" && continue
 
-        repository=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$repository")) && echoErr "ERROR: Repository of the plan '$joid' was undefined" && sleep 10 && exit 1
-        checkout=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        url=$(echo "$jobj" | jsonParse "url" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$url")) && url=$(echo "$jobj" | jsonParse "git" 2> /dev/null || echo -n "")
+        version=$(echo "$jobj" | jsonParse "version" 2> /dev/null || echo -n "")
         checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
-        if ($(isNullOrWhitespaces "$checkout")) && ($(isNullOrWhitespaces "$checksum")) ; then
-            echoErr "ERROR: Checkout ('$checkout') or Checksum ('$checksum') was undefined"
-            sleep 10
-            exit 1
-        fi
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$checksum")) && checksum=$KIRA_COSIGN_PUB
 
-        if ($(isLetters "$joid")) ; then
-            globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
-            globSet "NEXT_${joid^^}_BRANCH" "$checkout"
-            globSet "NEXT_${joid^^}_REPO" "$repository"
-        else
-            echoWarn "WARNING: Unknown plan id '$joid'"
-        fi
+        globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
+        globSet "NEXT_${joid^^}_VERSION" "$version"
+        globSet "NEXT_${joid^^}_URL" "$url"
     done < $UPGRADE_PLAN_RES64_FILE
 
     if [ "${INFRA_MODE,,}" == "validator" ] ; then
@@ -82,11 +75,9 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
         if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
             echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
             globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
-            # NOTE: Pause disabled until safety min validators hotfix
-            # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || VFAIL="true"
-            VFAIL="false"
-
-            [ "${VFAIL,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
+            PAUSE_FAILED="false"
+            docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || PAUSE_FAILED="true"
+            [ "${PAUSE_FAILED,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
         fi
     fi
 
@@ -94,263 +85,61 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     for name in $CONTAINERS; do
         [ "${name,,}" == "registry" ] && continue
         echoInfo "INFO: Halting and re-starting '$name' container..."
-
         $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
     done
 
     echoInfo "INFO: Waiting for contianers to restart..."
     sleep 15
-fi
 
-CONTAINER_NAME="${INFRA_MODE,,}"
-COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
-
-if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] && [ "${UPGRADE_INSTATE}" == "true" ] ; then
-    # SOFT FORK
-    echoInfo "INFO: Started creating snapshoot, instate upgrade requested!"
-
-    MIN_BLOCK=$(globGet LATEST_BLOCK_HEIGHT) && (! $(isNaturalNumber "$MIN_BLOCK")) && MIN_BLOCK="0"
-
-    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
+    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory & old exports..."
+    GENESIS_EXPORT="$APP_HOME/genesis-export.json"
     rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip files from '$KIRA_SNAP' directory"
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
-    
-    SNAP_FILENAME="${NETWORK_NAME}-$MIN_BLOCK-$(date -u +%s).tar"
-    ADDRBOOK_FILE="$COMMON_PATH/upgrade-addrbook.json"
-    KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
-
-    rm -fv $ADDRBOOK_FILE $KIRA_SNAP_PATH
-
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$COMMON_DIR/upgrade.sh $UPGRADE_INSTATE $MIN_BLOCK $SNAP_FILENAME" || echoErr "ERROR: Failures occured during container upgrade process!"
-
-    [ ! -f "$ADDRBOOK_FILE" ] && echoErr "ERROR: Failed to create address book file '$ADDRBOOK_FILE'" && sleep 10 && exit 1
-
-    # snapshots might fail due to lack of disk space
-    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
-    [ ! -f "$KIRA_SNAP_PATH" ] && echoErr "ERROR: Failed to create snapshoot file '$SNAP_FILE'" || \
-        setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
-
-    echoInfo "INFO: Recovering seed & peer nodes..."
-    SEEDS_DUMP="/tmp/seedsdump"
-    ADDR_DUMP="/tmp/addrdump"
-    ADDR_DUMP_ARR="/tmp/addrdumparr"
-    ADDR_DUMP_BASE64="/tmp/addrdump64"
-    rm -fv $ADDR_DUMP $ADDR_DUMP_ARR $ADDR_DUMP_BASE64
-    touch $ADDR_DUMP $SEEDS_DUMP $PUBLIC_SEEDS
-    jsonParse "addrs" $ADDRBOOK_FILE $ADDR_DUMP_ARR
-    (jq -rc '.[] | @base64' $ADDR_DUMP_ARR 2> /dev/null || echo -n "") > $ADDR_DUMP_BASE64
-
-    while IFS="" read -r row || [ -n "$row" ] ; do
-        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        last_success=$(echo "$jobj" | jsonParse "last_success" 2> /dev/null || echo -n "") && last_success=$(delWhitespaces $last_success | tr -d '"' || "")
-        ( [ -z "$last_success" ] || [ "$last_success" == "0001-01-01T00:00:00Z" ] ) && echoInfo "INFO: Skipping address, connection was never establised." && continue
-        nodeId=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "") && nodeId=$(delWhitespaces $nodeId | tr -d '"' || "")
-        (! $(isNodeId "$nodeId")) && echoInfo "INFO: Skipping address, node id '$nodeId' is invalid." && continue
-        ip=$(echo "$jobj" | jsonQuickParse "ip" 2> /dev/null || echo -n "") && ip=$(delWhitespaces $ip | tr -d '"' || "")
-        (! $(isIp "$ip")) && echoInfo "INFO: Skipping address, node ip '$ip' is NOT a valid IPv4." && continue
-        port=$(echo "$jobj" | jsonQuickParse "port" 2> /dev/null || echo -n "") && port=$(delWhitespaces $port | tr -d '"' || "")
-        (! $(isPort "$port")) && echoInfo "INFO: Skipping address, '$port' is NOT a valid port." && continue
-        if grep -q "$nodeId" "$SEEDS_DUMP" || grep -q "$ip:$port" "$SEEDS_DUMP" || grep -q "$nodeId" "$PUBLIC_SEEDS" || grep -q "$ip:$port" "$PUBLIC_SEEDS" ; then
-            echoWarn "WARNING: Address '$nodeId@$ip:$port' is already present in the seeds list or invalid, last conn ($last_success)"
-        else
-            echoInfo "INFO: Success, found new node addess '$nodeId@$ip:$port', last conn ($last_success)"
-            echo "$nodeId@$ip:$port" >> $SEEDS_DUMP
-        fi
-    done < $ADDR_DUMP_BASE64
-
-    if (! $(isFileEmpty $SEEDS_DUMP)) ; then
-        echoInfo "INFO: New public seed nodes were found in the address book. Saving addressess to PUBLIC_SEEDS '$PUBLIC_SEEDS'..."
-        cat $SEEDS_DUMP >> $PUBLIC_SEEDS
-    else
-        echoWarn "WARNING: NO new public seed nodes were found in the address book!"
-    fi
-
-    globSet UPGRADE_EXPORT_DONE "true"
-elif [ "${UPGRADE_EXPORT_DONE}" == "false" ] && [ "${UPGRADE_INSTATE}" == "false" ] ; then
-    # HARD FORK
-    echoInfo "INFO: Started, creation of new genesis requested!"
-
-    GENESIS_EXPORT="$COMMON_PATH/genesis-export.json"
-    GENESIS_EXPORT_OLD="$COMMON_PATH/old-genesis-export.json"
-    rm -fv $GENESIS_EXPORT $GENESIS_EXPORT_OLD
-
-    echoInfo "INFO: Exporting genesis!"
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$COMMON_DIR/old-genesis-export.json"
-    ($(isFileEmpty $GENESIS_EXPORT_OLD)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1
-
-    echoInfo "INFO: Updating sekai repository..."
-    SEKAI_BRANCH=$(globGet "NEXT_SEKAI_BRANCH")
-    SEKAI_REPO=$(globGet "NEXT_SEKAI_REPO")
-
-    if (! $(isNullOrEmpty "$SEKAI_BRANCH")) && (! $(isNullOrEmpty "$SEKAI_BRANCH")) ; then
-        echoInfo "INFO: SEKAI Repo upgrade detected, cloning new resources..."
-        docker exec -i $CONTAINER_NAME /bin/bash -c "sekaid version"
-        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && rm -rfv \$SEKAI && mkdir -p \$SEKAI && git clone $SEKAI_REPO \$SEKAI && cd \$SEKAI && git checkout $SEKAI_BRANCH"
-        docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && cd \$SEKAI && make install"
-        echoInfo "INFO: SEKAI Repo was updated..."
-        docker exec -i $CONTAINER_NAME /bin/bash -c "sekaid version"
-    fi
-
-    echoInfo "INFO: Converting genesis!"
-    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid new-genesis-from-exported \$COMMON_DIR/old-genesis-export.json \$COMMON_DIR/genesis-export.json || rm -fv \$COMMON_DIR/genesis-export.json"
-    ($(isFileEmpty $GENESIS_EXPORT)) && echoErr "ERROR: Genesis file conversion failed!" && sleep 10 && exit 1
-
-    echoInfo "INFO: Saving upgrade evidence into temporary debug directory"
-    mkdir -p /debug
-    cp -afv $GENESIS_EXPORT_OLD "/debug/old-genesis-export.json"
-    cp -afv $GENESIS_EXPORT "/debug/genesis-export.json"
-
-    NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $GENESIS_EXPORT)
-    NEW_NETWORK_NAME=$(jsonParse "chain_id" $GENESIS_EXPORT 2> /dev/null || echo -n "")
-    ($(isNullOrEmpty $NEW_NETWORK_NAME)) && echoErr "ERROR: Could NOT identify new network name in the exported genesis file" && sleep 10 && exit 1
-    [ "$NEW_NETWORK_NAME" != "$NEW_CHAIN_ID" ] && echoErr "ERROR: Invalid genesis chain id swap, expected '$NEW_CHAIN_ID', but got '$NEW_NETWORK_NAME'" && sleep 10 && exit 1
-    
-    NEW_BLOCK_HEIGHT=$(jsonParse "initial_height" $GENESIS_EXPORT 2> /dev/null || echo -n "")
-    (! $(isNaturalNumber $NEW_BLOCK_HEIGHT)) && echoErr "ERROR: Could NOT identify new block height in the exported genesis file" && sleep 10 && exit 1
-    NEW_BLOCK_TIME=$(date2unix $(jsonParse "genesis_time" $GENESIS_EXPORT 2> /dev/null || echo -n ""))
-    (! $(isNaturalNumber "$NEW_BLOCK_TIME")) && echoErr "ERROR: Could NOT identify new block time in the exported genesis file" && sleep 10 && exit 1
-
-    echoInfo "INFO: Upgrading network identifier, block height and global genesis files"
-
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
-    chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
-    rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
-    cp -afv "$GENESIS_EXPORT" "$LOCAL_GENESIS_PATH"
-    chattr +i $LOCAL_GENESIS_PATH
-    GENESIS_SHA256=$(sha256 $LOCAL_GENESIS_PATH)
-    globSet GENESIS_SHA256 "$GENESIS_SHA256"
-
-    setGlobEnv NETWORK_NAME "$NEW_NETWORK_NAME"
+    rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
+    rm -fv "$GENESIS_EXPORT" "$APP_HOME/addrbook-export.json" "$APP_HOME/priv_validator_state-export.json" "$APP_HOME/old-genesis.json" "$APP_HOME/new-genesis.json" "$APP_HOME/genesis.json"
     setGlobEnv KIRA_SNAP_PATH ""
 
-    echoInfo "INFO: Wiping all snapshoots from the '$KIRA_SNAP' directory..."
-    rm -fv $KIRA_SNAP/*.tar || echoErr "ERROR: Failed to wipe *.tar file from '$KIRA_SNAP' directory"
-    rm -fv $KIRA_SNAP/*.zip || echoErr "ERROR: Failed to wipe *.zip file from '$KIRA_SNAP' directory"
-    rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
-    rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
-
-    globSet LATEST_BLOCK $NEW_BLOCK_HEIGHT
-    globSet LATEST_BLOCK_TIME $NEW_BLOCK_TIME
-    globSet LATEST_BLOCK_HEIGHT "$NEW_BLOCK_HEIGHT" "$GLOBAL_COMMON_RO"
-    globSet MIN_HEIGHT "$NEW_BLOCK_HEIGHT"
-    globSet MIN_HEIGHT "$NEW_BLOCK_HEIGHT" $GLOBAL_COMMON_RO
-
-    globSet UPGRADE_EXPORT_DONE "true"
-else
-    echoInfo "INFO: State export already done."
-fi
-
-UPGRADE_EXPORT_DONE=$(globGet UPGRADE_EXPORT_DONE)
-if [ "${UPGRADE_REPOS_DONE,,}" == "false" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ]; then
-    echoInfo "INFO: Wiping all unused containers..."
-    for name in $CONTAINERS; do
-        [ "${name,,}" == "registry" ] && continue
-        echoInfo "INFO: Removing '$name' container and cleaning up resources..."
-        $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
-
-        # chattr -i
-        rm -rfv "$DOCKER_COMMON/${name}"
-    done
-
-    echoInfo "INFO: Starting repos upgrade..."
-    while IFS="" read -r row || [ -n "$row" ] ; do
-        jobj=$(echo ${row} | base64 --decode 2> /dev/null 2> /dev/null || echo -n "")
-        joid=$(echo "$jobj" | jsonQuickParse "id" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$joid")) && echoWarn "WARNING: Undefined plan id" && continue
-
-        # kira repo is processed during plan setup, so ony other repost must be upgraded
-        [ "$joid" == "kira" ] && echoInfo "INFO: Infra repo was already upgraded..." && continue
-
-        checksum=$(globGet "NEXT_${joid^^}_CHECKSUM")
-        checkout=$(globGet "NEXT_${joid^^}_BRANCH")
-        repository=$(globGet "NEXT_${joid^^}_REPO")
-
-        REPO_ZIP="/tmp/repo.zip"
-        REPO_TMP="/tmp/repo"
-        rm -fv $REPO_ZIP
-        cd $HOME && rm -rfv $REPO_TMP
-        mkdir -p $REPO_TMP && cd "$REPO_TMP"
-
-        DOWNLOAD_SUCCESS="true"
-        if (! $(isNullOrWhitespaces "$checkout")) ; then
-            echoInfo "INFO: Fetching '$joid' repository from git..."
-            $KIRA_COMMON/git-pull.sh "$repository" "$checkout" "$REPO_TMP" 555 || DOWNLOAD_SUCCESS="false"
-            [ "${DOWNLOAD_SUCCESS,,}" == "false" ] && echoErr "ERROR: Failed to pull '$repository' from  '$checkout' branch." && sleep 10 && exit 1
-            echoInfo "INFO: Repo '$repository' pull from branch '$checkout' suceeded, navigating to '$REPO_TMP' and compressing source into '$REPO_ZIP'..."
-            cd "$REPO_TMP" && zip -0 -r -v "$REPO_ZIP" .* || DOWNLOAD_SUCCESS="false"
-        else
-            echoInfo "INFO: Checkour branch was not found, downloading '$joid' repository from external file..."
-            wget "$repository" -O $REPO_ZIP || DOWNLOAD_SUCCESS="false"
-        fi
-
-        if [ "$DOWNLOAD_SUCCESS" == "true" ] && [ -f "$REPO_ZIP" ]; then
-            echoInfo "INFO: Download or Fetch of '$joid' repository suceeded"
-            if (! $(isNullOrWhitespaces "$checksum")) ; then
-                cd $HOME && rm -rfv $REPO_TMP && mkdir -p $REPO_TMP
-                unzip -o -: $KM_ZIP -d $REPO_TMP
-                chmod -R -v 555 $REPO_TMP
-                REPO_HASH=$(CDHelper hash SHA256 -p="$REPO_TMP" -x=true -r=true --silent=true -i="$REPO_TMP/.git,$REPO_TMP/.gitignore")
-                rm -rfv $REPO_TMP
-
-                if [ "$REPO_HASH" != "$checksum" ] ; then
-                    echoInfo "INFO: Checksum verification suceeded"
-                else
-                    echoErr "ERROR: Chcecksum verification failed, expected '$checksum', but got '$REPO_HASH'"
-                    sleep 10
-                    exit 1
-                fi
-            fi
-        else
-            echoErr "ERROR: Failed to download ($DOWNLOAD_SUCCESS) or package '$joid' repository" && sleep 10 && exit 1
-        fi
-
-        if ($(isLetters "$joid")) ; then
-            setGlobEnv "${joid^^}_CHECKSUM" "$checksum"
-            setGlobEnv "${joid^^}_BRANCH" "$checkout"
-            setGlobEnv "${joid^^}_REPO" "$repository"
-        else
-            echoWarn "WARNING: Unknown plan id '$joid'"
-        fi
-    done < $UPGRADE_PLAN_RES64_FILE
-
-    NEW_NETWORK="false"
-    globSet NEW_NETWORK "$NEW_NETWORK"
-
+    echoInfo "INFO: Exporting genesis!"
+    # NOTE: The $APP_HOME/config/genesis.json might be a symlink, for this reason we MUST copy it using docker exec
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && cp -fv \"$SEKAID_HOME/config/genesis.json\" \"$SEKAID_HOME/old-genesis.json\""
+    docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && sekaid export --home=\$SEKAID_HOME &> \$SEKAID_HOME/genesis-export.json"
+    (! $(isFileJson $GENESIS_EXPORT)) && echoErr "ERROR: Failed to export genesis file!" && sleep 10 && exit 1 || echoInfo "INFO: Finished upgrade export!"
+    
+    # delete old genesis after export is complete
+    if [ "$UPGRADE_INSTATE" == "false"] ; then
+        echoInfo "INFO: Deleting old genesis since new genesis is required"
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+        chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the interx reference direcotry"
+        rm -fv "$LOCAL_GENESIS_PATH" "$INTERX_REFERENCE_DIR/genesis.json"
+    else
+        echoInfo "INFO: Upgrade does NOT require a new genesis file"
+    fi
+    
     echoInfo "INFO: Starting update service..."
-    globSet UPGRADE_REPOS_DONE "true"
+    setGlobEnv NETWORK_NAME "$NEW_CHAIN_ID"
+    globSet UPGRADE_EXPORT_DONE "true"
     globSet UPDATE_FAIL_COUNTER "0"
     globSet UPDATE_DONE "false"
-    globSet SETUP_REBOOT ""
+    globSet SYSTEM_REBOOT "true"
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
-    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
-    
-    echoInfo "INFO: Dumping loggs before planned reboot & update..."
-    rm -fv "$KIRA_DUMP/kiraup-done.log.txt"
-    journalctl --since "$PLAN_START_DT" -u kiraplan -b --no-pager --output cat > "$KIRA_DUMP/kiraplan-done.log.txt" || echoErr "ERROR: Failed to dump kira plan service log"
-    
-    echoInfo "INFO: Restarting update daemon..."
-    systemctl daemon-reload
-    systemctl restart docker
-    timeout 60 systemctl restart kiraup
+
+    $KIRA_MANAGER/init.sh --infra-src="$INFRA_SRC" --init-mode="upgrade"
 else
-    echoInfo "INFO: Repos upgrade already done"
+    echoInfo "INFO: Upgrade exports already done!"
 fi
 
-UPGRADE_REPOS_DONE=$(globGet UPGRADE_REPOS_DONE)
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
-if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_REPOS_DONE,,}" == "true" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ] ; then
-
+if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ] ; then
     if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "true"
-        # NOTE: Pause disabled until safety min validators hotfix
-        # VFAIL="false" && docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || VFAIL="true"
-        VFAIL="false"
+        UNPAUSE_FAILED="false"
+        docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || UNPAUSE_FAILED="true"
 
-        if [ "${VFAIL,,}" == "true" ] ; then
+        if [ "${UNPAUSE_FAILED,,}" == "true" ] ; then
             echoWarn "WARNING: Failed to pause validator node"
         else
             echoInfo "INFO: Validator node was sucesfully unpaused"

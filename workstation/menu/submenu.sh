@@ -77,15 +77,15 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -x
 set -e
 
+NEW_NETWORK="false"
 if [ "${INFRA_MODE,,}" == "validator" ]; then
     set +x
     echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
     [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
-else
-    NEW_NETWORK="false"
 fi
 
+globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
 globSet NEW_NETWORK "$NEW_NETWORK"
 [ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 [ -z "$(globGet SNAPSHOT_EXECUTE)" ] && globSet SNAPSHOT_EXECUTE "true"
@@ -105,24 +105,21 @@ while :; do
     echo -e "|       Network Interface: $IFACE (default)"
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
-    echo -e "|  NEW Network Deployment: ${NEW_NETWORK^^}"
+    echo -e "|  NEW Network Deployment: $(globGet NEW_NETWORK)"
     [ "${NEW_NETWORK,,}" == "true" ] && \
-    echo -e "|        NEW Network Name: ${NEW_NETWORK_NAME}"
-    [ "${NEW_NETWORK,,}" != "true" ] && \
-    echo -e "|            Network Name: ${NETWORK_NAME}"
+    echo -e "|        NEW Network Name: $(globGet NEW_NETWORK_NAME)"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     echo -e "|       Snapshots Enabled: $(globGet SNAPSHOT_EXECUTE)"
     [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
-    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH" && \
-    echo -e "|     Current kira Branch: $INFRA_BRANCH"
-    echo -e "|      Base Image Version: $KIRA_BASE_VERSION"
+    echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH"
+    echo -e "|       Base Image Source: $(globGet NEW_BASE_IMAGE_SRC)"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
     displayAlign left $printWidth " [2] | Change SSH Port to Expose"
-    displayAlign left $printWidth " [3] | Change Default Branches"
+    displayAlign left $printWidth " [3] | Change Base Image URL"
     displayAlign left $printWidth " [4] | Change Node Type (sentry/seed/validator)"
-    displayAlign left $printWidth " [5] | Change Network Exposure (privacy) Mode"
+    displayAlign left $printWidth " [5] | Change Node Exposure (privacy) Mode"
     displayAlign left $printWidth " [6] | Change Snapshots Configuration"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
@@ -140,6 +137,7 @@ while :; do
     echo "NETWORK interface: $IFACE"
     setGlobEnv IFACE "$IFACE"
     setGlobEnv KIRA_SNAP_PATH ""
+    globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
 
     if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
@@ -161,7 +159,7 @@ while :; do
     continue
     ;;
   3*)
-    $KIRA_MANAGER/menu/branch-select.sh "false"
+    $KIRA_MANAGER/menu/base-image-select.sh
     continue
     ;;
   4*)
@@ -171,14 +169,14 @@ while :; do
   5*)
     set +x
     echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
-    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=($(globGet OPTION))
+    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=$(globGet OPTION)
     set -x
 
     [ "${MODE,,}" == "p" ] && globSet PRIVATE_MODE "false"
     [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
     ;;
   6*)
-    $KIRA_MANAGER/kira/kira-backup.sh "submenu"
+    $KIRA_MANAGER/kira/kira-backup.sh
     continue
     ;;
   x*)
@@ -192,26 +190,23 @@ while :; do
 done
 set -x
 
-globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER"
+globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER" UPGRADE_PLAN
 globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
-globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT SETUP_REBOOT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
+globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
-globSet LATEST_BLOCK 0
 globSet UPDATE_DONE "false"
 globSet UPDATE_FAIL "false"
+globSet SYSTEM_REBOOT "false"
 
 SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
 globSet PORTS_EXPOSURE "enabled"
 
-rm -fv $(globFile validator_SEKAID_STATUS)
-rm -fv $(globFile sentry_SEKAID_STATUS)
-rm -fv $(globFile seed_SEKAID_STATUS)
-rm -fv $(globFile interx_SEKAID_STATUS)
+rm -fv $(globFile validator_SEKAID_STATUS) $(globFile sentry_SEKAID_STATUS) 
+rm -fv $(globFile seed_SEKAID_STATUS) $(globFile interx_SEKAID_STATUS)
 
-UPGRADE_NAME=$(cat $KIRA_INFRA/upgrade || echo "")
-globSet UPGRADE_NAME "$UPGRADE_NAME"
+globDel UPGRADE_INSTATE
 globSet UPGRADE_DONE "true"
 globSet UPGRADE_TIME "$(date2unix $(date))"
 globSet AUTO_UPGRADES "true"
@@ -221,74 +216,11 @@ globSet PLAN_FAIL_COUNT "0"
 globSet PLAN_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet PLAN_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then
-  globSet MIN_HEIGHT "0"
-  globSet LATEST_BLOCK_HEIGHT "0"
-  globSet LATEST_BLOCK_TIME "0"
+mkdir -p $KIRA_LOGS
+echo -n "" > $KIRA_LOGS/kiraup.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraup.log'"
+echo -n "" > $KIRA_LOGS/kiraplan.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraplan.log'"
 
-  globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
-  globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
-  globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
-fi
-
-set +e && source $ETC_PROFILE &>/dev/null && set -e
-
-echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
-(! $(isNaturalNumber $MTU)) && MTU=1500
-(($MTU < 100)) && MTU=900
-globSet MTU $MTU
-
-rm -rfv "$KIRA_DUMP/kiraup-done.log.txt" "$KIRA_DUMP/kirascan-done.log.txt"
-
-cat > /etc/systemd/system/kiraup.service << EOL
-[Unit]
-Description=KIRA Update And Setup Service
-After=network.target
-[Service]
-CPUWeight=20
-CPUQuota=85%
-IOWeight=20
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=5
-LimitNOFILE=4096
-StandardOutput=append:$KIRA_LOGS/kiraup.log
-StandardError=append:$KIRA_LOGS/kiraup.log
-[Install]
-WantedBy=default.target
-EOL
-
-cat > /etc/systemd/system/kiraplan.service << EOL
-[Unit]
-Description=KIRA Upgrade Plan Service
-After=network.target
-[Service]
-CPUWeight=100
-CPUQuota=100%
-IOWeight=100
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/plan.sh
-Restart=always
-SuccessExitStatus=on-failure
-RestartSec=5
-LimitNOFILE=4096
-StandardOutput=append:$KIRA_LOGS/kiraplan.log
-StandardError=append:$KIRA_LOGS/kiraplan.log
-[Install]
-WantedBy=default.target
-EOL
-
-rm -rfv $KIRA_LOGS && mkdir -p $KIRA_LOGS
-
+$KIRA_MANAGER/setup/services.sh
 systemctl daemon-reload
 systemctl enable kiraup
 systemctl enable kiraplan
@@ -299,9 +231,7 @@ systemctl restart systemd-journald
 echoInfo "INFO: Starting install logs preview, to exit type Ctrl+c"
 sleep 2
 
-KIRA_UP_ACTIVE=$(isServiceActive kiraup)
-
-if [ "${KIRA_UP_ACTIVE,,}" == "true" ] ; then
+if [ "$(isServiceActive kiraup)" == "true" ] ; then
   cat $KIRA_LOGS/kiraup.log
 else
   systemctl status kiraup
@@ -312,9 +242,3 @@ fi
 $KIRA_MANAGER/kira/kira.sh
 
 exit 0
-
-# systemctl status kiraup
-# journalctl -u kiraup 
-# cat $KIRA_LOGS/kiraup.log
-
-# systemctl restart kiraup && journalctl -u kiraup -f --output cat

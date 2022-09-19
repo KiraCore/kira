@@ -40,6 +40,7 @@ while ! ping -c1 $PING_TARGET &>/dev/null ; do
 done
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
+    rm -rfv $INTERXD_HOME/*
     mkdir -p "$CACHE_DIR" "$INTERXD_HOME"
     grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
     rpc="http://$PING_TARGET:$DEFAULT_RPC_PORT"
@@ -65,6 +66,7 @@ globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "interxd $(interxd version)"
 
 echoInfo "INFO: Starting INTERX service..."
+kill -9 $(lsof -t -i:11000) || echoWarn "WARNING: Nothing running on port 11000, or failed to kill processes"
 EXIT_CODE=0 && interxd start --home="$INTERXD_HOME" || EXIT_CODE="$?"
 set +x
 echoErr "ERROR: INTERX failed with the exit code $EXIT_CODE"
