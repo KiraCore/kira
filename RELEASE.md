@@ -1,3 +1,3 @@
 Features:
 
-* First test release without automated upgrades support
+* HaAdded automated upgrades hard-fork support

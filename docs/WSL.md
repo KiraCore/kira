@@ -55,7 +55,7 @@ docker rmi -f $(docker images -aq)
 # Setup Example
 
 ```
-# bafybeigx2qmj26n3q7ueqizjqwcorokzwmvodsnfx4gcljpthpqsqgl3zu
+# bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
  INFRA_SRC="https://ipfs.kira.network/ipfs/$HASH" && wget $INFRA_SRC/init.sh -O ./i.sh && \
  chmod 555 -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
