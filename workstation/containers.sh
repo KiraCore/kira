@@ -32,7 +32,7 @@ chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the l
 chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
 rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
 
-if [ "${NEW_NETWORK,,}" == "false" ] && ( [ "$UPGRADE_MODE" == "none" ] || [ "$UPGRADE_MODE" == "soft" ] ) ; then 
+if [ "$(globGet NEW_NETWORK)" == "false" ] && ( [ "$UPGRADE_MODE" == "none" ] || [ "$UPGRADE_MODE" == "soft" ] ) ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"

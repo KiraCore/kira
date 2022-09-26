@@ -64,6 +64,31 @@ showCurrentPlan | jq
 showNextPlan | jq
 ```
 
+> Creating Hard Fork Update Plan (different binary)
+
+```
+HASH="bafybeifqhdxfpt2vmgjpbnkov43afh5yvaye2r3udx2hk3gdpic326suoi" && \
+RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
+sekaid tx upgrade proposal-set-plan \
+ --name="Hard Fork - Test Upgrade - $(date)" \
+ --instate-upgrade=false \
+ --skip-handler=false \
+ --resources="[${RES1}]" \
+ --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
+ --old-chain-id="$NETWORK_NAME" \
+ --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
+ --rollback-memo="roll" \
+ --max-enrollment-duration=60 \
+ --upgrade-memo="This is a hard fork test upgrade with no changes in sekaid binary" \
+ --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
+
+voteYes $(lastProposal) validator
+
+showCurrentPlan | jq
+showNextPlan | jq
+```
+
+
  # Halt services to simulate missing validators
 
  ```

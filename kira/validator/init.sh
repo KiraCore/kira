@@ -5,9 +5,6 @@ set -x
 
 echoInfo "INFO: Started SEKAI init..."
 
-NEW_NETWORK=$(globGet NEW_NETWORK)
-PRIVATE_MODE=$(globGet PRIVATE_MODE)
-
 SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 SNAP_INFO="$SEKAID_HOME/data/snapinfo.json"
 
@@ -61,7 +58,7 @@ set -x
 echoInfo "INFO: All accounts were recovered"
 sekaid keys list --keyring-backend=test --home=$SEKAID_HOME
   
-if [ "${NEW_NETWORK,,}" == "true" ]; then
+if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoInfo "INFO: Generating new genesis file..."
     set +x 
     sekaid add-genesis-account $(sekaid keys show validator -a --keyring-backend=test --home=$SEKAID_HOME) 299998800000000ukex,29999780000000000test,2000000000000000000000000000samolean,1000000lol --home=$SEKAID_HOME

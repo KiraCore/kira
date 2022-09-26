@@ -87,7 +87,7 @@ fi
 
 globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
 globSet NEW_NETWORK "$NEW_NETWORK"
-[ "${NEW_NETWORK,,}" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
+[ "$(globGet NEW_NETWORK)" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
 [ -z "$(globGet SNAPSHOT_EXECUTE)" ] && globSet SNAPSHOT_EXECUTE "true"
 
 PRIVATE_MODE=$(globGet PRIVATE_MODE) && (! $(isBoolean "$PRIVATE_MODE")) && PRIVATE_MODE="false" && globSet PRIVATE_MODE "$PRIVATE_MODE"
@@ -106,12 +106,12 @@ while :; do
     echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: $(globGet NEW_NETWORK)"
-    [ "${NEW_NETWORK,,}" == "true" ] && \
+    [ "$(globGet NEW_NETWORK)" == "true" ] && \
     echo -e "|        NEW Network Name: $(globGet NEW_NETWORK_NAME)"
     echo -e "|       Secrets Direcotry: $KIRA_SECRETS"
     echo -e "|     Snapshots Direcotry: $KIRA_SNAP"
     echo -e "|       Snapshots Enabled: $(globGet SNAPSHOT_EXECUTE)"
-    [ "${NEW_NETWORK,,}" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
+    [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH"
     echo -e "|       Base Image Source: $(globGet NEW_BASE_IMAGE_SRC)"
     echo -e "|-----------------------------------------------|"

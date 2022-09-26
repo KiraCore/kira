@@ -115,7 +115,7 @@ cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status" && exit 1
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
     declare -a perms=(

@@ -6,7 +6,7 @@ mkdir -p "$KIRA_CONFIGS"
 TMP_GENESIS_PATH="/tmp/genesis.json"
 NEW_NETWORK=$(globGet NEW_NETWORK)
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
     echoWarn "WARNING: User chose to create new network, existing list of seeds & peers will be removed"
     rm -f -v "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
