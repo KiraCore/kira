@@ -9,8 +9,9 @@ RAM_RESERVED="$(echo "scale=0; ( $RAM_MEMORY / 2 ) / 1024 " | bc)m"
 
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-COMMON_GLOB="$COMMON_PATH/kiraglob"
+GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -25,6 +26,14 @@ set -x
 
 globSet "${CONTAINER_NAME}_STARTED" "false"
 
+echoInfo "INFO: Updating genesis reference file..."
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
+ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+chattr +i "$INTERX_REFERENCE_DIR/genesis.json"
+chattr +i "$LOCAL_GENESIS_PATH"
+
 if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     echoInfo "INFO: Wiping '$CONTAINER_NAME' resources and setting up config vars..."
     $KIRA_COMMON/container-delete.sh "$CONTAINER_NAME"
@@ -34,15 +43,13 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     tryCat "$COMMON_PATH/logs/health.log" | globSet "${CONTAINER_NAME}_HEALTH_LOG_OLD"
     # globGet interx_start_log_old
     tryCat "$COMMON_PATH/logs/start.log" | globSet "${CONTAINER_NAME}_START_LOG_OLD"
-    rm -rfv "$COMMON_PATH"
-    mkdir -p "$COMMON_LOGS" "$COMMON_GLOB"
+    rm -rfv "$COMMON_PATH" "$APP_HOME"
+    mkdir -p "$COMMON_LOGS" "$GLOBAL_COMMON" "$APP_HOME"
 
     echoInfo "INFO: Loading secrets..."
     set +x
-    set +e
     source $KIRAMGR_SCRIPTS/load-secrets.sh
     echo "$SIGNER_ADDR_MNEMONIC" > "$COMMON_PATH/signing.mnemonic"
-    set -e
     set -x
 
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
@@ -51,9 +58,14 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     [ "${INFRA_MODE,,}" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
     [ "${INFRA_MODE,,}" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
-    globSet KIRA_ADDRBOOK "" $COMMON_GLOB
 
-    echoInfo "INFO: Starting '$CONTAINER_NAME' container..."
+    globSet KIRA_ADDRBOOK "" $GLOBAL_COMMON
+    globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
+    globSet NEW_NETWORK "$(globGet NEW_NETWORK)" $GLOBAL_COMMON
+    globSet INIT_DONE "false" $GLOBAL_COMMON
+
+    BASE_IMAGE_SRC=$(globGet BASE_IMAGE_SRC)
+    echoInfo "INFO: Starting '$CONTAINER_NAME' container from '$BASE_IMAGE_SRC'..."
 docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
@@ -76,7 +88,8 @@ docker run -d \
     -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
-    ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION
+    -v $APP_HOME:/$INTERXD_HOME \
+    $BASE_IMAGE_SRC
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
     $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"

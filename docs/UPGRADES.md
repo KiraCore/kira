@@ -5,9 +5,7 @@
 
 ```
 whitelistPermission validator $PermCreateSoftwareUpgradeProposal $(showAddress validator) && \
-whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) 
-
-
+whitelistPermission validator $PermVoteSoftwareUpgradeProposal $(showAddress validator) && \
 whitelistValidators validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
 whitelistValidators validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
 whitelistValidators validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads && \
@@ -19,21 +17,45 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r
 > Creating Soft Fork Update Plan
 
 ```
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-94" && \
+HASH="bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m" && \
+RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
- --name="$UPGRADE_NAME_TMP" \
+ --name="Soft Fork - Test Upgrade - $(date)" \
  --instate-upgrade=true \
  --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
+ --resources="[${RES1}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
  --new-chain-id="$NETWORK_NAME" \
- --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
+ --rollback-memo="roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a soft fork test upgrade" \
+ --upgrade-memo="This is a soft fork test upgrade with no changes in sekaid binary" \
+ --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
+
+voteYes $(lastProposal) validator
+voteNo $(lastProposal) validator
+
+
+showCurrentPlan | jq
+showNextPlan | jq
+```
+
+> Creating Hard Fork Update Plan (same binary)
+
+```
+HASH="bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m" && \
+RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
+sekaid tx upgrade proposal-set-plan \
+ --name="Hard Fork - Test Upgrade - $(date)" \
+ --instate-upgrade=false \
+ --skip-handler=true \
+ --resources="[${RES1}]" \
+ --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
+ --old-chain-id="$NETWORK_NAME" \
+ --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
+ --rollback-memo="roll" \
+ --max-enrollment-duration=60 \
+ --upgrade-memo="This is a hard fork test upgrade with no changes in sekaid binary" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator
@@ -42,82 +64,30 @@ showCurrentPlan | jq
 showNextPlan | jq
 ```
 
-> Creating Hard Fork Update Plan
+> Creating Hard Fork Update Plan (different binary)
 
 ```
-UPGRADE_NAME_TMP="upgrade-118" && UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 800)) && \
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"master\",\"checksum\":\"\"}" && \
+HASH="bafybeifqhdxfpt2vmgjpbnkov43afh5yvaye2r3udx2hk3gdpic326suoi" && \
+RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
- --name="$UPGRADE_NAME_TMP" \
+ --name="Hard Fork - Test Upgrade - $(date)" \
  --instate-upgrade=false \
- --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
- --min-upgrade-time="$UPGRADE_TIME" \
- --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="devnet-24" \
- --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
- --max-enrollment-duration=60 \
- --upgrade-memo="This is a hard fork test upgrade" \
- --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --output=json --yes | txAwait 180
-
-voteYes $(lastProposal) validator
-
-showCurrentPlan | jq
-showNextPlan | jq
-```
-> Latest Public testnet Soft Fork
-
-```
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"testnet-5\",\"checksum\":\"\"}" && \
-UPGRADE_NAME_TMP="upgrade-94" && \
-sekaid tx upgrade proposal-set-plan \
- --name="$UPGRADE_NAME_TMP" \
- --instate-upgrade=true \
- --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
+ --skip-handler=false \
+ --resources="[${RES1}]" \
  --min-upgrade-time=$(($(date -d "$(date)" +"%s") + 900)) \
  --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="$NETWORK_NAME" \
- --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
+ --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
+ --rollback-memo="roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a public testnet, planned soft fork upgrade" \
- --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
+ --upgrade-memo="This is a hard fork test upgrade with no changes in sekaid binary" \
+ --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator
 
 showCurrentPlan | jq
 showNextPlan | jq
- ```
-
-> Latest Public testnet Hard Fork 668
-
 ```
-UPGRADE_NAME_TMP="upgrade-118" && UPGRADE_BRANCH="testnet-9" && UPGRADE_TIME=$(date2unix "2022-01-07T16:30:00Z") && \
-INFRA_RES_TMP="{\"id\":\"kira\",\"git\":\"https://github.com/KiraCore/kira\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
-SEKAI_RES_TMP="{\"id\":\"sekai\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
-INTRX_RES_TMP="{\"id\":\"interx\",\"git\":\"https://github.com/KiraCore/sekai\",\"checkout\":\"$UPGRADE_BRANCH\",\"checksum\":\"\"}" && \
-sekaid tx upgrade proposal-set-plan \
- --name="$UPGRADE_NAME_TMP" \
- --instate-upgrade=false \
- --skip-handler=true \
- --resources="[${INFRA_RES_TMP},${SEKAI_RES_TMP},${INTRX_RES_TMP}]" \
- --min-upgrade-time="$UPGRADE_TIME" \
- --old-chain-id="$NETWORK_NAME" \
- --new-chain-id="$UPGRADE_BRANCH" \
- --rollback-memo="${UPGRADE_NAME_TMP}-roll" \
- --max-enrollment-duration=90 \
- --upgrade-memo="This is a planned hard fork of the public testnet" \
- --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes | txAwait 180
 
-voteYes $(lastProposal) validator
-
-showCurrentPlan | jq
-showNextPlan | jq
- ```
 
  # Halt services to simulate missing validators
 

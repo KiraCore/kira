@@ -13,16 +13,12 @@ set -x
 
 STATUS_SCAN="${COMMON_DIR}/status"
 COMMON_CONSENSUS="$COMMON_READ/consensus"
-
 VALOPERS_FILE="$COMMON_READ/valopers"
 CFG="$SEKAID_HOME/config/config.toml"
+PREVIOUS_HEIGHT=$(globGet previous_height)
+FAILED="false"
 
 rm -rfv $STATUS_SCAN
-
-LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO")
-PREVIOUS_HEIGHT=$(globGet previous_height)
-
-FAILED="false"
 
 echoInfo "INFO: Checking node status..."
 CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" $COMMON_CONSENSUS || echo -n "")
@@ -31,13 +27,12 @@ CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_SCAN || echo -n "")
 HEIGHT=$(jsonQuickParse "latest_block_height" $STATUS_SCAN || echo -n "")
 (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
 (! $(isNaturalNumber "$PREVIOUS_HEIGHT")) && PREVIOUS_HEIGHT=0
-(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
 [[ $HEIGHT -ge 1 ]] && globSet previous_height "$HEIGHT"
 
 echoWarn "------------------------------------------------"
 echoWarn "|    Current height: $HEIGHT"
 echoWarn "|   Previous height: $PREVIOUS_HEIGHT"
-echoWarn "|     Latest height: $LATEST_BLOCK_HEIGHT"
+echoWarn "|     Latest height: $(globGet latest_block_height $GLOBAL_COMMON_RO)"
 echoWarn "| Consensus Stopped: $CONSENSUS_STOPPED"
 echoWarn "------------------------------------------------"
 

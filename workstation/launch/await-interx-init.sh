@@ -6,6 +6,7 @@ IS_STARTED="false"
 INTERX_STATUS_CODE=""
 CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=1800
@@ -52,7 +53,7 @@ echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
 docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
 if [[ "$INTERX_STATUS_CODE" -ne "200" ]] || [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
     echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"

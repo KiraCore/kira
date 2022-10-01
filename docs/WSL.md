@@ -54,8 +54,18 @@ docker rmi -f $(docker images -aq)
 
 # Setup Example
 
+Setup with IPFS hash
 ```
-BRANCH="feature/ci-cd-v1" && rm -fv ./i.sh && \
- wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && ./i.sh "$BRANCH"
+# bafybeifqhdxfpt2vmgjpbnkov43afh5yvaye2r3udx2hk3gdpic326suoi
+read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
+ wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+ chmod 555 -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
+```
+
+Setup with version ID
+```
+# v0.10.1
+read -p "INPUT VERSION OF THE KM RELEASE: " VER && rm -fv ./i.sh && \
+ wget https://github.com/KiraCore/kira/releases/download/$VER/init.sh -O ./i.sh && \
+ chmod 555 -v ./i.sh && ./i.sh --infra-src="$VER" --init-mode="interactive"
 ```

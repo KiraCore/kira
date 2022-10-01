@@ -29,7 +29,6 @@ sleep 3
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 for name in $CONTAINERS; do
     $KIRA_COMMON/container-delete.sh "$name"
-    rm -rfv "$DOCKER_COMMON/${name}"
     globDel "${name}_SEKAID_STATUS"
 done
 
@@ -42,13 +41,7 @@ docker image prune -a -f || echoErr "ERROR: Failed to prune dangling images!"
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
 
 echoInfo "INFO: Docker common directories cleanup..."
-rm -fv $TMP_GENESIS_PATH
-[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $LOCAL_GENESIS_PATH $TMP_GENESIS_PATH
-chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO"
-rm -fv $LOCAL_GENESIS_PATH
-mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" 
-[ "${NEW_NETWORK,,}" == "false" ] && cp -afv $TMP_GENESIS_PATH $LOCAL_GENESIS_PATH
+rm -rfv "$DOCKER_COMMON_RO/consensus" "$DOCKER_COMMON_RO/valopers"
 
 echoInfo "INFO: Restarting firewall settings..."
 $KIRA_MANAGER/networking.sh
@@ -61,7 +54,9 @@ set -x
 
 echoInfo "INFO: Recreating docker networks..."
 if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then
-    MTU=$(globGet MTU)
+    MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+    (! $(isNaturalNumber $MTU)) && MTU=1500
+    (($MTU < 100)) && MTU=900
     echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
     docker network rm $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
     NETWORKS=$(timeout 10 docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "")
@@ -79,14 +74,12 @@ $KIRA_MANAGER/launch/update-ifaces.sh
 
 echoInfo "INFO: Updating IP addresses info..."
 systemctl restart kirascan || ( echoErr "ERROR: Failed to restart kirascan service" && exit 1 )
-i=0 && LOCAL_IP="" && PUBLIC_IP=""
-while ( (! $(isIp "$LOCAL_IP")) && (! $(isPublicIp "$PUBLIC_IP")) ) ; do
+i=0 && globDel PUBLIC_IP LOCAL_IP
+while ( (! $(isIp $(globGet LOCAL_IP))) && (! $(isPublicIp $(globGet PUBLIC_IP))) ) ; do
     i=$((i + 1))
-    PUBLIC_IP=$(globGet "PUBLIC_IP")
-    LOCAL_IP=$(globGet "LOCAL_IP")
-    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($PUBLIC_IP) or Local IPv4 ($LOCAL_IP) address could not be found. Setup CAN NOT continue!" && exit 1 
+    [ "$i" == "30" ] && echoErr "ERROR: Public IPv4 ($(globGet PUBLIC_IP)) or Local IPv4 ($(globGet LOCAL_IP)) address could not be found. Setup CAN NOT continue!" && exit 1 
     echoInfo "INFO: Waiting for public and local IPv4 address to be updated..."
-    sleep 30
+    sleep 10
 done
 
 echoInfo "INFO: Setting up snapshots and geesis file..."
@@ -105,7 +98,7 @@ if [ "${INFRA_MODE,,}" == "seed" ] ; then
 elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
 elif [ "${INFRA_MODE,,}" == "validator" ] ; then
-    if [ "${NEW_NETWORK,,}" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ) ; then
+    if [ "$(globGet NEW_NETWORK)" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ) ; then
         EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"

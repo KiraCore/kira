@@ -6,15 +6,19 @@ EXPECTED_NODE_ID="$1"
 
 CONTAINER_NAME="validator"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
 RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
-
-NEW_NETWORK=$(globGet NEW_NETWORK)
-UPGRADE_NAME=$(globGet UPGRADE_NAME)
 TIMEOUT=3600
+
+if [ $INIT_MODE == "upgrade" ] ; then
+    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+else
+    UPGRADE_MODE="none"
+fi
 
 set +x
 echoWarn "--------------------------------------------------"
@@ -23,12 +27,11 @@ echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
-echoWarn "|     UPGRADE NAME: $UPGRADE_NAME"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
+echoWarn "|        INIT MODE: $INIT_MODE"
+echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|-------------------------------------------------"
 set -x
-
-($(isNullOrEmpty $UPGRADE_NAME)) && echoErr "ERROR: Invalid upgrade name!" && exit 1
 
 NODE_ID=""
 PREVIOUS_HEIGHT=0
@@ -49,7 +52,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
         timerPause $TIMER_NAME
-        cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
     else
         timerUnpause $TIMER_NAME
@@ -57,16 +60,17 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-        cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+        cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
         echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
     else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     # copy genesis from validator only if internal node syncing takes place
-    if [ "${NEW_NETWORK,,}" == "true" ] ; then 
+    if [ "$(globGet NEW_NETWORK)" == "true" ] || [ "$UPGRADE_MODE" == "hard" ] ; then 
         echoInfo "INFO: Attempting to access genesis file of the new network..."
-        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-        rm -fv $LOCAL_GENESIS_PATH
-        cp -afv "$COMMON_PATH/genesis.json" "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
+        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+        chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+        rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+        cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
     fi
 
     # make sure genesis is present in the destination path
@@ -75,6 +79,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
         sleep 12 && continue
     else
         chattr +i "$LOCAL_GENESIS_PATH"
+        globSet GENESIS_SHA256 "$(sha256 $LOCAL_GENESIS_PATH)"
         echoInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
     fi
 
@@ -99,7 +104,7 @@ echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
 docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
 echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
 [ ! -f "$LOCAL_GENESIS_PATH" ] && \
     echoErr "ERROR: Failed to copy genesis file from the $CONTAINER_NAME node" && exit 1
@@ -110,7 +115,7 @@ cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display 
 [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] && \
     echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status" && exit 1
 
-if [ "${NEW_NETWORK,,}" == "true" ] ; then
+if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
     echoInfo "INFO: New network was launched, attempting to setup essential post-genesis proposals..."
 
     declare -a perms=(
@@ -194,21 +199,21 @@ sekaid tx tokens proposal-upsert-alias --from validator --keyring-backend=test \
 EOL
 )
 
-    UPGRADE_RESOURCES="{\"id\":\"kira\",\"git\":\"$INFRA_REPO\",\"checkout\":\"$INFRA_BRANCH\",\"checksum\":\"\"}"
-    UPGRADE_RESOURCES="${UPGRADE_RESOURCES},{\"id\":\"base-image\",\"url\":\"ghcr.io/kiracore/docker/kira-base:$KIRA_BASE_VERSION\"}"
+# NOTE: Only initial plan should be called genesis, plans with such name will NOT be executed!
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan --from=validator --keyring-backend=test \
- --name="$UPGRADE_NAME" \
+ --name="genesis" \
  --instate-upgrade=true \
  --skip-handler=true \
  --resources='[$UPGRADE_RESOURCES]' \
  --min-upgrade-time=$UPGRADE_TIME \
  --old-chain-id="\$NETWORK_NAME" \
  --new-chain-id="\$NETWORK_NAME" \
- --rollback-memo="${UPGRADE_NAME}-roll" \
+ --rollback-memo="genesis" \
  --max-enrollment-duration=666 \
- --upgrade-memo="Genesis setup plan" \
+ --upgrade-memo="Genesis Setup Plan" \
  --chain-id=\$NETWORK_NAME --home=\$SEKAID_HOME --fees=100ukex --log_format=json --yes --output=json  | txAwait 180
 EOL
 )

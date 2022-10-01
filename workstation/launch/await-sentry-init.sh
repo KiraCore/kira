@@ -5,9 +5,9 @@ set -x
 
 CONTAINER_NAME=$1
 EXPECTED_NODE_ID=$2
-#SYNC_AWAIT=$3
-#[ -z "$SYNC_AWAIT" ] && SYNC_AWAIT="true"
+
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
+APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
@@ -17,6 +17,12 @@ RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
 
+if [ $INIT_MODE == "upgrade" ] ; then
+    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+else
+    UPGRADE_MODE="none"
+fi
+
 set +x
 echoWarn "--------------------------------------------------"
 echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
@@ -25,6 +31,8 @@ echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
+echoWarn "|        INIT MODE: $INIT_MODE"
+echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|-------------------------------------------------"
 set -x
 
@@ -49,7 +57,7 @@ while : ; do
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" == "configuring" ] ; then
             timerPause $TIMER_NAME
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is still being configured, please wait ..." && sleep 30 && continue
         else
             timerUnpause $TIMER_NAME
@@ -57,9 +65,28 @@ while : ; do
 
         echoInfo "INFO: Awaiting $CONTAINER_NAME initialization..."
         if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-            cat $COMMON_LOGS/start.log | tail -n 75 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
+            cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display '$CONTAINER_NAME' container start logs"
             echoWarn "WARNING: $CONTAINER_NAME is not initialized yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..." && sleep 30 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
+
+        # copy genesis from sentry only if internal node syncing takes place
+        if [ $UPGRADE_MODE == "hard" ] ; then 
+            echoInfo "INFO: Attempting to access genesis file of the new network..."
+            chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "WARNINIG: Genesis file was NOT found in the local direcotry"
+            chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "WARNINIG: Genesis file was NOT found in the reference direcotry"
+            rm -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"
+            cp -afv $APP_HOME/config/genesis.json "$LOCAL_GENESIS_PATH" || rm -fv $LOCAL_GENESIS_PATH
+        fi
+
+        # make sure genesis is present in the destination path
+        if [ ! -f "$LOCAL_GENESIS_PATH" ] ; then
+            echoWarn "WARNING: Failed to copy genesis file from $CONTAINER_NAME, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
+            sleep 12 && continue
+        else
+            chattr +i "$LOCAL_GENESIS_PATH"
+            globSet GENESIS_SHA256 "$(sha256 $LOCAL_GENESIS_PATH)"
+            choInfo "INFO: Success, genesis file was copied to $LOCAL_GENESIS_PATH"
+        fi
 
         echoInfo "INFO: Awaiting node status..."
         STATUS=$(timeout 6 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
@@ -79,24 +106,17 @@ while : ; do
             echoWarn "INFO: New blocks are not beeing synced or produced yet, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
             sleep 10 && continue
         else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
-
-        #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-        #    echoWarn "WARNING: New blocks are not beeing synced yet! Current height: $HEIGHT, previous height: $PREVIOUS_HEIGHT, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."
-        #    [ "$HEIGHT" != "0" ] && PREVIOUS_HEIGHT=$HEIGHT
-        #    sleep 10
-        #    continue
-        #else echoInfo "INFO: Success, $CONTAINER_NAME container id is syncing new blocks" && break ; fi
     done
 
     echoInfo "INFO: Printing all $CONTAINER_NAME health logs..."
     docker inspect --format "{{json .State.Health }}" $($KIRA_COMMON/container-id.sh "$CONTAINER_NAME") | jq '.Log[-1].Output' | xargs | sed 's/\\n/\n/g' || echo "INFO: Failed to display $CONTAINER_NAME container health logs"
 
     echoInfo "INFO: Printing $CONTAINER_NAME start logs..."
-    cat $COMMON_LOGS/start.log | tail -n 150 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
+    cat $COMMON_LOGS/start.log | tail -n 200 || echoWarn "WARNING: Failed to display $CONTAINER_NAME container start logs"
 
     FAILURE="false"
     if [ "$(globGet ${CONTAINER_NAME}_STATUS)" != "running" ] ; then
-        echoErr "ERROR: $CONTAINER_NAME did NOT acheive running statusy"
+        echoErr "ERROR: $CONTAINER_NAME did NOT acheive running status"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME was started sucessfully" ; fi
 
@@ -105,11 +125,6 @@ while : ; do
         echoErr "ERROR: Expected '$EXPECTED_NODE_ID', but got '$NODE_ID'"
         FAILURE="true"
     else echoInfo "INFO: $CONTAINER_NAME node id check succeded '$NODE_ID' is a match" ; fi
-
-    #if [[ $HEIGHT -le $PREVIOUS_HEIGHT ]] ; then
-    #    echoErr "ERROR: $CONTAINER_NAME node failed to start catching up new blocks, check node configuration, peers or if seed nodes function correctly."
-    #    FAILURE="true"
-    #fi
 
     NETWORK=$(echo "$STATUS" | jsonQuickParse "network" || echo -n "")
     if [ "$NETWORK_NAME" != "$NETWORK" ] ; then
