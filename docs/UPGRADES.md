@@ -14,9 +14,13 @@ whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ag6ct3jxeh7r
 whitelistPermission validator $PermVoteSoftwareUpgradeProposal kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads 180
 ```
 
+
 > Creating Soft Fork Update Plan
 
 ```
+# v0.10.0: bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
+# v0.10.1: bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq
+ 
 HASH="bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
@@ -43,7 +47,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan (same binary)
 
 ```
-HASH="bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m" && \
+HASH="bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
@@ -67,7 +71,10 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan (different binary)
 
 ```
-HASH="bafybeifqhdxfpt2vmgjpbnkov43afh5yvaye2r3udx2hk3gdpic326suoi" && \
+# v0.10.0: bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
+# v0.10.1: bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq
+
+HASH="bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
