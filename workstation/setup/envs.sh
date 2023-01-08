@@ -40,7 +40,6 @@ KIRA_SENTRY_DNS="sentry.local"          && setGlobEnv KIRA_SENTRY_DNS "$KIRA_SEN
 KIRA_SEED_DNS="seed.local"              && setGlobEnv KIRA_SEED_DNS "$KIRA_SEED_DNS" 
 KIRA_INTERX_DNS="interx.local"          && setGlobEnv KIRA_INTERX_DNS "$KIRA_INTERX_DNS" 
 
-#KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"          && setGlobEnv KIRA_REGISTRY "$KIRA_REGISTRY" 
 KIRA_DOCKER="$KIRA_INFRA/docker"                                && setGlobEnv KIRA_DOCKER "$KIRA_DOCKER"
 KIRAMGR_SCRIPTS="$KIRA_MANAGER/launch"                          && setGlobEnv KIRAMGR_SCRIPTS "$KIRAMGR_SCRIPTS"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"    && setGlobEnv INTERX_REFERENCE_DIR "$INTERX_REFERENCE_DIR"

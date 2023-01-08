@@ -23,12 +23,13 @@ wsl --install -d Ubuntu-20.04 && \
 # Listing Installed Distros
 wsl --list --verbose
 
-# Ensure that `Ubuntu-20.04` is present
+# Ensure that `Ubuntu-20.04` and `Ubuntu-22.04` is present
 
 mkdir -p /c/linux && cd /c/linux
 
 # Export Base Image
 wsl --export Ubuntu-20.04 ubuntu-base-20.04.tar
+wsl --export Ubuntu-22.04 ubuntu-base-22.04.tar
 
 # Import Base Image & Create New Env
 wsl --import kira /c/linux/kira /c/linux/ubuntu-base-20.04.tar
@@ -44,6 +45,12 @@ tee -a /etc/wsl.conf <<EOF
 [user]
 default=asmodat
 EOF
+
+# Reboot WSL
+net stop LxssManager
+net start LxssManager
+
+wsl --export default default.tar
 ```
 
 # Docker Containers & Images Cleanup
@@ -58,6 +65,7 @@ Setup with IPFS hash
 ```
 # v0.10.0: bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
 # v0.10.1: bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq
+# v0.10.2: bafybeihdzfgpm2pbyvgk4t4uptkfzdvsmpsquu4ydi63c6pq6zfwsu5mri
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
  wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \

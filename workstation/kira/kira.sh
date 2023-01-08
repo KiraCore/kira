@@ -70,8 +70,6 @@ while : ; do
             STATUS_TMP=$(globGet "${name}_STATUS")
             HEALTH_TMP=$(globGet "${name}_HEALTH")
             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
-            [ "${name,,}" == "registry" ] && continue
-
             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"

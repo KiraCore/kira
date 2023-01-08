@@ -83,7 +83,6 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
     echoInfo "INFO: Halting and re-starting all containers..."
     for name in $CONTAINERS; do
-        [ "${name,,}" == "registry" ] && continue
         echoInfo "INFO: Halting and re-starting '$name' container..."
         $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
     done

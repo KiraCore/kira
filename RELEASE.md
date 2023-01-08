@@ -1,4 +1,4 @@
 Features:
 
-* Added automated upgrades hard-fork support
-* NEW_NETWORK property is no longer sourced from env variables
+* Added automated upgrades soft-fork support
+* Updated default base image to v0.13.0

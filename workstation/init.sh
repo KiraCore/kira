@@ -21,46 +21,49 @@ if [ "${USER,,}" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-BASE_IMAGE_VERSION="v0.12.2"
+BASE_IMAGE_VERSION="v0.13.0"
 TOOLS_VERSION="v0.2.20"
 COSIGN_VERSION="v1.7.2"
 
 set +x
-echo "------------------------------------------------"
-echo "|      STARTED: INIT"
-echo "|-----------------------------------------------"
-echo "|            KIRA USER: $KIRA_USER"
-echo "|        TOOLS VERSION: $TOOLS_VERSION"
-echo "|       COSIGN VERSION: $COSIGN_VERSION"
-echo "| DEFAULT BASE VERSION: $BASE_IMAGE_VERSION"
-echo "------------------------------------------------"
-echo -e  "\e[35;1mMMMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMMMM"
-echo             "MMMNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NMMM"
-echo             "MMW0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xNMM"
-echo             "MMWOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oXMM"
-echo             "MMW0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oXMM"
-echo             "MMMWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oXMM"
-echo             "MMMMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oXMM"
-echo             "MMMMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oXMM"
-echo             "MMMMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oXMM"
-echo             "MMMMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0WMM"
-echo             "MMMMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMMMM"
-echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMMMM"
-echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMMMM"
-echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMMMM"
-echo             "MMMMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMMMM"
-echo             "MMM              KIRA NETWORK SETUP              MMM"
-echo -e          "MMMMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
+echo -e  "\e[1;40m======================================================\e[0m"
+echo -e  "\e[1;40m|               KIRA | Manager Init Script           |\e[0m"   
+echo -e  "\e[1;40m|====================================================|\e[0m"
+echo -e  "\e[1;40m|           KIRA USER: $KIRA_USER                     \e[0m"
+echo -e  "\e[1;40m|       TOOLS VERSION: $TOOLS_VERSION                 \e[0m"
+echo -e  "\e[1;40m|      COSIGN VERSION: $COSIGN_VERSION                \e[0m"
+echo -e  "\e[1;40m|   BASE IMG. VERSION: $BASE_IMAGE_VERSION            \e[0m"
+echo -e  "\e[1;40m======================================================\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@&BG&@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@B?^..^75B&@@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@##@@@&GJ!:   .~?P#@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@#GJ!::!YG&@@&#P?^.  .:!YG&@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@&B57^.      .^75B&@@&BY!^.  .^75B&@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@#J~.              :~JG#@@@#Y^     .~JB@@@@@@@@@@@@#@@\e[0m"
+echo -e  "\e[1;40m@&BY7^.               .^7YJ~:     :~?P#@@@@@@@@#GJ!~#@\e[0m"
+echo -e  "\e[1;40m@@@@@#GJ~:                    .^75B&@@@@@@@&B57^.  :#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@&#P?^.            .:!YG&@@@@@@@&B5?^.      :#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@&B57^.     :~JG#@@@@@@@@#PJ~:          :#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@&@@@@@@@#GJ!~?P#&@@@@@@@@GY!:.             :#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@#!75B&@@@@@@&&@@@@@@@@@@@#^                .!#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.  :~JP#@@@@@@@@@@@@@@@@#:            .^75B&@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.     .:!YG&@@@@@@@@@@@@#:        .^75B&@@&#@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.   :.    .^75B&@@@@@@@@#:    .:!YG&@@@#GJ!~#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.  :GGJ~      .~?P#@@@@@#:   .5#@@@&GY!:.  ^#@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.  :#@@#:        .7@@@@@#:   :B&B57^.  .^!YB@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.  :#@@#:         !@@@@@#:   .!^.   :!JG#@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@B.  ^&@@#:         !@@@@@#:      .~?P#&@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@G.  ^&@@#:         !@@@@@#:  .^75B&@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@G.  ^&@@B.         !@@@@@#~!YB&@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@&57^~&@@B.         !@@@@@@&@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@#B@@@B.         !@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@#?~.       !@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@&B57^.   !@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@&GY!:7@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@@@@@#B@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
+echo -e  "\e[1;40m@@ KIRA - PUSHING THE LIMITS OF TRUSTLESS COMPUTING @@\e[0m"
+echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
 sleep 3
-
 echo -n ""
 set -x
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
@@ -148,7 +151,7 @@ echoInfo "INFO: Veryfying kira base image integrity..."
 cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC || \
  ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC )
 
-echoInfo "INFO: Setting up essential ENV variables & constant..."
+echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
 setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
 setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
@@ -156,9 +159,23 @@ setGlobEnv KIRA_USER "$KIRA_USER"
 setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"
 setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
-
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
+
+set +x
+echoWarn  "======================================================"
+echoWarn  "|              KIRA | Manager Init Script            |"   
+echoWarn  "|====================================================|"
+echoWarn  "|          KIRA USER: $KIRA_USER"
+echoWarn  "|          INIT MODE: $INIT_MODE"
+echoWarn  "|       INFRA SOURCE: $INFRA_SRC"
+echoWarn  "|   BASE IMG. SOURCE: $IMAGE_SRC"
+echoWarn  "|      TOOLS VERSION: $TOOLS_VERSION"
+echoWarn  "|     COSIGN VERSION: $COSIGN_VERSION"
+echoWarn  "======================================================"
+sleep 3
+echo -n ""
+set -x
 
 KIRA_HOME="/home/$KIRA_USER"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
 KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
@@ -171,10 +188,11 @@ KIRA_CONFIGS="$KIRA_HOME/.kira"             && setGlobEnv KIRA_CONFIGS "$KIRA_CO
 PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"   && setGlobEnv PUBLIC_PEERS "$KIRA_CONFIGS/public_peers"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"   && setGlobEnv PUBLIC_SEEDS "$KIRA_CONFIGS/public_seeds"
 
-KIRA_REPOS="/kira/repos"            && setGlobEnv KIRA_REPOS "$KIRA_REPOS"
-KIRA_INFRA="$KIRA_REPOS/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
-KIRA_SEKAI="$KIRA_REPOS/sekai"      && setGlobEnv KIRA_SEKAI "$KIRA_SEKAI"
-KIRA_INTERX="$KIRA_REPOS/interx"    && setGlobEnv KIRA_INTERX "$KIRA_INTERX"
+#KIRA_REPOS="/kira/repos"            && setGlobEnv KIRA_REPOS "$KIRA_REPOS"
+#KIRA_INFRA="$KIRA_REPOS/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
+#KIRA_SEKAI="$KIRA_REPOS/sekai"      && setGlobEnv KIRA_SEKAI "$KIRA_SEKAI"
+#KIRA_INTERX="$KIRA_REPOS/interx"    && setGlobEnv KIRA_INTERX "$KIRA_INTERX"
+KIRA_INFRA="/kira/repos/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
 
 KIRA_BIN="/kira/bin"                && setGlobEnv KIRA_BIN "$KIRA_BIN"
 KIRA_SETUP="/kira/setup"            && setGlobEnv KIRA_SETUP "$KIRA_SETUP"
@@ -205,8 +223,8 @@ apt-get update -y --fix-missing
 apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential htop ccze sysstat \
     nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude zip unzip p7zip-full \
-    python python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm net-tools \
-    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl bc dnsutils psmisc netcat nmap parallel default-jre default-jdk 
+    python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm net-tools \
+    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl bc dnsutils psmisc netcat nmap parallel
 
 pip3 install ECPy
 

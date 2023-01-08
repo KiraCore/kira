@@ -47,7 +47,7 @@ showNextPlan | jq
 > Creating Hard Fork Update Plan (same binary)
 
 ```
-HASH="bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq" && \
+HASH="bafybeihdzfgpm2pbyvgk4t4uptkfzdvsmpsquu4ydi63c6pq6zfwsu5mri" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
@@ -59,7 +59,7 @@ sekaid tx upgrade proposal-set-plan \
  --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
  --rollback-memo="roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a hard fork test upgrade with no changes in sekaid binary" \
+ --upgrade-memo="This is a hard fork test upgrade with NO changes in sekaid binary" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator
@@ -73,8 +73,9 @@ showNextPlan | jq
 ```
 # v0.10.0: bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
 # v0.10.1: bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq
+# v0.10.2: bafybeihdzfgpm2pbyvgk4t4uptkfzdvsmpsquu4ydi63c6pq6zfwsu5mri
 
-HASH="bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq" && \
+HASH="bafybeihdzfgpm2pbyvgk4t4uptkfzdvsmpsquu4ydi63c6pq6zfwsu5mri" && \
 RES1="{\"id\":\"kira\",\"git\":\"https://ipfs.kira.network/ipfs/$HASH/kira.zip\"}" && \
 sekaid tx upgrade proposal-set-plan \
  --name="Hard Fork - Test Upgrade - $(date)" \
@@ -86,7 +87,7 @@ sekaid tx upgrade proposal-set-plan \
  --new-chain-id="$(echo $NETWORK_NAME | cut -d '-' -f 1)-$(($(echo $NETWORK_NAME | cut -d '-' -f 2) + 1))" \
  --rollback-memo="roll" \
  --max-enrollment-duration=60 \
- --upgrade-memo="This is a hard fork test upgrade with no changes in sekaid binary" \
+ --upgrade-memo="This is a hard fork test upgrade with changes in sekaid binary" \
  --from=validator --keyring-backend=test --home=$SEKAID_HOME --chain-id=$NETWORK_NAME --fees=100ukex --log_format=json --yes --output=json | txAwait 180
 
 voteYes $(lastProposal) validator

@@ -11,8 +11,42 @@ VERSION=$(docker -v || echo "error")
 # NOTE: WSL requires docker desktop running on the host machine 
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 if [ "${IS_WSL,,}" == "true" ] ; then
-    setGlobEnv DOCKER_HOST "tcp://localhost:2375"
+    setGlobEnv DOCKER_HOST "tcp://127.0.0.1:2375"
     setGlobEnv DOCKER_BUILDKIT "1"
+
+    echoInfo "INFO: Updating docker service for WSL2..."
+cat > /usr/lib/systemd/system/docker.service << EOL
+[Unit]
+Description=Docker Application Container Engine
+After=network-online.target docker.socket firewalld.service containerd.service
+Wants=network-online.target
+Requires=docker.socket containerd.service
+
+[Service]
+Type=notify
+ExecStart=/usr/bin/dockerd -H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock
+ExecReload=/bin/kill -s HUP \$MAINPID
+TimeoutSec=0
+RestartSec=2
+Restart=always
+StartLimitBurst=3
+StartLimitInterval=60s
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+TasksMax=infinity
+Delegate=yes
+KillMode=process
+OOMScoreAdjust=-500
+
+[Install]
+WantedBy=multi-user.target
+EOL
+
+systemctl daemon-reload || echoWarn "WARNING: Failed to reload systemctl"
+systemctl start docker
+systemctl status docker
+
 fi
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
