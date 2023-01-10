@@ -77,9 +77,7 @@ docker rmi -f $(docker images -aq)
 
 Setup with IPFS hash
 ```
-# v0.10.0: bafybeidrg5tjsh7ucsguxd2fuajv6rz42dirpwbqmloqbgxqxdaooy3p5m
-# v0.10.1: bafybeicm4r5ny2fysxmnvv6wxxkrkevrwle2j2jqc5ymv2oodg3yxms7wq
-# v0.10.2: bafybeihdzfgpm2pbyvgk4t4uptkfzdvsmpsquu4ydi63c6pq6zfwsu5mri
+# v0.11.3: bafybeici2avunqa5b34foe6qmlotc3zyljeqcts3mplqqasf63elkgddd4
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
  wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \

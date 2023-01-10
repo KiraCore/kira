@@ -76,11 +76,18 @@ jobs:
             with:
               branch: ${{ env.RELEASE_BRANCH }}
               sha: ${{ env.PARENT_BRANCH_REF }}
+          - name: Close All PRs
+            if: ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) && 
+                ( startsWith(env.RELEASE_BRANCH, 'release/v') && contains(env.RELEASE_BRANCH, '.') )
+            uses: crondaemon/close-pr@v1
+            with:
+              comment: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
+            env:
+              GITHUB_TOKEN: ${{ secrets.REPO_ACCESS }}
           - name: Create PR from feature to version branch
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
             if: |
-               ( env.TARGET_BRANCH_EXISTS == false || env.TARGET_BRANCH_EXISTS == 'false' ) &&
                ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) && 
                ( startsWith(env.RELEASE_BRANCH, 'release/v') && contains(env.RELEASE_BRANCH, '.') )
             with:

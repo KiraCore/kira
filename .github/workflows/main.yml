@@ -331,8 +331,8 @@ jobs:
           #    GITHUB_TOKEN: "${{ secrets.REPO_ACCESS }}"
           #    LOG: "TRACE"
           - name: Comment PR's with IPFS
-            # ref.: https://github.com/actions-cool/maintain-one-comment, v2.0.2
-            uses: actions-cool/maintain-one-comment@cc0daaf4db77952f0b631bb2c1e169813d78a7fd
+            # ref.: https://github.com/actions-cool/maintain-one-comment, v3.0.0
+            uses: actions-cool/maintain-one-comment@de04bd2a3750d86b324829a3ff34d47e48e16f4b
           #  if: github.event_name == 'pull_request' &&
           #    ( startsWith(env.DESTINATION_BRANCH, 'release/v') && contains(env.DESTINATION_BRANCH, '.') ) &&
           #    ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
