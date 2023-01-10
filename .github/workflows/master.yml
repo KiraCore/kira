@@ -50,6 +50,13 @@ jobs:
               pr_label: "kira-automation"
               pr_assignee: "asmodat"
               pr_allow_empty: true
+          - name: Close All PRs
+            if: startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.')
+            uses: crondaemon/close-pr@v1
+            with:
+              comment: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
+            env:
+              GITHUB_TOKEN: ${{ secrets.REPO_ACCESS }}
           - name: Create PR from a version branch to dev after version branch push
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
