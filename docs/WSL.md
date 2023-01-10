@@ -40,17 +40,31 @@ wsl --set-version kira 2
 # Open Env
 wsl -d kira --user asmodat --cd ~
 
-# Within WSL set default user
+# Within WSL set default user and enable systemd service
 tee -a /etc/wsl.conf <<EOF
 [user]
 default=asmodat
+[boot]
+systemd=true
 EOF
+
+wsl --terminate kira
+wsl --shutdown
 
 # Reboot WSL
 net stop LxssManager
 net start LxssManager
 
 wsl --export default default.tar
+```
+
+# Quick Setup Clean VM
+```
+mkdir -p /c/linux && cd /c/linux && \
+ wsl --terminate kira || echo "WARNING: Could NOT terminate kira VM" && \
+ wsl --unregister kira || echo "WARNING: Could NOT unregister kira VM" && \
+ rm -rfv /c/linux/kira && \
+ wsl --import kira /c/linux/kira /c/linux/ubuntu-base-20.04.tar && echo "SUCCESS" || echo "FAILED"
 ```
 
 # Docker Containers & Images Cleanup

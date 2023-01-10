@@ -333,14 +333,14 @@ jobs:
           - name: Comment PR's with IPFS
             # ref.: https://github.com/actions-cool/maintain-one-comment, v2.0.2
             uses: actions-cool/maintain-one-comment@cc0daaf4db77952f0b631bb2c1e169813d78a7fd
-            if: github.event_name == 'pull_request' &&
-              ( startsWith(env.DESTINATION_BRANCH, 'release/v') && contains(env.DESTINATION_BRANCH, '.') ) &&
-              ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
+          #  if: github.event_name == 'pull_request' &&
+          #    ( startsWith(env.DESTINATION_BRANCH, 'release/v') && contains(env.DESTINATION_BRANCH, '.') ) &&
+          #    ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
             with:
               token: ${{ secrets.REPO_ACCESS }}
               update-mode: replace
               body: |
-                App was deployed to IPFS: ```${{env.IPFS_HASH}}```
+                KM files were deployed to IPFS: ```${{env.IPFS_HASH}}```
                 * Private Gateway: [ipfs.kira.network/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.kira.network/ipfs/${{env.IPFS_HASH}})
                 * Public Gateway: [ipfs.io/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.io/ipfs/${{env.IPFS_HASH}})
           - name: Add IPFS published label
