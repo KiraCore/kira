@@ -23,7 +23,7 @@ fi
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.0"
 TOOLS_VERSION="v0.2.20"
-COSIGN_VERSION="v1.7.2"
+COSIGN_VERSION="v1.13.0"
 
 set +x
 echo -e  "\e[1;40m======================================================\e[0m"
@@ -81,8 +81,8 @@ if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
     FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}" | tr '[:upper:]' '[:lower:]')
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
     FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
-    COSIGN_HASH_ARM="2448231e6bde13722aad7a17ac00789d187615a24c7f82739273ea589a42c94b"
-    COSIGN_HASH_AMD="80f80f3ef5b9ded92aa39a9dd8e028f5b942a3b6964f24c47b35e7f6e4d18907"
+    COSIGN_HASH_ARM="a50651a67b42714d6f1a66eb6773bf214dacae321f04323c0885f6a433051f95"
+    COSIGN_HASH_AMD="a7a79a52c7747e2c21554cad4600e6c7130c0429017dd258f9c558d957fa9090"
     if [ "$FILE_HASH" != "$COSIGN_HASH_ARM" ] && [ "$FILE_HASH" != "$COSIGN_HASH_AMD" ] ; then
         echoErr "ERROR: Failed to download cosign tool, expected checksum to be '$COSIGN_HASH', but got '$FILE_HASH'"
         exit 1
