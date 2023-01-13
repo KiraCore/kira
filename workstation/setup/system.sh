@@ -29,7 +29,7 @@ case \"\$1\" in
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
         firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
-        systemctl restart docker || echo \"ERROR: Failed to restart docker\"
+        systemctl start docker || echo \"ERROR: Failed to start docker\"
         systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
         systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
         systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"

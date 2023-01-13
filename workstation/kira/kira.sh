@@ -4,7 +4,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 echoInfo "INFO: Launching KIRA Network Manager..."
 
-if [ "${USER,,}" != root ]; then
+if [ "${USER,,}" != "root" ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
 fi
@@ -18,6 +18,7 @@ STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS=""
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -215,7 +216,7 @@ while : ; do
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p" ||
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && [ "${IS_WSL,,}" != "true" ]
             echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
             echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s" ||
@@ -261,7 +262,8 @@ while : ; do
     if [ "${OPTION,,}" == "r" ]; then
         echoInfo "INFO: Restarting docker..."
         systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
-        systemctl restart docker || echoErr "ERROR: Failed to restart docker service"
+        systemctl stop docker || echoErr "ERROR: Failed to stop docker service"
+        systemctl start docker || echoErr "ERROR: Failed to re-start docker service"
     fi
 
     FORCE_SCAN="false"

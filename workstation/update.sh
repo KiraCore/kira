@@ -48,7 +48,11 @@ if [ "$(globGet SYSTEM_REBOOT)" == "true" ] ; then
     exit 0
 else
     echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."
-    systemctl restart docker || echoWarn "WARNINIG: Failed to start docker"
+    if [ "${IS_WSL,,}" != "true" ] ; then
+        systemctl restart docker || echoWarn "WARNINIG: Failed to restart docker"
+    else
+        systemctl start docker || echoWarn "WARNINIG: Failed to start docker"
+    fi
     sleep 3
 fi
 

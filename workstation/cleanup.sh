@@ -6,6 +6,7 @@ timerStart
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
 TMP_GENESIS_PATH="/tmp/genesis.json"
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 cd $KIRA_HOME
 
 # find top largest files: find / -xdev -type f -size +100M -exec ls -la {} \; | sort -nk 5
@@ -17,12 +18,15 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|         SCAN DIR: $KIRA_SCAN"
 echoWarn "|    DOCKER COMMON: $DOCKER_COMMON"
 echoWarn "| DOCKER COMMON RO: $DOCKER_COMMON_RO"
+echoWarn "|           IS WSL: $IS_WSL"
 echoWarn "------------------------------------------------"
 set -x
 
 echoInfo "INFO: Restarting docker..."
 systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
-systemctl restart docker || ( echoErr "ERROR: Failed to restart docker service" && exit 1 )
+if [ "${IS_WSL,,}" != "true" ] ; then
+    systemctl restart docker || ( echoErr "ERROR: Failed to restart docker service" && exit 1 )
+fi
 
 sleep 3
 

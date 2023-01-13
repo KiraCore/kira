@@ -8,6 +8,7 @@ cd $KIRA_HOME
 NEW_NETWORK=$(globGet NEW_NETWORK)
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 
 if [ $INIT_MODE == "upgrade" ] ; then
     [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
@@ -24,6 +25,7 @@ echoWarn "|       INIT MODE: $INIT_MODE"
 echoWarn "|    UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|   EXTERNAL SYNC: $EXTERNAL_SYNC"
 echoWarn "| UPGRADE INSTATE: $UPGRADE_INSTATE"
+echoWarn "|          IS WSL: $IS_WSL"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -48,7 +50,11 @@ fi
 globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
-systemctl restart docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
+if [ "${IS_WSL,,}" != "true" ] ; then
+    systemctl restart docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
+else
+    systemctl start docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
+fi
 echoInfo "INFO: Recreating docker networks..."
 sleep 3
 
