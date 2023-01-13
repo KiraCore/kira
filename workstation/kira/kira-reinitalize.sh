@@ -22,7 +22,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
 
     echoInfo "INFO: Downloading initialization script..."
     rm -fv $INFRA_SRC_OUT
-    safeWget $INFRA_SRC_OUT $NEW_INFRA_SRC "$KIRA_COSIGN_PUB" || ( echo "ERROR: Failed to download $NEW_INFRA_SRC" && rm -fv $INIT_SRC_OUT )
+    safeWget $INFRA_SRC_OUT $NEW_INFRA_SRC "$(globGet KIRA_COSIGN_PUB)" || ( echo "ERROR: Failed to download $NEW_INFRA_SRC" && rm -fv $INIT_SRC_OUT )
     
     if [ ! -f "$INFRA_SRC_OUT" ] ; then
         ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo "" ; done

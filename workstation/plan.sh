@@ -75,7 +75,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
         version=$(echo "$KIRA_PLAN" | jsonParse "version" 2> /dev/null || echo -n "")
         checksum=$(echo "$KIRA_PLAN" | jsonParse "checksum" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$KIRA_PLAN" | jsonParse "checkout" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$checksum")) && checksum=$KIRA_COSIGN_PUB
+        ($(isNullOrWhitespaces "$checksum")) && checksum="$(globGet KIRA_COSIGN_PUB)"
 
         DOWNLOAD_SUCCESS="true"
         safeWget ./kira.zip "$url" "$checksum" || DOWNLOAD_SUCCESS="false"

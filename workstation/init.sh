@@ -111,6 +111,7 @@ FILE_NAME="bash-utils.sh" && \
 ./$FILE_NAME globSet KIRA_USER "$KIRA_USER"
 ./$FILE_NAME globSet TOOLS_VERSION "$TOOLS_VERSION"
 ./$FILE_NAME globSet COSIGN_VERSION "$COSIGN_VERSION"
+./$FILE_NAME globSet KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 
 . /etc/profile
 echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
@@ -121,9 +122,9 @@ INFRA_SRC="" && infra_src="" && arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null
 IMAGE_SRC="" && image_src="" && arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
 INIT_MODE="" && init_mode="" && arg3="$3" && [ -z "$arg3" ] && arg3="--arg3=null"
 getArgs "$arg1" "$arg2" "$arg3"
-[ -z $INFRA_SRC ] && INFRA_SRC=$infra_src
-[ -z $IMAGE_SRC ] && IMAGE_SRC=$image_src && [ -z $IMAGE_SRC ] && IMAGE_SRC=$BASE_IMAGE_VERSION
-[ -z $INIT_MODE ] && INIT_MODE=$init_mode && [ -z $INIT_MODE ] && INIT_MODE="interactive"
+[ -z "$INFRA_SRC" ] && INFRA_SRC="$infra_src"
+[ -z "$IMAGE_SRC" ] && IMAGE_SRC="$image_src" && [ -z $IMAGE_SRC ] && IMAGE_SRC="$BASE_IMAGE_VERSION"
+[ -z "$INIT_MODE" ] && INIT_MODE="$init_mode" && [ -z $INIT_MODE ] && INIT_MODE="interactive"
 
 ($(isVersion "$INFRA_SRC")) && INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$INFRA_SRC/kira.zip"
 ($(isCID "$INFRA_SRC")) && INFRA_SRC="https://ipfs.kira.network/ipfs/$INFRA_SRC/kira.zip"
@@ -153,15 +154,14 @@ if [ $INIT_MODE == "interactive" ] ; then
 fi
 
 echoInfo "INFO: Veryfying kira base image integrity..."
-cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC || \
- ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC )
+cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC || \
+ ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC )
 
 echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
 
 setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"
-setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
 
@@ -232,7 +232,7 @@ apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --a
 pip3 install ECPy
 
 echoInfo "INFO: Updating kira Repository..."
-safeWget /tmp/kira.zip "$INFRA_SRC" $KIRA_COSIGN_PUB
+safeWget /tmp/kira.zip "$INFRA_SRC" "$(globGet KIRA_COSIGN_PUB)"
 rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
 unzip /tmp/kira.zip -d $KIRA_INFRA
 chmod -R 555 $KIRA_INFRA

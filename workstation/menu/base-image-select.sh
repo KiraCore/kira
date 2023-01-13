@@ -16,7 +16,7 @@ while : ; do
 
     echoInfo "INFO: Veryfying base image, please wait..."
     SUCCESS="true"
-    cosign verify --key $KIRA_COSIGN_PUB $NEW_BASE_IMAGE_SRC || SUCCESS="false"
+    cosign verify --key "$(globGet KIRA_COSIGN_PUB)" "$NEW_BASE_IMAGE_SRC" || SUCCESS="false"
 
     if [ "$SUCCESS" == "false" ] ; then
         echoErr "ERROR: Failed to verify source of the '$NEW_BASE_IMAGE_SRC', image is NOT safe to use!"

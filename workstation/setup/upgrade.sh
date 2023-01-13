@@ -63,7 +63,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
         version=$(echo "$jobj" | jsonParse "version" 2> /dev/null || echo -n "")
         checksum=$(echo "$jobj" | jsonParse "checksum" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
-        ($(isNullOrWhitespaces "$checksum")) && checksum=$KIRA_COSIGN_PUB
+        ($(isNullOrWhitespaces "$checksum")) && checksum="$(globGet KIRA_COSIGN_PUB)"
 
         globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
         globSet "NEXT_${joid^^}_VERSION" "$version"
