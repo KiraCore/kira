@@ -31,14 +31,18 @@ source $MNEMONICS
 while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
     echoInfo "INFO: Private key store location: '$MNEMONICS'"
     echoWarn "WARNING: Master mnemonic is invalid or was NOT found within the key store"
-    echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+    echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read MASTER_MNEMONIC
     MASTER_MNEMONIC=$(echo "$MASTER_MNEMONIC" | xargs 2> /dev/null || echo -n "")
     MASTER_MNEMONIC=$(echo ${MASTER_MNEMONIC//,/ })
-    if ($(isMnemonic "$MASTER_MNEMONIC")) ; then
-        echoInfo "INFO: Master mnemonic is valid and will be saved to keystore"
+
+    if [ -z "$MASTER_MNEMONIC" ] ; then
+      echoInfo "INFO: Master mnemonic will be auto-generated during setup"
+      MASTER_MNEMONIC="autogen"
+    elif ($(isMnemonic "$MASTER_MNEMONIC")) ; then
+      echoInfo "INFO: Master mnemonic is valid and will be saved to keystore"
     else
-        echoErr "ERROR: Invalid Bip39 seed words sequence"
-        continue
+      echoErr "ERROR: Invalid Bip39 seed words sequence"
+      continue
     fi
 
     setVar MASTER_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null

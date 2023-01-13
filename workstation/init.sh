@@ -107,6 +107,11 @@ FILE_NAME="bash-utils.sh" && \
  cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
  chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob"
 
+# Ensure variables are stored and no modification takes place after loading envs
+./$FILE_NAME globSet KIRA_USER "$KIRA_USER"
+./$FILE_NAME globSet TOOLS_VERSION "$TOOLS_VERSION"
+./$FILE_NAME globSet COSIGN_VERSION "$COSIGN_VERSION"
+
 . /etc/profile
 echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
 
@@ -153,9 +158,6 @@ cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC || \
 
 echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
-globSet KIRA_USER "$KIRA_USER"
-globSet TOOLS_VERSION "$TOOLS_VERSION"
-globSet COSIGN_VERSION "$COSIGN_VERSION"
 
 setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"
