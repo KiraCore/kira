@@ -17,7 +17,7 @@ RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
 
-if [ $INIT_MODE == "upgrade" ] ; then
+if [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
     [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
 else
     UPGRADE_MODE="none"
@@ -31,7 +31,7 @@ echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
 echoWarn "|         RPC PORT: $RPC_PORT"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
-echoWarn "|        INIT MODE: $INIT_MODE"
+echoWarn "|        INIT MODE: $(globGet INIT_MODE)"
 echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|-------------------------------------------------"
 set -x

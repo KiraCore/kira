@@ -77,6 +77,7 @@ docker rmi -f $(docker images -aq)
 
 Setup with IPFS hash
 ```
+# Enter virtual machine
 wsl -d kira --user asmodat --cd ~
 
 # v0.11.3: bafybeic3bca5sqj3k5hxmif33y2stdjlxzlr23q4wv7piexmdwvobctymy

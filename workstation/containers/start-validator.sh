@@ -55,7 +55,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    if [ $INIT_MODE == "upgrade" ] ; then
+    if [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
         if [ "$UPGRADE_INSTATE" == "true" ] ; then
             UPGRADE_MODE="soft"

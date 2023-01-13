@@ -160,8 +160,8 @@ cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC || \
 echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
 globSet INFRA_SRC "$INFRA_SRC"
+globSet INIT_MODE "$INIT_MODE"
 
-setGlobEnv INIT_MODE "$INIT_MODE"
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
 
@@ -170,9 +170,9 @@ echoWarn  "======================================================"
 echoWarn  "|              KIRA | Manager Init Script            |"   
 echoWarn  "|====================================================|"
 echoWarn  "|          KIRA USER: $(globGet KIRA_USER)"
-echoWarn  "|          INIT MODE: $INIT_MODE"
+echoWarn  "|          INIT MODE: $(globGet INIT_MODE)"
 echoWarn  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
-echoWarn  "|   BASE IMG. SOURCE: $IMAGE_SRC"
+echoWarn  "|   BASE IMG. SOURCE: $(globGet IMAGE_SRC)"
 echoWarn  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
 echoWarn  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
 echoWarn  "======================================================"
@@ -254,7 +254,7 @@ timeout 60 journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum f
 
 $KIRA_MANAGER/setup/tools.sh
 
-if [ $INIT_MODE == "interactive" ] ; then
+if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
     set +x
     echoInfo "INFO: Your host environment was initialized"
     echoWarn "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
@@ -262,7 +262,7 @@ if [ $INIT_MODE == "interactive" ] ; then
     echoInfo "INFO: Launching setup menu..."
     set -x
     source $KIRA_MANAGER/menu/menu.sh "true"
-elif [ $INIT_MODE == "upgrade" ] ; then
+elif [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
     echoInfo "INFO: Starting upgrade & restarting update daemon..."
     globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER"
     rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
@@ -270,7 +270,7 @@ elif [ $INIT_MODE == "upgrade" ] ; then
     systemctl daemon-reload
     timeout 60 systemctl restart kiraup
 else
-    echoErr "ERROR: Unknown init-mode flag '$INIT_MODE'"
+    echoErr "ERROR: Unknown init-mode flag '$(globGet INIT_MODE)'"
     exit 1
 fi
 

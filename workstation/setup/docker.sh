@@ -45,7 +45,7 @@ EOL
 
     systemctl daemon-reload || echoWarn "WARNING: Failed to reload systemctl"
     systemctl start docker || echoWarn "WARNING: Failed to start docker service, it might not be installed"
-    systemctl status docker
+    systemctl status docker || echoWarn "WARNING: Docker service is dead or inactive"
 fi
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
