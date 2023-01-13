@@ -171,14 +171,14 @@ echoWarn  "|          KIRA USER: $(globGet KIRA_USER)"
 echoWarn  "|          INIT MODE: $INIT_MODE"
 echoWarn  "|       INFRA SOURCE: $INFRA_SRC"
 echoWarn  "|   BASE IMG. SOURCE: $IMAGE_SRC"
-echoWarn  "|      TOOLS VERSION: $(globSet TOOLS_VERSION)"
-echoWarn  "|     COSIGN VERSION: $(globSet COSIGN_VERSION)"
+echoWarn  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
+echoWarn  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
 echoWarn  "======================================================"
 sleep 3
 echo -n ""
 set -x
 
-KIRA_HOME="/home/$(globGet KIRA_USER)"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
+KIRA_HOME="/home/$(globGet KIRA_USER)"      && setGlobEnv KIRA_HOME "$KIRA_HOME"
 KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
 KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
 KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 

@@ -79,7 +79,7 @@ Setup with IPFS hash
 ```
 wsl -d kira --user asmodat --cd ~
 
-# v0.11.3: bafybeihkn264kibfwe5xdqno67bmb35zu7pd46b2cvw5zcmyay22helbni
+# v0.11.3: bafybeic3bca5sqj3k5hxmif33y2stdjlxzlr23q4wv7piexmdwvobctymy
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
  wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
