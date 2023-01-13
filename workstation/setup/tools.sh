@@ -53,4 +53,4 @@ echoInfo "INFO:  Installed tmkms-key-import: " && tmkms-key-import version
 echoInfo "INFO:          Installed bip39gen: " && bip39gen version
 echoInfo "INFO:            Booted systemctl: " && systemctl --version
   
-cd $KIRA_HOME
+cd "$(globGet KIRA_HOME)"

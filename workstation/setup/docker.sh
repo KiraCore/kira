@@ -43,12 +43,10 @@ OOMScoreAdjust=-500
 WantedBy=multi-user.target
 EOL
 
-    systemctl daemon-reload || echoWarn "WARNING: Failed to reload systemctl"
-    systemctl start docker || echoWarn "WARNING: Failed to start docker service, it might not be installed"
-    systemctl status docker || echoWarn "WARNING: Docker service is dead or inactive"
+    $KIRA_COMMON/docker-restart.sh
 fi
 
-ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
+ESSENTIALS_HASH=$(echo "$(globGet KIRA_HOME)-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
 if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || ( [ "${IS_WSL,,}" != "true" ]  && (! $(isServiceActive "docker")) ) ; then

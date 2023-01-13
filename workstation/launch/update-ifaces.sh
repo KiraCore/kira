@@ -36,7 +36,7 @@ done
 
 echoInfo "INFO: Interfaces before restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
-systemctl restart docker || echoWarn "WARNINIG: Failed to restart docker service"
+$KIRA_COMMON/docker-restart.sh
 echoInfo "INFO: Interfaces after restart:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 

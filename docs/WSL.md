@@ -78,9 +78,10 @@ docker rmi -f $(docker images -aq)
 Setup with IPFS hash
 ```
 # Enter virtual machine
-wsl -d kira --user asmodat --cd ~
+wsl --terminate kira && \
+ wsl -d kira --user asmodat --cd ~
 
-# v0.11.3: bafybeic3bca5sqj3k5hxmif33y2stdjlxzlr23q4wv7piexmdwvobctymy
+# v0.11.3: bafybeihgiyrw4jfvbtuuchvlybzs3e2keqb7krgom4liskwbei7qyo3vfm
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
  wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \

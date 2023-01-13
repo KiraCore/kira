@@ -12,7 +12,7 @@ HEALTH_LOGS="$COMMON_LOGS/health.log"
 set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
-cd $KIRA_HOME
+cd "$(globGet KIRA_HOME)"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"

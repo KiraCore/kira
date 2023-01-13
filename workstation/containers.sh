@@ -3,12 +3,11 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/containers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart
-cd $KIRA_HOME
+cd "$(globGet KIRA_HOME)"
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
-IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 
 if [ $INIT_MODE == "upgrade" ] ; then
     [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
@@ -25,7 +24,7 @@ echoWarn "|       INIT MODE: $INIT_MODE"
 echoWarn "|    UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|   EXTERNAL SYNC: $EXTERNAL_SYNC"
 echoWarn "| UPGRADE INSTATE: $UPGRADE_INSTATE"
-echoWarn "|          IS WSL: $IS_WSL"
+echoWarn "|   KIRA HOME DIR: $(globGet KIRA_HOME)"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -50,11 +49,7 @@ fi
 globSet GENESIS_SHA256 "$GENESIS_SHA256"
 
 echoInfo "INFO: Starting containers build..."
-if [ "${IS_WSL,,}" != "true" ] ; then
-    systemctl restart docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
-else
-    systemctl start docker || ( echoErr "ERROR: Failed to start docker" && exit 1 )
-fi
+$KIRA_COMMON/docker-restart.sh
 echoInfo "INFO: Recreating docker networks..."
 sleep 3
 

@@ -180,7 +180,7 @@ sleep 3
 echo -n ""
 set -x
 
-KIRA_HOME="/home/$(globGet KIRA_USER)"      && setGlobEnv KIRA_HOME "$KIRA_HOME"
+KIRA_HOME="/home/$(globGet KIRA_USER)"      && globSet KIRA_HOME "$KIRA_HOME"
 KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
 KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
 KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
@@ -243,7 +243,7 @@ cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
 chmod -R 555 $KIRA_MANAGER
 
 KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
-[ -z "KIRA_SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && exit 1
+[ -z "$KIRA_SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && exit 1
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
 
 echoInfo "INFO: Startting cleanup..."

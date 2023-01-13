@@ -12,13 +12,12 @@ fi
 $KIRA_MANAGER/kira/kira-setup-status.sh
 set -x
 
-cd $KIRA_HOME
+cd "$(globGet KIRA_HOME)"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS=""
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
-IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -216,7 +215,7 @@ while : ; do
         [ "${ALL_CONTAINERS_PAUSED,,}" == "false" ] &&
             echo "| [P] | PAUSE All Containers                    |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p" ||
             echo "| [P] | Un-PAUSE All Containers                 |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
-        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] && [ "${IS_WSL,,}" != "true" ]
+        [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
             echo "| [R] | RESTART All Containers                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}r"
         [ "${ALL_CONTAINERS_STOPPED,,}" == "false" ] &&
             echo "| [S] | STOP All Containers                     |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s" ||
@@ -261,9 +260,7 @@ while : ; do
 
     if [ "${OPTION,,}" == "r" ]; then
         echoInfo "INFO: Restarting docker..."
-        systemctl daemon-reload  || echoErr "ERROR: Failed to reload systemctl daemon"
-        systemctl stop docker || echoErr "ERROR: Failed to stop docker service"
-        systemctl start docker || echoErr "ERROR: Failed to re-start docker service"
+        $KIRA_COMMON/docker-restart.sh
     fi
 
     FORCE_SCAN="false"
@@ -396,7 +393,7 @@ while : ; do
     [ "${EXECUTED,,}" == "true" ] && [ ! -z $OPTION ] && echoNErr "INFO: Option ($OPTION) was executed, press any key to continue..." && pressToContinue
 
     if [ "${OPTION,,}" == "i" ]; then
-        cd $KIRA_HOME
+        cd "$(globGet KIRA_HOME)"
         systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
         source $KIRA_MANAGER/kira/kira-reinitalize.sh
         source $KIRA_MANAGER/kira/kira.sh
