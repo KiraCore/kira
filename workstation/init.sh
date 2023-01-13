@@ -159,8 +159,8 @@ cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC || \
 
 echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
+globSet INFRA_SRC "$INFRA_SRC"
 
-setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
@@ -171,7 +171,7 @@ echoWarn  "|              KIRA | Manager Init Script            |"
 echoWarn  "|====================================================|"
 echoWarn  "|          KIRA USER: $(globGet KIRA_USER)"
 echoWarn  "|          INIT MODE: $INIT_MODE"
-echoWarn  "|       INFRA SOURCE: $INFRA_SRC"
+echoWarn  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
 echoWarn  "|   BASE IMG. SOURCE: $IMAGE_SRC"
 echoWarn  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
 echoWarn  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
@@ -232,7 +232,7 @@ apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --a
 pip3 install ECPy
 
 echoInfo "INFO: Updating kira Repository..."
-safeWget /tmp/kira.zip "$INFRA_SRC" "$(globGet KIRA_COSIGN_PUB)"
+safeWget /tmp/kira.zip "$(globGet INFRA_SRC)" "$(globGet KIRA_COSIGN_PUB)"
 rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
 unzip /tmp/kira.zip -d $KIRA_INFRA
 chmod -R 555 $KIRA_INFRA

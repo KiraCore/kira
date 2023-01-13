@@ -21,7 +21,7 @@ cd /kira
 if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Updating kira, sekai, INTERX"
 
-    safeWget ./kira.zip "$INFRA_SRC" "$(globGet KIRA_COSIGN_PUB)"
+    safeWget ./kira.zip "$(globGet INFRA_SRC)" "$(globGet KIRA_COSIGN_PUB)"
     rm -rfv $KIRA_INFRA && mkdir -p $KIRA_INFRA
     unzip ./kira.zip -d $KIRA_INFRA
     rm -rfv ./kira.zip

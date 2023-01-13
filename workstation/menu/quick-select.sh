@@ -27,7 +27,7 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoNInfo "CONFIG:               Deployment Mode: " && echoErr $(globGet INFRA_MODE)
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
     echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
-    echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
+    echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $(globGet INFRA_SRC)
     echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
     echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
     set -x
@@ -325,7 +325,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
         echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
-        echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
+        echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $(globGet INFRA_SRC)
         echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
         echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
         set -x

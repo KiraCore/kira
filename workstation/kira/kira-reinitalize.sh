@@ -3,7 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-reinitalize.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 echoInfo "INFO: Re-Initalizing Infrastructure..."
-echoInfo "INFO: Default infrastructure URL: $INFRA_SRC"
+echoInfo "INFO: Default infrastructure URL: $(globGet INFRA_SRC)"
 
 NEW_INFRA_SRC=""
 INFRA_SRC_OUT="/tmp/kira.zip"
@@ -17,7 +17,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
         ($(isVersion "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$NEW_INFRA_SRC/kira.zip"
         ($(isCID "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://ipfs.kira.network/ipfs/$NEW_INFRA_SRC/kira.zip"
     else
-        NEW_INFRA_SRC=$INFRA_SRC
+        NEW_INFRA_SRC="$(globGet INFRA_SRC)"
     fi
 
     echoInfo "INFO: Downloading initialization script..."

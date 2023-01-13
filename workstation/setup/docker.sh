@@ -43,10 +43,9 @@ OOMScoreAdjust=-500
 WantedBy=multi-user.target
 EOL
 
-systemctl daemon-reload || echoWarn "WARNING: Failed to reload systemctl"
-systemctl start docker
-systemctl status docker
-
+    systemctl daemon-reload || echoWarn "WARNING: Failed to reload systemctl"
+    systemctl start docker || echoWarn "WARNING: Failed to start docker service, it might not be installed"
+    systemctl status docker
 fi
 
 ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)

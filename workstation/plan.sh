@@ -92,7 +92,7 @@ if [ "${PLAN_DONE,,}" == "false" ] ; then
             cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
             chmod -R 555 $KIRA_MANAGER
 
-            setGlobEnv INFRA_SRC "$url"
+            globSet INFRA_SRC "$url"
 
             echoInfo "INFO: Updating setup version..."
             SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")

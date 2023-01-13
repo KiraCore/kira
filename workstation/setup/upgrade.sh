@@ -124,7 +124,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     globSet SETUP_START_DT "$(date +'%Y-%m-%d %H:%M:%S')"
     globSet SETUP_END_DT ""
 
-    $KIRA_MANAGER/init.sh --infra-src="$INFRA_SRC" --init-mode="upgrade"
+    $KIRA_MANAGER/init.sh --infra-src="$(globGet INFRA_SRC)" --init-mode="upgrade"
 else
     echoInfo "INFO: Upgrade exports already done!"
 fi

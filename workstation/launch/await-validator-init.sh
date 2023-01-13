@@ -200,7 +200,7 @@ EOL
 )
 
 # NOTE: Only initial plan should be called genesis, plans with such name will NOT be executed!
-    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$INFRA_SRC\"}"
+    UPGRADE_RESOURCES="{\"id\":\"kira\",\"url\":\"$(globGet INFRA_SRC)\"}"
     UPGRADE_TIME=$(($(date -d "$(date)" +"%s") + 900))
     UPGRADE_PROPOSAL=$(cat <<EOL
 sekaid tx upgrade proposal-set-plan --from=validator --keyring-backend=test \
