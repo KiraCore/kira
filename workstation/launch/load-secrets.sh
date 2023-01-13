@@ -33,7 +33,7 @@ function MnemonicGenerator() {
                 echoErr "ERROR: Master mnemonic was not specified, keys can NOT be derived :(, please define '$mnemonicVariableName' variable in the '$MNEMONICS' file"
                 exit 1
             fi
-            mnemonic="$(bip39gen mnemonic --length=24 --entropy="$entropyHex" --verbose=true --hex=true)"
+            mnemonic="$(bip39gen mnemonic --length=24 --entropy="$entropyHex" --verbose=false --hex=true)"
         fi
         setVar "$mnemonicVariableName" "$mnemonic" "$MNEMONICS" 1> /dev/null
     fi
