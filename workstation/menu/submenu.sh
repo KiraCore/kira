@@ -34,10 +34,7 @@ while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
     echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
     MASTER_MNEMONIC=$(echo "$MASTER_MNEMONIC" | xargs 2> /dev/null || echo -n "")
     MASTER_MNEMONIC=$(echo ${MASTER_MNEMONIC//,/ })
-    if ($(isNullOrWhitespaces "$VALIDATOR_ADDR_MNEMONIC")) ; then
-        echoInfo "INFO: All missing keys will be derived from your new master mnemonic :)"
-        MASTER_MNEMONIC=""
-    elif ($(isMnemonic "$MASTER_MNEMONIC")) ; then
+    if ($(isMnemonic "$MASTER_MNEMONIC")) ; then
         echoInfo "INFO: Master mnemonic is valid and will be saved to keystore"
     else
         echoErr "ERROR: Invalid Bip39 seed words sequence"

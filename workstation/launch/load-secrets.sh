@@ -29,7 +29,7 @@ function MnemonicGenerator() {
         echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
         mnemonic=$(echo ${mnemonic//,/ } | xargs || echo -n "")
         if (! $(isMnemonic "$mnemonic")) ; then
-            if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
+            if (! $(isMnemonic "$masterMnemonic")) ; then
                 echoErr "ERROR: Master mnemonic was not specified, keys can NOT be derived :(, please define '$mnemonicVariableName' variable in the '$MNEMONICS' file"
                 exit 1
             fi

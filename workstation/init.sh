@@ -153,9 +153,10 @@ cosign verify --key $KIRA_COSIGN_PUB $IMAGE_SRC || \
 
 echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet BASE_IMAGE_SRC "$IMAGE_SRC"
-setGlobEnv TOOLS_VERSION "$TOOLS_VERSION"
-setGlobEnv COSIGN_VERSION "$COSIGN_VERSION"
-setGlobEnv KIRA_USER "$KIRA_USER"
+globSet KIRA_USER "$KIRA_USER"
+globSet TOOLS_VERSION "$TOOLS_VERSION"
+globSet COSIGN_VERSION "$COSIGN_VERSION"
+
 setGlobEnv INFRA_SRC "$INFRA_SRC"
 setGlobEnv INIT_MODE "$INIT_MODE"
 setGlobEnv KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
@@ -166,18 +167,18 @@ set +x
 echoWarn  "======================================================"
 echoWarn  "|              KIRA | Manager Init Script            |"   
 echoWarn  "|====================================================|"
-echoWarn  "|          KIRA USER: $KIRA_USER"
+echoWarn  "|          KIRA USER: $(globGet KIRA_USER)"
 echoWarn  "|          INIT MODE: $INIT_MODE"
 echoWarn  "|       INFRA SOURCE: $INFRA_SRC"
 echoWarn  "|   BASE IMG. SOURCE: $IMAGE_SRC"
-echoWarn  "|      TOOLS VERSION: $TOOLS_VERSION"
-echoWarn  "|     COSIGN VERSION: $COSIGN_VERSION"
+echoWarn  "|      TOOLS VERSION: $(globSet TOOLS_VERSION)"
+echoWarn  "|     COSIGN VERSION: $(globSet COSIGN_VERSION)"
 echoWarn  "======================================================"
 sleep 3
 echo -n ""
 set -x
 
-KIRA_HOME="/home/$KIRA_USER"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
+KIRA_HOME="/home/$(globGet KIRA_USER)"                && setGlobEnv KIRA_HOME "$KIRA_HOME"
 KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
 KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
 KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
