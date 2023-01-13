@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-backup.sh" && rm -f $FILE && nano $FILE && chmod 555 $FILE
 
-SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET) && [ -z "$SNAPSHOT_TARGET" ] && SNAPSHOT_TARGET="${INFRA_MODE,,}"
+SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET) && [ -z "$SNAPSHOT_TARGET" ] && SNAPSHOT_TARGET="$(globGet INFRA_MODE)"
 echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=$(globGet OPTION)
 
 if [ "${SELECT,,}" == "k" ] ; then

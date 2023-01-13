@@ -54,10 +54,10 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
 
     cp -arfv "$KIRA_INFRA/kira/." "$COMMON_PATH"
 
-    globSet "cfg_node_node_type" "$INFRA_MODE" $GLOBAL_COMMON
-    [ "${INFRA_MODE,,}" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
-    [ "${INFRA_MODE,,}" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
-    [ "${INFRA_MODE,,}" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+    globSet "cfg_node_node_type" "$(globGet INFRA_MODE)" $GLOBAL_COMMON
+    [ "$(globGet INFRA_MODE)" == "seed" ] && globSet "cfg_node_seed_node_id" "$SEED_NODE_ID" $GLOBAL_COMMON
+    [ "$(globGet INFRA_MODE)" == "sentry" ] && globSet "cfg_node_sentry_node_id" "$SENTRY_NODE_ID" $GLOBAL_COMMON
+    [ "$(globGet INFRA_MODE)" == "validator" ] && globSet "cfg_node_validator_node_id" "$VALIDATOR_NODE_ID" $GLOBAL_COMMON
 
     globSet KIRA_ADDRBOOK "" $GLOBAL_COMMON
     globSet PRIVATE_MODE "$(globGet PRIVATE_MODE)" $GLOBAL_COMMON
@@ -82,8 +82,8 @@ docker run -d \
     -e DOCKER_NETWORK="$KIRA_DOCEKR_NETWORK" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
-    -e INFRA_MODE="${INFRA_MODE,,}" \
-    -e PING_TARGET="${INFRA_MODE,,}.local" \
+    -e INFRA_MODE="$(globGet INFRA_MODE)" \
+    -e PING_TARGET="$(globGet INFRA_MODE).local" \
     -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
     -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
     -v $COMMON_PATH:/common \

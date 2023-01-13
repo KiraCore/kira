@@ -93,30 +93,28 @@ else
 fi
 
 echoInfo "INFO: Setting up essential environment variables..."
-if [ "${INFRA_MODE,,}" == "seed" ] ; then
+if [ "$(globGet INFRA_MODE)" == "seed" ] ; then
     EXTERNAL_SYNC="true"
-elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
+elif [ "$(globGet INFRA_MODE)" == "sentry" ] ; then
     EXTERNAL_SYNC="true"
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+elif [ "$(globGet INFRA_MODE)" == "validator" ] ; then
     if [ "$(globGet NEW_NETWORK)" == "true" ] || ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ) ; then
         EXTERNAL_SYNC="false" 
     else
         EXTERNAL_SYNC="true"
     fi
 else
-  echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+  echoErr "ERROR: Unrecognized infra mode $(globGet INFRA_MODE)"
   exit 1
 fi
 
-[ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$INFRA_MODE' mode"
-[ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$INFRA_MODE' mode"
+[ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$(globGet INFRA_MODE)' mode"
+[ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$(globGet INFRA_MODE)' mode"
 
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
-globSet INFRA_MODE "$INFRA_MODE"
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
 
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO
-globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER" $GLOBAL_COMMON_RO
 
 set +x

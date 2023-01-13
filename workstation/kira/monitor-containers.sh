@@ -10,7 +10,7 @@ STATUS_SCAN_PATH="$KIRA_SCAN/status"
 SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
-IS_SYNCING=$(globGet "${INFRA_MODE,,}_SYNCING")
+IS_SYNCING=$(globGet "$(globGet INFRA_MODE)_SYNCING")
 TIME_NOW="$(date2unix $(date))"
 UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 

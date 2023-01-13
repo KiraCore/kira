@@ -4,7 +4,7 @@ set +x
 
 SKIP_SELECTION="$1" && [ -z "$SKIP_SELECTION" ] && SKIP_SELECTION="true"
 
-if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] ) ; then
+if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "$(globGet INFRA_MODE)" != "validator" ] && [ "$(globGet INFRA_MODE)" != "sentry" ] && [ "$(globGet INFRA_MODE)" != "seed" ] ) ; then
     printf "\033c"
     printWidth=47
     echo -e "\e[31;1m-------------------------------------------------"
@@ -27,17 +27,26 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
       case ${KEY,,} in
       1*)
         echo "INFO: Starting Validator Node Deployment..."
-        INFRA_MODE="validator"  && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        INFRA_MODE="validator"
+        #setGlobEnv INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
         break
         ;;
       2*)
         echo "INFO: Starting Sentry Mode Deployment..."
-        INFRA_MODE="sentry"     && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        INFRA_MODE="sentry"
+        #setGlobEnv INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
         break
         ;;
       3*)
         echo "INFO: Starting Seed Mode Deployment..."
-        INFRA_MODE="seed"       && setGlobEnv INFRA_MODE "$INFRA_MODE"
+        INFRA_MODE="seed"
+        #setGlobEnv INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE"
+        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
         break
         ;;
       x*)
@@ -53,7 +62,8 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "${INFRA_MODE,,}" != "validator" 
 fi
 
 loadGlobEnvs
-globSet SNAPSHOT_TARGET "$INFRA_MODE"
-globSet FIREWALL_ZONE "$INFRA_MODE"
+globSet SNAPSHOT_TARGET "$(globGet INFRA_MODE)"
+globSet FIREWALL_ZONE "$(globGet INFRA_MODE)"
+#globSet INFRA_MODE "$INFRA_MODE"
 
 source $KIRA_MANAGER/menu/submenu.sh

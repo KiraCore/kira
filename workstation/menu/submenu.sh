@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source $ETC_PROFILE &>/dev/null && set -e
 
-if [ "${INFRA_MODE,,}" == "seed" ]; then
+if [ "$(globGet INFRA_MODE)" == "seed" ]; then
   title="Seed Mode"
-elif [ "${INFRA_MODE,,}" == "sentry" ]; then
+elif [ "$(globGet INFRA_MODE)" == "sentry" ]; then
   title="Sentry Mode"
-elif [ "${INFRA_MODE,,}" == "validator" ]; then
+elif [ "$(globGet INFRA_MODE)" == "validator" ]; then
   title="Validator Mode"
 else
   echoErr "ERROR: Unknown operation mode"
@@ -23,52 +23,30 @@ timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone 
 [ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
 [ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
 
-if [ "${INFRA_MODE,,}" == "validator" ] ; then
-    MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
-    set +x
-    source $MNEMONICS
 
-    while (! $(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; do
-        echoInfo "INFO: Private key store location: '$MNEMONICS'"
-        echoWarn "WARNING: Validator account private key (VALIDATOR_ADDR_MNEMONIC) is invalid or was NOT found within the key store"
-        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
-        VALIDATOR_ADDR_MNEMONIC=$(echo "$VALIDATOR_ADDR_MNEMONIC" | xargs 2> /dev/null || echo -n "")
-        VALIDATOR_ADDR_MNEMONIC=$(echo ${VALIDATOR_ADDR_MNEMONIC//,/ })
-        if ($(isNullOrWhitespaces "$VALIDATOR_ADDR_MNEMONIC")) ; then
-            echoInfo "INFO: New validator account controller key will be generated"
-            VALIDATOR_ADDR_MNEMONIC=""
-        elif ($(isMnemonic "$VALIDATOR_ADDR_MNEMONIC")) ; then
-            echoInfo "INFO: Validator controller key mnemonic (VALIDATOR_ADDR_MNEMONIC) is valid and will be saved to keystore"
-        else
-            echoErr "ERROR: Invalid Bip39 seed words sequence"
-            continue
-        fi
+MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
+set +x
+source $MNEMONICS
 
-        setVar VALIDATOR_ADDR_MNEMONIC "$VALIDATOR_ADDR_MNEMONIC" "$MNEMONICS" 1> /dev/null
-        break
-    done
-    
-    while (! $(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; do
-        echoInfo "INFO: Private key store location: '$MNEMONICS'"
-        echoWarn "WARNING: Validator signing private key (VALIDATOR_VAL_MNEMONIC) is invalid or was NOT found within the key store"
-        echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_VAL_MNEMONIC
-        VALIDATOR_VAL_MNEMONIC=$(echo "$VALIDATOR_VAL_MNEMONIC" | xargs 2> /dev/null || echo -n "")
-        VALIDATOR_VAL_MNEMONIC=$(echo ${VALIDATOR_VAL_MNEMONIC//,/ })
-        if ($(isNullOrWhitespaces "$VALIDATOR_VAL_MNEMONIC")) ; then
-            echoInfo "INFO: New validator signing key will be generated"
-            VALIDATOR_VAL_MNEMONIC=""
-        elif ($(isMnemonic "$VALIDATOR_VAL_MNEMONIC")) ; then
-            echoInfo "INFO: Validator signing key mnemonic (VALIDATOR_VAL_MNEMONIC)  is valid and will be saved to keystore"
-        else
-            echoErr "ERROR: Invalid Bip39 seed words sequence"
-            continue
-        fi
+while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
+    echoInfo "INFO: Private key store location: '$MNEMONICS'"
+    echoWarn "WARNING: Master mnemonic is invalid or was NOT found within the key store"
+    echoNErr "Input minimum of 24 whitespace-separated bip39 seed words or press [ENTER] to autogenerate: " && read VALIDATOR_ADDR_MNEMONIC
+    MASTER_MNEMONIC=$(echo "$MASTER_MNEMONIC" | xargs 2> /dev/null || echo -n "")
+    MASTER_MNEMONIC=$(echo ${MASTER_MNEMONIC//,/ })
+    if ($(isNullOrWhitespaces "$VALIDATOR_ADDR_MNEMONIC")) ; then
+        echoInfo "INFO: All missing keys will be derived from your new master mnemonic :)"
+        MASTER_MNEMONIC=""
+    elif ($(isMnemonic "$MASTER_MNEMONIC")) ; then
+        echoInfo "INFO: Master mnemonic is valid and will be saved to keystore"
+    else
+        echoErr "ERROR: Invalid Bip39 seed words sequence"
+        continue
+    fi
 
-        setVar VALIDATOR_VAL_MNEMONIC "$VALIDATOR_VAL_MNEMONIC" "$MNEMONICS" 1> /dev/null
-        break
-    done
-    set -x
-fi
+    setVar MASTER_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null
+    break
+done
 
 echo "INFO: Loading secrets..."
 set +e
@@ -78,7 +56,7 @@ set -x
 set -e
 
 NEW_NETWORK="false"
-if [ "${INFRA_MODE,,}" == "validator" ]; then
+if [ "$(globGet INFRA_MODE)" == "validator" ]; then
     set +x
     echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
     set -x
@@ -139,10 +117,10 @@ while :; do
     setGlobEnv KIRA_SNAP_PATH ""
     globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
 
-    if [ "${INFRA_MODE,,}" == "validator" ] || [ "${INFRA_MODE,,}" == "sentry" ] || [ "${INFRA_MODE,,}" == "seed" ] ; then
+    if [ "$(globGet INFRA_MODE)" == "validator" ] || [ "$(globGet INFRA_MODE)" == "sentry" ] || [ "$(globGet INFRA_MODE)" == "seed" ] ; then
         $KIRA_MANAGER/menu/quick-select.sh
     else
-        echoErr "ERROR: Unknown infra mode '$INFRA_MODE'"
+        echoErr "ERROR: Unknown infra mode '$(globGet INFRA_MODE)'"
         sleep 10
         continue
     fi
@@ -169,7 +147,7 @@ while :; do
   5*)
     set +x
     echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
-    echoNErr "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=$(globGet OPTION)
+    echoNErr "Launch $(globGet INFRA_MODE) node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=$(globGet OPTION)
     set -x
 
     [ "${MODE,,}" == "p" ] && globSet PRIVATE_MODE "false"

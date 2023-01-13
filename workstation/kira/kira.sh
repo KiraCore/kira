@@ -83,7 +83,7 @@ while : ; do
     ALLOWED_OPTIONS="x"
     echo -e "\e[33;1m-------------------------------------------------"
     BANER="         KIRA NETWORK MANAGER ${KIRA_SETUP_VER}${WHITESPACE}"
-    echo "|${BANER:0:47}: $INFRA_MODE mode"
+    echo "|${BANER:0:47}: $(globGet INFRA_MODE) mode"
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
     if [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then # plan in action

@@ -14,7 +14,7 @@ UPGRADE_PLAN_RES_FILE=$(globFile UPGRADE_PLAN_RES)
 UPGRADE_PLAN_RES64_FILE=$(globFile UPGRADE_PLAN_RES64)
 OLD_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "old_chain_id" || echo "")
 NEW_CHAIN_ID=$(cat "$UPGRADE_PLAN_FILE" | jsonParse "new_chain_id" || echo "")
-CONTAINER_NAME="${INFRA_MODE,,}"
+CONTAINER_NAME="$(globGet INFRA_MODE)"
 COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 
@@ -35,8 +35,8 @@ set -x
 
 ($(isNullOrEmpty "$NEW_CHAIN_ID")) && echoErr "ERROR: Failed to find new chain identifier in the upgrade plan!" && sleep 10 && exit 1
 (! $(isBoolean "$UPGRADE_INSTATE")) && echoErr "ERROR: Invalid instate upgrade parameter, expected boolean but got '$UPGRADE_INSTATE'" && sleep 10 && exit 1
-[ "${INFRA_MODE,,}" != "validator" ] && [ "${INFRA_MODE,,}" != "sentry" ] && [ "${INFRA_MODE,,}" != "seed" ] && \
-    echoErr "ERROR: Unsupported infra mode '$INFRA_MODE'" && sleep 10 && exit 1
+[ "$(globGet INFRA_MODE)" != "validator" ] && [ "$(globGet INFRA_MODE)" != "sentry" ] && [ "$(globGet INFRA_MODE)" != "seed" ] && \
+    echoErr "ERROR: Unsupported infra mode '$(globGet INFRA_MODE)'" && sleep 10 && exit 1
 
 echoInfo "INFO: Extracting resources from the upgrade plan..."
 jsonParse "resources" $UPGRADE_PLAN_FILE $UPGRADE_PLAN_RES_FILE
@@ -70,9 +70,9 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
         globSet "NEXT_${joid^^}_URL" "$url"
     done < $UPGRADE_PLAN_RES64_FILE
 
-    if [ "${INFRA_MODE,,}" == "validator" ] ; then
+    if [ "$(globGet INFRA_MODE)" == "validator" ] ; then
         UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
-        if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
+        if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
             echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
             globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
             PAUSE_FAILED="false"
@@ -132,7 +132,7 @@ fi
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
 if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ] ; then
-    if [ "${INFRA_MODE,,}" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
+    if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "true"
         UNPAUSE_FAILED="false"

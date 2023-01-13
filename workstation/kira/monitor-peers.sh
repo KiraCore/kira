@@ -18,7 +18,7 @@ while [ "$(globGet IS_SCAN_DONE)" != "true" ] ; do
     sleep 10
 done
 
-SEKAI_ADDRBOOK_FILE="$DOCKER_HOME/${INFRA_MODE,,}/config/addrbook.json"
+SEKAI_ADDRBOOK_FILE="$DOCKER_HOME/$(globGet INFRA_MODE)/config/addrbook.json"
 INTERX_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK "$DOCKER_COMMON/interx/kiraglob")
 CONTAINERS=$(globGet CONTAINERS)
 

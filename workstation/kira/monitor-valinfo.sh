@@ -20,7 +20,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA VALIDATORS SCAN $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "|          INFRA_MODE: $INFRA_MODE"
+echoWarn "|          INFRA_MODE: $(globGet INFRA_MODE)"
 echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
 echoWarn "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
@@ -39,7 +39,7 @@ echoInfo "INFO: Saving valopers info..."
 ($(isSimpleJsonObjOrArrFile "$VALOPERS_SCAN_PATH")) && cp -afv "$VALOPERS_SCAN_PATH" "$VALOPERS_COMM_RO_PATH" || echo -n "" > "$VALOPERS_COMM_RO_PATH"
 ($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
 
-if [[ "${INFRA_MODE,,}" =~ ^(validator|local)$ ]] ; then
+if [[ "$(globGet INFRA_MODE)" =~ ^(validator|local)$ ]] ; then
     echoInfo "INFO: Fetching validator address.."
     VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
     ($(isKiraAddress "$VALIDATOR_ADDR")) && globSet VALIDATOR_ADDR "$VALIDATOR_ADDR" || VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)

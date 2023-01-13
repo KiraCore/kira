@@ -19,7 +19,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CONTAINERS BUILD SCRIPT             |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|      INFRA MODE: $INFRA_MODE"
+echoWarn "|      INFRA MODE: $(globGet INFRA_MODE)"
 echoWarn "|       INIT MODE: $INIT_MODE"
 echoWarn "|    UPGRADE MODE: $UPGRADE_MODE"
 echoWarn "|   EXTERNAL SYNC: $EXTERNAL_SYNC"
@@ -68,17 +68,17 @@ globSet sentry_STARTED false
 globSet validator_STARTED false
 globSet interx_STARTED false
 
-if [ "${INFRA_MODE,,}" == "seed" ] ; then
+if [ "$(globGet INFRA_MODE)" == "seed" ] ; then
     globSet SEED_EXPOSED true
     $KIRA_MANAGER/containers/start-seed.sh
-elif [ "${INFRA_MODE,,}" == "sentry" ] ; then
+elif [ "$(globGet INFRA_MODE)" == "sentry" ] ; then
     globSet SENTRY_EXPOSED true
     $KIRA_MANAGER/containers/start-sentry.sh
-elif [ "${INFRA_MODE,,}" == "validator" ] ; then
+elif [ "$(globGet INFRA_MODE)" == "validator" ] ; then
     globSet VALIDATOR_EXPOSED true
     $KIRA_MANAGER/containers/start-validator.sh
 else
-    echoErr "ERROR: Unrecognized infra mode ${INFRA_MODE}"
+    echoErr "ERROR: Unrecognized infra mode $(globGet INFRA_MODE)"
     globSet CONTAINERS_BUILD_SUCCESS "false"
     exit 1
 fi
@@ -133,7 +133,7 @@ else
     echoInfo "INFO: Containers deployment suceeded..."
     globSet CONTAINERS_BUILD_SUCCESS "true"
     echoInfo "INFO: Creating snapshot..."
-    [ "${INFRA_MODE,,}" == "latest" ] && SNAPSHOT_TARGET="validator" || SNAPSHOT_TARGET="${INFRA_MODE,,}"
+    SNAPSHOT_TARGET="$(globGet INFRA_MODE)"
     globSet IS_SCAN_DONE "false"
     globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
     globSet SNAPSHOT_TARGET "$SNAPSHOT_TARGET"

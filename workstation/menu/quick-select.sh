@@ -24,7 +24,7 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     set +x
     echo "INFO: Startup configuration of the NEW network was finalized"
     echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
-    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
+    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $(globGet INFRA_MODE)
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
     echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
     echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $INFRA_SRC
@@ -318,7 +318,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         set +x
         echo "INFO: Startup configuration was finalized"
         echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
-        echoNInfo "CONFIG:               Deployment Mode: " && echoErr $INFRA_MODE
+        echoNInfo "CONFIG:               Deployment Mode: " && echoErr $(globGet INFRA_MODE)
         echoNInfo "CONFIG: Minimum expected block height: " && echoErr $NEW_MIN_HEIGHT
         echoNInfo "CONFIG:   Minimum expected block time: " && echoErr $NEW_BLOCK_TIME
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM

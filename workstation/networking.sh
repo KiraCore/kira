@@ -23,7 +23,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| DEPLOYMENT MODE: $INFRA_MODE"
+echoWarn "| DEPLOYMENT MODE: $(globGet INFRA_MODE)"
 echoWarn "|   FIREWALL ZONE: $FIREWALL_ZONE"
 echoWarn "|  PORTS EXPOSURE: $PORTS_EXPOSURE"
 echoWarn "|       PUBLIC IP: $PUBLIC_IP"

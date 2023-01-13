@@ -3,24 +3,24 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 echoInfo "INFO: Loading secrets..."
 
 MNEMONICS="$KIRA_SECRETS/mnemonics.env"
-
 mkdir -p "$KIRA_SECRETS"
 touch $MNEMONICS
 
-REGEN_PRIV_VALIDATOR_KEYS="false"
-REGEN_VALIDATOR_NODE_KEYS="false"
-REGEN_SENTRY_NODE_KEYS="false"
-
 function MnemonicGenerator() {
     loadGlobEnvs
-    MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+    local MNEMONICS="$KIRA_SECRETS/mnemonics.env"
     source $MNEMONICS
 
-    mnemonicVariableName="${1^^}_${2^^}_MNEMONIC"
+    # master mnemonic used to derive other mnemonics
+    local masterMnemonic="$MASTER_MNEMONIC"
+    # expected variable name
+    local mnemonicVariableName=$(toUpper "${1}_${2}_MNEMONIC")
+    # Default entropy == "${masterMnemonic} ; ${mnemonicVariableName}"
+    local entropyHex=$(echo -n "$masterMnemonic ; ${1} ${2}" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{ print $1 }' | xargs)
 
-    valkeyPath="$KIRA_SECRETS/priv_${1,,}_key.json"
-    nodekeyPath="$KIRA_SECRETS/${1,,}_node_key.json"
-    keyidPath="$KIRA_SECRETS/${1,,}_node_id.key"
+    local valkeyPath="$KIRA_SECRETS/priv_${1,,}_key.json"
+    local nodekeyPath="$KIRA_SECRETS/${1,,}_node_key.json"
+    local keyidPath="$KIRA_SECRETS/${1,,}_node_id.key"
 
     mnemonic="${!mnemonicVariableName}"
     mnemonic=$(echo "$mnemonic" | xargs || echo -n "")
@@ -28,7 +28,13 @@ function MnemonicGenerator() {
     if (! $(isMnemonic "$mnemonic")) ; then # if mnemonic is not present then generate new one
         echoInfo "INFO: $mnemonicVariableName was not found, regenerating..."
         mnemonic=$(echo ${mnemonic//,/ } | xargs || echo -n "")
-        (! $(isMnemonic "$mnemonic")) && mnemonic="$(bip39gen mnemonic --length=24 --verbose=false)"
+        if (! $(isMnemonic "$mnemonic")) ; then
+            if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
+                echoErr "ERROR: Master mnemonic was not specified, keys can NOT be derived :(, please define '$mnemonicVariableName' variable in the '$MNEMONICS' file"
+                exit 1
+            fi
+            mnemonic="$(bip39gen mnemonic --length=24 --entropy="$entropyHex" --verbose=true --hex=true)"
+        fi
         setVar "$mnemonicVariableName" "$mnemonic" "$MNEMONICS" 1> /dev/null
     fi
 
@@ -63,14 +69,20 @@ function MnemonicGenerator() {
     rm -fv $TMP_DUMP
 }
 
+
+
+if [ "$(globGet INFRA_MODE)" == "validator" ] ; then
+    setVar VALIDATOR_ADDR_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null
+    MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
+    MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)
+elif [ "$(globGet INFRA_MODE)" == "seed" ] ; then
+    MnemonicGenerator "seed" "node" # seed node key
+elif [ "$(globGet INFRA_MODE)" == "sentry" ] ; then
+    MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
+fi
+
 MnemonicGenerator "signer" "addr" # INTERX message signing key
-MnemonicGenerator "validator" "addr" # validator controller key
 MnemonicGenerator "test" "addr" # generic test key
-MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
-MnemonicGenerator "seed" "node" # seed node key
-MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
-# NOTE: private validator key is generated from the separate mnemonic then node key or address !!!
-MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)
 
 source $MNEMONICS
 

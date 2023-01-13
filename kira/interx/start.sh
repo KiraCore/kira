@@ -47,7 +47,7 @@ if [ "$(globGet INIT_DONE)" != "true" ]; then
 
     interxd init --cache_dir="$CACHE_DIR" --home="$INTERXD_HOME" --grpc="$grpc" --rpc="$rpc" --port="$INTERNAL_API_PORT" \
       --signing_mnemonic="$COMMON_DIR/signing.mnemonic" \
-      --node_type="$INFRA_MODE" \
+      --node_type="$(globGet INFRA_MODE)" \
       --addrbook="$(globFile KIRA_ADDRBOOK)" \
       --faucet_time_limit=30 \
       --faucet_amounts="100000ukex,20000000test,300000000000000000samolean,1lol" \
