@@ -10,6 +10,7 @@ MAX_FAILS=3
 
 UPDATE_FAIL_COUNTER=$(globGet UPDATE_FAIL_COUNTER)
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+IS_WSL="flase"
 
 if (! $(isNaturalNumber "$(globGet UPDATE_FAIL_COUNTER)")) ; then
     UPDATE_FAIL_COUNTER=0

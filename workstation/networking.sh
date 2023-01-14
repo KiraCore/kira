@@ -18,6 +18,7 @@ PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +trie
 LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo -n "")
 ( ! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo "0.0.0.0")
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+IS_WSL="flase"
 
 set +x
 echoWarn "------------------------------------------------"

@@ -10,6 +10,7 @@ VERSION=$(docker -v || echo "error")
 
 # NOTE: WSL requires docker desktop running on the host machine 
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+IS_WSL="flase"
 if [ "${IS_WSL,,}" == "true" ] ; then
     setGlobEnv DOCKER_HOST "tcp://127.0.0.1:2375"
     setGlobEnv DOCKER_BUILDKIT "1"

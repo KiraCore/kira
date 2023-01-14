@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_COMMON/docker-restart.sh" && rm -fv $FILE && nano $FILE && chmod 555 $FILE
 
 IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
+IS_WSL="flase"
 
 if (! $(isCommand "docker")) ; then 
     echo "WARNING: Can NOT restart docker, command was NOT found"
