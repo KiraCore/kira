@@ -8,49 +8,10 @@ $KIRA_COMMON/docker-restart.sh
 sleep 5
 VERSION=$(docker -v || echo "error")
 
-# NOTE: WSL requires docker desktop running on the host machine 
-IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
-IS_WSL="flase"
-if [ "${IS_WSL,,}" == "true" ] ; then
-    setGlobEnv DOCKER_HOST "tcp://127.0.0.1:2375"
-    setGlobEnv DOCKER_BUILDKIT "1"
-
-    echoInfo "INFO: Updating docker service for WSL2..."
-cat > /usr/lib/systemd/system/docker.service << EOL
-[Unit]
-Description=Docker Application Container Engine
-After=network-online.target docker.socket firewalld.service containerd.service
-Wants=network-online.target
-Requires=docker.socket containerd.service
-
-[Service]
-Type=notify
-ExecStart=/usr/bin/dockerd -H tcp://127.0.0.1:2375 -H unix:///var/run/docker.sock
-ExecReload=/bin/kill -s HUP \$MAINPID
-TimeoutSec=0
-RestartSec=2
-Restart=always
-StartLimitBurst=3
-StartLimitInterval=60s
-LimitNOFILE=infinity
-LimitNPROC=infinity
-LimitCORE=infinity
-TasksMax=infinity
-Delegate=yes
-KillMode=process
-OOMScoreAdjust=-500
-
-[Install]
-WantedBy=multi-user.target
-EOL
-
-    $KIRA_COMMON/docker-restart.sh
-fi
-
 ESSENTIALS_HASH=$(echo "$(globGet KIRA_HOME)-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
-if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || ( [ "${IS_WSL,,}" != "true" ]  && (! $(isServiceActive "docker")) ) ; then
+if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceActive "docker")) ; then
     echoInfo "INFO: Attempting to remove old docker..."
     docker system prune -f || echoWarn "WARNING: failed to prune docker system"
     $KIRA_COMMON/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
@@ -83,7 +44,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || ( [ "${IS_WSL,,}"
     umount /var/lib/docker || echoWarn "WARNING: Failed to unmount /var/lib/docker"
     rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock" "/var/lib/containerd"
 
-    if ! timeout 2 ping -c1 "download.docker.com" &>/dev/null && [ "${IS_WSL,,}" != "true" ] ; then
+    if ! timeout 2 ping -c1 "download.docker.com" &>/dev/null ; then
         firewall-cmd --permanent --delete-zone=docker || echoWarn "WARNING: Failed to delete docker zone"
         firewall-cmd --set-default-zone=public || echoWarn "INFO: WARNING to set default zone"
         firewall-cmd --reload
@@ -93,7 +54,7 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || ( [ "${IS_WSL,,}"
         echoErr "ERROR: System must be rebooted, no connection with 'download.docker.com'"
         if [ ! -f $SETUP_CHECK_REBOOT ] ; then
             touch $SETUP_CHECK_REBOOT
-            [ "${IS_WSL,,}" != "true" ] && reboot
+            reboot
         else
             sleep 10
             exit 1

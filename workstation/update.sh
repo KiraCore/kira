@@ -9,8 +9,6 @@ UPDATE_DUMP="$KIRA_DUMP/kiraup"
 MAX_FAILS=3
 
 UPDATE_FAIL_COUNTER=$(globGet UPDATE_FAIL_COUNTER)
-IS_WSL=$(isSubStr "$(uname -a)" "microsoft-standard-WSL")
-IS_WSL="flase"
 
 if (! $(isNaturalNumber "$(globGet UPDATE_FAIL_COUNTER)")) ; then
     UPDATE_FAIL_COUNTER=0
@@ -45,7 +43,7 @@ if [ "$(globGet SYSTEM_REBOOT)" == "true" ] ; then
     echoInfo "INFO: Reboot is required before tools setup can continue..." && sleep 3
     echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
     globSet SYSTEM_REBOOT "false"
-    [ "${IS_WSL,,}" != "true" ] && reboot
+    reboot
     exit 0
 else
     echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."
