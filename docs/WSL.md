@@ -48,7 +48,7 @@ default=asmodat
 systemd=true
 EOF
 
-wsl --terminate kira
+wsl --terminate kira2
 wsl --shutdown
 
 # Reboot WSL
@@ -80,6 +80,9 @@ Setup with IPFS hash
 # Enter virtual machine
 wsl --terminate kira && \
  wsl -d kira --user asmodat --cd ~
+
+wsl --terminate kira2 && \
+ wsl -d kira2 --user asmodat --cd ~
 
 # v0.11.3: bafybeihgiyrw4jfvbtuuchvlybzs3e2keqb7krgom4liskwbei7qyo3vfm
 

@@ -20,7 +20,7 @@ cd $SEKAID_HOME/config
 sekaid init --overwrite --chain-id="$NETWORK_NAME" "KIRA VALIDATOR NODE" --home=$SEKAID_HOME
   
 echoInfo "INFO: Importing priv key from common storage..."
-cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
+cp -afv "$COMMON_DIR/priv_validator_key.json" "$SEKAID_HOME/config/priv_validator_key.json"
   
 if (! $(isFileEmpty "$SNAP_FILE_INPUT")) ; then
     echoInfo "INFO: Snap file or directory was found, attepting integrity verification and data recovery..."
@@ -45,11 +45,11 @@ else
 fi
   
 set +x
-echoInfo "INFO: Attempting accounts recovery"
-SIGNER_KEY=$COMMON_DIR/signer_addr_mnemonic.key && SIGNER_ADDR_MNEMONIC=$(cat $SIGNER_KEY)
-VALIDATOR_KEY=$COMMON_DIR/validator_addr_mnemonic.key && VALIDATOR_ADDR_MNEMONIC=$(cat $VALIDATOR_KEY)
-TEST_KEY=$COMMON_DIR/test_addr_mnemonic.key && TEST_ADDR_MNEMONIC=$(cat $TEST_KEY)
-  
+echoInfo "INFO: Attempting accounts recovery, loading keys..."
+SIGNER_KEY="$COMMON_DIR/signer_addr_mnemonic.key" && SIGNER_ADDR_MNEMONIC="$(cat $SIGNER_KEY | xargs)"
+VALIDATOR_KEY="$COMMON_DIR/validator_addr_mnemonic.key" && VALIDATOR_ADDR_MNEMONIC="$(cat $VALIDATOR_KEY | xargs)"
+TEST_KEY="$COMMON_DIR/test_addr_mnemonic.key" && TEST_ADDR_MNEMONIC="$(cat $TEST_KEY | xargs)"
+echoInfo "INFO: Importing keys..."
 yes $SIGNER_ADDR_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
 yes $VALIDATOR_ADDR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
 yes $TEST_ADDR_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover

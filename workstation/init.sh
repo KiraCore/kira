@@ -181,20 +181,16 @@ echo -n ""
 set -x
 
 KIRA_HOME="/home/$(globGet KIRA_USER)"      && globSet KIRA_HOME "$KIRA_HOME"
-KIRA_LOGS="$KIRA_HOME/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
-KIRA_DUMP="$KIRA_HOME/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
-KIRA_SNAP="$KIRA_HOME/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
-KIRA_SCAN="$KIRA_HOME/kirascan"             && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
-KIRA_SECRETS="$KIRA_HOME/.secrets"          && setGlobEnv KIRA_SECRETS "$KIRA_SECRETS"
-KIRA_CONFIGS="$KIRA_HOME/.kira"             && setGlobEnv KIRA_CONFIGS "$KIRA_CONFIGS"
+KIRA_LOGS="$(globGet KIRA_HOME)/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
+KIRA_DUMP="$(globGet KIRA_HOME)/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
+KIRA_SNAP="$(globGet KIRA_HOME)/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
+KIRA_SCAN="$(globGet KIRA_HOME)/kirascan"             && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
+KIRA_SECRETS="$(globGet KIRA_HOME)/.secrets"          && setGlobEnv KIRA_SECRETS "$KIRA_SECRETS"
+KIRA_CONFIGS="$(globGet KIRA_HOME)/.kira"             && setGlobEnv KIRA_CONFIGS "$KIRA_CONFIGS"
 
 PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"   && setGlobEnv PUBLIC_PEERS "$KIRA_CONFIGS/public_peers"
 PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"   && setGlobEnv PUBLIC_SEEDS "$KIRA_CONFIGS/public_seeds"
 
-#KIRA_REPOS="/kira/repos"            && setGlobEnv KIRA_REPOS "$KIRA_REPOS"
-#KIRA_INFRA="$KIRA_REPOS/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
-#KIRA_SEKAI="$KIRA_REPOS/sekai"      && setGlobEnv KIRA_SEKAI "$KIRA_SEKAI"
-#KIRA_INTERX="$KIRA_REPOS/interx"    && setGlobEnv KIRA_INTERX "$KIRA_INTERX"
 KIRA_INFRA="/kira/repos/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
 
 KIRA_BIN="/kira/bin"                && setGlobEnv KIRA_BIN "$KIRA_BIN"
@@ -216,7 +212,7 @@ LOCAL_GENESIS_PATH="$DOCKER_COMMON_RO/genesis.json"     && setGlobEnv LOCAL_GENE
 
 rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
-mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SEKAI $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
+mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
 
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
