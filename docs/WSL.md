@@ -48,7 +48,7 @@ default=asmodat
 systemd=true
 EOF
 
-wsl --terminate kira2
+wsl --terminate kira
 wsl --shutdown
 
 # Reboot WSL
@@ -78,8 +78,8 @@ docker rmi -f $(docker images -aq)
 Setup with IPFS hash
 ```
 # Enter virtual machine
-wsl --terminate kira && \
- wsl -d kira --user asmodat --cd ~
+wsl --terminate kira3 && \
+ wsl -d kira3 --user asmodat --cd ~
 
 wsl --terminate kira2 && \
  wsl -d kira2 --user asmodat --cd ~

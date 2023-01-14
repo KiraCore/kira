@@ -19,7 +19,7 @@ echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SEED_NODE_ID"
 echoWarn "|   NETWORK: $(globGet KIRA_DOCEKR_NETWORK)"
-echoWarn "|  HOSTNAME: $KIRA_SEED_DNS"
+echoWarn "|  HOSTNAME: $(globGet KIRA_SEED_DNS)"
 echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
@@ -126,7 +126,7 @@ docker run -d \
     -p $KIRA_SEED_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_SEED_RPC_PORT:$DEFAULT_RPC_PORT \
     -p $KIRA_SEED_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
-    --hostname $KIRA_SEED_DNS \
+    --hostname "$(globGet KIRA_SEED_DNS)" \
     --restart=always \
     --name $CONTAINER_NAME \
     --net="$(globGet KIRA_DOCEKR_NETWORK)" \
@@ -134,7 +134,7 @@ docker run -d \
     --log-opt max-file=5 \
     -e UPGRADE_MODE="$UPGRADE_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e HOSTNAME="$KIRA_SEED_DNS" \
+    -e HOSTNAME="$(globGet KIRA_SEED_DNS)" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SEED_NODE_ID" \
     -e EXTERNAL_P2P_PORT="$KIRA_SEED_P2P_PORT" \

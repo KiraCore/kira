@@ -8,11 +8,13 @@ GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 COMMON_LOGS="$COMMON_PATH/logs"
 START_LOGS="$COMMON_LOGS/start.log"
 HEALTH_LOGS="$COMMON_LOGS/health.log"
+KIRA_HOME="$(globGet KIRA_HOME)"
+KIRA_INTERX_DNS="$(globGet KIRA_INTERX_DNS)"
 
 set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
-cd "$(globGet KIRA_HOME)"
+cd "$KIRA_HOME"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 CONTAINER_STATUS="$KIRA_SCAN/status/$NAME"
 CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"

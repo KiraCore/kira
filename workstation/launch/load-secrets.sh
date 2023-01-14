@@ -89,6 +89,7 @@ fi
 
 MnemonicGenerator "signer" "addr" # INTERX message signing key
 MnemonicGenerator "test" "addr" # generic test key
+MnemonicGenerator "test" "node" # connection test node key
 
 source $MNEMONICS
 

@@ -19,7 +19,7 @@ echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NETWORK: $(globGet KIRA_DOCEKR_NETWORK)"
 echoWarn "|   NODE ID: $VALIDATOR_NODE_ID"
-echoWarn "|  HOSTNAME: $KIRA_VALIDATOR_DNS"
+echoWarn "|  HOSTNAME: $(globGet KIRA_VALIDATOR_DNS)"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
@@ -135,7 +135,7 @@ docker run -d \
     -p $KIRA_VALIDATOR_P2P_PORT:$DEFAULT_P2P_PORT \
     -p $KIRA_VALIDATOR_RPC_PORT:$DEFAULT_RPC_PORT \
     -p $KIRA_VALIDATOR_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
-    --hostname "$KIRA_VALIDATOR_DNS" \
+    --hostname "$(globGet KIRA_VALIDATOR_DNS)" \
     --restart=always \
     --name "$CONTAINER_NAME" \
     --net="$(globGet KIRA_DOCEKR_NETWORK)" \
@@ -143,7 +143,7 @@ docker run -d \
     --log-opt max-file=5 \
     -e UPGRADE_MODE="$UPGRADE_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e HOSTNAME="$KIRA_VALIDATOR_DNS" \
+    -e HOSTNAME="$(globGet KIRA_VALIDATOR_DNS)" \
     -e EXTERNAL_P2P_PORT="$KIRA_VALIDATOR_P2P_PORT" \
     -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
     -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \

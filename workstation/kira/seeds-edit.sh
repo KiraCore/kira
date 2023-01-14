@@ -40,7 +40,7 @@ while : ; do
 
         p2=$(resolveDNS $p2)
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
-        PING_TIME=$(tmconnect handshake --address="$p1@$p2:$p3" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "0")
+        PING_TIME=$(tmconnect handshake --address="$p1@$p2:$p3" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "0")
         (! $(isNaturalNumber $PING_TIME)) && PING_TIME=0
 
         if [[ $PING_TIME -ge 1 ]] && [[ $PING_TIME -le 999 ]] ; then
@@ -136,9 +136,9 @@ while : ; do
                 port=""
             fi
 
-            seed_node_id=$(tmconnect id --address="$dns:$KIRA_SEED_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            sentry_node_id=$(tmconnect id --address="$dns:$KIRA_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
-            validator_node_id=$(tmconnect id --address="$dns:$KIRA_VALIDATOR_P2P_PORT" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+            seed_node_id=$(tmconnect id --address="$dns:$KIRA_SEED_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
+            sentry_node_id=$(tmconnect id --address="$dns:$KIRA_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
+            validator_node_id=$(tmconnect id --address="$dns:$KIRA_VALIDATOR_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"

@@ -398,11 +398,11 @@ if [ "$(globGet NEW_NETWORK)" != "true" ] && [ "${REINITALIZE_NODE,,}" == "false
         echoNErr "Choose to [A]utomatically discover external seeds or [M]anually configure public and private connections: " && pressToContinue a m && OPTION=$(globGet OPTION)
         set -x
 
-        SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        SEED_NODE_ID=$(tmconnect id --address="$NODE_ADDR:16656" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$SEED_NODE_ID")) && SEED_NODE_ADDR="${SEED_NODE_ID}@${NODE_ADDR}:16656" || SEED_NODE_ADDR=""
-        SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        SENTRY_NODE_ID=$(tmconnect id --address="$NODE_ADDR:26656" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$SENTRY_NODE_ID")) && SENTRY_NODE_ADDR="${SENTRY_NODE_ID}@${NODE_ADDR}:26656" || SENTRY_NODE_ID=""
-        VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/seed_node_key.json" --timeout=3 || echo "")
+        VALIDATOR_NODE_ID=$(tmconnect id --address="$NODE_ADDR:36656" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
         ($(isNodeId "$VALIDATOR_NODE_ID")) && VALIDATOR_NODE_ADDR="${VALIDATOR_NODE_ID}@${NODE_ADDR}:36656" || VALIDATOR_NODE_ADDR=""
 
         [ ! -z "$SEED_NODE_ADDR" ] && echo "$SEED_NODE_ADDR" >> $PUBLIC_SEEDS

@@ -18,7 +18,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SENTRY_NODE_ID"
-echoWarn "|  HOSTNAME: $KIRA_INTERX_DNS"
+echoWarn "|  HOSTNAME: $(globGet KIRA_INTERX_DNS)"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
@@ -71,7 +71,7 @@ docker run -d \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
     -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
-    --hostname $KIRA_INTERX_DNS \
+    --hostname "$(globGet KIRA_INTERX_DNS)" \
     --restart=always \
     --name $CONTAINER_NAME \
     --net="$(globGet KIRA_DOCEKR_NETWORK)" \

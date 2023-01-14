@@ -44,5 +44,6 @@ KIRA_SUBNET="10.1.0.0/16"
 ```
 KIRA_VALIDATOR_DNS="validator.local"
 KIRA_SENTRY_DNS="sentry.local"
+KIRA_SEED_DNS="seed.local"
 KIRA_INTERX_DNS="interx.local"
 ```
