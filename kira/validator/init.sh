@@ -49,7 +49,7 @@ echoInfo "INFO: Attempting accounts recovery, loading keys..."
 SIGNER_KEY="$COMMON_DIR/signer_addr_mnemonic.key" && SIGNER_ADDR_MNEMONIC="$(cat $SIGNER_KEY | xargs)"
 VALIDATOR_KEY="$COMMON_DIR/validator_addr_mnemonic.key" && VALIDATOR_ADDR_MNEMONIC="$(cat $VALIDATOR_KEY | xargs)"
 TEST_KEY="$COMMON_DIR/test_addr_mnemonic.key" && TEST_ADDR_MNEMONIC="$(cat $TEST_KEY | xargs)"
-echoInfo "INFO: Importing keys..."
+echoInfo "INFO: Keys loaded, importing..."
 yes $SIGNER_ADDR_MNEMONIC | sekaid keys add signer --keyring-backend=test --home=$SEKAID_HOME --recover
 yes $VALIDATOR_ADDR_MNEMONIC | sekaid keys add validator --keyring-backend=test --home=$SEKAID_HOME --recover
 yes $TEST_ADDR_MNEMONIC | sekaid keys add test --keyring-backend=test --home=$SEKAID_HOME --recover

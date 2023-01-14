@@ -74,12 +74,12 @@ docker run -d \
     --hostname $KIRA_INTERX_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_DOCEKR_NETWORK \
+    --net="$(globGet KIRA_DOCEKR_NETWORK)" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e DOCKER_NETWORK="$KIRA_DOCEKR_NETWORK" \
+    -e DOCKER_NETWORK="$(globGet KIRA_DOCEKR_NETWORK)" \
     -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
     -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
     -e INFRA_MODE="$(globGet INFRA_MODE)" \

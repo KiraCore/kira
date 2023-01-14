@@ -18,7 +18,7 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SEED_NODE_ID"
-echoWarn "|   NETWORK: $KIRA_DOCEKR_NETWORK"
+echoWarn "|   NETWORK: $(globGet KIRA_DOCEKR_NETWORK)"
 echoWarn "|  HOSTNAME: $KIRA_SEED_DNS"
 echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -129,7 +129,7 @@ docker run -d \
     --hostname $KIRA_SEED_DNS \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net=$KIRA_DOCEKR_NETWORK \
+    --net="$(globGet KIRA_DOCEKR_NETWORK)" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e UPGRADE_MODE="$UPGRADE_MODE" \

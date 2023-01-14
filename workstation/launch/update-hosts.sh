@@ -4,12 +4,15 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 START_TIME="$(date -u +%s)"
+KIRA_DOCEKR_NETWORK=$(globGet KIRA_DOCEKR_NETWORK)
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: HOSTS-UPDATE SCRIPT v0.2.2.4        |"
 echoWarn "|-----------------------------------------------"
-echoWarn "| RECONNECT: $RECONNECT"
-echoWarn "|    TARGET: $TARGET"
+echoWarn "|           RECONNECT: $RECONNECT"
+echoWarn "|              TARGET: $TARGET"
+echoWarn "| KIRA DOCEKR NETWORK: $KIRA_DOCEKR_NETWORK"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -19,6 +22,7 @@ containers=$(timeout 8 docker ps -a | awk '{if(NR>1) print $NF}' | tac  2> /dev/
 
 for container in $containers ; do
     echoInfo "INFO: Checking $container network info"
+    
     id=$($KIRA_COMMON/container-id.sh "$container")
     ip=$(timeout 8 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${KIRA_DOCEKR_NETWORK}.IPAddress" || echo -n "")
   

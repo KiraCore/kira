@@ -6,7 +6,10 @@ timerStart
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
 TMP_GENESIS_PATH="/tmp/genesis.json"
-cd "$(globGet KIRA_HOME)"
+KIRA_DOCEKR_NETWORK=$(globGet KIRA_DOCEKR_NETWORK)
+KIRA_DOCEKR_SUBNET=$(globGet KIRA_DOCEKR_SUBNET)
+KIRA_HOME=$(globGet KIRA_HOME)
+cd "$KIRA_HOME"
 
 # find top largest files: find / -xdev -type f -size +100M -exec ls -la {} \; | sort -nk 5
 
@@ -14,10 +17,12 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: CLEANUP SCRIPT                       |"
 echoWarn "|-----------------------------------------------"
-echoWarn "|         SCAN DIR: $KIRA_SCAN"
-echoWarn "|    DOCKER COMMON: $DOCKER_COMMON"
-echoWarn "| DOCKER COMMON RO: $DOCKER_COMMON_RO"
-echoWarn "|    KIRA HOME DIR: $(globGet KIRA_HOME)"
+echoWarn "|            SCAN DIR: $KIRA_SCAN"
+echoWarn "|       DOCKER COMMON: $DOCKER_COMMON"
+echoWarn "|    DOCKER COMMON RO: $DOCKER_COMMON_RO"
+echoWarn "| KIRA DOCKER NETWORK: $KIRA_DOCEKR_NETWORK"
+echoWarn "|  KIRA DOCKER SUBNET: $KIRA_DOCEKR_SUBNET"
+echoWarn "|       KIRA HOME DIR: $KIRA_HOME"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -51,13 +56,15 @@ source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
 
+
+
 echoInfo "INFO: Recreating docker networks..."
 if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then
     MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
     (! $(isNaturalNumber $MTU)) && MTU=1500
     (($MTU < 100)) && MTU=900
     echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
-    docker network rm $KIRA_DOCEKR_NETWORK || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
+    docker network rm "$KIRA_DOCEKR_NETWORK" || echoWarn "WARNING: Failed to remove $(globGet KIRA_DOCEKR_NETWORK) network"
     NETWORKS=$(timeout 10 docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "")
     for net in $NETWORKS ; do
         SUBNET=$(timeout 10 docker network inspect $net | jsonParse "[0].IPAM.Config.[0].Subnet" 2> /dev/null || echo -n "")
@@ -66,7 +73,7 @@ if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" 
             docker network rm $net || echoWarn "WARNING: Failed to remove $net network"
         fi
     done
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" $KIRA_DOCEKR_NETWORK
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" $(globGet KIRA_DOCEKR_NETWORK)
 fi
 
 $KIRA_MANAGER/launch/update-ifaces.sh
