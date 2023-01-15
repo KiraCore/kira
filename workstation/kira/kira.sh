@@ -2,6 +2,8 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+# Force console colour to be black
+tput setab 0
 echoInfo "INFO: Launching KIRA Network Manager..."
 
 if [ "${USER,,}" != "root" ]; then
@@ -135,10 +137,10 @@ while : ; do
     LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
     LOCAL_IP="L.IP: $LOCAL_IP                                               "
     if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $IFACE $(globGet NET_PRIOR)"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $(globGet IFACE) $(globGet NET_PRIOR)"
     else
         PUBLIC_IP="$PUBLIC_IP                          "
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $IFACE $(globGet NET_PRIOR)"
+        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $(globGet IFACE) $(globGet NET_PRIOR)"
     fi
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
@@ -323,7 +325,7 @@ while : ; do
             echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
             globSet SNAP_EXPOSE "true"
             ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
-                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$KIRA_INTERX_PORT/download/snapshot.tar" || \
+                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/download/snapshot.tar" || \
                 echoErr "ERROR: Failed to create snapshot symlink"
         else
             echoInfo "INFO: Ensuring exposed snapshot will be removed..."

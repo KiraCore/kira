@@ -31,23 +31,11 @@ echo -e "\e[37;1m--------------------------------------------------"
     for p in "${PORTS[@]}" ; do
         NAME=""
         
-        [ "$p" == "$KIRA_INTERX_PORT" ] && NAME="INTERX Service" && TYPE="API" && PORTS_CNT=$((PORTS_CNT + 1))
-
-        [ "$p" == "$KIRA_SEED_P2P_PORT" ] && NAME="Seed Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SENTRY_P2P_PORT" ] && NAME="Public Sentry" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_VALIDATOR_P2P_PORT" ] && NAME="Validator Node" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
-
-        [ "$p" == "$KIRA_SEED_RPC_PORT" ] && NAME="Seed Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SENTRY_RPC_PORT" ] && NAME="Public Sentry" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_VALIDATOR_RPC_PORT" ] && NAME="Validator Node" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
-
-        [ "$p" == "$KIRA_SEED_GRPC_PORT" ] && NAME="Seed Node" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SENTRY_GRPC_PORT" ] && NAME="Public Sentry" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_VALIDATOR_GRPC_PORT" ] && NAME="Validator Node" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
-
-        [ "$p" == "$KIRA_SEED_PROMETHEUS_PORT" ] && NAME="Seed Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && NAME="Pub. Sentry Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
-        [ "$p" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && NAME="Val. Node Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$(globGet CUSTOM_INTERX_PORT)" ]     && NAME="INTERX Service" && TYPE="API" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$(globGet CUSTOM_P2P_PORT)" ]        && NAME="Gossip Protocol" && TYPE="P2P" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$(globGet CUSTOM_RPC_PORT)" ]        && NAME="REST Service" && TYPE="RPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        #[ "$p" == "$(globGet CUSTOM_GRPC_PORT)" ] && NAME="ProtoBuf REST" && TYPE="GRPC" && PORTS_CNT=$((PORTS_CNT + 1))
+        [ "$p" == "$(globGet CUSTOM_PROMETHEUS_PORT)" ] && NAME="Prometheus Monitor" && TYPE="HTTP" && PORTS_CNT=$((PORTS_CNT + 1))
 
         i=$((i + 1))
         [ -z "$NAME" ] && continue
@@ -67,7 +55,7 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "| [C] | Force CUSTOM Ports Configuration         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
        [ "${PORTS_EXPOSURE,,}" != "disabled" ] && \
        echo "| [D] | Force DISABLE All Ports                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
-       IFACE_TMP="(${IFACE})${WHITESPACE:0:10}|"
+       IFACE_TMP="($(globGet IFACE))${WHITESPACE:0:10}|"
        echo "| [I] | Change Network INTERFACE $IFACE_TMP"        && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
        echo "|------------------------------------------------|"
        echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
@@ -112,10 +100,10 @@ echo -e "\e[37;1m--------------------------------------------------"
         globSet PORTS_EXPOSURE "custom"
     elif [ "${OPTION,,}" == "i" ]; then
         echoInfo "INFO: Starting network interface selection menu..."
-        IFACE_OLD="$IFACE"
+        IFACE_OLD="$(globGet IFACE)"
         $KIRA_MANAGER/menu/interface-select.sh
         set +e && source "/etc/profile" &>/dev/null && set -e
-        if [ "$IFACE_OLD" != "$IFACE" ] ; then
+        if [ "$IFACE_OLD" != "$(globGet IFACE)" ] ; then
             echoInfo "INFO: Reinitalizing firewall..."
             $KIRA_MANAGER/networking.sh
         else

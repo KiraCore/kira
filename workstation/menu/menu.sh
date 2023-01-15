@@ -21,32 +21,22 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "$(globGet INFRA_MODE)" != "valid
     echo ""
      
     while :; do
-      read -n1 -p "Input option: " KEY
-      echo ""
+      echoErr "Input option: " && pressToContinue 1 2 3 x && KEY=$(globGet OPTION) && echo ""
       
       case ${KEY,,} in
       1*)
         echo "INFO: Starting Validator Node Deployment..."
-        INFRA_MODE="validator"
-        #setGlobEnv INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
+        globSet INFRA_MODE "validator"
         break
         ;;
       2*)
         echo "INFO: Starting Sentry Mode Deployment..."
-        INFRA_MODE="sentry"
-        #setGlobEnv INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
+        globSet INFRA_MODE "sentry"
         break
         ;;
       3*)
         echo "INFO: Starting Seed Mode Deployment..."
-        INFRA_MODE="seed"
-        #setGlobEnv INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE"
-        globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
+        globSet INFRA_MODE "seed"
         break
         ;;
       x*)
@@ -61,9 +51,6 @@ if [ "${SKIP_SELECTION,,}" == "false" ] || ( [ "$(globGet INFRA_MODE)" != "valid
     set -x
 fi
 
-loadGlobEnvs
-globSet SNAPSHOT_TARGET "$(globGet INFRA_MODE)"
-globSet FIREWALL_ZONE "$(globGet INFRA_MODE)"
-#globSet INFRA_MODE "$INFRA_MODE"
-
+# envs must be loaded as they impact custom & default ports
+$KIRA_MANAGER/setup/envs.sh
 source $KIRA_MANAGER/menu/submenu.sh

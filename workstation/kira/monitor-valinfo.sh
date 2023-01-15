@@ -32,8 +32,8 @@ sleep 1
 touch "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 
 echoInfo "INFO: Saving valopers info..."
-(curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
-(curl --fail "0.0.0.0:$KIRA_INTERX_PORT/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
+(curl --fail "0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
+(curl --fail "0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
 
 # let containers know the validators info
 ($(isSimpleJsonObjOrArrFile "$VALOPERS_SCAN_PATH")) && cp -afv "$VALOPERS_SCAN_PATH" "$VALOPERS_COMM_RO_PATH" || echo -n "" > "$VALOPERS_COMM_RO_PATH"

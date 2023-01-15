@@ -7,6 +7,8 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
+KIRA_HOSTNAME="${CONTAINER_NAME}.local"
+KIRA_NETWORK="$(globGet KIRA_DOCEKR_NETWORK)"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -18,8 +20,8 @@ echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SENTRY_NODE_ID"
-echoWarn "|   NETWORK: $(globGet KIRA_DOCEKR_NETWORK)"
-echoWarn "|  HOSTNAME: $(globGet KIRA_SENTRY_DNS)"
+echoWarn "|   NETWORK: $KIRA_NETWORK"
+echoWarn "|  HOSTNAME: $KIRA_HOSTNAME"
 echoWarn "|  SNAPSHOT: $KIRA_SNAP_PATH"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
@@ -100,7 +102,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
         globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
         globSet cfg_p2p_seeds "" $GLOBAL_COMMON
-        globSet cfg_p2p_laddr "tcp://0.0.0.0:$DEFAULT_P2P_PORT" $GLOBAL_COMMON
+        globSet cfg_p2p_laddr "tcp://0.0.0.0:$(globGet DEFAULT_P2P_PORT)" $GLOBAL_COMMON
         globSet cfg_p2p_seed_mode "false" $GLOBAL_COMMON
         globSet cfg_p2p_max_num_outbound_peers "32" $GLOBAL_COMMON
         globSet cfg_p2p_max_num_inbound_peers "128" $GLOBAL_COMMON
@@ -112,7 +114,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         globSet cfg_p2p_allow_duplicate_ip "true" $GLOBAL_COMMON
         globSet cfg_p2p_addr_book_strict "false" $GLOBAL_COMMON
         # CFG [RPC]
-        globSet cfg_rpc_laddr "tcp://0.0.0.0:$DEFAULT_RPC_PORT" $GLOBAL_COMMON
+        globSet cfg_rpc_laddr "tcp://0.0.0.0:$(globGet DEFAULT_RPC_PORT)" $GLOBAL_COMMON
         globSet cfg_rpc_cors_allowed_origins "[ \"*\" ]" $GLOBAL_COMMON
         ####################################################################################
     fi
@@ -127,23 +129,23 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_SENTRY_P2P_PORT:$DEFAULT_P2P_PORT \
-    -p $KIRA_SENTRY_RPC_PORT:$DEFAULT_RPC_PORT \
-    -p $KIRA_SENTRY_PROMETHEUS_PORT:$DEFAULT_PROMETHEUS_PORT \
-    --hostname "$(globGet KIRA_SENTRY_DNS)" \
+    -p "$(globGet CUSTOM_P2P_PORT):$(globGet DEFAULT_P2P_PORT)" \
+    -p "$(globGet CUSTOM_RPC_PORT):$(globGet DEFAULT_RPC_PORT)" \
+    -p "$(globGet CUSTOM_PROMETHEUS_PORT):$(globGet DEFAULT_PROMETHEUS_PORT)" \
+    --hostname "$KIRA_HOSTNAME" \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net="$(globGet KIRA_DOCEKR_NETWORK)" \
+    --net="$KIRA_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e UPGRADE_MODE="$UPGRADE_MODE" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e HOSTNAME="$(globGet KIRA_SENTRY_DNS)" \
+    -e HOSTNAME="$KIRA_HOSTNAME" \
     -e NODE_TYPE=$CONTAINER_NAME \
     -e NODE_ID="$SENTRY_NODE_ID" \
-    -e EXTERNAL_P2P_PORT="$KIRA_SENTRY_P2P_PORT" \
-    -e INTERNAL_P2P_PORT="$DEFAULT_P2P_PORT" \
-    -e INTERNAL_RPC_PORT="$DEFAULT_RPC_PORT" \
+    -e EXTERNAL_P2P_PORT="$(globGet CUSTOM_P2P_PORT)" \
+    -e INTERNAL_P2P_PORT="$(globGet DEFAULT_P2P_PORT)" \
+    -e INTERNAL_RPC_PORT="$(globGet DEFAULT_RPC_PORT)" \
     -v $COMMON_PATH:/common \
     -v $KIRA_SNAP:/snap \
     -v $DOCKER_COMMON_RO:/common_ro:ro \

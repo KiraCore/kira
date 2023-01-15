@@ -16,19 +16,11 @@ while : ; do
     PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_$PORT")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
     
-    [ "$PORT" == "$KIRA_INTERX_PORT" ] && TYPE="API"
-
-    [ "$PORT" == "$KIRA_SEED_P2P_PORT" ] && TYPE="P2P"
-    [ "$PORT" == "$KIRA_SENTRY_P2P_PORT" ] && TYPE="P2P"
-    [ "$PORT" == "$KIRA_VALIDATOR_P2P_PORT" ] && TYPE="P2P"
-
-    [ "$PORT" == "$KIRA_SEED_RPC_PORT" ] && TYPE="RPC"
-    [ "$PORT" == "$KIRA_SENTRY_RPC_PORT" ] && TYPE="RPC"
-    [ "$PORT" == "$KIRA_VALIDATOR_RPC_PORT" ] && TYPE="RPC"
-
-    [ "$PORT" == "$KIRA_SEED_PROMETHEUS_PORT" ] && TYPE="HTTP"
-    [ "$PORT" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] && TYPE="HTTP"
-    [ "$PORT" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ] && TYPE="HTTP"
+    [ "$PORT" == "$(globGet CUSTOM_INTERX_PORT)" ] && TYPE="API"
+    [ "$PORT" == "$(globGet CUSTOM_P2P_PORT)" ] && TYPE="P2P"
+    [ "$PORT" == "$(globGet CUSTOM_RPC_PORT)" ] && TYPE="RPC"
+    [ "$PORT" == "$(globGet CUSTOM_GRPC_PORT)" ] && TYPE="GRPC"
+    [ "$PORT" == "$(globGet CUSTOM_PROMETHEUS_PORT)" ] && TYPE="HTTP"
 
     PORT_TMP="${PORT}${WHITESPACE}"
     TYPE_TMP="${TYPE}${WHITESPACE}"

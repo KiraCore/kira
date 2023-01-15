@@ -13,7 +13,7 @@ sekaid query customgov network-properties --output=json | jq
 ## Show List Of Validator
 
 ```
-echo $(curl 0.0.0.0:$KIRA_INTERX_PORT/api/valopers?all=true | jq)
+echo $(curl 0.0.0.0:11000/api/valopers?all=true | jq)
 ```
 
 # List All Validator Addresses

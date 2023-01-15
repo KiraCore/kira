@@ -22,8 +22,11 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.0"
-TOOLS_VERSION="v0.3.0"
+TOOLS_VERSION="v0.3.1"
 COSIGN_VERSION="v1.13.1"
+
+# Force console colour to be black
+tput setab 0
 
 set +x
 echo -e  "\e[1;40m======================================================\e[0m"

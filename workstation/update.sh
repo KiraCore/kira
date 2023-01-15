@@ -43,7 +43,7 @@ if [ "$(globGet SYSTEM_REBOOT)" == "true" ] ; then
     echoInfo "INFO: Reboot is required before tools setup can continue..." && sleep 3
     echoErr "Reconnect to your machine after restart and type 'kira' in the console to continue"
     globSet SYSTEM_REBOOT "false"
-    reboot
+    (! $(isWSL)) && reboot
     exit 0
 else
     echoInfo "INFO: Tools setup reboot was already performed, setup will continue..."

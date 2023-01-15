@@ -12,13 +12,16 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
+KIRA_HOSTNAME="${$CONTAINER_NAME}.local"
+KIRA_NETWORK="(globGet KIRA_DOCEKR_NETWORK)"
 
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SENTRY_NODE_ID"
-echoWarn "|  HOSTNAME: $(globGet KIRA_INTERX_DNS)"
+echoWarn "|  HOSTNAME: $KIRA_HOSTNAME"
+echoWarn "|   NETWORK: $KIRA_NETWORK"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
@@ -70,22 +73,22 @@ docker run -d \
     --cpus="$CPU_RESERVED" \
     --memory="$RAM_RESERVED" \
     --oom-kill-disable \
-    -p $KIRA_INTERX_PORT:$DEFAULT_INTERX_PORT \
-    --hostname "$(globGet KIRA_INTERX_DNS)" \
+    -p $(globGet CUSTOM_INTERX_PORT):$(globGet DEFAULT_INTERX_PORT) \
+    --hostname "$KIRA_HOSTNAME" \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net="$(globGet KIRA_DOCEKR_NETWORK)" \
+    --net="$KIRA_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e DOCKER_NETWORK="$(globGet KIRA_DOCEKR_NETWORK)" \
-    -e INTERNAL_API_PORT="$DEFAULT_INTERX_PORT" \
-    -e EXTERNAL_API_PORT="$KIRA_INTERX_PORT" \
+    -e DOCKER_NETWORK="$KIRA_NETWORK" \
+    -e INTERNAL_API_PORT="$(globGet DEFAULT_INTERX_PORT)" \
+    -e EXTERNAL_API_PORT="$(globGet CUSTOM_INTERX_PORT)" \
     -e INFRA_MODE="$(globGet INFRA_MODE)" \
     -e PING_TARGET="$(globGet INFRA_MODE).local" \
-    -e DEFAULT_GRPC_PORT="$DEFAULT_GRPC_PORT" \
-    -e DEFAULT_RPC_PORT="$DEFAULT_RPC_PORT" \
+    -e DEFAULT_GRPC_PORT="$(globGet DEFAULT_GRPC_PORT)" \
+    -e DEFAULT_RPC_PORT="$(globGet DEFAULT_RPC_PORT)" \
     -v $COMMON_PATH:/common \
     -v $DOCKER_COMMON_RO:/common_ro:ro \
     -v $APP_HOME:/$INTERXD_HOME \

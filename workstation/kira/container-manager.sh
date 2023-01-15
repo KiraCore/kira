@@ -9,7 +9,6 @@ COMMON_LOGS="$COMMON_PATH/logs"
 START_LOGS="$COMMON_LOGS/start.log"
 HEALTH_LOGS="$COMMON_LOGS/health.log"
 KIRA_HOME="$(globGet KIRA_HOME)"
-KIRA_INTERX_DNS="$(globGet KIRA_INTERX_DNS)"
 
 set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
@@ -45,7 +44,7 @@ while : ; do
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
         if [ "${NAME,,}" == "interx" ] ; then
-            echo $(curl $KIRA_INTERX_DNS:$KIRA_INTERX_PORT/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
+            echo $(curl interx.local:$(globGet CUSTOM_INTERX_PORT)/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi

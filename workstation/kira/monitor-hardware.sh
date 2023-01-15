@@ -58,7 +58,7 @@ PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +trie
 ( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo -e "")
 
 echoInfo "INFO: Discovering & Saving Local IP..."
-LOCAL_IP=$(/sbin/ifconfig $IFACE | grep -i mask | awk '{print $2}' | cut -f2 || echo -e "")
+LOCAL_IP=$(/sbin/ifconfig "$(globGet IFACE)" | grep -i mask | awk '{print $2}' | cut -f2 || echo -e "")
 ( ! $(isIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo -e "")
 
 echoInfo "INFO: Updating IP addresses info..."
@@ -68,7 +68,7 @@ tryMkDir "$GLOBAL_COMMON_RO"
 ($(isIp "$LOCAL_IP")) && globSet "LOCAL_IP" "$LOCAL_IP" && globSet "LOCAL_IP" "$LOCAL_IP" "$GLOBAL_COMMON_RO"
 
 echoInfo "INFO: Updating network speed info..."
-LINE=$(grep $IFACE /proc/net/dev | sed s/.*:// || echo -e "")
+LINE=$(grep "$(globGet IFACE)" /proc/net/dev | sed s/.*:// || echo -e "")
 RECEIVED=$(echo $LINE | awk '{print $1}' || echo -e "")
 TRANSMITTED=$(echo $LINE | awk '{print $9}' || echo -e "")
 

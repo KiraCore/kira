@@ -10,7 +10,6 @@ APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
-RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
 
@@ -26,7 +25,7 @@ echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
-echoWarn "|         RPC PORT: $RPC_PORT"
+echoWarn "|         RPC PORT: $(globGet CUSTOM_RPC_PORT)"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|        INIT MODE: $(globGet INIT_MODE)"
 echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
@@ -84,7 +83,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     fi
 
     echoInfo "INFO: Awaiting node status..."
-    STATUS=$(timeout 6 curl 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
+    STATUS=$(timeout 6 curl 0.0.0.0:$(globGet CUSTOM_RPC_PORT)/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
     NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
     if (! $(isNodeId "$NODE_ID")); then
         echoWarn "WARNING: Status and Node ID is not available, waiting up to $(timerSpan $TIMER_NAME $TIMEOUT) seconds ..."

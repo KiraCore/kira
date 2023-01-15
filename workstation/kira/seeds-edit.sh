@@ -130,15 +130,20 @@ while : ; do
             SVAL="." && while ! [[ "${SVAL,,}" =~ ^(y|n)$ ]] ; do echoNErr "Do you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && read -d'' -s -n1 SVAL && echo ""; done
             [ "${SVAL,,}" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${TARGET^^} list" && continue
 
-            [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$DEFAULT_RPC_PORT" ] && [ "${portStandalone}" != "$DEFAULT_INTERX_PORT" ] && port="$portStandalone"
+            [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$(globGet DEFAULT_RPC_PORT)" ] && [ "${portStandalone}" != "$(globGet DEFAULT_INTERX_PORT)" ] && port="$portStandalone"
             [ ! -z "$port" ] && if ! timeout 1 nc -z $dns $port ; then
                 echoWarn "WARNING: Port '$port' is not accessible or not defined, attempting discovery..." 
                 port=""
             fi
 
+            KIRA_SEED_P2P_PORT=$(globGet KIRA_SEED_P2P_PORT)
+            KIRA_SENTRY_P2P_PORT=$(globGet KIRA_SENTRY_P2P_PORT)
+            KIRA_VALIDATOR_P2P_PORT=$(globGet KIRA_VALIDATOR_P2P_PORT)
+            CUSTOM_P2P_PORT=$(globGet CUSTOM_P2P_PORT)
             seed_node_id=$(tmconnect id --address="$dns:$KIRA_SEED_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
             sentry_node_id=$(tmconnect id --address="$dns:$KIRA_SENTRY_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
             validator_node_id=$(tmconnect id --address="$dns:$KIRA_VALIDATOR_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
+            custom_node_id=$(tmconnect id --address="$dns:$CUSTOM_P2P_PORT" --node_key="$KIRA_SECRETS/test_node_key.json" --timeout=3 || echo "")
 
             if ($(isNodeId "$seed_node_id")) && timeout 1 nc -z $dns $KIRA_SEED_P2P_PORT ; then 
                 tmp_addr="${seed_node_id}@${dns}:$KIRA_SEED_P2P_PORT"
@@ -162,6 +167,14 @@ while : ; do
                 echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is exposed" ; 
             else 
                 echoInfo "INFO: Port $KIRA_VALIDATOR_P2P_PORT is NOT accepting P2P connections" ; 
+            fi
+
+            if ($(isNodeId "$custom_node_id")) && timeout 1 nc -z $dns $KIRA_VALIDATOR_P2P_PORT ; then 
+                tmp_addr="${custom_node_id}@${dns}:$CUSTOM_P2P_PORT"
+                [ -z "$DETECTED_NODES" ] && DETECTED_NODES="$tmp_addr" || DETECTED_NODES="${DETECTED_NODES},$tmp_addr"
+                echoInfo "INFO: Port $CUSTOM_P2P_PORT is exposed" ; 
+            else 
+                echoInfo "INFO: Port $CUSTOM_P2P_PORT is NOT accepting P2P connections" ; 
             fi
         else
             DETECTED_NODES="${nodeId}@${dns}:${port}"

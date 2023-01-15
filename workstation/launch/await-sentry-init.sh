@@ -12,7 +12,6 @@ COMMON_LOGS="$COMMON_PATH/logs"
 SNAP_HEIGHT_FILE="$COMMON_PATH/snap_height"
 SNAP_NAME_FILE="$COMMON_PATH/snap_name"
 IFACES_RESTARTED="false"
-RPC_PORT="KIRA_${CONTAINER_NAME^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
 
 TIMER_NAME="${CONTAINER_NAME^^}_INIT"
 TIMEOUT=3600
@@ -29,7 +28,7 @@ echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
-echoWarn "|         RPC PORT: $RPC_PORT"
+echoWarn "|         RPC PORT: $(globGet CUSTOM_RPC_PORT)"
 echoWarn "| EXPECTED NODE ID: $EXPECTED_NODE_ID"
 echoWarn "|        INIT MODE: $(globGet INIT_MODE)"
 echoWarn "|     UPGRADE MODE: $UPGRADE_MODE"
@@ -89,7 +88,7 @@ while : ; do
         fi
 
         echoInfo "INFO: Awaiting node status..."
-        STATUS=$(timeout 6 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
+        STATUS=$(timeout 6 curl --fail 0.0.0.0:$(globGet CUSTOM_RPC_PORT)/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") 
         NODE_ID=$(echo "$STATUS" | jsonQuickParse "id" || echo -n "")
         if (! $(isNodeId "$NODE_ID")) ; then
             sleep 20

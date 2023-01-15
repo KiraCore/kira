@@ -20,7 +20,7 @@ sleep 1
 
 timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone to UTC, ensure to do that manually after setup is finalized!" && sleep 10 )
 
-[ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
+[ -z "$(globGet IFACE)" ] && globSet IFACE "$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
 [ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
 
 
@@ -76,13 +76,22 @@ while :; do
     set +x
     printf "\033c"
 
+    SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 7)
+    P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 7)
+    RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 7)
+    GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 7)
+    PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 7)
+    INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 7)
+
     printWidth=47
     echo -e "\e[31;1m-------------------------------------------------"
     displayAlign center $printWidth "$title $KIRA_SETUP_VER"
     displayAlign center $printWidth "$(date '+%d/%m/%Y %H:%M:%S')"
     echo -e "|-----------------------------------------------|"
-    echo -e "|       Network Interface: $IFACE (default)"
-    echo -e "|        Exposed SSH Port: $DEFAULT_SSH_PORT"
+    echo -e "|  SSH  |  P2P  |  RPC  | GRPC  | PROM. | INT.X |"
+    echo -e "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
+    echo -e "|-----------------------------------------------|"
+    echo -e "|       Network Interface: $(globGet IFACE) (default)"
     echo -e "|            Privacy Mode: ${PRIVATE_MODE^^}"
     echo -e "|  NEW Network Deployment: $(globGet NEW_NETWORK)"
     [ "$(globGet NEW_NETWORK)" == "true" ] && \
@@ -92,13 +101,13 @@ while :; do
     echo -e "|       Snapshots Enabled: $(globGet SNAPSHOT_EXECUTE)"
     [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "| Latest (local) Snapshot: $KIRA_SNAP_PATH"
-    echo -e "|       Base Image Source: $(globGet NEW_BASE_IMAGE_SRC)"
+    echo -e "|       Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" 21)"
     echo -e "|-----------------------------------------------|"
     displayAlign left $printWidth " [1] | Change Default Network Interface"
-    displayAlign left $printWidth " [2] | Change SSH Port to Expose"
+    displayAlign left $printWidth " [2] | Change Default Port Configuration"
     displayAlign left $printWidth " [3] | Change Base Image URL"
     displayAlign left $printWidth " [4] | Change Node Type (sentry/seed/validator)"
-    displayAlign left $printWidth " [5] | Change Node Exposure (privacy) Mode"
+    displayAlign left $printWidth " [5] | Change Network Exposure (local/public)"
     displayAlign left $printWidth " [6] | Change Snapshots Configuration"
     echo "|-----------------------------------------------|"
     displayAlign left $printWidth " [S] | Start Node Setup"
@@ -107,14 +116,12 @@ while :; do
     echo ""
     FAILED="false"
   
-    read -n1 -p "Input option: " KEY
-    echo ""
+    echoErr "Input option: " && pressToContinue 1 2 3 4 5 6 s x && KEY=$(globGet OPTION) && echo ""
 
   case ${KEY,,} in
   s*)
     echo "INFO: Starting Quick Setup..."
-    echo "NETWORK interface: $IFACE"
-    setGlobEnv IFACE "$IFACE"
+    echo "NETWORK interface: $(globGet IFACE)"
     setGlobEnv KIRA_SNAP_PATH ""
     globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
 
@@ -132,9 +139,50 @@ while :; do
     continue
     ;;
   2*)
-    DEFAULT_SSH_PORT="." && while (! $(isPort "$DEFAULT_SSH_PORT")); do echoNErr "Input SSH port number to expose: " && read DEFAULT_SSH_PORT ; done
+    clear
+    echoErr "Choose to modify each [I]ndividual port, [O]ffset all except SSH by fixed number or e[X]it." && pressToContinue e i x OPTION
+    [ "$(globGet OPTION)" == "x" ] && continue
+    if [ "$(globGet OPTION)" == "o" ] ; then
+      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 1000 ]] ; do echoNErr "Input offset value between 0 and 1000: " && read OFFSET ; done
+      SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 7)
+      P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 7)
+      RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 7)
+      GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 7)
+      PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 7)
+      INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 7)
+    elif [ "$(globGet OPTION)" == "e" ] ; then 
+      # SSH
+      echoInfo "INFO: Default SSH port number: $SSH_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input SSH port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && SSH_PORT=$PORT
+      # P2P
+      echoInfo "INFO: Default P2P port number: $P2P_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input P2P port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && P2P_PORT=$PORT
+      # RPC
+      echoInfo "INFO: Default RPC port number: $RPC_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input RPC port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && RPC_PORT=$PORT
+      # GRPC
+      echoInfo "INFO: Default GRPC port number: $GRPC_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input GRPC port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && GRPC_PORT=$PORT
+      # PROMETHEUS
+      echoInfo "INFO: Default PROMETHEUS port number: $PRTH_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input PROMETHEUS port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && PRTH_PORT=$PORT
+      # INTERX
+      echoInfo "INFO: Default INTERX port number: $INEX_PORT"
+      PORT="." && while (! $(isPort "$PORT")) || [ -z "$PORT" ]; do echoNErr "Input INTERX port number or press [ENTER] for default: " && read PORT ; done
+      [ ! -z "$PORT" ] && INEX_PORT=$PORT
+    fi
     set -x
-    setGlobEnv DEFAULT_SSH_PORT "$DEFAULT_SSH_PORT"
+    globSet DEFAULT_SSH_PORT "$SSH_PORT"
+    globSet CUSTOM_P2P_PORT "$P2P_PORT"
+    globSet CUSTOM_RPC_PORT "$RPC_PORT"
+    globSet CUSTOM_GRPC_PORT "$GRPC_PORT"
+    globSet CUSTOM_PROMETHEUS_PORT "$PRTH_PORT"
+    globSet CUSTOM_INTERX_PORT "$INEX_PORT"
     continue
     ;;
   3*)

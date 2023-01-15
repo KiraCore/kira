@@ -28,7 +28,7 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
     echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
     echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $(globGet INFRA_SRC)
-    echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
+    echoNInfo "CONFIG:     Default Network Interface: " && echoErr $(globGet IFACE)
     echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
     set -x
 
@@ -75,16 +75,22 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
         fi
 
-        STATUS=$(timeout 15 curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
 
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_SEED_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet CUSTOM_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
 
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_VALIDATOR_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet CUSTOM_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
 
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$KIRA_SENTRY_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SEED_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_VALIDATOR_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+
+        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGetKIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
 
         HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
         CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
@@ -101,7 +107,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
-        SNAP_URL="$NODE_ADDR:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+        SNAP_URL="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
         if ($(urlExists "$SNAP_URL")) ; then
             SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
@@ -175,7 +181,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             if (! $(isFileEmpty "$TMP_SNAPS")) ; then
                 echoInfo "INFO: Snapshot peer was found"
                 SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
-                SNAP_URL="$SNAP_PEER:$DEFAULT_INTERX_PORT/download/snapshot.tar"
+                SNAP_URL="$SNAP_PEER:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
                 SNAP_AVAILABLE="true"
             else
                 echoWarn "INFO: No snapshot peers were found"
@@ -258,7 +264,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
              
         if ($(isFileEmpty "$TMP_GENESIS_PATH")) ; then
             while : ; do
-                GENESIS_SOURCE="$NODE_ADDR:$DEFAULT_INTERX_PORT/api/genesis"
+                GENESIS_SOURCE="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/api/genesis"
                 set +x
                 echoWarn "WARNING: Genesis file was NOT found!"
                 echoInfo "INFO: Default genesis source file: $GENESIS_SOURCE"
@@ -326,7 +332,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
         echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
         echoNInfo "CONFIG:           KIRA Manager source: " && echoErr $(globGet INFRA_SRC)
-        echoNInfo "CONFIG:     Default Network Interface: " && echoErr $IFACE
+        echoNInfo "CONFIG:     Default Network Interface: " && echoErr $(globGet IFACE)
         echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
         set -x
 

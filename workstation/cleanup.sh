@@ -60,7 +60,7 @@ set -x
 
 echoInfo "INFO: Recreating docker networks..."
 if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then
-    MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+    MTU=$(cat "/sys/class/net/$(globGet IFACE)/mtu" || echo "1500")
     (! $(isNaturalNumber $MTU)) && MTU=1500
     (($MTU < 100)) && MTU=900
     echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."

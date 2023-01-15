@@ -49,8 +49,7 @@ for name in $CONTAINERS; do
 
     if [[ "${name,,}" =~ ^(validator|sentry|seed)$ ]] ; then
         echoInfo "INFO: Fetching sekai status..."
-        RPC_PORT="KIRA_${name^^}_RPC_PORT" && RPC_PORT="${!RPC_PORT}"
-        echo $(timeout 3 curl --fail 0.0.0.0:$RPC_PORT/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
+        echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_RPC_PORT)/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         # TODO: REMOVE DOCKER
         echoInfo "INFO: Fetching upgrade plan..."
         TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "plan" || echo "")
@@ -58,8 +57,8 @@ for name in $CONTAINERS; do
         (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$(globGet UPGRADE_PLAN)" != "$TMP_UPGRADE_PLAN" ] && globSet NEW_UPGRADE_PLAN "$TMP_UPGRADE_PLAN"
     elif [ "${name,,}" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
-        echo $(timeout 3 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
-        echo $(timeout 3 curl --fail 0.0.0.0:$KIRA_INTERX_PORT/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
+        echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
+        echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
     fi
 done
 

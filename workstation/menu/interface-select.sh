@@ -5,7 +5,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 echoErr "Select your default internet connected network interface:"
 
-[ -z "$IFACE" ] && IFACE=$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)
+[ -z "$(globGet IFACE)" ] && globSet IFACE "$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
 ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
 ifaces=( $ifaces_iterate )
 
@@ -17,21 +17,20 @@ done
 
 OPTION=""
 while : ; do
-    read -p "Input interface number 0-$i (Default: $IFACE): " OPTION
+    read -p "Input interface number 0-$i (Default: $(globGet IFACE)): " OPTION
     [ -z "$OPTION" ] && break
     ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
 done
 
-[ ! -z "$OPTION" ] && IFACE=${ifaces[$OPTION]}
+[ ! -z "$OPTION" ] && globSet IFACE "${ifaces[$OPTION]}"
 
 set +x
 echoInfo "INFO: NETWORK interface '$IFACE' was selected"
 echoNErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 set -x
-setGlobEnv IFACE "$IFACE"
 
 echoInfo "INFO: MTU Value Discovery..."
-MTU=$(cat /sys/class/net/$IFACE/mtu || echo "1500")
+MTU=$(cat /sys/class/net/$(globGet IFACE)/mtu || echo "1500")
 (! $(isNaturalNumber $MTU)) && MTU=1500
 (($MTU < 100)) && MTU=900
 globSet MTU $MTU
