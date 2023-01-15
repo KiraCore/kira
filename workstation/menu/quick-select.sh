@@ -29,62 +29,71 @@ if [ "$NEW_NETWORK" == "true" ]; then
 elif [ "$NEW_NETWORK" == "false" ] ; then
     while : ; do
         MIN_HEIGHT="0"
-        if [ ! -z "$(globGet TRUSTED_NODE_ADDR)" ] ; then 
-            set +x
-            echoInfo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
-            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
-            echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
-            set -x
-            [ -z "$v1" ] && v1=$(globGet TRUSTED_NODE_ADDR) || v1=$(resolveDNS "$v1")
-        else
-            set +x
-            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
-            echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
-            set -x
-        fi
 
-        ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
-        [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
-        [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+        NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
+        STATUS="$(globGet TRUSTED_NODE_STATUS)"
+        CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
+        HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
+        [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true"
+
         
-        echoInfo "INFO: Please wait, testing connectivity..."
-        if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
-            echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
-            continue
-        else
-            echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
-        fi
 
-        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet CUSTOM_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet CUSTOM_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SEED_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_VALIDATOR_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGetKIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-
-        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
-
-        if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-            CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
-        fi
-
-        if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
-            echoWarn "WARNING: Could NOT read status, block height or chian-id"
-            echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
-            continue
-        fi
+#        if [ ! -z "$(globGet TRUSTED_NODE_ADDR)" ] ; then 
+#            set +x
+#            echoInfo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
+#            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
+#            echoNErr "Input address (IP/DNS) of the public node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
+#            set -x
+#            [ -z "$v1" ] && v1=$(globGet TRUSTED_NODE_ADDR) || v1=$(resolveDNS "$v1")
+#        else
+#            set +x
+#            echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
+#            echoNErr "Input address (IP/DNS) of the public node you trust: " && read v1
+#            set -x
+#        fi
+#
+#        ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
+#        [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
+#        [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+#        
+#        echoInfo "INFO: Please wait, testing connectivity..."
+#        if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
+#            echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
+#            continue
+#        else
+#            echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
+#        fi
+#
+#        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+#
+#        STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet CUSTOM_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+#
+#        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet CUSTOM_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+#
+#        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SEED_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+#
+#        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_VALIDATOR_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+#
+#        ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGetKIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+#
+#        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
+#        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
+#
+#        if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
+#            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
+#            CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
+#        fi
+#
+#        if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
+#            echoWarn "WARNING: Could NOT read status, block height or chian-id"
+#            echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
+#            continue
+#        fi
 
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
@@ -318,7 +327,7 @@ elif [ "$NEW_NETWORK" == "false" ] ; then
             continue
         fi
 
-        globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
+        #globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
         globSet MIN_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
         globSet LATEST_BLOCK_TIME "$(date2unix $NEW_BLOCK_TIME)" $GLOBAL_COMMON_RO

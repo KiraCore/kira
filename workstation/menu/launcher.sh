@@ -46,6 +46,14 @@ set -x
 set -e
 
 while :; do
+
+    $KIRA_MANAGER/menu/seed-status-refresh.sh
+
+    CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
+    HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
+    NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
+    [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+    
     set +x
     printf "\033c"
 
@@ -69,11 +77,11 @@ while :; do
     echo -e "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
     echo -e "|-----------------------------------------------------------|"
     [ "$(globGet NEW_NETWORK)" == "false" ] && \
-    echo -e "|        Network Name: $(strFixL "???" $prtCharsSubMax)"
+    echo -e "|        Network Name: $(strFixL "$CHAIN_ID" $prtCharsSubMax)"
     echo -e "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
     echo -e "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
     [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
-    echo -e "| Last Known Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
+    echo -e "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
     echo -e "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" $prtCharsSubMax)"
     echo -e "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
     echo -e "|-----------------------------------------------------------|"
@@ -86,14 +94,19 @@ while :; do
     echo -e "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 20)|"
     [ "$(globGet NEW_NETWORK)" == "true" ] && \
     echo -e "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 20)|" || \
-    echo -e "| [8] | Change Trusted Node Address   : $(strFixL "$(globGet TRUSTED_NODE_ADDR)" 20)|"
+    echo -e "| [8] | Change Trusted Node Address   : $(strFixL "$NODE_ADDR" 20)|"
     echo -e "|-----------------------------------------------------------|"
     echo -e "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
     echo -e "-------------------------------------------------------------\e[0m\c\n"
     echo ""
     FAILED="false"
   
-    echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 s r x && KEY=$(globGet OPTION) && echo ""
+    if [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
+        echoWarn "WARNINIG: Trusted seed is unavilable, change node address to start setup..."
+        echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 r x && KEY=$(globGet OPTION) && echo ""
+    else
+        echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 s r x && KEY=$(globGet OPTION) && echo ""
+    fi
 
   case ${KEY,,} in
   s*)
