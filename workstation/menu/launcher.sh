@@ -46,7 +46,6 @@ set -x
 set -e
 
 while :; do
-    loadGlobEnvs
     set +x
     printf "\033c"
 
@@ -69,8 +68,7 @@ while :; do
     echo -e "|   SSH   |   P2P   |   RPC   |   GRPC  | MONITOR | INTERX  |"
     echo -e "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
     echo -e "|-----------------------------------------------------------|"
-    [ "$(globGet NEW_NETWORK)" == "true" ] && \
-    echo -e "|        Network Name: $(strFixL "$(globGet NEW_NETWORK_NAME)" $prtCharsSubMax)" || \
+    [ "$(globGet NEW_NETWORK)" == "false" ] && \
     echo -e "|        Network Name: $(strFixL "???" $prtCharsSubMax)"
     echo -e "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
     echo -e "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
@@ -86,45 +84,36 @@ while :; do
     echo -e "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 20)|"
     echo -e "| [6] | Change Snapshots Config.      : $(strFixL "$SNAPS" 20)|"
     echo -e "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 20)|"
+    [ "$(globGet NEW_NETWORK)" == "true" ] && \
+    echo -e "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 20)|" || \
+    echo -e "| [8] | Change Trusted Node Address   : $(strFixL "$(globGet TRUSTED_NODE_ADDR)" 20)|"
     echo -e "|-----------------------------------------------------------|"
     echo -e "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
     echo -e "-------------------------------------------------------------\e[0m\c\n"
     echo ""
     FAILED="false"
   
-    echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 s r x && KEY=$(globGet OPTION) && echo ""
+    echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 s r x && KEY=$(globGet OPTION) && echo ""
 
   case ${KEY,,} in
   s*)
     echo "INFO: Starting Quick Setup..."
-    echo "NETWORK interface: $(globGet IFACE)"
     setGlobEnv KIRA_SNAP_PATH ""
     globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
-
-    if [ "$(globGet INFRA_MODE)" == "validator" ] || [ "$(globGet INFRA_MODE)" == "sentry" ] || [ "$(globGet INFRA_MODE)" == "seed" ] ; then
-        $KIRA_MANAGER/menu/quick-select.sh
-    else
-        echoErr "ERROR: Unknown infra mode '$(globGet INFRA_MODE)'"
-        sleep 10
-        continue
-    fi
+    $KIRA_MANAGER/menu/quick-select.sh
     break
     ;;
   1*)
     $KIRA_MANAGER/menu/interface-select.sh
-    continue
     ;;
   2*)
     $KIRA_MANAGER/menu/ports-select.sh
-    continue
     ;;
   3*)
     $KIRA_MANAGER/menu/base-image-select.sh
-    continue
     ;;
   4*)
     $KIRA_MANAGER/menu/node-type-select.sh
-    continue
     ;;
   5*)
     set +x
@@ -137,21 +126,25 @@ while :; do
     ;;
   6*)
     $KIRA_MANAGER/kira/kira-backup.sh
-    continue
     ;;
   7*)
-   NEW_NETWORK="false"
-   if [ "$(globGet INFRA_MODE)" == "validator" ]; then
-       set +x
-       echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
-       set -x
-       [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
-   fi
-   
-   globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
-   globSet NEW_NETWORK "$NEW_NETWORK"
-   [ "$(globGet NEW_NETWORK)" == "true" ] && $KIRA_MANAGER/menu/chain-id-select.sh
-   continue
+     NEW_NETWORK="false"
+     if [ "$(globGet INFRA_MODE)" == "validator" ]; then
+         set +x
+         echoNErr "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
+         set -x
+         [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
+     fi
+
+     globSet NEW_NETWORK "$NEW_NETWORK"
+     globSet NEW_NETWORK_NAME "localnet-1"
+   ;;
+   8*)
+      if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
+        $KIRA_MANAGER/menu/chain-id-select.sh
+      else
+        $KIRA_MANAGER/menu/seed-select.sh
+      fi
    ;;
   x*)
     exit 0

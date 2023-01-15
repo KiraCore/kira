@@ -8,10 +8,11 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 TMP_SNAP_DIR="$KIRA_SNAP/tmp"
 TMP_SNAP_PATH="$TMP_SNAP_DIR/tmp-snap.tar"
 MIN_HEIGHT="0"
+NEW_NETWORK=$(globGet NEW_NETWORK)
 
 rm -fv "$TMP_GENESIS_PATH" "$TMP_SNAP_PATH"
 
-if [ "$(globGet NEW_NETWORK)" == "true" ]; then
+if [ "$NEW_NETWORK" == "true" ]; then
     rm -fv "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
     REINITALIZE_NODE="false"
     CHAIN_ID="$(globGet NEW_NETWORK_NAME)"
@@ -21,30 +22,11 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     DOWNLOAD_SUCCESS="false"
     SNAPSHOT=""
 
-    set +x
-    echo "INFO: Startup configuration of the NEW network was finalized"
-    echoNInfo "CONFIG:       Network name (chain-id): " && echoErr $CHAIN_ID
-    echoNInfo "CONFIG:               Deployment Mode: " && echoErr $(globGet INFRA_MODE)
-    echoNInfo "CONFIG: Minimum expected block height: " && echoErr "0"
-    echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
-    echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
-    set -x
-
-    if [ "${OPTION,,}" == "r" ] ; then
-        echoInfo "INFO: Operation cancelled, try diffrent setup option"
-        source $KIRA_MANAGER/menu/launcher.sh
-        exit 0
-    fi
-
-    chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-    rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
-    mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
-
     globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
     globSet LATEST_BLOCK_TIME "0" $GLOBAL_COMMON_RO
     globSet TRUSTED_NODE_ADDR "0.0.0.0"
-elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
+elif [ "$NEW_NETWORK" == "false" ] ; then
     while : ; do
         MIN_HEIGHT="0"
         if [ ! -z "$(globGet TRUSTED_NODE_ADDR)" ] ; then 
@@ -327,8 +309,7 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
         echoNInfo "CONFIG:   Minimum expected block time: " && echoErr $NEW_BLOCK_TIME
         echoNInfo "CONFIG:         Genesis file checksum: " && echoErr $GENSUM
         echoNInfo "CONFIG:        Snapshot file checksum: " && echoErr $SNAPSUM
-        echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR 
-        echoNInfo "CONFIG:        New network deployment: " && echoErr $(globGet NEW_NETWORK)
+        echoNInfo "CONFIG:          Trusted Node Address: " && echoErr $NODE_ADDR
         echoNErr "Choose to [A]pprove or [R]eject configuration: " && pressToContinue a r && OPTION=$(globGet OPTION)
         set -x
 
@@ -336,10 +317,6 @@ elif [ "$(globGet NEW_NETWORK)" == "false" ] ; then
             echoInfo "INFO: Operation cancelled, try connecting with diffrent node"
             continue
         fi
-
-        chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
-        rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
-        mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
 
         globSet TRUSTED_NODE_ADDR "$NODE_ADDR"
         globSet MIN_HEIGHT "$NEW_MIN_HEIGHT" $GLOBAL_COMMON_RO
@@ -352,6 +329,11 @@ else
     echoErr "ERROR: Unexpected option '$SELECT'"
     exit 1
 fi
+
+# cleanup common directory and old files
+chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the local direcotry"
+rm -rfv "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO" "$LOCAL_GENESIS_PATH"
+mkdir -p "$DOCKER_COMMON" "$DOCKER_COMMON_RO" "$GLOBAL_COMMON_RO"
 
 set -x
 

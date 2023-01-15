@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
-# quick edit: FILE="$KIRA_MANAGER/menu/menu.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/menu/node-type-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set +x
 
 while :; do
