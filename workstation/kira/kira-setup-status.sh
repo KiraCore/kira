@@ -33,7 +33,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
     
     while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; do
         set +x
-        set +e && source "$ETC_PROFILE" &>/dev/null && set -e
+        set +e && source "/etc/profile" &>/dev/null && set -e
         SETUP_END_DT=$(globGet SETUP_END_DT)
         SETUP_START_DT=$(globGet SETUP_START_DT)
         UPDATE_DONE=$(globGet UPDATE_DONE)
@@ -78,7 +78,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
     
     while [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPGRADE_DONE,,}" != "true" ] ; do
         set +x
-        set +e && source "$ETC_PROFILE" &>/dev/null && set -e
+        set +e && source "/etc/profile" &>/dev/null && set -e
         PLAN_END_DT=$(globGet PLAN_END_DT)
         PLAN_START_DT=$(globGet PLAN_START_DT)
         PLAN_DONE=$(globGet PLAN_DONE)

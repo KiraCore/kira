@@ -5,6 +5,7 @@ set -x
 
 START_TIME="$(date -u +%s)"
 KIRA_DOCEKR_NETWORK=$(globGet KIRA_DOCEKR_NETWORK)
+HOSTS_PATH="/etc/hosts" 
 
 set +x
 echoWarn "------------------------------------------------"
@@ -12,6 +13,7 @@ echoWarn "| STARTED: HOSTS-UPDATE SCRIPT v0.2.2.4        |"
 echoWarn "|-----------------------------------------------"
 echoWarn "|           RECONNECT: $RECONNECT"
 echoWarn "|              TARGET: $TARGET"
+echoWarn "|          HOSTS PATH: $HOSTS_PATH"
 echoWarn "| KIRA DOCEKR NETWORK: $KIRA_DOCEKR_NETWORK"
 echoWarn "------------------------------------------------"
 set -x

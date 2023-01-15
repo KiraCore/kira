@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="${SELF_CONTAINER}/defaultcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart DEFAULT_HEALTHCHECK

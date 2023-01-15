@@ -175,7 +175,7 @@ echoWarn  "|====================================================|"
 echoWarn  "|          KIRA USER: $(globGet KIRA_USER)"
 echoWarn  "|          INIT MODE: $(globGet INIT_MODE)"
 echoWarn  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
-echoWarn  "|   BASE IMG. SOURCE: $(globGet IMAGE_SRC)"
+echoWarn  "|   BASE IMG. SOURCE: $(globGet BASE_IMAGE_SRC)"
 echoWarn  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
 echoWarn  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
 echoWarn  "======================================================"
@@ -244,6 +244,7 @@ chmod -R 555 $KIRA_MANAGER
 KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
 [ -z "$KIRA_SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && exit 1
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
+globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
 
 echoInfo "INFO: Startting cleanup..."
 timeout 60 apt-get autoclean -y || echoWarn "WARNING: autoclean failed"
@@ -257,10 +258,10 @@ if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
     set +x
     echoInfo "INFO: Your host environment was initialized"
     echoWarn "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
-    echoNErr "Press any key to accept terms & continue or Ctrl+C to abort..." && read -n 1 -s && echo ""
+    echoNErr "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(toLower $(globGet OPTION))" == "n" ] && exit 1
     echoInfo "INFO: Launching setup menu..."
     set -x
-    source $KIRA_MANAGER/menu/menu.sh "true"
+    source $KIRA_MANAGER/menu/launcher.sh
 elif [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
     echoInfo "INFO: Starting upgrade & restarting update daemon..."
     globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER"

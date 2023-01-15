@@ -3,9 +3,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 INFRA_MODE="$(globGet INFRA_MODE)"
-
-ETC_PROFILE="/etc/profile"  && setGlobEnv ETC_PROFILE "$ETC_PROFILE" 
-HOSTS_PATH="/etc/hosts"     && setGlobEnv HOSTS_PATH "$HOSTS_PATH"
+if [ "$INFRA_MODE" != "validator" ] && [ "$INFRA_MODE" != "sentry" ] && [ "$INFRA_MODE" != "seed" ] ; then
+    INFRA_MODE="validator"  && globSet INFRA_MODE "$INFRA_MODE"
+fi
+globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
 
 (! $(isPort "$(globGet DEFAULT_SSH_PORT)")) && globSet DEFAULT_SSH_PORT "22"
 
@@ -43,9 +44,19 @@ KIRA_DOCKER="$KIRA_INFRA/docker"                                && setGlobEnv KI
 KIRAMGR_SCRIPTS="$KIRA_MANAGER/launch"                          && setGlobEnv KIRAMGR_SCRIPTS "$KIRAMGR_SCRIPTS"
 INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"    && setGlobEnv INTERX_REFERENCE_DIR "$INTERX_REFERENCE_DIR"
 
-globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
 globSet SNAPSHOT_TARGET "$INFRA_MODE"
 globSet FIREWALL_ZONE "$INFRA_MODE"
+
+# defines if node should be able to communicate with other local nodes (true), or only private ones (false)
+[ "$(globGet PRIVATE_MODE)" != "true" ] && globSet PRIVATE_MODE "false"
+
+# defines if node should be making snapshots immediately after launch
+[ "$(globGet SNAPSHOT_EXECUTE)" != "true" ] && globSet SNAPSHOT_EXECUTE "false"
+
+# defines if new network should be launched (default false)
+[ "$(globGet NEW_NETWORK)" != "true" ] && globSet NEW_NETWORK "false"
+
+globSet KIRA_SETUP_VER "$(globGet KIRA_SETUP_VER)" $GLOBAL_COMMON_RO
 
 # remove & disable system crash notifications
 rm -f /var/crash/*

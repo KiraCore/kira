@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="${COMMON_DIR}/configure.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 exec 2>&1
 set -x

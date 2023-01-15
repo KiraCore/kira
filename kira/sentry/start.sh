@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source /etc/profile &>/dev/null && set -e
 exec 2>&1
 set -x
 
@@ -71,7 +71,7 @@ fi
 
 echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
-set +e && source "$ETC_PROFILE" &>/dev/null && set -e
+set +e && source "/etc/profile" &>/dev/null && set -e
 globSet CFG_TASK "false"
 globSet RUNTIME_VERSION "sekaid $(sekaid version)"
 

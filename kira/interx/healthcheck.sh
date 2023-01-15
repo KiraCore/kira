@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source /etc/profile &>/dev/null && set -e
 set -x
 
 timerStart HEALTHCHECK

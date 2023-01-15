@@ -118,10 +118,7 @@ fi
 [ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$(globGet INFRA_MODE)' mode"
 
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
-globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
-
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO
-globSet KIRA_SETUP_VER "$KIRA_SETUP_VER" $GLOBAL_COMMON_RO
 
 set +x
 echoWarn "------------------------------------------------"

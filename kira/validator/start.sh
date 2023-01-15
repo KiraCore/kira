@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 exec 2>&1
-set +e && source $ETC_PROFILE &>/dev/null && set -e
+set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="${COMMON_DIR}/validator/start.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 set +x
