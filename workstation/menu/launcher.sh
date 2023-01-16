@@ -156,7 +156,7 @@ while :; do
       if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
         $KIRA_MANAGER/menu/chain-id-select.sh
       else
-        $KIRA_MANAGER/menu/seed-select.sh
+        $KIRA_MANAGER/menu/trusted-node-select.sh
       fi
    ;;
   x*)
@@ -174,7 +174,7 @@ done
 set -x
 
 globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER" UPGRADE_PLAN
-globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
+
 globDel VALIDATOR_ADDR UPDATE_FAIL_COUNTER SETUP_END_DT UPDATE_CONTAINERS_LOG UPDATE_CLEANUP_LOG UPDATE_TOOLS_LOG LATEST_STATUS SNAPSHOT_TARGET
 [ -z "$(globGet SNAP_EXPOSE)" ] && globSet SNAP_EXPOSE "true"
 [ -z "$(globGet SNAPSHOT_KEEP_OLD)" ] && globSet SNAPSHOT_KEEP_OLD "true"
@@ -186,8 +186,8 @@ SETUP_START_DT="$(date +'%Y-%m-%d %H:%M:%S')"
 globSet SETUP_START_DT "$SETUP_START_DT"
 globSet PORTS_EXPOSURE "enabled"
 
-rm -fv $(globFile validator_SEKAID_STATUS) $(globFile sentry_SEKAID_STATUS) 
-rm -fv $(globFile seed_SEKAID_STATUS) $(globFile interx_SEKAID_STATUS)
+globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
+rm -fv "$(globFile validator_SEKAID_STATUS)" "$(globFile sentry_SEKAID_STATUS)" "$(globFile seed_SEKAID_STATUS)" "$(globFile interx_SEKAID_STATUS)"
 
 globDel UPGRADE_INSTATE
 globSet UPGRADE_DONE "true"

@@ -98,3 +98,16 @@ read -p "INPUT VERSION OF THE KM RELEASE: " VER && rm -fv ./i.sh && \
  wget https://github.com/KiraCore/kira/releases/download/$VER/init.sh -O ./i.sh && \
  chmod 555 -v ./i.sh && ./i.sh --infra-src="$VER" --init-mode="interactive"
 ```
+
+# Multi-node Local Testnet
+```
+
+# terminate all machines
+wsl --terminate kira2 && \
+ wsl --terminate kira3
+
+wsl -d kira2 --user asmodat
+
+# To pause failed updates run: systemctl stop kiraup
+
+```

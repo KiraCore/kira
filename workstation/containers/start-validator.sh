@@ -50,8 +50,14 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
     cp -afv "$KIRA_SECRETS/${CONTAINER_NAME}_node_key.json" $COMMON_PATH/node_key.json
     set -x
 
+    # ensure all data is cleaned up before container is launched
     if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
         rm -fv "$COMMON_PATH/genesis.json"
+        globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
+        rm -fv "$(globFile validator_SEKAID_STATUS)" "$(globFile sentry_SEKAID_STATUS)" "$(globFile seed_SEKAID_STATUS)" "$(globFile interx_SEKAID_STATUS)"
+        globSet MIN_HEIGHT "0" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_TIME "" $GLOBAL_COMMON_RO
+        globSet LATEST_BLOCK_HEIGHT "0" $GLOBAL_COMMON_RO
     fi
 
     touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"

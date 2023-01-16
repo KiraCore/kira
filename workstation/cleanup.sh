@@ -32,9 +32,11 @@ sleep 3
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 for name in $CONTAINERS; do
-    $KIRA_COMMON/container-delete.sh "$name"
-    globDel "${name}_SEKAID_STATUS"
+    $KIRA_COMMON/container-delete.sh "$name"\
 done
+
+globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
+rm -fv "$(globFile validator_SEKAID_STATUS)" "$(globFile sentry_SEKAID_STATUS)" "$(globFile seed_SEKAID_STATUS)" "$(globFile interx_SEKAID_STATUS)"
 
 echoInfo "INFO: KIRA Scan service cleanup..."
 rm -frv "$KIRA_SCAN" && mkdir -p "$KIRA_SCAN"
