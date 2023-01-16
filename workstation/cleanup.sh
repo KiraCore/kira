@@ -32,7 +32,7 @@ sleep 3
 
 CONTAINERS=$(docker ps -a | awk '{if(NR>1) print $NF}' | tac)
 for name in $CONTAINERS; do
-    $KIRA_COMMON/container-delete.sh "$name"\
+    $KIRA_COMMON/container-delete.sh "$name"
 done
 
 globDel "sentry_SEKAID_STATUS" "validator_SEKAID_STATUS" "seed_SEKAID_STATUS" "interx_SEKAID_STATUS"
@@ -57,8 +57,6 @@ set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e
 set -x
-
-
 
 echoInfo "INFO: Recreating docker networks..."
 if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then

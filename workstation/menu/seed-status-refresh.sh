@@ -51,3 +51,19 @@ fi
 globSet "TRUSTED_NODE_STATUS" "$STATUS"
 globSet "TRUSTED_NODE_CHAIN_ID" "$CHAIN_ID"
 globSet "TRUSTED_NODE_HEIGHT" "$HEIGHT"
+
+echoInfo "INFO: Please wait, testing snapshot access..."
+SNAP_SIZE="0"
+SNAP_URL="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
+if ($(urlExists "$SNAP_URL")) ; then
+    SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
+    echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
+fi
+
+if [[ $SNAP_SIZE -le 0 ]] ; then
+    SNAP_URL=""
+    SNAP_SIZE="0"
+fi
+
+globSet "TRUSTED_SNAP_URL" "$SNAP_URL"
+globSet "TRUSTED_SNAP_SIZE "$SNAP_SIZE"

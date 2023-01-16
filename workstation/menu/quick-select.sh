@@ -110,6 +110,9 @@ elif [ "$NEW_NETWORK" == "false" ] ; then
             set -x
         fi
 
+        
+
+
         SNAP_AVAILABLE="false"
         DOWNLOAD_SUCCESS="false"
         rm -fv $TMP_SNAP_PATH

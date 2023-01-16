@@ -66,6 +66,9 @@ while :; do
     EXPOSURE="local networks" && [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public networks"
     SNAPS="snap disabled" && [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snap enabled"
     LMODE="join existing net." && [ "$(globGet NEW_NETWORK)" == "true" ] && LMODE="create new net."
+
+    SNAP_URL=$(globGet TRUSTED_SNAP_URL)
+    SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
     
     prtChars=59
     prtCharsSub=33
@@ -82,6 +85,8 @@ while :; do
     echo -e "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
     [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echo -e "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
+    [ "$(globGet NEW_NETWORK)" != "true" ] && [[ $SNAP_SIZE -gt 0 ]] && \
+    echo -e "|   External Snapshot: $(strFixL "$SNAP_URL" $prtCharsSubMax)"
     echo -e "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" $prtCharsSubMax)"
     echo -e "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
     echo -e "|-----------------------------------------------------------|"
