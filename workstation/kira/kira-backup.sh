@@ -53,3 +53,7 @@ setGlobEnv KIRA_SNAP $KIRA_SNAP
 
 echoInfo "INFO: Snapsot task will be initiated and results saved to '$KIRA_SNAP' directory"
 sleep 2
+
+# globSet SNAPSHOT_EXECUTE false
+# globSet SNAPSHOT_UNHALT "true"
+# globSet SNAPSHOT_KEEP_OLD "false"

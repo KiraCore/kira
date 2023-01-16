@@ -87,7 +87,7 @@ wsl --terminate kira2 && \
 # v0.11.3: bafybeihgiyrw4jfvbtuuchvlybzs3e2keqb7krgom4liskwbei7qyo3vfm
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
- wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+ wget https://ipfs.io/ipfs/$HASH/init.sh -O ./i.sh && \
  chmod 555 -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
 ```
 
