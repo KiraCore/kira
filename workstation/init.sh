@@ -130,7 +130,7 @@ getArgs "$arg1" "$arg2" "$arg3"
 [ -z "$INIT_MODE" ] && INIT_MODE="$init_mode" && [ -z $INIT_MODE ] && INIT_MODE="interactive"
 
 ($(isVersion "$INFRA_SRC")) && INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$INFRA_SRC/kira.zip"
-($(isCID "$INFRA_SRC")) && INFRA_SRC="https://ipfs.io/ipfs/$INFRA_SRC/kira.zip"
+($(isCID "$INFRA_SRC")) && INFRA_SRC="https://ipfs.kira.network/ipfs/$INFRA_SRC/kira.zip"
 (! $(urlExists "$INFRA_SRC")) && echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!" && exit 1
 
 ($(isVersion "$IMAGE_SRC")) && IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:$IMAGE_SRC"

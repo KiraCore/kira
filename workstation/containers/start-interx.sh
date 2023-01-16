@@ -13,7 +13,7 @@ APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 KIRA_HOSTNAME="${CONTAINER_NAME}.local"
-KIRA_NETWORK="(globGet KIRA_DOCEKR_NETWORK)"
+KIRA_DOCEKR_NETWORK="$(globGet KIRA_DOCEKR_NETWORK)"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -21,7 +21,7 @@ echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
 echoWarn "|   NODE ID: $SENTRY_NODE_ID"
 echoWarn "|  HOSTNAME: $KIRA_HOSTNAME"
-echoWarn "|   NETWORK: $KIRA_NETWORK"
+echoWarn "|   NETWORK: $KIRA_DOCEKR_NETWORK"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
 echoWarn "|   MAX RAM: $RAM_RESERVED"
 echoWarn "------------------------------------------------"
@@ -77,12 +77,12 @@ docker run -d \
     --hostname "$KIRA_HOSTNAME" \
     --restart=always \
     --name $CONTAINER_NAME \
-    --net="$KIRA_NETWORK" \
+    --net="$KIRA_DOCEKR_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e NODE_TYPE="$CONTAINER_NAME" \
     -e NETWORK_NAME="$NETWORK_NAME" \
-    -e DOCKER_NETWORK="$KIRA_NETWORK" \
+    -e DOCKER_NETWORK="$KIRA_DOCEKR_NETWORK" \
     -e INTERNAL_API_PORT="$(globGet DEFAULT_INTERX_PORT)" \
     -e EXTERNAL_API_PORT="$(globGet CUSTOM_INTERX_PORT)" \
     -e INFRA_MODE="$(globGet INFRA_MODE)" \

@@ -29,7 +29,7 @@ else
     ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_VALIDATOR_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
     CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
 
-    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGetKIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
 
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
     CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
@@ -66,4 +66,4 @@ if [[ $SNAP_SIZE -le 0 ]] ; then
 fi
 
 globSet "TRUSTED_SNAP_URL" "$SNAP_URL"
-globSet "TRUSTED_SNAP_SIZE "$SNAP_SIZE"
+globSet "TRUSTED_SNAP_SIZE" "$SNAP_SIZE"

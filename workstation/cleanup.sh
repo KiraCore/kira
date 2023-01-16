@@ -64,7 +64,7 @@ if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" 
     (! $(isNaturalNumber $MTU)) && MTU=1500
     (($MTU < 100)) && MTU=900
     echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
-    docker network rm "$KIRA_DOCEKR_NETWORK" || echoWarn "WARNING: Failed to remove $(globGet KIRA_DOCEKR_NETWORK) network"
+    docker network rm "$KIRA_DOCEKR_NETWORK" || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
     NETWORKS=$(timeout 10 docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "")
     for net in $NETWORKS ; do
         SUBNET=$(timeout 10 docker network inspect $net | jsonParse "[0].IPAM.Config.[0].Subnet" 2> /dev/null || echo -n "")
@@ -73,7 +73,7 @@ if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" 
             docker network rm $net || echoWarn "WARNING: Failed to remove $net network"
         fi
     done
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" $(globGet KIRA_DOCEKR_NETWORK)
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" "$KIRA_DOCEKR_NETWORK"
 fi
 
 $KIRA_MANAGER/launch/update-ifaces.sh
