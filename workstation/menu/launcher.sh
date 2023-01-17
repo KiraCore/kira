@@ -49,23 +49,25 @@ while :; do
 
     $KIRA_MANAGER/menu/seed-status-refresh.sh
 
-    CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
+    CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)" && [ -z "$CHAIN_ID" ] && CHAIN_ID="???"
     HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
     NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
+    NEW_NETWORK=$(globGet NEW_NETWORK)
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+    (! $(isDnsOrIp "$NODE_ADDR")) && NODE_ADDR="???.???.???.???"
     
     set +x
     printf "\033c"
 
-    SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 9)
-    P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 9)
-    RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 9)
-    GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 9)
-    PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 9)
-    INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 9)
+    SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 11)
+    P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 11)
+    RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 11)
+    GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 12)
+    PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 14)
+    INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 14)
     EXPOSURE="local networks" && [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public networks"
     SNAPS="snap disabled" && [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snap enabled"
-    LMODE="join existing net." && [ "$(globGet NEW_NETWORK)" == "true" ] && LMODE="create new network"
+    LMODE="join '$CHAIN_ID' network" && [ "$NEW_NETWORK" == "true" ] && LMODE="create new test network"
 
     SNAP_URL=$(globGet TRUSTED_SNAP_URL)
     SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
@@ -74,49 +76,52 @@ while :; do
     DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
     
     FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
-    
-    prtChars=59
-    prtCharsSub=33
-    prtCharsSubMax=50
-    echoC ";whi;" "============================================================="
-    echoC ";whi;" "|$(strFixC "$(toUpper $(globGet INFRA_MODE)) NODE LAUNCHER, KM $KIRA_SETUP_VER" $prtChars)|"
-    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " $prtChars "." "-")|"
-    echoC ";whi;" "|   SSH   |   P2P   |   RPC   |   GRPC  | MONITOR | INTERX  |"
-    echoC ";whi;" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
-    [ "$FIREWALL_ENABLED" == "true" ] && \
-      echoC "sto;whi" "|$(echoC "res;gre" $(strFixC " FIREWALL ENABLED " $prtChars "." "-"))|" || \
-      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL DISABLED " $prtChars "." "-"))|"
-    [ "$(globGet NEW_NETWORK)" == "false" ] && \
-    echoC ";whi;" "|        Network Name: $(strFixL "$CHAIN_ID" $prtCharsSubMax)"
-    echoC ";whi;" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
-    echoC ";whi;" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
-    [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
-    echoC ";whi;" "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
-    [ "$(globGet NEW_NETWORK)" != "true" ] && [[ $SNAP_SIZE -gt 0 ]] && \
-    echoC ";whi;" "|   External Snapshot: $(strFixL "$SNAP_URL" $prtCharsSubMax)"
-    echoC ";whi;" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" $prtCharsSubMax)"
-    echoC ";whi;" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
-    echoC ";whi;" "|-----------------------------------------------------------|"
-    echoC ";whi;" "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 20)|"
-    echoC ";whi;" "| [2] | Change Ports or Subnet Config.: $(strFixL "$DOCKER_NETWORK:$DOCKER_SUBNET" 20)|"
-    echoC ";whi;" "| [3] | Change Base Image URL         : $(strFixL "" 20)|"
-    echoC ";whi;" "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 20)|"
-    echoC ";whi;" "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 20)|"
-    echoC ";whi;" "| [6] | Change Snapshots Config.      : $(strFixL "$SNAPS" 20)|"
-    echoC ";whi;" "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 20)|"
-    [ "$(globGet NEW_NETWORK)" == "true" ] && \
-    echoC ";whi;" "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 20)|" || \
-    echoC ";whi;" "| [8] | Change Trusted Node Address   : $(strFixL "$NODE_ADDR" 20)|"
-    echoC ";whi;" "|-----------------------------------------------------------|"
-    echoC ";whi;" "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
-    echoC ";whi;" "-------------------------------------------------------------"
- 
-    if [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
-        echoWarn "WARNINIG: Trusted seed is unavilable, change node address to start setup..."
-        echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 r x && KEY=$(globGet OPTION) && echo ""
+
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "$(toUpper $(globGet INFRA_MODE)) NODE LAUNCHER, KM $KIRA_SETUP_VER" 78)")|"
+ echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+    echoC ";whi" "| SSH PORT  | P2P PORT  | RPC PORT  | GRPC PORT  |  PROMETHEUS  | INTERX (API) |"
+    echoC ";whi" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
+    if [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
+  echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " NETWORK NOT FOUND, CHANGE TRUSTED SEED ADDRESS " 78 "." "-")")|"
     else
-        echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 s r x && KEY=$(globGet OPTION) && echo ""
+    [ "$FIREWALL_ENABLED" == "false" ] && \
+  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " FIREWALL PERMANENTLY DISABLED " 78 "." "-")")|"
     fi
+    #[ "$NEW_NETWORK" == "false" ] && \
+    #echoC ";whi" "|        Network Name: $(strFixL "$CHAIN_ID" 55) |"
+    echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
+    echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
+    [ "$NEW_NETWORK" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
+    echoC ";whi" "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" 55) |"
+    [ "$NEW_NETWORK" != "true" ] && [[ $SNAP_SIZE -gt 0 ]] && \
+    echoC ";whi" "|   External Snapshot: $(strFixL "$SNAP_URL" 55) |"
+    echoC ";whi" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" 55) |"
+    echoC ";whi" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" 55) |"
+    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    echoC ";whi" "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 39)|"
+    echoC ";whi" "| [2] | Change Ports or Subnet Config.: $(strFixL "$DOCKER_NETWORK : $DOCKER_SUBNET" 39)|"
+    echoC ";whi" "| [3] | Change Base Image URL         : $(strFixL "" 39)|"
+    echoC ";whi" "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 39)|"
+    echoC ";whi" "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 39)|"
+    echoC ";whi" "| [6] | Change Snapshots Config.      : $(strFixL "$SNAPS" 39)|"
+    echoC ";whi" "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 39)|"
+    [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] && col="red" || col="whi"
+    [ "$NEW_NETWORK" == "true" ] && \
+                        echoC ";whi" "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 39)|" || \
+ echoC "sto;whi" "| $(echoC "res;$col" "[8] | Change Trusted Node Address   : $(strFixL "$NODE_ADDR" 39)")|"
+    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] && col="bla" || col="gre"
+  echoC "sto;whi" "| $(echoC "res;$col" "[S] | Start Setup")                   | [R] Refresh      | [X] Abort Setup     |"
+    echoNC ";whi" " ------------------------------------------------------------------------------"
+
+    setterm -cursor off
+    if [ "$NEW_NETWORK" != "true" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
+        pressToContinue 1 2 3 4 5 6 7 8 r x && KEY=$(globGet OPTION)
+    else
+        pressToContinue 1 2 3 4 5 6 7 8 s r x && KEY=$(globGet OPTION)
+    fi
+    setterm -cursor on
 
   case ${KEY,,} in
   s*)

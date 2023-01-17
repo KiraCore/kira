@@ -66,7 +66,6 @@ echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@&GY!:7@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
 echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@@@@@#B@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
 echo -e  "\e[1;40m@@ KIRA - PUSHING THE LIMITS OF TRUSTLESS COMPUTING @@\e[0m"
 echo -e  "\e[1;40m@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@\e[0m"
-sleep 3
 echo -n ""
 set -x
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
@@ -268,11 +267,11 @@ if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
     echoC ";whi" "   7@B .@@@@@Y  :@@#B&&G7.         .##~   G#G.   ~##. :##^   !##7 !##!     .BB5"
     echoC ";whi" "   7@B .@@@@@J  :@&G?.                                                         "
     echoC ";whi" "   :B5 :@@@@@J   :                                                             "
-    echoC ";whi" "       .G@@@@J                                                                 "
+ echoC "sto;whi" "       .G@@@@J                  ..3:$(echoC "res;bla" "PUSHING THE LIMITS OF TRUSTLESS COMPUTING"):."
     echoC ";whi" "          ^Y&?                                                                 "
     echo ""
-
     echoC ";whi;bla" "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
+    echo ""
     echoNLog "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(toLower $(globGet OPTION))" == "n" ] && exit 1
     echoInfo "INFO: Launching setup menu..."
     set -x

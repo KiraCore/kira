@@ -29,13 +29,13 @@ while : ; do
 
     FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 
-    echoC ";whi;" "===================================================="
+    echoC ";whi;" " =================================================="
     echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
     echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
     echoC ";whi;" "|      NAME      |      VALUE     |    DEFAULT     |"
     [ "$FIREWALL_ENABLED" == "true" ] && \
       echoC "sto;whi" "|$(echoC "res;gre" $(strFixC " FIREWALL ENABLED " 50 "." "-"))|" || \
-      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL DISABLED " 50 "." "-"))|"
+      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL PERMANENTLY DISABLED " 50 "." "-"))|"
     echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
     echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
     echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
@@ -51,11 +51,12 @@ while : ; do
     echoC ";whi;" "| [M] Modify individual configurations             |"
     echoC ";whi;" "| [O] Batch-offset ports from defaults (excl. SSH) |"
     echoC ";whi;" "| [X] Exit without making changes                  |"
-    echoC ";whi;" "----------------------------------------------------"
-    echoNErr "Input option: " && pressToContinue f m o x OPTION
+    echoC ";whi;" " --------------------------------------------------"
+    setterm -cursor off && pressToContinue f m o x OPTION && setterm -cursor on
+
     if [ "$(globGet OPTION)" == "x" ] ; then
         break
-    if [ "$(globGet OPTION)" == "f" ] ; then
+    elif [ "$(globGet OPTION)" == "f" ] ; then
         [ "$FIREWALL_ENABLED" == "true" ] && globSet FIREWALL_ENABLED "false" || globSet FIREWALL_ENABLED "true"
         continue
     elif [ "$(globGet OPTION)" == "o" ] ; then

@@ -86,6 +86,9 @@ globSet KIRA_SETUP_VER "$(globGet KIRA_SETUP_VER)" $GLOBAL_COMMON_RO
 
 (! $(isBoolean $(globGet FIREWALL_ENABLED))) && globSet FIREWALL_ENABLED "true"
 
+# if new base docker image is not defined then default it to old one
+[ -z "$(globGet NEW_BASE_IMAGE_SRC)" ] && globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
+
 # remove & disable system crash notifications
 rm -f /var/crash/*
 mkdir -p "/etc/default" && touch /etc/default/apport
