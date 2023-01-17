@@ -8,7 +8,7 @@ APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 KIRA_HOSTNAME="${CONTAINER_NAME}.local"
-KIRA_DOCEKR_NETWORK="$(globGet KIRA_DOCEKR_NETWORK)"
+KIRA_DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
 
 CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
 RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
@@ -19,7 +19,7 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING $CONTAINER_NAME NODE"
 echoWarn "|-----------------------------------------------"
-echoWarn "|   NETWORK: $KIRA_DOCEKR_NETWORK"
+echoWarn "|   NETWORK: $KIRA_DOCKER_NETWORK"
 echoWarn "|   NODE ID: $VALIDATOR_NODE_ID"
 echoWarn "|  HOSTNAME: $KIRA_HOSTNAME"
 echoWarn "|   MAX CPU: $CPU_RESERVED / $CPU_CORES"
@@ -146,7 +146,7 @@ docker run -d \
     --hostname "$KIRA_HOSTNAME" \
     --restart=always \
     --name "$CONTAINER_NAME" \
-    --net="$KIRA_DOCEKR_NETWORK" \
+    --net="$KIRA_DOCKER_NETWORK" \
     --log-opt max-size=5m \
     --log-opt max-file=5 \
     -e UPGRADE_MODE="$UPGRADE_MODE" \

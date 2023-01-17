@@ -1,19 +1,11 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f --output cat
+# systemctl restart kirascan && tail -f $KIRA_LOGS/kirascan.log
+# systemctl status kirascan, systemctl stop kirascan
 set -x
 
 echoInfo "INFO: Started kira network scan $KIRA_SETUP_VER"
-
-SCAN_LOGS="$KIRA_SCAN/logs"
-HOSTS_SCAN_PATH="$KIRA_SCAN/hosts"
-STATUS_SCAN_PATH="$KIRA_SCAN/status"
-VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
-SNAPSHOT_SCAN_PATH="$KIRA_SCAN/snapshot"
-HARDWARE_SCAN_PATH="$KIRA_SCAN/hardware"
-PEERS_SCAN_PATH="$KIRA_SCAN/peers"
-
 SCAN_DUMP="$KIRA_DUMP/kirascan"
 
 timerDel "DISK_CONS" "NET_CONS"
@@ -40,8 +32,7 @@ while : ; do
         continue
     fi
     
-    tryMkDir $KIRA_SNAP $KIRA_SCAN $STATUS_SCAN_PATH $SCAN_LOGS $SCAN_DUMP
-    touch "$VALINFO_SCAN_PATH" "$SNAPSHOT_SCAN_PATH"
+    tryMkDir "$KIRA_SNAP" "$KIRA_SCAN" "$SCAN_DUMP"
 
     set +e && source "/etc/profile" &>/dev/null && set -e
 
@@ -53,8 +44,8 @@ while : ; do
 
     if ! kill -0 $(globGet HOSTS_SCAN_PID) 2>/dev/null; then
         echoInfo "INFO: Starting hosts update..."
-        LOG_FILE="$HOSTS_SCAN_PATH.log"
-        (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+        LOG_FILE="$(globGet HOSTS_SCAN_LOG)"
+        (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/hosts.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 600 $KIRA_MANAGER/launch/update-hosts.sh &> $LOG_FILE &
         globSet HOSTS_SCAN_PID "$!"
     else
@@ -63,8 +54,8 @@ while : ; do
     
     if ! kill -0 $(globGet HARDWARE_SCAN_PID) 2>/dev/null; then
         echoInfo "INFO: Starting hardware monitor..."
-        LOG_FILE="$HARDWARE_SCAN_PATH.log"
-        (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+        LOG_FILE="$(globFile HARDWARE_SCAN_LOG)"
+        (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/hardware.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 600 $KIRA_MANAGER/kira/monitor-hardware.sh &> $LOG_FILE &
         globSet HARDWARE_SCAN_PID "$!"
     else
@@ -73,8 +64,8 @@ while : ; do
 
     if ! kill -0 $(globGet VALINFO_SCAN_PID) 2>/dev/null; then
         echo "INFO: Starting valinfo monitor..."
-        LOG_FILE="$VALINFO_SCAN_PATH.log"
-        (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+        LOG_FILE="$(globGet VALINFO_SCAN_LOG)"
+        (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/valinfo.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 3600 $KIRA_MANAGER/kira/monitor-valinfo.sh &> $LOG_FILE &
         globSet VALINFO_SCAN_PID "$!"
     else
@@ -82,9 +73,9 @@ while : ; do
     fi
 
     if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && ( [ "${SNAPSHOT_EXECUTE,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ) ; then
-        echo "INFO: Starting snapshot monitor..."
-        LOG_FILE="$SNAPSHOT_SCAN_PATH.log"
-        (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+        echoInfo "INFO: Starting snapshot monitor..."
+        LOG_FILE="$(globFile SNAPSHOT_SCAN_LOG)"
+        (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/snapshot.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 86400 $KIRA_MANAGER/kira/monitor-snapshot.sh &> $LOG_FILE &
         globSet SNAPSHOT_SCAN_PID "$!"
     else
@@ -92,9 +83,9 @@ while : ; do
     fi
 
     if ! kill -0 $(globGet PEERS_SCAN_PID) 2>/dev/null; then
-        echo "INFO: Starting peers monitor..."
-        LOG_FILE="$PEERS_SCAN_PATH.log"
-        (! $(isFileEmpty $LOG_FILE)) && cp -afv $LOG_FILE $SCAN_DUMP || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+        echoInfo "INFO: Starting peers monitor..."
+        LOG_FILE="$(globFile PEERS_SCAN_LOG)"
+        (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/peers.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 86400 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
         globSet PEERS_SCAN_PID "$!"
     else
@@ -103,21 +94,30 @@ while : ; do
 
     echoInfo "INFO: Waiting for network and docker processes querry to finalize..."
     wait $PID1
+    PID1_EXIT_CODE="$?"
     globGet "NETWORKS" > $SCAN_DUMP/networks || echoWarn "WARNING: Failed to dump networks info"
     wait $PID2
+    PID2_EXIT_CODE="$?"
     globGet "CONTAINERS" > $SCAN_DUMP/containers || echoWarn "WARNING: Failed to dump containers info"
-    
-    SUCCESS="true"
-    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh || SUCCESS="false"
-    
-    if [ "${SUCCESS,,}" != "true" ] ; then
-        echoErr "ERROR: Containers monitor failed!"
+
+    echoInfo "INFO: Starting container monitor..."
+    LOG_FILE="$(globFile CONTAINERS_SCAN_LOG)"
+    (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/containers.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
+    timeout 600 $KIRA_MANAGER/kira/monitor-containers.sh &> $LOG_FILE &
+    globSet CONTAINERS_SCAN_PID "$!"
+
+    echoInfo "INFO: Waiting for container scan to finalize running..."
+    wait $(globGet CONTAINERS_SCAN_PID)
+    PID3_EXIT_CODE="$?"
+
+     if [ "${PID3_EXIT_CODE}" != "0" ] ; then
+        echoErr "ERROR: Containers monitor failed!, expected exit code to be 0, but got '$PID3_EXIT_CODE' "
         globSet IS_SCAN_DONE "false"
         sleep 5
     else
         globSet IS_SCAN_DONE "true"
     fi
-    
+
     set +x
     echoWarn "------------------------------------------------"
     echoWarn "| FINISHED: MONITOR                            |"

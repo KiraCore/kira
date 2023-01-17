@@ -7,6 +7,8 @@ while : ; do
     # load latest values
     set +x
     clear
+
+    INFRA_MODE="$(globGet INFRA_MODE)"
     SSH_PORT="$(globGet DEFAULT_SSH_PORT)"
     P2P_PORT="$(globGet CUSTOM_P2P_PORT)"
     RPC_PORT="$(globGet CUSTOM_RPC_PORT)"
@@ -14,26 +16,63 @@ while : ; do
     PRTH_PORT="$(globGet CUSTOM_PROMETHEUS_PORT)"
     INEX_PORT="$(globGet CUSTOM_INTERX_PORT)"
 
-    echoWarn "Please review youur current ports configuration"
-    echoInfo "         SSH: $SSH_PORT"
-    echoInfo "         P2P: $P2P_PORT"
-    echoInfo "         RPC: $RPC_PORT"
-    echoInfo "        GRPC: $GRPC_PORT"
-    echoInfo "      INTERX: $INEX_PORT"
-    echoInfo "  PROMETHEUS: $PRTH_PORT"
-    echoNErr "Choose to modify each [I]ndividual port, [O]ffset all except SSH by fixed number or e[X]it: " && pressToContinue i o x OPTION
+    P2P_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_P2P_PORT")"
+    RPC_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_RPC_PORT")"
+    GRPC_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_GRPC_PORT")"
+    PRTH_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_PROMETHEUS_PORT")"
+    INEX_PORT_DEF="$(globGet "DEFAULT_INTERX_PORT")"
+
+    DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
+    DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
+    DEFAULT_DOCKER_SUBNET="$(globGet DEFAULT_DOCKER_SUBNET)"
+    DEFAULT_DOCKER_NETWORK="$(globGet DEFAULT_DOCKER_NETWORK)"
+
+    echoC ";whi;" "===================================================="
+    echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
+    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
+    echoC ";whi;" "|      NAME      |      VALUE     |    DEFAULT     |"
+    echoC ";whi;" "|--------------------------------------------------|"
+    echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
+    echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
+    echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
+    echoC ";whi;" "|        P2P Port:$(strFixC "$P2P_PORT" 16)|$(strFixC "$P2P_PORT_DEF" 16)|"
+    echoC ";whi;" "|        RPC Port:$(strFixC "$RPC_PORT" 16)|$(strFixC "$RPC_PORT_DEF" 16)|"
+    echoC ";whi;" "|       GRPC Port:$(strFixC "$GRPC_PORT" 16)|$(strFixC "$GRPC_PORT_DEF" 16)|"
+    echoC ";whi;" "|     INTERX Port:$(strFixC "$INEX_PORT" 16)|$(strFixC "$INEX_PORT_DEF" 16)|"
+    echoC ";whi;" "| PROMETHEUS Port:$(strFixC "$PRTH_PORT" 16)|$(strFixC "$PRTH_PORT_DEF" 16)|"
+    echoC ";whi;" "----------------------------------------------------"
+    echoC ";whi;" "| [M] Modify individual configurations             |"
+    echoC ";whi;" "| [O] Offset from defaults by number (except SSH)  |"
+    echoC ";whi;" "| [X] Exit without making changes                  |"
+    echoC ";whi;" "----------------------------------------------------"
+    echoNErr "Input option: " && pressToContinue m o x OPTION
     if [ "$(globGet OPTION)" == "x" ] ; then
         break
     elif [ "$(globGet OPTION)" == "o" ] ; then
-      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 1000 ]] ; do echoNErr "Input offset value between 0 and 1000: " && read OFFSET ; done
+      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 254 ]] ; do echoNErr "Input offset value between 0 and 254: " && read OFFSET ; done
       # Do NOT offset SSH port
       SSH_PORT=$((SSH_PORT + 0))
-      P2P_PORT=$((P2P_PORT + OFFSET))
-      RPC_PORT=$((RPC_PORT + OFFSET))
-      GRPC_PORT=$((GRPC_PORT + OFFSET))
-      PRTH_PORT=$((PRTH_PORT + OFFSET))
-      INEX_PORT=$((INEX_PORT + OFFSET))
-    elif [ "$(globGet OPTION)" == "i" ] ; then 
+      P2P_PORT=$((P2P_PORT_DEF + OFFSET))
+      RPC_PORT=$((RPC_PORT_DEF + OFFSET))
+      GRPC_PORT=$((GRPC_PORT_DEF + OFFSET))
+      PRTH_PORT=$((PRTH_PORT_DEF + OFFSET))
+      INEX_PORT=$((INEX_PORT_DEF + OFFSET))
+      if [[ $OFFSET -gt 1 ]] ; then
+        DOCKER_SUBNET="10.$((1 + OFFSET)).0.0/16"
+        DOCKER_NETWORK="kiranet$((1 + OFFSET))"
+      fi
+    elif [ "$(globGet OPTION)" == "m" ] ; then
+      # NETWORK
+      echoInfo "INFO: Default Docker network name: $DEFAULT_DOCKER_NETWORK"
+      NAME="." && while [[ $(strLength "$NAME") -lt 3 ]] && [ ! -z "$NAME" ]; do echoNErr "Input new name (min 3 char.) or press [ENTER] for default: " && read NAME ; done
+      NAME="$(delWhitespaces $(toLower "$NAME"))"
+      [ -z "$NAME" ] && NAME="$DEFAULT_DOCKER_NETWORK"
+      DOCKER_NETWORK="$NAME"
+      # SUBNET
+      echoInfo "INFO: Default Docker subnet: $DEFAULT_DOCKER_SUBNET"
+      SUBNET="." && while [[ $(strLength "$SUBNET") -lt 3 ]] && [ ! -z "$SUBNET" ]; do echoNErr "Input subnet or press [ENTER] for default: " && read SUBNET ; done
+      [ -z "$SUBNET" ] && SUBNET="$DEFAULT_DOCKER_SUBNET"
+      DOCKER_SUBNET="$SUBNET"
       # NOTE: By adding 0 we cut the whitespaces ans ensure value is a valid
       echoInfo "INFO: Default SSH port number: $SSH_PORT"
       PORT="." && while (! $(isPort "$PORT")) && [ ! -z "$PORT" ]; do echoNErr "Input SSH port number or press [ENTER] for default: " && read PORT ; done
@@ -59,21 +98,37 @@ while : ; do
       PORT="." && while (! $(isPort "$PORT")) && [ ! -z "$PORT" ]; do echoNErr "Input INTERX port number or press [ENTER] for default: " && read PORT ; done
       [ ! -z "$PORT" ] && INEX_PORT=$((PORT + 0)) || INEX_PORT=$((INEX_PORT + 0))
     fi
-    echoWarn "Please review port configuration changes"
-    echoInfo "         SSH: $SSH_PORT"
-    echoInfo "         P2P: $P2P_PORT"
-    echoInfo "         RPC: $RPC_PORT"
-    echoInfo "        GRPC: $GRPC_PORT"
-    echoInfo "      INTERX: $INEX_PORT"
-    echoInfo "  PROMETHEUS: $PRTH_PORT"
-    echoNErr "Press [Y]es to approve changes or [N]o to cancel: " && pressToContinue y n OPTION
-    if [ "$(globGet OPTION)" == "y" ] ; then
+
+    clear
+    echoC ";whi;" "===================================================="
+    echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
+    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
+    echoC ";whi;" "|      NAME      |   NEW VALUES   |    DEFAULT     |"
+    echoC ";whi;" "|--------------------------------------------------|"
+    echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
+    echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
+    echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
+    echoC ";whi;" "|        P2P Port:$(strFixC "$P2P_PORT" 16)|$(strFixC "$P2P_PORT_DEF" 16)|"
+    echoC ";whi;" "|        RPC Port:$(strFixC "$RPC_PORT" 16)|$(strFixC "$RPC_PORT_DEF" 16)|"
+    echoC ";whi;" "|       GRPC Port:$(strFixC "$GRPC_PORT" 16)|$(strFixC "$GRPC_PORT_DEF" 16)|"
+    echoC ";whi;" "|     INTERX Port:$(strFixC "$INEX_PORT" 16)|$(strFixC "$INEX_PORT_DEF" 16)|"
+    echoC ";whi;" "| PROMETHEUS Port:$(strFixC "$PRTH_PORT" 16)|$(strFixC "$PRTH_PORT_DEF" 16)|"
+    echoC ";whi;" "----------------------------------------------------"
+    echoC ";whi;" "| [S] Save changes                                 |"
+    echoC ";whi;" "| [X] Exit without making changes                  |"
+    echoC ";whi;" "----------------------------------------------------"
+    echoNErr "Input option: " && pressToContinue s x OPTION
+    
+    if [ "$(globGet OPTION)" == "s" ] ; then
         globSet DEFAULT_SSH_PORT "$SSH_PORT"
         globSet CUSTOM_P2P_PORT "$P2P_PORT"
         globSet CUSTOM_RPC_PORT "$RPC_PORT"
         globSet CUSTOM_GRPC_PORT "$GRPC_PORT"
         globSet CUSTOM_PROMETHEUS_PORT "$PRTH_PORT"
         globSet CUSTOM_INTERX_PORT "$INEX_PORT"
+        globSet KIRA_DOCKER_SUBNET "$DOCKER_SUBNET"
+        globSet KIRA_DOCKER_NETWORK "$DOCKER_NETWORK"
+    else
         break
     fi
 done

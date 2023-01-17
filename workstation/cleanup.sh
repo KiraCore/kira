@@ -6,8 +6,8 @@ timerStart
 
 NEW_NETWORK=$(globGet NEW_NETWORK)
 TMP_GENESIS_PATH="/tmp/genesis.json"
-KIRA_DOCEKR_NETWORK=$(globGet KIRA_DOCEKR_NETWORK)
-KIRA_DOCEKR_SUBNET=$(globGet KIRA_DOCEKR_SUBNET)
+KIRA_DOCKER_NETWORK=$(globGet KIRA_DOCKER_NETWORK)
+KIRA_DOCKER_SUBNET=$(globGet KIRA_DOCKER_SUBNET)
 KIRA_HOME=$(globGet KIRA_HOME)
 cd "$KIRA_HOME"
 
@@ -20,8 +20,8 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|            SCAN DIR: $KIRA_SCAN"
 echoWarn "|       DOCKER COMMON: $DOCKER_COMMON"
 echoWarn "|    DOCKER COMMON RO: $DOCKER_COMMON_RO"
-echoWarn "| KIRA DOCKER NETWORK: $KIRA_DOCEKR_NETWORK"
-echoWarn "|  KIRA DOCKER SUBNET: $KIRA_DOCEKR_SUBNET"
+echoWarn "| KIRA DOCKER NETWORK: $KIRA_DOCKER_NETWORK"
+echoWarn "|  KIRA DOCKER SUBNET: $KIRA_DOCKER_SUBNET"
 echoWarn "|       KIRA HOME DIR: $KIRA_HOME"
 echoWarn "------------------------------------------------"
 set -x
@@ -59,21 +59,21 @@ set -e
 set -x
 
 echoInfo "INFO: Recreating docker networks..."
-if [ "$KIRA_DOCEKR_NETWORK" != "bridge" ] && [ "$KIRA_DOCEKR_NETWORK" != "host" ] ; then
+if [ "$KIRA_DOCKER_NETWORK" != "bridge" ] && [ "$KIRA_DOCKER_NETWORK" != "host" ] ; then
     MTU=$(cat "/sys/class/net/$(globGet IFACE)/mtu" || echo "1500")
     (! $(isNaturalNumber $MTU)) && MTU=1500
     (($MTU < 100)) && MTU=900
-    echoInfo "INFO: Recreating $KIRA_DOCEKR_NETWORK network with '$KIRA_DOCEKR_SUBNET' subnet..."
-    docker network rm "$KIRA_DOCEKR_NETWORK" || echoWarn "WARNING: Failed to remove $KIRA_DOCEKR_NETWORK network"
+    echoInfo "INFO: Recreating $KIRA_DOCKER_NETWORK network with '$KIRA_DOCKER_SUBNET' subnet..."
+    docker network rm "$KIRA_DOCKER_NETWORK" || echoWarn "WARNING: Failed to remove $KIRA_DOCKER_NETWORK network"
     NETWORKS=$(timeout 10 docker network ls --format="{{.Name}}" || docker network ls --format="{{.Name}}" || echo -n "")
     for net in $NETWORKS ; do
         SUBNET=$(timeout 10 docker network inspect $net | jsonParse "[0].IPAM.Config.[0].Subnet" 2> /dev/null || echo -n "")
-        if [ ! -z "$SUBNET" ] && [ "$SUBNET" == "$KIRA_DOCEKR_SUBNET" ] ; then
-            echoInfo "INFO: Found network '$net' with overlapping subnet '$KIRA_DOCEKR_SUBNET', attempting to remove..."
+        if [ ! -z "$SUBNET" ] && [ "$SUBNET" == "$KIRA_DOCKER_SUBNET" ] ; then
+            echoInfo "INFO: Found network '$net' with overlapping subnet '$KIRA_DOCKER_SUBNET', attempting to remove..."
             docker network rm $net || echoWarn "WARNING: Failed to remove $net network"
         fi
     done
-    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCEKR_SUBNET" "$KIRA_DOCEKR_NETWORK"
+    docker network create --opt com.docker.network.driver.mtu=$MTU --subnet="$KIRA_DOCKER_SUBNET" "$KIRA_DOCKER_NETWORK"
 fi
 
 $KIRA_MANAGER/launch/update-ifaces.sh

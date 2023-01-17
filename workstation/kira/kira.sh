@@ -16,7 +16,6 @@ set -x
 
 cd "$(globGet KIRA_HOME)"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
-STATUS_SCAN_PATH="$KIRA_SCAN/status"
 WHITESPACE="                                                          "
 CONTAINERS=""
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"

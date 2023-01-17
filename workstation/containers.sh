@@ -93,17 +93,9 @@ fi
 
 PORTS="$(globGet DEFAULT_SSH_PORT) $(globGet CUSTOM_PROMETHEUS_PORT) $(globGet CUSTOM_GRPC_PORT) $(globGet CUSTOM_RPC_PORT) $(globGet CUSTOM_P2P_PORT)"
 CONTAINERS_COUNT=0
-if [ "$(globGet SEED_EXPOSED)" == "true" ] ; then
-    CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
-fi
-
-if [ "$(globGet SENTRY_EXPOSED)" == "true" ] ; then
-    CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
-fi
-
-if [ "$(globGet VALIDATOR_EXPOSED)" == "true" ] ; then
-    CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
-fi
+[ "$(globGet SEED_EXPOSED)" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
+[ "$(globGet SENTRY_EXPOSED)" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
+[ "$(globGet VALIDATOR_EXPOSED)" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
 
 if [ "$(globGet INTERX_EXPOSED)" == "true" ] ; then
     CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))

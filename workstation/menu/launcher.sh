@@ -69,40 +69,44 @@ while :; do
 
     SNAP_URL=$(globGet TRUSTED_SNAP_URL)
     SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
+
+    DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
+    DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
     
     prtChars=59
     prtCharsSub=33
     prtCharsSubMax=50
-    echo -e "\e[31;1m============================================================="
-    echo -e "|$(strFixC "$(toUpper $(globGet INFRA_MODE)) NODE LAUNCHER, KM $KIRA_SETUP_VER" $prtChars)|"
-    echo -e "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " $prtChars "." "-")|"
-    echo -e "|   SSH   |   P2P   |   RPC   |   GRPC  | MONITOR | INTERX  |"
-    echo -e "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
-    echo -e "|-----------------------------------------------------------|"
+    echoC ";whi;" "============================================================="
+    echoC ";whi;" "|$(strFixC "$(toUpper $(globGet INFRA_MODE)) NODE LAUNCHER, KM $KIRA_SETUP_VER" $prtChars)|"
+    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " $prtChars "." "-")|"
+    echoC ";whi;" "|   SSH   |   P2P   |   RPC   |   GRPC  | MONITOR | INTERX  |"
+    echoC ";whi;" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
+    echoC ";whi;" "|$(strFixC " DOCKER $DOCKER_SUBNET SUBNET $DOCKER_NETWORK " $prtChars "." "-")|"
+    echoC ";whi;" "|-----------------------------------------------------------|"
     [ "$(globGet NEW_NETWORK)" == "false" ] && \
-    echo -e "|        Network Name: $(strFixL "$CHAIN_ID" $prtCharsSubMax)"
-    echo -e "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
-    echo -e "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
+    echoC ";whi;" "|        Network Name: $(strFixL "$CHAIN_ID" $prtCharsSubMax)"
+    echoC ";whi;" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
+    echoC ";whi;" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" $prtCharsSubMax)"
     [ "$(globGet NEW_NETWORK)" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
-    echo -e "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
+    echoC ";whi;" "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" $prtCharsSubMax)"
     [ "$(globGet NEW_NETWORK)" != "true" ] && [[ $SNAP_SIZE -gt 0 ]] && \
-    echo -e "|   External Snapshot: $(strFixL "$SNAP_URL" $prtCharsSubMax)"
-    echo -e "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" $prtCharsSubMax)"
-    echo -e "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
-    echo -e "|-----------------------------------------------------------|"
-    echo -e "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 20)|"
-    echo -e "| [2] | Change Default Port Numbers   : $(strFixL "" 20)|"
-    echo -e "| [3] | Change Base Image URL         : $(strFixL "" 20)|"
-    echo -e "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 20)|"
-    echo -e "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 20)|"
-    echo -e "| [6] | Change Snapshots Config.      : $(strFixL "$SNAPS" 20)|"
-    echo -e "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 20)|"
+    echoC ";whi;" "|   External Snapshot: $(strFixL "$SNAP_URL" $prtCharsSubMax)"
+    echoC ";whi;" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" $prtCharsSubMax)"
+    echoC ";whi;" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
+    echoC ";whi;" "|-----------------------------------------------------------|"
+    echoC ";whi;" "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 20)|"
+    echoC ";whi;" "| [2] | Change Ports or Subnet Config.: $(strFixL "" 20)|"
+    echoC ";whi;" "| [3] | Change Base Image URL         : $(strFixL "" 20)|"
+    echoC ";whi;" "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 20)|"
+    echoC ";whi;" "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 20)|"
+    echoC ";whi;" "| [6] | Change Snapshots Config.      : $(strFixL "$SNAPS" 20)|"
+    echoC ";whi;" "| [7] | Change Network Launch Mode    : $(strFixL "$LMODE" 20)|"
     [ "$(globGet NEW_NETWORK)" == "true" ] && \
-    echo -e "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 20)|" || \
-    echo -e "| [8] | Change Trusted Node Address   : $(strFixL "$NODE_ADDR" 20)|"
-    echo -e "|-----------------------------------------------------------|"
-    echo -e "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
-    echo -e "-------------------------------------------------------------\e[0m\c\n"
+    echoC ";whi;" "| [8] | Change Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 20)|" || \
+    echoC ";whi;" "| [8] | Change Trusted Node Address   : $(strFixL "$NODE_ADDR" 20)|"
+    echoC ";whi;" "|-----------------------------------------------------------|"
+    echoC ";whi;" "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
+    echoC ";whi;" "-------------------------------------------------------------"
     echo ""
     FAILED="false"
   

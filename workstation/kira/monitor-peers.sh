@@ -6,7 +6,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 timerStart
-PEERS_SCAN_PATH="$KIRA_SCAN/peers"
 SNAPS_SCAN_PATH="$KIRA_SCAN/snaps"
 INTERX_PEERS_PATH="$INTERX_REFERENCE_DIR/peers.txt"
 INTERX_SNAPS_PATH="$INTERX_REFERENCE_DIR/snaps.txt"

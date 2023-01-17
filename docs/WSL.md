@@ -87,8 +87,8 @@ wsl --terminate kira2 && \
 # v0.11.3: bafybeihgiyrw4jfvbtuuchvlybzs3e2keqb7krgom4liskwbei7qyo3vfm
 
 read -p "INPUT HASH OF THE KM RELEASE: " HASH && rm -fv ./i.sh && \
- wget https://ipfs.io/ipfs/$HASH/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
+ wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+ chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
 ```
 
 Setup with version ID
@@ -96,7 +96,7 @@ Setup with version ID
 # v0.10.1
 read -p "INPUT VERSION OF THE KM RELEASE: " VER && rm -fv ./i.sh && \
  wget https://github.com/KiraCore/kira/releases/download/$VER/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && ./i.sh --infra-src="$VER" --init-mode="interactive"
+ chmod +x -v ./i.sh && ./i.sh --infra-src="$VER" --init-mode="interactive"
 ```
 
 # Multi-node Local Testnet
@@ -107,6 +107,7 @@ wsl --terminate kira2 && \
  wsl --terminate kira3
 
 wsl -d kira2 --user asmodat
+wsl -d kira3 --user asmodat
 
 # To pause failed updates run: systemctl stop kiraup
 

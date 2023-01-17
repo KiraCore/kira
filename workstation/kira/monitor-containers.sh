@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-containers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && journalctl -u kirascan -f --output cat
+# tail -f $(globFile CONTAINERS_SCAN_LOG)
 set -x
 
 echo "INFO: Started kira network contianers monitor..."
 timerStart MONITOR_CONTAINERS
-STATUS_SCAN_PATH="$KIRA_SCAN/status"
 SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
 CONTAINERS=$(globGet CONTAINERS)
-IS_SYNCING=$(globGet "$(globGet INFRA_MODE)_SYNCING")
+INFRA_MODE=$(globGet INFRA_MODE)
+IS_SYNCING=$(globGet "${INFRA_MODE}_SYNCING")
 TIME_NOW="$(date2unix $(date))"
 UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 
@@ -21,6 +21,7 @@ echoWarn "|-----------------------------------------------"
 echoWarn "|        KIRA SCAN: $KIRA_SCAN"
 echoWarn "|       CONTAINERS: $CONTAINERS"
 echoWarn "|         NETWORKS: $NETWORKS"
+echoWarn "|       INFRA MODE: $INFRA_MODE"
 echoWarn "|       IS SYNCING: $IS_SYNCING"
 echoWarn "|  INTERX REF. DIR: $INTERX_REFERENCE_DIR"
 echoWarn "|         TIME NOW: $TIME_NOW"
@@ -32,7 +33,7 @@ set -x
 globDel NEW_UPGRADE_PLAN
 for name in $CONTAINERS; do
     echoInfo "INFO: Processing container $name"
-    mkdir -p "$DOCKER_COMMON/$name"
+    mkdir -p "$DOCKER_COMMON/$name" "$SCAN_LOGS"
 
     PIDX=$(globGet "${name}_STATUS_PID")
 

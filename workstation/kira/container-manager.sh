@@ -26,7 +26,7 @@ echoInfo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$KADDR_PATH"
-touch $KADDR_PATH
+touch "$KADDR_PATH" "$VALINFO_SCAN_PATH"
 
 VALIDATOR_ADDR=""
 VALINFO=""
