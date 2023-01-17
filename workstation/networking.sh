@@ -30,6 +30,12 @@ echoWarn "|        LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
+FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
+if [ "$FIREWALL_ENABLED" != "true" ] ; then
+    echoInfo "INFO: Firewall configuraiton will be skipped"
+    exit 0
+fi
+
 echoInfo "INFO: Stopping docker & restaring firewall..."
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
 $KIRA_COMMON/docker-stop.sh || echoWarn "WARNING: Failed to stop docker service"

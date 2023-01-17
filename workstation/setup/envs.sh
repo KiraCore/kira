@@ -84,6 +84,8 @@ globSet FIREWALL_ZONE "$INFRA_MODE"
 
 globSet KIRA_SETUP_VER "$(globGet KIRA_SETUP_VER)" $GLOBAL_COMMON_RO
 
+(! $(isBoolean $(globGet FIREWALL_ENABLED))) && globSet FIREWALL_ENABLED "true"
+
 # remove & disable system crash notifications
 rm -f /var/crash/*
 mkdir -p "/etc/default" && touch /etc/default/apport

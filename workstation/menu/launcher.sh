@@ -65,13 +65,15 @@ while :; do
     INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 9)
     EXPOSURE="local networks" && [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public networks"
     SNAPS="snap disabled" && [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snap enabled"
-    LMODE="join existing net." && [ "$(globGet NEW_NETWORK)" == "true" ] && LMODE="create new net."
+    LMODE="join existing net." && [ "$(globGet NEW_NETWORK)" == "true" ] && LMODE="create new network"
 
     SNAP_URL=$(globGet TRUSTED_SNAP_URL)
     SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
 
     DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
     DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
+    
+    FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
     
     prtChars=59
     prtCharsSub=33
@@ -81,8 +83,9 @@ while :; do
     echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " $prtChars "." "-")|"
     echoC ";whi;" "|   SSH   |   P2P   |   RPC   |   GRPC  | MONITOR | INTERX  |"
     echoC ";whi;" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
-    echoC ";whi;" "|$(strFixC " DOCKER $DOCKER_SUBNET SUBNET $DOCKER_NETWORK " $prtChars "." "-")|"
-    echoC ";whi;" "|-----------------------------------------------------------|"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+      echoC "sto;whi" "|$(echoC "res;gre" $(strFixC " FIREWALL ENABLED " $prtChars "." "-"))|" || \
+      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL DISABLED " $prtChars "." "-"))|"
     [ "$(globGet NEW_NETWORK)" == "false" ] && \
     echoC ";whi;" "|        Network Name: $(strFixL "$CHAIN_ID" $prtCharsSubMax)"
     echoC ";whi;" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $prtCharsSubMax)"
@@ -95,7 +98,7 @@ while :; do
     echoC ";whi;" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" $prtCharsSubMax)"
     echoC ";whi;" "|-----------------------------------------------------------|"
     echoC ";whi;" "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 20)|"
-    echoC ";whi;" "| [2] | Change Ports or Subnet Config.: $(strFixL "" 20)|"
+    echoC ";whi;" "| [2] | Change Ports or Subnet Config.: $(strFixL "$DOCKER_NETWORK:$DOCKER_SUBNET" 20)|"
     echoC ";whi;" "| [3] | Change Base Image URL         : $(strFixL "" 20)|"
     echoC ";whi;" "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 20)|"
     echoC ";whi;" "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 20)|"
@@ -107,9 +110,7 @@ while :; do
     echoC ";whi;" "|-----------------------------------------------------------|"
     echoC ";whi;" "| [S] | Start Setup   | [R] Refresh   | [X] Abort Setup     |"
     echoC ";whi;" "-------------------------------------------------------------"
-    echo ""
-    FAILED="false"
-  
+ 
     if [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
         echoWarn "WARNINIG: Trusted seed is unavilable, change node address to start setup..."
         echoNErr "Input option: " && pressToContinue 1 2 3 4 5 6 7 8 r x && KEY=$(globGet OPTION) && echo ""

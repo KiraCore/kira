@@ -22,7 +22,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.0"
-TOOLS_VERSION="v0.3.2"
+TOOLS_VERSION="v0.3.3"
 COSIGN_VERSION="v1.13.1"
 
 # Force console colour to be black
@@ -256,9 +256,24 @@ $KIRA_MANAGER/setup/tools.sh
 
 if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
     set +x
-    echoInfo "INFO: Your host environment was initialized"
-    echoWarn "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
-    echoNErr "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(toLower $(globGet OPTION))" == "n" ] && exit 1
+    echo ""
+    echoC ";whi" "        ^&@G!.                                                                 "
+    echoC ";whi" "  .^Y#G7:.:Y#&#Y^                                                              "
+    echoC ";whi" ":G@@@@@@@&5~.^B@@@G:     .:         7?.    .7?^  .?7  .??????~.        ^77^    "
+    echoC ";whi" "  :JB@@@@@@@@@@#Y^    ^J#@&        :@@J   ?@@5   ?@@: .BGGGGB@@B      ~@@@@^   "
+    echoC ";whi" "      ^Y#@@&5~.   :JB@@@@@&        :@@? :&@#:    ?@@:        ~@@7    :@@&@@&   "
+    echoC ";whi" "   ^5^    .     .@@@@@@@@&J        :@@&G@@?      ?@@: .GPPPPG@@G    .@@& ~@@G  "
+    echoC ";whi" "   !@@@#J:      :@@@@&P!...         ::^^^.        ::   ^^^^^^:.     .^^.  5@@7 "
+    echoC ";whi" "   !@&!B@@@B?.  :@@G..:?B@G        .GG^  ~BB!    ^GG. .GG:   5GP   PG5     &@@^"
+    echoC ";whi" "   7@B .@@@@@Y  :@@#B&&G7.         .##~   G#G.   ~##. :##^   !##7 !##!     .BB5"
+    echoC ";whi" "   7@B .@@@@@J  :@&G?.                                                         "
+    echoC ";whi" "   :B5 :@@@@@J   :                                                             "
+    echoC ";whi" "       .G@@@@J                                                                 "
+    echoC ";whi" "          ^Y&?                                                                 "
+    echo ""
+
+    echoC ";whi;bla" "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
+    echoNLog "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(toLower $(globGet OPTION))" == "n" ] && exit 1
     echoInfo "INFO: Launching setup menu..."
     set -x
     source $KIRA_MANAGER/menu/launcher.sh

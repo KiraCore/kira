@@ -27,11 +27,15 @@ while : ; do
     DEFAULT_DOCKER_SUBNET="$(globGet DEFAULT_DOCKER_SUBNET)"
     DEFAULT_DOCKER_NETWORK="$(globGet DEFAULT_DOCKER_NETWORK)"
 
+    FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
+
     echoC ";whi;" "===================================================="
     echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
     echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
     echoC ";whi;" "|      NAME      |      VALUE     |    DEFAULT     |"
-    echoC ";whi;" "|--------------------------------------------------|"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+      echoC "sto;whi" "|$(echoC "res;gre" $(strFixC " FIREWALL ENABLED " 50 "." "-"))|" || \
+      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL DISABLED " 50 "." "-"))|"
     echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
     echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
     echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
@@ -41,15 +45,21 @@ while : ; do
     echoC ";whi;" "|     INTERX Port:$(strFixC "$INEX_PORT" 16)|$(strFixC "$INEX_PORT_DEF" 16)|"
     echoC ";whi;" "| PROMETHEUS Port:$(strFixC "$PRTH_PORT" 16)|$(strFixC "$PRTH_PORT_DEF" 16)|"
     echoC ";whi;" "----------------------------------------------------"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+    echoC ";whi;" "| [F] Disable Firewall Rules Enforcing             |" || \
+    echoC ";whi;" "| [F] Enable Firewall Rules Enforcing              |" 
     echoC ";whi;" "| [M] Modify individual configurations             |"
-    echoC ";whi;" "| [O] Offset from defaults by number (except SSH)  |"
+    echoC ";whi;" "| [O] Batch-offset ports from defaults (excl. SSH) |"
     echoC ";whi;" "| [X] Exit without making changes                  |"
     echoC ";whi;" "----------------------------------------------------"
-    echoNErr "Input option: " && pressToContinue m o x OPTION
+    echoNErr "Input option: " && pressToContinue f m o x OPTION
     if [ "$(globGet OPTION)" == "x" ] ; then
         break
+    if [ "$(globGet OPTION)" == "f" ] ; then
+        [ "$FIREWALL_ENABLED" == "true" ] && globSet FIREWALL_ENABLED "false" || globSet FIREWALL_ENABLED "true"
+        continue
     elif [ "$(globGet OPTION)" == "o" ] ; then
-      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 254 ]] ; do echoNErr "Input offset value between 0 and 254: " && read OFFSET ; done
+      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 64 ]] ; do echoNErr "Input offset value between 0 and 64: " && read OFFSET ; done
       # Do NOT offset SSH port
       SSH_PORT=$((SSH_PORT + 0))
       P2P_PORT=$((P2P_PORT_DEF + OFFSET))
@@ -70,7 +80,7 @@ while : ; do
       DOCKER_NETWORK="$NAME"
       # SUBNET
       echoInfo "INFO: Default Docker subnet: $DEFAULT_DOCKER_SUBNET"
-      SUBNET="." && while [[ $(strLength "$SUBNET") -lt 3 ]] && [ ! -z "$SUBNET" ]; do echoNErr "Input subnet or press [ENTER] for default: " && read SUBNET ; done
+      SUBNET="." && while [[ $(strLength "$SUBNET") -lt 3 ]] && [ ! -z "$SUBNET" ]; do echoNErr "Input valid CIDR or press [ENTER] for default: " && read SUBNET ; done
       [ -z "$SUBNET" ] && SUBNET="$DEFAULT_DOCKER_SUBNET"
       DOCKER_SUBNET="$SUBNET"
       # NOTE: By adding 0 we cut the whitespaces ans ensure value is a valid
@@ -118,7 +128,7 @@ while : ; do
     echoC ";whi;" "| [X] Exit without making changes                  |"
     echoC ";whi;" "----------------------------------------------------"
     echoNErr "Input option: " && pressToContinue s x OPTION
-    
+
     if [ "$(globGet OPTION)" == "s" ] ; then
         globSet DEFAULT_SSH_PORT "$SSH_PORT"
         globSet CUSTOM_P2P_PORT "$P2P_PORT"

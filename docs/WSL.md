@@ -99,6 +99,23 @@ read -p "INPUT VERSION OF THE KM RELEASE: " VER && rm -fv ./i.sh && \
  chmod +x -v ./i.sh && ./i.sh --infra-src="$VER" --init-mode="interactive"
 ```
 
+# Setting Fixed IP
+```
+# execute within the instance
+ROOT_PROFILE=/root/.profile
+
+if [[ $(getLastLineByPSubStr "ip addr add" $ROOT_PROFILE) -lt 0 ]] ; then
+    cat >> $ROOT_PROFILE <<EOL
+
+ip addr flush dev eth0
+ip addr add 192.168.123.100/24 brd + dev eth0
+ip route add default via 192.168.123.1
+EOL
+fi
+
+. $ROOT_PROFILE
+```
+
 # Multi-node Local Testnet
 ```
 
