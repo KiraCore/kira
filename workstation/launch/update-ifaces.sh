@@ -13,6 +13,11 @@ echoWarn "|--------------------------------------------------"
 echoWarn "|     BASH SOURCE: ${BASH_SOURCE[0]}"
 echoWarn "---------------------------------------------------"
 
+if [ "$(globGet FIREWALL_ENABLED)" != "true" ] || ($(isWSL)); then
+    echoInfo "INFO: Interfaces configuration will be skipped, because firewall rules are not being enforced or node is running within WSL"
+    exit 0
+fi
+
 echoInfo "INFO: Interfaces before cleanup:"
 echoInfo "$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF || echo '')"
 

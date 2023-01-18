@@ -35,7 +35,7 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
 
     set +x
     clear
-    cSubCnt=56
+    cSubCnt=57
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SETUP PROGRESS CHECK TOOL, KM $KIRA_SETUP_VER" 78)")|"
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"

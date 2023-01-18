@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="${COMMON_DIR}/defaultcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="/common/validator/healthcheck.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart DEFAULT_HEALTHCHECK
 

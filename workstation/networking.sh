@@ -5,7 +5,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 timerStart SETUP_NETWORKING
 PORTS=($(globGet CUSTOM_INTERX_PORT) $(globGet CUSTOM_RPC_PORT) $(globGet CUSTOM_P2P_PORT) $(globGet CUSTOM_PROMETHEUS_PORT) $(globGet CUSTOM_GRPC_PORT))
 PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
-FIREWALL_ZONE=$(globGet INFRA_MODE)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
 PRIORITY_MIN="-31000"
@@ -22,16 +21,15 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| DEPLOYMENT MODE: $(globGet INFRA_MODE)"
-echoWarn "|   FIREWALL ZONE: $FIREWALL_ZONE"
-echoWarn "|  PORTS EXPOSURE: $PORTS_EXPOSURE"
-echoWarn "|       PUBLIC IP: $PUBLIC_IP"
-echoWarn "|        LOCAL IP: $LOCAL_IP"
+echoWarn "| FIREWALL ENABLED: $(globGet FIREWALL_ENABLED)"
+echoWarn "|    FIREWALL ZONE: $FIREWALL_ZONE"
+echoWarn "|   PORTS EXPOSURE: $PORTS_EXPOSURE"
+echoWarn "|        PUBLIC IP: $PUBLIC_IP"
+echoWarn "|         LOCAL IP: $LOCAL_IP"
 echoWarn "------------------------------------------------"
 set -x
 
-FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
-if [ "$FIREWALL_ENABLED" != "true" ] ; then
+if [ "$(globGet FIREWALL_ENABLED)" != "true" ] ; then
     echoInfo "INFO: Firewall configuraiton will be skipped"
     exit 0
 fi

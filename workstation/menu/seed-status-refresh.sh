@@ -6,6 +6,9 @@ set +x
 NODE_ADDR=$(globGet TRUSTED_NODE_ADDR)
 [ -z "$NODE_ADDR" ] && NODE_ADDR="0.0.0.0"
 
+DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
+CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
+
 echoInfo "INFO: Please wait, testing connectivity..."
 if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
     echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
@@ -14,11 +17,13 @@ if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
     HEIGHT="0"
 else
     echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
-    STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+    STATUS=$(timeout 15 curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
     CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
 
-    STATUS=$(timeout 15 curl "$NODE_ADDR:$(globGet CUSTOM_INTERX_PORT)/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+    if [ "$CUSTOM_INTERX_PORT" != "$DEFAULT_INTERX_PORT" ] ; then
+        STATUS=$(timeout 15 curl "$NODE_ADDR:$CUSTOM_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+    fi
 
     ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet CUSTOM_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
     CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""

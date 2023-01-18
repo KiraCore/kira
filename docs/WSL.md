@@ -66,21 +66,18 @@ net start LxssManager
 wsl --export default default.tar
 ```
 
-# Quick Setup Clean VM (3 nodes)
+# Quick Setup or Hard Reset 3 VM insatnces
 ```
-mkdir -p /c/linux && cd /c/linux
-
-wsl --terminate kira || echo "WARNING: Could NOT terminate kira VM 1" && \
+# this command should be run in bin bash
+mkdir -p /c/linux && cd /c/linux && \
+ wsl --terminate kira || echo "WARNING: Could NOT terminate kira VM 1" && \
  wsl --terminate kira2 || echo "WARNING: Could NOT terminate kira VM 2" && \
- wsl --terminate kira3 || echo "WARNING: Could NOT terminate kira VM 3"
-
-wsl --unregister kira || echo "WARNING: Could NOT unregister kira VM 1" && \
+ wsl --terminate kira3 || echo "WARNING: Could NOT terminate kira VM 3" && \
+ wsl --unregister kira || echo "WARNING: Could NOT unregister kira VM 1" && \
  wsl --unregister kira2 || echo "WARNING: Could NOT unregister kira VM 2" && \
- wsl --unregister kira3 || echo "WARNING: Could NOT unregister kira VM 3"
-
-rm -rfv /c/linux/kira /c/linux/kira2 /c/linux/kira3
-
-wsl --import kira /c/linux/kira /c/linux/ubuntu-base-20.04.tar && \
+ wsl --unregister kira3 || echo "WARNING: Could NOT unregister kira VM 3" && \
+ rm -rfv /c/linux/kira /c/linux/kira2 /c/linux/kira3 && \
+ wsl --import kira /c/linux/kira /c/linux/ubuntu-base-20.04.tar && \
  wsl --import kira2 /c/linux/kira2 /c/linux/ubuntu-base-20.04.tar && \
  wsl --import kira3 /c/linux/kira3 /c/linux/ubuntu-base-20.04.tar && echo "success" || echo "failure"
 ```

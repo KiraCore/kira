@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
+# quick edit: FILE="$KIRA_MANAGER/launch/await-interx-init.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 IS_STARTED="false"
@@ -38,7 +39,7 @@ while [[ $(timerSpan $TIMER_NAME) -lt $TIMEOUT ]] ; do
     else echoInfo "INFO: Success, $CONTAINER_NAME was initialized" ; fi
 
     echoInfo "INFO: Awaiting $CONTAINER_NAME service to start..."
-    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$(globGet DEFAULT_INTERX_PORT)/api/metadata 2>/dev/null | xargs || echo -n "")
+    INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl -s -o /dev/null -w '%{http_code}' 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/metadata 2>/dev/null | xargs || echo -n "")
 
     if [[ "${INTERX_STATUS_CODE}" -ne "200" ]]; then
         sleep 30
