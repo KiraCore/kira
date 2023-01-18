@@ -33,6 +33,7 @@ case \"\$1\" in
         systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
         systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
         systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"
+        systemctl restart kiraplan || echo \"WARNING: Could NOT restart kira plan service\"
 esac
 exit 0"
 

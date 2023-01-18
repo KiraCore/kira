@@ -29,36 +29,67 @@ while : ; do
 
     FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 
-    echoC ";whi;" " =================================================="
-    echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
-    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
-    echoC ";whi;" "|      NAME      |      VALUE     |    DEFAULT     |"
-    [ "$FIREWALL_ENABLED" == "true" ] && \
-      echoC "sto;whi" "|$(echoC "res;gre" $(strFixC " FIREWALL ENABLED " 50 "." "-"))|" || \
-      echoC "sto;whi" "|$(echoC "res;red" $(strFixC " FIREWALL PERMANENTLY DISABLED " 50 "." "-"))|"
-    echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
-    echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
-    echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
-    echoC ";whi;" "|        P2P Port:$(strFixC "$P2P_PORT" 16)|$(strFixC "$P2P_PORT_DEF" 16)|"
-    echoC ";whi;" "|        RPC Port:$(strFixC "$RPC_PORT" 16)|$(strFixC "$RPC_PORT_DEF" 16)|"
-    echoC ";whi;" "|       GRPC Port:$(strFixC "$GRPC_PORT" 16)|$(strFixC "$GRPC_PORT_DEF" 16)|"
-    echoC ";whi;" "|     INTERX Port:$(strFixC "$INEX_PORT" 16)|$(strFixC "$INEX_PORT_DEF" 16)|"
-    echoC ";whi;" "| PROMETHEUS Port:$(strFixC "$PRTH_PORT" 16)|$(strFixC "$PRTH_PORT_DEF" 16)|"
-    echoC ";whi;" "----------------------------------------------------"
-    [ "$FIREWALL_ENABLED" == "true" ] && \
-    echoC ";whi;" "| [F] Disable Firewall Rules Enforcing             |" || \
-    echoC ";whi;" "| [F] Enable Firewall Rules Enforcing              |" 
-    echoC ";whi;" "| [M] Modify individual configurations             |"
-    echoC ";whi;" "| [O] Batch-offset ports from defaults (excl. SSH) |"
-    echoC ";whi;" "| [X] Exit without making changes                  |"
-    echoC ";whi;" " --------------------------------------------------"
-    setterm -cursor off && pressToContinue f m o x OPTION && setterm -cursor on
+    PRT_SSH_PORT=$(strFixC "$SSH_PORT" 11)   &&  PRT_SSH_PORT_DEF=$(strFixC "22" 11)
+    PRT_P2P_PORT=$(strFixC "$P2P_PORT" 11)   &&  PRT_P2P_PORT_DEF=$(strFixC "$P2P_PORT_DEF" 11)
+    PRT_RPC_PORT=$(strFixC "$RPC_PORT" 11)   &&  PRT_RPC_PORT_DEF=$(strFixC "$RPC_PORT_DEF" 11)
+    PRT_GRPC_PORT=$(strFixC "$GRPC_PORT" 12) && PRT_GRPC_PORT_DEF=$(strFixC "$GRPC_PORT_DEF" 12)
+    PRT_PRTH_PORT=$(strFixC "$PRTH_PORT" 14) && PRT_PRTH_PORT_DEF=$(strFixC "$PRTH_PORT_DEF" 14)
+    PRT_INEX_PORT=$(strFixC "$INEX_PORT" 14) && PRT_INEX_PORT_DEF=$(strFixC "$INEX_PORT_DEF" 14)
 
+    IFACE="$(globGet IFACE)"
+    IFACE_DEF="$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
+
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "PORTS MAPPING & NETWORKING CONFIGURATOR, KM $KIRA_SETUP_VER" 78)")|"
+ echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+    echoC ";whi" "| SSH PORT  | P2P PORT  | RPC PORT  | GRPC PORT  |  PROMETHEUS  | INTERX (API) |"
+    echoC ";whi" "|$PRT_SSH_PORT|$PRT_P2P_PORT|$PRT_RPC_PORT|$PRT_GRPC_PORT|$PRT_PRTH_PORT|$PRT_INEX_PORT|"
+    echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " DEFAULT PORTS " 78 "." "-")")|"
+    echoC ";whi" "|$(echoC "res;bla" "$PRT_SSH_PORT_DEF|$PRT_P2P_PORT_DEF|$PRT_RPC_PORT_DEF|$PRT_GRPC_PORT_DEF|$PRT_PRTH_PORT_DEF|$PRT_INEX_PORT_DEF")|"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+      echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " FIREWALL ENABLED " 78 "." "-")")|" || \
+      echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " FIREWALL DISABLED " 78 "." "-")")|"
+    echoC "sto;whi" "|$(strFixL " Docker Network: $DOCKER_NETWORK" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_NETWORK" 40)") |"
+    echoC "sto;whi" "|$(strFixL "  Docker Subnet: $DOCKER_SUBNET" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_SUBNET" 40)") |"
+    echoC "sto;whi" "|$(strFixL " Net. Interface: $IFACE" 35)| $(echoC "sto;bla" "$(strFixL "   default - $IFACE_DEF" 40)") |"
+    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+    echoC ";whi" "| $(strFixL "[F] Disable firewall rules enforcing" 76) |" || \
+    echoC ";whi" "| $(strFixL "[F] Enable firewall rules enforcing" 76) |" 
+    echoC ";whi" "| $(strFixL "[I] Change network interface" 76) |"
+    echoC ";whi" "| $(strFixL "[M] Modify each port mapping & subnet individually" 76) |"
+    echoC ";whi" "| $(strFixL "[O] Batch-offset ports & subnet from defaults (excluding SSH)" 76) |"
+    echoC ";whi" "| [X] Exit ____________________________________________________________________|"
+    setterm -cursor off && pressToContinue f m i o x OPTION && setterm -cursor on
+
+    clear
     if [ "$(globGet OPTION)" == "x" ] ; then
         break
     elif [ "$(globGet OPTION)" == "f" ] ; then
         [ "$FIREWALL_ENABLED" == "true" ] && globSet FIREWALL_ENABLED "false" || globSet FIREWALL_ENABLED "true"
         continue
+    elif [ "$(globGet OPTION)" == "i" ] ; then
+        ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
+        ifaces=( $ifaces_iterate )
+
+        i=-1
+        for f in $ifaces_iterate ; do
+            i=$((i + 1))
+            if [ "$f" == "$IFACE" ] ; then
+              echoC "sto;whi" " [$i] | $f $(echoC "sto;bla" "(default)")"
+            else
+              echoC ";whi" " [$i] | $f"
+            fi
+        done
+
+        OPTION=""
+        while : ; do
+            echoNC ";gre" "Input interface number 0-$i or press [ENTER] for default: " && read OPTION
+            [ -z "$OPTION" ] && OPTION="" && break
+            ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && [[ $OPTION -ge 0 ]] && break
+        done
+
+        ($(isNaturalNumber "$OPTION")) && IFACE="${ifaces[$OPTION]}"
     elif [ "$(globGet OPTION)" == "o" ] ; then
       OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 64 ]] ; do echoNErr "Input offset value between 0 and 64: " && read OFFSET ; done
       # Do NOT offset SSH port
@@ -110,25 +141,31 @@ while : ; do
       [ ! -z "$PORT" ] && INEX_PORT=$((PORT + 0)) || INEX_PORT=$((INEX_PORT + 0))
     fi
 
+    PRT_SSH_PORT=$(strFixC "$SSH_PORT" 11)
+    PRT_P2P_PORT=$(strFixC "$P2P_PORT" 11)  
+    PRT_RPC_PORT=$(strFixC "$RPC_PORT" 11)  
+    PRT_GRPC_PORT=$(strFixC "$GRPC_PORT" 12)
+    PRT_PRTH_PORT=$(strFixC "$PRTH_PORT" 14)
+    PRT_INEX_PORT=$(strFixC "$INEX_PORT" 14)
+
     clear
-    echoC ";whi;" "===================================================="
-    echoC ";whi;" "|$(strFixC "PORTS & LOCAL SUBNET CONFIGURATION, KM $KIRA_SETUP_VER" 50)|"
-    echoC ";whi;" "|$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 50 "." "-")|"
-    echoC ";whi;" "|      NAME      |   NEW VALUES   |    DEFAULT     |"
-    echoC ";whi;" "|--------------------------------------------------|"
-    echoC ";whi;" "|  Docker Network:$(strFixC "$DOCKER_NETWORK" 16)|$(strFixC "$DEFAULT_DOCKER_NETWORK" 16)|"
-    echoC ";whi;" "|   Docker Subnet:$(strFixC "$DOCKER_SUBNET" 16)|$(strFixC "$DEFAULT_DOCKER_SUBNET" 16)|"
-    echoC ";whi;" "|        SSH Port:$(strFixC "$SSH_PORT" 16)|$(strFixC "$SSH_PORT" 16)|"
-    echoC ";whi;" "|        P2P Port:$(strFixC "$P2P_PORT" 16)|$(strFixC "$P2P_PORT_DEF" 16)|"
-    echoC ";whi;" "|        RPC Port:$(strFixC "$RPC_PORT" 16)|$(strFixC "$RPC_PORT_DEF" 16)|"
-    echoC ";whi;" "|       GRPC Port:$(strFixC "$GRPC_PORT" 16)|$(strFixC "$GRPC_PORT_DEF" 16)|"
-    echoC ";whi;" "|     INTERX Port:$(strFixC "$INEX_PORT" 16)|$(strFixC "$INEX_PORT_DEF" 16)|"
-    echoC ";whi;" "| PROMETHEUS Port:$(strFixC "$PRTH_PORT" 16)|$(strFixC "$PRTH_PORT_DEF" 16)|"
-    echoC ";whi;" "----------------------------------------------------"
-    echoC ";whi;" "| [S] Save changes                                 |"
-    echoC ";whi;" "| [X] Exit without making changes                  |"
-    echoC ";whi;" "----------------------------------------------------"
-    echoNErr "Input option: " && pressToContinue s x OPTION
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "PORTS MAPPING & NETWORKING CONFIGURATOR, KM $KIRA_SETUP_VER" 78)")|"
+ echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+    echoC ";whi" "| SSH PORT  | P2P PORT  | RPC PORT  | GRPC PORT  |  PROMETHEUS  | INTERX (API) |"
+    echoC ";whi" "|$PRT_SSH_PORT|$PRT_P2P_PORT|$PRT_RPC_PORT|$PRT_GRPC_PORT|$PRT_PRTH_PORT|$PRT_INEX_PORT|"
+    echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " DEFAULT PORTS " 78 "." "-")")|"
+    echoC ";whi" "|$(echoC "res;bla" "$PRT_SSH_PORT_DEF|$PRT_P2P_PORT_DEF|$PRT_RPC_PORT_DEF|$PRT_GRPC_PORT_DEF|$PRT_PRTH_PORT_DEF|$PRT_INEX_PORT_DEF")|"
+    [ "$FIREWALL_ENABLED" == "true" ] && \
+      echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " FIREWALL ENABLED " 78 "." "-")")|" || \
+      echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " FIREWALL DISABLED " 78 "." "-")")|"
+    echoC "sto;whi" "|$(strFixL " Docker Network: $DOCKER_NETWORK" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_NETWORK" 40)") |"
+    echoC "sto;whi" "|$(strFixL "  Docker Subnet: $DOCKER_SUBNET" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_SUBNET" 40)") |"
+    echoC "sto;whi" "|$(strFixL " Net. Interface: $IFACE" 35)| $(echoC "sto;bla" "$(strFixL "   default - $IFACE_DEF" 40)") |"
+    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    echoC "sto;whi" "| $(echoC "res;gre" "$(strFixL "[S] Save changes" 76)") |"
+    echoC ";whi" "| $(strFixL "[R] Reject changes and try again" 76) |"
+    echoC ";whi" "| [X] Exit ____________________________________________________________________|"
 
     if [ "$(globGet OPTION)" == "s" ] ; then
         globSet DEFAULT_SSH_PORT "$SSH_PORT"
@@ -139,6 +176,14 @@ while : ; do
         globSet CUSTOM_INTERX_PORT "$INEX_PORT"
         globSet KIRA_DOCKER_SUBNET "$DOCKER_SUBNET"
         globSet KIRA_DOCKER_NETWORK "$DOCKER_NETWORK"
+        globSet IFACE "$IFACE"
+
+        MTU=$(cat /sys/class/net/$(globGet IFACE)/mtu || echo "1500")
+        (! $(isNaturalNumber $MTU)) && MTU=1500
+        (($MTU < 100)) && MTU=900
+        globSet MTU $MTU
+    elif [ "$(globGet OPTION)" == "r" ] ; then
+      continue
     else
         break
     fi

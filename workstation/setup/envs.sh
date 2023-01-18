@@ -89,6 +89,17 @@ globSet KIRA_SETUP_VER "$(globGet KIRA_SETUP_VER)" $GLOBAL_COMMON_RO
 # if new base docker image is not defined then default it to old one
 [ -z "$(globGet NEW_BASE_IMAGE_SRC)" ] && globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
 
+# default network interface
+[ -z "$(globGet IFACE)" ] && globSet IFACE "$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
+if [ -z "$(globGet MTU)" ] ; then
+    MTU=$(cat /sys/class/net/$(globGet IFACE)/mtu || echo "1500")
+    (! $(isNaturalNumber $MTU)) && MTU=1500
+    (($MTU < 100)) && MTU=900
+    globSet MTU $MTU
+fi
+
+[ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
+
 # remove & disable system crash notifications
 rm -f /var/crash/*
 mkdir -p "/etc/default" && touch /etc/default/apport

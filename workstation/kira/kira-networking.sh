@@ -55,8 +55,6 @@ echo -e "\e[37;1m--------------------------------------------------"
        echo "| [C] | Force CUSTOM Ports Configuration         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
        [ "${PORTS_EXPOSURE,,}" != "disabled" ] && \
        echo "| [D] | Force DISABLE All Ports                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
-       IFACE_TMP="($(globGet IFACE))${WHITESPACE:0:10}|"
-       echo "| [I] | Change Network INTERFACE $IFACE_TMP"        && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}i"
        echo "|------------------------------------------------|"
        echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
        echo "| [P] | Edit/Show Persistent PEERS List          |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}p"
@@ -98,17 +96,6 @@ echo -e "\e[37;1m--------------------------------------------------"
     elif [ "${OPTION,,}" == "c" ]; then
         echoInfo "INFO: Enabling custom ports configuration..."
         globSet PORTS_EXPOSURE "custom"
-    elif [ "${OPTION,,}" == "i" ]; then
-        echoInfo "INFO: Starting network interface selection menu..."
-        IFACE_OLD="$(globGet IFACE)"
-        $KIRA_MANAGER/menu/interface-select.sh
-        set +e && source "/etc/profile" &>/dev/null && set -e
-        if [ "$IFACE_OLD" != "$(globGet IFACE)" ] ; then
-            echoInfo "INFO: Reinitalizing firewall..."
-            $KIRA_MANAGER/networking.sh
-        else
-            echoInfo "INFO: Network interface was not changed"
-        fi
     elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
         [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
         [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"

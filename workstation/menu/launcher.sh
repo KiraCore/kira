@@ -10,9 +10,6 @@ sleep 1
 
 timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone to UTC, ensure to do that manually after setup is finalized!" && sleep 10 )
 
-[ -z "$(globGet IFACE)" ] && globSet IFACE "$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
-[ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
-
 MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
 set +x
 source $MNEMONICS
@@ -54,9 +51,15 @@ while :; do
     NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
     NEW_NETWORK=$(globGet NEW_NETWORK)
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
-    (! $(isDnsOrIp "$NODE_ADDR")) && NODE_ADDR="???.???.???.???"
+    if (! $(isDnsOrIp "$NODE_ADDR")) ; then
+      NODE_ADDR="???.???.???.???"
+      CHAIN_ID="???"
+      HEIGHT="0"
+    fi
     
     set +x
+    source $MNEMONICS
+    
     printf "\033c"
 
     SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 11)
@@ -86,7 +89,8 @@ while :; do
   echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " NETWORK NOT FOUND, CHANGE TRUSTED SEED ADDRESS " 78 "." "-")")|"
     else
     [ "$FIREWALL_ENABLED" == "false" ] && \
-  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " FIREWALL PERMANENTLY DISABLED " 78 "." "-")")|"
+  echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " FIREWALL DISABLED " 78 "." "-")")|" || \
+  echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     fi
     #[ "$NEW_NETWORK" == "false" ] && \
     #echoC ";whi" "|        Network Name: $(strFixL "$CHAIN_ID" 55) |"
@@ -99,8 +103,8 @@ while :; do
     echoC ";whi" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" 55) |"
     echoC ";whi" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" 55) |"
     echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
-    echoC ";whi" "| [1] | Change Default Net. Interface : $(strFixL "$(globGet IFACE)" 39)|"
-    echoC ";whi" "| [2] | Change Ports or Subnet Config.: $(strFixL "$DOCKER_NETWORK : $DOCKER_SUBNET" 39)|"
+    echoC ";whi" "| [1] | Change Master Mnemonic        : $(strFixL "" 39)|"
+    echoC ";whi" "| [2] | Change Networking Config.     : $(strFixL "$(globGet IFACE) : $DOCKER_NETWORK : $DOCKER_SUBNET" 39)|"
     echoC ";whi" "| [3] | Change Base Image URL         : $(strFixL "" 39)|"
     echoC ";whi" "| [4] | Change Node Type              : $(strFixL "$(globGet INFRA_MODE)" 39)|"
     echoC ";whi" "| [5] | Change Network Exposure       : $(strFixL "$EXPOSURE" 39)|"
@@ -132,7 +136,7 @@ while :; do
     break
     ;;
   1*)
-    $KIRA_MANAGER/menu/interface-select.sh
+    continue
     ;;
   2*)
     $KIRA_MANAGER/menu/ports-select.sh

@@ -15,22 +15,44 @@ PLAN_FAIL=$(globGet PLAN_FAIL)
 UPGRADE_DONE=$(globGet UPGRADE_DONE)
 CONTAINERS=$(globGet CONTAINERS)
 
-set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTING: KIRA SETUP STATUS CHECK $KIRA_SETUP_VER"
-echoWarn "|-----------------------------------------------"
-echoWarn "| SETUP START DATE: $SETUP_START_DT"
-echoWarn "|   SETUP END DATE: $SETUP_END_DT"
-echoWarn "|      UPDATE DONE: $UPDATE_DONE"
-echoWarn "|     UPGRADE DONE: $UPGRADE_DONE"
-echoWarn "|    UPDATE FAILED: $UPDATE_FAIL"
-echoWarn "|        PLAN DONE: $PLAN_DONE"
-echoWarn "|      PLAN FAILED: $PLAN_FAIL"
-echoWarn "------------------------------------------------"
-set -x
+timeout 30 systemctl daemon-reload || echoErr "ERROR: Failed to reload deamon"
+systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
+systemctl restart kiraplan || echoErr "ERROR: Failed to restart kiraplan service"
+systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
+systemctl restart kiraclean || echoErr "ERROR: Failed to restart kiraclean service"
+sleep 3
 
 while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
     
+    SETUP_END_DT=$(globGet SETUP_END_DT)
+    SETUP_START_DT=$(globGet SETUP_START_DT)
+    UPDATE_DONE=$(globGet UPDATE_DONE)
+    UPDATE_FAIL=$(globGet UPDATE_FAIL)
+    PLAN_DONE=$(globGet PLAN_DONE)
+    PLAN_FAIL=$(globGet PLAN_FAIL)
+    UPGRADE_DONE=$(globGet UPGRADE_DONE)
+    CONTAINERS=$(globGet CONTAINERS)
+
+    set +x
+    clear
+    cSubCnt=56
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SETUP PROGRESS CHECK TOOL, KM $KIRA_SETUP_VER" 78)")|"
+    echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+    echoC ";whi" "|  SETUP START DATE: $(strFixL "$SETUP_START_DT" $cSubCnt) |"
+    echoC ";whi" "|    SETUP END DATE: $(strFixL "$SETUP_END_DT" $cSubCnt) |"
+    echoC ";whi" "|       UPDATE DONE: $(strFixL "$UPDATE_DONE" $cSubCnt) |"
+    echoC ";whi" "|      UPGRADE DONE: $(strFixL "$UPGRADE_DONE" $cSubCnt) |"
+    echoC ";whi" "|     UPDATE FAILED: $(strFixL "$UPDATE_FAIL" $cSubCnt) |"
+    echoC ";whi" "|         PLAN DONE: $(strFixL "$PLAN_DONE" $cSubCnt) |"
+    echoC ";whi" "|       PLAN FAILED: $(strFixL "$PLAN_FAIL" $cSubCnt) |"
+    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    echoC ";whi" "|    KIRAUP SERVICE: $(strFixL "$(systemctl is-active "kiraup" 2> /dev/null || echo "inactive")" $cSubCnt) |"
+    echoC ";whi" "|  KIRAPLAN SERVICE: $(strFixL "$(systemctl is-active "kiraplan" 2> /dev/null || echo "inactive")" $cSubCnt) |"
+    echoC ";whi" "|  KIRASCAN SERVICE: $(strFixL "$(systemctl is-active "kirascan" 2> /dev/null || echo "inactive")" $cSubCnt) |"
+    echoC ";whi" "| KIRACLEAN SERVICE: $(strFixL "$(systemctl is-active "kirascan" 2> /dev/null || echo "inactive")" $cSubCnt) |"
+    echoC ";whi" " ------------------------------------------------------------------------------"
+
     while [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; do
         set +x
         set +e && source "/etc/profile" &>/dev/null && set -e
@@ -43,10 +65,10 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         if [ "${UPDATE_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node setup FAILED, its reccomended that you [D]ump all logs"
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
-            echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
+            echoNLog "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         else
             echoWarn "WARNING: Your node initial setup is NOT compleated yet"
-            echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
+            echoNLog "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         fi
         VSEL=$(globGet OPTION)
         set -x
@@ -88,10 +110,10 @@ while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "
         if [ "${PLAN_FAIL,,}" == "true" ] ; then
             echoWarn "WARNING: Your node upgrade FAILED, its reccomended that you [D]ump all logs"
             echoWarn "WARNING: Make sure to investigate issues before reporting them to relevant gitub repository"
-            echoNErr "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
+            echoNLog "Choose to [V]iew setup logs, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: " && pressToContinue v r d k
         else
             echoWarn "WARNING: Your node upgrade setup is NOT compleated yet"
-            echoNErr "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: "  && pressToContinue v r d k
+            echoNLog "Choose to [V]iew setup progress, [R]initalize new node, [D]ump logs or force open [K]IRA Manager: "  && pressToContinue v r d k
         fi
         VSEL=$(globGet OPTION)
         set -x
