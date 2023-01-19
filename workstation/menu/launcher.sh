@@ -41,7 +41,7 @@ while :; do
     MASTER_MNEMONIC=""
     set -x
     NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
-    [ -z "$NODE_ID" ] && NODE_ID="???"
+    (! $(isNodeId "$NODE_ID")) && NODE_ID="???...???"
 
     SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 11)
     P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 12)
@@ -77,7 +77,8 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
   echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     fi
   
-    echoC ";whi" "| $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
+    (! $(isNodeId "$NODE_ID")) && col="red" || col="whi"
+ echoC "sto;whi" "|$(echoC "res;$col" " $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) ")|" 
     echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
     echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
     [ "$NEW_NETWORK" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
@@ -86,21 +87,21 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     echoC ";whi" "|   External Snapshot: $(strFixL "$SNAP_URL" 55) |"
     echoC ";whi" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" 55) |"
     echoC ";whi" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" 55) |"
-    echoC "sto;whi" "|$(echoC "res;bla" "----------- SELECT OPTION -----------:-------------- CURRENT VALUE -----------")|"
+    echoC "sto;whi" "|$(echoC "res;bla" "----------- SELECT OPTION -----------:------------- CURRENT VALUE ------------")|"
 
     [ "$MNEMONIC_SAVED" == "true" ] && \
                        echoC ";whi" "| [1] | Modify Master Mnemonic        : $(strFixL "" 39)|" ||
     echoC ";whi" "| $(echoC "res;red" "[1] | Set or Gen. Master Mnemonic   : $(strFixL "" 39)")|"
-    echoC ";whi" "| [2] | Modify Networking Config.     : $(strFixL "$(globGet IFACE)" 39)|"
+    echoC ";whi" "| [2] | Modify Networking Config.     : $(strFixL "$IFACE, $DOCKER_NETWORK, $DOCKER_SUBNET" 39)|"
     echoC ";whi" "| [3] | Switch to Diffrent Node Type  : $(strFixL "$INFRA_MODE node" 39)|"
     [ "$(globGet PRIVATE_MODE)" == "true" ] && \
-    echoC ";whi" "| [4] | Expose Node to Public Netw.   : $(strFixL "exposed via $LOCAL_IP" 39)|" || \
-    echoC ";whi" "| [4] | Expose Node to Local Networks : $(strFixL "exposed via $PUBLIC_IP" 39)|"
+    echoC ";whi" "| [4] | Expose Node to Public Netw.   : $(strFixL "expose as $LOCAL_IP to LOCAL" 39)|" || \
+    echoC ";whi" "| [4] | Expose Node to Local Networks : $(strFixL "expose as $PUBLIC_IP to PUBLIC" 39)|"
     echoC ";whi" "| [5] | Modify Snapshots Config.      : $(strFixL "$SNAPS" 39)|"
     if [ "$INFRA_MODE" == "validator" ] ; then
     [ "$NEW_NETWORK" == "true" ] && \
-    echoC ";whi" "| [6] | Join Existing Network         : $(strFixL "" 39)|" || \
-    echoC ";whi" "| [6] | Launch New Local Testnet      : $(strFixL "" 39)|"
+    echoC ";whi" "| [6] | Join Existing Network         : $(strFixL "launch your own testnet" 39)|" || \
+    echoC ";whi" "| [6] | Launch New Local Testnet      : $(strFixL "join existing public or test network" 39)|"
     fi
     [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] && col="red" || col="whi"
     [ "$NEW_NETWORK" == "true" ] && \

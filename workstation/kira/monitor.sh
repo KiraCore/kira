@@ -21,6 +21,7 @@ while : ; do
     echoWarn "|   STARTED: MONITOR                           |"
     echoWarn "|----------------------------------------------|"
     echoWarn "|        SCAN DONE: $(globGet IS_SCAN_DONE) "
+    echoWarn "|    SNAN DUMP DIR: $SCAN_DUMP"
     echoWarn "| SNAPSHOT EXECUTE: $SNAPSHOT_EXECUTE"
     echoWarn "------------------------------------------------"
     set -x
@@ -44,7 +45,7 @@ while : ; do
 
     if ! kill -0 $(globGet HOSTS_SCAN_PID) 2>/dev/null; then
         echoInfo "INFO: Starting hosts update..."
-        LOG_FILE="$(globGet HOSTS_SCAN_LOG)"
+        LOG_FILE="$(globFile HOSTS_SCAN_LOG)"
         (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/hosts.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 600 $KIRA_MANAGER/launch/update-hosts.sh &> $LOG_FILE &
         globSet HOSTS_SCAN_PID "$!"
@@ -64,7 +65,7 @@ while : ; do
 
     if ! kill -0 $(globGet VALINFO_SCAN_PID) 2>/dev/null; then
         echo "INFO: Starting valinfo monitor..."
-        LOG_FILE="$(globGet VALINFO_SCAN_LOG)"
+        LOG_FILE="$(globFile VALINFO_SCAN_LOG)"
         (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/valinfo.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 3600 $KIRA_MANAGER/kira/monitor-valinfo.sh &> $LOG_FILE &
         globSet VALINFO_SCAN_PID "$!"
