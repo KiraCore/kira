@@ -1,7 +1,6 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/seed-status-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-set +x
 
 NODE_ADDR=$(globGet TRUSTED_NODE_ADDR)
 [ -z "$NODE_ADDR" ] && NODE_ADDR="0.0.0.0"

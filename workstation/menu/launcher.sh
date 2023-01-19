@@ -13,9 +13,10 @@ timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone 
 MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
 
 while :; do
-
+    set -x
     $KIRA_MANAGER/menu/seed-status-refresh.sh
 
+    IFACE=$(globGet IFACE)
     INFRA_MODE=$(globGet INFRA_MODE)
     CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)" && [ -z "$CHAIN_ID" ] && CHAIN_ID="???"
     HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
@@ -27,21 +28,26 @@ while :; do
       CHAIN_ID="???"
       HEIGHT="0"
     fi
+
+    echoInfo "INFO: Public & Local IP discovery..."
+    PUBLIC_IP=$(timeout 10 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
+    LOCAL_IP=$(timeout 10 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "")
+    (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
+    (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
     
     set +x
-    MASTER_MNEMONIC=$(getVar MASTER_MNEMONIC "$MNEMONICS")
-    ($(isMnemonic "$MASTER_MNEMONIC")) && MNEMONIC_SAVED"true" || MNEMONIC_SAVED="false"
+    MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
+    ($(isMnemonic "$MASTER_MNEMONIC")) && MNEMONIC_SAVED="true" || MNEMONIC_SAVED="false"
     MASTER_MNEMONIC=""
-    NODE_ID=$(getVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
+    set -x
+    NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
     [ -z "$NODE_ID" ] && NODE_ID="???"
 
-    printf "\033c"
-
     SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 11)
-    P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 11)
-    RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 11)
+    P2P_PORT=$(strFixC "$(globGet CUSTOM_P2P_PORT)" 12)
+    RPC_PORT=$(strFixC "$(globGet CUSTOM_RPC_PORT)" 12)
     GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 12)
-    PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 14)
+    PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 12)
     INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 14)
     EXPOSURE="local network exposure" && [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public network exposure"
     SNAPS="snapshots disabled" && [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snapshots enabled"
@@ -52,19 +58,18 @@ while :; do
 
     DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
     DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
-    
+
     FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 
+    set +x && printf "\033c" && clear && setterm -cursor off
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "$(toUpper $INFRA_MODE) NODE LAUNCHER, KM $KIRA_SETUP_VER" 78)")|"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
-    echoC ";whi" "| SSH PORT  | P2P PORT  | RPC PORT  | GRPC PORT  |  PROMETHEUS  | INTERX (API) |"
+    echoC ";whi" "|  SSH PORT |  P2P PORT  |  RPC PORT  |  GRPC PORT | PROMETHEUS | INTERX (API) |"
     echoC ";whi" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
     if [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
   echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " NETWORK NOT FOUND, CHANGE TRUSTED SEED ADDRESS " 78 "." "-")")|"
-    else
-
-    if [ "$MNEMONIC_SAVED" == "false" ] ; then
+    elif [ "$MNEMONIC_SAVED" == "false" ] ; then
 echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED " 78 "." "-")")|"
     elif [ "$FIREWALL_ENABLED" == "false" ] ; then
   echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " FIREWALL DISABLED " 78 "." "-")")|"
@@ -72,7 +77,7 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
   echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     fi
   
-    echoC ";whi" "| $(strFixL "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
+    echoC ";whi" "| $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
     echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
     echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
     [ "$NEW_NETWORK" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
@@ -81,22 +86,26 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     echoC ";whi" "|   External Snapshot: $(strFixL "$SNAP_URL" 55) |"
     echoC ";whi" "|   Base Image Source: $(strFixL "$(globGet NEW_BASE_IMAGE_SRC)" 55) |"
     echoC ";whi" "|  KIRA Manger Source: $(strFixL "$(globGet INFRA_SRC)" 55) |"
-    echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
+    echoC "sto;whi" "|$(echoC "res;bla" "----------- SELECT OPTION -----------:-------------- CURRENT VALUE -----------")|"
+
     [ "$MNEMONIC_SAVED" == "true" ] && \
                        echoC ";whi" "| [1] | Modify Master Mnemonic        : $(strFixL "" 39)|" ||
     echoC ";whi" "| $(echoC "res;red" "[1] | Set or Gen. Master Mnemonic   : $(strFixL "" 39)")|"
-    echoC ";whi" "| [2] | Modify Networking Config.     : $(strFixL "$(globGet IFACE) : $DOCKER_NETWORK : $DOCKER_SUBNET" 39)|"
-    echoC ";whi" "| [3] | Modify Base Image URL         : $(strFixL "" 39)|"
-    echoC ";whi" "| [4] | Switch to Diffrent Node Type  : $(strFixL "$INFRA_MODE" 39)|"
-    [ "$(globGet PRIVATE_MODE)" == "false" ] && \
-    echoC ";whi" "| [5] | Expose Node to Pub. Networks  : $(strFixL "$EXPOSURE" 39)|" ||
-    echoC ";whi" "| [5] | Expose Node to Local Networks : $(strFixL "$EXPOSURE" 39)|" ||
-    echoC ";whi" "| [6] | Modify Snapshots Config.      : $(strFixL "$SNAPS" 39)|"
-    echoC ";whi" "| [7] | Select Launch Mode            : $(strFixL "$LMODE" 39)|"
+    echoC ";whi" "| [2] | Modify Networking Config.     : $(strFixL "$(globGet IFACE)" 39)|"
+    echoC ";whi" "| [3] | Switch to Diffrent Node Type  : $(strFixL "$INFRA_MODE node" 39)|"
+    [ "$(globGet PRIVATE_MODE)" == "true" ] && \
+    echoC ";whi" "| [4] | Expose Node to Public Netw.   : $(strFixL "exposed via $LOCAL_IP" 39)|" || \
+    echoC ";whi" "| [4] | Expose Node to Local Networks : $(strFixL "exposed via $PUBLIC_IP" 39)|"
+    echoC ";whi" "| [5] | Modify Snapshots Config.      : $(strFixL "$SNAPS" 39)|"
+    if [ "$INFRA_MODE" == "validator" ] ; then
+    [ "$NEW_NETWORK" == "true" ] && \
+    echoC ";whi" "| [6] | Join Existing Network         : $(strFixL "" 39)|" || \
+    echoC ";whi" "| [6] | Launch New Local Testnet      : $(strFixL "" 39)|"
+    fi
     [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] && col="red" || col="whi"
     [ "$NEW_NETWORK" == "true" ] && \
-                        echoC ";whi" "| [8] | Modify Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 39)|" || \
- echoC "sto;whi" "| $(echoC "res;$col" "[8] | Modify Trusted Node Address   : $(strFixL "$NODE_ADDR" 39)")|"
+                        echoC ";whi" "| [7] | Modify Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 39)|" || \
+ echoC "sto;whi" "| $(echoC "res;$col" "[7] | Modify Trusted Node Address   : $(strFixL "$NODE_ADDR" 39)")|"
     echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     ( ( [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ) || [ "$MNEMONIC_SAVED" == "false" ] ) && \
     col="bla" || col="gre"
@@ -104,7 +113,7 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
   echoC "sto;whi" "| $(echoC "res;$col" "[S] | Start Setup")                   | [R] Refresh      | [X] Abort Setup     |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    setterm -cursor off
+    
     if ( ( [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ) || [ "$MNEMONIC_SAVED" == "false" ] ) ; then
         pressToContinue 1 2 3 4 5 6 7 8 r x && KEY=$(globGet OPTION)
     else
@@ -127,36 +136,24 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     $KIRA_MANAGER/menu/ports-select.sh
     ;;
   3*)
-    $KIRA_MANAGER/menu/base-image-select.sh
-    ;;
-  4*)
     $KIRA_MANAGER/menu/node-type-select.sh
     ;;
-  5*)
-    set +x
-    echoWarn "WARNING: Nodes launched in the private mode can only communicate via P2P with other nodes deployed in their local/private network"
-    echoNLog "Launch $INFRA_MODE node in [P]ublic or Pri[V]ate networking mode: " && pressToContinue p v && MODE=$(globGet OPTION)
-    set -x
-
-    [ "${MODE,,}" == "p" ] && globSet PRIVATE_MODE "false"
-    [ "${MODE,,}" == "v" ] && globSet PRIVATE_MODE "true"
+  4*)
+    [ "$PRIVATE_MODE" == "true" ] && globSet PRIVATE_MODE "false" || globSet PRIVATE_MODE "true"
     ;;
-  6*)
+  5*)
     $KIRA_MANAGER/kira/kira-backup.sh
     ;;
-  7*)
-     NEW_NETWORK="false"
-     if [ "$INFRA_MODE" == "validator" ]; then
-         set +x
-         echoNLog "Create [N]ew network or [J]oin existing one: " && pressToContinue n j
-         set -x
-         [ "$(globGet OPTION)" == "n" ] && NEW_NETWORK="true" || NEW_NETWORK="false"
-     fi
-
-     globSet NEW_NETWORK "$NEW_NETWORK"
-     globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 999 + 1))"
+  6*)
+    [ "$INFRA_MODE" != "validator" ] && continue
+    if [ "$NEW_NETWORK" == "true" ] ; then
+      globSet NEW_NETWORK "false" 
+    else
+      globSet NEW_NETWORK "true"
+      globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 999 + 1))"
+    fi
    ;;
-   8*)
+   7*)
       if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
         $KIRA_MANAGER/menu/chain-id-select.sh
       else

@@ -6,11 +6,11 @@ set +x
 INFRA_MODE=$(globGet INFRA_MODE)
 MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
 
-while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
+while : ; do
 
     set +x
-    MASTER_MNEMONIC=$(getVar MASTER_MNEMONIC "$MNEMONICS")
-    NODE_ID=$(getVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
+    MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
+    NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
     [ -z "$NODE_ID" ] && NODE_ID="???"
 
         clear
@@ -18,22 +18,23 @@ while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
         echoC ";whi" " =============================================================================="
      echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SECRETS MANAGMENT TOOL, KM $KIRA_SETUP_VER" 78)")|"
         echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+        echoC ";whi" "| $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
         echoC ";whi" "| Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $cSubCnt) |"
         echoC ";whi" "| Keystore Location: $(strFixL "$MNEMONICS" $cSubCnt) |"
-        echoC ";whi" "| $(strFixL "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
-     echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
-        echoC ";whi" "|$(strFixL " [G] | Generate new master mnemonic and DELETE all old secrets" 78)|"
+        echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
     if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
-        echoC ";whi" "|$(strFixL " [M] | Modify existing master mnemonic and DELETE all old secrets" 78)|"
+        echoC "sto;whi" "|$(echoC "res;gre" "$(strFixL " [G] | Generate new master mnemonic and DELETE all secrets" 78)")|"
+    else
+        echoC ";whi" "|$(strFixL " [M] | Modify existing master mnemonic and DELETE all secrets" 78)|"
         echoC ";whi" "|$(strFixL " [V] | Display existing master mnemonic from keystore" 78)|"
     fi
-        echoC ";whi" "|$(strFixL " [X] | Exit without making changes" 78)|"
+        echoC ";whi" "|$(strFixL " [X] | Exit without making changes __________________________________________" 78 _ _)|"
 
     setterm -cursor off
-    if [(! $(isMnemonic "$MASTER_MNEMONIC")) ; then
-        pressToContinue g m v x && KEY=$(globGet OPTION)
-    else
+    if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
         pressToContinue g x && KEY=$(globGet OPTION)
+    else
+        pressToContinue m v x && KEY=$(globGet OPTION)
     fi
     setterm -cursor on
 
@@ -42,15 +43,15 @@ while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
     elif [ "$KEY" == "g" ] ; then
         echoNLog "Press [Y]es to wipe secrets dir. & generate new secrets or [N]o to cancel: " && pressToContinue y n && KEY=$(globGet OPTION)
         if [ "$KEY" == "y" ] ; then
-            rm -rfv "$KIRA_SECRETS"
-            mkdir -p "$KIRA_SECRETS"
+            rm -rfv "$KIRA_SECRETS" && mkdir -p "$KIRA_SECRETS" && touch "$MNEMONICS"
             setVar MASTER_MNEMONIC "autogen" "$MNEMONICS" 1> /dev/null
         else
             continue
         fi
-    elif [ "$KEY" == "g" ] ; then
+    elif [ "$KEY" == "m" ] ; then
         echoNLog "Press [Y]es to wipe secrets dir. & define new secrets or [N]o to cancel: " && pressToContinue y n && KEY=$(globGet OPTION)
         if [ "$KEY" == "y" ] ; then
+            MASTER_MNEMONIC=""
             while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
                 echoNLog "Input 24 whitespace-separated bip39 words or press [ENTER] to autogen.: " && read MASTER_MNEMONIC
                 MASTER_MNEMONIC=$(echo "$MASTER_MNEMONIC" | xargs 2> /dev/null || echo -n "")
@@ -66,6 +67,7 @@ while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
                     setVar MASTER_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null
                     break
                 fi
+            done
         else
             continue
         fi
@@ -73,9 +75,16 @@ while (! $(isMnemonic "$MASTER_MNEMONIC")) ; do
         clear
         IFS=" "
         read -ra arr <<< "$MASTER_MNEMONIC"
-        for i in "${!arr[@]}"; do
-            echoC ";whi" "$((i+1)). ${arr[i]}"
+        echoNC ";gre" "Numbered list of you master mnemonic seed words:\n\n"
+        i=0
+        while [ $i -lt ${#arr[@]} ]; do
+            W1="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
+            W2="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
+            W3="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
+            W4="$(strFixC " $((i+1)). ${arr[i]}" 19)" && i=$((i+1))
+            echoC ";whi" "$W1|$W2|$W3|$W4"
         done
+        echoNC ";gre" "\n\nOrdered list: " && echoNC ";whi" "\n\n$MASTER_MNEMONIC\n\n"
         echoNLog "Press any key to continue: " && pressToContinue ""
     fi
 
