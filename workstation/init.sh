@@ -195,7 +195,7 @@ apt-get update -y --fix-missing
 apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --allow-change-held-packages \
     software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential htop ccze sysstat \
     nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude zip unzip p7zip-full \
-    python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm net-tools \
+    python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm \
     perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl bc dnsutils psmisc netcat nmap parallel lsof
 
 pip3 install ECPy

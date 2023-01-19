@@ -13,6 +13,8 @@ INFRA_MODE=$(globGet INFRA_MODE)
 IS_SYNCING=$(globGet "${INFRA_MODE}_SYNCING")
 TIME_NOW="$(date2unix $(date))"
 UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
+DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 
 set +x
 echoWarn "------------------------------------------------"
@@ -58,6 +60,10 @@ for name in $CONTAINERS; do
         (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$(globGet UPGRADE_PLAN)" != "$TMP_UPGRADE_PLAN" ] && globSet NEW_UPGRADE_PLAN "$TMP_UPGRADE_PLAN"
     elif [ "${name,,}" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
+
+        #INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl --fail 0.0.0.0:$DEFAULT_INTERX_PORT/api/kira/statu 2>/dev/null || echo -n "")
+        #INEX_KIRA_STATUS="$(timeout 3 curl --fail 0.0.0.0:$CUSTOM_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "")"
+
         echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
     fi

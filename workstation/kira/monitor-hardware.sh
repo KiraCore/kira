@@ -7,6 +7,8 @@ set -x
 
 # Largest File Discovery: find / -type f -printf '%s %p\n' | sort -nr | head -10
 
+IFACE=$(globGet IFACE)
+
 timerStart
 
 set +x
@@ -52,14 +54,10 @@ if ($(isNaturalNumber "$DISK_USED")) && ($(isNaturalNumber "$DISK_AVAIL")) ; the
 fi
 
 echoInfo "INFO: Discovering & Saving Public IP..."
-PUBLIC_IP=$(dig TXT +short o-o.myaddr.l.google.com @ns1.google.com +time=5 +tries=1 | awk -F'"' '{ print $2}' || echo -e "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @resolver1.opendns.com myip.opendns.com +time=5 +tries=1 | awk -F'"' '{ print $1}' || echo -e "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(dig +short @ns1.google.com -t txt o-o.myaddr.l.google.com -4 | xargs || echo -e "")
-( ! $(isPublicIp "$PUBLIC_IP")) && PUBLIC_IP=$(timeout 3 curl https://ipinfo.io/ip | xargs || echo -e "")
+PUBLIC_IP=$(timeout 10 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
 
 echoInfo "INFO: Discovering & Saving Local IP..."
-LOCAL_IP=$(/sbin/ifconfig "$(globGet IFACE)" | grep -i mask | awk '{print $2}' | cut -f2 || echo -e "")
-( ! $(isIp "$LOCAL_IP")) && LOCAL_IP=$(hostname -I | awk '{ print $1}' || echo -e "")
+LOCAL_IP=$(timeout 10 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "")
 
 echoInfo "INFO: Updating IP addresses info..."
 tryMkDir "$DOCKER_COMMON_RO"

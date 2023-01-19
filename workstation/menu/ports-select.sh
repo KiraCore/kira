@@ -23,10 +23,10 @@ while : ; do
     PRTH_PORT="$(globGet CUSTOM_PROMETHEUS_PORT)"
     INEX_PORT="$(globGet CUSTOM_INTERX_PORT)"
 
-    P2P_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_P2P_PORT")"
-    RPC_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_RPC_PORT")"
-    GRPC_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_GRPC_PORT")"
-    PRTH_PORT_DEF="$(globGet "KIRA_${INFRA_MODE}_PROMETHEUS_PORT")"
+    P2P_PORT_DEF="$(globGet "DEFAULT_P2P_PORT")"
+    RPC_PORT_DEF="$(globGet "DEFAULT_RPC_PORT")"
+    GRPC_PORT_DEF="$(globGet "DEFAULT_GRPC_PORT")"
+    PRTH_PORT_DEF="$(globGet "DEFAULT_PROMETHEUS_PORT")"
     INEX_PORT_DEF="$(globGet "DEFAULT_INTERX_PORT")"
 
     DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
@@ -101,7 +101,7 @@ while : ; do
 
         ($(isNaturalNumber "$OPTION")) && IFACE="${ifaces[$OPTION]}"
     elif [ "$(globGet OPTION)" == "o" ] ; then
-      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 64 ]] ; do echoNLog "Input offset value between 0 and 64: " && read OFFSET ; done
+      OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 108 ]] || [[ $OFFSET -lt 100 ]] ; do echoNLog "Input offset value between 100 and 108: " && read OFFSET ; done
       # Do NOT offset SSH port
       SSH_PORT=$((SSH_PORT + 0))
       P2P_PORT=$((P2P_PORT_DEF + OFFSET))
