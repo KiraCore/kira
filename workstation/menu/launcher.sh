@@ -22,6 +22,7 @@ while :; do
     HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
     NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
     NEW_NETWORK=$(globGet NEW_NETWORK)
+    TRUSTED_NODE_GENESIS_HASH=$(globGet TRUSTED_NODE_GENESIS_HASH)
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
     if (! $(isDnsOrIp "$NODE_ADDR")) ; then
       NODE_ADDR="???.???.???.???"
@@ -69,6 +70,8 @@ while :; do
     echoC ";whi" "|$SSH_PORT|$P2P_PORT|$RPC_PORT|$GRPC_PORT|$PRTH_PORT|$INEX_PORT|"
     if [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ; then
   echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " NETWORK NOT FOUND, CHANGE TRUSTED SEED ADDRESS " 78 "." "-")")|"
+    elif [ "$NEW_NETWORK" != "true" ] && (! $(isSHA256 "$TRUSTED_NODE_GENESIS_HASH")) ; then
+  echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " GENESIS FILE NOT FOUND, CHANGE TRUSTED SEED OR PROVIDE SOURCE " 78 "." "-")")|"
     elif [ "$MNEMONIC_SAVED" == "false" ] ; then
 echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED " 78 "." "-")")|"
     elif [ "$FIREWALL_ENABLED" == "false" ] ; then
@@ -79,6 +82,9 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
   
     (! $(isNodeId "$NODE_ID")) && col="red" || col="whi"
  echoC "sto;whi" "|$(echoC "res;$col" " $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) ")|" 
+ [ "$NEW_NETWORK" != "true" ] && ($(isSHA256 "$TRUSTED_NODE_GENESIS_HASH")) && \
+    echoC ";whi" "|        Genesis Hash: $(strFixL "$TRUSTED_NODE_GENESIS_HASH" 55) |"
+ 
     echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
     echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
     [ "$NEW_NETWORK" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \

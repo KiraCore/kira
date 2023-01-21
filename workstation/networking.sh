@@ -45,6 +45,12 @@ firewall-cmd --get-zones
 firewall-cmd --permanent --zone=public --change-interface=$(globGet IFACE)
 
 echoInfo "INFO: firewalld cleanup"
+# ALL_ZONES=($(firewall-cmd --get-zones))
+# for zone in "${ALL_ZONES[@]}" ; do
+#     firewall-cmd --permanent --zone=$zone --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from $zone zone"
+#     firewall-cmd --permanent --zone=$zone --remove-source="$ALL_IP"  || echoInfo "INFO: Failed to remove source ALL from $zone zone"
+# done
+
 DEFAULT_ZONES=(validator sentry seed)
 for zone in "${DEFAULT_ZONES[@]}" ; do
     firewall-cmd --permanent --zone=$zone --remove-interface=docker0 || echoInfo "INFO: Failed to remove docker0 interface from $zone zone"
