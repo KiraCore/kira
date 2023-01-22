@@ -21,13 +21,32 @@ while :; do
     CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)" && [ -z "$CHAIN_ID" ] && CHAIN_ID="???"
     HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
     NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
-    NEW_NETWORK=$(globGet NEW_NETWORK)
-    TRUSTED_NODE_GENESIS_HASH=$(globGet TRUSTED_NODE_GENESIS_HASH)
+    NEW_NETWORK="$(globGet NEW_NETWORK)"
+
+    TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
+    TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
+    TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
+    TRUSTED_NODE_SNAP_URL="$(globGet TRUSTED_NODE_SNAP_URL)"
+    TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)" && (! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
+
+    SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
+    SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
+    SNAPSHOT_GENESIS_HASH=$(globGet SNAPSHOT_GENESIS_HASH)
+
+    if [ -z "$SNAPSHOT_CHAIN_ID" ] || [ "$SNAPSHOT_CHAIN_ID" != "$CHAIN_ID" ] || [ ! -f "$SNAPSHOT_FILE"] ; then
+      SNAPSHOT_VALID="false"
+    else
+      SNAPSHOT_VALID="true"
+    fi
+
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
     if (! $(isDnsOrIp "$NODE_ADDR")) ; then
       NODE_ADDR="???.???.???.???"
       CHAIN_ID="???"
       HEIGHT="0"
+    elif [ "$NODE_ADDR" != "0.0.0.0" ] ; then
+      ($(isPort "$TRUSTED_NODE_INTERX_PORT")) && NODE_ADDR="${NODE_ADDR}:${TRUSTED_NODE_INTERX_PORT}" || \
+       ( ($(isPort "$TRUSTED_NODE_RPC_PORT")) && NODE_ADDR="${NODE_ADDR}:${TRUSTED_NODE_RPC_PORT}" )
     fi
 
     echoInfo "INFO: Public & Local IP discovery..."
@@ -86,7 +105,13 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     echoC ";whi" "|        Genesis Hash: $(strFixL "$TRUSTED_NODE_GENESIS_HASH" 55) |"
  
     echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
-    echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
+
+    if [ "$SNAPSHOT_VALID" == "true" ] ; then
+      echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
+      echoC ";whi" "|      Snapshots File: $(strFixL "$SNAPSHOT_FILE - $(prettyBytes "$(fileSize "$SNAPSHOT_FILE")")" 40) $(strFixR "$(prettyBytes "$(fileSize "$SNAPSHOT_FILE")")" 14) |"
+      echoC ";whi" "|  Snapshots Checksum: $(strFixL "$SNAPSHOT_FILE_HASH" 55) |"
+      echoC ";whi" "|  Snap. Genesis Hash: $(strFixL "$SNAPSHOT_GENESIS_HASH" 55) |"
+    fi
     [ "$NEW_NETWORK" != "true" ] && [ -f "$KIRA_SNAP_PATH" ] && \
     echoC ";whi" "|      Local Snapshot: $(strFixL "$KIRA_SNAP_PATH" 55) |"
     [ "$NEW_NETWORK" != "true" ] && [[ $SNAP_SIZE -gt 0 ]] && \
@@ -103,7 +128,8 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     [ "$(globGet PRIVATE_MODE)" == "true" ] && \
     echoC ";whi" "| [4] | Expose Node to Public Netw.   : $(strFixL "expose as $LOCAL_IP to LOCAL" 39)|" || \
     echoC ";whi" "| [4] | Expose Node to Local Networks : $(strFixL "expose as $PUBLIC_IP to PUBLIC" 39)|"
-    echoC ";whi" "| [5] | Modify Snapshots Config.      : $(strFixL "$SNAPS" 39)|"
+
+    echoC ";whi" "| [5] | Download or Select Snapshot   : $(strFixL "$SNAPS" 39)|"
     if [ "$INFRA_MODE" == "validator" ] ; then
     [ "$NEW_NETWORK" == "true" ] && \
     echoC ";whi" "| [6] | Join Existing Network         : $(strFixL "launch your own testnet" 39)|" || \
@@ -113,11 +139,12 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     [ "$NEW_NETWORK" == "true" ] && \
                         echoC ";whi" "| [7] | Modify Network Name           : $(strFixL "$(globGet NEW_NETWORK_NAME)" 39)|" || \
  echoC "sto;whi" "| $(echoC "res;$col" "[7] | Modify Trusted Node Address   : $(strFixL "$NODE_ADDR" 39)")|"
+ 
     echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     ( ( [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ) || [ "$MNEMONIC_SAVED" == "false" ] ) && \
     col="bla" || col="gre"
 
-  echoC "sto;whi" "| $(echoC "res;$col" "[S] | Start Setup")                   | [R] Refresh      | [X] Abort Setup     |"
+  echoC "sto;whi" "| $(echoC "res;$col" "$(strFixL "[S] | Start Setup (block height: $HEIGHT)" 38)")| [R] Refresh      | [X] Abort Setup     |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
     
@@ -149,7 +176,7 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     [ "$PRIVATE_MODE" == "true" ] && globSet PRIVATE_MODE "false" || globSet PRIVATE_MODE "true"
     ;;
   5*)
-    $KIRA_MANAGER/kira/kira-backup.sh
+    $KIRA_MANAGER/menu/snap-select.sh
     ;;
   6*)
     [ "$INFRA_MODE" != "validator" ] && continue
