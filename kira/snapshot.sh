@@ -20,9 +20,12 @@ LOCAL_GENESIS="$SEKAID_CONFIG/genesis.json"
 STATE_FILE="$SEKAID_DATA/priv_validator_state.json"
 SNAP_INFO="$SEKAID_DATA/snapinfo.json"
 
-LATEST_BLOCK_TIME=$(globGet latest_block_time "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME="0"
-LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT="0"
-STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "") && (! $(isNaturalNumber "$STATE_HEIGHT")) && MIN_BLOCK="0"
+LATEST_BLOCK_TIME=$(globGet latest_block_time "$GLOBAL_COMMON_RO") 
+LATEST_BLOCK_HEIGHT=$(globGet latest_block_height "$GLOBAL_COMMON_RO") 
+STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "")
+(! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME="0"
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT="0"
+(! $(isNaturalNumber "$STATE_HEIGHT")) && MIN_BLOCK="0"
 [[ $LATEST_BLOCK_HEIGHT -lt $STATE_HEIGHT ]] && LATEST_BLOCK_HEIGHT=$STATE_HEIGHT
 
 ($(isNullOrWhitespaces $SNAP_FILENAME)) && SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-${LATEST_BLOCK_TIME}.tar"

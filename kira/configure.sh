@@ -27,10 +27,12 @@ STATE_FILE="$SEKAID_HOME/data/priv_validator_state.json"
 
 LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
 PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
-
-LATEST_BLOCK_HEIGHT=$(globGet latest_block_height $GLOBAL_COMMON_RO) && (! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
-MIN_HEIGHT=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO) && (! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
-STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+LATEST_BLOCK_HEIGHT=$(globGet latest_block_height $GLOBAL_COMMON_RO) 
+MIN_HEIGHT=$(globGet MIN_HEIGHT $GLOBAL_COMMON_RO) 
+STATE_HEIGHT=$(jsonQuickParse "height" $STATE_FILE || echo "") 
+(! $(isNaturalNumber $LATEST_BLOCK_HEIGHT)) && LATEST_BLOCK_HEIGHT=0
+(! $(isNaturalNumber $MIN_HEIGHT)) && MIN_HEIGHT=0
+(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
 [[ $MIN_HEIGHT -lt $LATEST_BLOCK_HEIGHT ]] && MIN_HEIGHT=$LATEST_BLOCK_HEIGHT
 [[ $MIN_HEIGHT -lt $STATE_HEIGHT ]] && MIN_HEIGHT=$STATE_HEIGHT
 
@@ -217,7 +219,8 @@ if (! $(isFileEmpty $LOCAL_RPC_PATH)) ; then
         set +x
         BLOCK_INFO=$(timeout 3 curl --fail $rpc/block?height=$MIN_HEIGHT 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
         [ -z "$BLOCK_INFO" ] && echoWarn "WARNING: Failed to fetch block info from '$rpc'" && continue
-        HEIGHT=$(echo "$BLOCK_INFO" | jsonParse "block.header.height" 2>/dev/null || echo -n "") && (! $(isNaturalNumber $HEIGHT)) && HEIGHT=0
+        HEIGHT=$(echo "$BLOCK_INFO" | jsonParse "block.header.height" 2>/dev/null || echo -n "") 
+        (! $(isNaturalNumber $HEIGHT)) && HEIGHT=0
         [ "$HEIGHT" != "$MIN_HEIGHT" ] && echoWarn "INFO: RPC height is $HEIGHT but expected $MIN_HEIGHT" && continue
         NEW_TRUST_HASH=$(echo "$BLOCK_INFO" | jsonParse "block_id.hash" 2>/dev/null || echo -n "")
         [ -z "$TRUST_HASH" ] && TRUST_HASH=$NEW_TRUST_HASH

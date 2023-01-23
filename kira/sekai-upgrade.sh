@@ -11,7 +11,8 @@ ADDRBOOK_EXPORT="$SEKAID_HOME/addrbook-export.json"
 STATE_FILE="$SEKAID_HOME/data/priv_validator_state.json"
 STATE_EXPORT="$SEKAID_HOME/priv_validator_state-export.json"
 
-STATE_HEIGHT=$(jsonParse "height" $STATE_FILE || echo "") && (! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
+STATE_HEIGHT=$(jsonParse "height" $STATE_FILE || echo "") 
+(! $(isNaturalNumber $STATE_HEIGHT)) && STATE_HEIGHT=0
 
 echoInfo "INFO: Exporting configuration files..."
 # ensure address book exists or is copied from one of the possible source paths

@@ -37,7 +37,7 @@ while : ; do
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
     VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
     GENESIS_SHA256=$(globGet GENESIS_SHA256)
-    UPGRADE_TIME=$(globGet "UPGRADE_TIME") && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+    UPGRADE_TIME=$(globGet "UPGRADE_TIME")
     PLAN_DONE=$(globGet PLAN_DONE)
     UPGRADE_DONE=$(globGet UPGRADE_DONE)
     PLAN_FAIL=$(globGet PLAN_FAIL)
@@ -45,6 +45,7 @@ while : ; do
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     CONTAINERS_COUNT=$(globGet CONTAINERS_COUNT)
+    (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
     
     VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
@@ -88,7 +89,8 @@ while : ; do
     echo "|------------ $(date '+%d/%m/%Y %H:%M:%S') --------------|"
 
     if [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then # plan in action
-        LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO) && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO) 
+        (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
         [ "${UPGRADE_INSTATE,,}" == "true" ] && UPGRADE_INSTATE="SOFT" || UPGRADE_INSTATE="HARD"
@@ -197,8 +199,9 @@ while : ; do
             HEALTH_TMP=$(globGet "${name}_HEALTH")
 
             if [[ "${name,,}" =~ ^(validator|sentry|seed|interx)$ ]] && [[ "${STATUS_TMP,,}" =~ ^(running|starting)$ ]]; then
-                LATEST_BLOCK=$(globGet "${name}_BLOCK") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+                LATEST_BLOCK=$(globGet "${name}_BLOCK") 
                 TMP_CATCHING_UP=$(globGet "${name}_SYNCING")
+                (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
                 [ "${TMP_CATCHING_UP,,}" == "true" ] && STATUS_TMP="syncing : $LATEST_BLOCK" || STATUS_TMP="$STATUS_TMP : $LATEST_BLOCK"
             fi
 

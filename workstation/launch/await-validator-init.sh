@@ -228,7 +228,8 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
 
-    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") 
+    (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
     
@@ -236,7 +237,8 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
 
-    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") 
+    (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
@@ -244,7 +246,8 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     
-    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") 
+    (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 
@@ -252,7 +255,8 @@ EOL
     docker exec -i validator bash -c "source /etc/profile && $VOTE_YES_LAST_PROPOSAL"
     docker exec -i validator bash -c "source /etc/profile && $QUERY_LAST_PROPOSAL" | jq
     
-    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") && (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
+    LAST_PROPOSAL=$(docker exec -i validator bash -c "source /etc/profile && lastProposal" || "0") 
+    (! $(isNaturalNumber $LAST_PROPOSAL)) && LAST_PROPOSAL=0
     [ "$LAST_PROPOSAL" == "$PREVIOUS_PROPOSAL" ] && echoErr "ERROR: New proposal was not created!" && exit 1
     PREVIOUS_PROPOSAL=$LAST_PROPOSAL && echoWarn "[$LAST_PROPOSAL] Time now: $(date '+%Y-%m-%dT%H:%M:%S')"
 

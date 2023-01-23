@@ -123,7 +123,8 @@ echo -e "\e[37;1m--------------------------------------------------"
                 # port must be a number
                 ( [[ ! $mask =~ ^[0-9]+$ ]] || (($mask < 8 || $mask > 32)) ) && mask="" 
                 if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
-                    ipRange="$ip" && [ ! -z "$mask" ] && ipRange="$ip/$mask"
+                    ipRange="$ip" 
+                    [ ! -z "$mask" ] && ipRange="$ip/$mask"
                     echoInfo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
                     [ "${SELECT,,}" == "a" ] && setLastLineBySubStrOrAppend "$ip" "$ipRange" $FILE
                     [ "${SELECT,,}" == "r" ] && setLastLineBySubStrOrAppend "$ip" "" $FILE

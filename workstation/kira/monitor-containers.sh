@@ -12,9 +12,10 @@ CONTAINERS=$(globGet CONTAINERS)
 INFRA_MODE=$(globGet INFRA_MODE)
 IS_SYNCING=$(globGet "${INFRA_MODE}_SYNCING")
 TIME_NOW="$(date2unix $(date))"
-UPGRADE_TIME=$(globGet UPGRADE_TIME) && (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
+UPGRADE_TIME=$(globGet UPGRADE_TIME)
 CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
+(! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
 
 set +x
 echoWarn "------------------------------------------------"
@@ -73,10 +74,13 @@ NEW_UPGRADE_PLAN=$(globGet NEW_UPGRADE_PLAN)
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globGet UPDATE_DONE)" == "true" ] && [ "$(globGet UPGRADE_DONE)" == "true" ] && [ "$(globGet PLAN_DONE)" == "true" ] ; then
     echoInfo "INFO: Upgrade plan was found!"
     TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
-    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") && TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") && (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
+    TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") 
+    TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") 
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
     TMP_OLD_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "old_chain_id" || echo "")
     TMP_NEW_CHAIN_ID=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "new_chain_id" || echo "")
+    (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
+
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
     if [ "${TMP_UPGRADE_NAME,,}" != "genesis" ] && [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt $TIME_NOW ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
         echoInfo "INFO: New upgrade plan was found!"
@@ -139,10 +143,13 @@ for name in $CONTAINERS; do
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
     NODE_STATUS=$(globGet ${name}_STATUS)
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
-        LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0") && (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+        LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0") 
         LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00")
-        LATEST_BLOCK_TIME=$(date2unix "$LATEST_BLOCK_TIME") && (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
-        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false") && (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP=false
+        LATEST_BLOCK_TIME=$(date2unix "$LATEST_BLOCK_TIME") 
+        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
+        (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
+        (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
+        (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP=false
 
         if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")

@@ -22,7 +22,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.0"
-TOOLS_VERSION="v0.3.7"
+TOOLS_VERSION="v0.3.8"
 COSIGN_VERSION="v1.13.1"
 
 # Force console colour to be black
@@ -42,8 +42,10 @@ set -x
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
-ARCH=$(uname -m) && ( [[ "${ARCH,,}" == *"arm"* ]] || [[ "${ARCH,,}" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
-PLATFORM=$(uname) && PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
+ARCH=$(uname -m) 
+PLATFORM=$(uname) 
+PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
+( [[ "${ARCH,,}" == *"arm"* ]] || [[ "${ARCH,,}" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
 
 COSIGN_NOT_INSTALLED=$(cosign version || echo "true")
 KEYS_DIR="/usr/keys"
@@ -91,9 +93,12 @@ echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
 
 #######################################################################################
 echoInfo "INFO: Processing input arguments..."
-INFRA_SRC="" && infra_src="" && arg1="$1" && [ -z "$arg1" ] && arg1="--arg1=null"
-IMAGE_SRC="" && image_src="" && arg2="$2" && [ -z "$arg2" ] && arg2="--arg2=null"
-INIT_MODE="" && init_mode="" && arg3="$3" && [ -z "$arg3" ] && arg3="--arg3=null"
+INFRA_SRC="" && infra_src="" && arg1="$1" 
+IMAGE_SRC="" && image_src="" && arg2="$2" 
+INIT_MODE="" && init_mode="" && arg3="$3" 
+[ -z "$arg1" ] && arg1="--arg1=null"
+[ -z "$arg2" ] && arg2="--arg2=null"
+[ -z "$arg3" ] && arg3="--arg3=null"
 getArgs "$arg1" "$arg2" "$arg3"
 [ -z "$INFRA_SRC" ] && INFRA_SRC="$infra_src"
 [ -z "$IMAGE_SRC" ] && IMAGE_SRC="$image_src" && [ -z $IMAGE_SRC ] && IMAGE_SRC="$BASE_IMAGE_VERSION"

@@ -116,13 +116,15 @@ while : ; do
     elif [ "$(globGet OPTION)" == "m" ] ; then
       # NETWORK
       echoC ";whi" "Default Docker network name: $DEFAULT_DOCKER_NETWORK"
-      NAME="." && while [[ $(strLength "$NAME") -lt 3 ]] && [ ! -z "$NAME" ]; do echoNLog "Input new name (min 3 char.) or press [ENTER] for default: " && read NAME ; done
+      NAME="." 
+      while [[ $(strLength "$NAME") -lt 3 ]] && [ ! -z "$NAME" ]; do echoNLog "Input new name (min 3 char.) or press [ENTER] for default: " && read NAME ; done
       NAME="$(delWhitespaces $(toLower "$NAME"))"
       [ -z "$NAME" ] && NAME="$DEFAULT_DOCKER_NETWORK"
       DOCKER_NETWORK="$NAME"
       # SUBNET
       echoC ";whi" "Default Docker subnet: $DEFAULT_DOCKER_SUBNET"
-      SUBNET="." && while (! $(isCIDR "$SUBNET")) && [ ! -z "$SUBNET" ]; do echoNLog "Input valid CIDR or press [ENTER] for default: " && read SUBNET ; done
+      SUBNET="." 
+      while (! $(isCIDR "$SUBNET")) && [ ! -z "$SUBNET" ]; do echoNLog "Input valid CIDR or press [ENTER] for default: " && read SUBNET ; done
       [ -z "$SUBNET" ] && SUBNET="$DEFAULT_DOCKER_SUBNET"
       DOCKER_SUBNET="$SUBNET"
       # NOTE: By adding 0 we cut the whitespaces ans ensure value is a valid

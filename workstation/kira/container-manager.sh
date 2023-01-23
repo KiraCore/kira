@@ -89,10 +89,11 @@ while : ; do
 
     # globs
     RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
-    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON") && [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
+    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON") 
     EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON")
     PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
     IS_HALTING=$(globGet HALT_TASK $GLOBAL_COMMON)
+    [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
 
     if [ "${EXISTS,,}" != "true" ] ; then
         printf "\033c"
@@ -359,7 +360,8 @@ while : ; do
             [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
             [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echoInfo "INFO: Found $LINES_MAX log lines, printing $LOG_LINES..."
-            TMP_LOG_LINES=$LOG_LINES && [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
+            TMP_LOG_LINES=$LOG_LINES 
+            [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
             [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
             [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
             ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done

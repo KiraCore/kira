@@ -43,7 +43,8 @@ if [ "$PREVIOUS_HEIGHT" != "$HEIGHT" ] ; then
 else
     if [[ $PREVIOUS_HEIGHT -ge $HEIGHT ]]; then
         echoWarn "WARNING: Blocks are not beeing produced or synced"
-        TIME_SPAN=$(timerSpan catching_up) && (! $(isNaturalNumber $TIME_SPAN)) && TIME_SPAN=0
+        TIME_SPAN=$(timerSpan catching_up) 
+        (! $(isNaturalNumber $TIME_SPAN)) && TIME_SPAN=0
         echoErr "ERROR: Block production or sync stopped more than $TIME_SPAN seconds ago"
         [[ $TIME_SPAN -gt 900 ]] && FAILED="true"
     else

@@ -2,11 +2,11 @@
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/seed-status-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
+TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
+TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
 NODE_ADDR=$(globGet TRUSTED_NODE_ADDR)
 [ -z "$NODE_ADDR" ] && NODE_ADDR="0.0.0.0"
-
-DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
-CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
 
 echoInfo "INFO: Please wait, testing connectivity..."
 if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
@@ -16,35 +16,23 @@ if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
     HEIGHT="0"
 else
     echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
-    STATUS=$(timeout 15 curl "$NODE_ADDR:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-    if [ "$CUSTOM_INTERX_PORT" != "$DEFAULT_INTERX_PORT" ] ; then
-        STATUS=$(timeout 15 curl "$NODE_ADDR:$CUSTOM_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
-        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-    fi
-
-    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet CUSTOM_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SEED_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_VALIDATOR_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
-    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") && ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
-
-    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$(globGet KIRA_SENTRY_RPC_PORT)/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
+    STATUS=$(timeout 15 curl "$NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
+    CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "") 
+    ($(isNullOrWhitespaces "$CHAIN_ID")) && STATUS=""
+    ($(isNullOrWhitespaces "$STATUS")) && STATUS=$(timeout 15 curl --fail "$NODE_ADDR:$TRUSTED_NODE_RPC_PORT/status" 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "")
 
     HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
     CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null|| echo -n "")
 
     if [ "$NODE_ADDR" == "0.0.0.0" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-        HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-        CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="???"
+        HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
+        CHAIN_ID=$NETWORK_NAME 
+        ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="???"
+        (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
     fi
 
     if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
-        echoWarn "WARNING: Could NOT read status, block height or chian-id"
+        echoWarn "WARNING: Could NOT read status, block height '$HEIGHT' or chian-id '$CHAIN_ID'"
         echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public node address"
         STATUS=""
         ($(isNullOrWhitespaces "$NETWORK_NAME")) && CHAIN_ID="???"
@@ -58,9 +46,10 @@ globSet "TRUSTED_NODE_HEIGHT" "$HEIGHT"
 
 echoInfo "INFO: Please wait, testing snapshot access..."
 SNAP_SIZE="0"
-SNAP_URL="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
+SNAP_URL="$NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/download/snapshot.tar"
 if ($(urlExists "$SNAP_URL")) ; then
-    SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
+    SNAP_SIZE=$(urlContentLength "$SNAP_URL") 
+    (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
     echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
 fi
 
@@ -71,3 +60,4 @@ fi
 
 globSet "TRUSTED_SNAP_URL" "$SNAP_URL"
 globSet "TRUSTED_SNAP_SIZE" "$SNAP_SIZE"
+sleep 1

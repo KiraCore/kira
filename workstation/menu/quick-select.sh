@@ -98,7 +98,8 @@ elif [ "$NEW_NETWORK" == "false" ] ; then
         echoInfo "INFO: Please wait, testing snapshot access..."
         SNAP_URL="$NODE_ADDR:$(globGet DEFAULT_INTERX_PORT)/download/snapshot.tar"
         if ($(urlExists "$SNAP_URL")) ; then
-            SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
+            SNAP_SIZE=$(urlContentLength "$SNAP_URL") 
+            (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
             set +x
             echoInfo "INFO: Node '$NODE_ADDR' is exposing $SNAP_SIZE Bytes snapshot"
             echoNErr "Sync from snap [E]xposed by trusted node, [L]ocal direcotry, [A]uto-discover new snap, select [D]iffrent node or [C]ontinue with slow sync: " && pressToContinue e l a d c && VSEL=$(globGet OPTION)

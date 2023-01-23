@@ -18,16 +18,18 @@ while :; do
 
     IFACE=$(globGet IFACE)
     INFRA_MODE=$(globGet INFRA_MODE)
-    CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)" && [ -z "$CHAIN_ID" ] && CHAIN_ID="???"
+    CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)" 
     HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
     NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
     NEW_NETWORK="$(globGet NEW_NETWORK)"
+    [ -z "$CHAIN_ID" ] && CHAIN_ID="???"
 
     TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
     TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
     TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
     TRUSTED_NODE_SNAP_URL="$(globGet TRUSTED_NODE_SNAP_URL)"
-    TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)" && (! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
+    TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)"
+    (! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
 
     SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
     SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
@@ -69,9 +71,12 @@ while :; do
     GRPC_PORT=$(strFixC "$(globGet CUSTOM_GRPC_PORT)" 12)
     PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 12)
     INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 14)
-    EXPOSURE="local network exposure" && [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public network exposure"
-    SNAPS="snapshots disabled" && [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snapshots enabled"
-    LMODE="join '$CHAIN_ID' network" && [ "$NEW_NETWORK" == "true" ] && LMODE="create new test network"
+    EXPOSURE="local network exposure" 
+    SNAPS="snapshots disabled" 
+    LMODE="join '$CHAIN_ID' network" 
+    [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public network exposure"
+    [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snapshots enabled"
+    [ "$NEW_NETWORK" == "true" ] && LMODE="create new test network"
 
     SNAP_URL=$(globGet TRUSTED_SNAP_URL)
     SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
@@ -144,7 +149,7 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     ( ( [ "$NEW_NETWORK" == "false" ] && [ "$REINITALIZE_NODE" != "true" ] && [ $HEIGHT -le 0 ] ) || [ "$MNEMONIC_SAVED" == "false" ] ) && \
     col="bla" || col="gre"
 
-  echoC "sto;whi" "| $(echoC "res;$col" "$(strFixL "[S] | Start Setup (block height: $HEIGHT)" 38)")| [R] Refresh      | [X] Abort Setup     |"
+  echoC "sto;whi" "| $(echoC "res;$col" "$(strFixL "[S] | Start Setup, height: $HEIGHT" 36)")| [R] Refresh      | [X] Abort Setup     |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
     

@@ -10,6 +10,7 @@ DEFAULT_RPC_PORT="$(globGet DEFAULT_RPC_PORT)"
 KIRA_SEED_RPC_PORT="$(globGet KIRA_SEED_RPC_PORT)"
 KIRA_VALIDATOR_RPC_PORT="$(globGet KIRA_VALIDATOR_RPC_PORT)"
 KIRA_SENTRY_RPC_PORT="$(globGet KIRA_SENTRY_RPC_PORT)"
+
 TRUSTED_NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
 TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
 TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
@@ -92,8 +93,10 @@ while : ; do
       CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
 
       if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-          HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-          CHAIN_ID=$NETWORK_NAME && ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
+          HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
+          CHAIN_ID=$NETWORK_NAME 
+          ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
+          (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
       fi
 
       if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
@@ -118,7 +121,8 @@ while : ; do
 
     TRUSTED_NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
     TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
-    TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)" && [ -z "$TRUSTED_NODE_RPC_PORT" ] && TRUSTED_NODE_RPC_PORT=0
+    TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)" 
+    [ -z "$TRUSTED_NODE_RPC_PORT" ] && TRUSTED_NODE_RPC_PORT=0
 
     CUSTOM_P2P_PORT="$(globGet CUSTOM_P2P_PORT)"
     DEFAULT_P2P_PORT="$(globGet DEFAULT_P2P_PORT)"
@@ -184,7 +188,8 @@ while : ; do
 
     if ($(urlExists "$SNAP_URL")) ; then
         echoInfo "INFO: Snapshoot found!"
-        SNAP_SIZE=$(urlContentLength "$SNAP_URL") && (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0
+        SNAP_SIZE=$(urlContentLength "$SNAP_URL") 
+        (! $(isNaturalNumber $SNAP_SIZE)) && SNAP_SIZE=0 
         globSet TRUSTED_NODE_SNAP_URL "$SNAP_URL"
         globSet TRUSTED_NODE_SNAP_SIZE "$SNAP_SIZE"
     else

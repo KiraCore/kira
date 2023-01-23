@@ -1,12 +1,16 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/snap-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
+# $KIRA_MANAGER/menu/snap-select.sh --show-log=true
 set +x
 
 # provide path to a file to autoconfigure snapshot
-snap_file="" && arg1="$1" && [ -z "$arg1" ] && arg1="--snap-file=''"
-getArgs "$arg1"
-
+snap_file="" && arg1="$1" 
+show_log="" && arg2="$2" 
+[ -z "$arg1" ] && arg1="--snap-file=''"
+[ -z "$arg2" ] && arg2="--show-log=false"
+getArgs "$arg1" "$arg2"
+clear
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 
@@ -21,20 +25,21 @@ TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
 TRUSTED_NODE_CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
 TRUSTED_NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
 TRUSTED_NODE_SNAP_URL="$(globGet TRUSTED_NODE_SNAP_URL)"
-TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)" && (! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
+TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)" 
+(! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
 
 globDel OVERWRITE_SNAP_URL OVERWRITE_SNAP_SIZE
 
 AUTOCONFIGURE_EXIT="false"
 
 while : ; do
+    [ "$show_log" == "false" ] && set +x || set -x
+
     # on loop continue assume fail and exit auto-configuration
     [ "$AUTOCONFIGURE_EXIT" != "false" ] && echoWarn "WARNING: Snapshot autoconfig failed" && break
     if [ -z "$snap_file" ] ; then
-        set +x
         echoNC ";gre" "Download [E]xternal snapshot, select from [L]ocal direcotry or e[X]it: " && pressToContinue e l x && VSEL=$(globGet OPTION)
     else
-        set -x
         AUTOCONFIGURE_EXIT="true"
         VSEL=""
     fi
@@ -44,12 +49,13 @@ while : ; do
     elif [ "${VSEL,,}" == "e" ] ; then
         echoInfo "INFO: Please wait, snap auto-discovery..."
         TMP_SNAPS="/tmp/snaps.txt" && rm -f "$TMP_SNAPS" 
-        wget $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
+        wget -q $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
         if (! $(isFileEmpty "$TMP_SNAPS")) ; then
             echoInfo "INFO: Snapshot peer was found"
             SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
             AUTO_SNAP_URL="$SNAP_PEER:$DEFAULT_INTERX_PORT/download/snapshot.tar"
-            AUTO_SNAP_SIZE=$(urlContentLength "$AUTO_SNAP_URL") && (! $(isNaturalNumber $AUTO_SNAP_SIZE)) && AUTO_SNAP_SIZE=0
+            AUTO_SNAP_SIZE=$(urlContentLength "$AUTO_SNAP_URL") 
+            (! $(isNaturalNumber $AUTO_SNAP_SIZE)) && AUTO_SNAP_SIZE=0
             AUTO_STATUS=$(timeout 15 curl "$SNAP_PEER:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
             AUTO_CHAIN_ID=$(echo "$AUTO_STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
             if [[ $AUTO_SNAP_SIZE -gt 0 ]] && [ "$AUTO_CHAIN_ID" == "$TRUSTED_CHAIN_ID" ] ; then

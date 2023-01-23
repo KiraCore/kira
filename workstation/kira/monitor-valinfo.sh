@@ -109,14 +109,20 @@ else
     fi
 fi
 
-VAL_ACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_ACTIVE")) && VAL_ACTIVE="???"
-VAL_TOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_TOTAL")) && VAL_TOTAL="???"
-VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$VAL_WAITING")) && VAL_WAITING="???"
-CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" && ($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???"
-CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")" && (! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
-
-LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
-CONS_STOPPED_HEIGHT=$(globGet CONS_STOPPED_HEIGHT) && (! $(isNaturalNumber "$CONS_STOPPED_HEIGHT")) && CONS_STOPPED_HEIGHT=0
+VAL_ACTIVE="$(jsonQuickParse "active_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" 
+VAL_TOTAL="$(jsonQuickParse "total_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" 
+VAL_WAITING="$(jsonQuickParse "waiting_validators" $VALOPERS_COMM_RO_PATH 2>/dev/null || echo -n "")" 
+CONS_STOPPED="$(jsonQuickParse "consensus_stopped" $CONSENSUS_COMM_RO_PATH 2>/dev/null || echo -n "")" 
+CONS_BLOCK_TIME="$(jsonQuickParse "average_block_time" $CONSENSUS_COMM_RO_PATH  2>/dev/null || echo -n "")"
+LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
+CONS_STOPPED_HEIGHT=$(globGet CONS_STOPPED_HEIGHT)
+($(isNullOrEmpty "$VAL_ACTIVE")) && VAL_ACTIVE="???"
+($(isNullOrEmpty "$VAL_TOTAL")) && VAL_TOTAL="???"
+($(isNullOrEmpty "$VAL_WAITING")) && VAL_WAITING="???"
+($(isNullOrEmpty "$CONS_STOPPED")) && CONS_STOPPED="???" 
+(! $(isNumber "$CONS_BLOCK_TIME")) && CONS_BLOCK_TIME="???"
+(! $(isNaturalNumber "$LATEST_BLOCK_HEIGHT")) && LATEST_BLOCK_HEIGHT=0
+(! $(isNaturalNumber "$CONS_STOPPED_HEIGHT")) && CONS_STOPPED_HEIGHT=0
 
 if [ "$CONS_STOPPED_HEIGHT" != "$LATEST_BLOCK_HEIGHT" ] ; then
     CONS_STOPPED="false"
