@@ -10,7 +10,7 @@ show_log="" && arg2="$2"
 [ -z "$arg1" ] && arg1="--snap-file=''"
 [ -z "$arg2" ] && arg2="--show-log=false"
 getArgs "$arg1" "$arg2"
-clear
+[ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 
@@ -26,29 +26,40 @@ TRUSTED_NODE_CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
 TRUSTED_NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
 TRUSTED_NODE_SNAP_URL="$(globGet TRUSTED_NODE_SNAP_URL)"
 TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)" 
-(! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
+(! $(isNaturalNumber "$TRUSTED_NODE_SNAP_SIZE")) && TRUSTED_NODE_SNAP_SIZE=0
 
 globDel OVERWRITE_SNAP_URL OVERWRITE_SNAP_SIZE
 
 AUTOCONFIGURE_EXIT="false"
+MANUALCONFIG_WAILT="false"
 
 while : ; do
-    [ "$show_log" == "false" ] && set +x || set -x
-
     # on loop continue assume fail and exit auto-configuration
     [ "$AUTOCONFIGURE_EXIT" != "false" ] && echoWarn "WARNING: Snapshot autoconfig failed" && break
+    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC ";gre" "Press any key to continue" && pressToContinue
+
     if [ -z "$snap_file" ] ; then
+        SNAPSHOTS=`ls $KIRA_SNAP/*.tar` || SNAPSHOTS=""
+        clear
+        [ -z "$SNAPSHOTS" ] && SNAPSHOTS_COUNT=0 || SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
+
+        echoC ";whi" "Found $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE") external snapshot"
+        echoC ";whi" "Found $SNAPSHOTS_COUNT local snapshots in '$KIRA_SNAP' directory"
         echoNC ";gre" "Download [E]xternal snapshot, select from [L]ocal direcotry or e[X]it: " && pressToContinue e l x && VSEL=$(globGet OPTION)
+        MANUALCONFIG_WAILT="true"
     else
         AUTOCONFIGURE_EXIT="true"
+        MANUALCONFIG_WAILT="false"
         VSEL=""
     fi
 
     if [ "${VSEL,,}" == "x" ] ; then
         break
     elif [ "${VSEL,,}" == "e" ] ; then
+        clear
         echoInfo "INFO: Please wait, snap auto-discovery..."
         TMP_SNAPS="/tmp/snaps.txt" && rm -f "$TMP_SNAPS" 
+        AUTO_SNAP_SIZE=0
         wget -q $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
         if (! $(isFileEmpty "$TMP_SNAPS")) ; then
             echoInfo "INFO: Snapshot peer was found"
@@ -58,30 +69,34 @@ while : ; do
             (! $(isNaturalNumber $AUTO_SNAP_SIZE)) && AUTO_SNAP_SIZE=0
             AUTO_STATUS=$(timeout 15 curl "$SNAP_PEER:$DEFAULT_INTERX_PORT/api/kira/status" 2>/dev/null | jsonParse "" 2>/dev/null || echo -n "")
             AUTO_CHAIN_ID=$(echo "$AUTO_STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
-            if [[ $AUTO_SNAP_SIZE -gt 0 ]] && [ "$AUTO_CHAIN_ID" == "$TRUSTED_CHAIN_ID" ] ; then
-                echoInfo "INFO: Snapshot auto-discovery detected $AUTO_SNAP_SIZE Bytes file '$AUTO_SNAP_URL'"
-                echoWarn "WARNING: Auto-detected snapshots are NOT trusted! You are downloading them on your own risk."
-            fi
         fi
 
-        echoInfo "INFO: Default trusted node snapshot size is '$TRUSTED_NODE_SNAP_SIZE' Bytes"
+        if [[ $AUTO_SNAP_SIZE -gt 0 ]] && [ "$AUTO_CHAIN_ID" == "$TRUSTED_CHAIN_ID" ] ; then
+            echoC ";whi" "Snapshot auto-discovery detected '$AUTO_SNAP_SIZE' Bytes file '$AUTO_SNAP_URL'"
+            echoWarn "WARNING: Auto-detected snapshots are NOT trusted! You are downloading them on your own risk."
+        else
+            echoC ";whi" "Snapshot auto-discovery did NOT detected any additional snaps"
+        fi
+
+        echoC ";whi" "Default trusted node snap URL: '$TRUSTED_NODE_SNAP_URL'"
+        echoC ";whi" "Default trusted node snapshot size: $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE")"
         
-        echoNC ";whi" "Enter URL to download snapshot or press [ENTER] for default: " && read DOWNLOAD_SNAP_URL
+        echoNC ";gre" "Enter URL to download snapshot or press [ENTER] for default: " && read DOWNLOAD_SNAP_URL
         [ -z "$DOWNLOAD_SNAP_URL" ] && DOWNLOAD_SNAP_URL="$TRUSTED_NODE_SNAP_URL"
         echoInfo "INFO: Please wait, testing '$DOWNLOAD_SNAP_URL' URL..."
-        ($(urlExists "$DOWNLOAD_SNAP_URL")) && DOWNLOAD_SNAP_SIZE=$(urlContentLength "$DOWNLOAD_SNAP_URL") || DOWNLOAD_SNAP_SIZE=0
+        DOWNLOAD_SNAP_SIZE=$(urlContentLength "$DOWNLOAD_SNAP_URL")
 
         if (! $(isNaturalNumber $DOWNLOAD_SNAP_SIZE)) || [[ $DOWNLOAD_SNAP_SIZE -le 0 ]] ; then
-            echoErr "ERROR: Snapshot was NOT found, please provide diffrent URL next time" && continue
+            echoErr "ERROR: Snapshot '$DOWNLOAD_SNAP_URL' was NOT found or has 0 Bytes size, please provide diffrent URL next time" && continue
         fi
 
-        echoInfo "INFO: Snapshot was found, attampting to download '$DOWNLOAD_SNAP_SIZE B' file, it might take a while..."
+        echoInfo "INFO: Snapshot was found, attampting to download $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE") file, it might take a while..."
         rm -rfv $TMP_SNAP_DIR
         mkdir -p "$TMP_SNAP_DIR/test"
-        DOWNLOAD_SUCCESS="true" && wget "$SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
-        [ "$DOWNLOAD_SUCCESS" == "false" ] && echoErr "ERROR: Download failed, check if your disk space is sufficient or try again with diffrent URL" && continue
+        DOWNLOAD_SUCCESS="true" && wget "$DOWNLOAD_SNAP_URL" -O $TMP_SNAP_PATH || DOWNLOAD_SUCCESS="false"
+        [ "$DOWNLOAD_SUCCESS" == "false" ] && echoErr "ERROR: Download from '$DOWNLOAD_SNAP_URL' failed, check if your disk space is sufficient or try again with diffrent URL" && continue
 
-        echoInfo "INFO: File was downloaded successfully, moving file to a default snaps directory..."
+        echoInfo "INFO: File was downloaded successfully, moving file from a temporary path '$TMP_SNAP_PATH' to a default snaps directory '$KIRA_SNAP' ..."
         mkdir -p $KIRA_SNAP
         mv -fv $TMP_SNAP_PATH "$KIRA_SNAP/download.tar" || ( echoErr "ERROR: Failed to move snap file to snaps dir '$KIRA_SNAP' :(" && continue  )
     fi

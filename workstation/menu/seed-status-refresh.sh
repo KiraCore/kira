@@ -58,6 +58,18 @@ if [[ $SNAP_SIZE -le 0 ]] ; then
     SNAP_SIZE="0"
 fi
 
-globSet "TRUSTED_SNAP_URL" "$SNAP_URL"
-globSet "TRUSTED_SNAP_SIZE" "$SNAP_SIZE"
+globSet "TRUSTED_NODE_SNAP_URL" "$SNAP_URL"
+globSet "TRUSTED_NODE_SNAP_SIZE" "$SNAP_SIZE"
+
+echoC ";gre" "Trusted node refresh results:"
+echoC ";whi" "   TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
+echoC ";whi" "           TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
+echoC ";whi" "             TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
+echoC ";whi" "       TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"
+echoC ";whi" "       TRUSTED_NODE_RPC_PORT: $(globGet TRUSTED_NODE_RPC_PORT)"
+echoC ";whi" "    TRUSTED_NODE_INTERX_PORT: $(globGet TRUSTED_NODE_INTERX_PORT)"
+echoC ";whi" "       TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
+echoC ";whi" "         TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
+echoC ";whi" "       TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
+echoC ";whi" "      TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
 sleep 1

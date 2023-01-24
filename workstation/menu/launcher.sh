@@ -29,7 +29,7 @@ while :; do
     TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
     TRUSTED_NODE_SNAP_URL="$(globGet TRUSTED_NODE_SNAP_URL)"
     TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)"
-    (! $(isNaturalNumber)) && TRUSTED_NODE_SNAP_SIZE=0
+    (! $(isNaturalNumber "$TRUSTED_NODE_SNAP_SIZE")) && TRUSTED_NODE_SNAP_SIZE=0
 
     SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
     SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
@@ -78,8 +78,8 @@ while :; do
     [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snapshots enabled"
     [ "$NEW_NETWORK" == "true" ] && LMODE="create new test network"
 
-    SNAP_URL=$(globGet TRUSTED_SNAP_URL)
-    SNAP_SIZE=$(globGet TRUSTED_SNAP_SIZE)
+    SNAP_URL=$(globGet TRUSTED_NODE_SNAP_URL)
+    SNAP_SIZE=$(globGet TRUSTED_NODE_SNAP_SIZE)
 
     DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
     DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
