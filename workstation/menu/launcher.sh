@@ -33,12 +33,17 @@ while :; do
 
     SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
     SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
+    SNAPSHOT_CHAIN_ID=$(globGet SNAPSHOT_CHAIN_ID)
     SNAPSHOT_GENESIS_HASH=$(globGet SNAPSHOT_GENESIS_HASH)
+    SNAPSHOT_HEIGHT=$(globGet SNAPSHOT_HEIGHT)
+    SNAPSHOT_SYNC=$(globGet SNAPSHOT_SYNC)
 
-    if [ -z "$SNAPSHOT_CHAIN_ID" ] || [ "$SNAPSHOT_CHAIN_ID" != "$CHAIN_ID" ] || [ ! -f "$SNAPSHOT_FILE"] ; then
+    if [ -z "$SNAPSHOT_CHAIN_ID" ] || [ "$SNAPSHOT_CHAIN_ID" != "$CHAIN_ID" ] || ($(isFileEmpty "$SNAPSHOT_FILE")) || [ "$SNAPSHOT_GENESIS_HASH" != "$TRUSTED_NODE_GENESIS_HASH" ]; then
       SNAPSHOT_VALID="false"
+      SNAPINFO_DISPLAY="unknown or corrupted snap. file"
     else
       SNAPSHOT_VALID="true"
+      [ "$SNAPSHOT_SYNC" == "true" ] && SNAPINFO_DISPLAY="snapshot sync is ENABLED" || SNAPINFO_DISPLAY="snapshot sync is DISABLED"
     fi
 
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
@@ -72,10 +77,8 @@ while :; do
     PRTH_PORT=$(strFixC "$(globGet CUSTOM_PROMETHEUS_PORT)" 12)
     INEX_PORT=$(strFixC "$(globGet CUSTOM_INTERX_PORT)" 14)
     EXPOSURE="local network exposure" 
-    SNAPS="snapshots disabled" 
     LMODE="join '$CHAIN_ID' network" 
     [ "$(globGet PRIVATE_MODE)" == "false" ] && EXPOSURE="public network exposure"
-    [ "$(globGet SNAPSHOT_EXECUTE)" == "true" ] && SNAPS="snapshots enabled"
     [ "$NEW_NETWORK" == "true" ] && LMODE="create new test network"
 
     SNAP_URL=$(globGet TRUSTED_NODE_SNAP_URL)
@@ -110,10 +113,9 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     echoC ";whi" "|        Genesis Hash: $(strFixL "$TRUSTED_NODE_GENESIS_HASH" 55) |"
  
     echoC ";whi" "|   Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 55) |"
-
+    echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
     if [ "$SNAPSHOT_VALID" == "true" ] ; then
-      echoC ";whi" "| Snapshots Direcotry: $(strFixL "$KIRA_SNAP" 55) |"
-      echoC ";whi" "|      Snapshots File: $(strFixL "$SNAPSHOT_FILE - $(prettyBytes "$(fileSize "$SNAPSHOT_FILE")")" 40) $(strFixR "$(prettyBytes "$(fileSize "$SNAPSHOT_FILE")")" 14) |"
+      echoC ";whi" "|       Snapshot File: $(strFixL "$(basename $SNAPSHOT_FILE)" 40) $(strFixR "$(prettyBytes "$(fileSize "$SNAPSHOT_FILE")")" 14) |"
       echoC ";whi" "|  Snapshots Checksum: $(strFixL "$SNAPSHOT_FILE_HASH" 55) |"
       echoC ";whi" "|  Snap. Genesis Hash: $(strFixL "$SNAPSHOT_GENESIS_HASH" 55) |"
     fi
@@ -134,7 +136,7 @@ echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED 
     echoC ";whi" "| [4] | Expose Node to Public Netw.   : $(strFixL "expose as $LOCAL_IP to LOCAL" 39)|" || \
     echoC ";whi" "| [4] | Expose Node to Local Networks : $(strFixL "expose as $PUBLIC_IP to PUBLIC" 39)|"
 
-    echoC ";whi" "| [5] | Download or Select Snapshot   : $(strFixL "$SNAPS" 39)|"
+    echoC ";whi" "| [5] | Download or Select Snapshot   : $(strFixL "$SNAPINFO_DISPLAY" 39)|"
     if [ "$INFRA_MODE" == "validator" ] ; then
     [ "$NEW_NETWORK" == "true" ] && \
     echoC ";whi" "| [6] | Join Existing Network         : $(strFixL "launch your own testnet" 39)|" || \

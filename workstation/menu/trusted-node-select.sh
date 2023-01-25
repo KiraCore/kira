@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/trusted-node-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
-set +x
+show_log="false"
+getArgs "$1" --gargs_throw=false --gargs_verbose=true
+[ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
@@ -107,7 +109,7 @@ while : ; do
 
       globSet "TRUSTED_NODE_ID" ""
       globSet "TRUSTED_NODE_P2P_PORT" ""
-      globSet "TRUSTED_NODE_GENESIS" ""
+      globSet "TRUSTED_NODE_GENESIS_FILE" ""
       globSet "TRUSTED_NODE_GENESIS_HASH" ""
       globSet "TRUSTED_NODE_ADDR" "$NODE_ADDR"
       globSet "TRUSTED_NODE_RPC_PORT" "$TRUSTED_NODE_RPC_PORT"
@@ -172,10 +174,15 @@ while : ; do
     echoInfo "INFO: Genesis file search..."
 
     GENSUM=""
-    GENESIS_FILE="$(globFile TRUSTED_NODE_GENESIS)"
+    GENESIS_FILE="$(globFile TRUSTED_NODE_GENESIS_FILE)"
     if ($(isPort "$TRUSTED_NODE_INTERX_PORT")) ; then
         GENSUM=$(timeout 120 curl $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/gensum 2>/dev/null | jsonParse "checksum" | sed 's/^0x//' 2>/dev/null || echo -n "")
-        ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS
+        ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS_FILE
+
+        echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
+        jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || globDel TRUSTED_NODE_GENESIS_FILE
+        echoInfo "INFO: Please wait, calculating new checksum..."
+        GENSUM=$(sha256 $GENESIS_FILE)
     fi
 
     if ($(isSHA256 $GENSUM)) && (! $(isFileEmpty $GENESIS_FILE)) ; then
@@ -214,6 +221,7 @@ fi
 
 echoC ";gre" "Trusted node discovery results:"
 echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
+echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"
 echoC ";whi" "        TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
 echoC ";whi" "          TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
 echoC ";whi" "    TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"

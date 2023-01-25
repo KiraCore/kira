@@ -22,7 +22,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.0"
-TOOLS_VERSION="v0.3.9"
+TOOLS_VERSION="v0.3.10"
 COSIGN_VERSION="v1.13.1"
 
 # Force console colour to be black
@@ -93,13 +93,10 @@ echoInfo "INFO: Installed bash-utils $(bashUtilsVersion)"
 
 #######################################################################################
 echoInfo "INFO: Processing input arguments..."
-INFRA_SRC="" && infra_src="" && arg1="$1" 
-IMAGE_SRC="" && image_src="" && arg2="$2" 
-INIT_MODE="" && init_mode="" && arg3="$3" 
-[ -z "$arg1" ] && arg1="--arg1=null"
-[ -z "$arg2" ] && arg2="--arg2=null"
-[ -z "$arg3" ] && arg3="--arg3=null"
-getArgs "$arg1" "$arg2" "$arg3"
+INFRA_SRC="" && infra_src=""
+IMAGE_SRC="" && image_src=""
+INIT_MODE="" && init_mode=""
+getArgs "$1" "$2" "$3" --gargs_throw=false --gargs_verbose=true
 [ -z "$INFRA_SRC" ] && INFRA_SRC="$infra_src"
 [ -z "$IMAGE_SRC" ] && IMAGE_SRC="$image_src" && [ -z $IMAGE_SRC ] && IMAGE_SRC="$BASE_IMAGE_VERSION"
 [ -z "$INIT_MODE" ] && INIT_MODE="$init_mode" && [ -z $INIT_MODE ] && INIT_MODE="interactive"

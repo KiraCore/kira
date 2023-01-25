@@ -74,8 +74,11 @@ globSet FIREWALL_ZONE "$INFRA_MODE"
 # defines if node should be able to communicate with other local nodes (true), or only private ones (false)
 [ "$(globGet PRIVATE_MODE)" != "true" ] && globSet PRIVATE_MODE "false"
 
-# defines if node should be making snapshots immediately after launch
+# defines if node should be making snapshots immediately after launch, by default no snaps on launch
 [ "$(globGet SNAPSHOT_EXECUTE)" != "true" ] && globSet SNAPSHOT_EXECUTE "false"
+
+# by default do NOT sync from snapshoots
+[ "$(globGet SNAPSHOT_SYNC)" != "true" ] && globSet SNAPSHOT_SYNC "false"
 
 # defines if new network should be launched (default false)
 [ "$(globGet NEW_NETWORK)" != "true" ] && globSet NEW_NETWORK "false"

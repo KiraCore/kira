@@ -2,14 +2,8 @@
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/snap-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/menu/snap-select.sh --show-log=true
-set +x
-
-# provide path to a file to autoconfigure snapshot
-snap_file="" && arg1="$1" 
-show_log="" && arg2="$2" 
-[ -z "$arg1" ] && arg1="--snap-file=''"
-[ -z "$arg2" ] && arg2="--show-log=false"
-getArgs "$arg1" "$arg2"
+snap_file="" && show_log="false"
+getArgs "$1" "$2" --gargs_throw=false --gargs_verbose=true
 [ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
@@ -34,6 +28,8 @@ AUTOCONFIGURE_EXIT="false"
 MANUALCONFIG_WAILT="false"
 
 while : ; do
+    SNAPSHOT_SYNC=$(globGet SNAPSHOT_SYNC)
+
     # on loop continue assume fail and exit auto-configuration
     [ "$AUTOCONFIGURE_EXIT" != "false" ] && echoWarn "WARNING: Snapshot autoconfig failed" && break
     [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC ";gre" "Press any key to continue" && pressToContinue
@@ -42,10 +38,16 @@ while : ; do
         SNAPSHOTS=`ls $KIRA_SNAP/*.tar` || SNAPSHOTS=""
         clear
         [ -z "$SNAPSHOTS" ] && SNAPSHOTS_COUNT=0 || SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
+        
 
-        echoC ";whi" "Found $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE") external snapshot"
-        echoC ";whi" "Found $SNAPSHOTS_COUNT local snapshots in '$KIRA_SNAP' directory"
-        echoNC ";gre" "Download [E]xternal snapshot, select from [L]ocal direcotry or e[X]it: " && pressToContinue e l x && VSEL=$(globGet OPTION)
+         echoC ";whi" "   HINT: If it takes you long time to sync ask a friend for a snap URL :)"
+         echoC ";whi" "   Found $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE") external snapshot"
+         echoC ";whi" "   Found $SNAPSHOTS_COUNT local snapshots in the default snap. directory"
+        
+        [ "$SNAPSHOT_SYNC" == "true"] && \
+            ( echoNC ";gre" "Download [R]emote snap., select exising [F]ile, [D]isable snap. sync. or e[X]it: " && pressToContinue r f d x && VSEL=$(globGet OPTION) ) || \
+            ( echoNC ";gre" "Download [R]emote snap., select exising [F]ile, [E]nable snap. sync. or e[X]it: " && pressToContinue r f e x && VSEL=$(globGet OPTION))
+            
         MANUALCONFIG_WAILT="true"
     else
         AUTOCONFIGURE_EXIT="true"
@@ -56,6 +58,10 @@ while : ; do
     if [ "${VSEL,,}" == "x" ] ; then
         break
     elif [ "${VSEL,,}" == "e" ] ; then
+        globSet SNAPSHOT_SYNC "true"
+    elif [ "${VSEL,,}" == "d" ] ; then
+        globSet SNAPSHOT_SYNC "false"
+    elif [ "${VSEL,,}" == "r" ] ; then
         clear
         echoInfo "INFO: Please wait, snap auto-discovery..."
         TMP_SNAPS="/tmp/snaps.txt" && rm -f "$TMP_SNAPS" 
@@ -120,16 +126,15 @@ while : ; do
         suffix=""
         if [ -z $DEFAULT_SNAP ] && ( [ "$SNAPSHOTS_COUNT" == "$((i + 1))" ] || ([ ! -f "$SNAP_LATEST_PATH" ] && [ "$SNAP_LATEST_PATH" == "$s"]) ) ; then
             suffix="(default)"
-            DEFAULT_SNAP=$s
+            DEFAULT_SNAP="$s"
         fi
 
-        echoC ";whi" " [$i] $s $suffix"
+        echoC ";whi" " $(strFixL "[$i] $s" 55) | $(prettyBytes $(fileSize "$s")) | $suffix"
     done
 
-    if [ ! -z "$snap_file" ] ; then
+    if [ -z "$snap_file" ] ; then
         OPTION=""
         while : ; do
-            read -p ": " OPTION
             echoNC ";gre" "Input snapshot number 0-$i or press [ENTER] for default: " && read OPTION
             [ -z "$OPTION" ] && break
             ($(isNaturalNumber "$OPTION")) && [[ $OPTION -le $i ]] && break
@@ -138,8 +143,10 @@ while : ; do
         if [ ! -z "$OPTION" ] ; then
             SNAPSHOTS=( $SNAPSHOTS )
             SELECTED_SNAPSHOT=${SNAPSHOTS[$OPTION]}
+            echoInfo "INFO: User selected '$OPTION' option"
         else
-            SELECTED_SNAPSHOT=$DEFAULT_SNAP
+            echoInfo "INFO: User selected default option '$DEFAULT_SNAP'"
+            SELECTED_SNAPSHOT="$DEFAULT_SNAP"
         fi
     else
         SELECTED_SNAPSHOT="$snap_file"
@@ -149,8 +156,8 @@ while : ; do
     mkdir -p "$TMP_SNAP_DIR/test"
     DATA_GENESIS="$TMP_SNAP_DIR/test/genesis.json" && rm -fv ./genesis.json
     SNAP_INFO="$TMP_SNAP_DIR/test/snapinfo.json" && rm -fv ./snapinfo.json
-    tar -xvf $TMP_SNAP_PATH ./genesis.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
-    tar -xvf $TMP_SNAP_PATH ./snapinfo.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
+    tar -xvf $SELECTED_SNAPSHOT ./genesis.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
+    tar -xvf $SELECTED_SNAPSHOT ./snapinfo.json || echoErr "ERROR: Exteaction issue occured, some files might be corrupted or do NOT have read permissions"
     mv -fv ./genesis.json $DATA_GENESIS || echo -n "" > "$DATA_GENESIS"
     mv -fv ./snapinfo.json $SNAP_INFO || echo -n "" > "$SNAP_INFO"
 
@@ -159,7 +166,7 @@ while : ; do
     SNAP_TIME=$(jsonQuickParse "time" $SNAP_INFO 2> /dev/null || echo -n "")
     (! $(isNaturalNumber "$SNAP_HEIGHT")) && SNAP_HEIGHT=0
     (! $(isNaturalNumber "$SNAP_TIME")) && SNAP_TIME=0
-    
+
     # exit if snap file is incompatible
     [ ! -f "$DATA_GENESIS" ] && echoErr "ERROR: Data genesis not found ($DATA_GENESIS)" && continue
     [ ! -f "$SNAP_INFO" ] && echoErr "ERROR: Snap info not found ($SNAP_INFO)" && continue
@@ -169,8 +176,14 @@ while : ; do
     SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS)"
     echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
     cp -afv $DATA_GENESIS "$SNAPSHOT_GENESIS_FILE"
+    echoInfo "INFO: Please wait, attempting to minimize & sort genesis json of the snap..."
+    jsonParse "" "$SNAPSHOT_GENESIS_FILE" "$SNAPSHOT_GENESIS_FILE" --indent=false --sort_keys=true || :
     echoInfo "INFO: Calculating snapshot genesis file checksum, be patient, this might take a while..."
     SNAPSHOT_GENESIS_HASH="$(sha256 "$SNAPSHOT_GENESIS_FILE")"
+    TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
+
+    [ "$TRUSTED_NODE_GENESIS_HASH" != "$SNAPSHOT_GENESIS_HASH" ] && \
+        echoErr "ERROR: Trusted genesis hash '$TRUSTED_NODE_GENESIS_HASH' does NOT mtach snapshot genesis hash '$SNAPSHOT_GENESIS_HASH', snap or the trusted node is corrupted or malicious!" && continue
 
     # cleanup test directory
     rm -rfv "$TMP_SNAP_DIR/test" && mkdir -p "$TMP_SNAP_DIR"
@@ -197,5 +210,7 @@ while : ; do
     echoC ";whi" " SNAPSHOT_GENESIS_HASH: $(globGet SNAPSHOT_GENESIS_HASH)"
     echoC ";whi" "     SNAPSHOT_CHAIN_ID: $(globGet SNAPSHOT_CHAIN_ID)"
     echoC ";whi" "       SNAPSHOT_HEIGHT: $(globGet SNAPSHOT_HEIGHT)"
+    echoC ";whi" "         SNAPSHOT_SYNC: $(globGet SNAPSHOT_SYNC)"
+    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC ";gre" "Press any key to continue" && pressToContinue
     break
 done
