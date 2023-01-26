@@ -4,11 +4,12 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 set +x
 
 INFRA_MODE=$(globGet INFRA_MODE)
-MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
+MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+touch $MNEMONICS
 
 while : ; do
-
     set +x
+    
     MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
     NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
     [ -z "$NODE_ID" ] && NODE_ID="???"
@@ -58,12 +59,12 @@ while : ; do
                 MASTER_MNEMONIC=$(echo ${MASTER_MNEMONIC//,/ })
                 if [ -z $MASTER_MNEMONIC ] ; then
                     rm -rfv "$KIRA_SECRETS"
-                    mkdir -p "$KIRA_SECRETS"
-                    setVar MASTER_MNEMONIC "autogen" "$MNEMONICS" 1> /dev/null
+                    mkdir -p "$KIRA_SECRETS" && touch $MNEMONICS
+                    setVar MASTER_MNEMONIC "autogen" "$MNEMONICS"
                     break
                 elif ($(isMnemonic "$MASTER_MNEMONIC")) ; then
                     rm -rfv "$KIRA_SECRETS"
-                    mkdir -p "$KIRA_SECRETS"
+                    mkdir -p "$KIRA_SECRETS" && touch $MNEMONICS
                     setVar MASTER_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null
                     break
                 fi
@@ -75,14 +76,15 @@ while : ; do
         clear
         IFS=" "
         read -ra arr <<< "$MASTER_MNEMONIC"
+        IFS=$'\n\t'
         echoNC ";gre" "Numbered list of you master mnemonic seed words:\n\n"
         i=0
         while [ $i -lt ${#arr[@]} ]; do
-            W1="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
-            W2="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
-            W3="$(strFixC " $((i+1)). ${arr[i]}" 18)" && i=$((i+1))
-            W4="$(strFixC " $((i+1)). ${arr[i]}" 19)" && i=$((i+1))
-            echoC ";whi" "$W1|$W2|$W3|$W4"
+            val1="${arr[i]}" && i=$((i+1)) && id1="$i"
+            val2="${arr[i]}" && i=$((i+1)) && id2="$i"
+            val3="${arr[i]}" && i=$((i+1)) && id3="$i"
+            val4="${arr[i]}" && i=$((i+1)) && id4="$i"
+            echoNC ";whi" "$(strFixL " $id1. $val1" 18)|$(strFixL " $id2. $val2" 18)|$(strFixL " $id3. $val3" 18)|$(strFixL " $id4. $val4" 19)\n"
         done
         echoNC ";gre" "\n\nOrdered list: " && echoNC ";whi" "\n\n$MASTER_MNEMONIC\n\n"
         echoNLog "Press any key to continue: " && pressToContinue ""
@@ -92,6 +94,5 @@ while : ; do
     set +e
     set +x
     source $KIRAMGR_SCRIPTS/load-secrets.sh
-    set -x
     set -e
 done

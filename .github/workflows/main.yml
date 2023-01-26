@@ -343,6 +343,13 @@ jobs:
                 KM files were deployed to IPFS: ```${{env.IPFS_HASH}}```
                 * Private Gateway: [ipfs.kira.network/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.kira.network/ipfs/${{env.IPFS_HASH}})
                 * Public Gateway: [ipfs.io/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.io/ipfs/${{env.IPFS_HASH}})
+
+                Quick test setup:
+                ```bash
+                HASH="${{env.IPFS_HASH}}" && \
+                 wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+                 cd /tmp && chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
+                ````
           - name: Add IPFS published label
             # ref.: https://github.com/andymckay/labeler, v1.0.4
             uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90

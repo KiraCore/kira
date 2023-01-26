@@ -52,7 +52,7 @@ rm -rfv "$DOCKER_COMMON_RO/consensus" "$DOCKER_COMMON_RO/valopers"
 echoInfo "INFO: Restarting firewall settings..."
 $KIRA_MANAGER/networking.sh
 
-echoInfo "INFO: Loading secrets & generating mnemonics..."
+echoInfo "INFO: Loading secrets & generating missing mnemonics..."
 set +x
 source $KIRAMGR_SCRIPTS/load-secrets.sh
 set -e

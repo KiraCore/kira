@@ -5,6 +5,8 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
 TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
+TRUSTED_NODE_P2P_PORT="$(globGet TRUSTED_NODE_P2P_PORT)"
+TRUSTED_NODE_ID="$(globGet TRUSTED_NODE_ID)"
 NODE_ADDR=$(globGet TRUSTED_NODE_ADDR)
 [ -z "$NODE_ADDR" ] && NODE_ADDR="0.0.0.0"
 
@@ -61,7 +63,71 @@ fi
 globSet "TRUSTED_NODE_SNAP_URL" "$SNAP_URL"
 globSet "TRUSTED_NODE_SNAP_SIZE" "$SNAP_SIZE"
 
-echoC ";gre" "Trusted node refresh results:"
+echoInfo "INFO: Please wait, testing snapshot info..."
+
+SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
+SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
+SNAPSHOT_CHAIN_ID=$(globGet SNAPSHOT_CHAIN_ID)
+SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS_FILE)"
+SNAPSHOT_GENESIS_HASH=$(globGet SNAPSHOT_GENESIS_HASH)
+SNAPSHOT_HEIGHT=$(globGet SNAPSHOT_HEIGHT)
+SNAPSHOT_SYNC=$(globGet SNAPSHOT_SYNC)
+
+if [ -f "$SNAPSHOT_GENESIS_FILE" ] ; then
+    echoInfo "INFO: Recalculating snapshot hash..."
+    SNAPSHOT_GENESIS_HASH="$(sha256 "$SNAPSHOT_GENESIS_FILE")"
+    TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
+
+    if [ -z "$SNAPSHOT_CHAIN_ID" ] || [ "$SNAPSHOT_CHAIN_ID" != "$CHAIN_ID" ] || ($(isFileEmpty "$SNAPSHOT_FILE")) || [ "$SNAPSHOT_GENESIS_HASH" != "$TRUSTED_NODE_GENESIS_HASH" ]; then
+      globSet SNAPSHOT_CORRUPTED "true"
+    else
+      globSet SNAPSHOT_CORRUPTED "false"
+    fi
+
+    globSet SNAPSHOT_GENESIS_HASH "$SNAPSHOT_GENESIS_HASH"
+else
+    globSet SNAPSHOT_CORRUPTED "true"
+fi
+
+[ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+
+if [ "$REINITALIZE_NODE" == "false" ] ; then
+    echoInfo "INFO: Attempting public peers discovery..."
+    TMP_PEERS_PUB="/tmp/pub-peers.txt" && rm -fv "$TMP_PEERS_PUB" && touch $TMP_PEERS_PUB
+    wget $NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/pub_p2p_list?peers_only=true -O $TMP_PEERS_PUB || echoWarn "WARNING: Public peers discovery scan failed"
+    if (! $(isFileEmpty "$TMP_PEERS_PUB")) ; then
+        echoInfo "INFO: Saving extra peers..."
+        sort -u $TMP_PEERS_PUB -o $TMP_PEERS_PUB
+    else
+        echoInfo "INFO: No extra public peers were found!"
+    fi
+
+    echoInfo "INFO: Attempting private peers discovery..."
+    TMP_PEERS_PRIV="/tmp/pub-peers.txt" && rm -fv "$TMP_PEERS_PRIV" && touch $TMP_PEERS_PRIV
+    wget $NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/priv_p2p_list?peers_only=true -O $TMP_PEERS_PRIV || echoWarn "WARNING: Private peers discovery scan failed"
+    if (! $(isFileEmpty "$TMP_PEERS_PRIV")) ; then
+        echoInfo "INFO: Saving extra peers..."
+        sort -u $TMP_PEERS_PRIV -o $TMP_PEERS_PRIV
+    else
+        echoInfo "INFO: No extra public peers were found!"
+    fi
+
+    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" && touch $TMP_PEERS
+    shuf -n 32 "$TMP_PEERS_PUB" >> "$TMP_PEERS"
+    shuf -n 32 "$TMP_PEERS_PRIV" >> "$TMP_PEERS"
+
+    if ( ($(isNodeId "$TRUSTED_NODE_ID")) && ($(isNaturalNumber "$TRUSTED_NODE_P2P_PORT")) ) ; then
+        echo "${TRUSTED_NODE_ID}@${NODE_ADDR}:${TRUSTED_NODE_P2P_PORT}" >> $TMP_PEERS
+    fi
+
+    sort -u $TMP_PEERS -o $TMP_PEERS
+    rm -rfv $PUBLIC_SEEDS $PUBLIC_PEERS
+    touch $PUBLIC_SEEDS $PUBLIC_PEERS
+
+    cat $TMP_PEERS >> $PUBLIC_SEEDS
+fi
+
+echoC ";gre" "Trusted node & setup configuration refresh results:"
 echoC ";whi" "   TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
 echoC ";whi" "           TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
 echoC ";whi" "             TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
@@ -72,4 +138,5 @@ echoC ";whi" "       TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
 echoC ";whi" "         TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
 echoC ";whi" "       TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
 echoC ";whi" "      TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
+echoC ";whi" "          SNAPSHOT_CORRUPTED: $(globGet SNAPSHOT_CORRUPTED)"
 sleep 1

@@ -12,9 +12,6 @@ while : ; do
     (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
 
-    set +x
-    clear
-
     INFRA_MODE="$(globGet INFRA_MODE)"
     SSH_PORT="$(globGet DEFAULT_SSH_PORT)"
     P2P_PORT="$(globGet CUSTOM_P2P_PORT)"
@@ -47,6 +44,7 @@ while : ; do
     IFACE_DEF="$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
 
     set +x && printf "\033c" && clear && setterm -cursor off
+    opselE="r"
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "PORTS MAPPING & NETWORKING CONFIGURATOR, KM $KIRA_SETUP_VER" 78)")|"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
@@ -63,22 +61,34 @@ while : ; do
     echoC "sto;whi" "|$(strFixL "  Docker Subnet: $DOCKER_SUBNET" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_SUBNET" 40)") |"
     echoC "sto;whi" "|$(strFixL " Net. Interface: $IFACE" 35)| $(echoC "sto;bla" "$(strFixL "   default - $IFACE_DEF" 40)") |"
     echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
-    [ "$FIREWALL_ENABLED" == "true" ] && \
-    echoC ";whi" "| $(strFixL "[F] Disable firewall rules enforcing" 76) |" || \
-    echoC ";whi" "| $(strFixL "[F] Enable firewall rules enforcing" 76) |" 
+    if [ "$FIREWALL_ENABLED" == "true" ] ; then
+      echoC ";whi" "| $(strFixL "[D] Disable firewall rules enforcing" 76) |" 
+      opselE="d" 
+    else
+      echoC ";whi" "| $(strFixL "[E] Enable firewall rules enforcing" 76) |" 
+      opselE="e"
+    fi
     echoC ";whi" "| $(strFixL "[I] Change network interface" 76) |"
     echoC ";whi" "| $(strFixL "[M] Modify each port mapping & subnet individually" 76) |"
     echoC ";whi" "| $(strFixL "[O] Batch-offset ports & subnet from defaults (excluding SSH)" 76) |"
-    echoC ";whi" "| [X] Exit ____________________________________________________________________|"
-    setterm -cursor off && pressToContinue f m i o x OPTION && setterm -cursor on
-
+    echoC ";whi" "| $(strFixL "[X] Exit _" 77 "" "_")|"
+    setterm -cursor off 
+    pressToContinue "$opselE" i m o x OPTION && KEY="$(globGet OPTION)" 
+    KEY="$(toLower "$KEY")"
+    setterm -cursor on
     clear
-    if [ "$(globGet OPTION)" == "x" ] ; then
+
+    if [ "$KEY" == "x" ] ; then
         break
-    elif [ "$(globGet OPTION)" == "f" ] ; then
-        [ "$FIREWALL_ENABLED" == "true" ] && globSet FIREWALL_ENABLED "false" || globSet FIREWALL_ENABLED "true"
+    elif [ "$KEY" == "r" ] ; then
         continue
-    elif [ "$(globGet OPTION)" == "i" ] ; then
+    elif [ "$KEY" == "e" ] ; then
+        globSet FIREWALL_ENABLED "true" 
+        continue
+    elif [ "$KEY" == "d" ] ; then
+        globSet FIREWALL_ENABLED "false" 
+        continue
+    elif [ "$KEY" == "i" ] ; then
         ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
         ifaces=( $ifaces_iterate )
 
@@ -100,7 +110,7 @@ while : ; do
         done
 
         ($(isNaturalNumber "$OPTION")) && IFACE="${ifaces[$OPTION]}"
-    elif [ "$(globGet OPTION)" == "o" ] ; then
+    elif [ "$KEY" == "o" ] ; then
       OFFSET="." && while (! $(isNaturalNumber "$OFFSET")) || [[ $OFFSET -gt 108 ]] || [[ $OFFSET -lt 100 ]] ; do echoNLog "Input offset value between 100 and 108: " && read OFFSET ; done
       # Do NOT offset SSH port
       SSH_PORT=$((SSH_PORT + 0))
@@ -113,7 +123,7 @@ while : ; do
         DOCKER_SUBNET="10.$((1 + OFFSET)).0.0/16"
         DOCKER_NETWORK="kiranet$((1 + OFFSET))"
       fi
-    elif [ "$(globGet OPTION)" == "m" ] ; then
+    elif [ "$KEY" == "m" ] ; then
       # NETWORK
       echoC ";whi" "Default Docker network name: $DEFAULT_DOCKER_NETWORK"
       NAME="." 

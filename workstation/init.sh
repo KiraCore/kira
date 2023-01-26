@@ -133,7 +133,7 @@ cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC || \
  ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC )
 
 echoInfo "INFO: Setting up essential ENV variables & constants..."
-globSet BASE_IMAGE_SRC "$IMAGE_SRC"
+globSet NEW_BASE_IMAGE_SRC "$IMAGE_SRC"
 globSet INFRA_SRC "$INFRA_SRC"
 globSet INIT_MODE "$INIT_MODE"
 
@@ -147,7 +147,7 @@ echoC ";whi"  "|====================================================|"
 echoC ";whi"  "|          KIRA USER: $(globGet KIRA_USER)"
 echoC ";whi"  "|          INIT MODE: $(globGet INIT_MODE)"
 echoC ";whi"  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
-echoC ";whi"  "|   BASE IMG. SOURCE: $(globGet BASE_IMAGE_SRC)"
+echoC ";whi"  "|   BASE IMG. SOURCE: $(globGet NEW_BASE_IMAGE_SRC)"
 echoC ";whi"  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
 echoC ";whi"  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
 echoC ";whi"  "======================================================"
