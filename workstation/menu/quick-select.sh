@@ -9,6 +9,7 @@ NEW_NETWORK="$(globGet NEW_NETWORK)"
 SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
 SNAPSHOT_GENESIS_FILE=$(globFile SNAPSHOT_GENESIS_FILE)
 SNAPSHOT_HEIGHT=$(globGet SNAPSHOT_HEIGHT)
+SNAPSHOT_CHAIN_ID=$(globGet SNAPSHOT_CHAIN_ID)
 (! $(isNaturalNumber "$SNAPSHOT_HEIGHT")) && SNAPSHOT_HEIGHT=0
 
 TRUSTED_NODE_HEIGHT="$(globGet TRUSTED_NODE_HEIGHT)"
@@ -19,6 +20,8 @@ TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
 
 SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")
 (! $(isNaturalNumber "$SEEDS_COUNT")) && SEEDS_COUNT=0
+
+NEW_NETWORK_NAME=$(globGet NEW_NETWORK_NAME)
 
 [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
 
@@ -40,6 +43,7 @@ rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SN
 rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
 rm -fvr "$KIRA_SNAP/status"
 
+CHAIN_ID=""
 BLOCK_TIME="0"
 MIN_HEIGHT="0"
 KIRA_SNAP_PATH=""
@@ -51,15 +55,18 @@ if [ "$NEW_NETWORK" != "true" ] ; then
         KIRA_SNAP_PATH="$(globGet SNAPSHOT_FILE)"
         KIRA_SNAP_SHA256="$(globGet SNAPSHOT_FILE_HASH)"
         MIN_HEIGHT="$SNAPSHOT_HEIGHT"
+        CHAIN_ID="$SNAPSHOT_CHAIN_ID"
     else
         echoInfo  "INFO: Node will sync without snapshot."
         cp -vaf "$TRUSTED_NODE_GENESIS_FILE" "$LOCAL_GENESIS_PATH"
+        CHAIN_ID="$TRUSTED_NODE_CHAIN_ID"
     fi
 
     [[ $TRUSTED_NODE_HEIGHT -gt $MIN_HEIGHT ]] && MIN_HEIGHT=$TRUSTED_NODE_HEIGHT
     BLOCK_TIME=$(jsonParse "genesis_time" $TRUSTED_NODE_GENESIS_FILE 2> /dev/null || echo -n "")
 else
     echoInfo  "INFO: new network will be created during node setup process."
+    CHAIN_ID="$NEW_NETWORK_NAME"
 fi
 
 # Make sure genesis already exists if joining exisitng network was initiated
@@ -75,8 +82,10 @@ if [ "$NEW_NETWORK" != "true" ] ; then
     fi
 fi
 
+#NEW_NETWORK_NAME
+
 echoInfo "INFO: Configuring essential startup variables..."
-setGlobEnv NETWORK_NAME "$TRUSTED_NODE_CHAIN_ID"
+setGlobEnv NETWORK_NAME "$CHAIN_ID"
 setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 setGlobEnv KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
 
