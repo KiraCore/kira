@@ -347,8 +347,8 @@ jobs:
                 Quick test setup:
                 ```bash
                 HASH="${{env.IPFS_HASH}}" && \
-                 wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
-                 cd /tmp && chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
+                 cd /tmp && wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+                 chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
                 ````
           - name: Add IPFS published label
             # ref.: https://github.com/andymckay/labeler, v1.0.4

@@ -103,7 +103,8 @@ while :; do
 
     set +x && printf "\033c" && clear
     opselM="m" && opselM="n" && opselT="t" && opselD="d" && opselS="s" && opselL="l"
-    startCol="gre" && selACol="whi"
+    startCol="gre" && selACol="whi" && selNCol="whi"
+    WARNING=""
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "$(toUpper $INFRA_MODE) NODE LAUNCHER, KM $KIRA_SETUP_VER" 78)")|"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
@@ -127,15 +128,21 @@ while :; do
       if [ "$NEW_NETWORK" == "false" ] ; then
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " PRESS [S]TART TO JOIN '$CHAIN_ID' NETWORK AT BLOCK $HEIGHT " 78 "." "-")")|"
 
-        [[ $SEEDS_COUNT -le 8 ]] && [ "$REINITALIZE_NODE" != "true" ]
- echoC "sto;whi" "|$(echoC "res;yel" "$(strFixC " WARNING! ONLY $SEEDS_COUNT SEED P2P NODES WERE FOUND " 78 "." "-")")|"
+          if [[ $SEEDS_COUNT -le 8 ]] && [ "$REINITALIZE_NODE" != "true" ] ; then
+            WARNING="DETECTED SMALL NUMBER OF PUBLIC & PRIVATE PEERS"
+            selACol="yel"
+          fi
       else
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " PRESS [S]TART TO CREATE NEW '$NEW_NETWORK_NAME' NETWORK " 78 "." "-")")|"
       fi
     fi
 
     [ "$FIREWALL_ENABLED" == "false" ] && \
-      echoC "sto;whi" "|$(echoC "res;yel" "$(strFixC " WARNING! FIREWALL DISABLED " 78 "." "-")")|"
+      WARNING="FIREWALL DISABLED" && \
+      selNCol="yel"
+
+    [ ! -z "$WARNING" ] && \
+      echoC "sto;whi" "|$(echoC "res;yel" "$(strFixC " $WARNING " 78 "." "-")")|"
   
     (! $(isNodeId "$NODE_ID")) && col="red" || col="whi"
  echoC "sto;whi" "|$(echoC "res;$col" " $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) ")|"
@@ -159,9 +166,9 @@ while :; do
     echoC "sto;whi" "|$(echoC "res;bla" "----------- SELECT OPTION -----------:------------- CURRENT VALUE ------------")|"
 
     [ "$MNEMONIC_SAVED" == "true" ] && \
-                       echoC ";whi" "| [M] | Modify Master Mnemonic        : $(strFixL "" 39)|" ||
-    echoC ";whi" "| $(echoC "res;red" "[M] | Set or Gen. Master Mnemonic   : $(strFixL "" 39)")|"
-    echoC ";whi" "| [N] | Modify Networking Config.     : $(strFixL "$IFACE, $DOCKER_NETWORK, $DOCKER_SUBNET" 39)|"
+                         echoC ";whi" "| [M] | Modify Master Mnemonic        : $(strFixL "" 39)|" ||
+      echoC ";whi" "| $(echoC "res;red" "[M] | Set or Gen. Master Mnemonic   : $(strFixL "" 39)")|"
+ echoC ";$selNCol" "| [N] | Modify Networking Config.     : $(strFixL "$IFACE, $DOCKER_NETWORK, $DOCKER_SUBNET" 39)|"
     [ "$NEW_NETWORK" != "true" ] && \
       echoC ";whi" "| [T] | Switch to Diffrent Node Type  : $(strFixL "$INFRA_MODE node" 39)|" || \
       opselT="r"
@@ -183,9 +190,12 @@ while :; do
         opselL="l"
       fi
     fi
+
+    selAColVal="$NODE_ADDR, $SEEDS_COUNT peer"
+    ( [[ $SEEDS_COUNT -gt 1 ]] || [[ $SEEDS_COUNT -le 0 ]] ) && selAColVal="${selAColVal}s"
     [ "$NEW_NETWORK" == "true" ] && \
                             echoC ";whi" "| [A] | Modify Network Name           : $(strFixL "$NEW_NETWORK_NAME" 39)|" || \
- echoC "sto;whi" "| $(echoC "res;$selACol" "[A] | Modify Trusted Node Address   : $(strFixL "$NODE_ADDR" 39)")|"
+ echoC "sto;whi" "| $(echoC "res;$selACol" "[A] | Modify Trusted Node Address   : $(strFixL "$selAColVal" 39)")|"
   echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
 
   echoC "sto;whi" "| $(echoC "res;$startCol" "$(strFixL "[S] | Start Setup" 36)")| [R] Refresh      | [X] Abort Setup     |"
