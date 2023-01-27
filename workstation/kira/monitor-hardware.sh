@@ -54,10 +54,10 @@ if ($(isNaturalNumber "$DISK_USED")) && ($(isNaturalNumber "$DISK_AVAIL")) ; the
 fi
 
 echoInfo "INFO: Discovering & Saving Public IP..."
-PUBLIC_IP=$(timeout 10 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
+PUBLIC_IP=$(timeout 10 bu getPublicIp 2> /dev/null || echo "")
 
 echoInfo "INFO: Discovering & Saving Local IP..."
-LOCAL_IP=$(timeout 10 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "")
+LOCAL_IP=$(timeout 10 bu getLocalIp "$IFACE" 2> /dev/null || echo "0.0.0.0")
 
 echoInfo "INFO: Updating IP addresses info..."
 tryMkDir "$DOCKER_COMMON_RO"
@@ -66,7 +66,7 @@ tryMkDir "$GLOBAL_COMMON_RO"
 ($(isIp "$LOCAL_IP")) && globSet "LOCAL_IP" "$LOCAL_IP" && globSet "LOCAL_IP" "$LOCAL_IP" "$GLOBAL_COMMON_RO"
 
 echoInfo "INFO: Updating network speed info..."
-LINE=$(grep "$(globGet IFACE)" /proc/net/dev | sed s/.*:// || echo -e "")
+LINE=$(grep "$IFACE" /proc/net/dev | sed s/.*:// || echo -e "")
 RECEIVED=$(echo $LINE | awk '{print $1}' || echo -e "")
 TRANSMITTED=$(echo $LINE | awk '{print $9}' || echo -e "")
 

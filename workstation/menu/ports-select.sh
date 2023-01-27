@@ -5,10 +5,12 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 while : ; do
     # load latest values
+    IFACE="$(globGet IFACE)"
+    IFACE_DEF="$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
 
     echoInfo "INFO: Public & Local IP discovery..."
-    PUBLIC_IP=$(timeout 10 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
-    LOCAL_IP=$(timeout 10 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "")
+    PUBLIC_IP=$(timeout 60 bu getPublicIp 2> /dev/null || echo "")
+    LOCAL_IP=$(timeout 60 bu getLocalIp "$IFACE" 2> /dev/null || echo "0.0.0.0")
     (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
 
@@ -40,9 +42,6 @@ while : ; do
     PRT_PRTH_PORT=$(strFixC "$PRTH_PORT" 14) && PRT_PRTH_PORT_DEF=$(strFixC "$PRTH_PORT_DEF" 14)
     PRT_INEX_PORT=$(strFixC "$INEX_PORT" 14) && PRT_INEX_PORT_DEF=$(strFixC "$INEX_PORT_DEF" 14)
 
-    IFACE="$(globGet IFACE)"
-    IFACE_DEF="$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
-
     set +x && printf "\033c" && clear && setterm -cursor off
     opselE="r"
     echoC ";whi" " =============================================================================="
@@ -57,9 +56,9 @@ while : ; do
     [ "$FIREWALL_ENABLED" == "true" ] && \
       echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " FIREWALL ENABLED " 78 "." "-")")|" || \
       echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " FIREWALL DISABLED " 78 "." "-")")|"
-    echoC "sto;whi" "|$(strFixL " Docker Network: $DOCKER_NETWORK" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_NETWORK" 40)") |"
-    echoC "sto;whi" "|$(strFixL "  Docker Subnet: $DOCKER_SUBNET" 35)| $(echoC "sto;bla" "$(strFixL "   default - $DEFAULT_DOCKER_SUBNET" 40)") |"
-    echoC "sto;whi" "|$(strFixL " Net. Interface: $IFACE" 35)| $(echoC "sto;bla" "$(strFixL "   default - $IFACE_DEF" 40)") |"
+    echoC "sto;whi" "|$(strFixL " Docker Network: $DOCKER_NETWORK" 35)| $(echoC "res;bla" "$(strFixL "   default - $DEFAULT_DOCKER_NETWORK" 40)") |"
+    echoC "sto;whi" "|$(strFixL "  Docker Subnet: $DOCKER_SUBNET" 35)| $(echoC "res;bla" "$(strFixL "   default - $DEFAULT_DOCKER_SUBNET" 40)") |"
+    echoC "sto;whi" "|$(strFixL " Net. Interface: $IFACE" 35)| $(echoC "res;bla" "$(strFixL "   default - $IFACE_DEF" 40)") |"
     echoC "sto;whi" "|$(echoC "res;bla" "------------------------------------------------------------------------------")|"
     if [ "$FIREWALL_ENABLED" == "true" ] ; then
       echoC ";whi" "| $(strFixL "[D] Disable firewall rules enforcing" 76) |" 

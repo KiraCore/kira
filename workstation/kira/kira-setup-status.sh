@@ -16,11 +16,11 @@ UPGRADE_DONE=$(globGet UPGRADE_DONE)
 CONTAINERS=$(globGet CONTAINERS)
 
 timeout 30 systemctl daemon-reload || echoErr "ERROR: Failed to reload deamon"
-systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
-systemctl restart kiraplan || echoErr "ERROR: Failed to restart kiraplan service"
-systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
-systemctl restart kiraclean || echoErr "ERROR: Failed to restart kiraclean service"
-sleep 3
+# systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
+# systemctl restart kiraplan || echoErr "ERROR: Failed to restart kiraplan service"
+# systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
+# systemctl restart kiraclean || echoErr "ERROR: Failed to restart kiraclean service"
+# sleep 3
 
 while [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPDATE_FAIL,,}" != "false" ] || [ "${UPDATE_DONE,,}" != "true" ]; do
     

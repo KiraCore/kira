@@ -59,8 +59,8 @@ while :; do
     fi
 
     echoInfo "INFO: Public & Local IP discovery..."
-    PUBLIC_IP=$(timeout 10 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
-    LOCAL_IP=$(timeout 10 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "")
+    PUBLIC_IP=$(timeout 60 bu getPublicIp 2> /dev/null || echo "")
+    LOCAL_IP=$(timeout 60 bu getLocalIp "$IFACE" 2> /dev/null || echo "0.0.0.0")
     (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
     

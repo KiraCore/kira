@@ -133,9 +133,9 @@ fi
 
 # Multi-node Local Testnet
 ```
-wsl -d kira --user asmodat
-wsl -d kira2 --user asmodat
-wsl -d kira3 --user asmodat
+wsl -d kira --user asmodat --cd /tmp
+wsl -d kira2 --user asmodat --cd /tmp
+wsl -d kira3 --user asmodat --cd /tmp
 
 # To pause failed updates run: systemctl stop kiraup
 

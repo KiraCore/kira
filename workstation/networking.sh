@@ -3,9 +3,25 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 timerStart SETUP_NETWORKING
-PORTS=($(globGet CUSTOM_INTERX_PORT) $(globGet CUSTOM_RPC_PORT) $(globGet CUSTOM_P2P_PORT) $(globGet CUSTOM_PROMETHEUS_PORT) $(globGet CUSTOM_GRPC_PORT))
+
+DEFAULT_SSH_PORT="$(globGet DEFAULT_SSH_PORT)"
+DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
+DEFAULT_P2P_PORT="$(globGet DEFAULT_P2P_PORT)"
+DEFAULT_RPC_PORT="$(globGet DEFAULT_RPC_PORT)"
+DEFAULT_GRPC_PORT="$(globGet DEFAULT_GRPC_PORT)"
+DEFAULT_PROMETHEUS_PORT="$(globGet DEFAULT_PROMETHEUS_PORT)"
+
+CUSTOM_INTERX_PORT=$(globGet CUSTOM_INTERX_PORT)
+CUSTOM_RPC_PORT=$(globGet CUSTOM_RPC_PORT)
+CUSTOM_P2P_PORT=$(globGet CUSTOM_P2P_PORT)
+CUSTOM_PROMETHEUS_PORT=$(globGet CUSTOM_PROMETHEUS_PORT)
+CUSTOM_GRPC_PORT=$(globGet CUSTOM_GRPC_PORT)
+
+CUSTOM_PORTS_EXPOSE="$(globGet CUSTOM_PORTS_EXPOSE)"
+
 PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
 FIREWALL_ZONE=$(globGet FIREWALL_ZONE)
+FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 IFACE=$(globGet IFACE)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
@@ -13,25 +29,27 @@ PRIORITY_MIN="-31000"
 PRIORITY_MAX="32767"
 ALL_IP="0.0.0.0/0"
 
-PUBLIC_IP=$(timeout 60 bash -c ". /etc/profile && getPublicIp" 2> /dev/null || echo "")
-LOCAL_IP=$(timeout 60 bash -c ". /etc/profile && getLocalIp '$IFACE'" 2> /dev/null || echo "0.0.0.0")
-
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| FIREWALL ENABLED: $(globGet FIREWALL_ENABLED)"
+echoWarn "| FIREWALL ENABLED: $FIREWALL_ENABLED"
 echoWarn "|    FIREWALL ZONE: $FIREWALL_ZONE"
 echoWarn "|   PORTS EXPOSURE: $PORTS_EXPOSURE"
-echoWarn "|        PUBLIC IP: $PUBLIC_IP"
-echoWarn "|         LOCAL IP: $LOCAL_IP"
+echoWarn "|     CUSTOM PORTS: $CUSTOM_PORTS_EXPOSE"
 echoWarn "------------------------------------------------"
 set -x
 
-# if [ "$(globGet FIREWALL_ENABLED)" != "true" ] ; then
-#     echoInfo "INFO: Firewall configuraiton will be skipped"
-#     exit 0
-# fi
+if [ "$FIREWALL_ENABLED" != "true" ] ; then
+    echoInfo "INFO: Firewall configuraiton will be skipped"
+    $KIRA_MANAGER/launch/update-ifaces.sh
+    exit 0
+fi
+
+PUBLIC_IP=$(timeout 60 bu getPublicIp 2> /dev/null || echo "")
+echoInfo "INFO: Public IP found: $PUBLIC_IP"
+LOCAL_IP=$(timeout 60 bu getLocalIp "$IFACE" 2> /dev/null || echo "0.0.0.0")
+echoInfo "INFO: Local IP found: $LOCAL_IP, $PUBLIC_IP"
 
 echoInfo "INFO: Stopping docker & restaring firewall..."
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
@@ -42,7 +60,7 @@ timeout 60 systemctl restart firewalld || echoWarn "WARNING: Failed to restart f
 
 echoInfo "INFO: Default firewall zone: $(firewall-cmd --get-default-zone 2> /dev/null || echo "???")"
 firewall-cmd --get-zones
-firewall-cmd --permanent --zone=public --change-interface=$(globGet IFACE)
+firewall-cmd --permanent --zone=public --change-interface="$IFACE"
 
 echoInfo "INFO: firewalld cleanup"
 # ALL_ZONES=($(firewall-cmd --get-zones))
@@ -58,101 +76,28 @@ for zone in "${DEFAULT_ZONES[@]}" ; do
 done
 
 firewall-cmd --permanent --new-zone=$FIREWALL_ZONE || echoInfo "INFO: Failed to create $FIREWALL_ZONE already exists"
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface=$(globGet IFACE)
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface=$(globGet IFACE)
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface="$IFACE"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --change-interface="$IFACE"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --set-target=default
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-interface=docker0
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source="$ALL_IP"
 
-DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
-DEFAULT_P2P_PORT="$(globGet DEFAULT_P2P_PORT)"
-DEFAULT_RPC_PORT="$(globGet DEFAULT_RPC_PORT)"
-DEFAULT_GRPC_PORT="$(globGet DEFAULT_GRPC_PORT)"
-DEFAULT_PROMETHEUS_PORT="$(globGet DEFAULT_PROMETHEUS_PORT)"
+PORTS=(22 $CUSTOM_INTERX_PORT $CUSTOM_P2P_PORT $CUSTOM_RPC_PORT $CUSTOM_GRPC_PORT $CUSTOM_PROMETHEUS_PORT)
+PORTS+=($DEFAULT_SSH_PORT $DEFAULT_INTERX_PORT $DEFAULT_P2P_PORT $DEFAULT_RPC_PORT $CUSTOM_GRPC_PORT $DEFAULT_PROMETHEUS_PORT)
+PORTS+=($(strRangesToArr "$CUSTOM_PORTS_EXPOSE"))
+PORTS=($(echo "${PORTS[*]}" | tr ' ' '\n' | sort -u -n | tr '\n' ' '))
 
-for i in {100..108} ; do
-    # INTERX
-    TMP_PORT=$((DEFAULT_INTERX_PORT + $i))
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$TMP_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$TMP_PORT/tcp
-    [[ ! " ${PORTS[@]} " =~ " ${TMP_PORT} " ]] && PORTS+=($TMP_PORT)
+echoInfo "INFO: Adding following TCP ports to firewall rules: ${PORTS[*]}"
 
-    # P2P
-    TMP_PORT=$((DEFAULT_P2P_PORT + $i))
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$TMP_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$TMP_PORT/tcp
-    [[ ! " ${PORTS[@]} " =~ " ${TMP_PORT} " ]] && PORTS+=($TMP_PORT)
+i=PORTS[0]
+pEnd=PORTS[-1]
 
-    # RPC
-    TMP_PORT=$((DEFAULT_RPC_PORT + $i))
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$TMP_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$TMP_PORT/tcp
-    [[ ! " ${PORTS[@]} " =~ " ${TMP_PORT} " ]] && PORTS+=($TMP_PORT)
-
-    # GRPC
-    TMP_PORT=$((DEFAULT_GRPC_PORT + $i))
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$TMP_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$TMP_PORT/tcp
-    [[ ! " ${PORTS[@]} " =~ " ${TMP_PORT} " ]] && PORTS+=($TMP_PORT)
-
-    # PROMETHEUS
-    TMP_PORT=$((DEFAULT_PROMETHEUS_PORT + $i))
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$TMP_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$TMP_PORT/tcp
-    [[ ! " ${PORTS[@]} " =~ " ${TMP_PORT} " ]] && PORTS+=($TMP_PORT)
-
-    [ "$(isWSL)" != "true" ] && break
+while [[ $i -le $pEnd ]] ; do
+    port=$i && i=$((i + 1))
+    ( (! $(isPort "$port")) || [ "$port" == "53" ] ) && continue
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$port/tcp
+    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$port/tcp
 done
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_INTERX_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_INTERX_PORT/tcp
-CUSTOM_INTERX_PORT="$(globGet CUSTOM_INTERX_PORT)"
-if [ "$CUSTOM_INTERX_PORT" != "$DEFAULT_INTERX_PORT" ] && ($(isPort "$CUSTOM_INTERX_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$CUSTOM_INTERX_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$CUSTOM_INTERX_PORT/tcp
-fi
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_P2P_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_P2P_PORT/tcp
-CUSTOM_P2P_PORT="$(globGet CUSTOM_P2P_PORT)"
-if [ "$CUSTOM_P2P_PORT" != "$DEFAULT_P2P_PORT" ] && ($(isPort "$CUSTOM_P2P_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$CUSTOM_P2P_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$CUSTOM_P2P_PORT/tcp
-fi
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_RPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_RPC_PORT/tcp
-CUSTOM_RPC_PORT="$(globGet CUSTOM_RPC_PORT)"
-if [ "$CUSTOM_RPC_PORT" != "$DEFAULT_RPC_PORT" ] && ($(isPort "$CUSTOM_RPC_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$CUSTOM_RPC_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$CUSTOM_RPC_PORT/tcp
-fi
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_GRPC_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_GRPC_PORT/tcp
-CUSTOM_GRPC_PORT="$(globGet CUSTOM_GRPC_PORT)"
-if [ "$CUSTOM_GRPC_PORT" != "$DEFAULT_GRPC_PORT" ] && ($(isPort "$CUSTOM_GRPC_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$CUSTOM_GRPC_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$CUSTOM_GRPC_PORT/tcp
-fi
-
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_PROMETHEUS_PORT/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_PROMETHEUS_PORT/tcp
-CUSTOM_PROMETHEUS_PORT="$(globGet CUSTOM_PROMETHEUS_PORT)"
-if [ "$CUSTOM_PROMETHEUS_PORT" != "$DEFAULT_PROMETHEUS_PORT" ] && ($(isPort "$CUSTOM_PROMETHEUS_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$CUSTOM_PROMETHEUS_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$CUSTOM_PROMETHEUS_PORT/tcp
-fi
-
-# required for SSH
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=22/tcp
-firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=22/tcp
-
-DEFAULT_SSH_PORT="$(globGet DEFAULT_SSH_PORT)"
-if [ "$DEFAULT_SSH_PORT" != "22" ] && ($(isPort "$DEFAULT_SSH_PORT")) ; then
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$DEFAULT_SSH_PORT/tcp
-    firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$DEFAULT_SSH_PORT/tcp
-fi
 
 # required for DNS service
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=53/udp
@@ -163,7 +108,7 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule family=\"ip
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"22\" protocol=\"tcp\" accept"
 
-echoInfo "INFO: Setting up '$FIREWALL_ZONE' zone networking for '$(globGet IFACE)' interface & stopping docker before changes are applied..."
+echoInfo "INFO: Setting up '$FIREWALL_ZONE' zone networking for '$IFACE' interface & stopping docker before changes are applied..."
 
 for PORT in "${PORTS[@]}" ; do
     if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then
@@ -231,7 +176,7 @@ for PORT in "${PORTS[@]}" ; do
 done
 
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"10.0.0.0/8\" port port=\"1-65535\" protocol=\"tcp\" accept"
-# firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
+firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"172.16.0.0/12\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"192.168.0.0/16\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"0.0.0.0\" port port=\"1-65535\" protocol=\"tcp\" accept"
 firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"127.0.0.1\" port port=\"1-65535\" protocol=\"tcp\" accept"
