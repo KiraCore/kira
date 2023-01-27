@@ -111,6 +111,8 @@ firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$P
 echoInfo "INFO: Setting up '$FIREWALL_ZONE' zone networking for '$IFACE' interface & stopping docker before changes are applied..."
 
 for PORT in "${PORTS[@]}" ; do
+    ( [ "$PORT" == "53" ] || [ "$PORT" == "22" ] || [ "$PORT" == "$DEFAULT_SSH_PORT" ] ) && continue 
+
     if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then
         echoInfo "INFO: Disabling public access to the port $PORT, networking is tured off ($PORTS_EXPOSURE)"
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
