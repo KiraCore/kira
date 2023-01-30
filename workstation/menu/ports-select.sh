@@ -72,7 +72,7 @@ while : ; do
     echoC ";whi" "| $(strFixL "[O] Batch-offset ports & subnet from defaults (excluding SSH)" 76) |"
     echoC ";whi" "| $(strFixL "[X] Exit _" 77 "" "_")|"
     setterm -cursor off 
-    pressToContinue "$opselE" i m o x OPTION && KEY="$(globGet OPTION)" 
+    pressToContinue "$opselE" i m o x && KEY="$(globGet OPTION)" 
     KEY="$(toLower "$KEY")"
     setterm -cursor on
     clear
@@ -187,7 +187,7 @@ while : ; do
     echoC "sto;whi" "| $(echoC "res;gre" "$(strFixL "[S] Save changes" 76)") |"
     echoC ";whi" "| $(strFixL "[R] Reject changes and try again" 76) |"
     echoC ";whi" "| [X] Exit ____________________________________________________________________|"
-    setterm -cursor off && pressToContinue s r x OPTION && setterm -cursor on
+    setterm -cursor off && pressToContinue s r x && setterm -cursor on
 
     if [ "$(globGet OPTION)" == "s" ] ; then
         globSet DEFAULT_SSH_PORT "$SSH_PORT"

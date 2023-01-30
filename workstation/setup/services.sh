@@ -3,10 +3,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set -x
 
 mkdir -p $KIRA_LOGS
-touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
-chmod 555 $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log
+touch $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log $KIRA_LOGS/docker.log
+chmod +rw -v $KIRA_LOGS/kiraup.log $KIRA_LOGS/kiraplan.log $KIRA_LOGS/kiraclean.log $KIRA_LOGS/kirascan.log $KIRA_LOGS/docker.log
+echo -n "" > $KIRA_LOGS/kiraup.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraup.log'"
+echo -n "" > $KIRA_LOGS/kiraplan.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraplan.log'"
 echo -n "" > $KIRA_LOGS/kiraclean.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kiraclean.log'"
 echo -n "" > $KIRA_LOGS/kirascan.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/kirascan.log'"
+echo -n "" > $KIRA_LOGS/docker.log || echoWarn "WARNING: Failed to wipe '$KIRA_LOGS/docker.log'"
 
 # systemctl restart kiraup && journalctl -u kiraup -f --output cat
 # cat $KIRA_LOGS/kiraup.log

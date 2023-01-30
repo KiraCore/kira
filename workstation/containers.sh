@@ -58,8 +58,8 @@ globSet SENTRY_EXPOSED false
 globSet VALIDATOR_EXPOSED false
 globSet INTERX_EXPOSED true
 
-# setting infra containers count to infinite, to notify in the manager that not all containers launched during setup
-globSet INFRA_CONTAINERS_COUNT "100"
+# setting default infra containers count to 2, to notify in the manager that not all containers launched during setup
+globSet INFRA_CONTAINERS_COUNT "2"
 
 set -x
 set -e

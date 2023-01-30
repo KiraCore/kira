@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor-containers.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# tail -f $(globFile CONTAINERS_SCAN_LOG)
+# fileFollow $(globFile CONTAINERS_SCAN_LOG)
 set -x
 
 echo "INFO: Started kira network contianers monitor..."

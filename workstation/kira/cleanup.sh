@@ -19,7 +19,7 @@ while : ; do
 
     journalctl --vacuum-time=3d --vacuum-size=32M || echoWarn "WARNING: journalctl vacuum failed"
     find "/var/log" -type f -size +64M -exec truncate --size=8M {} + || echoWarn "WARNING: Failed to truncate system logs"
-    find "$KIRA_LOGS" -type f -size +1M -exec truncate --size=1k {} + || echoWarn "WARNING: Failed to truncate kira logs"
+    find "$KIRA_LOGS" -type f -size +64k -exec truncate --size=8k {} + || echoWarn "WARNING: Failed to truncate kira logs"
 
     CONTAINERS=$(timeout 60 docker ps -a | awk '{if(NR>1) print $NF}' | tac || echo "")
     for name in $CONTAINERS; do

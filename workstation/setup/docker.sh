@@ -71,6 +71,12 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || (! $(isServiceAct
     DOCKER_SERVICE="/lib/systemd/system/docker.service"
     sed -i "s/fd:/unix:/" $DOCKER_SERVICE  || echoWarn "WARNING: Failed to substitute fd with unix in $DOCKER_SERVICE"
 
+    logOutIndex=$(getLastLineByPrefix "StandardOutput=" "$DOCKER_SERVICE")
+    restartIndex=$(getLastLineByPrefix "Restart=" "$DOCKER_SERVICE")
+    if [[ $logOutIndex -lt 0 ]] && [[ $restartIndex -ge 1 ]]  ; then
+        setLineByNumber $restartIndex "Restart=always\nStandardOutput=append:$KIRA_LOGS/docker.log\nStandardError=append:$KIRA_LOGS/docker.log" $DOCKER_SERVICE
+    fi
+
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL

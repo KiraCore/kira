@@ -312,8 +312,8 @@ while : ; do
 
             if [ "${ACCEPT,,}" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $NAME logs..."
-                docker logs --follow --details --timestamps $ID || echoErr "ERROR: Failed to follow $NAME logs"
-                echoNErr "\nPress any key to continue..." && pressToContinue
+                cmdFollow "docker logs --follow --details --timestamps $ID" || echoErr "ERROR: Failed to follow $NAME logs"
+                echoNC ";gre" "\nPress any key to continue..." && pressToContinue
             fi
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"

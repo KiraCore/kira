@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/monitor.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
-# systemctl restart kirascan && tail -f $KIRA_LOGS/kirascan.log
+# systemctl restart kirascan && fileFollow $KIRA_LOGS/kirascan.log
 # systemctl status kirascan, systemctl stop kirascan
 set -x
 
