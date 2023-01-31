@@ -89,11 +89,7 @@ PORTS=($(echo "${PORTS[*]}" | tr ' ' '\n' | sort -u -n | tr '\n' ' '))
 
 echoInfo "INFO: Adding following TCP ports to firewall rules: ${PORTS[*]}"
 
-i=PORTS[0]
-pEnd=PORTS[-1]
-
-while [[ $i -le $pEnd ]] ; do
-    port=$i && i=$((i + 1))
+for port in "${PORTS[@]}" ; do
     ( (! $(isPort "$port")) || [ "$port" == "53" ] ) && continue
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-port=$port/tcp
     firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-source-port=$port/tcp
