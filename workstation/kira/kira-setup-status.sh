@@ -99,7 +99,7 @@ while : ; do
             selV="r"
             NOTIFY_INFO="ALL SYSTEMS READY TO LAUNCH [K]IRA MANAGER"
             if [ "$auto_open_km" == "true" ] ; then
-                $KIRA_MANAGER/kira/kira.sh
+                $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false"
                 exit 0
             fi
         fi
