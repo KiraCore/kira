@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-# quick edit: FILE="$KIRA_MANAGER/scripts/dump-logs.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/launch/dump-logs.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
 NAME=$1
@@ -38,8 +38,8 @@ echoInfo "INFO: Dumping old container logs..."
 globGet "${CONTAINER_NAME}_HEALTH_LOG_OLD" > "$CONTAINER_DUMP/health.log.old.txt"
 globGet "${CONTAINER_NAME}_START_LOG_OLD" > "$CONTAINER_DUMP/start.log.old.txt" 
 
-timeout 60 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
-echo $(timeout 60 docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
+timeout 10 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
+echo $(timeout 10 docker inspect $ID || echo -n "") > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
 
 if [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
     DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"
@@ -59,8 +59,8 @@ elif [ "${NAME,,}" == "interx" ] ; then
     cp -afv $APP_HOME/config.json $DUMP_CONFIG/config.json || echoWarn "WARNING: Failed to dump config file"
 fi
 
-timeout 60 docker logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echoWarn "WARNING: Failed to dump $NAME container logs"
-timeout 60 docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $CONTAINER_DUMP/healthcheck.txt || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
+timeout 10 docker logs --details --timestamps $ID > $CONTAINER_DUMP/logs.txt || echoWarn "WARNING: Failed to dump $NAME container logs"
+timeout 10 docker inspect --format "{{json .State.Health }}" "$ID" | jq '.Log[-1].Output' | sed 's/\\n/\n/g' > $CONTAINER_DUMP/healthcheck.txt || echoWarn "WARNING: Failed to dump $NAME container healthcheck logs"
 
 if (! $(isFileEmpty $START_LOGS)) ; then
     cp -afv $START_LOGS $CONTAINER_DUMP/start.txt || echoWarn "WARNING: Failed to dump $NAME start logs"

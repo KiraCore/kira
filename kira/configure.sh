@@ -259,10 +259,8 @@ echoInfo "INFO: Final Peers List:"
 echoInfo "$cfg_statesync_rpc_servers"
 
 echoInfo "INFO: Updating CFG file..."
-set -x
 getTomlVarNames $CFG > /tmp/cfg_names.tmp
 mapfile cfg_rows < /tmp/cfg_names.tmp
-set +x
 for row in "${cfg_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)
@@ -282,10 +280,8 @@ for row in "${cfg_rows[@]}"; do
 done
 
 echoInfo "INFO: Updating APP file..."
-set -x
 getTomlVarNames $APP > /tmp/app_names.tmp
 mapfile app_rows < /tmp/app_names.tmp
-set +x
 for row in "${app_rows[@]}"; do
     ( $(isNullOrWhitespaces $row) ) && continue
     tag=$(echo $row | cut -d' ' -f1 | tr -d '\011\012\013\014\015\040\133\135' | xargs)

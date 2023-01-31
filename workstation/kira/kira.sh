@@ -11,7 +11,10 @@ if [ "${USER,,}" != "root" ]; then
     exit 1
 fi
 
-$KIRA_MANAGER/kira/kira-setup-status.sh
+verify_setup_status="true"
+getArgs "$1" --gargs_throw=false --gargs_verbose="true"
+
+[ "$verify_setup_status" == "true" ] && $KIRA_MANAGER/kira/kira-setup-status.sh --auto_open_km="true"
 set -x
 
 cd "$(globGet KIRA_HOME)"

@@ -43,8 +43,8 @@ while : ; do
     [ -z "$CLEANUP_SERVICE" ] && CLEANUP_SERVICE="inactive" 
     [ -z "$DOCKER_SERVICE" ] && DOCKER_SERVICE="inactive" 
     
-    INACTIVE_SERVICES=", "
-    [ "$UPDATE_SERVICE" != "active" ] && INACTIVE_SERVICES="$INACTIVE_SERVICES kiraup" && colUpd="bla" || colUpd="whi"
+    INACTIVE_SERVICES=""
+    [ "$UPDATE_SERVICE" != "active" ] && INACTIVE_SERVICES="  kiraup" && colUpd="bla" || colUpd="whi"
     [ "$UPGRADE_SERVICE" != "active" ] && INACTIVE_SERVICES="$INACTIVE_SERVICES, kiraplan" && colUpg="bla" || colUpg="whi"
     [ "$MONIT_SERVICE" != "active" ] && INACTIVE_SERVICES="$INACTIVE_SERVICES, kirascan" && colMon="bla" || colMon="whi"
     [ "$CLEANUP_SERVICE" != "active" ] && INACTIVE_SERVICES="$INACTIVE_SERVICES, kiraclean" && colCle="bla" || colCle="whi"
@@ -52,6 +52,7 @@ while : ; do
     [[ $(strLength "$INACTIVE_SERVICES") -le 2 ]] && INACTIVE_SERVICES=""
     INACTIVE_SERVICES="$(strLastN "$INACTIVE_SERVICES" "$(($(strLength "$INACTIVE_SERVICES") - 2))")"
     INACTIVE_SERVICES=$(echo $INACTIVE_SERVICES | sed 's/^[ \t]*//')
+    [ ! -z "$INACTIVE_SERVICES" ] && selS="s" || selS="r"
 
     NOTIFY_INFO="" 
     colNot="yel"
@@ -143,6 +144,7 @@ while : ; do
     echoC ";whi" "|          Logs Dump File: $(strFixL "$DUMP_FILE ~ $(prettyBytes $(fileSize $DUMP_FILE))" $cSubCnt) |"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
     echoC ";whi" "| [D] |     Dump All Logs: $(strFixL "$DUMP_INFO" $cSubCnt) |"
+    [ ! -z "$INACTIVE_SERVICES" ] && \
     echoC ";whi" "| [S] |  Restart Services: $(strFixL "$INACTIVE_SERVICES" $cSubCnt) |"
     echoC ";whi" "| [I] |   Re-Install Node: $(strFixL "$(globGet INFRA_SRC)" $cSubCnt) |"
     echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
@@ -154,12 +156,13 @@ while : ; do
     setterm -cursor on
     VSEL="$(toLower "$VSEL")"
 
+    PRESS_TO_CONTINUE="true"
     if [ "$VSEL" == "r" ] ; then
         continue
     elif [ "$VSEL" == "x" ] ; then
         break
     elif [ "$VSEL" == "k" ] ; then
-        $KIRA_MANAGER/kira/kira.sh
+        $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false"
         break
     elif [ "$VSEL" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || ( echoErr "ERROR: Failed logs dump" && echoNC ";gre" "Press any key to continue:" && pressToContinue )
@@ -179,6 +182,7 @@ while : ; do
             if ($(isNullOrWhitespaces "$SETUP_END_DT")) ; then
                 clear && echoInfo "INFO: Starting setup logs preview..."
                 fileFollow $KIRAUP_LOG
+                PRESS_TO_CONTINUE="false"
             else
                 clear && echoInfo "INFO: Printing update tools logs:" && sleep 2
                 cat $(globGet UPDATE_TOOLS_LOG) || echoErr "ERROR: Tools Update Log was NOT found!"
@@ -194,6 +198,7 @@ while : ; do
             if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
                 clear && echoInfo "INFO: Starting plan logs preview..."
                 fileFollow $KIRAPLAN_LOG
+                PRESS_TO_CONTINUE="false"
             else
                 clear && echoInfo "INFO: Printing plan logs:" && sleep 2
                 cat $KIRAPLAN_LOG || echoErr "ERROR: Plan Log was NOT found! Please run 'journalctl -u kiraplan -f --output cat' to see service issues"
@@ -223,13 +228,6 @@ while : ; do
         else
             echoInfo "INFO: No logs to display..."
         fi
-        echoNC ";gre" "Press any key to continue:" && pressToContinue
+        [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC ";gre" "Press any key to continue:" && pressToContinue
     fi
 done
-
-set +x
-echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: KIRA SETUP STATUS CHECK            |"
-echoWarn "|  ELAPSED: $(timerSpan SETUP_STATUS_CHECK) seconds"
-echoWarn "------------------------------------------------"
-set -x
