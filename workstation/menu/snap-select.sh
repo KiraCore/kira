@@ -30,6 +30,7 @@ MANUALCONFIG_WAILT="false"
 
 while : ; do
     SNAPSHOT_SYNC=$(globGet SNAPSHOT_SYNC)
+    KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
     VSEL=""
 
     # on loop continue assume fail and exit auto-configuration

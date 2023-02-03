@@ -97,7 +97,7 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
     rm -fv $DOCKER_COMMON_RO/snap.* || echoErr "ERROR: Failed to wipe snap.* files from '$DOCKER_COMMON_RO' directory"
     rm -fv "$GENESIS_EXPORT" "$APP_HOME/addrbook-export.json" "$APP_HOME/priv_validator_state-export.json" "$APP_HOME/old-genesis.json" "$APP_HOME/new-genesis.json" "$APP_HOME/genesis.json"
-    setGlobEnv KIRA_SNAP_PATH ""
+    globSet KIRA_SNAP_PATH ""
 
     echoInfo "INFO: Exporting genesis!"
     # NOTE: The $APP_HOME/config/genesis.json might be a symlink, for this reason we MUST copy it using docker exec

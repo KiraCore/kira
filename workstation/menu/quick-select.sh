@@ -86,8 +86,8 @@ fi
 
 echoInfo "INFO: Configuring essential startup variables..."
 setGlobEnv NETWORK_NAME "$CHAIN_ID"
-setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
-setGlobEnv KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
+globSet KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
+globSet KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
 
 globSet BASE_IMAGE_SRC "$(globGet NEW_BASE_IMAGE_SRC)"
 globSet GENESIS_SHA256 "$TRUSTED_NODE_GENESIS_HASH"

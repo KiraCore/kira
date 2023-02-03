@@ -54,6 +54,16 @@ while : ; do
     INACTIVE_SERVICES=$(echo $INACTIVE_SERVICES | sed 's/^[ \t]*//')
     [ ! -z "$INACTIVE_SERVICES" ] && selS="s" || selS="r"
 
+    ACTIVE_SERVICES=""
+    [ "$UPDATE_SERVICE" != "inactive" ] && ACTIVE_SERVICES="  kiraup"
+    [ "$UPGRADE_SERVICE" != "inactive" ] && ACTIVE_SERVICES="$ACTIVE_SERVICES, kiraplan"
+    [ "$MONIT_SERVICE" != "inactive" ] && ACTIVE_SERVICES="$ACTIVE_SERVICES, kirascan"
+    [ "$CLEANUP_SERVICE" != "inactive" ] && ACTIVE_SERVICES="$ACTIVE_SERVICES, kiraclean"
+    [ "$DOCKER_SERVICE" != "inactive" ] && ACTIVE_SERVICES="$ACTIVE_SERVICES, docker"
+    [[ $(strLength "$ACTIVE_SERVICES") -le 2 ]] && ACTIVE_SERVICES=""
+    ACTIVE_SERVICES="$(strLastN "$ACTIVE_SERVICES" "$(($(strLength "$ACTIVE_SERVICES") - 2))")"
+    ACTIVE_SERVICES=$(echo $ACTIVE_SERVICES | sed 's/^[ \t]*//')
+
     NOTIFY_INFO="" 
     colNot="yel"
     colPrg="gre"
@@ -74,12 +84,12 @@ while : ; do
     elif  [ "${MONIT_SERVICE,,}" != "active" ] ; then
         colNot="red"
         colMon="red"
-        NOTIFY_INFO="KIRA MONITORING SERVICE IS INACTIVE, PLEASE [R]ESTART SERVICES"
+        NOTIFY_INFO="KIRA MONITORING SERVICE IS INACTIVE, [R]EFRESH OR RESTART [S]ERVICE"
     elif [ "${DOCKER_SERVICE,,}" != "active" ] ; then
         colNot="red"
         CONTAINERS=""
         CONTAINERS_COUNT="0"
-        NOTIFY_INFO="DOCKER SERVICE IS NOT ACTIVE, PLEASE [R]ESTART SERVICES"
+        NOTIFY_INFO="DOCKER SERVICE IS NOT ACTIVE, [R]EFRESH OR RESTART [S]ERVICE"
     else
         if [ "${UPDATE_DONE,,}" != "true" ] ; then
             colPrg="yel"
@@ -125,12 +135,11 @@ while : ; do
         SETUP_SPAN=$((UNIX_NOW - UNIX_START))
         SETUP_END_INFO="pending"
     fi
-    
 
     cSubCnt=51
     set +x && printf "\033c" && clear
     echoC ";whi" " =============================================================================="
- echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SETUP PROGRESS CHECK TOOL, KM $KIRA_SETUP_VER" 78)")|"
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SERVICES & SETUP PROGRESS CHECK TOOL, KM $KIRA_SETUP_VER" 78)")|"
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
     echoC ";whi" "|  SETUP SERV. | UPGRADE SERV. | MONITOR SERV. | CLEANUP SERV. | DOCKER SERV.  |"
  echoC "sto;whi" "|$(echoC "res;$colUpd" "$SETUP_SRV")|$(echoC "res;$colUpg" "$UPGRADE_SRV")|$(echoC "res;$colMon" "$SCAN_SRV")|$(echoC "res;$colCle" "$CLEAN_SRV")|$(echoC "res;$colDoc" "$DOCKR_SRV")|"
@@ -146,6 +155,8 @@ while : ; do
     echoC ";whi" "| [D] |     Dump All Logs: $(strFixL "$DUMP_INFO" $cSubCnt) |"
     [ ! -z "$INACTIVE_SERVICES" ] && \
     echoC ";whi" "| [S] |  Restart Services: $(strFixL "$INACTIVE_SERVICES" $cSubCnt) |"
+    [ ! -z "$ACTIVE_SERVICES" ] && \
+    echoC ";whi" "| [P] |    Pause Services: $(strFixL "$ACTIVE_SERVICES" $cSubCnt) |"
     echoC ";whi" "| [I] |   Re-Install Node: $(strFixL "$(globGet INFRA_SRC)" $cSubCnt) |"
     echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
  echoC "sto;whi" "| $(echoC "res;$colPrg" "$(strFixL "[V] | View Progress" 23)")|     [R] Refresh     |$(echoC "res;$colKM" "  [K] Open KM  ")|   [X] Exit    |"
@@ -162,8 +173,7 @@ while : ; do
     elif [ "$VSEL" == "x" ] ; then
         break
     elif [ "$VSEL" == "k" ] ; then
-        $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false"
-        break
+        $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false" || echoErr "ERROR: 'kira' management tool execution failed"
     elif [ "$VSEL" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || ( echoErr "ERROR: Failed logs dump" && echoNC ";gre" "Press any key to continue:" && pressToContinue )
     elif [ "$VSEL" == "i" ] ; then
@@ -176,6 +186,15 @@ while : ; do
         [ "$CLEANUP_SERVICE" != "active" ] && ( systemctl restart kiraclean || echoWarn "WARNING: Service 'kiraclean' failed to be restarted" )
         [ "$DOCKER_SERVICE" != "active" ] && ( systemctl restart docker || echoWarn "WARNING: Service 'docker' failed to be restarted" )
         echoInfo "INFO: Please wait, services are restarting..."
+        sleep 10
+    elif [ "$VSEL" == "s" ] ; then
+        timeout 30 systemctl daemon-reload || echoWarn "WARNING: Failed to reload deamon"
+        [ "$UPDATE_SERVICE" != "inactive" ] && ( systemctl stop kiraup || echoWarn "WARNING: Service 'kiraup' failed to be restarted" )
+        [ "$UPGRADE_SERVICE" != "inactive" ] && ( systemctl stop kiraplan || echoWarn "WARNING: Service 'kiraplan' failed to be restarted" )
+        [ "$MONIT_SERVICE" != "inactive" ] && ( systemctl stop kirascan || echoWarn "WARNING: Service 'kirascan' failed to be restarted" )
+        [ "$CLEANUP_SERVICE" != "inactive" ] && ( systemctl stop kiraclean || echoWarn "WARNING: Service 'kiraclean' failed to be restarted" )
+        [ "$DOCKER_SERVICE" != "inactive" ] && ( systemctl stop docker || echoWarn "WARNING: Service 'docker' failed to be restarted" )
+        echoInfo "INFO: Please wait, services are stopping..."
         sleep 10
     elif [ "$VSEL" == "v" ] ; then
         if [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; then

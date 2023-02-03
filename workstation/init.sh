@@ -155,16 +155,16 @@ sleep 3
 echo -n ""
 set -x
 
-KIRA_HOME="/home/$(globGet KIRA_USER)"      && globSet KIRA_HOME "$KIRA_HOME"
-KIRA_LOGS="$(globGet KIRA_HOME)/logs"                 && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
-KIRA_DUMP="$(globGet KIRA_HOME)/dump"                 && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
-KIRA_SNAP="$(globGet KIRA_HOME)/snap"                 && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
-KIRA_SCAN="$(globGet KIRA_HOME)/kirascan"             && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
-KIRA_SECRETS="$(globGet KIRA_HOME)/.secrets"          && setGlobEnv KIRA_SECRETS "$KIRA_SECRETS"
-KIRA_CONFIGS="$(globGet KIRA_HOME)/.kira"             && setGlobEnv KIRA_CONFIGS "$KIRA_CONFIGS"
+KIRA_HOME="/home/$(globGet KIRA_USER)"          && globSet KIRA_HOME "$KIRA_HOME"
+KIRA_LOGS="$(globGet KIRA_HOME)/logs"           && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
+KIRA_DUMP="$(globGet KIRA_HOME)/dump"           && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
+KIRA_SNAP="$(globGet KIRA_HOME)/snap"           && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
+KIRA_SCAN="$(globGet KIRA_HOME)/kirascan"       && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
+KIRA_SECRETS="$(globGet KIRA_HOME)/.secrets"    && setGlobEnv KIRA_SECRETS "$KIRA_SECRETS"
+KIRA_CONFIGS="$(globGet KIRA_HOME)/.kira"       && setGlobEnv KIRA_CONFIGS "$KIRA_CONFIGS"
 
-PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"   && setGlobEnv PUBLIC_PEERS "$KIRA_CONFIGS/public_peers"
-PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"   && setGlobEnv PUBLIC_SEEDS "$KIRA_CONFIGS/public_seeds"
+PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"       && setGlobEnv PUBLIC_PEERS "$KIRA_CONFIGS/public_peers"
+PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"       && setGlobEnv PUBLIC_SEEDS "$KIRA_CONFIGS/public_seeds"
 
 KIRA_INFRA="/kira/repos/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
 

@@ -9,6 +9,7 @@ TMP_GENESIS_PATH="/tmp/genesis.json"
 KIRA_DOCKER_NETWORK=$(globGet KIRA_DOCKER_NETWORK)
 KIRA_DOCKER_SUBNET=$(globGet KIRA_DOCKER_SUBNET)
 KIRA_HOME=$(globGet KIRA_HOME)
+KIRA_SNAP_PATH=$(globGet KIRA_SNAP_PATH)
 cd "$KIRA_HOME"
 
 # find top largest files: find / -xdev -type f -size +100M -exec ls -la {} \; | sort -nk 5

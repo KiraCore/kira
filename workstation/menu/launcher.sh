@@ -12,6 +12,15 @@ timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone 
 
 MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
 
+if ($(isFileEmpty "$MNEMONICS")) ; then
+    echoInfo "INFO: Mnemonics file was NOT found, auto-generating new secrets..."
+    sleep 3
+    setVar MASTER_MNEMONIC "autogen" "$MNEMONICS"
+    set +x
+    source $KIRAMGR_SCRIPTS/load-secrets.sh
+    set -e
+fi
+
 while :; do
     set -x
     

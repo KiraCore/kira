@@ -23,6 +23,8 @@ SNAPSHOT_GENESIS_HASH=$(globGet SNAPSHOT_GENESIS_HASH)
 SNAPSHOT_CHAIN_ID=$(globGet SNAPSHOT_CHAIN_ID)
 SNAPSHOT_HEIGHT=$(globGet SNAPSHOT_HEIGHT)
 
+KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
+
 while : ; do
     while : ; do
       if ($(isDnsOrIp "$TRUSTED_NODE_ADDR")) ; then
@@ -109,7 +111,6 @@ while : ; do
 
       globSet "TRUSTED_NODE_ID" ""
       globSet "TRUSTED_NODE_P2P_PORT" ""
-      globSet "TRUSTED_NODE_GENESIS_FILE" ""
       globSet "TRUSTED_NODE_GENESIS_HASH" ""
       globSet "TRUSTED_NODE_ADDR" "$NODE_ADDR"
       globSet "TRUSTED_NODE_RPC_PORT" "$TRUSTED_NODE_RPC_PORT"
@@ -173,22 +174,75 @@ while : ; do
 
     echoInfo "INFO: Genesis file search..."
 
-    GENSUM=""
     GENESIS_FILE="$(globFile TRUSTED_NODE_GENESIS_FILE)"
-    if ($(isPort "$TRUSTED_NODE_INTERX_PORT")) ; then
-        GENSUM=$(timeout 120 curl $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/gensum 2>/dev/null | jsonParse "checksum" | sed 's/^0x//' 2>/dev/null || echo -n "")
-        ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS_FILE
+    ($(isPort "$TRUSTED_NODE_INTERX_PORT")) && \
+        GENSUM=$(timeout 120 curl $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/gensum 2>/dev/null | jsonParse "checksum" | sed 's/^0x//' 2>/dev/null || echo -n "") || \
+        GENSUM=""
 
-        echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
-        jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || globDel TRUSTED_NODE_GENESIS_FILE
-        echoInfo "INFO: Please wait, calculating new checksum..."
-        GENSUM=$(sha256 $GENESIS_FILE)
+    echoInfo "INFO: Please wait, calculating old genesis file checksum..."
+    GENSUM_OLD=$(sha256 "$GENESIS_FILE")
+
+    if [ "$GENSUM_OLD" != "$GENSUM" ] || (! $(isSHA256 $GENSUM)) ; then
+        echoInfo "INFO: Genesis file was NOT downloaded yet or does not match interx gensum"
+        GENSUM=""
+        rm -fv  $GENESIS_FILE && touch $GENESIS_FILE
+
+        if ($(isPort "$TRUSTED_NODE_RPC_PORT")) ; then
+            GENCHUNK_DIR="/tmp/genchunks"
+            GENTEMP64=$GENCHUNK_DIR/temp64.txt
+            rm -rfv $GENCHUNK_DIR 
+            mkdir -p $GENCHUNK_DIR
+
+            CHUNK_ID=0
+            totalChunks=1
+            while : ; do
+                [[ $CHUNK_ID -ge $totalChunks ]] && break
+                rm -rfv $GENTEMP64 && touch $GENTEMP64
+                CHUNK="$GENCHUNK_DIR/chunk_${CHUNK_ID}.json"
+                wget "$TRUSTED_NODE_ADDR:$TRUSTED_NODE_RPC_PORT/genesis_chunked?chunk=$CHUNK_ID" -O $CHUNK || echo "" > $CHUNK
+                totalChunks=$(jsonQuickParse "total" $CHUNK || echo "")
+                (! $(isNaturalNumber "$totalChunks")) && totalChunks=0
+                jsonParse "result.data" "$CHUNK" "$GENTEMP64" || echo "" > $GENTEMP64
+                sed -i "s/[\"\']//g" $GENTEMP64 || echo "" > $GENTEMP64
+
+                if (! $(isFilleEmpty $GENTEMP64)) ; then 
+                    base64 -d $GENTEMP64 >> $GENESIS_FILE || ( rm -fv $GENESIS_FILE && totalChunks=-1 )
+                else
+                    echoEWarn "WARNINIG: Failed to porcess genesis chunk $CHUNK_ID"
+                    totalChunks=-1
+                fi
+                CHUNK_ID=$((CHUNK_ID + 1))
+            done
+
+            echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || rm -fv $GENESIS_FILE
+
+            if (! $(isFilleEmpty $GENESIS_FILE)) ; then 
+                echoInfo "INFO: Please wait, calculating new checksum..."
+                GENSUM=$(sha256 "$GENESIS_FILE")
+            else
+                echoWarn "WARNING: Genesis checksum fetch from RPC failed"
+                GENSUM=""
+            fi
+        fi
+
+        if ($(isPort "$TRUSTED_NODE_INTERX_PORT")) && (! $(isSHA256 $GENSUM)) ; then
+            echoInfo "INFO: Attempting to download genesis from interx..."
+            GENSUM=$(timeout 120 curl $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/gensum 2>/dev/null | jsonParse "checksum" | sed 's/^0x//' 2>/dev/null || echo -n "")
+            ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS_FILE
+
+            echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || globDel TRUSTED_NODE_GENESIS_FILE
+            echoInfo "INFO: Please wait, calculating new checksum..."
+            GENSUM=$(sha256 $GENESIS_FILE)
+        fi
+    else
+        echoInfo "INFO: Genesis file already exists and matches interx gensum"
     fi
 
     if ($(isSHA256 $GENSUM)) && (! $(isFileEmpty $GENESIS_FILE)) ; then
         globSet "TRUSTED_NODE_GENESIS_HASH" "$GENSUM"
     fi
-
 
     echoInfo "INFO: Snapshot discovery..."
     SNAP_URL="$TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/download/snapshot.tar"

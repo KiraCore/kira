@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+set +X
 
 # Force console colour to be black
 tput setab 0
@@ -14,6 +15,9 @@ fi
 verify_setup_status="true"
 getArgs "$1" --gargs_throw=false --gargs_verbose="true"
 
+# signal that system monitor didn't finished running yet
+globSet IS_SCAN_DONE "false"
+
 [ "$verify_setup_status" == "true" ] && $KIRA_MANAGER/kira/kira-setup-status.sh --auto_open_km="true"
 set -x
 
@@ -25,12 +29,15 @@ INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
 
-echoInfo "INFO: Restarting network scanner..."
-timeout 30 systemctl daemon-reload || echoErr "ERROR: Failed to reload deamon"
-systemctl restart kirascan || echoErr "ERROR: Failed to restart kirascan service"
 
-globSet IS_SCAN_DONE "false"
 INFRA_CONTAINERS_COUNT=$(globGet INFRA_CONTAINERS_COUNT)
+
+INFRA_MODE=$(globGet INFRA_MODE)
+CHAIN_ID=$(jsonQuickParse "chain_id" $LOCAL_GENESIS_PATH || echo "$NETWORK_NAME")
+
+# $LOCAL_GENESIS_PATH
+# )
+
 set +x
 
 while : ; do
@@ -54,7 +61,7 @@ while : ; do
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
 
     START_TIME="$(date -u +%s)"
-    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
+    
     CONS_STOPPED=$(globGet CONS_STOPPED)
     CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
@@ -82,6 +89,97 @@ while : ; do
             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
         done
     fi
+
+    ##########################################################
+    # SYSTEM UTILIZATION STATYSTICS
+    ##########################################################
+
+    CPU_UTIL="$(globGet CPU_UTIL)"      && [ -z "$CPU_UTIL" ]   && CPU_UTIL="???" && colCPU="bla" || colCPU="whi"
+    RAM_UTIL="$(globGet RAM_UTIL)"      && [ -z "$RAM_UTIL" ]   && RAM_UTIL="???" && colRAM="bla" || colRAM="whi"
+    DISK_UTIL="$(globGet DISK_UTIL)"    && [ -z "$DISK_UTIL" ]  && DISK_UTIL="???" && colDIS="bla" || colDIS="whi"
+    NET_IN="$(globGet NET_IN)"          && [ -z "$NET_IN" ]     && NET_IN="???" && colNIN="bla" || colNIN="whi"
+    NET_OUT="$(globGet NET_OUT)"        && [ -z "$NET_OUT" ]    && NET_OUT="???" && colNUT="bla" || colNUT="whi"
+    NET_IFACE="$(globGet IFACE)"        && [ -z "$NET_IFACE" ]  && NET_IFACE="???" && colIFA="bla" || colIFA="whi"
+
+    [ "$CPU_UTIL" == "100%" ] && colCPU="red"
+    [ "$RAM_UTIL" == "100%" ] && colRAM="red"
+    [ "$DISK_UTIL" == "100%" ] && colDIS="red"
+
+    CPU_UTIL=$(strFixC "$CPU_UTIL" 12)
+    RAM_UTIL=$(strFixC "$RAM_UTIL" 12)
+    DISK_UTIL=$(strFixC "$DISK_UTIL" 12)
+    NET_IN="$(prettyBytes $NET_IN)/s" && NET_IN=$(strFixC "$NET_IN" 12)
+    NET_OUT="$(prettyBytes $NET_OUT)/s" && NET_OUT=$(strFixC "$NET_OUT" 12)
+    NET_IFACE=$(strFixC "$NET_IFACE" 13)
+
+    ##########################################################
+    # BLOCKCHAIN STATYSTICS
+    ##########################################################
+
+    VAL_ACT=$(globGet VAL_ACTIVE)       && (! $(isNaturalNumber $VAL_ACT)) && VAL_ACT="???" && colACT="bla" || colACT="whi"
+    VAL_TOT=$(globGet VAL_TOTAL)        && (! $(isNaturalNumber $VAL_TOT)) && VAL_TOT="???" && colVTO="bla" || colVTO="whi"
+    VAL_WAI=$(globGet VAL_WAITING)      && (! $(isNaturalNumber $VAL_WAI)) && VAL_WAI="???" && colVWI="bla" || colVWI="whi"
+    BLO_NUM=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") && (! $(isNaturalNumber $BLO_NUM)) && BLO_NUM="???" && colBNR="bla" || colBNR="whi"
+    BLO_TIM=$(globGet CONS_BLOCK_TIME)  && (! $(isNumber $BLO_TIM)) && BLO_TIM="???" && colBTM="bla" || colBTM="whi"
+    CHA_NAM="$CHAIN_ID"                 && [ -z "$CHA_NAM" ]  && CHA_NAM="???" && colCNA="bla" || colCNA="whi"
+
+    ($(isNumber "$BLO_TIM")) && BLO_TIM=$(echo "scale=3; ( $BLO_TIM / 1 ) " | bc) && BLO_TIM="~${BLO_TIM}s"
+
+    VAL_ACT=$(strFixC "$VAL_ACT" 12)
+    VAL_TOT=$(strFixC "$VAL_TOT" 12)
+    VAL_WAI=$(strFixC "$VAL_WAI" 12)
+    BLO_NUM=$(strFixC "$BLO_NUM" 12)
+    BLO_TIM=$(strFixC "$BLO_TIM" 12)
+    CHA_NAM=$(strFixC "$CHA_NAM" 13)
+
+    ##########################################################
+    # NETWORK & SUBNET INFO
+    ##########################################################
+
+
+    PUB_IPA=$(globGet PUBLIC_IP)             && (! $(isDnsOrIp "$PUB_IPA")) && PUB_IPA="???" && colPIP="bla" || colPIP="whi"
+    LOC_IPA=$(globGet LOCAL_IP)              && (! $(isDnsOrIp "$LOC_IPA")) && LOC_IPA="???" && colLIP="bla" || colLIP="whi"
+    DCK_SUB="$(globGet KIRA_DOCKER_SUBNET)"  && (! $(isCIDR "$DCK_SUB"))  && DCK_SUB="???" && colDNT="bla" || colDNT="whi"
+    DCK_NET="$(globGet KIRA_DOCKER_NETWORK)"
+
+    [ "$PUB_IPA" == "0.0.0.0" ]     && PUB_IPA="???" && colPIP="bla" 
+    [ "$LOC_IPA" == "0.0.0.0" ]     && LOC_IPA="???" && colLIP="bla" 
+    [ "$DCK_SUB" == "0.0.0.0/0" ]   && DCK_SUB="???" && colLIP="bla" 
+    
+    PUB_IPA=$(strFixC "$PUB_IPA" 25)
+    LOC_IPA=$(strFixC "$LOC_IPA" 25)
+    DCK_SUB=$(strFixC "$DCK_SUB" 26)
+
+    ##########################################################
+    # SNAPSHOT & GENESIS INFO
+    ##########################################################
+
+    KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
+    SNA_PTH="$KIRA_SNAP_PATH"             && ($(isFileEmpty $SNA_PTH)) && SNA_PTH="???" && colSPH="bla" || colSPH="whi"
+    SNA_SHA="$(globGet KIRA_SNAP_SHA256)" && (! $(isSHA256 $SNA_SHA)) && SNA_SHA="???...???" && colSNS="bla" || colSNS="whi"
+    GEN_SHA="$(globGet GENESIS_SHA256)"   && (! $(isSHA256 $GEN_SHA)) && GEN_SHA="???...???" && colGSH="bla" || colGSH="whi"
+
+    (! $(isFileEmpty $SNA_PTH)) && SNA_PTH=$(basename -- "$SNA_PTH")
+
+    SNA_PTH=$(strFixC " $SNA_PTH " 25)
+    SNA_SHA=$(strFixC " $SNA_SHA " 25)
+    GEN_SHA=$(strFixC " $GEN_SHA " 26)
+
+
+    set +x && printf "\033c" && clear
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "KIRA $(toUpper $INFRA_MODE) NODE MANAGER $KIRA_SETUP_VER" 78)")|"
+    echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+    echoC ";whi" "|  CPU USAGE | RAM MEMORY | DISK SPACE |  UP.SPEED  |  DN.SPEED  |  INTERFACE  |"
+    echoC ";whi" "|$(echoC "res;$colCPU" "$CPU_UTIL")|$(echoC "res;$colRAM" "$RAM_UTIL")|$(echoC "res;$colDIS" "$DISK_UTIL")|$(echoC "res;$colNIN" "$NET_IN")|$(echoC "res;$colNUT" "$NET_OUT")|$(echoC "res;$colIFA" "$NET_IFACE")|"
+    echoC ";whi" "| VAL.ACTIVE | V.INACTIVE | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
+    echoC ";whi" "|$(echoC "res;$colACT" "$VAL_ACT")|$(echoC "res;$colVTO" "$VAL_TOT")|$(echoC "res;$colVWI" "$VAL_WAI")|$(echoC "res;$colBNR" "$BLO_NUM")|$(echoC "res;$colBTM" "$BLO_TIM")|$(echoC "res;$colCNA" "$CHA_NAM")|"
+    echoC ";whi" "|$(strFixC " PUBLIC IP " 25 "" "-")|$(strFixC " LOCAL IP " 25 "" "-")|$(strFixC " SUBNET ($DCK_NET) " 26 "" "-")|"
+    echoC ";whi" "|$(echoC "res;$colPIP" "$PUB_IPA")|$(echoC "res;$colLIP" "$LOC_IPA")|$(echoC "res;$colDNT" "$DCK_SUB")|"
+    echoC ";whi" "|      SNAPSHOT NAME      |    SNAPSHOT CHECKSUM    |     GENESIS CHECKSUM     |"
+    echoC ";whi" "|$(echoC "res;$colSPH" "$SNA_PTH")|$(echoC "res;$colSNS" "$SNA_SHA")|$(echoC "res;$colGSH" "$GEN_SHA")|"
+    sleep 30
+    continue
 
     printf "\033c"
 
@@ -138,14 +236,14 @@ while : ; do
         LATEST_BLOCK_HEIGHT="???"
     fi
 
-    LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
-    LOCAL_IP="L.IP: $LOCAL_IP                                               "
-    if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $(globGet IFACE) $(globGet NET_PRIOR)"
-    else
-        PUBLIC_IP="$PUBLIC_IP                          "
-        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $(globGet IFACE) $(globGet NET_PRIOR)"
-    fi
+#    LOCAL_IP=$(globGet "LOCAL_IP") && PUBLIC_IP=$(globGet "PUBLIC_IP")
+#    LOCAL_IP="L.IP: $LOCAL_IP                                               "
+#    if [ "$PUBLIC_IP" == "0.0.0.0" ] || ( ! $(isDnsOrIp "$PUBLIC_IP")) ; then
+#        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: \e[31;1mdisconnected\e[33;1m    : $(globGet IFACE) $(globGet NET_PRIOR)"
+#    else
+#        PUBLIC_IP="$PUBLIC_IP                          "
+#        echo -e "|\e[35;1m ${LOCAL_IP:0:24}P.IP: ${PUBLIC_IP:0:15}\e[33;1m : $(globGet IFACE) $(globGet NET_PRIOR)"
+#    fi
 
     if [ -f "$KIRA_SNAP_PATH" ]; then # snapshot is present
         SNAP_FILENAME="SNAPSHOT: $(basename -- "$KIRA_SNAP_PATH")${WHITESPACE}"

@@ -23,6 +23,9 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 SNAPSHOT_UNHALT=$(globGet SNAPSHOT_UNHALT)
 
+KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
+KIRA_SNAP_SHA256="$(globGet KIRA_SNAP_SHA256)"
+
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTING KIRA SNAPSHOT SCAN $KIRA_SETUP_VER"
@@ -43,7 +46,7 @@ set -x
 if [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ; then
     echoInfo "INFO: Updating snpashot '$KIRA_SNAP_PATH' checksum..."
     KIRA_SNAP_SHA256=$(sha256 "$KIRA_SNAP_PATH")
-    setGlobEnv KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
+    globSet KIRA_SNAP_SHA256 "$KIRA_SNAP_SHA256"
     echoInfo "SUCCESS: New checksum calculated!" && sleep 10 && exit 0
 fi
 
@@ -88,8 +91,8 @@ if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
     sleep 30
 else
     echoInfo "INFO: Success, new snapshot '$KIRA_SNAP_PATH' was created"
-    setGlobEnv KIRA_SNAP_SHA256 ""
-    setGlobEnv KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
+    globSet KIRA_SNAP_SHA256 ""
+    globSet KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 
     if [ "${SNAP_EXPOSE,,}" == "true" ]; then
         echoInfo "INFO: Exposing snapshoot via INTERX"
