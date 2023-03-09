@@ -35,7 +35,7 @@ fi
 echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
 globSet CFG_TASK "false"
-globSet RUNTIME_VERSION "sekaid $(sekaid version)"
+globSet RUNTIME_VERSION "$(sekaid version)"
 
 echoInfo "INFO: Starting validator..."
 kill -9 $(lsof -t -i:9090) || echoWarn "WARNING: Nothing running on port 9090, or failed to kill processes"

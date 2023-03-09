@@ -63,7 +63,7 @@ echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/interx/configure.sh
 
 globSet CFG_TASK "false"
-globSet RUNTIME_VERSION "interxd $(interxd version)"
+globSet RUNTIME_VERSION "$(interxd version)"
 
 echoInfo "INFO: Starting INTERX service..."
 kill -9 $(lsof -t -i:11000) || echoWarn "WARNING: Nothing running on port 11000, or failed to kill processes"

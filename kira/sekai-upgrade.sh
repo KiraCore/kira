@@ -67,7 +67,7 @@ elif [ "$UPGRADE_MODE" == "hard" ] ; then
     echoInfo "INFO: Converting genesis file..."
     sekaid unsafe-reset-all --home=$SEKAID_HOME
     rm -fv "$SEKAID_HOME/new-genesis.json" "$SEKAID_HOME/config/genesis.json" 
-    sekaid new-genesis-from-exported $SEKAID_HOME/genesis-export.json $SEKAID_HOME/new-genesis.json
+    sekaid new-genesis-from-exported $SEKAID_HOME/genesis-export.json $SEKAID_HOME/new-genesis.json --json-minimize=true
 
     NEXT_CHAIN_ID=$(jsonParse "app_state.upgrade.current_plan.new_chain_id" $SEKAID_HOME/new-genesis.json)
     NEW_NETWORK_NAME=$(jsonParse "chain_id" $SEKAID_HOME/new-genesis.json 2> /dev/null || echo -n "")

@@ -69,6 +69,7 @@ while : ; do
     colPrg="gre"
     colKM="whi"
     selV="v"
+    AUTO_OPEN="false"
     if [ "${UPDATE_FAIL,,}" == "true" ] ; then
         colNot="red"
         colPrg="red"
@@ -81,15 +82,6 @@ while : ; do
         colUpg="red"
         UPGRADE_SERVICE="failed"
         NOTIFY_INFO="NETWORK UPGRADE FAILED, PLEASE [D]UMP LOGGS AND REINSTALL NODE"
-    elif  [ "${MONIT_SERVICE,,}" != "active" ] ; then
-        colNot="red"
-        colMon="red"
-        NOTIFY_INFO="KIRA MONITORING SERVICE IS INACTIVE, [R]EFRESH OR RESTART [S]ERVICE"
-    elif [ "${DOCKER_SERVICE,,}" != "active" ] ; then
-        colNot="red"
-        CONTAINERS=""
-        CONTAINERS_COUNT="0"
-        NOTIFY_INFO="DOCKER SERVICE IS NOT ACTIVE, [R]EFRESH OR RESTART [S]ERVICE"
     else
         if [ "${UPDATE_DONE,,}" != "true" ] ; then
             colPrg="yel"
@@ -100,6 +92,15 @@ while : ; do
         elif [ "${PLAN_DONE,,}" != "true" ] ; then
             colPrg="yel"
             NOTIFY_INFO="PLANNED UPGRADE IS ONGOING OR AWAITING SCHEDULED BLOCK TIME"
+        elif  [ "${MONIT_SERVICE,,}" != "active" ] ; then
+            colNot="red"
+            colMon="red"
+            NOTIFY_INFO="KIRA MONITORING SERVICE IS INACTIVE, RESTART [S]ERVICES"
+        elif [ "${DOCKER_SERVICE,,}" != "active" ] ; then
+            colNot="red"
+            CONTAINERS=""
+            CONTAINERS_COUNT="0"
+            NOTIFY_INFO="DOCKER SERVICE IS NOT ACTIVE, RESTART [S]ERVICES"
         elif [ "${CLEANUP_SERVICE,,}" != "active" ] ; then
             NOTIFY_INFO="CLEANING SERVICE IS NOT ACTIVE, YOU MIGHT RUN OUT OF DISK SPACE"
         else
@@ -108,10 +109,7 @@ while : ; do
             colKM="gre"
             selV="r"
             NOTIFY_INFO="ALL SYSTEMS READY TO LAUNCH [K]IRA MANAGER"
-            if [ "$auto_open_km" == "true" ] ; then
-                $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false"
-                exit 0
-            fi
+            [ "$auto_open_km" == "true" ] && AUTO_OPEN="true"
         fi
     fi
 
@@ -162,10 +160,14 @@ while : ; do
  echoC "sto;whi" "| $(echoC "res;$colPrg" "$(strFixL "[V] | View Progress" 23)")|     [R] Refresh     |$(echoC "res;$colKM" "  [K] Open KM  ")|   [X] Exit    |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    setterm -cursor off 
-    pressToContinue --timeout=60 d s k "$selV" r x && VSEL=$(globGet OPTION) || VSEL="r"
-    setterm -cursor on
-    VSEL="$(toLower "$VSEL")"
+    if [ "$AUTO_OPEN" == "true" ] ; then
+        VSEL="k"
+    else
+        setterm -cursor off 
+        pressToContinue --timeout=60 d s k "$selV" r x && VSEL=$(globGet OPTION) || VSEL="r"
+        setterm -cursor on
+        VSEL="$(toLower "$VSEL")"
+    fi
 
     PRESS_TO_CONTINUE="true"
     if [ "$VSEL" == "r" ] ; then
@@ -173,7 +175,22 @@ while : ; do
     elif [ "$VSEL" == "x" ] ; then
         break
     elif [ "$VSEL" == "k" ] ; then
-        $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false" || echoErr "ERROR: 'kira' management tool execution failed"
+        EXIT_CODE=0
+        $KIRA_MANAGER/kira/kira.sh --verify_setup_status="false" || EXIT_CODE=$?
+        
+        if [ "$EXIT_CODE" != "0" ] ; then
+            auto_open_km="false"
+            if [ "$EXIT_CODE" == "200" ] ; then
+                echoInfo "INFO: KM requested to open service tool"
+                PRESS_TO_CONTINUE="false"
+            else
+                echoErr "ERROR: 'kira' management tool execution failed with exit code '$EXIT_CODE'"
+                PRESS_TO_CONTINUE="true"
+            fi
+        else
+            echoInfo "INFO: 'kira' management tool requested to gracefully abort execution"
+            exit 0
+        fi
     elif [ "$VSEL" == "d" ] ; then
         $KIRA_MANAGER/kira/kira-dump.sh || ( echoErr "ERROR: Failed logs dump" && echoNC ";gre" "Press any key to continue:" && pressToContinue )
     elif [ "$VSEL" == "i" ] ; then
@@ -184,7 +201,7 @@ while : ; do
         [ "$UPGRADE_SERVICE" != "active" ] && ( systemctl restart kiraplan || echoWarn "WARNING: Service 'kiraplan' failed to be restarted" )
         [ "$MONIT_SERVICE" != "active" ] && ( systemctl restart kirascan || echoWarn "WARNING: Service 'kirascan' failed to be restarted" )
         [ "$CLEANUP_SERVICE" != "active" ] && ( systemctl restart kiraclean || echoWarn "WARNING: Service 'kiraclean' failed to be restarted" )
-        [ "$DOCKER_SERVICE" != "active" ] && ( systemctl restart docker || echoWarn "WARNING: Service 'docker' failed to be restarted" )
+        [ "$DOCKER_SERVICE" != "active" ] && ( $KIRA_COMMON/docker-restart.sh || echoWarn "WARNING: Service 'docker' failed to be restarted" )
         echoInfo "INFO: Please wait, services are restarting..."
         sleep 10
     elif [ "$VSEL" == "s" ] ; then
@@ -247,6 +264,7 @@ while : ; do
         else
             echoInfo "INFO: No logs to display..."
         fi
-        [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC ";gre" "Press any key to continue:" && pressToContinue
     fi
+
+    [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC ";gre" "Press any key to continue:" && pressToContinue
 done

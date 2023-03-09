@@ -73,7 +73,7 @@ echoInfo "INFO: Loading configuration..."
 $COMMON_DIR/configure.sh
 set +e && source "/etc/profile" &>/dev/null && set -e
 globSet CFG_TASK "false"
-globSet RUNTIME_VERSION "sekaid $(sekaid version)"
+globSet RUNTIME_VERSION "$(sekaid version)"
 
 echoInfo "INFO: Starting sekaid..."
 kill -9 $(lsof -t -i:9090) || echoWarn "WARNING: Nothing running on port 9090, or failed to kill processes"
