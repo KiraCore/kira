@@ -192,7 +192,7 @@ while : ; do
             exit 0
         fi
     elif [ "$VSEL" == "d" ] ; then
-        $KIRA_MANAGER/kira/kira-dump.sh || ( echoErr "ERROR: Failed logs dump" && echoNC ";gre" "Press any key to continue:" && pressToContinue )
+        $KIRA_MANAGER/kira/kira-dump.sh || ( echoErr "ERROR: Failed logs dump" && echoNC "bli;whi" "Press any key to continue..." && pressToContinue )
     elif [ "$VSEL" == "i" ] ; then
         $KIRA_MANAGER/kira/kira-reinitalize.sh || ( echoErr "ERROR: Re-installation failed or was cancelled" && sleep 3 )
     elif [ "$VSEL" == "s" ] ; then
@@ -266,5 +266,5 @@ while : ; do
         fi
     fi
 
-    [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC ";gre" "Press any key to continue:" && pressToContinue
+    [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
 done

@@ -1,11 +1,12 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# $KIRA_MANAGER/kira/kira.sh --verify_setup_status=false
 set +x
 
 # Force console colour to be black
 tput setab 0
-echoInfo "INFO: Launching KIRA Network Manager..."
+echoNInfo "\n\nINFO: Launching KIRA Network Manager...\n"
 
 if [ "${USER,,}" != "root" ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
@@ -28,7 +29,6 @@ set -x
 
 cd "$(globGet KIRA_HOME)"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
-CONTAINERS=""
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 
 mkdir -p "$INTERX_REFERENCE_DIR"
@@ -41,38 +41,27 @@ CHAIN_ID=$(jsonQuickParse "chain_id" $LOCAL_GENESIS_PATH || echo "$NETWORK_NAME"
 MAIN_CONTAINER="$INFRA_MODE"
 MAIN_CONTAINERS=(interx $MAIN_CONTAINER)
 
+##########################################################
+# ENSURE KM CAN DISPLAY STATS
+##########################################################
+
+MONIT_SERVICE="$(systemctl is-active "kirascan" 2> /dev/null || : )"
+DOCKER_SERVICE="$(systemctl is-active "docker" 2> /dev/null || : )"
+if [ "$MONIT_SERVICE" != "active" ] ; then
+    echoErr "ERROR: Sytem monitorig service is NOT active"
+    exit 1
+elif [ "$DOCKER_SERVICE" != "active" ] ; then
+    echoErr "ERROR: Docker service is NOT active"
+    exit 1
+fi
+
 set +x
 
 while : ; do
-    set +e && source "/etc/profile" &>/dev/null && set -e
     
-    SCAN_DONE=$(globGet IS_SCAN_DONE)
-    
-    VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
-    GENESIS_SHA256=$(globGet GENESIS_SHA256)
-    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
-    CONTAINERS_COUNT=$(globGet CONTAINERS_COUNT)
-    START_TIME="$(date -u +%s)"
-    CONS_STOPPED=$(globGet CONS_STOPPED)
-    CONS_BLOCK_TIME=$(globGet CONS_BLOCK_TIME)
-    CONTAINERS=$(globGet CONTAINERS)
 
     ##########################################################
-    # ENSURE KM CAN DISPLAY STATS
-    ##########################################################
-
-    MONIT_SERVICE="$(systemctl is-active "kirascan" 2> /dev/null || : )"
-    DOCKER_SERVICE="$(systemctl is-active "docker" 2> /dev/null || : )"
-    if [ "$MONIT_SERVICE" != "active" ] ; then
-        echoWarn "WARNING: Sytem monitorig service is NOT active"
-        break
-    elif [ "$MONIT_SERVICE" != "active" ] ; then
-        echoWarn "WARNING: Docker service is NOT active"
-        break
-    fi
-
-    ##########################################################
-    # SYSTEM UTILIZATION STATYSTICS
+    echoInfo "LOADING SYSTEM UTILIZATION STATYSTICS..."
     ##########################################################
 
     CPU_UTIL="$(globGet CPU_UTIL)"      && [ -z "$CPU_UTIL" ]   && CPU_UTIL="???" && colCPU="bla" || colCPU="whi"
@@ -94,7 +83,7 @@ while : ; do
     NET_IFACE=$(strFixC "$NET_IFACE" 13)
 
     ##########################################################
-    # BLOCKCHAIN STATYSTICS
+    echoInfo "LOADING BLOCKCHAIN STATYSTICS..."
     ##########################################################
 
     VAL_ACT=$(globGet VAL_ACTIVE)       && (! $(isNaturalNumber $VAL_ACT)) && VAL_ACT="???" && colACT="bla" || colACT="whi"
@@ -107,9 +96,8 @@ while : ; do
     ($(isNumber "$BLO_TIM")) && BLO_TIM=$(echo "scale=3; ( $BLO_TIM / 1 ) " | bc) && BLO_TIM="~${BLO_TIM}s"
 
     ##########################################################
-    # NETWORK & SUBNET INFO
+    echoInfo "LOADING NETWORK & SUBNET INFO..."
     ##########################################################
-
 
     PUB_IPA=$(globGet PUBLIC_IP)             && (! $(isDnsOrIp "$PUB_IPA")) && PUB_IPA="???" && colPIP="bla" || colPIP="whi"
     LOC_IPA=$(globGet LOCAL_IP)              && (! $(isDnsOrIp "$LOC_IPA")) && LOC_IPA="???" && colLIP="bla" || colLIP="whi"
@@ -125,7 +113,7 @@ while : ; do
     DCK_SUB=$(strFixC "$DCK_SUB" 26)
 
     ##########################################################
-    # SNAPSHOT & GENESIS INFO
+    echoInfo "LOADING SNAPSHOT & GENESIS INFO..."
     ##########################################################
 
     KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
@@ -140,40 +128,11 @@ while : ; do
     GEN_SHA=$(strFixC " $GEN_SHA " 26)
 
     ##########################################################
-
-# if [ "${SCAN_DONE,,}" == "true" ]; then
-#         SUCCESS="true"
-#         ALL_CONTAINERS_PAUSED="true"
-#         ALL_CONTAINERS_STOPPED="true"
-#         ALL_CONTAINERS_HEALTHY="true"
-#         VALIDATOR_RUNNING="false"
-#         
-#         for name in $CONTAINERS; do
-#             if ! [[ " ${array[@]} " =~ " ${val} " ]]; then
-#                 continue
-#             fi
-#             KIRA_CONTAINERS
-# 
-#             EXISTS_TMP=$(globGet "${name}_EXISTS")
-#             [ "${EXISTS_TMP,,}" != "true" ] && continue
-# 
-#             STATUS_TMP=$(globGet "${name}_STATUS")
-#             HEALTH_TMP=$(globGet "${name}_HEALTH")
-#             [ "${STATUS_TMP,,}" != "running" ] && SUCCESS="false"
-#             [ "${STATUS_TMP,,}" != "exited" ] && ALL_CONTAINERS_STOPPED="false"
-#             [ "${STATUS_TMP,,}" != "paused" ] && ALL_CONTAINERS_PAUSED="false"
-#             [ "${HEALTH_TMP,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
-#             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" == "running" ] && VALIDATOR_RUNNING="true"
-#             [ "${name,,}" == "validator" ] && [ "${STATUS_TMP,,}" != "running" ] && VALIDATOR_RUNNING="false"
-#         done
-#     fi
-
-
     
-    
-    if [ "${SCAN_DONE,,}" == "true" ]; then
+    SCAN_DONE=$(globGet IS_SCAN_DONE)
+    if [ "$SCAN_DONE" == "true" ]; then
         ##########################################################
-        # CONTAINERS
+        echoInfo "LOADING CONTAINERS INFO"...
         ##########################################################
 
         ALL_CONTAINERS_PAUSED="true"
@@ -182,13 +141,13 @@ while : ; do
         ALL_CONTAINERS_RUNNING="true"
 
         for name in "${MAIN_CONTAINERS[@]}"; do
-            GLOBAL_COMMON="$DOCKER_COMMON/$NAME/kiraglob"
+            GLOBAL_COMMON="$DOCKER_COMMON/${name}/kiraglob"
             CONTAINER_STATUS="unknown"
             CONTAINER_HEALTH="unknown"
             CONTAINER_SYNCING="false"
             CONTAINER_BLOCK="0"
             CONTAINER_EXISTS="$(globGet "${name}_EXISTS")"
-            CONTAINER_RUNTIME=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
+            CONTAINER_RUNTIME="$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")"
             [ -z "$CONTAINER_RUNTIME" ] && CONTAINER_RUNTIME="unknown"
 
             if [ "$CONTAINER_EXISTS" == "true" ] ; then
@@ -220,7 +179,7 @@ while : ; do
         done
 
         ##########################################################
-        # STATUSES
+        echoInfo "LOADING STATUSES..."
         ##########################################################
 
         colNot="gre"
@@ -259,7 +218,7 @@ while : ; do
     fi
 
     ##########################################################
-    # SNAPSOT
+    echoInfo "LOADING SNAPSHOT INFO..."
     ##########################################################
 
     SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
@@ -268,7 +227,7 @@ while : ; do
     selB="b"
     colSnaOpt="whi"
     colSnaInf="whi"
-    SNAP_OPTN="Create or Expose Chain Snaps."
+    SNAP_OPTN="Create or Expose Snapshot"
     SNAP_INFO=""
     if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
         SNAP_INFO="snapshot is scheduled or ongoing..."
@@ -281,18 +240,18 @@ while : ; do
         SNAP_INFO="snapshot is exposed"
     elif [ "$SNAP_EXPOSE" != "true" ] ; then
         SNAP_INFO="snapshot is NOT exposed"
-        SNAP_OPTN="Create or Hide Chain Snapshot"
+        SNAP_OPTN="Create or Hide Snapshot"
     fi
 
     if [ "${SNAPSHOT_EXECUTE,,}" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
-        SNAP_INFO="$MAIN_CONTAINER_STATUS $MAIN_CONTAINER can't be snapshot"
+        SNAP_INFO="stopped node can't be snapshot"
         colSnaInf="red"
         colSnaOpt="bla"
         selB="r"
     fi
 
     ##########################################################
-    # AUTOMATED UPGRADES
+    echoInfo "LOADING AUTOMATED UPGRADES INFO..."
     ##########################################################
 
     AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
@@ -308,7 +267,7 @@ while : ; do
     fi
 
     ##########################################################
-    # NETWORKING & FIREWALL
+    echoInfo "LOADING NETWORKING & FIREWALL INFO..."
     ##########################################################
 
     PORTS_EXPOSURE=$(toLower "$(globGet PORTS_EXPOSURE)")
@@ -327,7 +286,7 @@ while : ; do
     fi
 
     ##########################################################
-    # UPGRADES
+    echoInfo "LOADING UPGRADES INFO..."
     ##########################################################
 
     PLAN_DONE=$(globGet PLAN_DONE)
@@ -346,19 +305,19 @@ while : ; do
         [ "${UPGRADE_INSTATE,,}" == "true" ] && UPGRADE_TYPE="SOFT"
         TMP_UPGRADE_MSG="NEW $UPGRADE_TYPE FORK UPGRADE"
         if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then
-            colNetInf="red"
-            NETF_INFO="NETWORK UPGRADE FAILED, REINSTALL NODE MANUALLY"
+            colNot="red"
+            NOTIFY_INFO="UPGRADE FAILED, REINSTALL NODE MANUALLY"
         elif [[ $UPGRADE_TIME_LEFT -gt 0 ]] && [[ $UPGRADE_TIME_LEFT -lt 31536000 ]] ; then
             UPGRADE_TIME_LEFT=$(prettyTimeSlim $UPGRADE_TIME_LEFT)
-            NETF_INFO="${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT"
+            NOTIFY_INFO="${TMP_UPGRADE_MSG} IN $UPGRADE_TIME_LEFT"
         else
-            colNetInf="yel"
-            NETF_INFO="${TMP_UPGRADE_MSG} IS ONGOING"
+            colNot="yel"
+            NOTIFY_INFO="${TMP_UPGRADE_MSG} IS ONGOING"
         fi
     fi
 
     ##########################################################
-    # VALIDATOR SPECIFIC CONFIGURATION
+    echoInfo "LOADING VALIDATOR SPECIFIC CONFIGURATION..."
     ##########################################################
 
     CATCHING_UP=$(globGet CATCHING_UP)
@@ -400,13 +359,13 @@ while : ; do
         colValOpt="bla"
     fi
 
-    if [ "${SCAN_DONE,,}" == "true" ] && [ "$CATCHING_UP" != "true" ] ; then
+    if [ "${SCAN_DONE,,}" == "true" ] && [ "$CATCHING_UP" == "true" ] ; then
         colNot="yel"
-        NOTIFY_INFO="PLEASE WAIT, CATCHIN UP WITH LATEST NETWORK STATE"
+        NOTIFY_INFO="PLEASE WAIT, CATCHING UP WITH LATEST NETWORK STATE"
     fi
 
     ##########################################################
-    # FORMATTING
+    echoInfo "LOADING FORMATTING..."
     ##########################################################
 
     VAL_ACT=$(strFixC "$VAL_ACT" 12)
@@ -464,11 +423,11 @@ while : ; do
     [ "$selV" != "r" ] && \
     echoC ";whi" "| $(echoC "res;$colValOpt" "[$(toUpper "$selV")] | $VALR_OPTN") : $(echoC "res;$colValInf" "$VALR_INFO") |"
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
-    echoC ";whi" "| [S]   Open Service & Setup Tool      |    [R]  Refresh    |     [X] Exit     |"
+    echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
-    timeout=60
-    [ "$IS_SCAN_DONE" != "true" ] && timeout=10
+    timeout=300
+    [ "$SCAN_DONE" != "true" ] && timeout=10
     pressToContinue --timeout=$timeout 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
     setterm -cursor on
     clear
@@ -539,7 +498,7 @@ while : ; do
         echoInfo "INFO: Option '$VSEL' is NOT available at the moment."
     fi
 
-    echoNC ";gre" "Press any key to continue:" && pressToContinue
+    echoNC "bli;whi" "Press any key to continue..." && pressToContinue
     continue
 
 ####################################################################

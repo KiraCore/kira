@@ -35,7 +35,7 @@ while : ; do
 
     # on loop continue assume fail and exit auto-configuration
     [ "$AUTOCONFIGURE_EXIT" != "false" ] && echoWarn "WARNING: Snapshot autoconfig failed" && break
-    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC ";gre" "Press any key to continue" && pressToContinue
+    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
 
     if [ -z "$snap_file" ] ; then
         SNAPSHOTS=`ls $KIRA_SNAP/*.tar` || SNAPSHOTS=""
@@ -228,6 +228,6 @@ while : ; do
     echoC ";whi" "       SNAPSHOT_HEIGHT: $(globGet SNAPSHOT_HEIGHT)"
     echoC ";whi" "         SNAPSHOT_SYNC: $(globGet SNAPSHOT_SYNC)"
     echoC ";whi" "    SNAPSHOT_CORRUPTED: $(globGet SNAPSHOT_CORRUPTED)"
-    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC ";gre" "Press any key to continue" && pressToContinue
+    [ "$MANUALCONFIG_WAILT" != "false" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
     break
 done
