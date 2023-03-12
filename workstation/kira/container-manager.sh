@@ -1,8 +1,11 @@
 #!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# $KIRA_MANAGER/kira/container-manager.sh --name=validator
 
-name="$(toLower "$1")"
+getArgs "$1" 
+
+# name="$(toLower "$1")"
 COMMON_PATH="$DOCKER_COMMON/$name"
 GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -14,9 +17,9 @@ set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 cd "$KIRA_HOME"
-VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
+
 CONTAINER_STATUS="$KIRA_SCAN/status/$name"
-CONTAINER_DUMP="$KIRA_DUMP/${name,,}"
+CONTAINER_DUMP="$KIRA_DUMP/${name}"
 WHITESPACE="                                                          "
 
 TMP_DIR="/tmp/kira-cnt-stats" # performance counters directory
@@ -26,7 +29,7 @@ echoInfo "INFO: Cleanup, getting container manager ready..."
 
 mkdir -p "$TMP_DIR" "$COMMON_LOGS" "$CONTAINER_DUMP"
 rm -fv "$KADDR_PATH"
-touch "$KADDR_PATH" "$VALINFO_SCAN_PATH"
+touch "$KADDR_PATH" 
 
 VALIDATOR_ADDR=""
 VALINFO=""
@@ -34,24 +37,24 @@ HOSTNAME=""
 KIRA_NODE_BLOCK=""
 LOADING="true"
 while : ; do
-    START_TIME="$(date -u +%s)"
+    
     NETWORKS=$(globGet "NETWORKS")
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KADDR=$(tryCat $KADDR_PATH "")
-    LATEST_BLOCK_HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
-    [ "${name,,}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
+    
+    [ "${name}" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
 
     touch "${KADDR_PATH}.pid" && if ! kill -0 $(tryCat "${KADDR_PATH}.pid") 2> /dev/null ; then
-        if [ "${name,,}" == "interx" ] ; then
+        if [ "${name}" == "interx" ] ; then
             echo $(curl interx.local:$(globGet CUSTOM_INTERX_PORT)/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$KADDR_PATH" &
             PID2="$!" && echo "$PID2" > "${KADDR_PATH}.pid"
         fi
     fi
 
-    if [[ "${name,,}" =~ ^(interx|validator|sentry|seed)$ ]] ; then
+    if [[ "${name}" =~ ^(interx|validator|sentry|seed)$ ]] ; then
         SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
-        if [ "${name,,}" != "interx" ] ; then 
+        if [ "${name}" != "interx" ] ; then 
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
@@ -61,35 +64,171 @@ while : ; do
         (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
 
-#    ########################################################################
-#
-#        # globGet validator_SEKAID_STATUS
-#        # globGet interx_interxd_STATUS
-#
-#    if [[ "$name" =~ ^(interx|validator|sentry|seed)$ ]] ; then
-#        SEKAID_STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
-#        if [ "${name,,}" != "interx" ] ; then 
-#            KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
-#            (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
-#        fi
-#        KIRA_NODE_CATCHING_UP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo -n "")
-#        [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
-#
-#        NODE_BLOCK=$(jsonQuickParse "latest_block_height" $SEKAID_STATUS_FILE 2> /dev/null || echo "0")
-#        (! $(isNaturalNumber "$NODE_BLOCK")) && NODE_BLOCK="0"
-#    fi
-#
-#
-#
-#    ########################################################################
-#    set +x && printf "\033c" && clear
-#    echoC ";whi" " =============================================================================="
-# echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "KIRA $(toUpper $name) CONTAINER MANAGER $KIRA_SETUP_VER" 78)")|"
-#    echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
-#    echoC ";whi" "| VAL.ACTIVE | V.INACTIVE | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
-#    echoC ";whi" "| NODE BLOCK | LAST BLOCK |   STATUS   |   HEALTH   | VISIBILITY |   RUNTIME   |"
-#
-#    ########################################################################
+    ########################################################################
+
+        # globGet validator_SEKAID_STATUS
+        # globGet interx_interxd_STATUS
+
+    ##########################################################
+    echoInfo "LOADING CONTAINER STATISTICS..."
+    ##########################################################
+
+    
+    if [[ "$name" =~ ^(interx|validator|sentry|seed)$ ]] ; then
+        STATUS_FILE=$(globFile "${name}_SEKAID_STATUS")
+    elif [[ "$name" =~ ^(interx)$ ]] ; then
+        STATUS_FILE=$(globFile "${name}_INTERX_STATUS")
+    else
+        STATUS_FILE=""
+    fi
+
+    if (! $(isFileEmpty "$STATUS_FILE")) ; then
+        NODE_ID=$(jsonQuickParse "id" $STATUS_FILE 2> /dev/null || echo -n "")
+
+        CATCHING_UP=$(toLower "$(jsonQuickParse "catching_up" $STATUS_FILE 2>/dev/null || echo -n "")")
+        [ "$CATCHING_UP" != "true" ] && CATCHING_UP="false"
+
+        NODE_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_FILE 2> /dev/null || echo "0")
+        (! $(isNaturalNumber "$NODE_BLOCK")) && NODE_BLOCK="0"
+    else
+        NODE_ID=""
+        NODE_BLOCK=""
+        CATCHING_UP=""
+    fi
+    
+    KIRA_DOCKER_NETWORK=$(globGet KIRA_DOCKER_NETWORK)
+
+    CONTAINER_ID=$(globGet "${name}_ID")
+    CONTAINER_STATUS="$(globGet "${name}_STATUS")"
+    CONTAINER_HEALTH="$(globGet "${name}_HEALTH")"
+    CONTAINER_HOSTNAME=$(globGet "${name}_HOSTNAME")
+    CONTAINER_IP=$(globGet "${name}_IP_${KIRA_DOCKER_NETWORK}")
+
+    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON")
+    RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
+    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON" | grep --color=never -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b' /dev/null || echo "")
+    LATEST_BLOCK=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
+
+    NOW_TIME="$(date -u +%s)"
+    RESTART_TIME=$(globGet RESTART_TIME "$GLOBAL_COMMON")
+    (! $(isNaturalNumber "$RESTART_TIME")) && RESTART_TIME="$NOW_TIME"
+    UPTIME=$(prettyTimeSlim $(($(date -u +%s) - $RESTART_TIME)))
+
+    (! $(isNodeId "$NODE_ID")) && NODE_ID="???"
+    (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP="???"
+    (! $(isNaturalNumber "$NODE_BLOCK")) && NODE_BLOCK="???" && colBloc="bla"
+    (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK="???" && colLBlo="bla"
+    ($(isNullOrWhitespaces "$CONTAINER_STATUS")) && CONTAINER_STATUS="???" && colCSta"bla"
+    ($(isNullOrWhitespaces "$CONTAINER_HEALTH")) && CONTAINER_HEALTH="???" && colCHel="bla"
+    ($(isNullOrWhitespaces "$CONTAINER_HOSTNAME")) && CONTAINER_HOSTNAME="???" && colCHos"bla"
+    ($(isNullOrWhitespaces "$CONTAINER_IP")) && CONTAINER_IP="???" && colCLIP"bla"
+    ($(isNullOrWhitespaces "$EXTERNAL_STATUS")) && EXTERNAL_STATUS="???" && colExSt="bla"
+    ($(isNullOrWhitespaces "$EXTERNAL_ADDRESS")) && EXTERNAL_ADDRESS="???" && colExAd"bla"
+    (! $(isVersion "$RUNTIME_VERSION")) && RUNTIME_VERSION="???" && colRunt="bla"
+    ( [ "$CONTAINER_STATUS" != "running" ] || ($(isNullOrWhitespaces "$EXTERNAL_STATUS")) ) && EXTERNAL_STATUS="offilne"
+
+    [ "$EXTERNAL_STATUS" == "online" ] && colExSt="gre"
+    [ "$EXTERNAL_STATUS" == "offline" ] && colExSt="red"
+
+    SHOW_VALIDATOR_STATS="false"
+    VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
+    NETPROPS_SCAN_PATH="$KIRA_SCAN/netprops"
+    if [ "$name" == "validator" ] ; then
+        ##########################################################
+        echoInfo "LOADING VALIDATOR STATISTICS..."
+        ##########################################################
+
+        NODE_ADDR=$(globGet VALIDATOR_ADDR)
+
+        VTOP=$(jsonQuickParse "top" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+        VSTREAK=$(jsonQuickParse "streak" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+        VSTATUS=$(jsonQuickParse "status" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+        VMISSCHANCE=$(jsonQuickParse "mischance" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+        VMISSMAX=$(jsonQuickParse "mischance_confidence" $NETPROPS_SCAN_PATH 2> /dev/null || echo -n "")
+        VPRODUCED=$(jsonQuickParse "produced_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+        VMISSED=$(jsonQuickParse "missed_blocks_counter" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
+
+        (! $(isNaturalNumber "$VTOP")) && VTOP="???" && colVTop="bla"
+        (! $(isNaturalNumber "$VSTREAK")) && VSTREAK="???" && colVStr="bla"
+        (! $(isNaturalNumber "$VSTATUS")) && VSTATUS="???" && colVSta="bla"
+        (! $(isNaturalNumber "$VMISSCHANCE")) && VMISSCHANCE="???" && colVMCh="bla"
+        (! $(isNaturalNumber "$VMISSMAX")) && VMISSMAX="???" && colVMCh="bla"
+        VMISSCHANCE="${VMISSCHANCE}/${VMISSMAX}"
+        (! $(isNaturalNumber "$VPRODUCED")) && VPRODUCED="???" && colVPro="bla"
+        (! $(isNaturalNumber "$VMISSED")) && VMISSED="???" && colVMis="bla"
+
+        SHOW_VALIDATOR_STATS="true"
+    fi
+
+    ##########################################################
+    echoInfo "FORMATTING DATA FIELDS..."
+    ##########################################################
+
+    SCAN_DONE=$(globGet IS_SCAN_DONE)
+    if [ "$SCAN_DONE" != "true" ]; then
+        # CONTAINER STATISTICS
+        NODE_ID="loading..."
+        NODE_BLOCK="loading..."
+        CATCHING_UP="loading..."
+        CONTAINER_STATUS="loading..."
+        CONTAINER_HEALTH="loading..."
+        EXTERNAL_STATUS="loading..."&& colExSt="bla"
+        RUNTIME_VERSION="loading..."
+        CONTAINER_IP="loading..."
+        CONTAINER_HOSTNAME="loading..."
+        EXTERNAL_ADDRESS="loading..."
+        # VALIDATOR STATISTICS
+        VTOP="loading..."
+        VSTREAK="loading..."
+        VSTATUS="loading..."
+        VMISSCHANCE="loading..."
+        VPRODUCED="loading..."
+        VMISSED="loading..."
+    fi
+
+    NODE_BLOCK=$(strFixC "$NODE_BLOCK" 12)
+    LATEST_BLOCK=$(strFixC "$LATEST_BLOCK" 12)
+    CONTAINER_STATUS=$(strFixC "$CONTAINER_STATUS" 12)
+    CONTAINER_HEALTH=$(strFixC "$CONTAINER_HEALTH" 12)
+    EXTERNAL_STATUS=$(strFixC "$(toUpper $EXTERNAL_STATUS)" 12)
+    RUNTIME_VERSION=$(strFixC "$RUNTIME_VERSION" 13)
+
+    VTOP=$(strFixC "$VTOP" 12)
+    VSTREAK=$(strFixC "$VSTREAK" 12)
+    VSTATUS=$(strFixC "$VSTATUS" 12)
+    VMISSCHANCE=$(strFixC "$VMISSCHANCE" 12)
+    VPRODUCED=$(strFixC "$VPRODUCED" 12)
+    VMISSED=$(strFixC "$VMISSED" 13)
+
+    LOCAL_IP=$(strFixC " $LOCAL_IP ($KIRA_DOCKER_NETWORK) " 25)
+    LOCAL_HOST=$(strFixC " $LOCAL_HOST " 25)
+    EXTERNAL_IP=$(strFixC " $GEN_SHA " 26)
+    
+
+    sleep 1
+
+    ########################################################################
+    set +x && printf "\033c" && clear
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "KIRA $(toUpper $name) CONTAINER MANAGER $KIRA_SETUP_VER" 78)")|"
+    echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 38 "." "-")")$(echoC "res;bla" "|")$(echoC "res;bla" "$(strFixC " UPTIME: $UPTIME " 39 "." "-")")|"
+    echoC ";whi" "| NODE BLOCK | LAST BLOCK | CON.STATUS |   HEALTH   | VISIBILITY |   RUNTIME   |"
+    echoC ";whi" "|$(echoC "res;$colBloc" "$NODE_BLOCK")|$(echoC "res;$colLBlo" "$LATEST_BLOCK")|$(echoC "res;$colCSta" "$CONTAINER_STATUS")|$(echoC "res;$colCHel" "$CONTAINER_HEALTH")|$(echoC "res;$colExSt" "$EXTERNAL_STATUS")|$(echoC "res;$colRunt" "$RUNTIME_VERSION")|"
+    [ "$SHOW_VALIDATOR_STATS" == "true" ] && \
+    echoC ";whi" "|    TOP     |   STREAK   | VAL.STATUS | MISSCHANCE | B.PRODUCED | BLOC.MISSED |" && \
+    echoC ";whi" "|$(echoC "res;$colVTop" "$VTOP")|$(echoC "res;$colVStr" "$VSTREAK")|$(echoC "res;$colVSta" "$VSTATUS")|$(echoC "res;$colVMCh" "$VMISSCHANCE")|$(echoC "res;$colVPro" "$VPRODUCED")|$(echoC "res;$colVMis" "$VMISSED")|"
+
+    echoC ";whi" "|        LOCAL IP         |       LOCAL HOST        |     EXTERNAL ADDRESS     |"
+    echoC ";whi" "|$(echoC "res;$colCLIP" "$CONTAINER_IP")|$(echoC "res;$colCHos" "$EXTERNAL_ADDRESS")|$(echoC "res;$colExAd" "$EXTERNAL_ADDRESS")|"
+                                                                          $
+
+    echoC ";whi" "|$(echoC "res;bla" "$(strFixC "-" 78 "." "-")")|"
+    echoC ";whi" "| Container Id: $(strFixL "$CONTAINER_ID" 63)|"
+    echoC ";whi" "|      Node Id: $(strFixL "$NODE_ID" 63)|"
+
+    sleep 60
+    continue
+    ########################################################################
 
     printf "\033c"
     
@@ -107,20 +246,19 @@ while : ; do
         continue
     fi
     
-    ID=$(globGet "${name}_ID")
+    
     EXISTS=$(globGet "${name}_EXISTS")
     STATUS=$(globGet "${name}_STATUS")
     HEALTH=$(globGet "${name}_HEALTH")
     RESTARTING=$(globGet "${name}_RESTARTING")
     STARTED_AT=$(globGet "${name}_STARTED_AT")
     FINISHED_AT=$(globGet "${name}_FINISHED_AT")
-    HOSTNAME=$(globGet "${name}_HOSTNAME")
+    
     PORTS=$(globGet "${name}_PORTS")
 
     # globs
-    RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
-    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON") 
-    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON")
+    
+    
     PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
     IS_HALTING=$(globGet HALT_TASK $GLOBAL_COMMON)
     [ -z "$EXTERNAL_STATUS" ] && EXTERNAL_STATUS="???"
@@ -166,7 +304,7 @@ while : ; do
     echo "|   Health: ${TMPVAR:0:43} |"
     echo "|-------------------------------------------------------|"
 
-    if [ "${name,,}" == "validator" ] && [ ! -z "$VALIDATOR_ADDR" ] ; then
+    if [ "${name}" == "validator" ] && [ ! -z "$VALIDATOR_ADDR" ] ; then
         VSTATUS="" && VTOP="" && VRANK="" && VSTREAK="" && VMISSED="" && VPRODUCED=""
         if (! $(isFileEmpty "$VALINFO_SCAN_PATH")) ; then
             VSTATUS=$(jsonQuickParse "status" $VALINFO_SCAN_PATH 2> /dev/null || echo -n "")
@@ -182,15 +320,15 @@ while : ; do
         fi
         VALADDR_TMP="${VALIDATOR_ADDR}${WHITESPACE}"
         echo "| Val.ADDR: ${VALADDR_TMP:0:43} : $VSTATUS"        
-    elif [ "${name,,}" == "interx" ] && [ ! -z "$KADDR" ] ; then
+    elif [ "${name}" == "interx" ] && [ ! -z "$KADDR" ] ; then
         KADDR_TMP="${KADDR}${WHITESPACE}"
         echo "|   Faucet: ${KADDR_TMP:0:43} |"
     fi
 
-    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${name,,}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
+    if [ ! -z "$EXTERNAL_ADDRESS" ] && [ "$STATUS" != "exited" ] && [[ "${name}" =~ ^(sentry|seed|validator|interx)$ ]] ; then
         TARGET=""
-        [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] && TARGET="(P2P)"
-        [ "${name,,}" == "interx" ] && TARGET="(API)"
+        [[ "${name}" =~ ^(sentry|seed|validator)$ ]] && TARGET="(P2P)"
+        [ "${name}" == "interx" ] && TARGET="(API)"
         
         EX_ADDR="${EXTERNAL_ADDRESS} ${TARGET} ${WHITESPACE}"
         [ "$STATUS" != "running" ] && EXTERNAL_STATUS="OFFLINE"
@@ -323,7 +461,7 @@ while : ; do
                 cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $name container logs"
             fi
 
-            if [ "${SNAPSHOT_TARGET,,}" == "${name,,}" ] && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+            if [ "${SNAPSHOT_TARGET,,}" == "${name}" ] && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
                 echoWarn "WARNING: Snapshot is ongoing, output logs will be included"
                 echo "--- SNAPSHOT LOG START ---" >> $TMP_DUMP
                 cat "$KIRA_SCAN/snapshot.log" >> $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $name container snapshot logs" >> $TMP_DUMP

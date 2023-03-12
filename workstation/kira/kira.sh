@@ -61,7 +61,7 @@ while : ; do
     
 
     ##########################################################
-    echoInfo "LOADING SYSTEM UTILIZATION STATYSTICS..."
+    echoInfo "LOADING SYSTEM UTILIZATION STATISTICS..."
     ##########################################################
 
     CPU_UTIL="$(globGet CPU_UTIL)"      && [ -z "$CPU_UTIL" ]   && CPU_UTIL="???" && colCPU="bla" || colCPU="whi"
@@ -83,7 +83,7 @@ while : ; do
     NET_IFACE=$(strFixC "$NET_IFACE" 13)
 
     ##########################################################
-    echoInfo "LOADING BLOCKCHAIN STATYSTICS..."
+    echoInfo "LOADING BLOCKCHAIN STATISTICS..."
     ##########################################################
 
     VAL_ACT=$(globGet VAL_ACTIVE)       && (! $(isNaturalNumber $VAL_ACT)) && VAL_ACT="???" && colACT="bla" || colACT="whi"
@@ -365,7 +365,7 @@ while : ; do
     fi
 
     ##########################################################
-    echoInfo "LOADING FORMATTING..."
+    echoInfo "FORMATTING DATA FIELDS..."
     ##########################################################
 
     VAL_ACT=$(strFixC "$VAL_ACT" 12)
@@ -423,6 +423,7 @@ while : ; do
     [ "$selV" != "r" ] && \
     echoC ";whi" "| $(echoC "res;$colValOpt" "[$(toUpper "$selV")] | $VALR_OPTN") : $(echoC "res;$colValInf" "$VALR_INFO") |"
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
+    echoC ";whi" "|$(strRepeat - 78)|"
     echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
@@ -435,9 +436,9 @@ while : ; do
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
 
     if [ "$MAIN_CONTAINER_EXISTS" == "true" ] && [ "$VSEL" == "0" ] ; then
-        source $KIRA_MANAGER/kira/container-manager.sh "$MAIN_CONTAINER"
+        $KIRA_MANAGER/kira/container-manager.sh --name="$MAIN_CONTAINER" || echoErr "ERROR: Faile to inspect '$MAIN_CONTAINER' container"
     elif [ "$MAIN_CONTAINER_EXISTS" == "true" ] && [ "$VSEL" == "1" ] ; then
-        source $KIRA_MANAGER/kira/container-manager.sh "interx"
+        $KIRA_MANAGER/kira/container-manager.sh --name="interx" || echoErr "ERROR: Faile to inspect 'interx' container"
     elif  [ "$VSEL" == "r" ] ; then
         continue
     elif  [ "$VSEL" == "s" ] ; then

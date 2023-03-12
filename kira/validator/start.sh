@@ -15,7 +15,7 @@ echoWarn "|  PRIVATE MODE: $(globGet PRIVATE_MODE)"
 echoWarn "------------------------------------------------"
 set -x
 
-globSet EXTERNAL_STATUS "OFFLINE"
+globSet EXTERNAL_STATUS "offline"
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
     if [ "$UPGRADE_MODE" == "soft" ] || [ "$UPGRADE_MODE" == "hard" ] ; then

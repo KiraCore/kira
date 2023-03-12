@@ -28,19 +28,19 @@ VERSION_LOC=$(timeout 8 curl --fail interx.local:$INTERNAL_API_PORT/api/kira/sta
 if [ -z "$VERSION_EXT" ] && [ "$PRIVATE_MODE" != "true" ] ; then
     echoInfo "INFO: External interx status found"
     globSet EXTERNAL_ADDRESS "$PUBLIC_IP:$EXTERNAL_API_PORT"
-    globSet EXTERNAL_STATUS "ONLINE"
+    globSet EXTERNAL_STATUS "online"
 elif [ -z "$VERSION_INT" ] && [ "$PRIVATE_MODE" == "true" ] ; then
     echoInfo "INFO: Internal interx status found"
     globSet EXTERNAL_ADDRESS "$LOCAL_IP:$EXTERNAL_API_PORT"
-    globSet EXTERNAL_STATUS "ONLINE"
+    globSet EXTERNAL_STATUS "online"
 elif [ -z "$VERSION_INT" ] ;then
     echoInfo "INFO: Local interx status found"
     # globSet EXTERNAL_ADDRESS "interx.local:$EXTERNAL_API_PORT"
     globSet EXTERNAL_ADDRESS "$LOCAL_IP:$EXTERNAL_API_PORT"
-    globSet EXTERNAL_STATUS "OFFLINE"
+    globSet EXTERNAL_STATUS "offline"
 else
     echoErr "ERROR: Unknown Status Codes: '$INDEX_STATUS_CODE_EXT' EXTERNAL, '$INDEX_STATUS_CODE_INT' INTERNAL, '$INDEX_STATUS_CODE_LOC' LOCAL"
-    globSet EXTERNAL_STATUS "OFFLINE"
+    globSet EXTERNAL_STATUS "offline"
     sleep 5
     exit 1
 fi

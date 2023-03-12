@@ -147,7 +147,7 @@ sleep 2
 if [ "$(isServiceActive kiraup)" == "true" ] ; then
   cat $KIRA_LOGS/kiraup.log
 else
-  systemctl status kiraup
+  systemctl status kiraup -l --no-pager
   echoErr "ERROR: Failed to launch kiraup service!"
   exit 1
 fi

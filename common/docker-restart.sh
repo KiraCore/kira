@@ -10,5 +10,5 @@ fi
 $KIRA_COMMON/docker-stop.sh
 systemctl daemon-reload  || echoWarn "WARNING: Failed daemon-reload"
 service docker restart || echoWarn "WARNING: Failed to restart docker"
-systemctl status docker || echoWarn "WARNING: Docker service status check failed"
+systemctl status docker -l --no-pager || echoWarn "WARNING: Docker service status check failed"
 

@@ -8,11 +8,13 @@ VALIDATORS64_SCAN_PATH="$KIRA_SCAN/validators64"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
 
+NETPROPS_SCAN_PATH="$KIRA_SCAN/netprops"
 VALOPERS_SCAN_PATH="$KIRA_SCAN/valopers"
 CONSENSUS_SCAN_PATH="$KIRA_SCAN/consensus"
 VALIDATORS_SCAN_PATH="$KIRA_SCAN/validators"
 VALOPERS_COMM_RO_PATH="$DOCKER_COMMON_RO/valopers"
 CONSENSUS_COMM_RO_PATH="$DOCKER_COMMON_RO/consensus"
+NETPROPS_COMM_RO_PATH="$DOCKER_COMMON_RO/netprops"
 
 INFRA_MODE=$(globGet INFRA_MODE)
 
@@ -25,6 +27,7 @@ echoWarn "|   VALINFO_SCAN_PATH: $VALINFO_SCAN_PATH"
 echoWarn "| VALSTATUS_SCAN_PATH: $VALSTATUS_SCAN_PATH"
 echoWarn "|  VALOPERS_SCAN_PATH: $VALOPERS_SCAN_PATH"
 echoWarn "| CONSENSUS_SCAN_PATH: $CONSENSUS_SCAN_PATH"
+echoWarn "|  NETPROPS_SCAN_PATH: $NETPROPS_SCAN_PATH"
 echoWarn "------------------------------------------------"
 set -x
 
@@ -34,12 +37,14 @@ touch "$VALSTATUS_SCAN_PATH" "$VALOPERS_SCAN_PATH" "$VALINFO_SCAN_PATH"
 echoInfo "INFO: Saving valopers info..."
 (curl --fail "0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/valopers?all=true" || echo -n "") > $VALOPERS_SCAN_PATH
 (curl --fail "0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/consensus" || echo -n "") > $CONSENSUS_SCAN_PATH
+(curl --fail "0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/kira/gov/network_properties" || echo -n "") > $NETPROPS_SCAN_PATH
 
 # let containers know the validators info
 ($(isSimpleJsonObjOrArrFile "$VALOPERS_SCAN_PATH")) && cp -afv "$VALOPERS_SCAN_PATH" "$VALOPERS_COMM_RO_PATH" || echo -n "" > "$VALOPERS_COMM_RO_PATH"
 ($(isSimpleJsonObjOrArrFile "$CONSENSUS_SCAN_PATH")) && cp -afv "$CONSENSUS_SCAN_PATH" "$CONSENSUS_COMM_RO_PATH" || echo -n "" > "$CONSENSUS_COMM_RO_PATH"
+($(isSimpleJsonObjOrArrFile "$NETPROPS_SCAN_PATH")) && cp -afv "$NETPROPS_SCAN_PATH" "$NETPROPS_COMM_RO_PATH" || echo -n "" > "$NETPROPS_COMM_RO_PATH"
 
-if [[ "$(globGet INFRA_MODE)" =~ ^(validator|local)$ ]] ; then
+if [[ "$(globGet INFRA_MODE)" =~ ^(validator)$ ]] ; then
     echoInfo "INFO: Fetching validator address.."
     VALIDATOR_ADDR=$(timeout 30 echo $(docker exec -i validator /bin/bash -c ". /etc/profile;showAddress validator") | xargs || echo -n "")
     ($(isKiraAddress "$VALIDATOR_ADDR")) && globSet VALIDATOR_ADDR "$VALIDATOR_ADDR" || VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)

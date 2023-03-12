@@ -22,7 +22,7 @@ SNAP_FILE_INPUT="$COMMON_READ/snap.tar"
 COMMON_GENESIS="$COMMON_READ/genesis.json"
 EXPORTED_GENESIS="$SEKAID_HOME/genesis-export.json"
 
-globSet EXTERNAL_STATUS "OFFLINE"
+globSet EXTERNAL_STATUS "offline"
 
 while [ "$(globGet INIT_DONE)" != "true" ] && ($(isFileEmpty "$SNAP_FILE_INPUT")) && ($(isFileEmpty "$COMMON_GENESIS")) ; do
     echoInfo "INFO: Waiting for genesis file to be provisioned... ($(date))"

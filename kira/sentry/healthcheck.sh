@@ -59,14 +59,14 @@ if [ ! -z "$EXTERNAL_DNS" ] && [ ! -z "$EXTERNAL_PORT" ] ; then
     echoInfo "INFO: Checking availability of the external address '$EXTERNAL_DNS:$EXTERNAL_PORT'"
     if timeout 15 nc -z $EXTERNAL_DNS $EXTERNAL_PORT ; then 
         echoInfo "INFO: Success, your node external address '$EXTERNAL_DNS' is exposed"
-        globSet EXTERNAL_STATUS "ONLINE"
+        globSet EXTERNAL_STATUS "online"
     else
         echoWarn "WARNING: Your node external address is NOT visible to other nodes"
-        globSet EXTERNAL_STATUS "OFFLINE"
+        globSet EXTERNAL_STATUS "offline"
     fi
 else
     echoWarn "WARNING: This node is NOT advertising its port ('$EXTERNAL_PORT') or external address ('$EXTERNAL_DNS') to other nodes in the network!"
-    globSet EXTERNAL_STATUS "OFFLINE"
+    globSet EXTERNAL_STATUS "offline"
 fi
 
 if [ "${FAILED,,}" == "true" ] ; then

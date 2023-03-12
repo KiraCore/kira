@@ -15,16 +15,7 @@ echoWarn "|    INTERX HOME: $INTERXD_HOME"
 echoWarn "------------------------------------------------"
 set -x
 
-KIRA_ADDRBOOK_FILE=$(globFile KIRA_ADDRBOOK)
-CACHE_DIR="$COMMON_DIR/cache"
-
-globSet EXTERNAL_STATUS "OFFLINE"
-
-RESTART_COUNTER=$(globGet RESTART_COUNTER)
-if ($(isNaturalNumber $RESTART_COUNTER)) ; then
-    globSet RESTART_COUNTER "$(($RESTART_COUNTER+1))"
-    globSet RESTART_TIME "$(date -u +%s)"
-fi
+globSet EXTERNAL_STATUS "offline"
 
 PING_ADDR=$(globGet "$PING_TARGET" $GLOBAL_COMMON_RO)
 PING_ADDR_RES=$(resolveDNS "$PING_TARGET")
@@ -40,6 +31,8 @@ while ! ping -c1 $PING_TARGET &>/dev/null ; do
 done
 
 if [ "$(globGet INIT_DONE)" != "true" ]; then
+    CACHE_DIR="$COMMON_DIR/cache"
+
     rm -rfv $INTERXD_HOME/*
     mkdir -p "$CACHE_DIR" "$INTERXD_HOME"
     grpc="dns:///$PING_TARGET:$DEFAULT_GRPC_PORT"
