@@ -123,7 +123,7 @@ while : ; do
     ($(isNullOrWhitespaces "$CONTAINER_HOSTNAME")) && CONTAINER_HOSTNAME="???" && colCHos"bla"
     ($(isNullOrWhitespaces "$CONTAINER_IP")) && CONTAINER_IP="???" && colCLIP"bla"
     ($(isNullOrWhitespaces "$EXTERNAL_STATUS")) && EXTERNAL_STATUS="???" && colExSt="bla"
-    ($(isNullOrWhitespaces "$EXTERNAL_ADDRESS")) && EXTERNAL_ADDRESS="???" && colExAd"bla"
+    ($(isNullOrWhitespaces "$EXTERNAL_ADDRESS")) && EXTERNAL_ADDRESS="???" && colExAd="bla"
     (! $(isVersion "$RUNTIME_VERSION")) && RUNTIME_VERSION="???" && colRunt="bla"
     ( [ "$CONTAINER_STATUS" != "running" ] || ($(isNullOrWhitespaces "$EXTERNAL_STATUS")) ) && EXTERNAL_STATUS="offilne"
 
@@ -200,9 +200,9 @@ while : ; do
     VPRODUCED=$(strFixC "$VPRODUCED" 12)
     VMISSED=$(strFixC "$VMISSED" 13)
 
-    LOCAL_IP=$(strFixC " $LOCAL_IP ($KIRA_DOCKER_NETWORK) " 25)
-    LOCAL_HOST=$(strFixC " $LOCAL_HOST " 25)
-    EXTERNAL_IP=$(strFixC " $GEN_SHA " 26)
+    CONTAINER_IP=$(strFixC " $CONTAINER_IP ($KIRA_DOCKER_NETWORK) " 25)
+    CONTAINER_HOSTNAME=$(strFixC " $CONTAINER_HOSTNAME " 25)
+    EXTERNAL_ADDRESS=$(strFixC " $EXTERNAL_ADDRESS " 26)
     
 
     sleep 1
@@ -218,9 +218,9 @@ while : ; do
     echoC ";whi" "|    TOP     |   STREAK   | VAL.STATUS | MISSCHANCE | B.PRODUCED | BLOC.MISSED |" && \
     echoC ";whi" "|$(echoC "res;$colVTop" "$VTOP")|$(echoC "res;$colVStr" "$VSTREAK")|$(echoC "res;$colVSta" "$VSTATUS")|$(echoC "res;$colVMCh" "$VMISSCHANCE")|$(echoC "res;$colVPro" "$VPRODUCED")|$(echoC "res;$colVMis" "$VMISSED")|"
 
-    echoC ";whi" "|        LOCAL IP         |       LOCAL HOST        |     EXTERNAL ADDRESS     |"
-    echoC ";whi" "|$(echoC "res;$colCLIP" "$CONTAINER_IP")|$(echoC "res;$colCHos" "$EXTERNAL_ADDRESS")|$(echoC "res;$colExAd" "$EXTERNAL_ADDRESS")|"
-                                                                          $
+    echoC ";whi" "|------- LOCAL IP --------|------ LOCAL HOST -------|---- EXTERNAL ADDRESS ----|"
+    echoC ";whi" "|$(echoC "res;$colCLIP" "$CONTAINER_IP")|$(echoC "res;$colCHos" "$CONTAINER_HOSTNAME")|$(echoC "res;$colExAd" "$EXTERNAL_ADDRESS")|"
+    echoC ";whi" "|----- CONTAINER ID ------|------- NODE ID ---------|---- EXTERNAL ADDRESS ----|"
 
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC "-" 78 "." "-")")|"
     echoC ";whi" "| Container Id: $(strFixL "$CONTAINER_ID" 63)|"

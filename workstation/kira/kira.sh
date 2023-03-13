@@ -423,7 +423,6 @@ while : ; do
     [ "$selV" != "r" ] && \
     echoC ";whi" "| $(echoC "res;$colValOpt" "[$(toUpper "$selV")] | $VALR_OPTN") : $(echoC "res;$colValInf" "$VALR_INFO") |"
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
-    echoC ";whi" "|$(strRepeat - 78)|"
     echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
