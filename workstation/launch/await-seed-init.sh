@@ -120,12 +120,12 @@ while : ; do
     [ "$NETWORK_NAME" != "$NETWORK" ] && \
         echoErr "ERROR: Expected network name to be '$NETWORK_NAME' but got '$NETWORK'" && FAILURE="true"
 
-    if [ "${FAILURE,,}" == "true" ] ; then
+    if [ "$FAILURE" == "true" ] ; then
         echoErr "ERROR: $CONTAINER_NAME node setup failed"
         retry=$((retry + 1))
         if [[ $retry -le 2 ]] ; then
             echoInfo "INFO: Attempting $CONTAINER_NAME restart ${retry}/2"
-            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+            $KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER_NAME" --await="true" --task="restart"
             continue
         fi
         sleep 30 && exit 1

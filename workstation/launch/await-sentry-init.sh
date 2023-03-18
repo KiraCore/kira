@@ -131,12 +131,12 @@ while : ; do
         FAILURE="true"
     fi
 
-    if [ "${FAILURE,,}" == "true" ] ; then
+    if [ "$FAILURE" == "true" ] ; then
         echoErr "ERROR: $CONTAINER_NAME node setup failed"
         retry=$((retry + 1))
         if [[ $retry -le 1 ]] ; then
             echoInfo "INFO: Attempting $CONTAINER_NAME restart ${retry}/1"
-            $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart"
+            $KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER_NAME" --await="true" --task="restart"
             continue
         fi
         sleep 30

@@ -54,23 +54,23 @@ fi
 CONTAINER_EXISTS=$($KIRA_COMMON/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
 
-[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
-[ "$(globGet HALT_TASK $GLOBAL_COMMON)" != "true" ] && [ "${IS_SYNCING,,}" == "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' is NOT halted and is still catching up!" && sleep 10 && exit 1
-[ "${SNAPSHOT_EXECUTE,,}" != "true" ] && echoErr "ERROR: Snapshoot was not requested and will not be processed, aborting..." && sleep 10 && exit 1
+[ "$CONTAINER_EXISTS" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
+[ "$(globGet HALT_TASK $GLOBAL_COMMON)" != "true" ] && [ "$IS_SYNCING" == "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' is NOT halted and is still catching up!" && sleep 10 && exit 1
+[ "$SNAPSHOT_EXECUTE" != "true" ] && echoErr "ERROR: Snapshoot was not requested and will not be processed, aborting..." && sleep 10 && exit 1
 
 [ $LATEST_BLOCK_HEIGHT -lt $CONTAINER_BLOCK_HEIGHT ] && LATEST_BLOCK_HEIGHT=$CONTAINER_BLOCK_HEIGHT
 
 echoInfo "INFO: Restarting '$CONTAINER_NAME' container and ensuring all processes are killed."
-$KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "false"
+$KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER_NAME" --await="true" --task="restart" --unhalt="false"
 
 CONTAINER_EXISTS=$($KIRA_COMMON/container-exists.sh "$CONTAINER_NAME" || echo "error")
 sleep 15
-[ "${CONTAINER_EXISTS,,}" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
+[ "$CONTAINER_EXISTS" != "true" ] && echoErr "ERROR: Target container '$CONTAINER_NAME' does NOT exists" && sleep 10 && exit 1
 
 SNAP_FILENAME="${NETWORK_NAME}-${LATEST_BLOCK_HEIGHT}-$(date -u +%s).tar"
 KIRA_SNAP_PATH="$KIRA_SNAP/$SNAP_FILENAME"
 
-if [ "${SNAPSHOT_KEEP_OLD,,}" == "true" ] ; then
+if [ "$SNAPSHOT_KEEP_OLD" == "true" ] ; then
     echoInfo "INFO: Old snapshots will NOT be persisted"
     rm -fv $KIRA_SNAP_PATH
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
@@ -83,7 +83,7 @@ fi
 
 docker exec -i $CONTAINER_NAME /bin/bash -c ". /etc/profile && \$COMMON_DIR/snapshot.sh \"$SNAP_FILENAME\"" && SUCCESS="true" || SUCCESS="false"
 
-if [ ! -f "$KIRA_SNAP_PATH" ] || [ "${SUCCESS,,}" != "true" ] ; then
+if [ ! -f "$KIRA_SNAP_PATH" ] || [ "$SUCCESS" != "true" ] ; then
     echoErr "ERROR: Failed to create snapshoot file '$KIRA_SNAP_PATH'"
     rm -fv $KIRA_SNAP_PATH || echoErr "ERROR: Failed to remove corrupted snapshot."
     rm -fv $KIRA_SNAP/zi* || echoErr "ERROR: Failed to wipe zi* files from '$KIRA_SNAP' directory"
@@ -94,7 +94,7 @@ else
     globSet KIRA_SNAP_SHA256 ""
     globSet KIRA_SNAP_PATH "$KIRA_SNAP_PATH"
 
-    if [ "${SNAP_EXPOSE,,}" == "true" ]; then
+    if [ "$SNAP_EXPOSE" == "true" ]; then
         echoInfo "INFO: Exposing snapshoot via INTERX"
         ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH"
     else
@@ -105,9 +105,9 @@ fi
 globSet SNAPSHOT_EXECUTE "false"
 globSet SNAPSHOT_TARGET ""
 
-if [ "${SNAPSHOT_UNHALT,,}" == "true" ] ; then
+if [ "$SNAPSHOT_UNHALT" == "true" ] ; then
     echoInfo "INFO: Restarting and unhalting '$CONTAINER_NAME' container..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
+    $KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER_NAME" --await="true" --task="restart" --unhalt="true"
 else
     echoInfo "INFO: No need to unhalt '$CONTAINER_NAME' container, container was requested to remain stopped"
 fi

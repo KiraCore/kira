@@ -95,7 +95,7 @@ docker run -d \
     $BASE_IMAGE_SRC
 else
     echoInfo "INFO: Container $CONTAINER_NAME is healthy, restarting..."
-    $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER_NAME" "true" "restart" "true"
+    $KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER_NAME" --await"true" --task="restart" --unhalt="true"
 fi
 
 echoInfo "INFO: Waiting for interx to start..."

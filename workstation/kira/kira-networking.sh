@@ -16,11 +16,11 @@ while : ; do
     ALLOWED_OPTIONS="x"
 echo -e "\e[37;1m--------------------------------------------------"
            echo "|         KIRA NETWORKING MANAGER $KIRA_SETUP_VER       |"
-           [ "${PORTS_EXPOSURE,,}" == "enabled" ] && \
+           [ "$PORTS_EXPOSURE" == "enabled" ] && \
            echo -e "|\e[0m\e[33;1m   ALL PORTS ARE OPEN TO THE PUBLIC NETWORKS    \e[37;1m|"
-           [ "${PORTS_EXPOSURE,,}" == "custom" ] && \
+           [ "$PORTS_EXPOSURE" == "custom" ] && \
            echo -e "|\e[0m\e[32;1m      ALL PORTS USE CUSTOM CONFIGURATION        \e[37;1m|"
-           [ "${PORTS_EXPOSURE,,}" == "disabled" ] && \
+           [ "$PORTS_EXPOSURE" == "disabled" ] && \
            echo -e "|\e[0m\e[31;1m        ACCESS TO ALL PORTS IS DISABLED         \e[37;1m|"
            echo "|-------------- $(date '+%d/%m/%Y %H:%M:%S') -------------| [config]"
     i=-1
@@ -49,11 +49,11 @@ echo -e "\e[37;1m--------------------------------------------------"
         echo "| ${INDEX:0:5}| ${TYPE_TMP:0:4} PORT ${P_TMP:0:5} - ${NAME_TMP:0:21} : $PORT_EXPOSURE" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}${i}"
     done
        echo "|------------------------------------------------|"
-       [ "${PORTS_EXPOSURE,,}" != "enabled" ] && \
+       [ "$PORTS_EXPOSURE" != "enabled" ] && \
        echo "| [E] | Force ENABLE All Ports                   |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}e"
-       [ "${PORTS_EXPOSURE,,}" != "custom" ] && \
+       [ "$PORTS_EXPOSURE" != "custom" ] && \
        echo "| [C] | Force CUSTOM Ports Configuration         |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}c"
-       [ "${PORTS_EXPOSURE,,}" != "disabled" ] && \
+       [ "$PORTS_EXPOSURE" != "disabled" ] && \
        echo "| [D] | Force DISABLE All Ports                  |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}d"
        echo "|------------------------------------------------|"
        echo "| [S] | Edit/Show SEED Nodes List                |" && ALLOWED_OPTIONS="${ALLOWED_OPTIONS}s"
@@ -69,11 +69,11 @@ echo -e "\e[37;1m--------------------------------------------------"
     fi
 
     [ -z "$OPTION" ] && continue
-    [[ "${ALLOWED_OPTIONS,,}" != *"$OPTION"* ]] && continue
+    [[ "$ALLOWED_OPTIONS" != *"$OPTION"* ]] && continue
 
-    if [ "${OPTION,,}" != "x" ] && [ "${OPTION,,}" != "p" ] && [ "${OPTION,,}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
+    if [ "${OPTION}" != "x" ] && [ "${OPTION}" != "p" ] && [ "${OPTION}" != "s" ] && [[ $OPTION != ?(-)+([0-9]) ]] ; then
         echoNErr "Press [Y]es to confirm option (${OPTION^^}) or [N]o to cancel: " && pressToContinue y n && ACCEPT=$(globGet OPTION)
-        [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+        [ "$ACCEPT" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
         echo -n ""
     fi
 
@@ -87,21 +87,21 @@ echo -e "\e[37;1m--------------------------------------------------"
         fi
     done
     
-    if [ "${OPTION,,}" == "d" ]; then
+    if [ "${OPTION}" == "d" ]; then
         echoInfo "INFO: Disabling all ports..."
         globSet PORTS_EXPOSURE "disabled"
-    elif [ "${OPTION,,}" == "e" ]; then
+    elif [ "${OPTION}" == "e" ]; then
         echoInfo "INFO: Enabling all ports..."
         globSet PORTS_EXPOSURE "enabled"
-    elif [ "${OPTION,,}" == "c" ]; then
+    elif [ "${OPTION}" == "c" ]; then
         echoInfo "INFO: Enabling custom ports configuration..."
         globSet PORTS_EXPOSURE "custom"
-    elif [ "${OPTION,,}" == "s" ] || [ "${OPTION,,}" == "p" ] ; then
-        [ "${OPTION,,}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
-        [ "${OPTION,,}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
+    elif [ "${OPTION}" == "s" ] || [ "${OPTION}" == "p" ] ; then
+        [ "${OPTION}" == "s" ] && TYPE="seeds" && TARGET="Seed Nodes"
+        [ "${OPTION}" == "p" ] && TYPE="peers" && TARGET="Persistent Peers"
 
-        [ "${OPTION,,}" == "s" ] && FILE=$PUBLIC_SEEDS
-        [ "${OPTION,,}" == "p" ] && FILE=$PUBLIC_PEERS
+        [ "${OPTION}" == "s" ] && FILE=$PUBLIC_SEEDS
+        [ "${OPTION}" == "p" ] && FILE=$PUBLIC_PEERS
         EXPOSURE="public"
 
         echoInfo "INFO: Starting $TYPE editor..."
@@ -114,29 +114,29 @@ echo -e "\e[37;1m--------------------------------------------------"
 
         echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
         echoNErr "Choose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT=$(globGet OPTION)
-        [ "${SELECT,,}" == "c" ] && continue
+        [ "$SELECT" == "c" ] && continue
 
         echoInfo "INFO: Re-starting $CONTAINER container..."
-        $KIRA_MANAGER/kira/container-pkill.sh "$CONTAINER" "true" "restart"
-    elif [ "${OPTION,,}" == "f" ]; then
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$CONTAINER" --await="true" --task="restart"
+    elif [ "${OPTION}" == "f" ]; then
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
-    elif [ "${OPTION,,}" == "r" ]; then
+    elif [ "${OPTION}" == "r" ]; then
         echoInfo "INFO: Restarting network interfaces..."
         $KIRA_MANAGER/launch/update-ifaces.sh
-    elif [ "${OPTION,,}" == "x" ]; then
+    elif [ "${OPTION}" == "x" ]; then
         echoInfo "INFO: Stopping kira networking manager..."
         break
     fi
 
-    if [ "${OPTION,,}" == "e" ] || [ "${OPTION,,}" == "c" ] || [ "${OPTION,,}" == "d" ] ; then
+    if [ "$OPTION" == "e" ] || [ "$OPTION" == "c" ] || [ "$OPTION" == "d" ] ; then
         echoInfo "INFO: Current '$FIREWALL_ZONE' zone rules"
         firewall-cmd --list-ports
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
         echoNErr "Choose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT=$(globGet OPTION)
-        [ "${SELECT,,}" == "c" ] && continue
+        [ "$SELECT" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh
     fi

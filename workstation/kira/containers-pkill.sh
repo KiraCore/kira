@@ -33,7 +33,7 @@ set -x
 if [ ! -z "$CONTAINERS" ] ; then
     for NAME in $CONTAINERS; do
         echoInfo "INFO: Attempting to pkill container $NAME"
-        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "$AWAIT" "$TASK" "$UNHALT"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$NAME" --await="$AWAIT" --task="$TASK" --unhalt="$UNHALT"
     done
 else
     echoWarn "WARNING: NO containers found"

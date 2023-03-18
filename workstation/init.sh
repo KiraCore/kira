@@ -28,17 +28,6 @@ COSIGN_VERSION="v1.13.1"
 # Force console colour to be black
 tput setab 0
 
-set +x
-echo -e  "\e[1;40m======================================================\e[0m"
-echo -e  "\e[1;40m|               KIRA | Manager Init Script           |\e[0m"   
-echo -e  "\e[1;40m|====================================================|\e[0m"
-echo -e  "\e[1;40m|           KIRA USER: $KIRA_USER                     \e[0m"
-echo -e  "\e[1;40m|       TOOLS VERSION: $TOOLS_VERSION                 \e[0m"
-echo -e  "\e[1;40m|      COSIGN VERSION: $COSIGN_VERSION                \e[0m"
-echo -e  "\e[1;40m|   BASE IMG. VERSION: $BASE_IMAGE_VERSION            \e[0m"
-echo -e  "\e[1;40m======================================================\e[0m"
-echo -n ""
-set -x
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
@@ -141,16 +130,16 @@ globSet INIT_MODE "$INIT_MODE"
 loadGlobEnvs
 
 set +x
-echoC ";whi"  "======================================================"
-echoC ";whi"  "|              KIRA | Manager Init Script            |"   
-echoC ";whi"  "|====================================================|"
+echoC ";whi"  "================================================================================"
+echoC ";whi"  "|"$(strFixC "STARTED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78)")|"   
+echoC ";whi"  "================================================================================"
 echoC ";whi"  "|          KIRA USER: $(globGet KIRA_USER)"
 echoC ";whi"  "|          INIT MODE: $(globGet INIT_MODE)"
 echoC ";whi"  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
 echoC ";whi"  "|   BASE IMG. SOURCE: $(globGet NEW_BASE_IMAGE_SRC)"
 echoC ";whi"  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
 echoC ";whi"  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
-echoC ";whi"  "======================================================"
+echoC ";whi"  "================================================================================"
 sleep 3
 echo -n ""
 set -x
@@ -264,7 +253,7 @@ else
 fi
 
 set +x
-echoInfo "------------------------------------------------"
-echoInfo "| FINISHED: INIT                               |"
-echoInfo "------------------------------------------------"
+echoC ";whi"  "================================================================================"
+echoC ";whi"  "|"$(strFixC "FINISHED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78)")|"   
+echoC ";whi"  "================================================================================"
 set -x

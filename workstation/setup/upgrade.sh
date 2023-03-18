@@ -49,7 +49,7 @@ else
     echoInfo "INFO: Success upgrade plan file was found"
 fi
 
-if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
+if [ "$UPGRADE_EXPORT_DONE" == "false" ] ; then
     echoInfo "INFO: Reading repos info..."
 
     globDel "NEXT_KIRA_URL" "NEXT_KIRA_VERSION" "NEXT_KIRA_CHECKSUM"
@@ -72,19 +72,19 @@ if [ "${UPGRADE_EXPORT_DONE,,}" == "false" ] ; then
 
     if [ "$(globGet INFRA_MODE)" == "validator" ] ; then
         UPGRADE_PAUSE_ATTEMPTED=$(globGet UPGRADE_PAUSE_ATTEMPTED)
-        if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "false" ] ; then
+        if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "$UPGRADE_PAUSE_ATTEMPTED" == "false" ] ; then
             echoInfo "INFO: Infra is running in the validator mode. Attempting to pause the validator in order to perform safe in-state upgrade!"
             globSet "UPGRADE_PAUSE_ATTEMPTED" "true"
             PAUSE_FAILED="false"
             docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || PAUSE_FAILED="true"
-            [ "${PAUSE_FAILED,,}" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
+            [ "$PAUSE_FAILED" == "true" ] && echoWarn "WARNING: Failed to pause validator node" || echoInfo "INFO: Validator node was sucesfully paused"
         fi
     fi
 
     echoInfo "INFO: Halting and re-starting all containers..."
     for name in $CONTAINERS; do
         echoInfo "INFO: Halting and re-starting '$name' container..."
-        $KIRA_MANAGER/kira/container-pkill.sh "$name" "true" "restart" "false"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="false"
     done
 
     echoInfo "INFO: Waiting for contianers to restart..."
@@ -131,14 +131,14 @@ fi
 
 UPGRADE_UNPAUSE_ATTEMPTED=$(globGet UPGRADE_UNPAUSE_ATTEMPTED)
 UPDATE_DONE=$(globGet UPDATE_DONE)
-if [ "${UPDATE_DONE,,}" == "true" ] && [ "${UPGRADE_EXPORT_DONE,,}" == "true" ] ; then
-    if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "${UPGRADE_PAUSE_ATTEMPTED,,}" == "true" ]  && [ "${UPGRADE_UNPAUSE_ATTEMPTED,,}" == "true" ] ; then
+if [ "$UPDATE_DONE" == "true" ] && [ "$UPGRADE_EXPORT_DONE" == "true" ] ; then
+    if [ "$(globGet INFRA_MODE)" == "validator" ] && [ "$UPGRADE_PAUSE_ATTEMPTED" == "true" ]  && [ "$UPGRADE_UNPAUSE_ATTEMPTED" == "true" ] ; then
         echoInfo "INFO: Infra is running in the validator mode. Attempting to unpause the validator in order to finalize a safe in-state upgrade!"
         globSet "UPGRADE_UNPAUSE_ATTEMPTED" "true"
         UNPAUSE_FAILED="false"
         docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || UNPAUSE_FAILED="true"
 
-        if [ "${UNPAUSE_FAILED,,}" == "true" ] ; then
+        if [ "$UNPAUSE_FAILED" == "true" ] ; then
             echoWarn "WARNING: Failed to pause validator node"
         else
             echoInfo "INFO: Validator node was sucesfully unpaused"
