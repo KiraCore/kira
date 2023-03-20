@@ -129,16 +129,19 @@ globSet INIT_MODE "$INIT_MODE"
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
 
+tput setab 0
+tput setaf 7
+
 set +x
 echoC ";whi"  "================================================================================"
-echoC ";whi"  "|"$(strFixC "STARTED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78)")|"   
+echoC ";whi"  "|$(strFixC "STARTED KIRA INIT SCRIPT" 78))|"   
 echoC ";whi"  "================================================================================"
-echoC ";whi"  "|          KIRA USER: $(globGet KIRA_USER)"
-echoC ";whi"  "|          INIT MODE: $(globGet INIT_MODE)"
-echoC ";whi"  "|       INFRA SOURCE: $(globGet INFRA_SRC)"
-echoC ";whi"  "|   BASE IMG. SOURCE: $(globGet NEW_BASE_IMAGE_SRC)"
-echoC ";whi"  "|      TOOLS VERSION: $(globGet TOOLS_VERSION)"
-echoC ";whi"  "|     COSIGN VERSION: $(globGet COSIGN_VERSION)"
+echoC ";whi"  "|          KIRA USER:$(strFixL " $(globGet KIRA_USER) " 58)|"
+echoC ";whi"  "|          INIT MODE:$(strFixL " $(globGet INIT_MODE) " 58)|"
+echoC ";whi"  "|       INFRA SOURCE:$(strFixL " $(globGet INFRA_SRC) " 58)|"
+echoC ";whi"  "|   BASE IMG. SOURCE:$(strFixL " $(globGet NEW_BASE_IMAGE_SRC) " 58)|"
+echoC ";whi"  "|      TOOLS VERSION:$(strFixL " $(globGet TOOLS_VERSION) " 58)|"
+echoC ";whi"  "|     COSIGN VERSION:$(strFixL " $(globGet COSIGN_VERSION) " 58)|"
 echoC ";whi"  "================================================================================"
 sleep 3
 echo -n ""
@@ -254,6 +257,6 @@ fi
 
 set +x
 echoC ";whi"  "================================================================================"
-echoC ";whi"  "|"$(strFixC "FINISHED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78)")|"   
+echoC ";whi"  "|$(strFixC "FINISHED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78))|"   
 echoC ";whi"  "================================================================================"
 set -x

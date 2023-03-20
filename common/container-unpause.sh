@@ -12,5 +12,5 @@ if [ -z "$id" ] ; then
     echo "INFO: Container $name does NOT exists"
 else
     echo "INFO: Container $name ($id) was found, unpausing..."
-    docker container unpause $id || echo "WARNING: Container $id could NOT be unpaused"
+    docker container unpause "$id" || echo "WARNING: Container $id could NOT be unpaused"
 fi

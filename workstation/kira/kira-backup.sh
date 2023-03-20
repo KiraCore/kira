@@ -30,22 +30,13 @@ while : ; do
     fi
 done
 
-echoWarn "WARNING: The '$SNAPSHOT_TARGET' container will be forcefully halted in order to safely backup blockchain state!"
-echoNErr "Do you want to [U]n-halt '$SNAPSHOT_TARGET' container after backup is compleated or keep all processes [S]topped: " && pressToContinue u s && SELECT=$(globGet OPTION)
-
-if [ "${SELECT,,}" == "u" ] ; then
-    echoInfo "INFO: Container will be unhalted after backup is complete"
-    globSet SNAPSHOT_UNHALT "true"
-else
-    echoInfo "INFO: Container processes will remain stopped after backup is complete"
-    globSet SNAPSHOT_UNHALT "false"
-fi
-
 echoWarn "WARNING: Snapshot creation will only be started afted node stopped syncing!"
 echoNErr "Do you want to [S]tart creation of a new backup, [D]isable or e[X]it without making changes: "
 pressToContinue s d x && SELECT=$(globGet OPTION)
 [ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
 
+# unhalts container after snapshot is complete
+globSet SNAPSHOT_UNHALT "true"
 globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
 globSet SNAPSHOT_TARGET $SNAPSHOT_TARGET
 [ "${SELECT,,}" == "s" ] && globSet SNAPSHOT_EXECUTE true
@@ -54,7 +45,3 @@ setGlobEnv KIRA_SNAP $KIRA_SNAP
 
 echoInfo "INFO: Snapsot task will be initiated and results saved to '$KIRA_SNAP' directory"
 sleep 2
-
-# globSet SNAPSHOT_EXECUTE false
-# globSet SNAPSHOT_UNHALT "true"
-# globSet SNAPSHOT_KEEP_OLD "false"

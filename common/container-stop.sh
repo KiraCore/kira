@@ -12,5 +12,5 @@ if [ -z "$id" ] ; then
     echo "INFO: Container $name does NOT exists"
 else
     echo "INFO: Container $name ($id) was found, stopping..."
-    docker container stop $id || echo "WARNING: Container $id could NOT be stopped"
+    docker container stop "$id" || echo "WARNING: Container $id could NOT be stopped"
 fi

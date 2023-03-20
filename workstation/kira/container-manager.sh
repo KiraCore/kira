@@ -2,10 +2,13 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/kira/container-manager.sh --name=validator
+set +x
+# Force console colour to be black and text gray
+tput setab 0
+tput setaf 7
 
 getArgs "$1" 
 
-set +x
 echoInfo "INFO: Launching KIRA Container Manager..."
 
 COMMON_PATH="$DOCKER_COMMON/$name"
@@ -78,9 +81,9 @@ while : ; do
     CONTAINER_HOSTNAME=$(globGet "${name}_HOSTNAME")
     CONTAINER_IP=$(globGet "${name}_IP_${KIRA_DOCKER_NETWORK}")
 
-    PROCESSES_HALTED=$(globGet HALT_TASK $GLOBAL_COMMON)
+    PROCESSES_HALTED=$(globGet HALT_TASK "$GLOBAL_COMMON")
     PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
-    EXTERNAL_STATUS=$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON")
+    EXTERNAL_STATUS=$(toLower "$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON")")
     RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
     EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON" | grep --color=never -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b' /dev/null || echo "")
     LATEST_BLOCK=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
@@ -96,6 +99,7 @@ while : ; do
             port_tmp=$(echo "$port" | grep -oP "^0.0.0.0:\K.*" || echo "$port")
             [[ $port_tmp == *":::"* ]] && continue
             map=$(strSplitTakeN / 0 "$port_tmp")
+
             proto=$(strSplitTakeN / 1 "$port_tmp")
             [ "$proto" != "tcp" ] && continue
             CONTAINER_PORTS_MAP="${CONTAINER_PORTS_MAP}${map}, "
@@ -103,22 +107,37 @@ while : ; do
     fi
     CONTAINER_PORTS_MAP=$(strFirstN "$CONTAINER_PORTS_MAP" $(($(strLength "$CONTAINER_PORTS_MAP") - 2)))
 
+    colNID="whi"
+    colBloc="whi"
+    colLBlo="whi"
+    colCID="whi"
+    colCSta="whi"
+    colCHel="whi"
+    colCHos="whi"
+    colCLIP="whi"
+    colExSt="whi"
+    colExAd="whi"
+    colRunt="whi"
+
     (! $(isNodeId "$NODE_ID")) && NODE_ID="???" && colNID="bla"
     (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP="???"
     (! $(isNaturalNumber "$NODE_BLOCK")) && NODE_BLOCK="???" && colBloc="bla"
     (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK="???" && colLBlo="bla"
-    ($(isNullOrWhitespaces "$CONTAINER_ID")) && CONTAINER_ID="???" && colCID"bla"
-    ($(isNullOrWhitespaces "$CONTAINER_STATUS")) && CONTAINER_STATUS="???" && colCSta"bla"
+    ($(isNullOrWhitespaces "$CONTAINER_ID")) && CONTAINER_ID="???" && colCID="bla"
+    ($(isNullOrWhitespaces "$CONTAINER_STATUS")) && CONTAINER_STATUS="???" && colCSta="bla"
     ($(isNullOrWhitespaces "$CONTAINER_HEALTH")) && CONTAINER_HEALTH="???" && colCHel="bla"
-    ($(isNullOrWhitespaces "$CONTAINER_HOSTNAME")) && CONTAINER_HOSTNAME="???" && colCHos"bla"
-    ($(isNullOrWhitespaces "$CONTAINER_IP")) && CONTAINER_IP="???" && colCLIP"bla"
+    ($(isNullOrWhitespaces "$CONTAINER_HOSTNAME")) && CONTAINER_HOSTNAME="???" && colCHos="bla"
+    ($(isNullOrWhitespaces "$CONTAINER_IP")) && CONTAINER_IP="???" && colCLIP="bla"
     ($(isNullOrWhitespaces "$EXTERNAL_STATUS")) && EXTERNAL_STATUS="???" && colExSt="bla"
     ($(isNullOrWhitespaces "$EXTERNAL_ADDRESS")) && EXTERNAL_ADDRESS="???" && colExAd="bla"
     (! $(isVersion "$RUNTIME_VERSION")) && RUNTIME_VERSION="???" && colRunt="bla"
-    [ "$CONTAINER_STATUS" != "running" ] && EXTERNAL_STATUS="offilne"
 
-    [ "$EXTERNAL_STATUS" == "online" ] && colExSt="gre"
+    [ "$CONTAINER_STATUS" != "running" ] && EXTERNAL_STATUS="offilne"
     [ "$EXTERNAL_STATUS" == "offline" ] && colExSt="red"
+    [[ "$CONTAINER_STATUS" =~ ^(created|restarting|"setting up"|"backing up"|halted)$ ]] && colCSta="yel"
+    [[ "$CONTAINER_STATUS" =~ ^(exited|dead)$ ]] && colCSta="red"
+    [[ "$CONTAINER_HEALTH" =~ ^(starting)$ ]] && colCHel="yel"
+    [[ "$CONTAINER_HEALTH" =~ ^(unhealthy|none|unknown)$ ]] && colCHel="red"
 
     SHOW_VALIDATOR_STATS="false"
     VALINFO_SCAN_PATH="$KIRA_SCAN/valinfo"
@@ -172,7 +191,7 @@ while : ; do
 
     selI="i"
     selM="d"
-    selK="u"
+    selK="k"
 
     selR="r"
     selP="p"
@@ -200,63 +219,40 @@ while : ; do
 
     OPTION_INSPECT=$(strFixL " [I] Inspect Container" 25)
     if [ "$PRIVATE_MODE" == "true" ] ; then
+        [ "$EXTERNAL_STATUS" == "online" ] && EXTERNAL_STATUS="LOCAL NET."
         OPTION_PRIVACY=$(strFixL " [D] Disable Priv. Mode" 25)
     else
+        [ "$EXTERNAL_STATUS" == "online" ] && EXTERNAL_STATUS="PUBLIC NET"
         selM="e" && OPTION_PRIVACY=$(strFixL " [E] Enable Privacy Mode" 25)
-        [ "$PRIVATE_MODE" != "false" ] && selM="" && colS="bla"
     fi
-
-    if [ "$PROCESSES_HALTED" == "true" ] ; then
-        OPTION_KILL=$(strFixL " [W] Wake Up Proceses " 26)
-    else
-        selK="k" && OPTION_KILL=$(strFixL " [K] Kill All Proceses " 26)
-        [ "$PROCESSES_HALTED" != "false" ] && selK="" && colK="bla"
-    fi
+    OPTION_KILL=$(strFixL " [K] Kill App Process " 26)
 
     OPTION_LOGS=$(strFixL " [L] Show Logs" 25)
       OPTION_HEALTH=$(strFixL " [H] Show Health Logs" 25)
       OPTION_EXIT=$(strFixL " [X] Exit" 26)
 
-    if [ "$CONTAINER_EXISTS" != "true" ] || [ "$SCAN_DONE" != "true" ] ; then
-        selR=""
-        selP=""
-        selS=""
+    if [ "$CONTAINER_EXISTS" != "true" ] || [ "$SCAN_DONE" != "true" ] || [ "$CONTAINER_STATUS" != "running" ] ; then
         selI=""
         selM=""
         selK=""
+
+        selR=""
+        selP=""
+        selS=""
+        
         selL=""
         selH=""
+
         colI="bla"
-        colP="bla"
-        colS="bla"
         colM="bla"
         colK="bla"
+
         colR="bla"
-    else
-        if [ "$CONTAINER_STATUS" == "paused" ] ; then
-            selS=""
-            selI=""
-            selM=""
-            selR=""
-            selP="u"
-            colI="bla"
-            colS="bla"
-            colM="bla"
-            colK="bla"
-            colR="bla"
-            OPTION_PAUSE=$(strFixL " [U] Unpause Container" 25)
-        elif [ "$CONTAINER_STATUS" != "running" ] ; then 
-            OPTION_START=$(strFixL " [S] Start Container" 26)
-            selI=""
-            selP=""
-            selK=""
-            selR=""
-            selS="s"
-            colI="bla"
-            colP="bla"
-            colK="bla"
-            colR="bla"
-        fi
+        colP="bla"
+        colS="bla"
+
+        colL="bla"
+        colH="bla"
     fi
 
     ##########################################################
@@ -286,44 +282,70 @@ while : ; do
         VMISSED="loading..."
         # INTERX STATISTICS
         FAUCET_ADDR="loading..."
+    else
+        if [ "$CONTAINER_STATUS" == "paused" ] ; then
+            selP="u" && colP="whi"
+            selL="l" && colL="whi"
+            OPTION_PAUSE=$(strFixL " [U] Unpause Container" 25)
+        elif [ "$CONTAINER_STATUS" == "halted" ] ; then
+            selI="i" && colI="whi"
+            selK="w" && colK="yel"
+            selR="r" && colR="whi"
+            selP="p" && colP="whi"
+            selS="t" && colS="whi"
+            selL="l" && colL="whi"
+            selH="h" && colH="whi"
+            OPTION_KILL=$(strFixL " [W] Wake Up App Process " 26)
+        elif [[ "$CONTAINER_STATUS" =~ ^("setting up"|"backing up")$ ]] ; then
+            selI="i" && colI="whi"
+            selL="l" && colL="whi"
+            selH="h" && colH="whi"
+        elif [ "$CONTAINER_STATUS" == "exited" ] ; then
+            selS="s" && colS="red"
+            selL="l" && colL="whi"
+            OPTION_START=$(strFixL " [S] Start Container" 26)
+        fi
+
+        CONTAINER_IP="$CONTAINER_IP ($KIRA_DOCKER_NETWORK)"
     fi
 
-    NODE_BLOCK=$(strFixC "$NODE_BLOCK" 12)
-    LATEST_BLOCK=$(strFixC "$LATEST_BLOCK" 12)
-    CONTAINER_STATUS=$(strFixC "$CONTAINER_STATUS" 12)
-    CONTAINER_HEALTH=$(strFixC "$CONTAINER_HEALTH" 12)
-    EXTERNAL_STATUS=$(strFixC "$(toUpper $EXTERNAL_STATUS)" 12)
-    RUNTIME_VERSION=$(strFixC "$RUNTIME_VERSION" 13)
+    P_NODE_BLOCK=$(strFixC "$NODE_BLOCK" 12)
+    P_LATEST_BLOCK=$(strFixC "$LATEST_BLOCK" 12)
+    # ensure lowercase characters when printing out "loading..." info
+    [ "$SCAN_DONE" == "true" ] && P_CONTAINER_STATUS=$(strFixC "$(toUpper "$CONTAINER_STATUS")" 12) || P_CONTAINER_STATUS=$(strFixC "loading..." 12) 
+    [ "$SCAN_DONE" == "true" ] && P_CONTAINER_HEALTH=$(strFixC "$(toUpper "$CONTAINER_HEALTH")" 12) || P_CONTAINER_HEALTH=$(strFixC "loading..." 12) 
+    [ "$SCAN_DONE" == "true" ] && P_EXTERNAL_STATUS=$(strFixC "$(toUpper "$EXTERNAL_STATUS")" 12)   || P_EXTERNAL_STATUS=$(strFixC "loading..." 12) 
+    P_RUNTIME_VERSION=$(strFixC "$RUNTIME_VERSION" 13)
 
-    VTOP=$(strFixC "$VTOP" 12)
-    VSTREAK=$(strFixC "$VSTREAK" 12)
-    VSTATUS=$(strFixC "$VSTATUS" 12)
-    VMISSCHANCE=$(strFixC "$VMISSCHANCE" 12)
-    VPRODUCED=$(strFixC "$VPRODUCED" 12)
-    VMISSED=$(strFixC "$VMISSED" 13)
+    P_VTOP=$(strFixC "$VTOP" 12)
+    P_VSTREAK=$(strFixC "$VSTREAK" 12)
+    P_VSTATUS=$(strFixC "$VSTATUS" 12)
+    P_VMISSCHANCE=$(strFixC "$VMISSCHANCE" 12)
+    P_VPRODUCED=$(strFixC "$VPRODUCED" 12)
+    P_VMISSED=$(strFixC "$VMISSED" 13)
 
-    CONTAINER_IP=$(strFixC " $CONTAINER_IP ($KIRA_DOCKER_NETWORK) " 25)
-    CONTAINER_HOSTNAME=$(strFixC " $CONTAINER_HOSTNAME " 25)
-    EXTERNAL_ADDRESS=$(strFixC " $EXTERNAL_ADDRESS " 26)
+    P_CONTAINER_IP=$(strFixC " $CONTAINER_IP " 25)
+    P_CONTAINER_HOSTNAME=$(strFixC " $CONTAINER_HOSTNAME " 25)
+    P_EXTERNAL_ADDRESS=$(strFixC " $EXTERNAL_ADDRESS " 26)
 
-    CONTAINER_ID=$(strFixC " $CONTAINER_ID " 25)
-    NODE_ID=$(strFixC " $NODE_ID " 25)
-    UPTIME=$(strFixC " $UPTIME " 26)
+    P_CONTAINER_ID=$(strFixC " $CONTAINER_ID " 25)
+    P_NODE_ID=$(strFixC " $NODE_ID " 25)
+    P_UPTIME=$(strFixC " $UPTIME " 26)
 
     set +x && printf "\033c" && clear
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "KIRA $(toUpper $name) CONTAINER MANAGER $KIRA_SETUP_VER" 78)")|"
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
     echoC ";whi" "| NODE BLOCK | LAST BLOCK | CON.STATUS |   HEALTH   | VISIBILITY |   RUNTIME   |"
-    echoC ";whi" "|$(echoC "res;$colBloc" "$NODE_BLOCK")|$(echoC "res;$colLBlo" "$LATEST_BLOCK")|$(echoC "res;$colCSta" "$CONTAINER_STATUS")|$(echoC "res;$colCHel" "$CONTAINER_HEALTH")|$(echoC "res;$colExSt" "$EXTERNAL_STATUS")|$(echoC "res;$colRunt" "$RUNTIME_VERSION")|"
+    echoC ";whi" "|$(echoC "res;$colBloc" "$P_NODE_BLOCK")|$(echoC "res;$colLBlo" "$P_LATEST_BLOCK")|$(echoC "res;$colCSta" "$P_CONTAINER_STATUS")|$(echoC "res;$colCHel" "$P_CONTAINER_HEALTH")|$(echoC "res;$colExSt" "$P_EXTERNAL_STATUS")|$(echoC "res;$colRunt" "$P_RUNTIME_VERSION")|"
     [ "$SHOW_VALIDATOR_STATS" == "true" ] && \
     echoC ";whi" "|    TOP     |   STREAK   | VAL.STATUS | MISSCHANCE | B.PRODUCED | BLOC.MISSED |" && \
-    echoC ";whi" "|$(echoC "res;$colVTop" "$VTOP")|$(echoC "res;$colVStr" "$VSTREAK")|$(echoC "res;$colVSta" "$VSTATUS")|$(echoC "res;$colVMCh" "$VMISSCHANCE")|$(echoC "res;$colVPro" "$VPRODUCED")|$(echoC "res;$colVMis" "$VMISSED")|"
+    echoC ";whi" "|$(echoC "res;$colVTop" "$P_VTOP")|$(echoC "res;$colVStr" "$P_VSTREAK")|$(echoC "res;$colVSta" "$P_VSTATUS")|$(echoC "res;$colVMCh" "$P_VMISSCHANCE")|$(echoC "res;$colVPro" "$P_VPRODUCED")|$(echoC "res;$colVMis" "$P_VMISSED")|"
 
     echoC ";whi" "|------- LOCAL IP --------|------ LOCAL HOST -------|---- EXTERNAL ADDRESS ----|"
-    echoC ";whi" "|$(echoC "res;$colCLIP" "$CONTAINER_IP")|$(echoC "res;$colCHos" "$CONTAINER_HOSTNAME")|$(echoC "res;$colExAd" "$EXTERNAL_ADDRESS")|"
+    echoC ";whi" "|$(echoC "res;$colCLIP" "$P_CONTAINER_IP")|$(echoC "res;$colCHos" "$P_CONTAINER_HOSTNAME")|$(echoC "res;$colExAd" "$P_EXTERNAL_ADDRESS")|"
     echoC ";whi" "|      CONTAINER ID       |        NODE ID          |          UPTIME          |"
-    echoC ";whi" "|$(echoC "res;$colCID" "$CONTAINER_ID")|$(echoC "res;$colNID" "$NODE_ID")|$(echoC "res;whi" "$UPTIME")|"
+    echoC ";whi" "|$(echoC "res;$colCID" "$P_CONTAINER_ID")|$(echoC "res;$colNID" "$P_NODE_ID")|$(echoC "res;whi" "$P_UPTIME")|"
 
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC "-" 78 "." "-")")|"
 
@@ -340,8 +362,27 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colL" "$OPTION_LOGS")|$(echoC "res;$colH" "$OPTION_HEALTH")|$(echoC "res;$colX" "$OPTION_EXIT")| "
     echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
-    timeout=300
-    [ "$SCAN_DONE" != "true" ] && timeout=10
+
+    if [ "$SCAN_DONE" != "true" ] ; then
+        timeout=10
+    else
+        case $CONTAINER_STATUS in
+        "running") timeout=300 ;;
+        "halted") timeout=300 ;;
+        "exited") timeout=300 ;;
+        "dead") timeout=300 ;;
+        "starting") timeout=15 ;;
+        "setting up") timeout=15 ;;
+        "backing up") timeout=30 ;;
+        *) timeout=15 ;;
+        esac
+
+        case $CONTAINER_HEALTH in
+        "starting") timeout=60 ;;
+        *) ;;
+        esac
+    fi
+
     pressToContinue --timeout=$timeout "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
     setterm -cursor on
     
@@ -349,11 +390,11 @@ while : ; do
     EXECUTED="false"
 
     if [ "$VSEL" == "i" ] ; then
-        echo "INFO: Entering container $name ($ID)..."
+        echo "INFO: Entering container $name ($CONTAINER_ID)..."
         echo "INFO: To exit the container type 'exit'"
         FAILURE="false"
-        # NOTE: It might be considered to instead of ..it $ID bash use ...it $ID sh, this might be required for base images that do not have bash (e.g. docker registry)
-        docker exec -it $ID bash || FAILURE="true"
+        # NOTE: It might be considered to instead of ..it $CONTAINER_ID bash use ...it $CONTAINER_ID sh, this might be required for base images that do not have bash (e.g. docker registry)
+        docker exec -it $CONTAINER_ID bash || FAILURE="true"
         
         if [ "${FAILURE,,}" == "true" ] ; then
             ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
@@ -363,16 +404,17 @@ while : ; do
             $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="false"
             echo "INFO: Waiting for container to start..."
             sleep 3
-            echo "INFO: Entering container $name ($ID)..."
+            echo "INFO: Entering container $name ($CONTAINER_ID)..."
             echo "INFO: To exit the container type 'exit'"
-            docker exec -it $ID bash || echo "WARNING: Failed to inspect $name container"
+            docker exec -it $CONTAINER_ID bash || echo "WARNING: Failed to inspect $name container"
         fi
         
         [ "$IS_HALTING" == "true" ] && echo "INFO: Applications running within your container were halted, you will have to choose Un-HALT option to start them again!"
         VSEL="" && EXECUTED="true"
     elif [ "$VSEL" == "r" ] ; then
         echo "INFO: Restarting container..."
-        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart"
+        [ "$PROCESSES_HALTED" == "true" ] && unhalt="false" || unhalt="true"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="$unhalt"
         FORCE_RESCAN="true" && EXECUTED="true"
     elif [ "$VSEL" == "w" ] ; then
         echo "INFO: Removing halt file"
@@ -387,14 +429,16 @@ while : ; do
         globSet PRIVATE_MODE "false" "$GLOBAL_COMMON"
         globSet PRIVATE_MODE "false"
         echoInfo "INFO: Restarting container..."
-        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart"
+        [ "$PROCESSES_HALTED" == "true" ] && unhalt="false" || unhalt="true"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="$unhalt"
         FORCE_RESCAN="true" && EXECUTED="true"
     elif [ "$VSEL" == "e" ] ; then
         echoInfo "INFO: Enabling private mode..."
         globSet PRIVATE_MODE "true" "$GLOBAL_COMMON"
         globSet PRIVATE_MODE "true"
         echoInfo "INFO: Restarting container..."
-        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart"
+        [ "$PROCESSES_HALTED" == "true" ] && unhalt="false" || unhalt="true"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="$unhalt"
         FORCE_RESCAN="true" && EXECUTED="true"
     elif [ "$VSEL" == "t" ] ; then
         echo "INFO: Stopping container..."
@@ -402,7 +446,7 @@ while : ; do
         FORCE_RESCAN="true" && EXECUTED="true"
     elif [ "$VSEL" == "s" ] ; then
         echo "INFO: Starting container..."
-        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="start"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="start" --unhalt="true"
         FORCE_RESCAN="true" && EXECUTED="true"
     elif [ "$VSEL" == "p" ] ; then
         echo "INFO: Pausing container..."
@@ -420,9 +464,9 @@ while : ; do
         TMP_DUMP=$CONTAINER_DUMP/logs.txt.tmp
         while : ; do
             printf "\033c"
-            echoInfo "INFO: Please wait, reading $name ($ID) container log..."
+            echoInfo "INFO: Please wait, reading $name ($CONTAINER_ID) container log..."
             rm -f $TMP_DUMP && touch $TMP_DUMP
-            timeout 10 docker logs --details --timestamps $ID > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to dump $name container logs"
+            timeout 10 docker logs --details --timestamps $CONTAINER_ID > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to dump $name container logs"
 
             if (! $(isFileEmpty $TMP_DUMP)) ; then
                 cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $name container logs"
@@ -447,15 +491,15 @@ while : ; do
 
             if [ "${ACCEPT,,}" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $name logs..."
-                cmdFollow "docker logs --follow --details --timestamps $ID" || echoErr "ERROR: Failed to follow $name logs"
-                echoNC ";gre" "\nPress any key to continue..." && pressToContinue
+                cmdFollow "docker logs --follow --details --timestamps $CONTAINER_ID" || echoErr "ERROR: Failed to follow $name logs"
+                echoNC "bli;whi" "\nPress any key to continue..." && pressToContinue
             fi
 
             [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
             [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
             if [ "${ACCEPT,,}" == "d" ] ; then
                 rm -fv "$START_LOGS"
-                echo -n "" > $(docker inspect --format='{{.LogPath}}' $ID) || echoErr "ERROR: Failed to delete docker logs"
+                echo -n "" > $(docker inspect --format='{{.LogPath}}' $CONTAINER_ID) || echoErr "ERROR: Failed to delete docker logs"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
@@ -480,10 +524,10 @@ while : ; do
         TMP_DUMP=$CONTAINER_DUMP/healthcheck.txt.tmp
         while : ; do
             printf "\033c"
-            echo "INFO: Please wait, reading $name ($ID) container healthcheck logs..."
+            echo "INFO: Please wait, reading $name ($CONTAINER_ID) container healthcheck logs..."
             rm -f $TMP_DUMP && touch $TMP_DUMP 
 
-            echo -e $(docker inspect --format "{{json .State.Health }}" "$ID" 2> /dev/null | jq '.Log[-1].Output' 2> /dev/null) > $TMP_DUMP || echo "" > $TMP_DUMP
+            echo -e $(docker inspect --format "{{json .State.Health }}" "$CONTAINER_ID" 2> /dev/null | jq '.Log[-1].Output' 2> /dev/null) > $TMP_DUMP || echo "" > $TMP_DUMP
             
             if [ -f "$HEALTH_LOGS" ]; then
                 echo "--- HEALTH LOGS ---" >> $TMP_DUMP 
@@ -530,7 +574,7 @@ while : ; do
 
     # trigger re-scan if requested
     [ "$FORCE_RESCAN" == "true" ] && globSet IS_SCAN_DONE "false"
-    ( [ "$EXECUTED" == "true" ] && [ ! -z "$VSEL" ] ) && echoNErr "Option ($VSEL) was executed, press any key to continue..." && pressToContinue
+    ( [ "$EXECUTED" == "true" ] && [ ! -z "$VSEL" ] ) && echoNC "bli;whi" "\nOption ($VSEL) was executed, press any key to continue..." && pressToContinue
 
 done
 

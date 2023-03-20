@@ -3,9 +3,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/kira/kira.sh --verify_setup_status=false
 set +x
-
-# Force console colour to be black
+# Force console colour to be black and text gray
 tput setab 0
+tput setaf 7
+
 echoNInfo "\n\nINFO: Launching KIRA Network Manager...\n"
 
 if [ "${USER,,}" != "root" ]; then
@@ -434,10 +435,13 @@ while : ; do
 
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
 
-    if [ "$MAIN_CONTAINER_EXISTS" == "true" ] && [ "$VSEL" == "0" ] ; then
-        $KIRA_MANAGER/kira/container-manager.sh --name="$MAIN_CONTAINER" || echoErr "ERROR: Faile to inspect '$MAIN_CONTAINER' container"
-    elif [ "$MAIN_CONTAINER_EXISTS" == "true" ] && [ "$VSEL" == "1" ] ; then
-        $KIRA_MANAGER/kira/container-manager.sh --name="interx" || echoErr "ERROR: Faile to inspect 'interx' container"
+    PRESS_TO_CONTINUE="true"
+    if [ "$VSEL" == "0" ] ; then
+        PRESS_TO_CONTINUE="false"
+        $KIRA_MANAGER/kira/container-manager.sh --name="$MAIN_CONTAINER" || ( echoErr "ERROR: Faile to inspect '$MAIN_CONTAINER' container" && PRESS_TO_CONTINUE="false" )
+    elif [ "$VSEL" == "1" ] ; then
+        PRESS_TO_CONTINUE="false"
+        $KIRA_MANAGER/kira/container-manager.sh --name="interx" || ( echoErr "ERROR: Faile to inspect 'interx' container" && PRESS_TO_CONTINUE="false" )
     elif  [ "$VSEL" == "r" ] ; then
         continue
     elif  [ "$VSEL" == "s" ] ; then
@@ -498,7 +502,7 @@ while : ; do
         echoInfo "INFO: Option '$VSEL' is NOT available at the moment."
     fi
 
-    echoNC "bli;whi" "Press any key to continue..." && pressToContinue
+    [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
     continue
 
 ####################################################################
