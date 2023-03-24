@@ -115,7 +115,7 @@ jobs:
                 bash-utils echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
                 sleep 10
-                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echo "ERROR: Failed to find pinned files"
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echoErr "ERROR: Failed to find pinned files"
                 IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bash-utils jsonParse "rows.[0].ipfs_pin_hash" || echo "")
                 cat ./ipfs-pinned.log
                 [ ! -z "$IPFS_HASH" ] && break 
@@ -137,10 +137,20 @@ jobs:
               while [[ $CHECK_ELAPSED -lt 300 ]] ; do
                 bash-utils echoInfo "INFO: Attempting fils pin to IPFS, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pin.log && touch ./ipfs-pin.log
-                ipfs-api delete $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || echo "WARNING: Failed to delete file with name '$IPFS_UPLOAD_NAME' request failed or it might not exist"
-                ipfs-api pin ./bin/ipfs $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pin.log || echo "ERROR: Failed to pin web app"
+                rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bash-utils jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                cat ./ipfs-pinned.log || echoErr "ERROR: Failed to print pin check error logs"
+
+                if [ ! -z "$IPFS_HASH" ] ; then
+                  ipfs-api delete $IPFS_HASH --key=${{secrets.PINATA_API_JWT}} --verbose=true || echoWarn "WARNING: Failed to delete file with hash '$IPFS_HASH' request failed or it might not exist"
+                else
+                  ipfs-api delete $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || echoWarn "WARNING: Failed to delete file with name '$IPFS_UPLOAD_NAME' request failed or it might not exist"
+                fi
+                
+                ipfs-api pin ./bin/ipfs $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pin.log || echoErr "ERROR: Failed to pin web app"
                 IPFS_HASH=$(cat ./ipfs-pin.log | tail -n 1 | bash-utils jsonParse ".hash" || echo "")
-                cat ./ipfs-pin.log || echo "ERROR: Failed to print error logs"
+                cat ./ipfs-pin.log || echoErr "ERROR: Failed to print pin error logs"
                 [ ! -z "$IPFS_HASH" ] && break 
                 sleep 10
                 CHECK_ELAPSED=$(bash-utils timerSpan "pin-timeout")
