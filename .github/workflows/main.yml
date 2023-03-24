@@ -16,7 +16,7 @@ jobs:
       id-token: write
       pull-requests: write
     container:
-      image: ghcr.io/kiracore/docker/base-image:v0.11.4
+      image: ghcr.io/kiracore/docker/base-image:v0.13.3
     steps:
           # Work around https://github.com/actions/checkout/issues/760
           - name: Add safe.directory
@@ -110,14 +110,16 @@ jobs:
               sleep 120
               IPFS_HASH=""
               IPFS_UPLOAD_NAME=kira-$RELEASE_VER
-              while [ -z "$IPFS_HASH" ] || [ $(bash-utils timerSpan "pinned-timeout") -gt 900 ] ; do
-                bash-utils echoInfo "INFO: Waiting for IPFS files to be pinned..."
+              CHECK_ELAPSED=0
+              while [ -z "$IPFS_HASH" ] || [[ $CHECK_ELAPSED -gt 900 ]] ; do
+                bash-utils echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
                 sleep 10
                 ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echo "ERROR: Faile to find pinned files"
                 IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bash-utils jsonParse "rows.[0].ipfs_pin_hash" || echo "")
                 cat ./ipfs-pinned.log
                 sleep 10
+                CHECK_ELAPSED=$(bash-utils timerSpan "pinned-timeout")
               done
               echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
           - name: Pin IPFS files
@@ -130,14 +132,16 @@ jobs:
               bash-utils timerStart "pin-timeout"
               IPFS_HASH=""
               IPFS_UPLOAD_NAME=kira-$RELEASE_VER
-              while [ -z "$IPFS_HASH" ] || [ $(bash-utils timerSpan "pin-timeout") -gt 300 ] ; do
-                bash-utils echoInfo "INFO: Attempting fils pin to IPFS..."
+              CHECK_ELAPSED=0
+              while [ -z "$IPFS_HASH" ] || [[ $CHECK_ELAPSED -gt 300 ]] ; do
+                bash-utils echoInfo "INFO: Attempting fils pin to IPFS, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pin.log && touch ./ipfs-pin.log
                 ipfs-api delete $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || echo "WARNING: Failed to delete file with name '$IPFS_UPLOAD_NAME' request failed or it might not exist"
                 ipfs-api pin ./bin/ipfs $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pin.log || echo "ERROR: Failed to pin web app"
                 IPFS_HASH=$(cat ./ipfs-pin.log | tail -n 1 | bash-utils jsonParse ".hash" || echo "")
-                cat ./ipfs-pin.log
+                cat ./ipfs-pin.log || echo "ERROR: Failed to print error logs"
                 sleep 10
+                CHECK_ELAPSED=$(bash-utils timerSpan "pin-timeout")
               done
               echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
           - name: Publish RELEASE info
