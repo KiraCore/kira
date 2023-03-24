@@ -65,7 +65,7 @@ jobs:
               echo "(current dir): $PWD" && ls -l ./
               cd ../ && tar -czvf src.tar.gz -C ./kira . && cp ./src.tar.gz ./kira/src.tar.gz
               cd ./kira
-              echo "Bash Utils Version: $(bash-utils bashUtilsVersion)"
+              echo "Bash Utils Version: $(bu bashUtilsVersion)"
               echo "     Source branch: ${{ env.SOURCE_BRANCH }}"
               echo "Destination branch: ${{ env.DESTINATION_BRANCH }}"
               echo "    Release branch: ${{ env.RELEASE_BRANCH }}"
@@ -106,21 +106,21 @@ jobs:
             shell: bash
             run: |
               set -x
-              bash-utils timerStart "pinned-timeout"
+              bu timerStart "pinned-timeout"
               sleep 120
               IPFS_HASH=""
               IPFS_UPLOAD_NAME=kira-$RELEASE_VER
               CHECK_ELAPSED=0
               while [[ $CHECK_ELAPSED -lt 900 ]] ; do
-                bash-utils echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
+                bu echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
                 sleep 10
-                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echoErr "ERROR: Failed to find pinned files"
-                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bash-utils jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
                 cat ./ipfs-pinned.log
                 [ ! -z "$IPFS_HASH" ] && break 
                 sleep 10
-                CHECK_ELAPSED=$(bash-utils timerSpan "pinned-timeout")
+                CHECK_ELAPSED=$(bu timerSpan "pinned-timeout")
               done
               echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
           - name: Pin IPFS files
@@ -130,30 +130,30 @@ jobs:
             shell: bash
             run: |
               set -x
-              bash-utils timerStart "pin-timeout"
+              bu timerStart "pin-timeout"
               IPFS_HASH=""
               IPFS_UPLOAD_NAME=kira-$RELEASE_VER
               CHECK_ELAPSED=0
               while [[ $CHECK_ELAPSED -lt 300 ]] ; do
-                bash-utils echoInfo "INFO: Attempting fils pin to IPFS, timeout in ${CHECK_ELAPSED}/900s..."
+                bu echoInfo "INFO: Attempting fils pin to IPFS, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pin.log && touch ./ipfs-pin.log
                 rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
-                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || echoErr "ERROR: Failed to find pinned files"
-                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bash-utils jsonParse "rows.[0].ipfs_pin_hash" || echo "")
-                cat ./ipfs-pinned.log || echoErr "ERROR: Failed to print pin check error logs"
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                cat ./ipfs-pinned.log || bu echoErr "ERROR: Failed to print pin check error logs"
 
                 if [ ! -z "$IPFS_HASH" ] ; then
-                  ipfs-api delete $IPFS_HASH --key=${{secrets.PINATA_API_JWT}} --verbose=true || echoWarn "WARNING: Failed to delete file with hash '$IPFS_HASH' request failed or it might not exist"
+                  ipfs-api delete $IPFS_HASH --key=${{secrets.PINATA_API_JWT}} --verbose=true || bu echoWarn "WARNING: Failed to delete file with hash '$IPFS_HASH' request failed or it might not exist"
                 else
-                  ipfs-api delete $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || echoWarn "WARNING: Failed to delete file with name '$IPFS_UPLOAD_NAME' request failed or it might not exist"
+                  ipfs-api delete $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || bu echoWarn "WARNING: Failed to delete file with name '$IPFS_UPLOAD_NAME' request failed or it might not exist"
                 fi
                 
-                ipfs-api pin ./bin/ipfs $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pin.log || echoErr "ERROR: Failed to pin web app"
-                IPFS_HASH=$(cat ./ipfs-pin.log | tail -n 1 | bash-utils jsonParse ".hash" || echo "")
-                cat ./ipfs-pin.log || echoErr "ERROR: Failed to print pin error logs"
+                ipfs-api pin ./bin/ipfs $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pin.log || bu echoErr "ERROR: Failed to pin web app"
+                IPFS_HASH=$(cat ./ipfs-pin.log | tail -n 1 | bu jsonParse ".hash" || echo "")
+                cat ./ipfs-pin.log || bu echoErr "ERROR: Failed to print pin error logs"
                 [ ! -z "$IPFS_HASH" ] && break 
                 sleep 10
-                CHECK_ELAPSED=$(bash-utils timerSpan "pin-timeout")
+                CHECK_ELAPSED=$(bu timerSpan "pin-timeout")
               done
               echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
           - name: Publish RELEASE info
