@@ -8,12 +8,8 @@ SCRIPT_START_TIME="$(date -u +%s)"
 UPDATE_DUMP="$KIRA_DUMP/kiraup"
 MAX_FAILS=3
 
-UPDATE_FAIL_COUNTER=$(globGet UPDATE_FAIL_COUNTER)
-
-if (! $(isNaturalNumber "$(globGet UPDATE_FAIL_COUNTER)")) ; then
-    UPDATE_FAIL_COUNTER=0
-    globSet UPDATE_FAIL_COUNTER "0"
-fi 
+UPDATE_FAIL_COUNTER="$(globGet UPDATE_FAIL_COUNTER)"
+(! $(isNaturalNumber "$UPDATE_FAIL_COUNTER")) && UPDATE_FAIL_COUNTER="0" && globSet UPDATE_FAIL_COUNTER "0"
 
 if [[ $UPDATE_FAIL_COUNTER -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
@@ -66,7 +62,7 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     if [ "${SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized essentials update"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "true"
-        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAIL_COUNTER - 1))
+        globSet UPDATE_FAIL_COUNTER "0"
         systemctl daemon-reload
         systemctl restart kiraup || echoErr "ERROR: Failed to restart kiraup service"
         exit 0
@@ -96,7 +92,7 @@ if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     if [ "${SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized update cleanup"
         globSet "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "true"
-        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAIL_COUNTER - 1))
+        globSet UPDATE_FAIL_COUNTER "0"
         exit 0
     else
         set +x
@@ -126,7 +122,7 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     if [ "${CONTAINERS_BUILD_SUCCESS,,}" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized containers update"
         globSet "CONTAINERS_UPDATED_$KIRA_SETUP_VER" "true"
-        globSet UPDATE_FAIL_COUNTER $(($UPDATE_FAIL_COUNTER - 1))
+        globSet UPDATE_FAIL_COUNTER "0"
         exit 0
     else
         set +x

@@ -3,6 +3,7 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/kira/kira.sh --verify_setup_status=false
 set +x
+
 # Force console colour to be black and text gray
 tput setab 0
 tput setaf 7
@@ -55,6 +56,12 @@ elif [ "$DOCKER_SERVICE" != "active" ] ; then
     echoErr "ERROR: Docker service is NOT active"
     exit 1
 fi
+
+function cleanup() {
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    setterm -cursor on
+    exit 130
+}
 
 set +x
 
@@ -427,6 +434,8 @@ while : ; do
     echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
+    trap cleanup SIGINT
+
     timeout=300
     [ "$SCAN_DONE" != "true" ] && timeout=10
     pressToContinue --timeout=$timeout 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"

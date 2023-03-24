@@ -3,6 +3,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/container-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/kira/container-manager.sh --name=validator
 set +x
+
+function cleanup() {
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    setterm -cursor on
+    exit 130
+}
+
 # Force console colour to be black and text gray
 tput setab 0
 tput setaf 7
@@ -28,6 +35,7 @@ cd "$(globGet KIRA_HOME)"
 mkdir -p  "$COMMON_LOGS" "$CONTAINER_DUMP"
 
 while : ; do
+
     SCAN_DONE=$(globGet IS_SCAN_DONE)
     SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
@@ -357,11 +365,12 @@ while : ; do
              echoC ";whi" "|$(strFixC "Faucet Address" 25 ): $(echoC "res;$colFAdr" "$(strFixL $FAUCET_ADDR 50 )") |"
 
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC "-" 78 "." "-")")|"
-    echoC ";whi" "|$(echoC "res;$colI" "$OPTION_INSPECT")|$(echoC "res;$colM" "$OPTION_PRIVACY")|$(echoC "res;$colK" "$OPTION_KILL")| "
-    echoC ";whi" "|$(echoC "res;$colR" "$OPTION_RESTART")|$(echoC "res;$colP" "$OPTION_PAUSE")|$(echoC "res;$colS" "$OPTION_START")| "
-    echoC ";whi" "|$(echoC "res;$colL" "$OPTION_LOGS")|$(echoC "res;$colH" "$OPTION_HEALTH")|$(echoC "res;$colX" "$OPTION_EXIT")| "
+    echoC ";whi" "|$(echoC "res;$colI" "$OPTION_INSPECT")|$(echoC "res;$colM" "$OPTION_PRIVACY")|$(echoC "res;$colK" "$OPTION_KILL")|"
+    echoC ";whi" "|$(echoC "res;$colR" "$OPTION_RESTART")|$(echoC "res;$colP" "$OPTION_PAUSE")|$(echoC "res;$colS" "$OPTION_START")|"
+    echoC ";whi" "|$(echoC "res;$colL" "$OPTION_LOGS")|$(echoC "res;$colH" "$OPTION_HEALTH")|$(echoC "res;$colX" "$OPTION_EXIT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
     setterm -cursor off
+    trap cleanup SIGINT
 
     if [ "$SCAN_DONE" != "true" ] ; then
         timeout=10
