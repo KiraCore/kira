@@ -9,7 +9,7 @@ while : ; do
     echoInfo "INFO: Network name (chai-id) MUST have a format <name>-<number>, e.g. mynetwork-1"
     echoNLog "Input name of your NEW network (chain-id): " && read NEW_NETWORK_NAME
 
-    NEW_NETWORK_NAME="${NEW_NETWORK_NAME,,}"
+    NEW_NETWORK_NAME="$(toLower "$NEW_NETWORK_NAME")"
     ARR=( $(echo "$NEW_NETWORK_NAME" | tr "-" "\n") ) && ARR_LEN=${#ARR[@]}
     [[ ${#NEW_NETWORK_NAME} -gt 14 ]] && echoWarn "WARNING: Network name can't be longer than 14 characters!" && continue
     [[ ${#NEW_NETWORK_NAME} -lt 3 ]] && echoWarn "WARNING: Network name can't be shorter than 3 characters!" && continue

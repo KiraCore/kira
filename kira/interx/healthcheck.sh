@@ -10,7 +10,7 @@ PRIVATE_MODE=$(globGet PRIVATE_MODE)
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "|   STARTED: ${NODE_TYPE^^} INTERX HEALTHCHECK"
+echoWarn "|   STARTED: $NODE_TYPE INTERX HEALTHCHECK"
 echoWarn "|----------------------------------------------|"
 echoWarn "|    PUBLIC IP: $PUBLIC_IP"
 echoWarn "|     LOCAL IP: $LOCAL_IP"

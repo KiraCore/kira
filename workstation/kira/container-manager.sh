@@ -37,8 +37,8 @@ mkdir -p  "$COMMON_LOGS" "$CONTAINER_DUMP"
 while : ; do
 
     SCAN_DONE=$(globGet IS_SCAN_DONE)
-    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
-    SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
+    declare -l SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    declare -l SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
     KIRA_DOCKER_NETWORK=$(globGet KIRA_DOCKER_NETWORK)
     
     [ "$name" == "validator" ] && VALIDATOR_ADDR=$(globGet VALIDATOR_ADDR)
@@ -49,8 +49,8 @@ while : ; do
             KIRA_NODE_ID=$(jsonQuickParse "id" $SEKAID_STATUS_FILE 2> /dev/null | awk '{print $1;}' 2> /dev/null || echo -n "")
             (! $(isNodeId "$KIRA_NODE_ID")) && KIRA_NODE_ID=""
         fi
-        KIRA_NODE_CATCHING_UP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo -n "")
-        [ "${KIRA_NODE_CATCHING_UP,,}" != "true" ] && KIRA_NODE_CATCHING_UP="false"
+        declare -l KIRA_NODE_CATCHING_UP=$(jsonQuickParse "catching_up" $SEKAID_STATUS_FILE 2>/dev/null || echo -n "")
+        [ "$KIRA_NODE_CATCHING_UP" != "true" ] && KIRA_NODE_CATCHING_UP="false"
         KIRA_NODE_BLOCK=$(jsonQuickParse "latest_block_height" $SEKAID_STATUS_FILE 2> /dev/null || echo "0")
         (! $(isNaturalNumber "$KIRA_NODE_BLOCK")) && KIRA_NODE_BLOCK="0"
     fi
@@ -405,9 +405,9 @@ while : ; do
         # NOTE: It might be considered to instead of ..it $CONTAINER_ID bash use ...it $CONTAINER_ID sh, this might be required for base images that do not have bash (e.g. docker registry)
         docker exec -it $CONTAINER_ID bash || FAILURE="true"
         
-        if [ "${FAILURE,,}" == "true" ] ; then
-            ACCEPT="" && while [ "${ACCEPT,,}" != "y" ] && [ "${ACCEPT,,}" != "n" ] ; do echo -en "\e[36;1mPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: \e[0m\c" && read  -d'' -s -n1 ACCEPT && echo "" ; done
-            [ "${ACCEPT,,}" == "n" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
+        if [ "$FAILURE" == "true" ] ; then
+            echoNC "bli;whi" "\nPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: " && pressToContinue y n && YNO=$(toLower "$(globGet OPTION)")
+            [ "$YNO" != "y" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $name container"
             echo "INFO: Attempting to start & prevent node from restarting..."
             $KIRA_MANAGER/kira/container-pkill.sh --name="$name" --await="true" --task="restart" --unhalt="false"
@@ -481,7 +481,7 @@ while : ; do
                 cat $START_LOGS > $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $name container logs"
             fi
 
-            if [ "${SNAPSHOT_TARGET,,}" == "${name}" ] && [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+            if [ "$SNAPSHOT_TARGET" == "${name}" ] && [ "$SNAPSHOT_EXECUTE" == "true" ] ; then
                 echoWarn "WARNING: Snapshot is ongoing, output logs will be included"
                 echo "--- SNAPSHOT LOG START ---" >> $TMP_DUMP
                 cat "$KIRA_SCAN/snapshot.log" >> $TMP_DUMP 2> /dev/null || echoWarn "WARNING: Failed to read $name container snapshot logs" >> $TMP_DUMP
@@ -489,35 +489,35 @@ while : ; do
             fi
 
             LINES_MAX=$(cat $TMP_DUMP 2> /dev/null | wc -l 2> /dev/null || echo "0")
-            ( [[ $LOG_LINES -gt $LINES_MAX ]] || [ "${SHOW_ALL,,}" == "true" ] ) && LOG_LINES=$LINES_MAX
+            ( [[ $LOG_LINES -gt $LINES_MAX ]] || [ "$SHOW_ALL" == "true" ] ) && LOG_LINES=$LINES_MAX
             [[ $LOG_LINES -gt 10000 ]] && LOG_LINES=10000
             [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echo -e "\e[36;1mINFO: Found $LINES_MAX log lines, printing $LOG_LINES...\e[0m"
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
+            [ "$READ_HEAD" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
+            [ "$READ_HEAD" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
 
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c|d|f)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap, [F]ollow or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap, [F]ollow or [C]lose: " && pressToContinue a m l r d s f c && OPTION=$(toLower "$(globGet OPTION)")
 
-            if [ "${ACCEPT,,}" == "f" ] ; then
+            if [ "$OPTION" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $name logs..."
                 cmdFollow "docker logs --follow --details --timestamps $CONTAINER_ID" || echoErr "ERROR: Failed to follow $name logs"
                 echoNC "bli;whi" "\nPress any key to continue..." && pressToContinue
             fi
 
-            [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
-            [ "${ACCEPT,,}" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
-            if [ "${ACCEPT,,}" == "d" ] ; then
+            [ "$OPTION" == "a" ] && SHOW_ALL="true"
+            [ "$OPTION" == "c" ] && echo -e "\nINFO: Closing log file...\n" && sleep 1 && break
+            if [ "$OPTION" == "d" ] ; then
                 rm -fv "$START_LOGS"
                 echo -n "" > $(docker inspect --format='{{.LogPath}}' $CONTAINER_ID) || echoErr "ERROR: Failed to delete docker logs"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
             fi
-            [ "${ACCEPT,,}" == "r" ] && continue
-            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
-            if [ "${ACCEPT,,}" == "s" ] ; then
-                if [ "${READ_HEAD,,}" == "true" ] ; then
+            [ "$OPTION" == "r" ] && continue
+            [ "$OPTION" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
+            [ "$OPTION" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
+            if [ "$OPTION" == "s" ] ; then
+                if [ "$READ_HEAD" == "true" ] ; then
                     READ_HEAD="false"
                 else
                     READ_HEAD="true"
@@ -549,23 +549,25 @@ while : ; do
             [[ $LOG_LINES -lt 10 ]] && LOG_LINES=10
             echoInfo "INFO: Found $LINES_MAX log lines, printing $LOG_LINES..."
             TMP_LOG_LINES=$LOG_LINES 
-            [ "${SHOW_ALL,,}" == "true" ] && TMP_LOG_LINES=10000
-            [ "${READ_HEAD,,}" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
-            [ "${READ_HEAD,,}" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
-            ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(a|m|l|r|s|c)$ ]] ; do echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
-            [ "${ACCEPT,,}" == "a" ] && SHOW_ALL="true"
-            [ "${ACCEPT,,}" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break
-            if [ "${ACCEPT,,}" == "d" ] ; then
+            [ "$SHOW_ALL" == "true" ] && TMP_LOG_LINES=10000
+            [ "$READ_HEAD" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
+            [ "$READ_HEAD" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
+
+            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && pressToContinue a m l r d s c && OPTION=$(toLower "$(globGet OPTION)")
+
+            [ "$OPTION" == "a" ] && SHOW_ALL="true"
+            [ "$OPTION" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break
+            if [ "$OPTION" == "d" ] ; then
                 rm -fv "$HEALTH_LOGS"
                 SHOW_ALL="false"
                 LOG_LINES=10
                 continue
             fi
-            [ "${ACCEPT,,}" == "r" ] && continue
-            [ "${ACCEPT,,}" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
-            [ "${ACCEPT,,}" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
-            if [ "${ACCEPT,,}" == "s" ] ; then
-                if [ "${READ_HEAD,,}" == "true" ] ; then
+            [ "$OPTION" == "r" ] && continue
+            [ "$OPTION" == "m" ] && SHOW_ALL="false" && LOG_LINES=$(($LOG_LINES + 10))
+            [ "$OPTION" == "l" ] && SHOW_ALL="false" && [[ $LOG_LINES -gt 5 ]] && LOG_LINES=$(($LOG_LINES - 10))
+            if [ "$OPTION" == "s" ] ; then
+                if [ "$READ_HEAD" == "true" ] ; then
                     READ_HEAD="false"
                 else
                     READ_HEAD="true"

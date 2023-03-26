@@ -10,7 +10,7 @@ tput setaf 7
 
 echoNInfo "\n\nINFO: Launching KIRA Network Manager...\n"
 
-if [ "${USER,,}" != "root" ]; then
+if [ "$USER" != "root" ]; then
     echoErr "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
 fi
@@ -32,12 +32,9 @@ set -x
 cd "$(globGet KIRA_HOME)"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
-
 mkdir -p "$INTERX_REFERENCE_DIR"
 
-
 INFRA_CONTAINERS_COUNT=$(globGet INFRA_CONTAINERS_COUNT)
-
 INFRA_MODE=$(globGet INFRA_MODE)
 CHAIN_ID=$(jsonQuickParse "chain_id" $LOCAL_GENESIS_PATH || echo "$NETWORK_NAME")
 MAIN_CONTAINER="$INFRA_MODE"
@@ -66,7 +63,6 @@ function cleanup() {
 set +x
 
 while : ; do
-    
 
     ##########################################################
     echoInfo "LOADING SYSTEM UTILIZATION STATISTICS..."
@@ -154,15 +150,15 @@ while : ; do
             CONTAINER_HEALTH="unknown"
             CONTAINER_SYNCING="false"
             CONTAINER_BLOCK="0"
-            CONTAINER_EXISTS="$(globGet "${name}_EXISTS")"
-            CONTAINER_RUNTIME="$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")"
+             CONTAINER_EXISTS="$(toLower "$(globGet "${name}_EXISTS")")"
+            CONTAINER_RUNTIME="$(toLower "$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")")"
             [ -z "$CONTAINER_RUNTIME" ] && CONTAINER_RUNTIME="unknown"
 
             if [ "$CONTAINER_EXISTS" == "true" ] ; then
-                CONTAINER_STATUS="$(globGet "${name}_STATUS")"
-                CONTAINER_HEALTH="$(globGet "${name}_HEALTH")"
-                CONTAINER_BLOCK="$(globGet "${name}_BLOCK")"
-                CONTAINER_SYNCING="$(globGet "${name}_SYNCING")"
+                 CONTAINER_STATUS="$(toLower "$(globGet "${name}_STATUS")")"
+                 CONTAINER_HEALTH="$(toLower "$(globGet "${name}_HEALTH")")"
+                  CONTAINER_BLOCK="$(toLower "$(globGet "${name}_BLOCK")")"
+                CONTAINER_SYNCING="$(toLower "$(globGet "${name}_SYNCING")")"
                 [ -z "$CONTAINER_STATUS" ] && CONTAINER_SYNCING="unknown"
                 [ -z "$CONTAINER_HEALTH" ] && CONTAINER_HEALTH="unknown"
                 [ "$CONTAINER_SYNCING" == "true" ] && CONTAINER_SYNCING="syncing"
@@ -171,10 +167,10 @@ while : ; do
                 CONTAINER_EXISTS="false"
             fi
 
-            [ "${CONTAINER_STATUS,,}" != "running" ] && ALL_CONTAINERS_RUNNING="false"
-            [ "${CONTAINER_STATUS,,}" != "exited" ]  && ALL_CONTAINERS_STOPPED="false"
-            [ "${CONTAINER_STATUS,,}" != "paused" ]  && ALL_CONTAINERS_PAUSED="false"
-            [ "${CONTAINER_HEALTH,,}" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
+            [ "$CONTAINER_STATUS" != "running" ] && ALL_CONTAINERS_RUNNING="false"
+            [ "$CONTAINER_STATUS" != "exited" ]  && ALL_CONTAINERS_STOPPED="false"
+            [ "$CONTAINER_STATUS" != "paused" ]  && ALL_CONTAINERS_PAUSED="false"
+            [ "$CONTAINER_HEALTH" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
 
             [ "$name" == "$MAIN_CONTAINER" ] && suffix="MAIN_" || suffix="$(toUpper "${name}_")"
             
@@ -229,15 +225,15 @@ while : ; do
     echoInfo "LOADING SNAPSHOT INFO..."
     ##########################################################
 
-    SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
-    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    declare -l SNAP_EXPOSE=$(globGet SNAP_EXPOSE)
+    declare -l SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     
     selB="b"
     colSnaOpt="whi"
     colSnaInf="whi"
     SNAP_OPTN="Create or Expose Snapshot"
     SNAP_INFO=""
-    if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] ; then
+    if [ "$SNAPSHOT_EXECUTE" == "true" ] ; then
         SNAP_INFO="snapshot is scheduled or ongoing..."
         colSnaInf="yel"
         colSnaOpt="bla"
@@ -251,7 +247,7 @@ while : ; do
         SNAP_OPTN="Create or Hide Snapshot"
     fi
 
-    if [ "${SNAPSHOT_EXECUTE,,}" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
+    if [ "$SNAPSHOT_EXECUTE" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
         SNAP_INFO="stopped node can't be snapshot"
         colSnaInf="red"
         colSnaOpt="bla"
@@ -262,7 +258,7 @@ while : ; do
     echoInfo "LOADING AUTOMATED UPGRADES INFO..."
     ##########################################################
 
-    AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
+    declare -l AUTO_UPGRADES=$(globGet AUTO_UPGRADES)
     colAupOpt="whi"
     colAupInf="whi"
     if [ "$AUTO_UPGRADES" == "true" ] ; then
@@ -297,22 +293,22 @@ while : ; do
     echoInfo "LOADING UPGRADES INFO..."
     ##########################################################
 
-    PLAN_DONE=$(globGet PLAN_DONE)
-    UPGRADE_DONE=$(globGet UPGRADE_DONE)
-    PLAN_FAIL=$(globGet PLAN_FAIL)
-    UPDATE_FAIL=$(globGet UPDATE_FAIL)
-    LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO)
-    UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
+    declare -l PLAN_DONE=$(globGet PLAN_DONE)
+    declare -l UPGRADE_DONE=$(globGet UPGRADE_DONE)
+    declare -l PLAN_FAIL=$(globGet PLAN_FAIL)
+    declare -l UPDATE_FAIL=$(globGet UPDATE_FAIL)
+    declare -l LATEST_BLOCK_TIME=$(globGet LATEST_BLOCK_TIME $GLOBAL_COMMON_RO)
+    declare -l UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
     UPGRADE_TIME=$(globGet "UPGRADE_TIME")
     (! $(isNaturalNumber "$UPGRADE_TIME")) && UPGRADE_TIME=0
     (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
 
-    if [ "${PLAN_DONE,,}" != "true" ] || [ "${UPGRADE_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then # plan in action
+    if [ "$PLAN_DONE" != "true" ] || [ "$UPGRADE_DONE" != "true" ] || [ "$PLAN_FAIL" == "true" ] || [ "$UPDATE_FAIL" == "true" ] ; then # plan in action
         UPGRADE_TIME_LEFT=$(($UPGRADE_TIME - $LATEST_BLOCK_TIME))
         UPGRADE_TYPE="HARD"
-        [ "${UPGRADE_INSTATE,,}" == "true" ] && UPGRADE_TYPE="SOFT"
+        [ "$UPGRADE_INSTATE" == "true" ] && UPGRADE_TYPE="SOFT"
         TMP_UPGRADE_MSG="NEW $UPGRADE_TYPE FORK UPGRADE"
-        if [ "${PLAN_FAIL,,}" == "true" ] || [ "${UPDATE_FAIL,,}" == "true" ] ; then
+        if [ "$PLAN_FAIL" == "true" ] || [ "$UPDATE_FAIL" == "true" ] ; then
             colNot="red"
             NOTIFY_INFO="UPGRADE FAILED, REINSTALL NODE MANUALLY"
         elif [[ $UPGRADE_TIME_LEFT -gt 0 ]] && [[ $UPGRADE_TIME_LEFT -lt 31536000 ]] ; then
@@ -328,8 +324,8 @@ while : ; do
     echoInfo "LOADING VALIDATOR SPECIFIC CONFIGURATION..."
     ##########################################################
 
-    CATCHING_UP=$(globGet CATCHING_UP)
-    VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
+    declare -l CATCHING_UP=$(globGet CATCHING_UP)
+    declare -l VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
     colValOpt="whi"
     colValInf="whi"
@@ -338,26 +334,26 @@ while : ; do
     if (! $(isNullOrWhitespaces "$VALSTATUS")) && [ "$MAIN_CONTAINER" == "validator" ] && [ "$CATCHING_UP" != "true" ] ; then
         selV="v"
 
-        if [ "${VALSTATUS,,}" == "active" ] ; then
+        if [ "$VALSTATUS" == "active" ] ; then
             VALR_OPTN="Enable Maintenance Mode"
             VALR_INFO="node is actively producing blocks"
             selV="e"
-        elif [ "${VALSTATUS,,}" == "paused" ] ; then
+        elif [ "$VALSTATUS" == "paused" ] ; then
             VALR_OPTN="Disable Maintenance Mode"
             VALR_INFO="node was gacefully paused"
             colValInf="yel"
             selV="d"
-        elif [ "${VALSTATUS,,}" == "inactive" ] ; then
+        elif [ "$VALSTATUS" == "inactive" ] ; then
             VALR_OPTN="Re-Activate Halted Node"
             VALR_INFO="inactive node can't sign blcoks"
             colValOpt="gre"
             colValInf="yel"
             selV="a"
-        elif [ "${VALSTATUS,,}" == "waiting" ] ; then
+        elif [ "$VALSTATUS" == "waiting" ] ; then
             VALR_OPTN="Join Validator Set"
             VALR_INFO="waiting to claim validator seat"
             selV="j"
-        elif [ "${VALSTATUS,,}" == "jailed" ] ; then
+        elif [ "$VALSTATUS" == "jailed" ] ; then
             colNot="red"
             NOTIFY_INFO="VALIDATOR COMMITED DOUBLE-SIGNING FAULT"
             selV="r"
@@ -367,7 +363,7 @@ while : ; do
         colValOpt="bla"
     fi
 
-    if [ "${SCAN_DONE,,}" == "true" ] && [ "$CATCHING_UP" == "true" ] ; then
+    if [ "$SCAN_DONE" == "true" ] && [ "$CATCHING_UP" == "true" ] ; then
         colNot="yel"
         NOTIFY_INFO="PLEASE WAIT, CATCHING UP WITH LATEST NETWORK STATE"
     fi
@@ -463,29 +459,29 @@ while : ; do
         globSet IS_SCAN_DONE "false"
     elif  [ "$VSEL" == "u" ] ; then
         echoInfo "INFO: Changing auto-upgrade settings..."
-        [ "${AUTO_UPGRADES,,}" != "true" ] && globSet AUTO_UPGRADES "true" || \
+        [ "$AUTO_UPGRADES" != "true" ] && globSet AUTO_UPGRADES "true" || \
             globSet AUTO_UPGRADES "false"
         continue
     elif  [ "$VSEL" == "n" ] ; then
         echoInfo "INFO: Staring networking manager..."
         $KIRA_MANAGER/kira/kira-networking.sh || echoErr "ERROR: Network manager failed"
     elif  [ "$VSEL" == "$selV" ] && [ "$VSEL" != "r" ] ; then
-        if [ "${VALSTATUS,,}" == "active" ] ; then
+        if [ "$VALSTATUS" == "active" ] ; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || \
                 echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
-        elif [ "${VALSTATUS,,}" == "paused" ] ; then
+        elif [ "$VALSTATUS" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || \
                 echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 5
-        elif [ "${VALSTATUS,,}" == "inactive" ] ; then
+        elif [ "$VALSTATUS" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && activateValidator validator" || \
                 echoErr "ERROR: Failed to confirm activate tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
             sleep 60
-        elif [ "${VALSTATUS,,}" == "waiting" ] ; then
+        elif [ "$VALSTATUS" == "waiting" ] ; then
             echoInfo "INFO: Attempting to claim validator seat..."
             MONIKER=""
             while (! $(isAlphanumeric "$MONIKER")) ; do
@@ -513,35 +509,5 @@ while : ; do
 
     [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
     continue
-
-####################################################################
-#    if [ "${SCAN_DONE,,}" == "true" ]; then
-#
-#
-#        if [ "${CATCHING_UP,,}" == "true" ]; then
-#            echo -e "|\e[0m\e[33;1m     PLEASE WAIT, NODES ARE CATCHING UP        \e[33;1m|"
-#        elif [[ $CONTAINERS_COUNT -lt $INFRA_CONTAINERS_COUNT ]]; then
-#            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, NOT ALL CONTAINERS LAUNCHED  \e[33;1m: ${CONTAINERS_COUNT}/${INFRA_CONTAINERS_COUNT}"
-#        elif [ "${ALL_CONTAINERS_HEALTHY,,}" != "true" ]; then
-#            echo -e "|\e[0m\e[31;1m ISSUES DETECTED, INFRASTRUCTURE IS UNHEALTHY  \e[33;1m|"
-#        elif [ "${SUCCESS,,}" == "true" ] && [ "${ALL_CONTAINERS_HEALTHY,,}" == "true" ]; then
-#            [ -z "$VALIDATOR_ADDR" ] && echo -e "|\e[0m\e[32;1m      SUCCESS, INFRASTRUCTURE IS HEALTHY       \e[33;1m|"
-#        else
-#            echo -e "|\e[0m\e[31;1m    INFRASTRUCTURE IS NOT FULLY OPERATIONAL    \e[33;1m|"
-#        fi
-#    fi
-########################################
-#            echoInfo "INFO: Exposing latest snapshot '$KIRA_SNAP_PATH' via INTERX"
-#            globSet SNAP_EXPOSE "true"
-#            ln -fv "$KIRA_SNAP_PATH" "$INTERX_SNAPSHOT_PATH" && \
-#                echoInfo "INFO: Await few minutes and your snapshot will become available via 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/download/snapshot.tar" || \
-#                echoErr "ERROR: Failed to create snapshot symlink"
-#        else
-#            echoInfo "INFO: Ensuring exposed snapshot will be removed..."
-#            globSet SNAP_EXPOSE "false"
-#            rm -fv "$INTERX_SNAPSHOT_PATH" && \
-#                echoInfo "INFO: Await few minutes and your snapshot will become unavailable" || \
-#                echoErr "ERROR: Failed to remove snapshot symlink"
-########################################
-
+    
 done

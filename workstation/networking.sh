@@ -19,7 +19,7 @@ CUSTOM_GRPC_PORT=$(globGet CUSTOM_GRPC_PORT)
 
 CUSTOM_PORTS_EXPOSE="$(globGet CUSTOM_PORTS_EXPOSE)"
 
-PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
+declare -l PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
 FIREWALL_ZONE=$(globGet FIREWALL_ZONE)
 FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 IFACE=$(globGet IFACE)
@@ -109,15 +109,15 @@ echoInfo "INFO: Setting up '$FIREWALL_ZONE' zone networking for '$IFACE' interfa
 for PORT in "${PORTS[@]}" ; do
     ( [ "$PORT" == "53" ] || [ "$PORT" == "22" ] || [ "$PORT" == "$DEFAULT_SSH_PORT" ] ) && continue 
 
-    if [ "${PORTS_EXPOSURE,,}" == "disabled" ] ; then
+    if [ "$PORTS_EXPOSURE" == "disabled" ] ; then
         echoInfo "INFO: Disabling public access to the port $PORT, networking is tured off ($PORTS_EXPOSURE)"
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
-    elif [ "${PORTS_EXPOSURE,,}" == "enabled" ] ; then
+    elif [ "$PORTS_EXPOSURE" == "enabled" ] ; then
         echoInfo "INFO: Enabling public access to the port $PORT, networking is tured on ($PORTS_EXPOSURE)"
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
         continue 
-    elif [ "${PORTS_EXPOSURE,,}" != "custom" ] ; then
+    elif [ "$PORTS_EXPOSURE" != "custom" ] ; then
         echoErr "WRROR: Unknown ports exposure type '$PORTS_EXPOSURE'"
         exit 1
     fi
@@ -133,15 +133,15 @@ for PORT in "${PORTS[@]}" ; do
     PORT_EXPOSURE=$(globGet "PORT_EXPOSURE_${PORT}")
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
 
-    if [ "${PORT_EXPOSURE,,}" == "disabled" ] ; then
+    if [ "$PORT_EXPOSURE" == "disabled" ] ; then
         echoInfo "INFO: Disabling public access to the port $PORT..."
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         continue
-    elif [ "${PORT_EXPOSURE,,}" == "enabled" ] ; then
+    elif [ "$PORT_EXPOSURE" == "enabled" ] ; then
         echoInfo "INFO: Enabling public access to the port $PORT..."
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MAX family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" accept"
         continue 
-    elif [ "${PORT_EXPOSURE,,}" == "whitelist" ] ; then
+    elif [ "$PORT_EXPOSURE" == "whitelist" ] ; then
         echoInfo "INFO: Custom whitelist rules will be applied to the port $PORT..."
         firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_MIN family=\"ipv4\" source address=\"$ALL_IP\" port port=\"$PORT\" protocol=\"tcp\" reject"
         while read ip ; do
@@ -149,7 +149,7 @@ for PORT in "${PORTS[@]}" ; do
             echoInfo "INFO: Whitelisting address ${ip}..."
             firewall-cmd --permanent --zone=$FIREWALL_ZONE --add-rich-rule="rule priority=$PRIORITY_WHITELIST family=\"ipv4\" source address=\"$ip\" port port=\"$PORT\" protocol=\"tcp\" accept"
         done < $WHITELIST
-    elif [ "${PORT_EXPOSURE,,}" == "blacklist" ] ; then
+    elif [ "$PORT_EXPOSURE" == "blacklist" ] ; then
         echoInfo "INFO: Custom blacklist rules will be applied to the port $PORT..."
         while read ip ; do
             [ -z "$ip" ] && continue # only display non-empty lines

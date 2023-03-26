@@ -131,26 +131,26 @@ while : ; do
                 echoWarn "#${i} -> $p"
             done < $FILE
             echoInfo "INFO: All $i ${TARGET}ED IP addresses were displayed"
-            echoNErr "Do you want to [A]dd or [R]emove $TARGET addresses or [E]xit: " && pressToContinue a r e && SELECT=$(globGet OPTION)
-            [ "${SELECT,,}" == "e" ] && break
-            [ "${SELECT,,}" == "a" ] && TARGET="ADDED to the $TARGET"
-            [ "${SELECT,,}" == "r" ] && TARGET="REMOVED from the $TARGET"
+            echoNErr "Do you want to [A]dd / [R]emove $TARGET addresses or [E]xit: " && pressToContinue a r e && SELECT="$(toLower "$(globGet OPTION)")"
+            [ "$SELECT" == "e" ] && break
+            [ "$SELECT" == "a" ] && TARGET="ADDED to the $TARGET"
+            [ "$SELECT" == "r" ] && TARGET="REMOVED from the $TARGET"
             echoNErr "Input comma separated list of IP addesses to $TARGET: " && read IP_LIST
 
             i=0
             for ip in $(echo $IP_LIST | sed "s/,/ /g") ; do
                 ip=$(echo "$ip" | xargs) # trim whitespace characters
                 ipArr=( $(echo $ip | tr "/" "\n") )
-                ip=${ipArr[0],,}
-                mask=${ipArr[1],,}
+                  ip=$(toLower "${ipArr[0]}")
+                mask=$(toLower "${ipArr[1]}")
                 # port must be a number
                 ( [[ ! $mask =~ ^[0-9]+$ ]] || (($mask < 8 || $mask > 32)) ) && mask="" 
                 if [[ $ip =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]] ; then
                     ipRange="$ip" 
                     [ ! -z "$mask" ] && ipRange="$ip/$mask"
                     echoInfo "INFO: SUCCESS, '$ipRange' is a valid IP address and will be $TARGET"
-                    [ "${SELECT,,}" == "a" ] && setLastLineBySubStrOrAppend "$ip" "$ipRange" $FILE
-                    [ "${SELECT,,}" == "r" ] && setLastLineBySubStrOrAppend "$ip" "" $FILE
+                    [ "$SELECT" == "a" ] && setLastLineBySubStrOrAppend "$ip" "$ipRange" $FILE
+                    [ "$SELECT" == "r" ] && setLastLineBySubStrOrAppend "$ip" "" $FILE
                     i=$((i + 1))
                 else
                     echoInfo "INFO: FAILURE, '$ip' is NOT a valid IP address and will NOT be $TARGET"

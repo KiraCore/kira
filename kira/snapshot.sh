@@ -44,6 +44,6 @@ timerStart SNAPSHOT
 echoInfo "INFO: Please wait, this might take a while, backing up '$SEKAID_DATA' -> '$SNAP_DESTINATION_FILE' ..."
 tar -cf "$SNAP_DESTINATION_FILE" ./ && SUCCESS="true" || SUCCESS="false"
 echoInfo "INFO: Elapsed: $(timerSpan SNAPSHOT) seconds"
-( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "${SUCCESS,,}" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
+( [ ! -f "$SNAP_DESTINATION_FILE" ] || [ "$SUCCESS" != "true" ] ) && echoInfo "INFO: Failed to create snapshot, file '$SNAP_DESTINATION_FILE' was not found" && exit 1
 
 echoInfo "INFO: Success, snapshot compleated!"

@@ -17,9 +17,9 @@ while :; do
   echo -e "| [X] | Exit                                      |"
   echo -e "---------------------------------------------------\e[0m\c\n"
   echo ""
-  echoNErr "Input option: " && pressToContinue 1 2 3 x && KEY=$(globGet OPTION) && echo ""
+  echoNErr "Input option: " && pressToContinue 1 2 3 x && KEY="$(toLower "$(globGet OPTION)")" && echo ""
   
-  case ${KEY,,} in
+  case "$KEY" in
   1*)
     echo "INFO: Starting Validator Node Deployment..."
     globSet INFRA_MODE "validator"

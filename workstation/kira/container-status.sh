@@ -29,24 +29,24 @@ fi
 globSet "${name}_ID" $ID
 globSet "${name}_EXISTS" $EXISTS
 
-if [ "${EXISTS,,}" == "true" ] ; then
+if [ "$EXISTS" == "true" ] ; then
     COMMON_PATH="$DOCKER_COMMON/$name"
     GLOBAL_COMMON="$COMMON_PATH/kiraglob"
 
     DOCKER_STATE=$(globFile "${name}_DOCKER_STATE")
     DOCKER_NETWORKS=$(globFile "${name}_DOCKER_NETWORKS")
     SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET)
-    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    declare -l SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
 
     echoInfo "INFO: Sucessfully inspected '$name' container '$ID'"
     jsonParse "0.State" $DOCKER_INSPECT $DOCKER_STATE || echoErr "ERROR: Failed to parsing docker state"
     jsonParse "0.NetworkSettings.Networks" $DOCKER_INSPECT $DOCKER_NETWORKS || echoErr "ERROR: Failed to parsing docker networks"
 
-    IS_SYNCING=$(globGet "${SNAPSHOT_TARGET}_SYNCING")
+    declare -l IS_SYNCING=$(globGet "${SNAPSHOT_TARGET}_SYNCING")
     CONTAINER_STATUS=$(toLower "$(jsonQuickParse "Status" $DOCKER_STATE 2> /dev/null || echo -n "")")
 
     if [ "$CONTAINER_STATUS" == "running" ] ; then
-        if [ "${SNAPSHOT_EXECUTE,,}" == "true" ] && [ "${SNAPSHOT_TARGET}" == "$name" ] && ( [ "${IS_SYNCING,,}" != "true" ] || [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ) ; then
+        if [ "$SNAPSHOT_EXECUTE" == "true" ] && [ "${SNAPSHOT_TARGET}" == "$name" ] && ( [ "$IS_SYNCING" != "true" ] || [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ) ; then
             CONTAINER_STATUS="backing up"
         elif [ "$(globGet HALT_TASK $GLOBAL_COMMON)" == "true" ] ; then
             CONTAINER_STATUS="halted"

@@ -8,18 +8,28 @@ mkdir -p "$KIRA_SECRETS"
 touch $MNEMONICS
 
 function MnemonicGenerator() {
+    local name=""
+    local type=""
+    getArgs "$1" "$2" --gargs_throw=false --gargs_verbose="true"
+    if [ -z "$name" ] || [ -z "$type" ] ; then
+        echoErr "ERROR: Failed MnemonicGenerator, the 'name' ('$name') flag was NOT defined or key 'type' ('$type') flag is invalid."
+    else
+        name=$(toLower "$name")
+        type=$(toLower "$type")
+    fi
+
     local MNEMONICS="$KIRA_SECRETS/mnemonics.env"
 
     # master mnemonic used to derive other mnemonics
     local masterMnemonic="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
     # expected variable name
-    local mnemonicVariableName=$(toUpper "${1}_${2}_MNEMONIC")
+    local mnemonicVariableName=$(toUpper "${name}_${type}_MNEMONIC")
     # Default entropy == "${masterMnemonic} ; ${mnemonicVariableName}"
-    local entropyHex=$(echo -n "$masterMnemonic ; ${1} ${2}" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{ print $1 }' | xargs)
+    local entropyHex=$(echo -n "$masterMnemonic ; ${name} ${type}" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{ print $1 }' | xargs)
 
-    local valkeyPath="$KIRA_SECRETS/priv_$(toLower "${1}")_key.json"
-    local nodekeyPath="$KIRA_SECRETS/$(toLower "${1}")_node_key.json"
-    local keyidPath="$KIRA_SECRETS/$(toLower "${1}")_node_id.key"
+    local valkeyPath="$KIRA_SECRETS/priv_$(toLower "${name}")_key.json"
+    local nodekeyPath="$KIRA_SECRETS/$(toLower "${name}")_node_key.json"
+    local keyidPath="$KIRA_SECRETS/$(toLower "${name}")_node_id.key"
 
     mnemonic="$(tryGetVar "$mnemonicVariableName" "$MNEMONICS")"
     mnemonic=$(echo "$mnemonic" | xargs || echo -n "")
@@ -37,35 +47,33 @@ function MnemonicGenerator() {
         setVar "$mnemonicVariableName" "$mnemonic" "$MNEMONICS" 1> /dev/null
     fi
 
-    TMP_DUMP="/tmp/validator-key-gen.dump.tmp"
-    if [ "${2,,}" == "val" ] ; then
-        echoInfo "INFO: Ensuring $1 private key is generated"
+    if [ "$type" == "val" ] ; then
+        echoInfo "INFO: Ensuring $name private key is generated"
         if [ ! -f "$valkeyPath" ] ; then # validator key is only re-generated if file is not present
-            rm -fv "$valkeyPath"
-            validator-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath" --nodekey=$TMP_DUMP --keyid=$TMP_DUMP
+            rm -fv "$valkeyPath" && touch "$valkeyPath"
+            validator-key-gen --mnemonic="$mnemonic" --valkey="$valkeyPath"
         fi
-    elif [ "${2,,}" == "node" ] ; then
-        echoInfo "INFO: Ensuring $1 nodekey files are generated"
+    elif [ "$type" == "node" ] ; then
+        echoInfo "INFO: Ensuring $name nodekey files are generated"
 
-        nodeIdVariableName="$(toUpper "${1}")_NODE_ID"
+        nodeIdVariableName="$(toUpper "${name}")_NODE_ID"
         nodeId="$(tryGetVar "$nodeIdVariableName" "$MNEMONICS")"
         
         if [ ! -f "$keyidPath" ] || [ ! -f "$nodekeyPath" ] ; then # node keys are only re-generated if any of keystore files is not present
-            rm -fv "$keyidPath" "$nodekeyPath"
-            validator-key-gen --mnemonic="$mnemonic" --valkey=$TMP_DUMP --nodekey="$nodekeyPath" --keyid="$keyidPath"
+            rm -fv "$keyidPath" "$nodekeyPath" && touch "$keyidPath" "$nodekeyPath" 
+            validator-key-gen --mnemonic="$mnemonic" --nodekey="$nodekeyPath" --keyid="$keyidPath"
         fi
     
         newNodeId=$(cat $keyidPath)
         if [ -z "$nodeId" ] || [ "$nodeId" != "$newNodeId" ] ; then
             setVar "$nodeIdVariableName" "$newNodeId" "$MNEMONICS"
         fi
-    elif [ "${2,,}" == "addr" ] ; then
-        echoInfo "INFO: $1 address key does not require any kestore files"
+    elif [ "$type" == "addr" ] ; then
+        echoInfo "INFO: $name address key does not require any kestore files"
     else
-        echoErr "ERROR: Invalid key type $2, must be valkey, nodekey, addrkey"
+        echoErr "ERROR: Invalid key type ${type}, must be valkey, nodekey, addrkey"
         exit 1
     fi
-    rm -fv $TMP_DUMP
 }
 
 MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
@@ -78,17 +86,17 @@ fi
 
 if [ "$(globGet INFRA_MODE)" == "validator" ] ; then
     setVar VALIDATOR_ADDR_MNEMONIC "$MASTER_MNEMONIC" "$MNEMONICS" 1> /dev/null
-    MnemonicGenerator "validator" "node" # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
-    MnemonicGenerator "validator" "val" # validator block signing key (priv_validator_key.json)
+    MnemonicGenerator --name="validator" --type="node"  # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
+    MnemonicGenerator --name="validator" --type="val"   # validator block signing key (priv_validator_key.json)
 elif [ "$(globGet INFRA_MODE)" == "seed" ] ; then
-    MnemonicGenerator "seed" "node" # seed node key
+    MnemonicGenerator --name="seed" --type="node"       # seed node key
 elif [ "$(globGet INFRA_MODE)" == "sentry" ] ; then
-    MnemonicGenerator "sentry" "node" # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
+    MnemonicGenerator --name="sentry" --type="node"     # sentry node key (sentry_node_key.json, sentry_node_id.key -> SENTRY_NODE_ID)
 fi
 
-MnemonicGenerator "signer" "addr" # INTERX message signing key
-MnemonicGenerator "test" "addr" # generic test key
-MnemonicGenerator "test" "node" # connection test node key
+MnemonicGenerator --name="signer" --type="addr" # INTERX message signing key
+MnemonicGenerator --name="test" --type="addr"   # generic test key
+MnemonicGenerator --name="test" --type="node"   # connection test node key
 
 source $MNEMONICS
 

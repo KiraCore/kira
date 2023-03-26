@@ -8,7 +8,7 @@ PRIVATE_MODE=$(globGet PRIVATE_MODE)
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "| STARTED: KIRA $NODE_TYPE START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| SEKAI VERSION: $(sekaid version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"
@@ -38,14 +38,14 @@ PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC "$GLOBAL_COMMON_RO")
 INFRA_MODE=$(globGet INFRA_MODE "$GLOBAL_COMMON_RO")
 
-while [ -z "$LOCAL_IP" ] && [ "${PRIVATE_MODE,,}" == "true" ] ; do
+while [ -z "$LOCAL_IP" ] && [ "$PRIVATE_MODE" == "true" ] ; do
    echoInfo "INFO: Waiting for Local IP to be provisioned... ($(date))"
    LOCAL_IP=$(globGet LOCAL_IP "$GLOBAL_COMMON_RO")
    PRIVATE_MODE=$(globGet PRIVATE_MODE)
    sleep 5
 done
 
-while [ -z "$PUBLIC_IP" ] && [ "${PRIVATE_MODE,,}" != "true" ] ; do
+while [ -z "$PUBLIC_IP" ] && [ "$PRIVATE_MODE" != "true" ] ; do
     echoInfo "INFO: Waiting for Public IP to be provisioned... ($(date))"
     PUBLIC_IP=$(globGet PUBLIC_IP "$GLOBAL_COMMON_RO")
     PRIVATE_MODE=$(globGet PRIVATE_MODE)

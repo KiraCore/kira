@@ -5,7 +5,7 @@ set +e && source /etc/profile &>/dev/null && set -e
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "| STARTED: KIRA $NODE_TYPE START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| SEKAI VERSION: $(sekaid version)"
 echoWarn "|   BASH SOURCE: ${BASH_SOURCE[0]}"

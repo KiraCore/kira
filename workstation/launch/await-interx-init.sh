@@ -9,7 +9,7 @@ CONTAINER_NAME="interx"
 COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
-TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMER_NAME="${CONTAINER_NAME}_INIT"
 TIMEOUT=1800
 
 CUSTOM_INTERX_PORT=$(globGet CUSTOM_INTERX_PORT)
@@ -17,7 +17,7 @@ DEFAULT_INTERX_PORT=$(globGet DEFAULT_INTERX_PORT)
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|  STARTING $CONTAINER_NAME INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "| COMMON DIR: $COMMON_PATH"
 echoWarn "|    TIMEOUT: $TIMEOUT seconds"
@@ -66,7 +66,7 @@ fi
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "| FINISHED: $CONTAINER_NAME INIT"
 echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
 echoWarn "------------------------------------------------"
 set -x

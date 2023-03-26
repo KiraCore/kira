@@ -19,23 +19,23 @@ echoWarn "------------------------------------------------"
 set -x
 
 echoInfo "INFO: Updating DNS names of all containers in the local hosts file"
-containers=$(timeout 8 docker ps -a | awk '{if(NR>1) print $NF}' | tac  2> /dev/null || echo -n "")
-( [ -z "$containers" ] || [ "${containers,,}" == "null" ] ) && continue
+declare -l containers=$(timeout 8 docker ps -a | awk '{if(NR>1) print $NF}' | tac  2> /dev/null || echo -n "")
+( [ -z "$containers" ] || [ "$containers" == "null" ] ) && continue
 
 for container in $containers ; do
     echoInfo "INFO: Checking $container network info"
     
     id=$($KIRA_COMMON/container-id.sh "$container")
-    ip=$(timeout 8 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${KIRA_DOCKER_NETWORK}.IPAddress" || echo -n "")
+    declare -l ip=$(timeout 8 docker inspect $id | jsonParse "0.NetworkSettings.Networks.${KIRA_DOCKER_NETWORK}.IPAddress" || echo -n "")
   
-    if [ -z "$ip" ] || [ "${ip,,}" == "null" ] ; then
+    if [ -z "$ip" ] || [ "$ip" == "null" ] ; then
       echoWarn "WARNING: Ip address of the container '$container' is NOT known, can't bind DNS!"
       continue
     fi
   
-    dns=$(echo "${container,,}.local" | tr _ -)
+    dns=$(echo "${container}.local" | tr _ -)
     currentDNS=$(getent hosts $dns | awk '{ print $1 }' || echo -n "")
-    globDNS=$(globGet "${container,,}.local" $GLOBAL_COMMON_RO)
+    globDNS=$(globGet "${container}.local" $GLOBAL_COMMON_RO)
     if [ "$currentDNS" == "$ip" ] && [ "$globDNS" == "$ip" ] ; then
       echoInfo "INFO: IP did not changed, no point to update hosts!"
       continue
@@ -48,7 +48,7 @@ for container in $containers ; do
     setLastLineBySubStrOrAppend "$dns" "$ip $dns" $HOSTS_PATH
     sort -u $HOSTS_PATH -o $HOSTS_PATH
     # publish gobl dns
-    globSet "${container,,}.local" "$ip" $GLOBAL_COMMON_RO
+    globSet "${container}.local" "$ip" $GLOBAL_COMMON_RO
 done
 
 set +x

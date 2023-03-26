@@ -35,22 +35,12 @@ BIN_DEST="/usr/local/bin/bip39gen" && \
   safeWget ./bip39gen.deb "https://github.com/KiraCore/tools/releases/download/$(globGet TOOLS_VERSION)/bip39gen-linux-$(getArch).deb" \
   "$(globGet KIRA_COSIGN_PUB)" && dpkg-deb -x ./bip39gen.deb ./bip39gen && cp -fv "$KIRA_BIN/bip39gen/bin/bip39gen" $BIN_DEST && chmod -v 755 $BIN_DEST
 
-# SYSCTRL_BOOTED="true"
-# systemctl daemon-reload || SYSCTRL_BOOTED="false"
-# if [ "${SYSCTRL_BOOTED,,}" != "true" ] ; then
-#     BIN_DEST=/usr/bin/systemctl
-#     safeWget $BIN_DEST \
-#         https://raw.githubusercontent.com/gdraheim/docker-systemctl-replacement/9cbe1a00eb4bdac6ff05b96ca34ec9ed3d8fc06c/files/docker/systemctl.py \
-#         "e02e90c6de6cd68062dadcc6a20078c34b19582be0baf93ffa7d41f5ef0a1fdd"
-# 
-#   chmod 555 $BIN_DEST
-# fi
-
 echoInfo "INFO:        Installed bash-utils: " && bashUtilsVersion
 echoInfo "INFO:         Installed tmconnect: " && tmconnect version
 echoInfo "INFO: Installed validator-key-gen: " && validator-key-gen --help
 echoInfo "INFO:  Installed tmkms-key-import: " && tmkms-key-import version
 echoInfo "INFO:          Installed bip39gen: " && bip39gen version
 echoInfo "INFO:            Booted systemctl: " && systemctl --version
-  
+systemctl daemon-reload
+
 cd "$(globGet KIRA_HOME)"

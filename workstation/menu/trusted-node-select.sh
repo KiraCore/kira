@@ -96,7 +96,7 @@ while : ; do
       HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
       CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
 
-      if [ "${REINITALIZE_NODE,,}" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
+      if [ "$REINITALIZE_NODE" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
           HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
           CHAIN_ID=$NETWORK_NAME 
           ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"

@@ -7,7 +7,7 @@ KIRA_SETUP_VER=$(globGet KIRA_SETUP_VER "$GLOBAL_COMMON_RO")
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA ${NODE_TYPE^^} START SCRIPT $KIRA_SETUP_VER"
+echoWarn "| STARTED: KIRA $NODE_TYPE START SCRIPT $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
 echoWarn "| INTERX VERSION: $(interxd version)"
 echoWarn "|    BASH SOURCE: ${BASH_SOURCE[0]}"

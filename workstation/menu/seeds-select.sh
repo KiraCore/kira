@@ -22,17 +22,17 @@ while : ; do
     (! $(isFileEmpty $PUBLIC_SEEDS )) && cat $PUBLIC_SEEDS || echo "none"
     echoWarn "WARNING: If you want to connect to external networks you have to specify at least one seed or peer node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the seed & peer nodes list"
-    echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [S]eed/[P]eer  Nodes, [W]ipe all or [E]xit: " && pressToContinue a s p w e && SELECT=$(globGet OPTION)
+    echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [S]eed/[P]eer Nodes, [W]ipe all or [E]xit: " && pressToContinue a s p w e && SELECT="$(toLower "$(globGet OPTION)")"
     set -x
-    if [ "${SELECT,,}" == "p" ] ; then
-        $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_PEERS" "Peer Nodes"
-    elif [ "${SELECT,,}" == "s" ] ; then
-        $KIRA_MANAGER/kira/seeds-edit.sh "$PUBLIC_SEEDS" "Seed Nodes"
-    elif [ "${SELECT,,}" == "w" ] ; then
+    if [ "$SELECT" == "p" ] ; then
+        $KIRA_MANAGER/kira/seeds-edit.sh --destination="$PUBLIC_PEERS" --target="Peer Nodes"
+    elif [ "$SELECT" == "s" ] ; then
+        $KIRA_MANAGER/kira/seeds-edit.sh --destination="$PUBLIC_SEEDS" --target="Seed Nodes"
+    elif [ "$SELECT" == "w" ] ; then
         echoInfo "INFO: Wiping all seed & peer node lists"
         rm -f -v "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
         touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
-    elif [ "${SELECT,,}" == "a" ] ; then
+    elif [ "$SELECT" == "a" ] ; then
         NODE_ADDR=""
         set +x
         echo "INFO: Previously trusted node address (default): $(globGet TRUSTED_NODE_ADDR)"
@@ -53,11 +53,11 @@ while : ; do
         else
             echoWarn "INFO: List of active public seeds was NOT found"
         fi
-    elif [ "${SELECT,,}" == "e" ] ; then
+    elif [ "$SELECT" == "e" ] ; then
         if ( ($(isFileEmpty $PUBLIC_SEEDS )) && ($(isFileEmpty $PUBLIC_PEERS )) ) ; then
             set +x
-            echoNErr "No public seed or peer nodes were specified, are you sure you want to launch network locally? (y/n): " && pressToContinue y n && SELECT=$(globGet OPTION)
-            [ "${SELECT,,}" != "y" ] && echoInfo "INFO: Action was cancelled by the user" && continue
+            echoNErr "No public seed or peer nodes were specified, are you sure you want to launch network locally? (y/n): " && pressToContinue y n && SELECT="$(toLower "$(globGet OPTION)")"
+            [ "$SELECT" != "y" ] && echoInfo "INFO: Action was cancelled by the user" && continue
             set -x
             rm -f -v "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
             touch "$PUBLIC_SEEDS" "$PUBLIC_PEERS"

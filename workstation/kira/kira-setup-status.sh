@@ -25,17 +25,17 @@ while : ; do
     (! $(isNaturalNumber "$CONTAINERS_COUNT")) && CONTAINERS_COUNT=0
     (! $(isNaturalNumber "$INFRA_CONTAINERS_COUNT")) && INFRA_CONTAINERS_COUNT=2
 
-    UPDATE_DONE="$(globGet UPDATE_DONE)"
-    UPDATE_FAIL="$(globGet UPDATE_FAIL)"
-    UPGRADE_DONE=$(globGet UPGRADE_DONE)
-    PLAN_DONE="$(globGet PLAN_DONE)"
-    PLAN_FAIL="$(globGet PLAN_FAIL)"
+    declare -l UPDATE_DONE="$(globGet UPDATE_DONE)"
+    declare -l UPDATE_FAIL="$(globGet UPDATE_FAIL)"
+    declare -l UPGRADE_DONE=$(globGet UPGRADE_DONE)
+    declare -l PLAN_DONE="$(globGet PLAN_DONE)"
+    declare -l PLAN_FAIL="$(globGet PLAN_FAIL)"
 
-    UPDATE_SERVICE="$(systemctl is-active "kiraup" 2> /dev/null || : )"
-    UPGRADE_SERVICE="$(systemctl is-active "kiraplan" 2> /dev/null || : )"
-    CLEANUP_SERVICE="$(systemctl is-active "kiraclean" 2> /dev/null || : )"
-    MONIT_SERVICE="$(systemctl is-active "kirascan" 2> /dev/null || : )"
-    DOCKER_SERVICE="$(systemctl is-active "docker" 2> /dev/null || : )"
+    declare -l UPDATE_SERVICE="$(systemctl is-active "kiraup" 2> /dev/null || : )"
+    declare -l UPGRADE_SERVICE="$(systemctl is-active "kiraplan" 2> /dev/null || : )"
+    declare -l CLEANUP_SERVICE="$(systemctl is-active "kiraclean" 2> /dev/null || : )"
+    declare -l MONIT_SERVICE="$(systemctl is-active "kirascan" 2> /dev/null || : )"
+    declare -l DOCKER_SERVICE="$(systemctl is-active "docker" 2> /dev/null || : )"
 
     [ -z "$UPDATE_SERVICE" ] && UPDATE_SERVICE="inactive" 
     [ -z "$UPGRADE_SERVICE" ] && UPGRADE_SERVICE="inactive" 
@@ -70,38 +70,38 @@ while : ; do
     colKM="whi"
     selV="v"
     AUTO_OPEN="false"
-    if [ "${UPDATE_FAIL,,}" == "true" ] ; then
+    if [ "$UPDATE_FAIL" == "true" ] ; then
         colNot="red"
         colPrg="red"
         colUpd="red"
         UPDATE_SERVICE="failed"
         NOTIFY_INFO="NODE SETUP FAILED, PLEASE [D]UMP LOGGS AND TRY SETUP AGAIN"
-    elif  [ "${PLAN_FAIL,,}" == "true" ] ; then
+    elif  [ "$PLAN_FAIL" == "true" ] ; then
         colNot="red"
         colPrg="red"
         colUpg="red"
         UPGRADE_SERVICE="failed"
         NOTIFY_INFO="NETWORK UPGRADE FAILED, PLEASE [D]UMP LOGGS AND REINSTALL NODE"
     else
-        if [ "${UPDATE_DONE,,}" != "true" ] ; then
+        if [ "$UPDATE_DONE" != "true" ] ; then
             colPrg="yel"
-            NOTIFY_INFO="NODE SETUP IS ONGOING"
-        elif [ "${UPGRADE_DONE,,}" != "true" ] ; then
+            NOTIFY_INFO="NODE SETUP IS ONGOING, YOUR MACHINE MIGHT RESTART"
+        elif [ "$UPGRADE_DONE" != "true" ] ; then
             colPrg="yel"
             NOTIFY_INFO="NETWORK UPGRADE IS ONGOING"
-        elif [ "${PLAN_DONE,,}" != "true" ] ; then
+        elif [ "$PLAN_DONE" != "true" ] ; then
             colPrg="yel"
             NOTIFY_INFO="PLANNED UPGRADE IS ONGOING OR AWAITING SCHEDULED BLOCK TIME"
-        elif  [ "${MONIT_SERVICE,,}" != "active" ] ; then
+        elif  [ "$MONIT_SERVICE" != "active" ] ; then
             colNot="red"
             colMon="red"
             NOTIFY_INFO="KIRA MONITORING SERVICE IS INACTIVE, RESTART [S]ERVICES"
-        elif [ "${DOCKER_SERVICE,,}" != "active" ] ; then
+        elif [ "$DOCKER_SERVICE" != "active" ] ; then
             colNot="red"
             CONTAINERS=""
             CONTAINERS_COUNT="0"
             NOTIFY_INFO="DOCKER SERVICE IS NOT ACTIVE, RESTART [S]ERVICES"
-        elif [ "${CLEANUP_SERVICE,,}" != "active" ] ; then
+        elif [ "$CLEANUP_SERVICE" != "active" ] ; then
             NOTIFY_INFO="CLEANING SERVICE IS NOT ACTIVE, YOU MIGHT RUN OUT OF DISK SPACE"
         else
             colNot="gre"
@@ -214,7 +214,7 @@ while : ; do
         echoInfo "INFO: Please wait, services are stopping..."
         sleep 10
     elif [ "$VSEL" == "v" ] ; then
-        if [ "${UPDATE_DONE,,}" != "true" ] || [ "${UPDATE_FAIL,,}" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; then
+        if [ "$UPDATE_DONE" != "true" ] || [ "$UPDATE_FAIL" != "false" ] || ($(isNullOrWhitespaces "$CONTAINERS")) ; then
             if ($(isNullOrWhitespaces "$SETUP_END_DT")) ; then
                 clear && echoInfo "INFO: Starting setup logs preview..."
                 fileFollow $KIRAUP_LOG
@@ -230,8 +230,8 @@ while : ; do
                 cat $KIRAUP_LOG || echoErr "ERROR: Update Log was NOT found! Please run 'journalctl -u kiraup -f --output cat' to see service issues"
                 echoInfo "INFO: Finished printing update service logs."
             fi
-        elif [ "${PLAN_DONE,,}" != "true" ] || [ "${PLAN_FAIL,,}" != "false" ] || [ "${UPGRADE_DONE,,}" != "true" ] ; then
-            if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "${PLAN_FAIL,,}" == "false" ] ; then
+        elif [ "$PLAN_DONE" != "true" ] || [ "$PLAN_FAIL" != "false" ] || [ "$UPGRADE_DONE" != "true" ] ; then
+            if ($(isNullOrWhitespaces "$PLAN_END_DT")) && [ "$PLAN_FAIL" == "false" ] ; then
                 clear && echoInfo "INFO: Starting plan logs preview..."
                 fileFollow $KIRAPLAN_LOG
                 PRESS_TO_CONTINUE="false"
@@ -258,7 +258,7 @@ while : ; do
         elif [ "$DOCKER_SERVICE" != "active" ] && [ -f "$DOCKER_LOG" ] ; then 
             clear && echoInfo "INFO: Printing 'docker' service logs:" && sleep 2
             cat $DOCKER_LOG
-        elif [ "${CLEANUP_SERVICE,,}" != "active" ] && [ -f "$CLEANUP_LOG" ] ; then 
+        elif [ "$CLEANUP_SERVICE" != "active" ] && [ -f "$CLEANUP_LOG" ] ; then 
             clear && echoInfo "INFO: Printing 'kiraclean' service logs:" && sleep 2
             cat $CLEANUP_LOG
         else

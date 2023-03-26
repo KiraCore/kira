@@ -105,12 +105,12 @@ fi
 globSet INFRA_CONTAINERS_COUNT "$CONTAINERS_COUNT"
 globSet EXPOSED_PORTS "$PORTS"
 
-seed_STARTED=$(globGet seed_STARTED)
-sentry_STARTED=$(globGet sentry_STARTED)
-validator_STARTED=$(globGet validator_STARTED)
-interx_STARTED=$(globGet interx_STARTED)
+declare -l seed_STARTED=$(globGet seed_STARTED)
+declare -l sentry_STARTED=$(globGet sentry_STARTED)
+declare -l validator_STARTED=$(globGet validator_STARTED)
+declare -l interx_STARTED=$(globGet interx_STARTED)
 
-if [ "${interx_STARTED,,}" != "true" ] ; then
+if [ "$interx_STARTED" != "true" ] ; then
     globSet CONTAINERS_BUILD_SUCCESS "false"
     set +x
     echoErr "ERROR: Failed to deploy one of the essential containers!"

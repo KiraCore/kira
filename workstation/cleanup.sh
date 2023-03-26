@@ -112,8 +112,8 @@ else
   exit 1
 fi
 
-[ "${EXTERNAL_SYNC,,}" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$(globGet INFRA_MODE)' mode"
-[ "${EXTERNAL_SYNC,,}" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$(globGet INFRA_MODE)' mode"
+[ "$EXTERNAL_SYNC" == "false" ] && echoInfo "INFO: Nodes will be synced from the pre-generated genesis in the '$(globGet INFRA_MODE)' mode"
+[ "$EXTERNAL_SYNC" == "true" ] && echoInfo "INFO: Nodes will be synced from the external seed node in the '$(globGet INFRA_MODE)' mode"
 
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC"
 globSet EXTERNAL_SYNC "$EXTERNAL_SYNC" $GLOBAL_COMMON_RO

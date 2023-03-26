@@ -4,9 +4,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 
 SNAPSHOT_TARGET=$(globGet SNAPSHOT_TARGET) 
 [ -z "$SNAPSHOT_TARGET" ] && SNAPSHOT_TARGET="$(globGet INFRA_MODE)"
-echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=$(globGet OPTION)
+echoNErr "Do you want to [K]eep old snapshots or [W]ipe all after backup is compleated: " && pressToContinue k w && SELECT=$(toLower "$(globGet OPTION)")
 
-if [ "${SELECT,,}" == "k" ] ; then
+if [ "$SELECT" == "k" ] ; then
     echoInfo "INFO: Old snapshots will be disposed"
     globSet SNAPSHOT_KEEP_OLD "true"
 else
@@ -32,15 +32,15 @@ done
 
 echoWarn "WARNING: Snapshot creation will only be started afted node stopped syncing!"
 echoNErr "Do you want to [S]tart creation of a new backup, [D]isable or e[X]it without making changes: "
-pressToContinue s d x && SELECT=$(globGet OPTION)
-[ "${SELECT,,}" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
+pressToContinue s d x && SELECT=$(toLower "$(globGet OPTION)")
+[ "$SELECT" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
 
 # unhalts container after snapshot is complete
 globSet SNAPSHOT_UNHALT "true"
 globSet "${SNAPSHOT_TARGET}_SYNCING" "true"
 globSet SNAPSHOT_TARGET $SNAPSHOT_TARGET
-[ "${SELECT,,}" == "s" ] && globSet SNAPSHOT_EXECUTE true
-[ "${SELECT,,}" == "d" ] && globSet SNAPSHOT_EXECUTE false
+[ "$SELECT" == "s" ] && globSet SNAPSHOT_EXECUTE true
+[ "$SELECT" == "d" ] && globSet SNAPSHOT_EXECUTE false
 setGlobEnv KIRA_SNAP $KIRA_SNAP
 
 echoInfo "INFO: Snapsot task will be initiated and results saved to '$KIRA_SNAP' directory"

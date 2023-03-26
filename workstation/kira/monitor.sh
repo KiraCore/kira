@@ -14,7 +14,7 @@ globDel "HOSTS_SCAN_PID" "HARDWARE_SCAN_PID" "PEERS_SCAN_PID" "SNAPSHOT_SCAN_PID
 
 while : ; do
     timerStart MONITOR
-    SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
+    declare -l SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     KIRA_SNAP_SHA256=$(globGet KIRA_SNAP_SHA256)
 
     set +x
@@ -74,7 +74,7 @@ while : ; do
         sleep 1
     fi
 
-    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && ( [ "${SNAPSHOT_EXECUTE,,}" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ) ; then
+    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && ( [ "$SNAPSHOT_EXECUTE" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ) ; then
         echoInfo "INFO: Starting snapshot monitor..."
         LOG_FILE="$(globFile SNAPSHOT_SCAN_LOG)"
         (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/snapshot.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"

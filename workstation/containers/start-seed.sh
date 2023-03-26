@@ -73,7 +73,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
         # CFG [base]
-        globSet cfg_base_moniker "KIRA ${CONTAINER_NAME^^} NODE" $GLOBAL_COMMON
+        globSet cfg_base_moniker "$(toUpper "KIRA $CONTAINER_NAME NODE")" $GLOBAL_COMMON
         globSet cfg_base_fast_sync "true" $GLOBAL_COMMON
         # CFG [FASTSYNC]
         globSet cfg_fastsync_version "v1" $GLOBAL_COMMON

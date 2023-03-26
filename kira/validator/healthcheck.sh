@@ -7,7 +7,7 @@ timerStart DEFAULT_HEALTHCHECK
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| STARTED: ${NODE_TYPE^^} SEKAI HEALTHCHECK"
+echoWarn "| STARTED: $NODE_TYPE SEKAI HEALTHCHECK"
 echoWarn "|    DATE: $(date)"
 echoWarn "------------------------------------------------"
 set -x
@@ -70,7 +70,7 @@ else
     globSet EXTERNAL_STATUS "offline"
 fi
 
-if [ "${FAILED,,}" == "true" ] ; then
+if [ "$FAILED" == "true" ] ; then
     SUCCESS_ELAPSED=$(timerSpan "success")
     echoErr "ERROR: $NODE_TYPE healthcheck failed for over ${SUCCESS_ELAPSED} out of max 300 seconds"
     if [ $SUCCESS_ELAPSED -gt 300 ] ; then

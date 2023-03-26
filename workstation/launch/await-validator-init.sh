@@ -10,7 +10,7 @@ APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IS_STARTED="false"
 IFACES_RESTARTED="false"
-TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMER_NAME="${CONTAINER_NAME}_INIT"
 TIMEOUT=3600
 
 if [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
@@ -21,7 +21,7 @@ fi
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|  STARTING $CONTAINER_NAME INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
@@ -130,8 +130,8 @@ if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
     for p in "${perms[@]}" ; do
         echoInfo "INFO: Whitelisting permission '$p'..."
         docker exec -i validator bash -c "source /etc/profile && whitelistPermission validator \$$p validator 180"
-        PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$$p")
-        [ "${PERM_CHECK,,}" != "true" ] && echoErr "ERROR: Failed to whitelist '$p'" && exit 1
+        declare -l PERM_CHECK=$(docker exec -i validator bash -c "source /etc/profile && isPermWhitelisted validator \$$p")
+        [ "$PERM_CHECK" != "true" ] && echoErr "ERROR: Failed to whitelist '$p'" && exit 1
     done
 
     echoInfo "INFO: Loading secrets..."
@@ -267,7 +267,7 @@ fi
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "| FINISHED: $CONTAINER_NAME INIT"
 echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
 echoWarn "------------------------------------------------"
 set -x

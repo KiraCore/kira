@@ -10,7 +10,6 @@ function cleanup() {
 
 # ports have 3 diffrent configuration states, public, disabled & custom
 FIREWALL_ZONE=$(globGet INFRA_MODE)
-WHITESPACE="                                                     "
 PORT_CFG_DIR="$KIRA_CONFIGS/ports/$PORT"
 mkdir -p "$PORT_CFG_DIR"
 touch "$PUBLIC_PEERS" "$PUBLIC_SEEDS"
@@ -175,7 +174,7 @@ while : ; do
         EXPOSURE="public"
 
         echoInfo "INFO: Starting $TYPE editor..."
-        $KIRA_MANAGER/kira/seeds-edit.sh "$FILE" "$EXPOSURE $TARGET"
+        $KIRA_MANAGER/kira/seeds-edit.sh --destination="$FILE" --target="$EXPOSURE $TARGET"
 
         CONTAINER="$(globGet INFRA_MODE)"
         COMMON_PATH="$DOCKER_COMMON/$CONTAINER" && mkdir -p "$COMMON_PATH"

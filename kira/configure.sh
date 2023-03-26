@@ -5,6 +5,7 @@ exec 2>&1
 set -x
 
 echoInfo "INFO: Starting $NODE_TYPE node configuration..."
+NODE_TYPE=$(toLower "$NODE_TYPE")
 
 CFG="$SEKAID_HOME/config/config.toml"
 APP="$SEKAID_HOME/config/app.toml"
@@ -44,7 +45,7 @@ cfg_p2p_seeds=$(globGet cfg_p2p_seeds)
 echoInfo "INFO: Setting up node key..."
 cp -afv $COMMON_DIR/node_key.json $SEKAID_HOME/config/node_key.json
 
-[ "${NODE_TYPE,,}" == "validator" ] && \
+[ "$NODE_TYPE" == "validator" ] && \
     echoInfo "INFO: Setting up priv validator key..." && \
     cp -afv $COMMON_DIR/priv_validator_key.json $SEKAID_HOME/config/priv_validator_key.json
 
@@ -61,10 +62,10 @@ echoInfo "INFO:   Public Addr: $PUBLIC_IP"
 echoInfo "INFO: External Addr: $EXTERNAL_ADDRESS"
 
 echoInfo "INFO: Starting genesis configuration..."
-if [[ "${NODE_TYPE,,}" =~ ^(sentry|seed)$ ]] && [ "$UPGRADE_MODE" == "none" ] ; then
+if [[ "$NODE_TYPE" =~ ^(sentry|seed)$ ]] && [ "$UPGRADE_MODE" == "none" ] ; then
     rm -fv $LOCAL_GENESIS
     cp -afv $COMMON_GENESIS $LOCAL_GENESIS # recover genesis from common folder
-elif [ "${NODE_TYPE,,}" == "validator" ] ; then
+elif [ "$NODE_TYPE" == "validator" ] ; then
     validatorAddr=$(showAddress validator)                      && setGlobEnv VALIDATOR_ADDR "$validatorAddr"
     testAddr=$(showAddress test)                                && setGlobEnv TEST_ADDR "$testAddr"
     signerAddr=$(showAddress signer)                            && setGlobEnv SIGNER_ADDR "$signerAddr"
@@ -108,9 +109,9 @@ if [ ! -z "$cfg_p2p_seeds" ] ; then
         [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=${addrArr1[0],,}
-        addr=${addrArr2[0],,}
-        port=${addrArr2[1],,}
+        nodeId=$(toLower "${addrArr1[0]}")
+          addr=$(toLower "${addrArr2[0]}")
+          port=$(toLower "${addrArr2[1]}")
         ip=$(resolveDNS $addr)
 
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
@@ -163,10 +164,10 @@ if [ ! -z "$cfg_p2p_persistent_peers" ] ; then
         [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=${addrArr1[0],,}
-        addr=${addrArr2[0],,}
-        port=${addrArr2[1],,}
-        ip=$(resolveDNS $addr)
+        nodeId=$(toLower "${addrArr1[0]}")
+          addr=$(toLower "${addrArr2[0]}")
+          port=$(toLower "${addrArr2[1]}")
+            ip=$(resolveDNS $addr)
         
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue
         (! $(isNodeId "$nodeId")) && echoWarn "WARNINIG: Peer '$peer' can NOT be added, invalid node-id!" && continue

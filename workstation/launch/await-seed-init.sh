@@ -8,7 +8,7 @@ COMMON_PATH="$DOCKER_COMMON/$CONTAINER_NAME"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
 IFACES_RESTARTED="false"
-TIMER_NAME="${CONTAINER_NAME^^}_INIT"
+TIMER_NAME="${CONTAINER_NAME}_INIT"
 TIMEOUT=3600
 
 if [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
@@ -19,7 +19,7 @@ fi
 
 set +x
 echoWarn "--------------------------------------------------"
-echoWarn "|  STARTING ${CONTAINER_NAME^^} INIT $KIRA_SETUP_VER"
+echoWarn "|  STARTING $CONTAINER_NAME INIT $KIRA_SETUP_VER"
 echoWarn "|-------------------------------------------------"
 echoWarn "|       COMMON DIR: $COMMON_PATH"
 echoWarn "|          TIMEOUT: $TIMEOUT seconds"
@@ -134,7 +134,7 @@ done
 
 set +x
 echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: ${CONTAINER_NAME^^} INIT"
+echoWarn "| FINISHED: $CONTAINER_NAME INIT"
 echoWarn "|  ELAPSED: $(timerSpan $TIMER_NAME) seconds"
 echoWarn "------------------------------------------------"
 set -x

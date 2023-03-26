@@ -15,7 +15,7 @@ if [ "$KIRA_USER" == "root" ]; then
     exit 1
 fi
 
-if [ "${USER,,}" != root ]; then
+if [ "$USER" != root ]; then
     echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
 fi
@@ -31,10 +31,9 @@ tput setab 0
 # this is essential to remove any inpropper output redirections to /dev/null while silencing output
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
-ARCH=$(uname -m) 
-PLATFORM=$(uname) 
-PLATFORM=$(echo "$PLATFORM" | tr '[:upper:]' '[:lower:]')
-( [[ "${ARCH,,}" == *"arm"* ]] || [[ "${ARCH,,}" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
+declare -l ARCH=$(uname -m)
+declare -l PLATFORM=$(uname)
+( [[ "$ARCH" == *"arm"* ]] || [[ "$ARCH" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
 
 COSIGN_NOT_INSTALLED=$(cosign version || echo "true")
 KEYS_DIR="/usr/keys"
@@ -42,7 +41,7 @@ KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
 
 if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
     echo "INFO: Installing cosign"
-    FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}" | tr '[:upper:]' '[:lower:]')
+    FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}")
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
     FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
     COSIGN_HASH_ARM="a50651a67b42714d6f1a66eb6773bf214dacae321f04323c0885f6a433051f95"
@@ -134,7 +133,7 @@ tput setaf 7
 
 set +x
 echoC ";whi"  "================================================================================"
-echoC ";whi"  "|$(strFixC "STARTED KIRA INIT SCRIPT" 78))|"   
+echoC ";whi"  "|$(strFixC "STARTED KIRA INIT SCRIPT" 78)|"   
 echoC ";whi"  "================================================================================"
 echoC ";whi"  "|          KIRA USER:$(strFixL " $(globGet KIRA_USER) " 58)|"
 echoC ";whi"  "|          INIT MODE:$(strFixL " $(globGet INIT_MODE) " 58)|"

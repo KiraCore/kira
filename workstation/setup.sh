@@ -2,7 +2,7 @@
 set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/setup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SKIP_UPDATE=$1
+declare -l SKIP_UPDATE=$1
 START_TIME=$2
 
 set +x
@@ -18,7 +18,7 @@ set -x
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 cd /kira
 
-if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
+if [ "$SKIP_UPDATE" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Updating kira, sekai, INTERX"
 
     safeWget ./kira.zip "$(globGet INFRA_SRC)" "$(globGet KIRA_COSIGN_PUB)"
@@ -35,7 +35,7 @@ if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
     echoInfo "INFO: Restarting setup and skipping update..."
     $KIRA_MANAGER/setup.sh "true" "$START_TIME"
     exit 0
-elif [ "${SKIP_UPDATE,,}" == "true" ]; then
+elif [ "$SKIP_UPDATE" == "true" ]; then
     echoInfo "INFO: Skipping kira Update..."
 else
     echoErr "ERROR: SKIP_UPDATE propoerty is invalid or undefined"

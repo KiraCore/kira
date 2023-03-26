@@ -57,9 +57,10 @@ if [ "$(globGet "ESSENAILS_UPDATED_$KIRA_SETUP_VER")" != "true" ]; then
     LOG_FILE="$KIRA_LOGS/kiraup-essentials-$KIRA_SETUP_VER.log" && globSet UPDATE_TOOLS_LOG "$LOG_FILE" 
 
     rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/setup.sh "false" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    SUCCESS="true"
+    $KIRA_MANAGER/setup.sh "false" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-    if [ "${SUCCESS,,}" == "true" ] ; then
+    if [ "$SUCCESS" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized essentials update"
         globSet "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "true"
         globSet UPDATE_FAIL_COUNTER "0"
@@ -87,9 +88,10 @@ if [ "$(globGet "CLEANUPS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     echoInfo "INFO: Starting cleanup process..."
     LOG_FILE="$KIRA_LOGS/kiraup-cleanup-$KIRA_SETUP_VER.log" && globSet UPDATE_CLEANUP_LOG "$LOG_FILE" 
     rm -fv $LOG_FILE && touch $LOG_FILE
-    SUCCESS="true" && $KIRA_MANAGER/cleanup.sh "true" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
+    SUCCESS="true" 
+    $KIRA_MANAGER/cleanup.sh "true" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || SUCCESS="false"
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-    if [ "${SUCCESS,,}" == "true" ] ; then
+    if [ "$SUCCESS" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized update cleanup"
         globSet "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "true"
         globSet UPDATE_FAIL_COUNTER "0"
@@ -119,7 +121,7 @@ if [ "$(globGet "CONTAINERS_UPDATED_$KIRA_SETUP_VER")" != "true" ] ; then
     $KIRA_MANAGER/containers.sh "true" 2>&1 | tee $LOG_FILE ; test ${PIPESTATUS[0]} = 0 || echoErr "ERROR: Containers build logs pipe failed!"
     CONTAINERS_BUILD_SUCCESS=$(globGet CONTAINERS_BUILD_SUCCESS)
     echoInfo "INFO: Logs were saved to $LOG_FILE" && cp -afv $LOG_FILE $UPDATE_DUMP || echoErr "ERROR: Failed to save log file in the dump directory"
-    if [ "${CONTAINERS_BUILD_SUCCESS,,}" == "true" ] ; then
+    if [ "$CONTAINERS_BUILD_SUCCESS" == "true" ] ; then
         echoInfo "INFO: Sucessfully finalized containers update"
         globSet "CONTAINERS_UPDATED_$KIRA_SETUP_VER" "true"
         globSet UPDATE_FAIL_COUNTER "0"

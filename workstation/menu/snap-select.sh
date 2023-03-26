@@ -55,7 +55,7 @@ while : ; do
             ( echoNC ";gre" "Download [R]emote snap, select exising [F]ile, [D]isable snap sync. or e[X]it: " && pressToContinue r f d x ) || \
             ( echoNC ";gre" "Download [R]emote snap, select exising [F]ile, [E]nable snap sync. or e[X]it: " && pressToContinue r f e x )
         
-        VSEL="$(globGet OPTION)"    
+        VSEL="$(toLower "$(globGet OPTION)")"
         echoC ";whi" "Option [$(toUpper "$VSEL")] was chosen"
         MANUALCONFIG_WAILT="true"
     else
@@ -63,17 +63,17 @@ while : ; do
         MANUALCONFIG_WAILT="false"
     fi
 
-    if [ "${VSEL,,}" == "x" ] ; then
+    if [ "$VSEL" == "x" ] ; then
         break
-    elif [ "${VSEL,,}" == "e" ] ; then
+    elif [ "$VSEL" == "e" ] ; then
         globSet SNAPSHOT_SYNC "true"
         MANUALCONFIG_WAILT="false"
         continue
-    elif [ "${VSEL,,}" == "d" ] ; then
+    elif [ "$VSEL" == "d" ] ; then
         globSet SNAPSHOT_SYNC "false"
         MANUALCONFIG_WAILT="false"
         continue
-    elif [ "${VSEL,,}" == "r" ] ; then
+    elif [ "$VSEL" == "r" ] ; then
         clear
         echoInfo "INFO: Please wait, snap auto-discovery..."
         TMP_SNAPS="/tmp/snaps.txt" && rm -f "$TMP_SNAPS" 

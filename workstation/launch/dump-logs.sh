@@ -3,10 +3,10 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/launch/dump-logs.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-NAME=$1
-DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
+declare -l NAME=$1
+declare -l DUMP_ZIP=$2 # defines if all dumped files should be dumed at the end of execution
 ID=$(globGet "${NAME}_ID")
-CONTAINER_DUMP="$KIRA_DUMP/${NAME,,}"
+CONTAINER_DUMP="$KIRA_DUMP/$NAME"
 COMMON_PATH="$DOCKER_COMMON/$NAME"
 APP_HOME="$DOCKER_HOME/$NAME"
 COMMON_LOGS="$COMMON_PATH/logs"
@@ -43,7 +43,7 @@ echo -n "" > $CONTAINER_DUMP/inspect.json
 docker exec -i $NAME printenv > $CONTAINER_DUMP/env.txt || echoWarn "WARNING: Failed to fetch environment variables"
 docker inspect $ID > $CONTAINER_DUMP/inspect.json || echoWarn "WARNING: Failed to inspect container $NAME"
 
-if [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
+if [[ "$NAME" =~ ^(validator|sentry|seed)$ ]] ; then
     DUMP_CONFIG="$CONTAINER_DUMP/.sekaid/config"
     DUMP_DATA="$CONTAINER_DUMP/.sekaid/data"
     mkdir -p $DUMP_CONFIG
@@ -56,7 +56,7 @@ if [[ "${NAME,,}" =~ ^(validator|sentry|seed)$ ]] ; then
 
     echoInfo "INFO: Dumping data files..."
     cp -fv $APP_HOME/data/priv_validator_state.json $DUMP_DATA/priv_validator_state.json || echoWarn "WARNING: Failed to dump address book file"
-elif [ "${NAME,,}" == "interx" ] ; then
+elif [ "$NAME" == "interx" ] ; then
     echoInfo "INFO: Dumping interx config files..."
     cp -afv $APP_HOME/config.json $DUMP_CONFIG/config.json || echoWarn "WARNING: Failed to dump config file"
 fi
@@ -78,9 +78,9 @@ else
     echoInfo "INFO: No health logs were found"
 fi
 
-if [ "${DUMP_ZIP,,}" == "true" ] ; then
+if [ "$DUMP_ZIP" == "true" ] ; then
     echoInfo "INFO: Compressing dump files..."
-    ZIP_FILE="$CONTAINER_DUMP/${NAME,,}.zip"
+    ZIP_FILE="$CONTAINER_DUMP/${NAME}.zip"
     zip -0 -r -v $ZIP_FILE $CONTAINER_DUMP
 else
     echoInfo "INFO: Container $NAME files will not be compressed in this run"

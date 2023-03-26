@@ -8,7 +8,7 @@ echo "INFO: Started kira network contianers monitor..."
 timerStart MONITOR_CONTAINERS
 SCAN_LOGS="$KIRA_SCAN/logs"
 NETWORKS=$(globGet NETWORKS)
-CONTAINERS=$(globGet CONTAINERS)
+declare -l CONTAINERS=$(globGet CONTAINERS)
 INFRA_MODE=$(globGet INFRA_MODE)
 IS_SYNCING=$(globGet "${INFRA_MODE}_SYNCING")
 TIME_NOW="$(date2unix $(date))"
@@ -51,7 +51,7 @@ for name in $CONTAINERS; do
     $KIRA_MANAGER/kira/container-status.sh "$name" "$NETWORKS" &> "$SCAN_LOGS/${name}-status.error.log" &
     globSet "${name}_STATUS_PID" "$!"
 
-    if [[ "${name,,}" =~ ^(validator|sentry|seed)$ ]] ; then
+    if [[ "$name" =~ ^(validator|sentry|seed)$ ]] ; then
         echoInfo "INFO: Fetching sekai status..."
         echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_RPC_PORT)/status 2>/dev/null | jsonParse "result" 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         # TODO: REMOVE DOCKER
@@ -59,12 +59,8 @@ for name in $CONTAINERS; do
         TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showNextPlan" | jsonParse "plan" || echo "")
         ($(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && TMP_UPGRADE_PLAN=$(docker exec -i $name bash -c "source /etc/profile && showCurrentPlan" | jsonParse "plan" || echo "")
         (! $(isNullOrEmpty "$TMP_UPGRADE_PLAN")) && [ "$(globGet UPGRADE_PLAN)" != "$TMP_UPGRADE_PLAN" ] && globSet NEW_UPGRADE_PLAN "$TMP_UPGRADE_PLAN"
-    elif [ "${name,,}" == "interx" ] ; then
+    elif [ "$name" == "interx" ] ; then
         echoInfo "INFO: Fetching sekai & interx status..."
-
-        #INTERX_STATUS_CODE=$(docker exec -t "$CONTAINER_NAME" curl --fail 0.0.0.0:$DEFAULT_INTERX_PORT/api/kira/statu 2>/dev/null || echo -n "")
-        #INEX_KIRA_STATUS="$(timeout 3 curl --fail 0.0.0.0:$CUSTOM_INTERX_PORT/api/kira/status 2>/dev/null || echo -n "")"
-
         echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/kira/status 2>/dev/null || echo -n "") | globSet "${name}_SEKAID_STATUS"
         echo $(timeout 3 curl --fail 0.0.0.0:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null || echo -n "") | globSet "${name}_INTERX_STATUS"
     fi
@@ -73,7 +69,7 @@ done
 NEW_UPGRADE_PLAN=$(globGet NEW_UPGRADE_PLAN)
 if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globGet UPDATE_DONE)" == "true" ] && [ "$(globGet UPGRADE_DONE)" == "true" ] && [ "$(globGet PLAN_DONE)" == "true" ] ; then
     echoInfo "INFO: Upgrade plan was found!"
-    TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
+    declare -l TMP_UPGRADE_NAME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "name" || echo "")
     TMP_UPGRADE_TIME=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "upgrade_time" || echo "") 
     TMP_UPGRADE_TIME=$(date2unix "$TMP_UPGRADE_TIME") 
     TMP_UPGRADE_INSTATE=$(echo "$NEW_UPGRADE_PLAN" | jsonParse "instate_upgrade" || echo "")
@@ -82,7 +78,7 @@ if (! $(isNullOrEmpty "$NEW_UPGRADE_PLAN")) && [ "$(globGet UPDATE_DONE)" == "tr
     (! $(isNaturalNumber "$TMP_UPGRADE_TIME")) && TMP_UPGRADE_TIME=0
 
     # NOTE!!! Upgrades will only happen if old plan time is older then new plan, otherwise its considered a plan rollback
-    if [ "${TMP_UPGRADE_NAME,,}" != "genesis" ] && [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt $TIME_NOW ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
+    if [ "$TMP_UPGRADE_NAME" != "genesis" ] && [ "$TMP_OLD_CHAIN_ID" == "$NETWORK_NAME" ] && [[ $TMP_UPGRADE_TIME -gt $UPGRADE_TIME ]] && [[ $TMP_UPGRADE_TIME -gt $TIME_NOW ]] && ($(isBoolean "$TMP_UPGRADE_INSTATE")) ; then
         echoInfo "INFO: New upgrade plan was found!"
 
         globSet UPGRADE_TIME "$TMP_UPGRADE_TIME"
@@ -122,8 +118,8 @@ NEW_CATCHING_UP="false"
 for name in $CONTAINERS; do
     echoInfo "INFO: Waiting for '$name' scan processes to finalize"
     PIDX=$(globGet "${name}_STATUS_PID")
-    EXISTS_TMP=$(globGet "${name}_EXISTS")
-    [ "${EXISTS_TMP,,}" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
+    declare -l EXISTS_TMP=$(globGet "${name}_EXISTS")
+    [ "$EXISTS_TMP" == "true" ] && CONTAINERS_COUNT=$((CONTAINERS_COUNT + 1))
 
     set +x
     while : ; do
@@ -141,20 +137,20 @@ for name in $CONTAINERS; do
     set -x
 
     STATUS_PATH=$(globFile "${name}_SEKAID_STATUS")
-    NODE_STATUS=$(globGet ${name}_STATUS)
+    declare -l NODE_STATUS=$(globGet ${name}_STATUS)
     if (! $(isFileEmpty "$STATUS_PATH")) ; then
         LATEST_BLOCK=$(jsonQuickParse "latest_block_height" $STATUS_PATH || echo "0") 
         LATEST_BLOCK_TIME=$(jsonParse "sync_info.latest_block_time" $STATUS_PATH || echo "1970-01-01T00:00:00")
         LATEST_BLOCK_TIME=$(date2unix "$LATEST_BLOCK_TIME") 
-        CATCHING_UP=$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")
+        CATCHING_UP="$(toLower "$(jsonQuickParse "catching_up" $STATUS_PATH || echo "false")")"
         (! $(isNaturalNumber "$LATEST_BLOCK")) && LATEST_BLOCK=0
         (! $(isNaturalNumber "$LATEST_BLOCK_TIME")) && LATEST_BLOCK_TIME=0
         (! $(isBoolean "$CATCHING_UP")) && CATCHING_UP=false
 
-        if [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] ; then
+        if [[ "$name" =~ ^(sentry|seed|validator)$ ]] ; then
             NODE_ID=$(jsonQuickParse "id" $STATUS_PATH 2> /dev/null  || echo "false")
             mkdir -p "$INTERX_REFERENCE_DIR"
-            ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name,,}_node_id"
+            ($(isNodeId "$NODE_ID")) && echo "$NODE_ID" > "$INTERX_REFERENCE_DIR/${name}_node_id"
 
             if [[ $LATEST_BLOCK -gt $NEW_LATEST_BLOCK ]] && [[ $LATEST_BLOCK_TIME -gt $NEW_LATEST_BLOCK_TIME ]] ; then
                 NEW_LATEST_BLOCK="$LATEST_BLOCK"
@@ -169,8 +165,8 @@ for name in $CONTAINERS; do
     fi
     
     [[ $MIN_HEIGHT -gt $LATEST_BLOCK ]] && CATCHING_UP="true"
-    ( [ "${NODE_STATUS,,}" == "halted" ] || [ "${NODE_STATUS,,}" == "backing up" ] ) && CATCHING_UP="false"
-    [[ "${name,,}" =~ ^(sentry|seed|validator)$ ]] && [ "${CATCHING_UP,,}" == "true" ] && NEW_CATCHING_UP="true"
+    ( [ "$NODE_STATUS" == "halted" ] || [ "$NODE_STATUS" == "backing up" ] ) && CATCHING_UP="false"
+    [[ "$name" =~ ^(sentry|seed|validator)$ ]] && [ "$CATCHING_UP" == "true" ] && NEW_CATCHING_UP="true"
     
     
     echoInfo "INFO: Saving status props..."

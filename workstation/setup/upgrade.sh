@@ -65,9 +65,9 @@ if [ "$UPGRADE_EXPORT_DONE" == "false" ] ; then
         ($(isNullOrWhitespaces "$checksum")) && checksum=$(echo "$jobj" | jsonParse "checkout" 2> /dev/null || echo -n "")
         ($(isNullOrWhitespaces "$checksum")) && checksum="$(globGet KIRA_COSIGN_PUB)"
 
-        globSet "NEXT_${joid^^}_CHECKSUM" "$checksum"
-        globSet "NEXT_${joid^^}_VERSION" "$version"
-        globSet "NEXT_${joid^^}_URL" "$url"
+        globSet "NEXT_${joid}_CHECKSUM" "$checksum"
+        globSet "NEXT_${joid}_VERSION" "$version"
+        globSet "NEXT_${joid}_URL" "$url"
     done < $UPGRADE_PLAN_RES64_FILE
 
     if [ "$(globGet INFRA_MODE)" == "validator" ] ; then

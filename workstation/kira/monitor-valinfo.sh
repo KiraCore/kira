@@ -75,14 +75,14 @@ fi
 if [ ! -z "$VALSTATUS" ] ; then
     echoInfo "INFO: Validator status was found..."
     echo "$VALSTATUS" > $VALSTATUS_SCAN_PATH
-    STATUS=$(echo "$VALSTATUS" | jsonQuickParse "status" || echo -n "")
+    STATUS="$(toLower "$(echo "$VALSTATUS" | jsonQuickParse "status" || echo -n "")")"
 else
     echoInfo "INFO: Validator status was NOT found..."
     echo -n "" > $VALSTATUS_SCAN_PATH
     STATUS=""
 fi
 
-if ($(isFileEmpty $VALOPERS_COMM_RO_PATH)) || [ "${STATUS,,}" == "waiting" ] ; then
+if ($(isFileEmpty $VALOPERS_COMM_RO_PATH)) || [ "$STATUS" == "waiting" ] ; then
     echoWarn "WARNING: List of validators was NOT found or validator has WAITING status, aborting info discovery"
     echo -n "" > $VALINFO_SCAN_PATH
 else
@@ -108,7 +108,7 @@ else
         done < $VALIDATORS64_SCAN_PATH
     fi
 
-    if [ "${VALOPER_FOUND,,}" != "true" ] ; then
+    if [ "$VALOPER_FOUND" != "true" ] ; then
         echoInfo "INFO: Validator '$VALIDATOR_ADDR' was NOT found in the valopers querry"
         echo -n "" > $VALINFO_SCAN_PATH
     fi

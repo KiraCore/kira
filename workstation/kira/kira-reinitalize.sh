@@ -9,10 +9,10 @@ NEW_INFRA_SRC=""
 INFRA_SRC_OUT="/tmp/kira.zip"
 SUCCESS_DOWNLOAD="false"
 
-while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do 
-    ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|c)$ ]] ; do echoNErr "Press [Y]es to keep default infrastructure URL or [C]hange source: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
+while [ "$SUCCESS_DOWNLOAD" == "false" ] ; do 
+    echoNErr "Press [Y]es to keep default infrastructure URL or [C]hange source: " && pressToContinue y c && ACCEPT=$(toLower "$(globGet OPTION)")
 
-    if [ "${ACCEPT,,}" == "c" ] ; then
+    if [ "$ACCEPT" == "c" ] ; then
         read  -p "Input URL, version or CID hash of the new infrastructure source: " NEW_INFRA_SRC
         ($(isVersion "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$NEW_INFRA_SRC/kira.zip"
         ($(isCID "$NEW_INFRA_SRC")) && NEW_INFRA_SRC="https://ipfs.kira.network/ipfs/$NEW_INFRA_SRC/kira.zip"
@@ -25,8 +25,9 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     safeWget $INFRA_SRC_OUT $NEW_INFRA_SRC "$(globGet KIRA_COSIGN_PUB)" || ( echo "ERROR: Failed to download $NEW_INFRA_SRC" && rm -fv $INIT_SRC_OUT )
     
     if [ ! -f "$INFRA_SRC_OUT" ] ; then
-        ACCEPT="." && while ! [[ "${ACCEPT,,}" =~ ^(y|x)$ ]] ; do echoNErr "Press [Y]es to try again or [X] to exit: " && read  -d'' -s -n1 ACCEPT && echo "" ; done
-        [ "${ACCEPT,,}" == "x" ] && break
+        echoNErr "Press [Y]es to try again or [X] to exit: " && pressToContinue y x && ACCEPT=$(toLower "$(globGet OPTION)")
+
+        [ "$ACCEPT" == "x" ] && break
     else
         SUCCESS_DOWNLOAD="true"
         chmod 555 $INFRA_SRC_OUT
@@ -34,7 +35,7 @@ while [ "${SUCCESS_DOWNLOAD,,}" == "false" ] ; do
     fi
 done
 
-if [ "${SUCCESS_DOWNLOAD,,}" != "true" ] ; then
+if [ "$SUCCESS_DOWNLOAD" != "true" ] ; then
     echoInfo "INFO: Re-initialization failed or was aborted"
     echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 else
