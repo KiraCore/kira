@@ -12,14 +12,15 @@ timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone 
 
 MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
 
-if ($(isFileEmpty "$MNEMONICS")) ; then
+set +x
+MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
+if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
     echoInfo "INFO: Mnemonics file was NOT found, auto-generating new secrets..."
-    sleep 3
     setVar MASTER_MNEMONIC "autogen" "$MNEMONICS"
-    set +x
-    source $KIRAMGR_SCRIPTS/load-secrets.sh
-    set -e
 fi
+
+$KIRAMGR_SCRIPTS/load-secrets.sh
+set -x
 
 while :; do
     set -x
@@ -74,10 +75,13 @@ while :; do
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
     
     set +x
-    MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
-    ($(isMnemonic "$MASTER_MNEMONIC")) && MNEMONIC_SAVED="true" || MNEMONIC_SAVED="false"
-    MASTER_MNEMONIC=""
+    VALIDATOR_ADDR=$(validator-key-gen --mnemonic="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")
+    if (! $(isKiraAddress "$VALIDATOR_ADDR")) ; then
+      echoErr "ERROR: Failed to generate master mnemonic and corresponding kira address"
+      exit 1
+    fi
     set -x
+
     NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
     (! $(isNodeId "$NODE_ID")) && NODE_ID="???...???"
 
@@ -125,9 +129,6 @@ while :; do
     elif [ "$NEW_NETWORK" != "true" ] && (! $(isSHA256 "$TRUSTED_NODE_GENESIS_HASH")) ; then
  echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " GENESIS FILE NOT FOUND, CHANGE TRUSTED SEED OR PROVIDE SOURCE " 78 "." "-")")|"
  startCol="bla" && opselS="r"
-    elif [ "$MNEMONIC_SAVED" == "false" ] ; then
- echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " MASTER MNEMONIC IS NOT DEFINED " 78 "." "-")")|"
- startCol="bla" && opselS="r"
     elif [ "$NEW_NETWORK" != "true" ] && [[ $SEEDS_COUNT -le 0 ]] && [ "$REINITALIZE_NODE" != "true" ] ; then
  echoC "sto;whi" "|$(echoC "res;red" "$(strFixC " P2P NODES NOT FOUND, CHANGE TRUSTED SEED ADDRESS " 78 "." "-")")|"
  startCol="bla" && opselS="r"
@@ -174,9 +175,7 @@ while :; do
 
     echoC "sto;whi" "|$(echoC "res;bla" "----------- SELECT OPTION -----------:------------- CURRENT VALUE ------------")|"
 
-    [ "$MNEMONIC_SAVED" == "true" ] && \
-                         echoC ";whi" "| [M] | Modify Master Mnemonic        : $(strFixL "" 39)|" ||
-      echoC ";whi" "| $(echoC "res;red" "[M] | Set or Gen. Master Mnemonic   : $(strFixL "" 39)")|"
+      echoC ";whi" "| [M] | View or Modify Mnemonic       : $(strFixL "$VALIDATOR_ADDR " 39)|"
  echoC ";$selNCol" "| [N] | Modify Networking Config.     : $(strFixL "$IFACE, $DOCKER_NETWORK, $DOCKER_SUBNET" 39)|"
     [ "$NEW_NETWORK" != "true" ] && \
       echoC ";whi" "| [T] | Switch to Diffrent Node Type  : $(strFixL "$INFRA_MODE node" 39)|" || \
