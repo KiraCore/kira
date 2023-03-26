@@ -2,6 +2,16 @@
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/launcher.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
+function cleanup() {
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    setterm -cursor on
+    exit 130
+}
+
+# Force console colour to be black and text gray
+tput setab 0
+tput setaf 7
+
 systemctl stop kirascan || echoWarn "WARNING: KIRA scan service could NOT be stopped"
 systemctl stop kiraup || echoWarn "WARNING: KIRA update service could NOT be stopped"
 systemctl stop kiraplan || echoWarn "WARNING: KIRA upgrade service could NOT be stopped"
@@ -208,7 +218,11 @@ while :; do
 
   echoC "sto;whi" "| $(echoC "res;$startCol" "$(strFixL "[S] | Start Setup" 36)")| [R] Refresh      | [X] Abort Setup     |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off && pressToContinue m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x && setterm -cursor on
+    setterm -cursor off 
+    pressToContinue m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
+    setterm -cursor on
+    trap cleanup SIGINT
+
     KEY=$(globGet OPTION)
     KEY="$(toLower "$KEY")" && [ "${KEY}" == "j" ] && KEY="l"
 

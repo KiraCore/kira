@@ -1,43 +1,61 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/mnemonic-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
-set +x
 
-INFRA_MODE=$(globGet INFRA_MODE)
+function cleanup() {
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    setterm -cursor on
+    exit 130
+}
+
+# Force console colour to be black and text gray
+tput setab 0
+tput setaf 7
+
+
+
+INFRA_MODE="$(globGet INFRA_MODE)"
 MNEMONICS="$KIRA_SECRETS/mnemonics.env"
 touch $MNEMONICS
 
 while : ; do
-    set +x
-    
-    MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
-    NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
+    selG="g"
+    selM="m"
+    selV="v"
+    selX="x"
+    OPTION_GENE="$(strFixL " [G] | Generate new master mnemonic and DELETE all secrets " 78 )"
+    OPTION_MODI="$(strFixL " [M] | Modify master mnemonic and DELETE all secrets " 78 )"
+    OPTION_VIEW="$(strFixL " [V] | Display master mnemonic from keystore " 78 )"
+    OPTION_EXIT="$(strFixL " [X] | Exit " 78 )"
+
+    NODE_ID="$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")"
     [ -z "$NODE_ID" ] && NODE_ID="???"
 
-        clear
-        cSubCnt=57
+        set +x && printf "\033c" && clear
         echoC ";whi" " =============================================================================="
-     echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SECRETS MANAGMENT TOOL, KM $KIRA_SETUP_VER" 78)")|"
+     echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "KIRA SECRETS MANAGMER $KIRA_SETUP_VER" 78)")|"
         echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
-        echoC ";whi" "| $(strFixR "${INFRA_MODE^} Node ID" 19): $(strFixL "$NODE_ID" 55) |"
-        echoC ";whi" "| Secrets Direcotry: $(strFixL "$KIRA_SECRETS" $cSubCnt) |"
-        echoC ";whi" "| Keystore Location: $(strFixL "$MNEMONICS" $cSubCnt) |"
-        echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
-    if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
-        echoC "sto;whi" "|$(echoC "res;gre" "$(strFixL " [G] | Generate new master mnemonic and DELETE all secrets" 78)")|"
-    else
-        echoC ";whi" "|$(strFixL " [M] | Modify existing master mnemonic and DELETE all secrets" 78)|"
-        echoC ";whi" "|$(strFixL " [V] | Display existing master mnemonic from keystore" 78)|"
-    fi
-        echoC ";whi" "|$(strFixL " [X] | Exit without making changes __________________________________________" 78 _ _)|"
+        echoC ";whi" "|$(strFixR "$(toCapital "$INFRA_MODE") Node ID" 18): $(strFixL "$NODE_ID" 57) |"
 
-    setterm -cursor off
-    if (! $(isMnemonic "$MASTER_MNEMONIC")) ; then
-        pressToContinue g x && KEY=$(globGet OPTION)
-    else
-        pressToContinue m v x && KEY=$(globGet OPTION)
-    fi
+        if [ "$INFRA_MODE" == "validator" ] ; then
+            VALIDATOR_ADDR=$(validator-key-gen --mnemonic="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")
+            echoC ";whi" "|$(strFixR "$(toCapital "$INFRA_MODE") Addres" 18): $(strFixL "$VALIDATOR_ADDR" 57) |"
+        fi
+
+        echoC ";whi" "| Secrets Direcotry: $(strFixL "$KIRA_SECRETS" 57) |"
+        echoC ";whi" "| Keystore Location: $(strFixL "$MNEMONICS" 57) |"
+     echoC "sto;whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
+        echoC ";whi" "|$OPTION_GENE|"
+        echoC ";whi" "|$OPTION_MODI|"
+        echoC ";whi" "|$OPTION_VIEW|"
+        echoC ";whi" "|$OPTION_EXIT|"
+        echoNC ";whi" " ------------------------------------------------------------------------------"
+        setterm -cursor off
+
+    timeout=3600
+    pressToContinue --timeout=$timeout "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
     setterm -cursor on
+    trap cleanup SIGINT
 
     if [ "$KEY" == "x" ] ; then
         break
@@ -73,10 +91,11 @@ while : ; do
             continue
         fi
     elif [ "$KEY" == "v" ] ; then
+        MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
         clear
         IFS=" "
         read -ra arr <<< "$MASTER_MNEMONIC"
-        IFS=$'\n\t'
+        unset IFS
         echoNC ";gre" "Numbered list of you master mnemonic seed words:\n\n"
         i=0
         while [ $i -lt ${#arr[@]} ]; do
@@ -84,7 +103,11 @@ while : ; do
             val2="${arr[i]}" && i=$((i+1)) && id2="$i"
             val3="${arr[i]}" && i=$((i+1)) && id3="$i"
             val4="${arr[i]}" && i=$((i+1)) && id4="$i"
-            echoNC ";whi" "$(strFixL " $id1. $val1" 18)|$(strFixL " $id2. $val2" 18)|$(strFixL " $id3. $val3" 18)|$(strFixL " $id4. $val4" 19)\n"
+            WORD_C1="$(strFixL " $id1. $val1" 18)"
+            WORD_C2="$(strFixL " $id2. $val2" 18)"
+            WORD_C3="$(strFixL " $id3. $val3" 18)"
+            WORD_C4="$(strFixL " $id4. $val4" 18)"
+            echoC ";whi" "$WORD_C1|$WORD_C2|$WORD_C3|$WORD_C4"
         done
         echoNC ";gre" "\n\nOrdered list: " && echoNC ";whi" "\n\n$MASTER_MNEMONIC\n\n"
         echoNLog "Press any key to continue: " && pressToContinue ""
