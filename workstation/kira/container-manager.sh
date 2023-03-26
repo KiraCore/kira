@@ -93,7 +93,7 @@ while : ; do
     PRIVATE_MODE=$(globGet PRIVATE_MODE "$GLOBAL_COMMON")
     EXTERNAL_STATUS=$(toLower "$(globGet EXTERNAL_STATUS "$GLOBAL_COMMON")")
     RUNTIME_VERSION=$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")
-    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON" | grep --color=never -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b' /dev/null || echo "")
+    EXTERNAL_ADDRESS=$(globGet EXTERNAL_ADDRESS "$GLOBAL_COMMON" | grep --color=never -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}:[0-9]{1,5}\b' 2> /dev/null || echo "")
     LATEST_BLOCK=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO")
 
     NOW_TIME="$(date -u +%s)"
@@ -168,7 +168,7 @@ while : ; do
         (! $(isKiraAddress "$NODE_ADDR")) && NODE_ADDR="???" && colNAdr="bla"
         (! $(isNaturalNumber "$VTOP")) && VTOP="???" && colVTop="bla"
         (! $(isNaturalNumber "$VSTREAK")) && VSTREAK="???" && colVStr="bla"
-        (! $(isNaturalNumber "$VSTATUS")) && VSTATUS="???" && colVSta="bla"
+        ($(isNullOrWhitespaces "$VSTATUS")) && VSTATUS="???" && colVSta="bla"
         (! $(isNaturalNumber "$VMISSCHANCE")) && VMISSCHANCE="???" && colVMCh="bla"
         (! $(isNaturalNumber "$VMISSMAX")) && VMISSMAX="???" && colVMCh="bla"
         VMISSCHANCE="${VMISSCHANCE}/${VMISSMAX}"
