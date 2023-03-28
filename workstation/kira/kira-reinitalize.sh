@@ -37,7 +37,6 @@ done
 
 if [ "$SUCCESS_DOWNLOAD" != "true" ] ; then
     echoInfo "INFO: Re-initialization failed or was aborted"
-    echoErr "Press any key to continue or Ctrl+C to abort..." && pressToContinue
 else
     rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
     unzip $INFRA_SRC_OUT -d $KIRA_INFRA
@@ -50,5 +49,6 @@ else
     chmod -R 555 $KIRA_MANAGER
 
     echoInfo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh --infra-src="$NEW_INFRA_SRC" --init-mode="interactive"
+    $KIRA_MANAGER/init.sh --infra-src="$NEW_INFRA_SRC" --init-mode="interactive"
+    exit 0
 fi

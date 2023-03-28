@@ -13,19 +13,19 @@ globDel "DISK_USED" "DISK_UTIL" "RAM_UTIL" "CPU_UTIL" "NETWORKS" "CONTAINERS" "I
 globDel "HOSTS_SCAN_PID" "HARDWARE_SCAN_PID" "PEERS_SCAN_PID" "SNAPSHOT_SCAN_PID" "VALINFO_SCAN_PID"
 
 while : ; do
-    timerStart MONITOR
+    timerStart SYS_MONITOR
     declare -l SNAPSHOT_EXECUTE=$(globGet SNAPSHOT_EXECUTE)
     KIRA_SNAP_SHA256=$(globGet KIRA_SNAP_SHA256)
 
-    set +x
-    echoWarn "------------------------------------------------"
-    echoWarn "|   STARTED: MONITOR                           |"
-    echoWarn "|----------------------------------------------|"
-    echoWarn "|        SCAN DONE: $(globGet IS_SCAN_DONE) "
-    echoWarn "|    SNAN DUMP DIR: $SCAN_DUMP"
-    echoWarn "| SNAPSHOT EXECUTE: $SNAPSHOT_EXECUTE"
-    echoWarn "------------------------------------------------"
-    set -x
+    set +x && echo ""
+    echoC ";whi;"  " =============================================================================="
+    echoC ";whi"  "|            STARTED:$(strFixL " KIRA SYSTEM MONITORING $KIRA_SETUP_VER" 58)|"   
+    echoC ";whi"  "|------------------------------------------------------------------------------|"
+    echoC ";whi"  "|          SCAN DONE:$(strFixL " $(globGet IS_SCAN_DONE)" 58)|"
+    echoC ";whi"  "|      SNAN DUMP DIR:$(strFixL " $SCAN_DUMP" 58)|"
+    echoC ";whi"  "| SNAPSHOT REQUESTED:$(strFixL " $SNAPSHOT_EXECUTE" 58)|"
+    echoC ";whi"  " =============================================================================="
+    echo "" && set -x 
 
     if (! $(isCommand "docker")) ; then
         echoErr "ERROR: Docker is not installed, monitor can NOT continue!"
@@ -51,6 +51,7 @@ while : ; do
         timeout 600 $KIRA_MANAGER/launch/update-hosts.sh &> $LOG_FILE &
         globSet HOSTS_SCAN_PID "$!"
     else
+        echoInfo "INFO: Hosts update process is ongoing..."
         sleep 1
     fi
     
@@ -61,26 +62,29 @@ while : ; do
         timeout 600 $KIRA_MANAGER/kira/monitor-hardware.sh &> $LOG_FILE &
         globSet HARDWARE_SCAN_PID "$!"
     else
+        echoInfo "INFO: Hardware monitor is running..."
         sleep 1
     fi
 
     if ! kill -0 $(globGet VALINFO_SCAN_PID) 2>/dev/null; then
-        echo "INFO: Starting valinfo monitor..."
+        echoInfo "INFO: Starting valinfo monitor..."
         LOG_FILE="$(globFile VALINFO_SCAN_LOG)"
         (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/valinfo.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 3600 $KIRA_MANAGER/kira/monitor-valinfo.sh &> $LOG_FILE &
         globSet VALINFO_SCAN_PID "$!"
     else
+        echoInfo "INFO: Validator monitor is running..."
         sleep 1
     fi
 
-    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null && ( [ "$SNAPSHOT_EXECUTE" == "true" ] || ( [ -f "$KIRA_SNAP_PATH" ] && [ -z "$KIRA_SNAP_SHA256" ] ) ) ; then
+    if ! kill -0 $(globGet SNAPSHOT_SCAN_PID) 2>/dev/null; then
         echoInfo "INFO: Starting snapshot monitor..."
         LOG_FILE="$(globFile SNAPSHOT_SCAN_LOG)"
         (! $(isFileEmpty $LOG_FILE)) && cp -Tafv "$LOG_FILE" "$SCAN_DUMP/snapshot.log" || echoWarn "WARNING: Log file was not found or could not be saved the dump directory"
         timeout 86400 $KIRA_MANAGER/kira/monitor-snapshot.sh &> $LOG_FILE &
         globSet SNAPSHOT_SCAN_PID "$!"
     else
+        echoInfo "INFO: Snapshot monitor is running..."
         sleep 1
     fi
 
@@ -91,6 +95,7 @@ while : ; do
         timeout 86400 $KIRA_MANAGER/kira/monitor-peers.sh &> $LOG_FILE &
         globSet PEERS_SCAN_PID "$!"
     else
+        echoInfo "INFO: Peers monitor is running..."
         sleep 1
     fi
 
@@ -117,15 +122,15 @@ while : ; do
         globSet IS_SCAN_DONE "false"
         sleep 5
     else
+        echoInfo "INFO: Scan was sucessfully finalized"
         globSet IS_SCAN_DONE "true"
     fi
 
-    set +x
-    echoWarn "------------------------------------------------"
-    echoWarn "| FINISHED: MONITOR                            |"
-    echoWarn "|----------------------------------------------|"
-    echoWarn "| SCAN DONE: $(globGet IS_SCAN_DONE)"
-    echoWarn "|   ELAPSED: $(timerSpan MONITOR) seconds"
-    echoWarn "------------------------------------------------"
-    set -x
+    set +x && echo ""
+    echoC ";whi"  " =============================================================================="
+    echoC ";whi"  "|           FINISHED:$(strFixL " SYSTEM MONITOR $KIRA_SETUP_VER" 58)|"   
+    echoC ";whi"  "|            ELAPSED:$(strFixL " $(prettyTime $(timerSpan SYS_MONITOR)) " 58)|"
+    echoC ";whi"  "|               TIME:$(strFixL " $(date +"%r, %A %B %d %Y")" 58)|"
+    echoC ";whi"  " =============================================================================="
+    echo "" && set -x 
 done

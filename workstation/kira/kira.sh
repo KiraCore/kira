@@ -121,11 +121,20 @@ while : ; do
     ##########################################################
 
     KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
-    SNA_PTH="$(basename -- "$KIRA_SNAP_PATH")"  && ($(isFileEmpty $SNA_PTH)) && SNA_PTH="???" && colSPH="bla" || colSPH="whi"
+    SNA_PTH="$(basename -- "$KIRA_SNAP_PATH")"  && ($(isFileEmpty $KIRA_SNAP_PATH)) && SNA_PTH="???" && colSPH="bla" || colSPH="whi"
     SNA_SHA="$(globGet KIRA_SNAP_SHA256)"       && (! $(isSHA256 $SNA_SHA)) && SNA_SHA="???...???" && colSNS="bla" || colSNS="whi"
     GEN_SHA="$(globGet GENESIS_SHA256)"         && (! $(isSHA256 $GEN_SHA)) && GEN_SHA="???...???" && colGSH="bla" || colGSH="whi"
 
-    (! $(isFileEmpty $SNA_PTH)) && SNA_PTH=$(basename -- "$SNA_PTH")
+    if (! $(isFileEmpty $KIRA_SNAP_PATH)) ; then
+        SNA_PTH=$(basename -- "$KIRA_SNAP_PATH")
+        KIRA_SNAP_SIZE="$(prettyBytes $(fileSize "$KIRA_SNAP_PATH") 1)"
+        LABEL_SNAP="$(strFixC " SNAPSHOT ~$KIRA_SNAP_SIZE " 25)"
+        colSPH="whi"
+    else
+        LABEL_SNAP="$(strFixC " SNAPSHOT NAME " 25)"
+        SNA_PTH="???" 
+        colSPH="bla"
+    fi
 
     SNA_PTH=$(strFixC " $SNA_PTH " 25)
     SNA_SHA=$(strFixC " $SNA_SHA " 25)
@@ -212,7 +221,10 @@ while : ; do
     fi
 
     if [ "$ALL_CONTAINERS_HEALTHY" == "false" ] ; then
-        if [ "$MAIN_CONTAINER_HEALTH" != "healthy" ] ; then
+        if [ "$MAIN_CONTAINER_HEALTH" == "starting" ] ; then
+            colNot="yel"
+            NOTIFY_INFO="PLEASE WAIT, ESSENTIAL CONTAINERS ARE STARTING"
+        elif [ "$MAIN_CONTAINER_HEALTH" != "healthy" ] ; then
             colNot="red"
             NOTIFY_INFO="ESSENTIAL CONTAINERS ARE FAILING HEALTHCHECK"
         else
@@ -247,7 +259,12 @@ while : ; do
         SNAP_OPTN="Create or Hide Snapshot"
     fi
 
-    if [ "$SNAPSHOT_EXECUTE" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
+    if [ "$SCAN_DONE" != "true" ] ; then
+        SNAP_INFO="loading snpashot info..."
+        colSnaInf="yel"
+        colSnaOpt="bla"
+        selB="r"
+    elif [ "$SNAPSHOT_EXECUTE" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
         SNAP_INFO="stopped node can't be snapshot"
         colSnaInf="red"
         colSnaOpt="bla"
@@ -409,17 +426,16 @@ while : ; do
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
     echoC ";whi" "|  CPU USAGE | RAM MEMORY | DISK SPACE |  UP.SPEED  |  DN.SPEED  |  INTERFACE  |"
     echoC ";whi" "|$(echoC "res;$colCPU" "$CPU_UTIL")|$(echoC "res;$colRAM" "$RAM_UTIL")|$(echoC "res;$colDIS" "$DISK_UTIL")|$(echoC "res;$colNIN" "$NET_IN")|$(echoC "res;$colNUT" "$NET_OUT")|$(echoC "res;$colIFA" "$NET_IFACE")|"
-    echoC ";whi" "| VAL.ACTIVE | V.INACTIVE | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
+    echoC ";whi" "| VALIDATORS | V.INACTIVE | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
     echoC ";whi" "|$(echoC "res;$colACT" "$VAL_ACT")|$(echoC "res;$colTOT" "$VAL_TOT")|$(echoC "res;$colWAI" "$VAL_WAI")|$(echoC "res;$colNUM" "$BLO_NUM")|$(echoC "res;$colTIM" "$BLO_TIM")|$(echoC "res;$colNAM" "$CHA_NAM")|"
     echoC ";whi" "|$(strFixC " PUBLIC IP " 25 "" "-")|$(strFixC " LOCAL IP " 25 "" "-")|$(strFixC " SUBNET ($DCK_NET) " 26 "" "-")|"
     echoC ";whi" "|$(echoC "res;$colPIP" "$PUB_IPA")|$(echoC "res;$colLIP" "$LOC_IPA")|$(echoC "res;$colDNT" "$DCK_SUB")|"
-    echoC ";whi" "|      SNAPSHOT NAME      |    SNAPSHOT CHECKSUM    |     GENESIS CHECKSUM     |"
+    echoC ";whi" "|$LABEL_SNAP|    SNAPSHOT CHECKSUM    |     GENESIS CHECKSUM     |"
     echoC ";whi" "|$(echoC "res;$colSPH" "$SNA_PTH")|$(echoC "res;$colSNS" "$SNA_SHA")|$(echoC "res;$colGSH" "$GEN_SHA")|"
     echoC ";whi" "|$(echoC "res;$colNot" "$(strFixC " $NOTIFY_INFO " 78 "." "-")")|"
     echoC ";whi" "|     |  CONTAINER NAME   |   STATUS   |   BLOCKS   |   HEALTH   | APP.VERSION |"
     echoC ";whi" "| [0] |$MAIN_CNTN|$MAIN_STAT|$MAIN_BLOC|$MAIN_HEAL|$MAIN_RUNT|"
     echoC ";whi" "| [1] |$INTX_CNTN|$INTX_STAT|$INTX_BLOC|$INTX_HEAL|$INTX_RUNT|"
-    #echoC ";whi" "|$(echoC "res;bla" "$(strFixC "-" 78 "." "-")")|"
     echoC ";whi" "|$(echoC "res;bla" "-----|-------- SELECT OPTION ---------:------------ CURRENT VALUE ------------")|"
     echoC ";whi" "| $(echoC "res;$colSnaOpt" "[B] | $SNAP_OPTN") : $(echoC "res;$colSnaInf" "$SNAP_INFO") |"
     echoC ";whi" "| $(echoC "res;$colAupOpt" "[U] | $AUPG_OPTN") : $(echoC "res;$colAupInf" "$AUPG_INFO") |"
@@ -450,9 +466,9 @@ while : ; do
     elif  [ "$VSEL" == "r" ] ; then
         continue
     elif  [ "$VSEL" == "s" ] ; then
-        return 200
+        exit 200
     elif  [ "$VSEL" == "x" ] ; then
-        return 0
+        exit 0
     elif  [ "$VSEL" == "b" ] ; then
         echoInfo "INFO: Staring backup configurator..."
         $KIRA_MANAGER/kira/kira-backup.sh || echoErr "ERROR: Snapshot setup failed"
@@ -509,5 +525,5 @@ while : ; do
 
     [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue
     continue
-    
+
 done

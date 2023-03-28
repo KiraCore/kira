@@ -164,7 +164,7 @@ while : ; do
         VSEL="k"
     else
         setterm -cursor off 
-        pressToContinue --timeout=60 d s k "$selV" r x && VSEL=$(globGet OPTION) || VSEL="r"
+        pressToContinue --timeout=60 d s k "$selV" i r x && VSEL=$(globGet OPTION) || VSEL="r"
         setterm -cursor on
         VSEL="$(toLower "$VSEL")"
     fi

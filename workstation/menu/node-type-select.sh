@@ -3,23 +3,31 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 # quick edit: FILE="$KIRA_MANAGER/menu/node-type-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set +x
 
+function cleanup() {
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    setterm -cursor on
+    exit 130
+}
+
 while :; do
-  printf "\033c"
-  prtChars=49
-  prtCharsSubMax=42
-  echo -e "\e[31;1m==================================================="
-  echo -e "|$(strFixC "SELECT NODE TYPE TO DEPLY, KM $KIRA_SETUP_VER" $prtChars)"
-  echo -e "|-------------------------------------------------|"
-  echo -e "| [1] | $(strFixL "Validator Mode" $prtCharsSubMax)|"
-  echo -e "| [2] | $(strFixL "Sentry Mode" $prtCharsSubMax)|"
-  echo -e "| [3] | $(strFixL "Seed Mode" $prtCharsSubMax)|"
-  echo -e "|-------------------------------------------------|"
-  echo -e "| [X] | Exit                                      |"
-  echo -e "---------------------------------------------------\e[0m\c\n"
-  echo ""
-  echoNErr "Input option: " && pressToContinue 1 2 3 x && KEY="$(toLower "$(globGet OPTION)")" && echo ""
-  
-  case "$KEY" in
+    set +x && printf "\033c" && clear
+    echoC ";whi" " =============================================================================="
+ echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "SELECT TYPE OF THE KIRA NODE TO DEPLOY, KM $KIRA_SETUP_VER" 78)")|"
+    echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
+              echoC ";whi" "| [1] |$(strFixC "Validator Mode" 18):$(strFixC "Operator node with aggressive prunning" 52) |"
+              echoC ";whi" "| [2] |$(strFixC "Sentry Mode" 18):$(strFixC "Full archival node and DDOS protection" 52) |"
+              echoC ";whi" "| [3] |$(strFixC "Seed Mode" 18):$(strFixC "Connector enabling network discovery " 52) |"
+    echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
+    echoC ";whi" "| [X] |$(strFixC "Exit" 18):$(strFixC " " 52) |"
+    echoNC ";whi" " ------------------------------------------------------------------------------"
+    setterm -cursor off
+    trap cleanup SIGINT
+
+  pressToContinue 1 2 3 x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
+  setterm -cursor on
+  clear
+
+  case "$VSEL" in
   1*)
     echo "INFO: Starting Validator Node Deployment..."
     globSet INFRA_MODE "validator"

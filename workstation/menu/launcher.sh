@@ -20,7 +20,9 @@ sleep 1
 
 timedatectl set-timezone "Etc/UTC" || ( echoErr "ERROR: Failed to set time zone to UTC, ensure to do that manually after setup is finalized!" && sleep 10 )
 
-MNEMONICS="$KIRA_SECRETS/mnemonics.env" && touch $MNEMONICS
+INIT_MODE="$(globGet INIT_MODE)"
+MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+touch $MNEMONICS
 
 set +x
 MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
@@ -122,7 +124,6 @@ while :; do
     SNAP_SIZE=$(globGet TRUSTED_NODE_SNAP_SIZE)
     DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
     DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
-    FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 
     set +x && printf "\033c" && clear
     opselM="m" && opselM="n" && opselT="t" && opselD="d" && opselS="s" && opselL="l"
@@ -156,10 +157,6 @@ while :; do
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC " PRESS [S]TART TO CREATE NEW '$NEW_NETWORK_NAME' NETWORK " 78 "." "-")")|"
       fi
     fi
-
-    [ "$FIREWALL_ENABLED" == "false" ] && \
-      WARNING="FIREWALL DISABLED" && \
-      selNCol="yel"
 
     [ ! -z "$WARNING" ] && \
       echoC "sto;whi" "|$(echoC "res;yel" "$(strFixC " $WARNING " 78 "." "-")")|"
@@ -218,13 +215,18 @@ while :; do
 
   echoC "sto;whi" "| $(echoC "res;$startCol" "$(strFixL "[S] | Start Setup" 36)")| [R] Refresh      | [X] Abort Setup     |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off 
-    pressToContinue m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
-    setterm -cursor on
-    trap cleanup SIGINT
 
-    KEY=$(globGet OPTION)
-    KEY="$(toLower "$KEY")" && [ "${KEY}" == "j" ] && KEY="l"
+    if [ "$INIT_MODE" == "noninteractive" ] && [ "$opselS" == "s" ] ; then
+        KEY="s"
+    else
+        setterm -cursor off 
+        pressToContinue m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
+        setterm -cursor on
+        trap cleanup SIGINT
+
+        KEY=$(globGet OPTION)
+        KEY="$(toLower "$KEY")" && [ "${KEY}" == "j" ] && KEY="l"
+    fi
 
   case ${KEY} in
   s*)
@@ -252,7 +254,7 @@ while :; do
       globSet NEW_NETWORK "false" 
     else
       globSet NEW_NETWORK "true"
-      globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 999 + 1))"
+      globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 99))"
     fi
    ;;
    a*)

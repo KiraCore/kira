@@ -128,7 +128,7 @@ while : ; do
     SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
 
     if [[ $SNAPSHOTS_COUNT -le 0 ]] || [ -z "$SNAPSHOTS" ] ; then
-      echoErr "ERROR: Snapshots were NOT found in the snaps direcory '$KIRA_SNAP'" 
+      echoErr "ERROR: Snapshots were NOT found in the snaps directory '$KIRA_SNAP'" 
       continue
     fi
 

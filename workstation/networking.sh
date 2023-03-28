@@ -21,7 +21,6 @@ CUSTOM_PORTS_EXPOSE="$(globGet CUSTOM_PORTS_EXPOSE)"
 
 declare -l PORTS_EXPOSURE=$(globGet PORTS_EXPOSURE)
 FIREWALL_ZONE=$(globGet FIREWALL_ZONE)
-FIREWALL_ENABLED="$(globGet FIREWALL_ENABLED)"
 IFACE=$(globGet IFACE)
 PRIORITY_WHITELIST="-32000"
 PRIORITY_BLACKLIST="-32000"
@@ -33,18 +32,11 @@ set +x
 echoWarn "------------------------------------------------"
 echoWarn "| STARTED: NETWORKING $KIRA_SETUP_VER"
 echoWarn "|-----------------------------------------------"
-echoWarn "| FIREWALL ENABLED: $FIREWALL_ENABLED"
 echoWarn "|    FIREWALL ZONE: $FIREWALL_ZONE"
 echoWarn "|   PORTS EXPOSURE: $PORTS_EXPOSURE"
 echoWarn "|     CUSTOM PORTS: $CUSTOM_PORTS_EXPOSE"
 echoWarn "------------------------------------------------"
 set -x
-
-if [ "$FIREWALL_ENABLED" != "true" ] ; then
-    echoInfo "INFO: Firewall configuraiton will be skipped"
-    $KIRA_MANAGER/launch/update-ifaces.sh
-    exit 0
-fi
 
 PUBLIC_IP=$(timeout 60 bu getPublicIp 2> /dev/null || echo "")
 echoInfo "INFO: Public IP found: $PUBLIC_IP"

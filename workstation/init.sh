@@ -2,9 +2,12 @@
 set -e
 
 # Accepted arguments:
-# --infra-src="<url>"                   // source of the KM package
-# --image-src="<url>"                   // source of the base image (optional)
-# --init-mode="interactive/upgrade"     // initalization mode
+# --infra-src="<string>"        // source of the KM package: <url>, <CID>, <version>
+# --image-src="<url>"           // source of the base image (optional)
+# --init-mode="<string>"        // initalization mode: noninteractive, interactive, upgrade
+# --infra-mode="<string>"       // infrastructure deployment mode: validator, sentry, seed
+# --master-mnemonic="<string>"  // 24 whitespace separated bip39 words
+# --trusted-node="<ip>"         // IP address of a trusted node to start syncing from
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
@@ -84,7 +87,10 @@ echoInfo "INFO: Processing input arguments..."
 INFRA_SRC="" && infra_src=""
 IMAGE_SRC="" && image_src=""
 INIT_MODE="" && init_mode=""
-getArgs "$1" "$2" "$3" --gargs_throw=false --gargs_verbose=true
+infra_mode=""
+master_mnemonic=""
+trusted_node=""
+getArgs "$1" "$2" "$3" "$4" "$5" --gargs_throw=false --gargs_verbose=true
 [ -z "$INFRA_SRC" ] && INFRA_SRC="$infra_src"
 [ -z "$IMAGE_SRC" ] && IMAGE_SRC="$image_src" && [ -z $IMAGE_SRC ] && IMAGE_SRC="$BASE_IMAGE_VERSION"
 [ -z "$INIT_MODE" ] && INIT_MODE="$init_mode" && [ -z $INIT_MODE ] && INIT_MODE="interactive"
@@ -95,6 +101,7 @@ getArgs "$1" "$2" "$3" --gargs_throw=false --gargs_verbose=true
 
 ($(isVersion "$IMAGE_SRC")) && IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:$IMAGE_SRC"
 (! $(urlExists "$IMAGE_SRC")) && echoErr "ERROR: Base Image URL '$IMAGE_SRC' does NOT contain image files!" && exit 1
+
 #######################################################################################
 
 if [ $INIT_MODE == "interactive" ] ; then
@@ -124,6 +131,8 @@ echoInfo "INFO: Setting up essential ENV variables & constants..."
 globSet NEW_BASE_IMAGE_SRC "$IMAGE_SRC"
 globSet INFRA_SRC "$INFRA_SRC"
 globSet INIT_MODE "$INIT_MODE"
+(! $(isNullOrWhitespaces $infra_mode)) && globSet INFRA_MODE "$infra_mode"
+(! $(isNullOrWhitespaces $trusted_node)) && globSet TRUSTED_NODE_ADDR "$trusted_node"
 
 # NOTE: Glob envs can be loaded only AFTER init provided variabes are set
 loadGlobEnvs
@@ -179,6 +188,16 @@ LOCAL_GENESIS_PATH="$DOCKER_COMMON_RO/genesis.json"     && setGlobEnv LOCAL_GENE
 rm -rfv $KIRA_DUMP
 mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
 mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
+
+# replace all secrets using new master secret (if specified)
+MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
+if ($(isMnemonic "$master_mnemonic")) && [ "$master_mnemonic" != "$MASTER_MNEMONIC" ] ; then
+    rm -rfv "$KIRA_SECRETS"/*
+    mkdir -p "$KIRA_SECRETS"
+    touch $MNEMONICS
+    setVar MASTER_MNEMONIC "$master_mnemonic" "$MNEMONICS"
+fi
 
 echoInfo "INFO: Installing Essential Packages..."
 rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
