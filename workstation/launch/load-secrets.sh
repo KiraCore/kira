@@ -92,6 +92,7 @@ if [ "$MASTER_MNEMONIC" == "autogen" ] ; then
 fi
 
 if [ "$INFRA_MODE" == "validator" ] ; then
+    MnemonicGenerator --name="validator" --type="addr"  # validator address
     MnemonicGenerator --name="validator" --type="node"  # validator node key (validator_node_key.json, validator_node_id.key -> VALIDATOR_NODE_ID)
     MnemonicGenerator --name="validator" --type="val"   # validator block signing key (priv_validator_key.json)
 elif [ "$INFRA_MODE" == "seed" ] ; then
