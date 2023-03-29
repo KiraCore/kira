@@ -4,8 +4,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # e.g.: $KIRA_MANAGER/kira/seeds-edit.sh --destination="$PUBLIC_SEEDS" --target="Seed Nodes"
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -140,10 +141,9 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colS" "$OPTION_SVE")|$(echoC "res;$colR" "$OPTION_REF")|$(echoC "res;$colX" "$OPTION_EXT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    timeout=86400
-    pressToContinue --timeout=$timeout "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
-    setterm -cursor on
-    trap cleanup SIGINT
+    setterm -cursor off && trap cleanup SIGINT
+    pressToContinue --timeout=86400 "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
+    setterm -cursor on && trap - SIGINT || :
 
     if [ "$VSEL" == "r" ] ; then
         echoInfo "INFO: Rrefreshing node list..." 

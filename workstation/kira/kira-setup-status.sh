@@ -4,6 +4,13 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # $KIRA_MANAGER/kira/kira-setup-status.sh --auto_open_km=false
 set -x
 
+function cleanup() {
+    setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
+    exit 130
+}
+
 auto_open_km="true"
 getArgs "$1" --gargs_throw=false --gargs_verbose="true"
 
@@ -163,9 +170,9 @@ while : ; do
     if [ "$AUTO_OPEN" == "true" ] ; then
         VSEL="k"
     else
-        setterm -cursor off 
+        setterm -cursor off && trap cleanup SIGINT
         pressToContinue --timeout=60 d s k "$selV" i r x && VSEL=$(globGet OPTION) || VSEL="r"
-        setterm -cursor on
+        setterm -cursor on && trap - SIGINT || :
         VSEL="$(toLower "$VSEL")"
     fi
 

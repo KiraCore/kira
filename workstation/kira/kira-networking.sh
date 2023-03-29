@@ -3,8 +3,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/kira-networking.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -137,14 +138,12 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colS" "$OPTION_SEEDS")|$(echoC "res;$colP" "$OPTION_PEERS")|$(echoC "res;$colF" "$OPTION_FIREW")|"
     echoC ";whi" "|$(echoC "res;$colN" "$OPTION_NETWO")|$(echoC "res;$colW" "$OPTION_WINDO")|$(echoC "res;$colX" "$OPTION_EXIT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off
 
-    timeout=300
-    pressToContinue --timeout=$timeout \
+    setterm -cursor off && trap cleanup SIGINT
+    pressToContinue --timeout=300 \
      "$sel0" "$sel1" "$sel2" "$sel3" "$sel4" "$sel5" "$sel6" "$sel7" "$sel8" "$sel9" \
      "$selS" "$selP" "$selF" "$selN" "$selW" "$selX" "$selE" "$selC" "$selD" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
-    setterm -cursor on
-    trap cleanup SIGINT
+    setterm -cursor on && trap - SIGINT || :
 
     i=-1
     for p in "${PORTS[@]}" ; do

@@ -3,8 +3,9 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 # quick edit: FILE="$KIRA_MANAGER/menu/mnemonic-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -50,12 +51,10 @@ while : ; do
         echoC ";whi" "|$OPTION_VIEW|"
         echoC ";whi" "|$OPTION_EXIT|"
         echoNC ";whi" " ------------------------------------------------------------------------------"
-        setterm -cursor off
-
-    timeout=3600
-    pressToContinue --timeout=$timeout "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
-    setterm -cursor on
-    trap cleanup SIGINT
+        
+    setterm -cursor off && trap cleanup SIGINT
+    pressToContinue "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
+    setterm -cursor on && trap - SIGINT || :
 
     if [ "$KEY" == "x" ] ; then
         break

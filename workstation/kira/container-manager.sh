@@ -5,8 +5,9 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 set +x
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -369,8 +370,7 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colR" "$OPTION_RESTART")|$(echoC "res;$colP" "$OPTION_PAUSE")|$(echoC "res;$colS" "$OPTION_START")|"
     echoC ";whi" "|$(echoC "res;$colL" "$OPTION_LOGS")|$(echoC "res;$colH" "$OPTION_HEALTH")|$(echoC "res;$colX" "$OPTION_EXIT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off
-    trap cleanup SIGINT
+    setterm -cursor off && trap cleanup SIGINT
 
     if [ "$SCAN_DONE" != "true" ] ; then
         timeout=10
@@ -393,7 +393,7 @@ while : ; do
     fi
 
     pressToContinue --timeout=$timeout "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-    setterm -cursor on
+    setterm -cursor on && trap - SIGINT || :
     
     FORCE_RESCAN="false"
     EXECUTED="false"

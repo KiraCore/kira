@@ -4,8 +4,9 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 set +x
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -20,11 +21,10 @@ while :; do
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
     echoC ";whi" "| [X] |$(strFixC "Exit" 18):$(strFixC " " 52) |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off
-    trap cleanup SIGINT
-
+    
+  setterm -cursor off && trap cleanup SIGINT
   pressToContinue 1 2 3 x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-  setterm -cursor on
+  setterm -cursor on && trap - SIGINT || :
   clear
 
   case "$VSEL" in

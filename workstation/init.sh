@@ -25,7 +25,7 @@ fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
 BASE_IMAGE_VERSION="v0.13.3"
-TOOLS_VERSION="v0.3.27"
+TOOLS_VERSION="v0.3.33"
 COSIGN_VERSION="v1.13.1"
 
 # Force console colour to be black

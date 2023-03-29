@@ -55,8 +55,9 @@ elif [ "$DOCKER_SERVICE" != "active" ] ; then
 fi
 
 function cleanup() {
-    echoNInfo "\n\nINFO: Exiting script...\n"
     setterm -cursor on
+    trap - SIGINT || :
+    echoNInfo "\n\nINFO: Exiting script...\n"
     exit 130
 }
 
@@ -445,13 +446,12 @@ while : ; do
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
     echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off
-    trap cleanup SIGINT
+    setterm -cursor off && trap cleanup SIGINT
 
     timeout=300
     [ "$SCAN_DONE" != "true" ] && timeout=10
     pressToContinue --timeout=$timeout 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-    setterm -cursor on
+    setterm -cursor on && trap - SIGINT || :
     clear
 
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
