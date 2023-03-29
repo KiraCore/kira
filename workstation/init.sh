@@ -24,7 +24,7 @@ if [ "$USER" != root ]; then
 fi
 
 # Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-BASE_IMAGE_VERSION="v0.13.3"
+BASE_IMAGE_VERSION="v0.13.4"
 TOOLS_VERSION="v0.3.33"
 COSIGN_VERSION="v1.13.1"
 
@@ -141,16 +141,16 @@ tput setab 0
 tput setaf 7
 
 set +x
-echoC ";whi"  "================================================================================"
+echoC ";whi"  " =============================================================================="
 echoC ";whi"  "|$(strFixC "STARTED KIRA INIT SCRIPT" 78)|"   
-echoC ";whi"  "================================================================================"
+echoC ";whi"  "|==============================================================================|"
 echoC ";whi"  "|          KIRA USER:$(strFixL " $(globGet KIRA_USER) " 58)|"
 echoC ";whi"  "|          INIT MODE:$(strFixL " $(globGet INIT_MODE) " 58)|"
 echoC ";whi"  "|       INFRA SOURCE:$(strFixL " $(globGet INFRA_SRC) " 58)|"
 echoC ";whi"  "|   BASE IMG. SOURCE:$(strFixL " $(globGet NEW_BASE_IMAGE_SRC) " 58)|"
 echoC ";whi"  "|      TOOLS VERSION:$(strFixL " $(globGet TOOLS_VERSION) " 58)|"
 echoC ";whi"  "|     COSIGN VERSION:$(strFixL " $(globGet COSIGN_VERSION) " 58)|"
-echoC ";whi"  "================================================================================"
+echoC ";whi"  " =============================================================================="
 sleep 3
 echo -n ""
 set -x

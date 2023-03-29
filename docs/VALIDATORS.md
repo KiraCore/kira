@@ -40,23 +40,23 @@ read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators vali
 
 e.g:
 
-whitelistValidators validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
-whitelistValidators validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
-whitelistValidators validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+whitelistValidators validator kiraXXX && \
+whitelistValidators validator kira1rccqtpytu2mkrqqchsqhz09cqlf4xmr80v7u5q && \
+whitelistValidators validator kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u
 ```
 
 ## Importing DEMO Keys to Test Instances
 
 ```
-# kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6
+# kiraXXX
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"strong picture raccoon decide debate orange honey benefit gym spell vendor moment mule ancient liar assist naive venture ability obtain trade reject short borrow\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"reward weapon cake shop sorry feature tone cluster era nut leg canoe burden man soldier reform neck narrow squirrel vintage teach dial broken mimic\"" >> $KIRA_SECRETS/mnemonics.env
+KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"XXX\"" > $KIRA_SECRETS/mnemonics.env
 
-# kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c
+# kira1rccqtpytu2mkrqqchsqhz09cqlf4xmr80v7u5q
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"waste forum motion vivid verb excite roast stuff virus embody assume hurt window album once cushion setup salon fiction custom glove also armed edge\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"word visit pelican venue nominee echo symptom devote cargo where guide derive creek rather poem thought own bulk token lounge tunnel unlock buffalo lecture\"" >> $KIRA_SECRETS/mnemonics.env
+KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"add pill clerk smooth oxygen intact lesson rocket pilot ritual draft desert word blossom easily fuel cushion expose thunder lonely more best behind file\"" > $KIRA_SECRETS/mnemonics.env
 
-# kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+# kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"eagle please appear wide quit hat column stereo vapor buddy seed busy rude bag peanut six speak rescue click claw trade robot tragic soldier\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"slight peasant company hood average ivory panic diary barrel fault solar broken birth smoke over unveil fortune cloth orient kidney harsh remain glad slab\"" >> $KIRA_SECRETS/mnemonics.env
+KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"ozone toss coil raven ring include boring shrimp subway sustain appear prosper patient total burger enlist breeze chuckle salad cannon thunder recall abandon thumb\"" > $KIRA_SECRETS/mnemonics.env
 ```

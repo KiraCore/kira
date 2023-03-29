@@ -18,36 +18,42 @@ while : ; do
 
         if [ "$SNAP_EXPOSE" != "true" ] ; then
             echoNC "bli;whi" "\n[E]xpose existing snapshot, change [D]irectory, [C]reate new snapshot or e[X]it: " 
-            pressToContinue e c x && SELECT=$(toLower "$(globGet OPTION)")
+            pressToContinue e c x
         else
             echoNC "bli;whi" "\n[H]ide exposed snapshot, change [D]irectory, [C]reate new snapshot or e[X]it: " 
-            pressToContinue h c x && SELECT=$(toLower "$(globGet OPTION)")
+            pressToContinue h c x
         fi
+    else
+        echoInfo "No snapshots were found :("
+        echoNC "bli;whi" "\n[C]reate new snapshot, change [D]irectory, or e[X]it: " 
+        pressToContinue c d x
+    fi
 
-        [ "$SELECT" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
+    SELECT=$(toLower "$(globGet OPTION)")
 
-        if [ "$SELECT" == "e" ] ; then
-            SNAP_EXPOSE="true"
-            globSet SNAP_EXPOSE "$SNAP_EXPOSE"
-        elif [ "$SELECT" == "h" ] ; then
-            SNAP_EXPOSE="false"
-            globSet SNAP_EXPOSE "$SNAP_EXPOSE"
-        elif [ "$SELECT" == "d" ] ; then
-            echoNErr "Input new snapshot storage directory or press [ENTER] for default: " && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}"
-            [ ! -z "$DEFAULT_SNAP_DIR"] && ( mkdir -p "$DEFAULT_SNAP_DIR" || echoErr "ERROR: Failed to create '$DEFAULT_SNAP_DIR' directory" )
-            [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
-            if [ ! -d "$DEFAULT_SNAP_DIR" ] ; then
-                echoErr "ERROR: Directory '$DEFAULT_SNAP_DIR' does not exist!"
-                sleep 3
-            else
-                echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
-                KIRA_SNAP="$DEFAULT_SNAP_DIR"
-                setGlobEnv KIRA_SNAP "$KIRA_SNAP"
-                sleep 3
-            fi
-        elif [ "$SELECT" == "c" ] ; then
-            break
+    [ "$SELECT" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
+
+    if [ "$SELECT" == "e" ] ; then
+        SNAP_EXPOSE="true"
+        globSet SNAP_EXPOSE "$SNAP_EXPOSE"
+    elif [ "$SELECT" == "h" ] ; then
+        SNAP_EXPOSE="false"
+        globSet SNAP_EXPOSE "$SNAP_EXPOSE"
+    elif [ "$SELECT" == "d" ] ; then
+        echoNErr "Input new snapshot storage directory or press [ENTER] for default: " && read DEFAULT_SNAP_DIR && DEFAULT_SNAP_DIR="${DEFAULT_SNAP_DIR%/}"
+        [ ! -z "$DEFAULT_SNAP_DIR"] && ( mkdir -p "$DEFAULT_SNAP_DIR" || echoErr "ERROR: Failed to create '$DEFAULT_SNAP_DIR' directory" )
+        [ -z "$DEFAULT_SNAP_DIR" ] && DEFAULT_SNAP_DIR=$KIRA_SNAP
+        if [ ! -d "$DEFAULT_SNAP_DIR" ] ; then
+            echoErr "ERROR: Directory '$DEFAULT_SNAP_DIR' does not exist!"
+            sleep 3
+        else
+            echoInfo "INFO: Snapshot directory will be set to '$DEFAULT_SNAP_DIR'"
+            KIRA_SNAP="$DEFAULT_SNAP_DIR"
+            setGlobEnv KIRA_SNAP "$KIRA_SNAP"
+            sleep 3
         fi
+    elif [ "$SELECT" == "c" ] ; then
+        break
     fi
 done
 

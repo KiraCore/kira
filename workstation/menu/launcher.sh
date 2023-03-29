@@ -87,6 +87,7 @@ while :; do
     (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
     
+    # validator-key-gen --mnemonic="$VALIDATOR_ADDR_MNEMONIC" --accadr=bech32 --prefix=kira --path="44'/118'/0'/0/0"
     set +x
     VALIDATOR_ADDR=$(validator-key-gen --mnemonic="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")
     if (! $(isKiraAddress "$VALIDATOR_ADDR")) ; then

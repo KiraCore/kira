@@ -31,6 +31,7 @@ set -x
 
 cd "$(globGet KIRA_HOME)"
 VALSTATUS_SCAN_PATH="$KIRA_SCAN/valstatus"
+CONSENSUS_SCAN_PATH="$KIRA_SCAN/consensus"
 INTERX_SNAPSHOT_PATH="$INTERX_REFERENCE_DIR/snapshot.tar"
 mkdir -p "$INTERX_REFERENCE_DIR"
 
@@ -99,6 +100,9 @@ while : ; do
     CHA_NAM="$CHAIN_ID"                 && [ -z "$CHA_NAM" ]  && CHA_NAM="???" && colNAM="bla" || colNAM="whi"
 
     ($(isNumber "$BLO_TIM")) && BLO_TIM=$(echo "scale=3; ( $BLO_TIM / 1 ) " | bc) && BLO_TIM="~${BLO_TIM}s"
+
+    declare -l CONSENSUS_STOPPED=$(jsonQuickParse "consensus_stopped" "$CONSENSUS_SCAN_PATH" 2>/dev/null || echo -n "")
+    (! $(isBoolean "$CONSENSUS_STOPPED")) && CONSENSUS_STOPPED="false"
 
     ##########################################################
     echoInfo "LOADING NETWORK & SUBNET INFO..."
@@ -196,9 +200,14 @@ while : ; do
         echoInfo "LOADING STATUSES..."
         ##########################################################
 
-        colNot="gre"
-        NOTIFY_INFO="NO ISSUES DETECTED, ALL SYSTEMS RUNNING"
-
+        if [ "$CONSENSUS_STOPPED" == "true" ] ; then
+            colNUM="red"
+            colNot="red"
+            NOTIFY_INFO="CONSENSUS IS STOPPED, BLOCKS ARE NOT BEING PRODUCED"
+        else
+            colNot="gre"
+            NOTIFY_INFO="NO ISSUES DETECTED, ALL SYSTEMS RUNNING"
+        fi
     else
         ALL_CONTAINERS_HEALTHY=""
 
@@ -343,8 +352,9 @@ while : ; do
     ##########################################################
 
     declare -l CATCHING_UP=$(globGet CATCHING_UP)
-    declare -l VALSTATUS=$(jsonQuickParse "status" $VALSTATUS_SCAN_PATH 2>/dev/null || echo -n "")
+    declare -l VALSTATUS=$(jsonQuickParse "status" "$VALSTATUS_SCAN_PATH" 2>/dev/null || echo -n "")
     ($(isNullOrEmpty "$VALSTATUS")) && VALSTATUS=""
+    
     colValOpt="whi"
     colValInf="whi"
     VALR_OPTN="undefined"
