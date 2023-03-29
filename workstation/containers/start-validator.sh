@@ -81,10 +81,10 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
         # APP [state_sync]
-        globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+        globSet app_state_sync_snapshot_interval "0" $GLOBAL_COMMON
         globSet app_base_pruning "custom" $GLOBAL_COMMON
         globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
-        globSet app_base_pruning_keep_every "1000" $GLOBAL_COMMON
+        globSet app_base_pruning_keep_every "0" $GLOBAL_COMMON
         globSet app_base_pruning_interval "10" $GLOBAL_COMMON
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
