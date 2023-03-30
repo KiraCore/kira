@@ -62,7 +62,9 @@ while : ; do
     pressToContinue i m o x && KEY="$(globGet OPTION)" 
     KEY="$(toLower "$KEY")"
     setterm -cursor on
+    
     clear
+    [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."
 
     if [ "$KEY" == "x" ] ; then
         break

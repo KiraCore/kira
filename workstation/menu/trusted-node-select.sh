@@ -205,7 +205,7 @@ while : ; do
                 jsonParse "result.data" "$CHUNK" "$GENTEMP64" || echo "" > $GENTEMP64
                 sed -i "s/[\"\']//g" $GENTEMP64 || echo "" > $GENTEMP64
 
-                if (! $(isFilleEmpty $GENTEMP64)) ; then 
+                if (! $(isFileEmpty $GENTEMP64)) ; then 
                     base64 -d $GENTEMP64 >> $GENESIS_FILE || ( rm -fv $GENESIS_FILE && totalChunks=-1 )
                 else
                     echoEWarn "WARNINIG: Failed to porcess genesis chunk $CHUNK_ID"
@@ -217,7 +217,7 @@ while : ; do
             echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
             jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || rm -fv $GENESIS_FILE
 
-            if (! $(isFilleEmpty $GENESIS_FILE)) ; then 
+            if (! $(isFileEmpty $GENESIS_FILE)) ; then 
                 echoInfo "INFO: Please wait, calculating new checksum..."
                 GENSUM=$(sha256 "$GENESIS_FILE")
             else

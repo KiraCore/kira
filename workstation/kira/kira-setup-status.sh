@@ -174,6 +174,9 @@ while : ; do
         pressToContinue --timeout=60 d s k "$selV" i r x && VSEL=$(globGet OPTION) || VSEL="r"
         setterm -cursor on && trap - SIGINT || :
         VSEL="$(toLower "$VSEL")"
+
+        clear
+        [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
     fi
 
     PRESS_TO_CONTINUE="true"

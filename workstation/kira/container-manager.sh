@@ -370,7 +370,6 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colR" "$OPTION_RESTART")|$(echoC "res;$colP" "$OPTION_PAUSE")|$(echoC "res;$colS" "$OPTION_START")|"
     echoC ";whi" "|$(echoC "res;$colL" "$OPTION_LOGS")|$(echoC "res;$colH" "$OPTION_HEALTH")|$(echoC "res;$colX" "$OPTION_EXIT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off && trap cleanup SIGINT
 
     if [ "$SCAN_DONE" != "true" ] ; then
         timeout=10
@@ -392,8 +391,12 @@ while : ; do
         esac
     fi
 
+    setterm -cursor off && trap cleanup SIGINT
     pressToContinue --timeout=$timeout "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
     setterm -cursor on && trap - SIGINT || :
+
+    clear
+    [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
     
     FORCE_RESCAN="false"
     EXECUTED="false"

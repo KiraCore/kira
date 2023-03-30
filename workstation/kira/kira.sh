@@ -259,7 +259,7 @@ while : ; do
         SNAP_INFO="snapshot is scheduled or ongoing..."
         colSnaInf="yel"
         colSnaOpt="bla"
-        selB="r"
+        selB=""
     elif ($(isFileEmpty $KIRA_SNAP_PATH)) ; then
         SNAP_INFO="no snapshots were found"
     elif [ "$SNAP_EXPOSE" == "true" ] ; then
@@ -273,12 +273,12 @@ while : ; do
         SNAP_INFO="loading snpashot info..."
         colSnaInf="yel"
         colSnaOpt="bla"
-        selB="r"
+        selB=""
     elif [ "$SNAPSHOT_EXECUTE" != "true" ] && [ "$MAIN_CONTAINER_STATUS" != "running" ] ; then
-        SNAP_INFO="stopped node can't be snapshot"
+        SNAP_INFO="not running node can't be snapshot"
         colSnaInf="red"
         colSnaOpt="bla"
-        selB="r"
+        selB=""
     fi
 
     ##########################################################
@@ -384,10 +384,10 @@ while : ; do
         elif [ "$VALSTATUS" == "jailed" ] ; then
             colNot="red"
             NOTIFY_INFO="VALIDATOR COMMITED DOUBLE-SIGNING FAULT"
-            selV="r"
+            selV=""
         fi
     else
-        selV="r"
+        selV=""
         colValOpt="bla"
     fi
 
@@ -451,19 +451,20 @@ while : ; do
     echoC ";whi" "| $(echoC "res;$colSnaOpt" "[B] | $SNAP_OPTN") : $(echoC "res;$colSnaInf" "$SNAP_INFO") |"
     echoC ";whi" "| $(echoC "res;$colAupOpt" "[U] | $AUPG_OPTN") : $(echoC "res;$colAupInf" "$AUPG_INFO") |"
     echoC ";whi" "| $(echoC "res;$colNetOpt" "[N] | $NETF_OPTN") : $(echoC "res;$colNetInf" "$NETF_INFO") |"
-    [ "$selV" != "r" ] && \
+    [ "$selV" != "" ] && \
     echoC ";whi" "| $(echoC "res;$colValOpt" "[$(toUpper "$selV")] | $VALR_OPTN") : $(echoC "res;$colValInf" "$VALR_INFO") |"
     echoC ";whi" "|$(echoC "res;bla" "$(strRepeat - 78)")|"
     echoC ";whi" "| [S]   Open Services & Setup Tool     |    [R]  Refresh    |     [X] Exit     |"
    echoNC ";whi" " ------------------------------------------------------------------------------"
-    setterm -cursor off && trap cleanup SIGINT
 
     timeout=300
     [ "$SCAN_DONE" != "true" ] && timeout=10
+
+    setterm -cursor off && trap cleanup SIGINT
     pressToContinue --timeout=$timeout 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
     setterm -cursor on && trap - SIGINT || :
-    clear
 
+    clear
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
 
     PRESS_TO_CONTINUE="true"
@@ -491,7 +492,7 @@ while : ; do
     elif  [ "$VSEL" == "n" ] ; then
         echoInfo "INFO: Staring networking manager..."
         $KIRA_MANAGER/kira/kira-networking.sh || echoErr "ERROR: Network manager failed"
-    elif  [ "$VSEL" == "$selV" ] && [ "$VSEL" != "r" ] ; then
+    elif  [ "$VSEL" == "$selV" ] && [ "$VSEL" != "" ] ; then
         if [ "$VALSTATUS" == "active" ] ; then
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || \
@@ -537,3 +538,5 @@ while : ; do
     continue
 
 done
+
+

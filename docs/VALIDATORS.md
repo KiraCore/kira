@@ -40,9 +40,10 @@ read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators vali
 
 e.g:
 
-whitelistValidators validator kiraXXX && \
 whitelistValidators validator kira1rccqtpytu2mkrqqchsqhz09cqlf4xmr80v7u5q && \
-whitelistValidators validator kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u
+whitelistValidators validator kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u && \
+whitelistValidators validator kira10z7harxdm7xweg08smc8k6v5jfgrfa2y6r2yr6 && \
+whitelistValidators validator kira1uh07m8gr03xy42g5q3lapp75k4a3kysefxufed
 ```
 
 ## Importing DEMO Keys to Test Instances

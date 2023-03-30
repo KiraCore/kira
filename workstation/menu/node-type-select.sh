@@ -25,7 +25,9 @@ while :; do
   setterm -cursor off && trap cleanup SIGINT
   pressToContinue 1 2 3 x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
   setterm -cursor on && trap - SIGINT || :
+  
   clear
+  [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
 
   case "$VSEL" in
   1*)

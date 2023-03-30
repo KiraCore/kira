@@ -9,8 +9,9 @@ NEW_INFRA_SRC=""
 INFRA_SRC_OUT="/tmp/kira.zip"
 SUCCESS_DOWNLOAD="false"
 
-while [ "$SUCCESS_DOWNLOAD" == "false" ] ; do 
-    echoNErr "Press [Y]es to keep default infrastructure URL or [C]hange source: " && pressToContinue y c && ACCEPT=$(toLower "$(globGet OPTION)")
+while [ "$SUCCESS_DOWNLOAD" == "false" ] ; do
+
+    echoNC "bli;whi" "\n[K]eep default infrastructure URL or [C]hange source: " && pressToContinue k c && ACCEPT=$(toLower "$(globGet OPTION)")
 
     if [ "$ACCEPT" == "c" ] ; then
         read  -p "Input URL, version or CID hash of the new infrastructure source: " NEW_INFRA_SRC
@@ -25,8 +26,7 @@ while [ "$SUCCESS_DOWNLOAD" == "false" ] ; do
     safeWget $INFRA_SRC_OUT $NEW_INFRA_SRC "$(globGet KIRA_COSIGN_PUB)" || ( echo "ERROR: Failed to download $NEW_INFRA_SRC" && rm -fv $INIT_SRC_OUT )
     
     if [ ! -f "$INFRA_SRC_OUT" ] ; then
-        echoNErr "Press [Y]es to try again or [X] to exit: " && pressToContinue y x && ACCEPT=$(toLower "$(globGet OPTION)")
-
+        echoNC "bli;whi" "\nTry [A]gain or e[X]it: " && pressToContinue a x && ACCEPT=$(toLower "$(globGet OPTION)")
         [ "$ACCEPT" == "x" ] && break
     else
         SUCCESS_DOWNLOAD="true"

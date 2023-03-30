@@ -56,6 +56,9 @@ while : ; do
     pressToContinue "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
     setterm -cursor on && trap - SIGINT || :
 
+    clear
+    [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."
+
     if [ "$KEY" == "x" ] ; then
         break
     elif [ "$KEY" == "g" ] ; then
@@ -95,7 +98,7 @@ while : ; do
         IFS=" "
         read -ra arr <<< "$MASTER_MNEMONIC"
         unset IFS
-        echoNC ";gre" "Numbered list of you master mnemonic seed words:\n\n"
+        echoNC ";gre" "Numbered list of your master mnemonic seed words:\n\n"
         i=0
         while [ $i -lt ${#arr[@]} ]; do
             val1="${arr[i]}" && i=$((i+1)) && id1="$i"
@@ -109,7 +112,7 @@ while : ; do
             echoC ";whi" "$WORD_C1|$WORD_C2|$WORD_C3|$WORD_C4"
         done
         echoNC ";gre" "\n\nOrdered list: " && echoNC ";whi" "\n\n$MASTER_MNEMONIC\n\n"
-        echoNLog "Press any key to continue: " && pressToContinue ""
+        echoNLog "Press any key to continue... " && pressToContinue ""
     fi
 
     echoInfo "INFO: Loading secrets..."
