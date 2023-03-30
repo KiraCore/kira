@@ -531,7 +531,7 @@ while : ; do
 
         globSet IS_SCAN_DONE "false"
     else
-        echoInfo "INFO: Option '$VSEL' is NOT available at the moment."
+        PRESS_TO_CONTINUE="false"
     fi
 
     [ "$PRESS_TO_CONTINUE" == "true" ] && echoNC "bli;whi" "Press any key to continue..." && pressToContinue

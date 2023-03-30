@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
-# quick edit: FILE="$KIRA_MANAGER/menu/seed-status-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# quick edit: FILE="$KIRA_MANAGER/menu/setup-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
@@ -89,45 +89,43 @@ else
     globSet SNAPSHOT_CORRUPTED "true"
 fi
 
-[ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
+REINITALIZE_NODE="false"
+[ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true"
 
 if [ "$REINITALIZE_NODE" == "false" ] ; then
+    TMP_PEERS_PUB="/tmp/pub-peers.txt"
+    TMP_PEERS_PRIV="/tmp/priv-peers.txt"
+    TMP_PEERS="/tmp/peers.txt"
+
+    rm -fv "$TMP_PEERS_PUB" "$TMP_PEERS_PRIV" "$TMP_PEERS" "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
+    touch "$TMP_PEERS_PUB" "$TMP_PEERS_PRIV" "$TMP_PEERS" "$PUBLIC_SEEDS" "$PUBLIC_PEERS"
+
     echoInfo "INFO: Attempting public peers discovery..."
-    TMP_PEERS_PUB="/tmp/pub-peers.txt" && rm -fv "$TMP_PEERS_PUB" && touch $TMP_PEERS_PUB
     wget $NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/pub_p2p_list?peers_only=true -O $TMP_PEERS_PUB || echoWarn "WARNING: Public peers discovery scan failed"
-    if (! $(isFileEmpty "$TMP_PEERS_PUB")) ; then
-        echoInfo "INFO: Saving extra peers..."
-        sort -u $TMP_PEERS_PUB -o $TMP_PEERS_PUB
-    else
-        echoInfo "INFO: No extra public peers were found!"
-    fi
+    (! $(isFileEmpty "$TMP_PEERS_PUB")) && \
+        echoInfo "INFO: Found $(wc -l < $TMP_PEERS_PUB) public peers :)" ||
+        echoWarn "WARNING: No extra public peers were found :("
 
     echoInfo "INFO: Attempting private peers discovery..."
-    TMP_PEERS_PRIV="/tmp/pub-peers.txt" && rm -fv "$TMP_PEERS_PRIV" && touch $TMP_PEERS_PRIV
     wget $NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/priv_p2p_list?peers_only=true -O $TMP_PEERS_PRIV || echoWarn "WARNING: Private peers discovery scan failed"
-    if (! $(isFileEmpty "$TMP_PEERS_PRIV")) ; then
-        echoInfo "INFO: Saving extra peers..."
-        sort -u $TMP_PEERS_PRIV -o $TMP_PEERS_PRIV
-    else
-        echoInfo "INFO: No extra public peers were found!"
-    fi
+    (! $(isFileEmpty "$TMP_PEERS_PRIV")) && \
+        echoInfo "INFO: Found $(wc -l < $TMP_PEERS_PRIV) private peers :)" ||
+        echoWarn "WARNING: No extra private peers were found :("
 
-    TMP_PEERS="/tmp/peers.txt" && rm -fv "$TMP_PEERS" && touch $TMP_PEERS
     shuf -n 32 "$TMP_PEERS_PUB" >> "$TMP_PEERS"
     shuf -n 32 "$TMP_PEERS_PRIV" >> "$TMP_PEERS"
 
     if ( ($(isNodeId "$TRUSTED_NODE_ID")) && ($(isNaturalNumber "$TRUSTED_NODE_P2P_PORT")) ) ; then
-        echo "${TRUSTED_NODE_ID}@${NODE_ADDR}:${TRUSTED_NODE_P2P_PORT}" >> $TMP_PEERS
+        echo "${TRUSTED_NODE_ID}@${NODE_ADDR}:${TRUSTED_NODE_P2P_PORT}" >> "$TMP_PEERS"
     fi
 
-    sort -u $TMP_PEERS -o $TMP_PEERS
-    rm -rfv $PUBLIC_SEEDS $PUBLIC_PEERS
-    touch $PUBLIC_SEEDS $PUBLIC_PEERS
-
-    cat $TMP_PEERS >> $PUBLIC_SEEDS
+    sort -u "$TMP_PEERS" -o "$TMP_PEERS"
+    cat "$TMP_PEERS" > "$PUBLIC_SEEDS"
 fi
 
-echoC ";gre" "Trusted node & setup configuration refresh results:"
+SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")
+
+echoNC ";gre" "\n\nTrusted node & setup configuration refresh results:\n"
 echoC ";whi" "   TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
 echoC ";whi" "           TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
 echoC ";whi" "             TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
@@ -139,4 +137,6 @@ echoC ";whi" "         TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
 echoC ";whi" "       TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
 echoC ";whi" "      TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
 echoC ";whi" "          SNAPSHOT_CORRUPTED: $(globGet SNAPSHOT_CORRUPTED)"
+[ "$REINITALIZE_NODE" == "false" ] && \
+echoC ";whi" "                 SEEDS COUNT: $SEEDS_COUNT"
 sleep 1
