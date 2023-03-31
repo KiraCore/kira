@@ -3,12 +3,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/port-manager.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # $KIRA_MANAGER/kira/port-manager.sh --port=36657
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
 getArgs "$1" --gargs_throw=false --gargs_verbose="true"
 
 FIREWALL_ZONE=$(globGet INFRA_MODE)
@@ -90,9 +84,7 @@ while : ; do
     echoC ";whi" "|$OPTION_EBLA|$OPTION_EWHI|$OPTION_EXIT|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    setterm -cursor off && trap cleanup SIGINT
-    pressToContinue --timeout=300 "$selA" "$selB" "$selC" "$selD" "$selE" "$selF" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL=""
-    setterm -cursor on && trap - SIGINT || :
+    pressToContinue --timeout=300 --cursor=false "$selA" "$selB" "$selC" "$selD" "$selE" "$selF" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL=""
 
     #############################################################
 

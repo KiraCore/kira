@@ -3,13 +3,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/kira/seeds-edit.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # e.g.: $KIRA_MANAGER/kira/seeds-edit.sh --destination="$PUBLIC_SEEDS" --target="Seed Nodes"
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 destination=""
 target=""
 getArgs "$1" "$2" --gargs_throw=false --gargs_verbose="true"
@@ -141,9 +134,7 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colS" "$OPTION_SVE")|$(echoC "res;$colR" "$OPTION_REF")|$(echoC "res;$colX" "$OPTION_EXT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    setterm -cursor off && trap cleanup SIGINT
-    pressToContinue --timeout=86400 "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
-    setterm -cursor on && trap - SIGINT || :
+    pressToContinue --timeout=86400 --cursor=false "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
 
     if [ "$VSEL" == "r" ] ; then
         echoInfo "INFO: Rrefreshing node list..." 

@@ -3,13 +3,6 @@ ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -
 # quick edit: FILE="$KIRA_MANAGER/menu/node-type-select.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set +x
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 while :; do
     set +x && printf "\033c" && clear
     echoC ";whi" " =============================================================================="
@@ -22,9 +15,7 @@ while :; do
     echoC ";whi" "| [X] |$(strFixC "Exit" 18):$(strFixC " " 52) |"
     echoNC ";whi" " ------------------------------------------------------------------------------"
     
-  setterm -cursor off && trap cleanup SIGINT
-  pressToContinue 1 2 3 x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-  setterm -cursor on && trap - SIGINT || :
+  pressToContinue --cursor=false 1 2 3 x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
   
   clear
   [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."

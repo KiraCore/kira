@@ -4,13 +4,6 @@ set +e && source "/etc/profile" &>/dev/null && set -e
 # $KIRA_MANAGER/kira/container-manager.sh --name=validator
 set +x
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 # Force console colour to be black and text gray
 tput setab 0
 tput setaf 7
@@ -391,9 +384,7 @@ while : ; do
         esac
     fi
 
-    setterm -cursor off && trap cleanup SIGINT
-    pressToContinue --timeout=$timeout "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-    setterm -cursor on && trap - SIGINT || :
+    pressToContinue --timeout=$timeout --cursor=false "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
 
     clear
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."

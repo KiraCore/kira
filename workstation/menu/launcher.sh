@@ -2,13 +2,6 @@
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/launcher.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 # Force console colour to be black and text gray
 tput setab 0
 tput setaf 7
@@ -220,9 +213,7 @@ while :; do
     if [ "$INIT_MODE" == "noninteractive" ] && [ "$opselS" == "s" ] ; then
         KEY="s"
     else
-        setterm -cursor off && trap cleanup SIGINT
-        pressToContinue m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
-        setterm -cursor on && trap - SIGINT || :
+        pressToContinue --cursor=false m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
 
         KEY=$(globGet OPTION)
         KEY="$(toLower "$KEY")" && [ "${KEY}" == "j" ] && KEY="l"

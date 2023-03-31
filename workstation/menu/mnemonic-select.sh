@@ -2,18 +2,9 @@
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/mnemonic-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 # Force console colour to be black and text gray
 tput setab 0
 tput setaf 7
-
-
 
 INFRA_MODE="$(globGet INFRA_MODE)"
 MNEMONICS="$KIRA_SECRETS/mnemonics.env"
@@ -51,10 +42,8 @@ while : ; do
         echoC ";whi" "|$OPTION_VIEW|"
         echoC ";whi" "|$OPTION_EXIT|"
         echoNC ";whi" " ------------------------------------------------------------------------------"
-        
-    setterm -cursor off && trap cleanup SIGINT
-    pressToContinue "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
-    setterm -cursor on && trap - SIGINT || :
+
+    pressToContinue --cursor=false "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
 
     clear
     [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."
@@ -112,7 +101,7 @@ while : ; do
             echoC ";whi" "$WORD_C1|$WORD_C2|$WORD_C3|$WORD_C4"
         done
         echoNC ";gre" "\n\nOrdered list: " && echoNC ";whi" "\n\n$MASTER_MNEMONIC\n\n"
-        echoNLog "Press any key to continue... " && pressToContinue ""
+        echoNLog "Press any key to continue..." && pressToContinue ""
     fi
 
     echoInfo "INFO: Loading secrets..."

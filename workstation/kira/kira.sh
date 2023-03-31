@@ -55,13 +55,6 @@ elif [ "$DOCKER_SERVICE" != "active" ] ; then
     exit 1
 fi
 
-function cleanup() {
-    setterm -cursor on
-    trap - SIGINT || :
-    echoNInfo "\n\nINFO: Exiting script...\n"
-    exit 130
-}
-
 set +x
 
 while : ; do
@@ -369,17 +362,17 @@ while : ; do
         elif [ "$VALSTATUS" == "paused" ] ; then
             VALR_OPTN="Disable Maintenance Mode"
             VALR_INFO="node was gacefully paused"
-            colValInf="yel"
+            colValOpt="cya"
             selV="d"
         elif [ "$VALSTATUS" == "inactive" ] ; then
             VALR_OPTN="Re-Activate Halted Node"
             VALR_INFO="inactive node can't sign blcoks"
-            colValOpt="gre"
-            colValInf="yel"
+            colValOpt="yel"
             selV="a"
         elif [ "$VALSTATUS" == "waiting" ] ; then
             VALR_OPTN="Join Validator Set"
             VALR_INFO="waiting to claim validator seat"
+            colValOpt="gre"
             selV="j"
         elif [ "$VALSTATUS" == "jailed" ] ; then
             colNot="red"
@@ -394,6 +387,8 @@ while : ; do
     if [ "$SCAN_DONE" == "true" ] && [ "$CATCHING_UP" == "true" ] ; then
         colNot="yel"
         NOTIFY_INFO="PLEASE WAIT, CATCHING UP WITH LATEST NETWORK STATE"
+    elif [ "$SCAN_DONE" != "true" ] ; then
+        selV=""
     fi
 
     ##########################################################
@@ -460,9 +455,7 @@ while : ; do
     timeout=300
     [ "$SCAN_DONE" != "true" ] && timeout=10
 
-    setterm -cursor off && trap cleanup SIGINT
-    pressToContinue --timeout=$timeout 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
-    setterm -cursor on && trap - SIGINT || :
+    pressToContinue --timeout=$timeout --cursor=false 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
 
     clear
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
@@ -511,12 +504,10 @@ while : ; do
         elif [ "$VALSTATUS" == "waiting" ] ; then
             echoInfo "INFO: Attempting to claim validator seat..."
             MONIKER=""
-            while (! $(isAlphanumeric "$MONIKER")) ; do
-                echoNC ";whi" "\nInput unique alphanumeric node name: " && read MONIKER
-                MONIKER="$(delWhitespaces "$MONIKER")"
+            while ($(isNullOrWhitespaces "$MONIKER")) ; do
+                echoNC ";whi" "\nInput unique node name: " && read MONIKER
             done
 
-            echoNInfo "\nINFO: Attempting to claim validator seat...\n"
             SUCCESS=false
             docker exec -i validator /bin/bash -c ". /etc/profile && claimValidatorSeat validator \"$MONIKER\"" && SUCCESS=true || \
                 echoErr "ERROR: Failed to confirm claim validator tx"

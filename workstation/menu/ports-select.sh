@@ -40,7 +40,7 @@ while : ; do
     PRT_PRTH_PORT=$(strFixC "$PRTH_PORT" 14) && PRT_PRTH_PORT_DEF=$(strFixC "$PRTH_PORT_DEF" 14)
     PRT_INEX_PORT=$(strFixC "$INEX_PORT" 14) && PRT_INEX_PORT_DEF=$(strFixC "$INEX_PORT_DEF" 14)
 
-    set +x && printf "\033c" && clear && setterm -cursor off
+    set +x && printf "\033c" && clear
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "PORTS MAPPING & NETWORKING CONFIGURATOR, KM $KIRA_SETUP_VER" 78)")|"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
@@ -58,10 +58,8 @@ while : ; do
     echoC ";whi" "| $(strFixL "[I] Change network interface" 76) |"
     echoC ";whi" "| $(strFixL "[M] Modify each port mapping & subnet individually" 76) |"
     echoC ";whi" "| $(strFixL "[X] Exit _" 77 "" "_")|"
-    setterm -cursor off 
-    pressToContinue i m o x && KEY="$(globGet OPTION)" 
-    KEY="$(toLower "$KEY")"
-    setterm -cursor on
+
+    pressToContinue --cursor=false i m o x && KEY="$(toLower "$(globGet OPTION)")" 
     
     clear
     [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."
@@ -139,7 +137,7 @@ while : ; do
     PRT_PRTH_PORT=$(strFixC "$PRTH_PORT" 14)
     PRT_INEX_PORT=$(strFixC "$INEX_PORT" 14)
 
-    set +x && printf "\033c" && clear && setterm -cursor off
+    set +x && printf "\033c" && clear
     echoC ";whi" " =============================================================================="
  echoC "sto;whi" "|$(echoC "res;gre" "$(strFixC "PORTS MAPPING & NETWORKING CONFIGURATOR, KM $KIRA_SETUP_VER" 78)")|"
  echoC "sto;whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
@@ -155,7 +153,7 @@ while : ; do
     echoC "sto;whi" "| $(echoC "res;gre" "$(strFixL "[S] Save changes" 76)") |"
     echoC ";whi" "| $(strFixL "[R] Reject changes and try again" 76) |"
     echoC ";whi" "| [X] Exit ____________________________________________________________________|"
-    setterm -cursor off && pressToContinue s r x && setterm -cursor on
+    pressToContinue --cursor=false s r x
 
     if [ "$(globGet OPTION)" == "s" ] ; then
         globSet DEFAULT_SSH_PORT "$SSH_PORT"
