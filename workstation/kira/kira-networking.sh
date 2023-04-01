@@ -172,7 +172,7 @@ while : ; do
         cp -afv "$FILE" "$COMMON_PATH/$TYPE"
 
         echoInfo "INFO: To apply changes you MUST restart your $EXPOSURE facing $CONTAINER container"
-        echoNC "bli;whi" "\nChoose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT="$(toLower $(globGet OPTION))"
+        echoNC "bli;whi" "\nChoose to [R]estart $CONTAINER container or [C]ontinue: " && pressToContinue r c && SELECT="$(globGet OPTION)"
         [ "$SELECT" == "c" ] && continue
 
         echoInfo "INFO: Re-starting $CONTAINER container..."
@@ -196,7 +196,7 @@ while : ; do
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echo "INFO: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        echoNC "bli;whi" "\nChoose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT="$(toLower $(globGet OPTION))"
+        echoNC "bli;whi" "\nChoose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT="$(globGet OPTION)"
         [ "$SELECT" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh

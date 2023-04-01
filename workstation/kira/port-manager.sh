@@ -18,7 +18,7 @@ while : ; do
     echoInfo "FORMATTING DATA FIELDS..."
     ##########################################################
 
-    PORT_EXPOSURE=$(toLower "$(globGet "PORT_EXPOSURE_${port}")")
+    declare -l PORT_EXPOSURE="$(globGet "PORT_EXPOSURE_${port}")"
     [ -z "$PORT_EXPOSURE" ] && PORT_EXPOSURE="enabled"
 
     case "$port" in
@@ -84,7 +84,7 @@ while : ; do
     echoC ";whi" "|$OPTION_EBLA|$OPTION_EWHI|$OPTION_EXIT|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    pressToContinue --timeout=300 --cursor=false "$selA" "$selB" "$selC" "$selD" "$selE" "$selF" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL=""
+    pressToContinue --timeout=300 --cursor=false "$selA" "$selB" "$selC" "$selD" "$selE" "$selF" "$selX" && VSEL="$(globGet OPTION)" || VSEL=""
 
     #############################################################
 
@@ -165,7 +165,7 @@ while : ; do
         firewall-cmd --get-active-zones
         firewall-cmd --zone=$FIREWALL_ZONE --list-all || echoWarn "WARNING: Failed to display current firewall rules"
         echoInfo "INFO: To apply changes to above rules you will have to restart firewall"
-        echoNC "bli;whi" "\nChoose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT="$(toLower $(globGet OPTION))"
+        echoNC "bli;whi" "\nChoose to [R]estart FIREWALL or [C]ontinue: " && pressToContinue r c && SELECT="$(globGet OPTION)"
         [ "$SELECT" == "c" ] && continue
         echoInfo "INFO: Reinitalizing firewall..."
         $KIRA_MANAGER/networking.sh

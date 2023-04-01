@@ -213,34 +213,21 @@ while :; do
     if [ "$INIT_MODE" == "noninteractive" ] && [ "$opselS" == "s" ] ; then
         KEY="s"
     else
-        pressToContinue --cursor=false m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x 
+        pressToContinue --cursor=false m n "$opselT" e "$opselD" "$opselL" a "$opselS" r x && KEY="$(globGet OPTION)"
 
-        KEY=$(globGet OPTION)
-        KEY="$(toLower "$KEY")" && [ "${KEY}" == "j" ] && KEY="l"
+        [ "${KEY}" == "j" ] && KEY="l"
         clear
         [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."
     fi
 
   case ${KEY} in
-  s*)
-    $KIRA_MANAGER/menu/quick-select.sh
-    break
-    ;;
-  m*)
-    $KIRA_MANAGER/menu/mnemonic-select.sh
-    ;;
-  n*)
-    $KIRA_MANAGER/menu/ports-select.sh
-    ;;
-  t*)
-    $KIRA_MANAGER/menu/node-type-select.sh
-    ;;
-  e*)
-    [ "$PRIVATE_MODE" == "true" ] && globSet PRIVATE_MODE "false" || globSet PRIVATE_MODE "true"
-    ;;
-  d*)
-    $KIRA_MANAGER/menu/snap-select.sh
-    ;;
+  s*) $KIRA_MANAGER/menu/quick-select.sh
+    break ;;
+  m*) $KIRA_MANAGER/menu/mnemonic-select.sh ;;
+  n*) $KIRA_MANAGER/menu/ports-select.sh ;;
+  t*) $KIRA_MANAGER/menu/node-type-select.sh ;;
+  e*) [ "$PRIVATE_MODE" == "true" ] && globSet PRIVATE_MODE "false" || globSet PRIVATE_MODE "true" ;;
+  d*) $KIRA_MANAGER/menu/snap-select.sh ;;
   l*)
     [ "$INFRA_MODE" != "validator" ] && continue
     if [ "$NEW_NETWORK" == "true" ] ; then
@@ -257,19 +244,9 @@ while :; do
         $KIRA_MANAGER/menu/trusted-node-select.sh
       fi
    ;;
-  x*)
-    exit 0
-    ;;
-  r*)
-    echoInfo "INFO: Refreshing status..."
-    sleep 1
-    continue
-    ;;
-  *)
-    echoInfo "INFO: Refreshing status..."
-    sleep 1
-    continue
-    ;;
+  x*) exit 0 ;;
+  r*) echoInfo "INFO: Refreshing status..." && sleep 1 continue ;;
+  *) echoInfo "INFO: Refreshing status..." && sleep 1 && continue ;;
   esac
 done
 set -x

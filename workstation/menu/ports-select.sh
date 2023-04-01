@@ -59,7 +59,7 @@ while : ; do
     echoC ";whi" "| $(strFixL "[M] Modify each port mapping & subnet individually" 76) |"
     echoC ";whi" "| $(strFixL "[X] Exit _" 77 "" "_")|"
 
-    pressToContinue --cursor=false i m o x && KEY="$(toLower "$(globGet OPTION)")" 
+    pressToContinue --cursor=false i m o x && KEY="$(globGet OPTION)"
     
     clear
     [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."

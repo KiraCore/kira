@@ -3,7 +3,7 @@ set -e
 
 # Accepted arguments:
 # --infra-src="<string>"        // source of the KM package: <url>, <CID>, <version>
-# --image-src="<url>"           // source of the base image (optional)
+# --image-src="<url>"           // source of the base image <url>, <version>
 # --init-mode="<string>"        // initalization mode: noninteractive, interactive, upgrade
 # --infra-mode="<string>"       // infrastructure deployment mode: validator, sentry, seed
 # --master-mnemonic="<string>"  // 24 whitespace separated bip39 words
@@ -255,7 +255,7 @@ if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
     echo ""
     echoC ";whi;bla" "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change firewall rules which might make your system vulnerable to various security threats or lock you out of the system entirely. By proceeding you take full responsibility for your own actions and accept that you continue at your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
     echo ""
-    echoNLog "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(toLower $(globGet OPTION))" == "n" ] && exit 1
+    echoNLog "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(globGet OPTION)" == "n" ] && exit 1
     echoInfo "INFO: Launching setup menu..."
     set -x
     source $KIRA_MANAGER/menu/launcher.sh

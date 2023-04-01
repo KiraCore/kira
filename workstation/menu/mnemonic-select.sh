@@ -43,7 +43,7 @@ while : ; do
         echoC ";whi" "|$OPTION_EXIT|"
         echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    pressToContinue --cursor=false "$selG" "$selM" "$selV" "$selX" && KEY="$(toLower "$(globGet OPTION)")"
+    pressToContinue --cursor=false "$selG" "$selM" "$selV" "$selX" && KEY="$(globGet OPTION)"
 
     clear
     [ "$KEY" != "r" ] && echoInfo "INFO: Option '$KEY' was selected, processing request..."

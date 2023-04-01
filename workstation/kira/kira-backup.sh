@@ -29,7 +29,7 @@ while : ; do
         pressToContinue c d x
     fi
 
-    SELECT=$(toLower "$(globGet OPTION)")
+    SELECT="$(globGet OPTION)"
 
     [ "$SELECT" == "x" ] && echoInfo "INFO: Exiting backup setup..." && sleep 2 && exit 0
 

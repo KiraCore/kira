@@ -109,9 +109,9 @@ if [ ! -z "$cfg_p2p_seeds" ] ; then
         [ -z "$seed" ] && echoWarn "WARNING: seed not found" && continue
         addrArr1=( $(echo $seed | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=$(toLower "${addrArr1[0]}")
-          addr=$(toLower "${addrArr2[0]}")
-          port=$(toLower "${addrArr2[1]}")
+        declare -l nodeId="${addrArr1[0]}"
+        declare -l addr="${addrArr2[0]}"
+        declare -l port="${addrArr2[1]}"
         ip=$(resolveDNS $addr)
 
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Seed '$seed' DNS could NOT be resolved!" && continue
@@ -164,9 +164,9 @@ if [ ! -z "$cfg_p2p_persistent_peers" ] ; then
         [ -z "$peer" ] && echoWarn "WARNING: peer not found" && continue
         addrArr1=( $(echo $peer | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
-        nodeId=$(toLower "${addrArr1[0]}")
-          addr=$(toLower "${addrArr2[0]}")
-          port=$(toLower "${addrArr2[1]}")
+        declare -l nodeId="${addrArr1[0]}"
+        declare -l addr="${addrArr2[0]}"
+        declare -l port="${addrArr2[1]}"
             ip=$(resolveDNS $addr)
         
         (! $(isDnsOrIp "$addr")) && echoWarn "WARNINIG: Peer '$peer' DNS could NOT be resolved!" && continue

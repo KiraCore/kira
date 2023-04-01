@@ -22,7 +22,7 @@ while : ; do
     (! $(isFileEmpty $PUBLIC_SEEDS )) && cat $PUBLIC_SEEDS || echo "none"
     echoWarn "WARNING: If you want to connect to external networks you have to specify at least one seed or peer node"
     echoInfo "INFO: If you are launching a new network you should wipe entire content of the seed & peer nodes list"
-    echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [S]eed/[P]eer Nodes, [W]ipe all or [E]xit: " && pressToContinue a s p w e && SELECT="$(toLower "$(globGet OPTION)")"
+    echoNErr "Attemp Public Seeds [A]uto-discovery, edit list of [S]eed/[P]eer Nodes, [W]ipe all or [E]xit: " && pressToContinue a s p w e && SELECT="$(globGet OPTION)"
     set -x
     if [ "$SELECT" == "p" ] ; then
         $KIRA_MANAGER/kira/seeds-edit.sh --destination="$PUBLIC_PEERS" --target="Peer Nodes"

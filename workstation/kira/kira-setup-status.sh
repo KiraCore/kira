@@ -163,7 +163,7 @@ while : ; do
     if [ "$AUTO_OPEN" == "true" ] ; then
         VSEL="k"
     else
-        pressToContinue --timeout=60 --cursor=false d s k "$selV" i r x && VSEL="$(toLower "$(globGet OPTION)")" || VSEL="r"
+        pressToContinue --timeout=60 --cursor=false d s k "$selV" i r x && VSEL="$(globGet OPTION)" || VSEL="r"
 
         clear
         [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."

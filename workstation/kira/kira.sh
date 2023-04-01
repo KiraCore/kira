@@ -153,30 +153,33 @@ while : ; do
 
         for name in "${MAIN_CONTAINERS[@]}"; do
             GLOBAL_COMMON="$DOCKER_COMMON/${name}/kiraglob"
-            CONTAINER_STATUS="unknown"
-            CONTAINER_HEALTH="unknown"
-            CONTAINER_SYNCING="false"
-            CONTAINER_BLOCK="0"
-             CONTAINER_EXISTS="$(toLower "$(globGet "${name}_EXISTS")")"
-            CONTAINER_RUNTIME="$(toLower "$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")")"
+            declare -l CONTAINER_EXISTS="$(globGet "${name}_EXISTS")"
+            declare -l CONTAINER_RUNTIME="$(globGet RUNTIME_VERSION "$GLOBAL_COMMON")"
             [ -z "$CONTAINER_RUNTIME" ] && CONTAINER_RUNTIME="unknown"
 
             if [ "$CONTAINER_EXISTS" == "true" ] ; then
-                 CONTAINER_STATUS="$(toLower "$(globGet "${name}_STATUS")")"
-                 CONTAINER_HEALTH="$(toLower "$(globGet "${name}_HEALTH")")"
-                  CONTAINER_BLOCK="$(toLower "$(globGet "${name}_BLOCK")")"
-                CONTAINER_SYNCING="$(toLower "$(globGet "${name}_SYNCING")")"
+                declare -l CONTAINER_STATUS="$(globGet "${name}_STATUS")"
+                declare -l CONTAINER_HEALTH="$(globGet "${name}_HEALTH")"
+                declare -l CONTAINER_BLOCK="$(globGet "${name}_BLOCK")"
+                declare -l CONTAINER_SYNCING="$(globGet "${name}_SYNCING")"
                 [ -z "$CONTAINER_STATUS" ] && CONTAINER_SYNCING="unknown"
                 [ -z "$CONTAINER_HEALTH" ] && CONTAINER_HEALTH="unknown"
                 [ "$CONTAINER_SYNCING" == "true" ] && CONTAINER_SYNCING="syncing"
                 (! $(isNaturalNumber $CONTAINER_SYNCING)) && CONTAINER_SYNCING="0"
             else
+                CONTAINER_STATUS="unknown"
+                CONTAINER_HEALTH="unknown"
                 CONTAINER_EXISTS="false"
+                CONTAINER_BLOCK="0"
+                CONTAINER_SYNCING="false"
             fi
 
-            [ "$CONTAINER_STATUS" != "running" ] && ALL_CONTAINERS_RUNNING="false"
-            [ "$CONTAINER_STATUS" != "exited" ]  && ALL_CONTAINERS_STOPPED="false"
-            [ "$CONTAINER_STATUS" != "paused" ]  && ALL_CONTAINERS_PAUSED="false"
+            case "$CONTAINER_STATUS" in
+                "running") ALL_CONTAINERS_RUNNING="false";;
+                "exited") ALL_CONTAINERS_STOPPED="false" ;;
+                "paused") ALL_CONTAINERS_PAUSED="false" ;;
+                "NULL") echo "true" ;;
+            esac
             [ "$CONTAINER_HEALTH" != "healthy" ] && ALL_CONTAINERS_HEALTHY="false"
 
             [ "$name" == "$MAIN_CONTAINER" ] && suffix="MAIN_" || suffix="$(toUpper "${name}_")"
@@ -455,7 +458,7 @@ while : ; do
     timeout=300
     [ "$SCAN_DONE" != "true" ] && timeout=10
 
-    pressToContinue --timeout=$timeout --cursor=false 0 1 "$selB" u n "$selV" s r x && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
+    pressToContinue --timeout=$timeout --cursor=false 0 1 "$selB" u n "$selV" s r x && VSEL="$(globGet OPTION)" || VSEL="r"
 
     clear
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."

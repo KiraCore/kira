@@ -384,7 +384,7 @@ while : ; do
         esac
     fi
 
-    pressToContinue --timeout=$timeout --cursor=false "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL=$(toLower "$(globGet OPTION)") || VSEL="r"
+    pressToContinue --timeout=$timeout --cursor=false "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL="$(globGet OPTION)" || VSEL="r"
 
     clear
     [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
@@ -400,7 +400,7 @@ while : ; do
         docker exec -it $CONTAINER_ID bash || FAILURE="true"
         
         if [ "$FAILURE" == "true" ] ; then
-            echoNC "bli;whi" "\nPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: " && pressToContinue y n && YNO=$(toLower "$(globGet OPTION)")
+            echoNC "bli;whi" "\nPress [Y]es to halt all processes, reboot & retry or [N]o to cancel: " && pressToContinue y n && YNO="$(globGet OPTION)"
             [ "$YNO" != "y" ] && echo -e "\nWARINIG: Operation was cancelled\n" && sleep 1 && continue
             echo "WARNING: Failed to inspect $name container"
             echo "INFO: Attempting to start & prevent node from restarting..."
@@ -490,7 +490,7 @@ while : ; do
             [ "$READ_HEAD" == "true" ] && tac $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed LAST $LOG_LINES lines\e[0m"
             [ "$READ_HEAD" != "true" ] && cat $TMP_DUMP | head -n $LOG_LINES && echo -e "\e[36;1mINFO: Printed FIRST $LOG_LINES lines\e[0m"
 
-            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap, [F]ollow or [C]lose: " && pressToContinue a m l r d s f c && OPTION=$(toLower "$(globGet OPTION)")
+            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap, [F]ollow or [C]lose: " && pressToContinue a m l r d s f c && OPTION="$(globGet OPTION)"
 
             if [ "$OPTION" == "f" ] ; then
                 echoInfo "INFO: Attempting to follow $name logs..."
@@ -547,7 +547,7 @@ while : ; do
             [ "$READ_HEAD" == "true" ] && tac $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed LAST $TMP_LOG_LINES lines"
             [ "$READ_HEAD" != "true" ] && cat $TMP_DUMP | head -n $TMP_LOG_LINES && echoInfo "INFO: Printed FIRST $TMP_LOG_LINES lines"
 
-            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && pressToContinue a m l r d s c && OPTION=$(toLower "$(globGet OPTION)")
+            echoNErr "Show [A]ll, [M]ore, [L]ess, [R]efresh, [D]elete, [S]wap or [C]lose: " && pressToContinue a m l r d s c && OPTION="$(globGet OPTION)"
 
             [ "$OPTION" == "a" ] && SHOW_ALL="true"
             [ "$OPTION" == "c" ] && echoInfo "INFO: Closing log file..." && sleep 1 && break

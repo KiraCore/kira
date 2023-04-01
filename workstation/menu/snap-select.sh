@@ -55,7 +55,7 @@ while : ; do
             ( echoNC ";gre" "Download [R]emote snap, select exising [F]ile, [D]isable snap sync. or e[X]it: " && pressToContinue r f d x ) || \
             ( echoNC ";gre" "Download [R]emote snap, select exising [F]ile, [E]nable snap sync. or e[X]it: " && pressToContinue r f e x )
         
-        VSEL="$(toLower "$(globGet OPTION)")"
+        VSEL="$(globGet OPTION)"
         echoC ";whi" "Option [$(toUpper "$VSEL")] was chosen"
         MANUALCONFIG_WAILT="true"
     else

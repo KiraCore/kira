@@ -48,9 +48,9 @@ while : ; do
         addrArr1=( $(echo $addr | tr "@" "\n") )
         addrArr2=( $(echo ${addrArr1[1]} | tr ":" "\n") )
                  
-        p1=$(toLower "${addrArr1[0]}")
-        p2=$(toLower "${addrArr2[0]}")
-        p3=$(toLower "${addrArr2[1]}")
+        declare -l p1="${addrArr1[0]}"
+        declare -l p2="${addrArr2[0]}"
+        declare -l p3="${addrArr2[1]}"
 
         p2=$(resolveDNS $p2)
         ($(isNodeId "$p1")) && nodeId="$p1" || nodeId=""
@@ -134,7 +134,7 @@ while : ; do
     echoC ";whi" "|$(echoC "res;$colS" "$OPTION_SVE")|$(echoC "res;$colR" "$OPTION_REF")|$(echoC "res;$colX" "$OPTION_EXT")|"
     echoNC ";whi" " ------------------------------------------------------------------------------"
 
-    pressToContinue --timeout=86400 --cursor=false "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL=$(toLower "$(globGet OPTION)") || VSEL="w"
+    pressToContinue --timeout=86400 --cursor=false "$colA" "$colD" "$selW" "$selS" "$selR" "$selX" && VSEL="$(globGet OPTION)" || VSEL="w"
 
     if [ "$VSEL" == "r" ] ; then
         echoInfo "INFO: Rrefreshing node list..." 
@@ -195,7 +195,7 @@ while : ; do
         if [ ! -z "${dnsStandalone}" ] ; then
             dns="$dnsStandalone"
             echoWarn "WARNING: '$addr' is NOT a valid ${target} address but a standalone IP or DNS"
-            echoNC "bli;whi" "\nDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && pressToContinue y n && YNO=$(toLower "$(globGet OPTION)")
+            echoNC "bli;whi" "\nDo you want to scan '$dnsStandalone' and attempt to acquire a public node id? (y/n): " && pressToContinue y n && YNO="$(globGet OPTION)"
             [ "$YNO" != "y" ] && echoInfo "INFO: Address '$addr' will NOT be added to ${target} list" && continue
 
             [ ! -z "$portStandalone" ] && [ "${portStandalone}" != "$(globGet DEFAULT_RPC_PORT)" ] && [ "${portStandalone}" != "$(globGet DEFAULT_INTERX_PORT)" ] && port="$portStandalone"
