@@ -37,7 +37,7 @@ BIN_DEST="/usr/local/bin/bip39gen" && \
 
 echoInfo "INFO:        Installed bash-utils: " && bashUtilsVersion
 echoInfo "INFO:         Installed tmconnect: " && tmconnect version
-echoInfo "INFO: Installed validator-key-gen: " && validator-key-gen --help
+echoInfo "INFO: Installed validator-key-gen: " && validator-key-gen --version
 echoInfo "INFO:  Installed tmkms-key-import: " && tmkms-key-import version
 echoInfo "INFO:          Installed bip39gen: " && bip39gen version
 echoInfo "INFO:            Booted systemctl: " && systemctl --version
