@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -e
+set -x
 
 # Accepted arguments:
 # --infra-src="<string>"        // source of the KM package: <url>, <CID>, <version>
@@ -36,13 +37,13 @@ rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
 declare -l ARCH=$(uname -m)
 declare -l PLATFORM=$(uname)
-( [[ "$ARCH" == *"arm"* ]] || [[ "$ARCH" == *"aarch"* ]] ) && ARCH="arm64" || ARCH="amd64"
+[[ "$ARCH" == *"ar"* ]] && ARCH="arm64" || ARCH="amd64"
 
-COSIGN_NOT_INSTALLED=$(cosign version || echo "true")
 KEYS_DIR="/usr/keys"
 KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
+COSIGN_INSTALLED="$(timeout 30 cosign version && echo "true" || echo "false")"
 
-if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
+if [ "$COSIGN_INSTALLED" == "false" ] ; then
     echo "INFO: Installing cosign"
     FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}")
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
