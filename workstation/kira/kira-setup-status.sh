@@ -204,13 +204,13 @@ while : ; do
         [ "$DOCKER_SERVICE" != "active" ] && ( $KIRA_COMMON/docker-restart.sh || echoWarn "WARNING: Service 'docker' failed to be restarted" )
         echoInfo "INFO: Please wait, services are restarting..."
         sleep 10
-    elif [ "$VSEL" == "s" ] ; then
+    elif [ "$VSEL" == "p" ] ; then
         timeout 30 systemctl daemon-reload || echoWarn "WARNING: Failed to reload deamon"
-        [ "$UPDATE_SERVICE" != "inactive" ] && ( systemctl stop kiraup || echoWarn "WARNING: Service 'kiraup' failed to be restarted" )
-        [ "$UPGRADE_SERVICE" != "inactive" ] && ( systemctl stop kiraplan || echoWarn "WARNING: Service 'kiraplan' failed to be restarted" )
-        [ "$MONIT_SERVICE" != "inactive" ] && ( systemctl stop kirascan || echoWarn "WARNING: Service 'kirascan' failed to be restarted" )
-        [ "$CLEANUP_SERVICE" != "inactive" ] && ( systemctl stop kiraclean || echoWarn "WARNING: Service 'kiraclean' failed to be restarted" )
-        [ "$DOCKER_SERVICE" != "inactive" ] && ( systemctl stop docker || echoWarn "WARNING: Service 'docker' failed to be restarted" )
+        [ "$UPDATE_SERVICE" != "inactive" ] && ( systemctl stop kiraup || echoWarn "WARNING: Service 'kiraup' failed to be stopped" )
+        [ "$UPGRADE_SERVICE" != "inactive" ] && ( systemctl stop kiraplan || echoWarn "WARNING: Service 'kiraplan' failed to be stopped" )
+        [ "$MONIT_SERVICE" != "inactive" ] && ( systemctl stop kirascan || echoWarn "WARNING: Service 'kirascan' failed to be stopped" )
+        [ "$CLEANUP_SERVICE" != "inactive" ] && ( systemctl stop kiraclean || echoWarn "WARNING: Service 'kiraclean' failed to be stopped" )
+        [ "$DOCKER_SERVICE" != "inactive" ] && ( systemctl stop docker || echoWarn "WARNING: Service 'docker' failed to be stopped" )
         echoInfo "INFO: Please wait, services are stopping..."
         sleep 10
     elif [ "$VSEL" == "v" ] ; then

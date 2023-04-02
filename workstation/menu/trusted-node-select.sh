@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/trusted-node-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
+interactive="true"
 show_log="false"
-getArgs "$1" --gargs_throw=false --gargs_verbose=true
+getArgs "$1" "$2" --gargs_throw=false --gargs_verbose=true
 [ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
@@ -25,42 +26,69 @@ SNAPSHOT_HEIGHT=$(globGet SNAPSHOT_HEIGHT)
 
 KIRA_SNAP_PATH="$(globGet KIRA_SNAP_PATH)"
 
+NODE_CHECK_SUCCESS="true"
+
 while : ; do
     while : ; do
-      if ($(isDnsOrIp "$TRUSTED_NODE_ADDR")) ; then
-          NODE_ADDR="$TRUSTED_NODE_ADDR"
-          ($(isPort "$TRUSTED_NODE_INTERX_PORT")) && NODE_ADDR="${NODE_ADDR}:${TRUSTED_NODE_INTERX_PORT}" || \
-           ( ($(isPort "$TRUSTED_NODE_RPC_PORT")) && NODE_ADDR="${NODE_ADDR}:${TRUSTED_NODE_RPC_PORT}" )
-          echoInfo "INFO: Previously trusted node address (default): $NODE_ADDR"
-          echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
-          echoNErr "Input address of the node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
-          [ -z "$v1" ] && v1=$NODE_ADDR
-      else
-          echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
-          echoNErr "Input address of the node you trust: " && read v1 && v1=$(echo "$v1" | xargs)
-      fi
+        set +x
 
-      v2=$(strSplitTakeN : 1 "$v1")
-      v1=$(strSplitTakeN : 0 "$v1")
-      v1=$(resolveDNS "$v1")
+        if ($(isPort "$TRUSTED_NODE_INTERX_PORT")) ; then
+            NODE_ADDR="${TRUSTED_NODE_ADDR}:${TRUSTED_NODE_INTERX_PORT}"
+        elif ($(isPort "$TRUSTED_NODE_RPC_PORT")) ; then
+            NODE_ADDR="${TRUSTED_NODE_ADDR}:${TRUSTED_NODE_RPC_PORT}"
+        else
+            NODE_ADDR="$TRUSTED_NODE_ADDR"
+        fi
+      
+        if [ "$interactive" == "true" ] ; then
+            if ($(isDnsOrIp "$TRUSTED_NODE_ADDR")) ; then
+                echoInfo "INFO: Previously trusted node address (default): $NODE_ADDR"
+                echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
+                echoNErr "Input address of the node you trust or choose [ENTER] for default: " && read v1 && v1=$(echo "$v1" | xargs)
+                [ -z "$v1" ] && v1=$NODE_ADDR
+            else
+                echoInfo "INFO: To reinitalize already existing node type: 0.0.0.0"
+                echoNErr "Input address of the node you trust: " && read v1 && v1=$(echo "$v1" | xargs)
+            fi
+        else
+            v1="$NODE_ADDR"
+        fi
+
+        v2=$(strSplitTakeN : 1 "$v1")
+        v1=$(strSplitTakeN : 0 "$v1")
+        v1=$(resolveDNS "$v1")
     
-      ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
-      [ -z "$NODE_ADDR" ] && echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!" && continue
+        ($(isDnsOrIp "$v1")) && NODE_ADDR="$v1" || NODE_ADDR="" 
+        if [ -z "$NODE_ADDR" ] ; then
+            echoWarn "WARNING: Value '$v1' is not a valid DNS name or IP address, try again!"
+            if [ "$interactive" == "true" ] ; then
+                continue 
+            else
+                NODE_CHECK_SUCCESS="false"
+                break
+            fi
+        fi
 
-      ($(isPort "$v2")) && NODE_ADDR_PORT="$v2" || NODE_ADDR_PORT="";
+        ($(isPort "$v2")) && NODE_ADDR_PORT="$v2" || NODE_ADDR_PORT="";
 
-      echoInfo "INFO: Please wait, testing connectivity..."
-      if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
-          echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
-          continue
-      else
-          echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
-      fi
+        echoInfo "INFO: Please wait, testing connectivity..."
+        if ! timeout 2 ping -c1 "$NODE_ADDR" &>/dev/null ; then
+            echoWarn "WARNING: Address '$NODE_ADDR' could NOT be reached, check your network connection or select diffrent node" 
+            if [ "$interactive" == "true" ] ; then
+                continue 
+            else
+                NODE_CHECK_SUCCESS="false"
+                break
+            fi
+        else
+            echoInfo "INFO: Success, node '$NODE_ADDR' is online!"
+        fi
+        set -x
 
-      TRUSTED_NODE_INTERX_PORT=""
-      TRUSTED_NODE_RPC_PORT=""
-      STATUS=""
-      CHAIN_ID=""
+        TRUSTED_NODE_INTERX_PORT=""
+        TRUSTED_NODE_RPC_PORT=""
+        STATUS=""
+        CHAIN_ID=""
 
         echoInfo "INFO: Trusted node INTERX port discovery..."
         # search interx ports
@@ -93,21 +121,26 @@ while : ; do
             fi
         done
 
-      HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
-      CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
+        HEIGHT=$(echo "$STATUS" | jsonQuickParse "latest_block_height" 2> /dev/null || echo -n "")
+        CHAIN_ID=$(echo "$STATUS" | jsonQuickParse "network" 2>/dev/null || echo -n "")
 
-      if [ "$REINITALIZE_NODE" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
-          HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
-          CHAIN_ID=$NETWORK_NAME 
-          ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
-          (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
-      fi
+        if [ "$REINITALIZE_NODE" == "true" ] && ( ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ) ; then
+            HEIGHT=$(globGet LATEST_BLOCK_HEIGHT "$GLOBAL_COMMON_RO") 
+            CHAIN_ID=$NETWORK_NAME 
+            ($(isNullOrWhitespaces "$NETWORK_NAME")) && NETWORK_NAME="unknown"
+            (! $(isNaturalNumber "$HEIGHT")) && HEIGHT="0"
+        fi
 
-      if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
-          echoWarn "WARNING: Could NOT read status, block height or chian-id"
-          echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public RPC or INTERX node address"
-          continue
-      fi
+        if ($(isNullOrWhitespaces "$CHAIN_ID")) || (! $(isNaturalNumber "$HEIGHT")) ; then
+            echoWarn "WARNING: Could NOT read status, block height or chian-id"
+            echoErr "ERROR: Address '$NODE_ADDR' is NOT a valid, publicly exposed public RPC or INTERX node address"
+            if [ "$interactive" == "true" ] ; then
+                continue 
+            else
+                NODE_CHECK_SUCCESS="false"
+                break
+            fi
+        fi
 
       globSet "TRUSTED_NODE_ID" ""
       globSet "TRUSTED_NODE_P2P_PORT" ""
@@ -121,6 +154,21 @@ while : ; do
     
       break
     done
+
+    if [ "$NODE_CHECK_SUCCESS" == "false" ] ; then
+        echoErr "ERROR: Node check failed"
+        globSet "TRUSTED_NODE_ID" ""
+        globSet "TRUSTED_NODE_P2P_PORT" ""
+        globSet "TRUSTED_NODE_GENESIS_HASH" ""
+        globSet "TRUSTED_NODE_RPC_PORT" ""
+        globSet "TRUSTED_NODE_INTERX_PORT" ""
+        globSet "TRUSTED_NODE_STATUS" ""
+        globSet "TRUSTED_NODE_CHAIN_ID" ""
+        globSet "TRUSTED_NODE_HEIGHT" ""
+        globSet "TRUSTED_NODE_GENESIS_HASH" ""
+        globDel "TRUSTED_NODE_GENESIS_FILE"
+        break
+    fi
 
     TRUSTED_NODE_ADDR="$(globGet TRUSTED_NODE_ADDR)"
     TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
@@ -197,18 +245,20 @@ while : ; do
             totalChunks=1
             while : ; do
                 [[ $CHUNK_ID -ge $totalChunks ]] && break
-                rm -rfv $GENTEMP64 && touch $GENTEMP64
                 CHUNK="$GENCHUNK_DIR/chunk_${CHUNK_ID}.json"
+                rm -rfv "$GENTEMP64" "$CHUNK"
+                touch "$GENTEMP64"
                 wget "$TRUSTED_NODE_ADDR:$TRUSTED_NODE_RPC_PORT/genesis_chunked?chunk=$CHUNK_ID" -O $CHUNK || echo "" > $CHUNK
                 totalChunks=$(jsonQuickParse "total" $CHUNK || echo "")
                 (! $(isNaturalNumber "$totalChunks")) && totalChunks=0
                 jsonParse "result.data" "$CHUNK" "$GENTEMP64" || echo "" > $GENTEMP64
                 sed -i "s/[\"\']//g" $GENTEMP64 || echo "" > $GENTEMP64
 
-                if (! $(isFileEmpty $GENTEMP64)) ; then 
+                if (! $(isFileEmpty $GENTEMP64)) ; then
+                    echoInfo "INFO: Genesis chunk $CHUNK_ID found, decoding to '$GENESIS_FILE'..."
                     base64 -d $GENTEMP64 >> $GENESIS_FILE || ( rm -fv $GENESIS_FILE && totalChunks=-1 )
                 else
-                    echoEWarn "WARNINIG: Failed to porcess genesis chunk $CHUNK_ID"
+                    echoWarn "WARNINIG: Failed to porcess genesis chunk $CHUNK_ID"
                     totalChunks=-1
                 fi
                 CHUNK_ID=$((CHUNK_ID + 1))
@@ -273,6 +323,7 @@ if [ ! -z "$SNAPSHOTS" ] && [[ $SNAPSHOTS_COUNT -gt 0 ]] && [[ "$SNAPSHOT_CHAIN_
     (! $(isNullOrWhitespaces "$DEFAULT_SNAP")) && $KIRA_MANAGER/menu/snap-select.sh --snap-file="$DEFAULT_SNAP"
 fi
 
+set +x
 echoC ";gre" "Trusted node discovery results:"
 echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
 echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"

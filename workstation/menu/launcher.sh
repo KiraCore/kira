@@ -229,21 +229,21 @@ while :; do
   e*) [ "$PRIVATE_MODE" == "true" ] && globSet PRIVATE_MODE "false" || globSet PRIVATE_MODE "true" ;;
   d*) $KIRA_MANAGER/menu/snap-select.sh ;;
   l*)
-    [ "$INFRA_MODE" != "validator" ] && continue
-    if [ "$NEW_NETWORK" == "true" ] ; then
-      globSet NEW_NETWORK "false" 
-    else
-      globSet NEW_NETWORK "true"
-      globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 99))"
-    fi
-   ;;
+      [ "$INFRA_MODE" != "validator" ] && continue
+      if [ "$NEW_NETWORK" == "true" ] ; then
+          globSet NEW_NETWORK "false" 
+      else
+          globSet NEW_NETWORK "true"
+          globSet NEW_NETWORK_NAME "localnet-$((RANDOM % 99))"
+      fi
+      ;;
    a*)
       if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
-        $KIRA_MANAGER/menu/chain-id-select.sh
+          $KIRA_MANAGER/menu/chain-id-select.sh
       else
-        $KIRA_MANAGER/menu/trusted-node-select.sh
+          $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="true"
       fi
-   ;;
+      ;;
   x*) exit 0 ;;
   r*) echoInfo "INFO: Refreshing status..." && sleep 1 continue ;;
   *) echoInfo "INFO: Refreshing status..." && sleep 1 && continue ;;

@@ -260,7 +260,6 @@ while : ; do
     ##########################################################
     echoInfo "FORMATTING DATA FIELDS..."
     ##########################################################
-
     
     if [ "$SCAN_DONE" != "true" ] ; then
         # CONTAINER STATISTICS
@@ -297,11 +296,18 @@ while : ; do
             selS="t" && colS="whi"
             selL="l" && colL="whi"
             selH="h" && colH="whi"
-            OPTION_KILL=$(strFixL " [W] Wake Up App Process " 26)
-        elif [[ "$CONTAINER_STATUS" =~ ^("setting up"|"backing up")$ ]] ; then
+            OPTION_KILL=$(strFixL " [W] Wake-up App Process " 26)
+        elif [ "$CONTAINER_STATUS" == "backing up" ] ; then
             selI="i" && colI="whi"
             selL="l" && colL="whi"
             selH="h" && colH="whi"
+        elif [ "$CONTAINER_STATUS" == "setting up" ]  ; then
+            selI="i" && colI="whi"
+            selL="l" && colL="whi"
+            selH="h" && colH="whi"
+            selP="p" && colP="whi"
+            selK="k" && colK="whi"
+            selS="t" && colS="whi"
         elif [ "$CONTAINER_STATUS" == "exited" ] ; then
             selS="s" && colS="red"
             selL="l" && colL="whi"

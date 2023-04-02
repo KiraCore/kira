@@ -21,16 +21,16 @@ if [[ $UPDATE_FAIL_COUNTER -ge $MAX_FAILS ]] ; then
 fi
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER"
-echoWarn "|-----------------------------------------------"
-echoWarn "|       BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|   UPDATE LOGS DIR: $KIRA_LOGS/kiraup-*-$KIRA_SETUP_VER.log"
-echoWarn "|     FAILS COUNTER: $UPDATE_FAIL_COUNTER/$MAX_FAILS"
-echoWarn "| SETUP START DTATE: $(globGet SETUP_START_DT)"
-echoWarn "|   SETUP END DTATE: $SETUP_END_DT"
-echoWarn "|      SETUP REBOOT: $(globGet SYSTEM_REBOOT)"
-echoWarn "------------------------------------------------"
+echoC ";whi"  " =============================================================================="
+echoC ";whi"  "|$(strFixC "STARTED KIRA UPDATE & SETUP SERVICE $KIRA_SETUP_VER" 78)|"   
+echoC ";whi"  "|==============================================================================|"
+echoC ";whi"  "|        BASH SOURCE: $(strFixL " ${BASH_SOURCE[0]} " 58)|"
+echoC ";whi"  "|    UPDATE LOGS DIR: $(strFixL " $KIRA_LOGS/kiraup-*-$KIRA_SETUP_VER.log " 58)|"
+echoC ";whi"  "|      FAILS COUNTER: $(strFixL " $UPDATE_FAIL_COUNTER/$MAX_FAILS " 58)|"
+echoC ";whi"  "|  SETUP START DTATE: $(strFixL " $(globGet SETUP_START_DT) " 58)|"
+echoC ";whi"  "|    SETUP END DTATE: $(strFixL " $SETUP_END_DT " 58)|"
+echoC ";whi"  "|       SETUP REBOOT: $(strFixL " $(globGet SYSTEM_REBOOT) " 58)|"
+echoC ";whi"  " =============================================================================="
 set -x
 
 mkdir -p $UPDATE_DUMP
@@ -148,13 +148,11 @@ globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
 globSet UPDATE_DONE "true"
 
 set +x
-echoInfo "INFO: Update & Setup was sucessfully finalized"
 echoInfo "INFO: To preview logs see $KIRA_LOGS direcotry"
-echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: UPDATE SCRIPT $KIRA_SETUP_VER"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echoWarn "------------------------------------------------"
-echoInfo "Press 'Ctrl+c' to exit then type 'kira' to enter infra manager"
+echoC ";whi"  "================================================================================"
+echoC ";whi"  "|$(strFixC "FINISHED KIRA UPDATE SCRIPT $KIRA_SETUP_VER" 78))|"   
+echoC ";whi"  "================================================================================"
+echoInfo "Press 'Q' or 'Ctrl+C' to exit then type 'kira' to enter infra manager"
 set -x
 
 systemctl stop kiraup

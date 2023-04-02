@@ -9,8 +9,8 @@ NEW_NETWORK=$(globGet NEW_NETWORK)
 EXTERNAL_SYNC=$(globGet EXTERNAL_SYNC $GLOBAL_COMMON_RO)
 UPGRADE_INSTATE=$(globGet UPGRADE_INSTATE)
 
-if [ $INIT_MODE == "upgrade" ] ; then
-    [ "$(globGet UPGRADE_INSTATE)" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
+if [ "$INIT_MODE" == "upgrade" ] ; then
+    [ "$UPGRADE_INSTATE" == "true" ] && UPGRADE_MODE="soft" || UPGRADE_MODE="hard"
 else
     UPGRADE_MODE="none"
 fi
@@ -33,7 +33,7 @@ chattr -i "$LOCAL_GENESIS_PATH" || echoWarn "Genesis file was NOT found in the l
 chattr -i "$INTERX_REFERENCE_DIR/genesis.json" || echoWarn "Genesis file was NOT found in the reference direcotry"
 rm -fv "$INTERX_REFERENCE_DIR/genesis.json"
 
-if [ "$(globGet NEW_NETWORK)" == "false" ] && ( [ "$UPGRADE_MODE" == "none" ] || [ "$UPGRADE_MODE" == "soft" ] ) ; then 
+if [ "$NEW_NETWORK" == "false" ] && ( [ "$UPGRADE_MODE" == "none" ] || [ "$UPGRADE_MODE" == "soft" ] ) ; then 
     echoInfo "INFO: Attempting to access genesis file from local configuration..."
     [ ! -f "$LOCAL_GENESIS_PATH" ] && echoErr "ERROR: Failed to locate genesis file, external sync is not possible" && exit 1
     ln -fv $LOCAL_GENESIS_PATH "$INTERX_REFERENCE_DIR/genesis.json"

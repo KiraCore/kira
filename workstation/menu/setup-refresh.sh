@@ -93,6 +93,7 @@ REINITALIZE_NODE="false"
 [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true"
 
 if [ "$REINITALIZE_NODE" == "false" ] ; then
+    echoInfo "INFO: Updating peers..."
     TMP_PEERS_PUB="/tmp/pub-peers.txt"
     TMP_PEERS_PRIV="/tmp/priv-peers.txt"
     TMP_PEERS="/tmp/peers.txt"
@@ -121,6 +122,8 @@ if [ "$REINITALIZE_NODE" == "false" ] ; then
 
     sort -u "$TMP_PEERS" -o "$TMP_PEERS"
     cat "$TMP_PEERS" > "$PUBLIC_SEEDS"
+
+    $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false"
 fi
 
 SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")
