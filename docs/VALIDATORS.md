@@ -39,24 +39,32 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators validator $ADDR
 
 e.g:
-
-whitelistValidators validator kira1vjfq0hrmyuyxw2es4t5dm8ra5jzw9pmrkp4syh && \
-whitelistValidators validator kira1pxld6ksvtnqqlqzth8kg2hv2r72e3e3huyn55t && \
-whitelistValidators validator kira12spkm5dt0ptgwmk4s32kx36r46vjpy2ltfr390 
+whitelistValidators validator kira1zlry4hl2sl636xkhhza4emny3dsl68lh8zk8l0 && \
+whitelistValidators validator ??? && \
+whitelistValidators validator ??? 
 ```
 
-## DEMO Keys and corresponding mnemonics
+## DEMO Keys and corresponding master mnemonics
 
 ```
 # extract master mnemonic from secrets dir
 tryGetVar MASTER_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-# kira1vjfq0hrmyuyxw2es4t5dm8ra5jzw9pmrkp4syh
-# awake absurd guard venture enrich balance puppy immense eternal maze cigar lock prison disease cousin true mind element weather virtual merge clog fire scrub
+# extract validator addr menmonic
+tryGetVar VALIDATOR_ADDR_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-# kira1pxld6ksvtnqqlqzth8kg2hv2r72e3e3huyn55t
-# blur hundred one tent net pledge valley finish toe jewel rice vacuum ready pizza door engage horror barely account foot make syrup thought few
+# genesis validator: kira1zjqvrcg83m7awxpwgcjusn5j4x2fmxhm59ujxx
+# > master: nose survey across coin naive slender ecology coil session bar visit ancient mail space scatter valve mask coyote blue pencil utility cross lucky pledge
+# >   addr: roof wine blush attend aware kit round shoulder pelican figure maze cool ugly danger artwork main mandate desert produce impact deny silk miracle tourist
 
-# kira12spkm5dt0ptgwmk4s32kx36r46vjpy2ltfr390
-# glory salute raccoon alpha cycle stuff brown two check rare wheat educate ridge dumb magic usage forum wrist raccoon erase onion cross parrot smile
+# kira1zlry4hl2sl636xkhhza4emny3dsl68lh8zk8l0
+# > master: boil thing column ramp under blast gate like struggle magnet believe planet write decline chronic faculty gallery nothing gown chase silent nose edit snake
+# >   addr: cable require discover gravity wrap faculty anger apology forest onion possible fiscal measure actress eager budget captain coil powder lion laundry arrive brain feed
+
+# ???
+# > master: 
+# >   addr: 
+
+# > master: 
+# >   addr: 
 ```
