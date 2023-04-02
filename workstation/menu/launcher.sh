@@ -33,7 +33,7 @@ while :; do
     
     NEW_NETWORK="$(globGet NEW_NETWORK)"
     if [ "$NEW_NETWORK" != "true" ] ; then
-      $KIRA_MANAGER/menu/setup-refresh.sh
+        $KIRA_MANAGER/menu/setup-refresh.sh
     fi
 
     IFACE=$(globGet IFACE)
@@ -81,7 +81,7 @@ while :; do
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
 
     set +x
-    VALIDATOR_ADDR=$(validator-key-gen --mnemonic="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")
+    VALIDATOR_ADDR="$(validator-key-gen --mnemonic="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")"
     if (! $(isKiraAddress "$VALIDATOR_ADDR")) ; then
       echoErr "ERROR: Failed to generate master mnemonic and corresponding kira address"
       exit 1
@@ -245,7 +245,7 @@ while :; do
       fi
       ;;
   x*) exit 0 ;;
-  r*) echoInfo "INFO: Refreshing status..." && sleep 1 continue ;;
+  r*) echoInfo "INFO: Refreshing status..." && sleep 1 && continue ;;
   *) echoInfo "INFO: Refreshing status..." && sleep 1 && continue ;;
   esac
 done

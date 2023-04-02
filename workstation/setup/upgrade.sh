@@ -19,18 +19,18 @@ COMMON_PATH="$DOCKER_COMMON/${CONTAINER_NAME}"
 APP_HOME="$DOCKER_HOME/$CONTAINER_NAME"
 
 set +x
-echoWarn "------------------------------------------------"
-echoWarn "| STARTED: KIRA UPGRADE SCRIPT $KIRA_SETUP_VER"
-echoWarn "|-----------------------------------------------"
-echoWarn "|         BASH SOURCE: ${BASH_SOURCE[0]}"
-echoWarn "|     PLAN START DATE: $PLAN_START_DT"
-echoWarn "| UPGRADE EXPORT DONE: $UPGRADE_EXPORT_DONE"
-echoWarn "|     UPGRADE INSTATE: $UPGRADE_INSTATE"
-echoWarn "|        OLD CHAIN ID: $OLD_CHAIN_ID"
-echoWarn "|        NEW CHAIN ID: $NEW_CHAIN_ID"
-echoWarn "|    TARGET CONTAINER: $CONTAINER_NAME"
-echoWarn "|          CONTAINERS: $CONTAINERS"
-echoWarn "------------------------------------------------"
+echoC ";whi"  " =============================================================================="
+echoC ";whi"  "|$(strFixC "STARTED KIRA UPGRADE SCRIPT $KIRA_SETUP_VER" 78)|"   
+echoC ";whi"  "|==============================================================================|"
+echoC ";whi"  "|        BASH SOURCE: $(strFixL " ${BASH_SOURCE[0]} " 58)|"
+echoC ";whi"  "|    PLAN START DATE: $(strFixL " $PLAN_START_DT " 58)|"
+echoC ";whi"  "|        EXPORT DONE: $(strFixL " $UPGRADE_EXPORT_DONE " 58)|"
+echoC ";whi"  "|    UPGRADE INSTATE: $(strFixL " $UPGRADE_INSTATE " 58)|"
+echoC ";whi"  "|       OLD CHAIN ID: $(strFixL " $OLD_CHAIN_ID " 58)|"
+echoC ";whi"  "|       NEW CHAIN ID: $(strFixL " $NEW_CHAIN_ID " 58)|"
+echoC ";whi"  "|   TARGET CONTAINER: $(strFixL " $CONTAINER_NAME " 58)|"
+echoC ";whi"  "|         CONTAINERS: $(strFixL " $CONTAINERS " 58)|"
+echoC ";whi"  " =============================================================================="
 set -x
 
 ($(isNullOrEmpty "$NEW_CHAIN_ID")) && echoErr "ERROR: Failed to find new chain identifier in the upgrade plan!" && sleep 10 && exit 1
@@ -151,9 +151,9 @@ if [ "$UPDATE_DONE" == "true" ] && [ "$UPGRADE_EXPORT_DONE" == "true" ] ; then
     fi
 fi
 
-echoWarn "------------------------------------------------"
-echoWarn "| FINISHED: UPGRADE SCRIPT $KIRA_SETUP_VER"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
-echoWarn "------------------------------------------------"
-
+set +x
+echoC ";whi"  "================================================================================"
+echoC ";whi"  "|$(strFixC "FINISHED KIRA UPGRADE SCRIPT $KIRA_SETUP_VER" 78))|"   
+echoC ";whi"  "================================================================================"
+set -x
 sleep 10

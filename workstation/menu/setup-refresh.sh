@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/setup-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+set -x
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
@@ -123,11 +124,13 @@ if [ "$REINITALIZE_NODE" == "false" ] ; then
     sort -u "$TMP_PEERS" -o "$TMP_PEERS"
     cat "$TMP_PEERS" > "$PUBLIC_SEEDS"
 
+    echoInfo "INFO: Updating trusted node info..."
     $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false"
 fi
 
 SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")
 
+set +x
 echoNC ";gre" "\n\nTrusted node & setup configuration refresh results:\n"
 echoC ";whi" "   TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
 echoC ";whi" "           TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
@@ -142,4 +145,5 @@ echoC ";whi" "      TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
 echoC ";whi" "          SNAPSHOT_CORRUPTED: $(globGet SNAPSHOT_CORRUPTED)"
 [ "$REINITALIZE_NODE" == "false" ] && \
 echoC ";whi" "                 SEEDS COUNT: $SEEDS_COUNT"
+set -x
 sleep 1

@@ -15,7 +15,7 @@ if [[ $UPDATE_FAIL_COUNTER -ge $MAX_FAILS ]] ; then
     echoErr "ERROR: Stopping update service for error..."
     globSet UPDATE_FAIL "true"
     globSet SETUP_END_DT "$(date +'%Y-%m-%d %H:%M:%S')"
-    echoErr "Press 'Ctrl+c' to exit then type 'kira' to open infrastructure manager"
+    echoErr "Press 'Q' or 'Ctrl+C' to exit then type 'kira' to enter infra manager"
     sleep 5 && systemctl stop kiraup
     exit 1
 fi
