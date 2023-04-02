@@ -24,8 +24,8 @@ function MnemonicGenerator() {
     local masterMnemonic="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
     # expected variable name
     local mnemonicVariableName=$(toUpper "${name}_${type}_MNEMONIC")
-    # Default entropy == "${masterMnemonic} ; ${mnemonicVariableName}"
-    local entropyHex=$(echo -n "$masterMnemonic ; ${name} ${type}" | tr '[:upper:]' '[:lower:]' | sha256sum | awk '{ print $1 }' | xargs)
+    # Default entropy == "${masterMnemonic} ; ${name} ${type}"
+    local entropyHex=$(echo -n "${masterMnemonic} ; ${name} ${type}" | tr '[:upper:]' '[:lower:]' | tr -d '[:space:]' | sha256sum | awk '{ print $1 }' | xargs)
 
     local valkeyPath="$KIRA_SECRETS/priv_$(toLower "${name}")_key.json"
     local nodekeyPath="$KIRA_SECRETS/$(toLower "${name}")_node_key.json"

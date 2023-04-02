@@ -493,22 +493,23 @@ while : ; do
             echoInfo "INFO: Attempting to change validator status from ACTIVE to PAUSED..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && pauseValidator validator" || \
                 echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
-            sleep 5
+            timeout 30 sleep "$(globGet CONS_BLOCK_TIME)" || echoWarn "WARNING: Await timeout"
         elif [ "$VALSTATUS" == "paused" ] ; then
             echoInfo "INFO: Attempting to change validator status from PAUSED to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && unpauseValidator validator" || \
                 echoErr "ERROR: Failed to confirm pause tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
-            sleep 5
+            timeout 30 sleep "$(globGet CONS_BLOCK_TIME)" || echoWarn "WARNING: Await timeout"
         elif [ "$VALSTATUS" == "inactive" ] ; then
             echoInfo "INFO: Attempting to change validator status from INACTIVE to ACTIVE..."
             ( docker exec -i validator /bin/bash -c ". /etc/profile && activateValidator validator" || \
                 echoErr "ERROR: Failed to confirm activate tx" ) && echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
-            sleep 60
+            timeout 30 sleep "$(globGet CONS_BLOCK_TIME)" || echoWarn "WARNING: Await timeout"
         elif [ "$VALSTATUS" == "waiting" ] ; then
             echoInfo "INFO: Attempting to claim validator seat..."
             MONIKER=""
             while ($(isNullOrWhitespaces "$MONIKER")) ; do
                 echoNC ";whi" "\nInput unique node name: " && read MONIKER
+                MONIKER=$(strTrim "$MONIKER")
             done
 
             SUCCESS=false
@@ -521,6 +522,9 @@ while : ; do
                 ( docker exec -i validator bash -c "source /etc/profile && upsertIdentityRecord validator \"validator_node_id\" \"$VALIDATOR_NODE_ID\" 180" || \
                     echoErr "ERROR: Failed to confirm indentity registrar upsert tx" )
             fi
+
+            echoWarn "WARNINIG: Please be patient, it might take couple of minutes before your status changes in the KIRA Manager..."
+            timeout 30 sleep "$(globGet CONS_BLOCK_TIME)" || echoWarn "WARNING: Await timeout"
         fi
 
         globSet IS_SCAN_DONE "false"

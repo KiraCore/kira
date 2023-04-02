@@ -178,7 +178,7 @@ while : ; do
         FAUCET_ADDR_PATH=$(globFile FAUCET_ADDR)
         touch "${FAUCET_ADDR_PATH}.pid" && if ! kill -0 $(tryCat "${FAUCET_ADDR_PATH}.pid") 2> /dev/null ; then
             if [ "${name}" == "interx" ] ; then
-                echo $(curl interx.local:$(globGet CUSTOM_INTERX_PORT)/api/faucet 2>/dev/null 2> /dev/null | jsonQuickParse "address" 2> /dev/null  || echo -n "") > "$FAUCET_ADDR_PATH" &
+                echo $(curl interx.local:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null 2> /dev/null | jsonQuickParse "faucet_addr" 2> /dev/null  || echo -n "") > "$FAUCET_ADDR_PATH" &
                 PID2="$!" && echo "$PID2" > "${FAUCET_ADDR_PATH}.pid"
             fi
         fi
@@ -384,10 +384,10 @@ while : ; do
         esac
     fi
 
-    pressToContinue --timeout=$timeout --cursor=false "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL="$(globGet OPTION)" || VSEL="r"
+    pressToContinue --timeout=$timeout --cursor=false "$selR" "$selP" "$selS" "$selI" "$selM" "$selK" "$selL" "$selH" "$selX"  && VSEL="$(globGet OPTION)" || VSEL=""
 
     clear
-    [ "$VSEL" != "r" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
+    [ ! -z "$VSEL" ] && echoInfo "INFO: Option '$VSEL' was selected, processing request..."
     
     FORCE_RESCAN="false"
     EXECUTED="false"
@@ -575,12 +575,14 @@ while : ; do
         VSEL="" && EXECUTED="true"
         sleep 1
         break
+    else
+        echoInfo "INFO: Refreshing Container Manager..."
+        VSEL="" && EXECUTED="true"
     fi
 
     # trigger re-scan if requested
     [ "$FORCE_RESCAN" == "true" ] && globSet IS_SCAN_DONE "false"
     ( [ "$EXECUTED" == "true" ] && [ ! -z "$VSEL" ] ) && echoNC "bli;whi" "\nOption ($VSEL) was executed, press any key to continue..." && pressToContinue
-
 done
 
 echoInfo "INFO: Container Manager Stopped"

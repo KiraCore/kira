@@ -25,8 +25,8 @@ fi
 
 # Used To Initialize essential dependencies
 BASE_IMAGE_VERSION="v0.13.5"
-TOOLS_VERSION="v0.3.36"
-COSIGN_VERSION="v1.13.1"
+TOOLS_VERSION="v0.3.38"
+COSIGN_VERSION="v2.0.0"
 
 # Force console colour to be black
 tput setab 0
@@ -47,8 +47,8 @@ if [ "$COSIGN_NOT_INSTALLED" == "true" ] ; then
     FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}")
     wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
     FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
-    COSIGN_HASH_ARM="a50651a67b42714d6f1a66eb6773bf214dacae321f04323c0885f6a433051f95"
-    COSIGN_HASH_AMD="a7a79a52c7747e2c21554cad4600e6c7130c0429017dd258f9c558d957fa9090"
+    COSIGN_HASH_ARM="8132cb2fb99a4c60ba8e03b079e12462c27073028a5d08c07ecda67284e0c88d"
+    COSIGN_HASH_AMD="169a53594c437d53ffc401b911b7e70d453f5a2c1f96eb2a736f34f6356c4f2b"
     if [ "$FILE_HASH" != "$COSIGN_HASH_ARM" ] && [ "$FILE_HASH" != "$COSIGN_HASH_AMD" ] ; then
         echoErr "ERROR: Failed to download cosign tool, expected checksum to be '$COSIGN_HASH', but got '$FILE_HASH'"
         exit 1
@@ -225,7 +225,7 @@ cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
 chmod -R 555 $KIRA_MANAGER
 
 KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
-[ -z "$KIRA_SETUP_VER" ] && echoErr "ERROR: Invalid setup release version!" && exit 1
+(! $(isVersion "$KIRA_SETUP_VER")) && echoErr "ERROR: Invalid setup release version!" && exit 1
 setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
 globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
 

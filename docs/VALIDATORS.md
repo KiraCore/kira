@@ -1,10 +1,10 @@
 # Launch Validator Node
 
 ```
-cd /tmp && read -p "Input branch name: " BRANCH && \
- wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && H=$(sha256sum ./i.sh | awk '{ print $1 }') && read -p "Is '$H' a [V]alid SHA256 ?: "$'\n' -n 1 V && \
- [ "${V,,}" == "v" ] && ./i.sh "$BRANCH" || echo "Hash was NOT accepted by the user"
+# using CID
+HASH="bafybeifctpv7qxafkccjlsm4taqohk6ywk4ig5jxfboxwnwasopiemb2lm" && \
+ cd /tmp && wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+ chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
 ```
 
 # Query Validator Info
@@ -40,24 +40,23 @@ read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators vali
 
 e.g:
 
-whitelistValidators validator kira1rccqtpytu2mkrqqchsqhz09cqlf4xmr80v7u5q && \
-whitelistValidators validator kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u && \
-whitelistValidators validator kira10z7harxdm7xweg08smc8k6v5jfgrfa2y6r2yr6 && \
-whitelistValidators validator kira1uh07m8gr03xy42g5q3lapp75k4a3kysefxufed
+whitelistValidators validator kira1vjfq0hrmyuyxw2es4t5dm8ra5jzw9pmrkp4syh && \
+whitelistValidators validator kira1pxld6ksvtnqqlqzth8kg2hv2r72e3e3huyn55t && \
+whitelistValidators validator kira12spkm5dt0ptgwmk4s32kx36r46vjpy2ltfr390 
 ```
 
-## Importing DEMO Keys to Test Instances
+## DEMO Keys and corresponding mnemonics
 
 ```
-# kiraXXX
+# extract master mnemonic from secrets dir
+tryGetVar MASTER_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"XXX\"" > $KIRA_SECRETS/mnemonics.env
+# kira1vjfq0hrmyuyxw2es4t5dm8ra5jzw9pmrkp4syh
+# awake absurd guard venture enrich balance puppy immense eternal maze cigar lock prison disease cousin true mind element weather virtual merge clog fire scrub
 
-# kira1rccqtpytu2mkrqqchsqhz09cqlf4xmr80v7u5q
+# kira1pxld6ksvtnqqlqzth8kg2hv2r72e3e3huyn55t
+# blur hundred one tent net pledge valley finish toe jewel rice vacuum ready pizza door engage horror barely account foot make syrup thought few
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"add pill clerk smooth oxygen intact lesson rocket pilot ritual draft desert word blossom easily fuel cushion expose thunder lonely more best behind file\"" > $KIRA_SECRETS/mnemonics.env
-
-# kira17ueeuth594mu9pddvudng47tnqwdlwjt82ak5u
-
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "MASTER_MNEMONIC=\"ozone toss coil raven ring include boring shrimp subway sustain appear prosper patient total burger enlist breeze chuckle salad cannon thunder recall abandon thumb\"" > $KIRA_SECRETS/mnemonics.env
+# kira12spkm5dt0ptgwmk4s32kx36r46vjpy2ltfr390
+# glory salute raccoon alpha cycle stuff brown two check rare wheat educate ridge dumb magic usage forum wrist raccoon erase onion cross parrot smile
 ```
