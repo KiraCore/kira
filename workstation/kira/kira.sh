@@ -15,6 +15,7 @@ if [ "$USER" != "root" ]; then
     exit 1
 fi
 
+uninstall="false"
 verify_setup_status="true"
 getArgs "$1" --gargs_throw=false --gargs_verbose="true"
 
@@ -23,6 +24,9 @@ globSet IS_SCAN_DONE "false"
 
 if [ "$verify_setup_status" == "true" ] ; then
     $KIRA_MANAGER/kira/kira-setup-status.sh --auto_open_km="true"
+    exit 0
+elif [ "$uninstall" == "true" ] ; then
+    $KIRA_MANAGER/kira/uninstall.sh
     exit 0
 fi
 
@@ -466,10 +470,10 @@ while : ; do
     PRESS_TO_CONTINUE="true"
     if [ "$VSEL" == "0" ] ; then
         PRESS_TO_CONTINUE="false"
-        $KIRA_MANAGER/kira/container-manager.sh --name="$MAIN_CONTAINER" || ( echoErr "ERROR: Faile to inspect '$MAIN_CONTAINER' container" && PRESS_TO_CONTINUE="false" )
+        $KIRA_MANAGER/kira/container-manager.sh --name="$MAIN_CONTAINER" || ( echoErr "ERROR: Failed while inspecting '$MAIN_CONTAINER' container" && PRESS_TO_CONTINUE="false" )
     elif [ "$VSEL" == "1" ] ; then
         PRESS_TO_CONTINUE="false"
-        $KIRA_MANAGER/kira/container-manager.sh --name="interx" || ( echoErr "ERROR: Faile to inspect 'interx' container" && PRESS_TO_CONTINUE="false" )
+        $KIRA_MANAGER/kira/container-manager.sh --name="interx" || ( echoErr "ERROR: Failed while inspecting 'interx' container" && PRESS_TO_CONTINUE="false" )
     elif  [ "$VSEL" == "r" ] ; then
         continue
     elif  [ "$VSEL" == "s" ] ; then

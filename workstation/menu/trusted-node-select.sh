@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/trusted-node-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
+print_summary="true"
 interactive="true"
 show_log="false"
-getArgs "$1" "$2" --gargs_throw=false --gargs_verbose=true
+getArgs "$1" "$2" "$3" --gargs_throw=false --gargs_verbose=true
 [ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
@@ -323,17 +324,19 @@ if [ ! -z "$SNAPSHOTS" ] && [[ $SNAPSHOTS_COUNT -gt 0 ]] && [[ "$SNAPSHOT_CHAIN_
     (! $(isNullOrWhitespaces "$DEFAULT_SNAP")) && $KIRA_MANAGER/menu/snap-select.sh --snap-file="$DEFAULT_SNAP"
 fi
 
-set +x
-echoC ";gre" "Trusted node discovery results:"
-echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
-echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"
-echoC ";whi" "        TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
-echoC ";whi" "          TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
-echoC ";whi" "    TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"
-echoC ";whi" "    TRUSTED_NODE_RPC_PORT: $(globGet TRUSTED_NODE_RPC_PORT)"
-echoC ";whi" " TRUSTED_NODE_INTERX_PORT: $(globGet TRUSTED_NODE_INTERX_PORT)"
-echoC ";whi" "    TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
-echoC ";whi" "      TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
-echoC ";whi" "    TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
-echoC ";whi" "   TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
-
+if [ "$print_summary" == "true" ] ; then
+    set +x
+    echoC ";gre" "Trusted node discovery results:"
+    echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
+    echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"
+    echoC ";whi" "        TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
+    echoC ";whi" "          TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
+    echoC ";whi" "    TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"
+    echoC ";whi" "    TRUSTED_NODE_RPC_PORT: $(globGet TRUSTED_NODE_RPC_PORT)"
+    echoC ";whi" " TRUSTED_NODE_INTERX_PORT: $(globGet TRUSTED_NODE_INTERX_PORT)"
+    echoC ";whi" "    TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
+    echoC ";whi" "      TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
+    echoC ";whi" "    TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
+    echoC ";whi" "   TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
+    set -x
+fi

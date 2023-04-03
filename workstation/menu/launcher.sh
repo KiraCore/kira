@@ -36,6 +36,10 @@ while :; do
         $KIRA_MANAGER/menu/setup-refresh.sh
     fi
 
+    ##########################################################
+    echoInfo "LOADING NETWORK INFO..."
+    ##########################################################
+
     IFACE=$(globGet IFACE)
     INFRA_MODE=$(globGet INFRA_MODE)
     CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
@@ -49,11 +53,19 @@ while :; do
     (! $(isNaturalNumber "$HEIGHT")) && HEIGHT=0
     (! $(isNaturalNumber "$SEEDS_COUNT")) && SEEDS_COUNT=0
 
+    ##########################################################
+    echoInfo "LOADING TRUSTED NODE INFO..."
+    ##########################################################
+
     TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
     TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
     TRUSTED_NODE_RPC_PORT="$(globGet TRUSTED_NODE_RPC_PORT)"
     TRUSTED_NODE_SNAP_SIZE="$(globGet TRUSTED_NODE_SNAP_SIZE)"
     (! $(isNaturalNumber "$TRUSTED_NODE_SNAP_SIZE")) && TRUSTED_NODE_SNAP_SIZE=0
+
+    ##########################################################
+    echoInfo "LOADING SNAPSHOT STATISTICS..."
+    ##########################################################
 
     SNAPSHOT_FILE=$(globGet SNAPSHOT_FILE)
     SNAPSHOT_FILE_HASH=$(globGet SNAPSHOT_FILE_HASH)
@@ -64,6 +76,13 @@ while :; do
     SNAPSHOT_CORRUPTED=$(globGet SNAPSHOT_CORRUPTED)
     (! $(isNaturalNumber "$SNAPSHOT_HEIGHT")) && SNAPSHOT_HEIGHT=0
 
+    ##########################################################
+    echoInfo "LOADING NETWORK INFO..."
+    ##########################################################
+
+    DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
+    DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
+    
     [ "$NODE_ADDR" == "0.0.0.0" ] && REINITALIZE_NODE="true" || REINITALIZE_NODE="false"
     if (! $(isDnsOrIp "$NODE_ADDR")) ; then
       NODE_ADDR="???.???.???.???"
@@ -80,6 +99,10 @@ while :; do
     (! $(isDnsOrIp "$PUBLIC_IP")) && PUBLIC_IP="???.???.???.???"
     (! $(isDnsOrIp "$LOCAL_IP")) && LOCAL_IP="???.???.???.???"
 
+    ##########################################################
+    echoInfo "LOADING ADDRESS INFO..."
+    ##########################################################
+
     set +x
     VALIDATOR_ADDR_MNEMONIC="$(tryGetVar VALIDATOR_ADDR_MNEMONIC "$MNEMONICS")"
     VALIDATOR_ADDR="$(validator-key-gen --mnemonic="$VALIDATOR_ADDR_MNEMONIC" --accadr=true --prefix=kira --path="44'/118'/0'/0/0" || echo "")"
@@ -90,6 +113,11 @@ while :; do
     set -x
 
     NODE_ID=$(tryGetVar "$(toUpper "$INFRA_MODE")_NODE_ID" "$MNEMONICS")
+
+    ##########################################################
+    echoInfo "FORMATTING DATA FIELDS..."
+    ##########################################################
+
     (! $(isNodeId "$NODE_ID")) && NODE_ID="???...???"
 
     SSH_PORT=$(strFixC "$(globGet DEFAULT_SSH_PORT)" 11)
@@ -116,9 +144,7 @@ while :; do
       fi
     fi
 
-    SNAP_SIZE=$(globGet TRUSTED_NODE_SNAP_SIZE)
-    DOCKER_SUBNET="$(globGet KIRA_DOCKER_SUBNET)"
-    DOCKER_NETWORK="$(globGet KIRA_DOCKER_NETWORK)"
+    sleep 1
 
     set +x && printf "\033c" && clear
     opselM="m" && opselM="n" && opselT="t" && opselD="d" && opselS="s" && opselL="l"

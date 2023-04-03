@@ -39,7 +39,7 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators validator $ADDR
 
 e.g:
-whitelistValidators validator kira1zlry4hl2sl636xkhhza4emny3dsl68lh8zk8l0 && \
+whitelistValidators validator ??? && \
 whitelistValidators validator ??? && \
 whitelistValidators validator ??? 
 ```
@@ -53,13 +53,13 @@ tryGetVar MASTER_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 # extract validator addr menmonic
 tryGetVar VALIDATOR_ADDR_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-# genesis validator: kira1zjqvrcg83m7awxpwgcjusn5j4x2fmxhm59ujxx
-# > master: nose survey across coin naive slender ecology coil session bar visit ancient mail space scatter valve mask coyote blue pencil utility cross lucky pledge
-# >   addr: roof wine blush attend aware kit round shoulder pelican figure maze cool ugly danger artwork main mandate desert produce impact deny silk miracle tourist
+# genesis validator: kira19m4r9zrk4jwj0vht4rxjcapsqhah5t7p6swrcm
+# > master: lava sun bread face village voice sing humble milk junior cupboard address cool earn snow monkey turtle bacon depth citizen trash idea amazing goat
+# >   addr: fetch autumn physical winner walnut fee spoil alley critic interest stamp save roast smoke seminar feature weather issue fix session deliver hamster fence spirit
 
-# kira1zlry4hl2sl636xkhhza4emny3dsl68lh8zk8l0
-# > master: boil thing column ramp under blast gate like struggle magnet believe planet write decline chronic faculty gallery nothing gown chase silent nose edit snake
-# >   addr: cable require discover gravity wrap faculty anger apology forest onion possible fiscal measure actress eager budget captain coil powder lion laundry arrive brain feed
+# devnet 2 validator: kira1vumk6952urr5ee7v79q072v5ztr94k4z7a2fv2
+# > master: life file diagram congress talent team sting topic crack potato sister topic speak gain rural estate chaos shop aisle eagle never crystal exhaust note
+# >   addr: chapter dutch brand marriage soft jaguar group humor dirt knock grunt own lonely panic nest regular pave wire track amused language dance vapor leaf
 
 # ???
 # > master: 
