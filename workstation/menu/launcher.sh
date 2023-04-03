@@ -248,8 +248,10 @@ while :; do
     fi
 
   case ${KEY} in
-  s*) $KIRA_MANAGER/menu/quick-select.sh
-    break ;;
+  s*) 
+      $KIRA_MANAGER/menu/quick-select.sh || echoErr "ERROR: Setup returned exit code '$?'"
+      break
+      ;;
   m*) $KIRA_MANAGER/menu/mnemonic-select.sh ;;
   n*) $KIRA_MANAGER/menu/ports-select.sh ;;
   t*) $KIRA_MANAGER/menu/node-type-select.sh ;;

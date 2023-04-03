@@ -69,9 +69,9 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
         # APP [state_sync]
-        globSet app_state_sync_snapshot_interval "200" $GLOBAL_COMMON
-        globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
-        globSet app_base_pruning "custom" $GLOBAL_COMMON
+        globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+        globSet app_state_sync_snapshot_keep_recent "1" $GLOBAL_COMMON
+        globSet app_base_pruning "nothing" $GLOBAL_COMMON
         globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
         globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
         globSet app_base_pruning_interval "10" $GLOBAL_COMMON
@@ -91,8 +91,8 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         globSet cfg_statesync_enable "true" $GLOBAL_COMMON
         globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
         # CFG [CONSENSUS]
-        globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
-        globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+        globSet cfg_consensus_timeout_commit "10000ms" $GLOBAL_COMMON
+        globSet cfg_consensus_create_empty_blocks_interval "20s" $GLOBAL_COMMON
         globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
         # CFG [INSTRUMENTATION]
         globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON

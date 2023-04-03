@@ -39,9 +39,9 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators validator $ADDR
 
 e.g:
-whitelistValidators validator ??? && \
-whitelistValidators validator ??? && \
-whitelistValidators validator ??? 
+whitelistValidators validator kira1vumk6952urr5ee7v79q072v5ztr94k4z7a2fv2 && \
+ whitelistValidators validator kira19pdg83nju0acrk3jcw9gxhmvu257puc9t2334h && \
+ whitelistValidators validator kira1nxtp8ly7x7fwnu2l737ckslk2u7y3mfv9fu938 
 ```
 
 ## DEMO Keys and corresponding master mnemonics
@@ -61,10 +61,11 @@ tryGetVar VALIDATOR_ADDR_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 # > master: life file diagram congress talent team sting topic crack potato sister topic speak gain rural estate chaos shop aisle eagle never crystal exhaust note
 # >   addr: chapter dutch brand marriage soft jaguar group humor dirt knock grunt own lonely panic nest regular pave wire track amused language dance vapor leaf
 
-# ???
-# > master: 
-# >   addr: 
+# devnet 3 validator: kira19pdg83nju0acrk3jcw9gxhmvu257puc9t2334h
+# > master: brief apple famous just liquid gadget text noise blue camera match ramp laptop chaos borrow flip mirror position solar inherit desert dose blanket mimic
+# >   addr: indicate marine rookie fabric problem parent rally ozone leopard practice permit pen fever clock museum renew unit bicycle addict light consider ask mad object
 
-# > master: 
-# >   addr: 
+# devnet 4 validator: kira1nxtp8ly7x7fwnu2l737ckslk2u7y3mfv9fu938
+# > master: easily cave will detail cake pyramid weekend street intact pill number asthma purpose wreck strong attack survey broom sorry child capital sport knife pause
+# >   addr: elbow scrap parrot liberty suspect wedding end fine various situate fiber kangaroo vote jazz census hen bread day sorry one mean episode umbrella animal
 ```
