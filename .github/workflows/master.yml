@@ -50,13 +50,13 @@ jobs:
               pr_label: "kira-automation"
               pr_assignee: "asmodat"
               pr_allow_empty: true
+          # https://github.com/CodelyTV/no-pull-requests, v1
           - name: Close All PRs
             if: startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.')
-            uses: crondaemon/close-pr@v1
+            uses: CodelyTV/no-pull-requests@53f1180ae5c5a7ccacdc55e03d5152ecfaeb1e00
             with:
-              comment: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
-            env:
               GITHUB_TOKEN: ${{ secrets.REPO_ACCESS }}
+              message: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
           - name: Create PR from a version branch to dev after version branch push
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
