@@ -64,9 +64,9 @@ jobs:
               echo " Release exists: ${{ env.RELEASE_EXISTS }}"
               echo "     Event name: ${{ github.event_name }}"
               echo "  Target Exists: ${{ env.TARGET_BRANCH_EXISTS }}"
-          # ref.: https://github.com/peterjgrainger/action-create-branch, v2.2.0
+          # ref.: https://github.com/peterjgrainger/action-create-branch, v2.4.0
           - name: Create version branch from source
-            uses: peterjgrainger/action-create-branch@c2800a3a9edbba2218da6861fa46496cf8f3195a
+            uses: peterjgrainger/action-create-branch@08259812c8ebdbf1973747f9297e332fa078d3c1
             if: |
                ( env.TARGET_BRANCH_EXISTS == false || env.TARGET_BRANCH_EXISTS == 'false' ) &&
                ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) && 
@@ -76,14 +76,14 @@ jobs:
             with:
               branch: ${{ env.RELEASE_BRANCH }}
               sha: ${{ env.PARENT_BRANCH_REF }}
+           # https://github.com/CodelyTV/no-pull-requests, v1
           - name: Close All PRs
             if: ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) && 
                 ( startsWith(env.RELEASE_BRANCH, 'release/v') && contains(env.RELEASE_BRANCH, '.') )
-            uses: crondaemon/close-pr@v1
+            uses: CodelyTV/no-pull-requests@53f1180ae5c5a7ccacdc55e03d5152ecfaeb1e00
             with:
-              comment: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
-            env:
               GITHUB_TOKEN: ${{ secrets.REPO_ACCESS }}
+              message: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
           - name: Create PR from feature to version branch
             # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
             uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
