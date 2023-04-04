@@ -175,16 +175,13 @@ while : ; do
         echoInfo "LOADING INTERX STATISTICS..."
         ##########################################################
 
-        FAUCET_ADDR_PATH=$(globFile FAUCET_ADDR)
-        touch "${FAUCET_ADDR_PATH}.pid" && if ! kill -0 $(tryCat "${FAUCET_ADDR_PATH}.pid") 2> /dev/null ; then
-            if [ "${name}" == "interx" ] ; then
-                echo $(curl interx.local:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null 2> /dev/null | jsonQuickParse "faucet_addr" 2> /dev/null  || echo -n "") > "$FAUCET_ADDR_PATH" &
-                PID2="$!" && echo "$PID2" > "${FAUCET_ADDR_PATH}.pid"
-            fi
+        FAUCET_ADDR=$(curl --max-time 2 interx.local:$(globGet CUSTOM_INTERX_PORT)/api/status 2>/dev/null 2> /dev/null | jsonQuickParse "faucet_addr" 2> /dev/null  || echo -n "")
+        if (! $(isKiraAddress "$FAUCET_ADDR")) ; then
+            FAUCET_ADDR="???" 
+            colFAdr="bla"
+        else
+            colFAdr="whi"
         fi
-
-        FAUCET_ADDR=$(globGet FAUCET_ADDR)
-        (! $(isKiraAddress "$FAUCET_ADDR")) && FAUCET_ADDR="???" && colFAdr="bla"
     fi
     
     ##########################################################

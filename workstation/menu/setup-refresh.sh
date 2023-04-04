@@ -125,7 +125,7 @@ if [ "$REINITALIZE_NODE" == "false" ] ; then
     cat "$TMP_PEERS" > "$PUBLIC_SEEDS"
 
     echoInfo "INFO: Updating trusted node info..."
-    $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false"
+    $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false" --print-summary="false"
 fi
 
 SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")

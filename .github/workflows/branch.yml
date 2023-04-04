@@ -20,10 +20,10 @@ jobs:
               git config --global --add safe.directory /usr/lib/flutter
               git config --global --add safe.directory /github/workspace
               git config --global --add safe.directory $PWD
-          # ref.: https://github.com/actions/checkout, v3.0.0
+          # ref.: https://github.com/actions/checkout, v3.5.0
           # NOTE: Fetch length must be 0 to recover  all history for all branches and tags.
           - name: Checkout repository
-            uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b
+            uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
             with:
               fetch-depth: 0
           - name: Extract branch name on pull request
