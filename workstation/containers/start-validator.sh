@@ -81,12 +81,22 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
         # APP [state_sync]
-        globSet app_state_sync_snapshot_interval "200" $GLOBAL_COMMON
-        globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
-        globSet app_base_pruning "custom" $GLOBAL_COMMON
-        globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
-        globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
-        globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+        if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
+            # genesis validator should always persist full network historry
+            globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+            globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning "nothing" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
+        else
+            # valdiators who are not genesis validators can prune old state
+            globSet app_state_sync_snapshot_interval "200" $GLOBAL_COMMON
+            globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning "custom" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
+            globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+        fi
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
         # CFG [base]
