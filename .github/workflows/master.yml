@@ -1,0 +1,71 @@
+name: release/v*.*.* -PR-> master
+
+on:
+  push:
+    branches: [ release/v*.*.* ]
+
+# git ls-remote <URL> | head -1 | sed "s/HEAD//"
+jobs:
+  # isolate signing & repo cloning from docker image
+  auto-pr:
+    name: Automated Master Branch PR
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      pull-requests: write
+    steps:
+          # Work around https://github.com/actions/checkout/issues/760
+          - name: Add safe.directory
+            run: |
+              git config --global --add safe.directory /usr/lib/flutter
+              git config --global --add safe.directory /github/workspace
+              git config --global --add safe.directory $PWD
+          # ref.: https://github.com/actions/checkout, v3.5.0
+          - name: Checkout repository
+            uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
+          - name: Extract branch name on pull request
+            shell: bash
+            run: |
+              set -x
+              git branch -r -l
+              echo "SOURCE_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+              echo "DEFAULT_BRANCH=${{ github.event.repository.default_branch }}" >> $GITHUB_ENV
+          - name: Print debug data before publishing
+            run: |
+              echo " Source branch: ${{ env.DEFAULT_BRANCH }}"
+              echo "Default branch: ${{ env.SOURCE_BRANCH }}"
+              echo "    Event name: ${{ github.event_name }}"
+              echo "    Repo. name: ${{ github.event.repository.name }}"
+          - name: Create PR from a version branch to master after version branch push
+            # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
+            uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
+            if: startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.')
+            with:
+              github_token: ${{ secrets.REPO_ACCESS }}
+              source_branch: ${{ env.SOURCE_BRANCH }}
+              destination_branch: ${{ env.DEFAULT_BRANCH}}
+              pr_title: "${{ env.SOURCE_BRANCH }} -> ${{ env.DEFAULT_BRANCH }}" 
+              pr_label: "kira-automation"
+              pr_assignee: "asmodat"
+              pr_allow_empty: true
+          # https://github.com/CodelyTV/no-pull-requests, v1
+          - name: Close All PRs
+            if: startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.')
+            uses: CodelyTV/no-pull-requests@53f1180ae5c5a7ccacdc55e03d5152ecfaeb1e00
+            with:
+              GITHUB_TOKEN: ${{ secrets.REPO_ACCESS }}
+              message: "This PR is obsolete, ${{env.SOURCE_BRANCH}} branch is ahead of your branch."
+          - name: Create PR from a version branch to dev after version branch push
+            # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
+            uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
+            if: startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.')
+            with:
+              github_token: ${{ secrets.REPO_ACCESS }}
+              source_branch: ${{ env.SOURCE_BRANCH }}
+              destination_branch: 'dev'
+              pr_title: "${{ env.SOURCE_BRANCH }} -> dev" 
+              pr_label: "kira-automation"
+              pr_assignee: "asmodat"
+              pr_allow_empty: true

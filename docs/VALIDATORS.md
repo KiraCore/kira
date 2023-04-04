@@ -1,10 +1,10 @@
 # Launch Validator Node
 
 ```
-cd /tmp && read -p "Input branch name: " BRANCH && \
- wget https://raw.githubusercontent.com/KiraCore/kira/$BRANCH/workstation/init.sh -O ./i.sh && \
- chmod 555 -v ./i.sh && H=$(sha256sum ./i.sh | awk '{ print $1 }') && read -p "Is '$H' a [V]alid SHA256 ?: "$'\n' -n 1 V && \
- [ "${V,,}" == "v" ] && ./i.sh "$BRANCH" || echo "Hash was NOT accepted by the user"
+# using CID
+HASH="bafybeifctpv7qxafkccjlsm4taqohk6ywk4ig5jxfboxwnwasopiemb2lm" && \
+ cd /tmp && wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+ chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
 ```
 
 # Query Validator Info
@@ -36,27 +36,36 @@ sekaid tx customslashing inactivate --from validator --keyring-backend=test --ho
 
 ## Adding Validators On Testnet
 ```
-read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidator validator $ADDR
+read -p "INPUT ADDRESS OF YOUR NEW VALIDATOR: " ADDR && whitelistValidators validator $ADDR
 
 e.g:
-
-whitelistValidator validator kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6 && \
-whitelistValidator validator kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c && \
-whitelistValidator validator kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+whitelistValidators validator kira1vumk6952urr5ee7v79q072v5ztr94k4z7a2fv2 && \
+ whitelistValidators validator kira19pdg83nju0acrk3jcw9gxhmvu257puc9t2334h && \
+ whitelistValidators validator kira1nxtp8ly7x7fwnu2l737ckslk2u7y3mfv9fu938 
 ```
 
-## Importing DEMO Keys to Test Instances
+## DEMO Keys and corresponding master mnemonics
 
 ```
-# kira1ejck5umkhdylea964yjqu9phr7lkz0t4d748d6
+# extract master mnemonic from secrets dir
+tryGetVar MASTER_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"strong picture raccoon decide debate orange honey benefit gym spell vendor moment mule ancient liar assist naive venture ability obtain trade reject short borrow\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"reward weapon cake shop sorry feature tone cluster era nut leg canoe burden man soldier reform neck narrow squirrel vintage teach dial broken mimic\"" >> $KIRA_SECRETS/mnemonics.env
+# extract validator addr menmonic
+tryGetVar VALIDATOR_ADDR_MNEMONIC "/home/ubuntu/.secrets/mnemonics.env"
 
-# kira1ag6ct3jxeh7rcdhvy8g3ajdhjrs3g6470v3s7c
+# genesis validator: kira19m4r9zrk4jwj0vht4rxjcapsqhah5t7p6swrcm
+# > master: lava sun bread face village voice sing humble milk junior cupboard address cool earn snow monkey turtle bacon depth citizen trash idea amazing goat
+# >   addr: fetch autumn physical winner walnut fee spoil alley critic interest stamp save roast smoke seminar feature weather issue fix session deliver hamster fence spirit
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"waste forum motion vivid verb excite roast stuff virus embody assume hurt window album once cushion setup salon fiction custom glove also armed edge\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"word visit pelican venue nominee echo symptom devote cargo where guide derive creek rather poem thought own bulk token lounge tunnel unlock buffalo lecture\"" >> $KIRA_SECRETS/mnemonics.env
+# devnet 2 validator: kira1vumk6952urr5ee7v79q072v5ztr94k4z7a2fv2
+# > master: life file diagram congress talent team sting topic crack potato sister topic speak gain rural estate chaos shop aisle eagle never crystal exhaust note
+# >   addr: chapter dutch brand marriage soft jaguar group humor dirt knock grunt own lonely panic nest regular pave wire track amused language dance vapor leaf
 
-# kira1ftp05qcmen9r8w6g7ajdxtmy0hldk39s3h0ads
+# devnet 3 validator: kira19pdg83nju0acrk3jcw9gxhmvu257puc9t2334h
+# > master: brief apple famous just liquid gadget text noise blue camera match ramp laptop chaos borrow flip mirror position solar inherit desert dose blanket mimic
+# >   addr: indicate marine rookie fabric problem parent rally ozone leopard practice permit pen fever clock museum renew unit bicycle addict light consider ask mad object
 
-KIRA_SECRETS=/home/ubuntu/.secrets && mkdir -p $KIRA_SECRETS && echo "VALIDATOR_ADDR_MNEMONIC=\"eagle please appear wide quit hat column stereo vapor buddy seed busy rude bag peanut six speak rescue click claw trade robot tragic soldier\"" > $KIRA_SECRETS/mnemonics.env && echo "VALIDATOR_VAL_MNEMONIC=\"slight peasant company hood average ivory panic diary barrel fault solar broken birth smoke over unveil fortune cloth orient kidney harsh remain glad slab\"" >> $KIRA_SECRETS/mnemonics.env
+# devnet 4 validator: kira1nxtp8ly7x7fwnu2l737ckslk2u7y3mfv9fu938
+# > master: easily cave will detail cake pyramid weekend street intact pill number asthma purpose wreck strong attack survey broom sorry child capital sport knife pause
+# >   addr: elbow scrap parrot liberty suspect wedding end fine various situate fiber kangaroo vote jazz census hen bread day sorry one mean episode umbrella animal
 ```

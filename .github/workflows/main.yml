@@ -1,0 +1,379 @@
+name: Build, Release & Publish
+
+on:
+  push:
+    branches: [ master, dev, latest, release/v*.*.*, feature/*, bugfix/* ]
+  pull_request:
+    branches: [ master, dev, latest, release/v*.*.*, feature/*, bugfix/* ]
+
+jobs:
+  build:
+    name: Repo Build
+    runs-on: ubuntu-20.04
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
+      pull-requests: write
+    container:
+      image: ghcr.io/kiracore/docker/base-image:v0.13.7
+    steps:
+          # Work around https://github.com/actions/checkout/issues/760
+          - name: Add safe.directory
+            run: |
+              git config --global --add safe.directory /usr/lib/flutter
+              git config --global --add safe.directory /github/workspace
+              git config --global --add safe.directory $PWD
+          # ref.: https://github.com/actions/checkout, v3.0.0
+          - name: Checkout repository
+            uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
+          - name: Extract branch name on push
+            if: github.event_name == 'push'
+            shell: bash
+            run: |
+              echo "SOURCE_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+              echo "DESTINATION_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          - name: Extract branch name on pull request
+            if: github.event_name == 'pull_request'
+            env:
+              REF_BRANCH: ${{ github.event.pull_request.head.ref }}
+              BASE_REF_BRANCH: ${{ github.base_ref }}
+            shell: bash
+            run: |
+              echo "SOURCE_BRANCH=$(echo ${{ env.REF_BRANCH }})" >> $GITHUB_ENV
+              echo "DESTINATION_BRANCH=$(echo ${{ env.BASE_REF_BRANCH }})" >> $GITHUB_ENV
+          - name: Inspecting & organizing artifacts
+            run: |
+              set -x
+              echo "(current dir): $PWD" && ls -l ./
+              chmod -Rv 555 ./scripts
+              VERSION_REGEX="^(v?)([0-9]+)\.([0-9]+)\.([0-9]+)(-?)([a-zA-Z]+)?(\.?([0-9]+)?)$"
+              SOURCE_BRANCH=${{ env.SOURCE_BRANCH }}
+              REPOSITORY_NAME="${{ github.event.repository.name }}" && echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> $GITHUB_ENV
+              RELEASE_VER="$(./scripts/version.sh)" && echo "RELEASE_VER=$RELEASE_VER" >> $GITHUB_ENV
+              echo "RELEASE_VER=$RELEASE_VER" >> $GITHUB_ENV
+              RELEASE_BRANCH="release/$RELEASE_VER" && echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
+              git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
+              if [[ "$RELEASE_VER" =~ $VERSION_REGEX ]] && [[ "$SOURCE_BRANCH" =~ $VERSION_REGEX ]] && [ "$SOURCE_BRANCH" != "$RELEASE_VER" ] ; then 
+                echo "ERROR: Version branch name MUST be the same as the app version, run scripts/version.sh to check app version!" 
+                exit 1
+              else
+                echo "INFO: Variables setup succeeded"
+              fi
+          - name: Print debug data before testing
+            run: |
+              echo "(current dir): $PWD" && ls -l ./
+              cd ../ && tar -czvf src.tar.gz -C ./kira . && cp ./src.tar.gz ./kira/src.tar.gz
+              cd ./kira
+              echo "Bash Utils Version: $(bu bashUtilsVersion)"
+              echo "     Source branch: ${{ env.SOURCE_BRANCH }}"
+              echo "Destination branch: ${{ env.DESTINATION_BRANCH }}"
+              echo "    Release branch: ${{ env.RELEASE_BRANCH }}"
+              echo "        Event name: ${{ github.event_name }}"
+              echo "   Repository name: ${{ env.REPOSITORY_NAME }}"
+              echo "   Release version: ${{ env.RELEASE_VER }}"
+              echo "    Release exists: ${{ env.RELEASE_EXISTS }}"
+          - name: KIRA Build & Install Packages
+            run: |
+              echo "(current dir): $PWD" && ls -l ./
+              chmod -Rv 555 ./scripts
+              echo "INFO: No build step necessary"
+          - name: Unit Testing
+            run: |
+              echo "TODO: unit tests"
+          - name: Local Integration Testing
+            run: |
+              echo "TODO: integration tests"
+          - name: Publishing Binaries
+            shell: bash
+            env:
+              KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+              COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+            run: |
+              set -x
+              make publish
+              IPFS_UPLOAD_NAME=kira-$RELEASE_VER
+              mkdir -p ./bin/$IPFS_UPLOAD_NAME
+              cp -fv ./bin/kira.zip ./bin/$IPFS_UPLOAD_NAME
+              cp -fv ./bin/init.sh ./bin/$IPFS_UPLOAD_NAME
+              echo "$KEY" > ../cosign.key
+              SUCCESS="true"
+              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/init.sh.sig ./bin/$IPFS_UPLOAD_NAME/init.sh --yes || SUCCESS="false"
+              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/kira.zip.sig ./bin/$IPFS_UPLOAD_NAME/kira.zip --yes || SUCCESS="false"
+              shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
+              rm -fv ../cosign.key
+              if [ "$SUCCESS" == "false" ] ; then  bu echoErr "ERROR: Signing of IPFS releases failed" ; exit 1 ; else bu echoInfo "Success, IPFS release signatures created :)" ; fi
+          - name: Find or await IPFS files to be pinned
+            if: github.event_name == 'pull_request' || 
+                ( env.RELEASE_EXISTS == true || env.RELEASE_EXISTS == 'true' ) || 
+                ( github.event_name == 'push' && !startsWith(env.SOURCE_BRANCH, 'feature') && !startsWith(env.SOURCE_BRANCH, 'refactor') && !startsWith(env.SOURCE_BRANCH, 'bugfix') )
+            shell: bash
+            run: |
+              set -x
+              bu timerStart "pinned-timeout"
+              sleep 120
+              IPFS_HASH=""
+              IPFS_UPLOAD_NAME=kira-$RELEASE_VER
+              CHECK_ELAPSED=0
+              while [[ $CHECK_ELAPSED -lt 900 ]] ; do
+                bu echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
+                rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
+                sleep 10
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                cat ./ipfs-pinned.log
+                [ ! -z "$IPFS_HASH" ] && break 
+                sleep 10
+                CHECK_ELAPSED=$(bu timerSpan "pinned-timeout")
+              done
+              echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
+          - name: Pin IPFS files
+            if: github.event_name == 'push' && 
+                ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) &&
+                ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'refactor') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
+            shell: bash
+            run: |
+              set -x
+              bu timerStart "pin-timeout"
+              IPFS_HASH=""
+              IPFS_UPLOAD_NAME=kira-$RELEASE_VER
+              CHECK_ELAPSED=0
+              while [[ $CHECK_ELAPSED -lt 300 ]] ; do
+                bu echoInfo "INFO: Attempting fils pin to IPFS, timeout in ${CHECK_ELAPSED}/900s..."
+                rm ./ipfs-pin.log && touch ./ipfs-pin.log
+
+                ipfs-api pin ./bin/$IPFS_UPLOAD_NAME $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true --force=true | tee -a ./ipfs-pin.log || bu echoErr "ERROR: Failed to pin web app"
+                IPFS_HASH=$(cat ./ipfs-pin.log | tail -n 1 | bu jsonParse ".hash" || echo "")
+                cat ./ipfs-pin.log || bu echoErr "ERROR: Failed to print pin error logs"
+                [ ! -z "$IPFS_HASH" ] && break
+
+                rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                cat ./ipfs-pinned.log || bu echoErr "ERROR: Failed to print pin check error logs"
+                [ ! -z "$IPFS_HASH" ] && break
+
+                sleep 10
+                CHECK_ELAPSED=$(bu timerSpan "pin-timeout")
+              done
+              echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
+          - name: Publish RELEASE info
+            shell: bash
+            run: |
+              set -x
+              IPFS_HASH=$(cat ./bin/ipfs-cid.txt)
+              [ -z "$IPFS_HASH" ] && bu echoErr "ERROR: Failed to pin or discover pinned web app!" && exit 1 || bu echoInfo "INFO: Success, files were found or pinned!"
+              IPFS_HASH_SHORT=${IPFS_HASH::10}...${IPFS_HASH: -3}
+              echo "INFO: Updating release file"
+              touch ./RELEASE.md
+              cp -fv ./RELEASE.md ./bin/RELEASE.md
+              cp -fv ./src.tar.gz ./bin/source-code.tar.gz
+              chmod -Rv 777 ./bin
+              echo -e "\n\r\n\rPublished web app:" >> ./bin/RELEASE.md
+              echo -e " * Private Gateway: [ipfs.kira.network/ipfs/${IPFS_HASH_SHORT}](https://ipfs.kira.network/ipfs/$IPFS_HASH)" >> ./bin/RELEASE.md
+              echo -e " * Public Gateway: [ipfs.io/ipfs/${IPFS_HASH_SHORT}](https://ipfs.io/ipfs/$IPFS_HASH)" >> ./bin/RELEASE.md
+              echo -e "\n\r\n\r\`\`\`" >> ./bin/RELEASE.md
+              echo -e "      Release Versions: $RELEASE_VER" >> ./bin/RELEASE.md
+              echo -e "     Release Date Time: $(date --rfc-2822)" >> ./bin/RELEASE.md
+              echo -e "        IPFS Directory:  CIDv1:$IPFS_HASH" >> ./bin/RELEASE.md
+              echo "               init.sh: sha256:$(sha256sum ./workstation/init.sh | awk '{ print $1 }')" >> ./bin/RELEASE.md
+              echo "              kira.zip: sha256:$(sha256sum ./bin/kira.zip | awk '{ print $1 }')" >> ./bin/RELEASE.md
+              echo "    source-code.tar.gz: sha256:$(sha256sum ./bin/source-code.tar.gz | awk '{ print $1 }')" >> ./bin/RELEASE.md
+              echo -e "\`\`\`"   >> ./bin/RELEASE.md
+              tar -czvf bin.tar.gz -C ./bin .
+          - name: Uploading artifacts
+            uses: actions/upload-artifact@v3.0.0
+            with:
+              name: kira-bin
+              path: ./bin.tar.gz
+          - name: Cleanup all resources
+            if: always()
+            shell: bash
+            run: |
+              rm -rfv ./*
+              echo "(current dir): $PWD" && ls -l ./
+  release:
+    name: Create Release
+    runs-on: ubuntu-22.04
+    needs: [build]
+    permissions:
+      contents: write
+      packages: write
+      id-token: write
+      pull-requests: write
+    steps:
+          # Install the cosign tool
+          # ref.: https://github.com/sigstore/cosign-installer, v3.0.1
+          - name: Install cosign
+            uses: sigstore/cosign-installer@c3667d99424e7e6047999fb6246c0da843953c65
+            with:
+              cosign-release: 'v2.0.0'
+          - name: Download artifacts
+            uses: actions/download-artifact@v3.0.0
+            with:
+              name: kira-bin
+          - name: Inspecting & organizing artifacts
+            run: |
+              echo "(current dir): $PWD" && ls -l ./
+              tar xvf ./bin.tar.gz
+              chmod -Rv 777 ./
+              IPFS_HASH=$(cat ./ipfs-cid.txt)
+              echo "IPFS_HASH=$IPFS_HASH" >> $GITHUB_ENV
+              echo "IPFS_HASH_SHORT=${IPFS_HASH::10}...${IPFS_HASH: -3}" >> $GITHUB_ENV
+              RELEASE_VER=$(cat ./RELEASE.md | tac | grep -Fn -m 1 'Release Versions: ' | rev | cut -d ":" -f1 | rev | xargs | tr -dc '[:alnum:]\-\.' || echo '')
+              echo "RELEASE_VER=$RELEASE_VER" >> $GITHUB_ENV
+              RELEASE_BRANCH="release/$RELEASE_VER" && echo "RELEASE_BRANCH=$RELEASE_BRANCH" >> $GITHUB_ENV
+              REPOSITORY_NAME="${{ github.event.repository.name }}"
+              echo "REPOSITORY_NAME=$REPOSITORY_NAME" >> $GITHUB_ENV
+              git ls-remote https://github.com/kiracore/$REPOSITORY_NAME | egrep -q "refs/tags/${RELEASE_VER}$" && echo "RELEASE_EXISTS=true" >> $GITHUB_ENV || echo "RELEASE_EXISTS=false" >> $GITHUB_ENV
+              [[ "$RELEASE_VER" == *"-rc"* ]] && echo "PRE_RELEASE=true" >> $GITHUB_ENV || echo "PRE_RELEASE=false" >> $GITHUB_ENV
+          # Branch name is also a version of the release
+          # ref: https://stackoverflow.com/questions/58033366/how-to-get-the-current-branch-within-github-actions
+          - name: Extract branch name on push
+            if: github.event_name == 'push'
+            shell: bash
+            run: |
+              echo "SOURCE_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+              echo "DESTINATION_BRANCH=$(echo ${GITHUB_REF#refs/heads/})" >> $GITHUB_ENV
+          - name: Extract branch name on pull request
+            if: github.event_name == 'pull_request'
+            env:
+              REF_BRANCH: ${{ github.event.pull_request.head.ref }}
+              BASE_REF_BRANCH: ${{ github.base_ref }}
+            shell: bash
+            run: |
+              echo "SOURCE_BRANCH=$(echo ${{ env.REF_BRANCH }})" >> $GITHUB_ENV
+              echo "DESTINATION_BRANCH=$(echo ${{ env.BASE_REF_BRANCH }})" >> $GITHUB_ENV
+          - name: Print debug data before publishing
+            run: |
+              echo " Source branch: ${{ env.SOURCE_BRANCH }}"
+              echo "  Dest. branch: ${{ env.DESTINATION_BRANCH }}"
+              echo "Release branch: ${{ env.RELEASE_BRANCH }}"
+              echo "     Repo Name: ${{ env.REPOSITORY_NAME }}"
+              echo "    Event name: ${{ github.event_name }}"
+              echo "  Release ver.: ${{ env.RELEASE_VER }}"
+              echo "Release exists: ${{ env.RELEASE_EXISTS }}"
+              echo " IPFS CID hash: ${{ env.IPFS_HASH }}"
+              echo "IPFS CID short: ${{ env.IPFS_HASH_SHORT }}"
+              echo "   Pre-release: ${{ env.PRE_RELEASE }}"
+          - name: Reject on error
+            # ref.: https://github.com/andrewslotin/rummelsnuff, v1.1.0
+            uses: andrewslotin/rummelsnuff@a0c9c1929f44eefff922aced1ee4dd64eddf12d6
+            if: ${{ failure() }}
+            with:
+              spam_label: "Build Errors"
+              close_spam_prs: "yes"
+              access_token: ${{ secrets.GITHUB_TOKEN }}
+          # ref: https://github.com/softprops/action-gh-release, v0.1.14
+          # Release on merge only (push action) - this should run only once
+          - name: Signing release files
+            if: |
+              github.event_name == 'push' &&
+              ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) &&
+              ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
+            shell: bash
+            env:
+              KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
+              COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
+            run: |
+              echo "$KEY" > ../cosign.key
+              for FILE in *; do FILE_NAME=$(basename $FILE); [ -f ./$FILE_NAME ] && cosign sign-blob --key=../cosign.key --output-signature=./${FILE_NAME}.sig ./$FILE_NAME --yes; done
+              shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
+              rm -fv ../cosign.key
+          # ref: https://github.com/softprops/action-gh-release, v0.1.14
+          # Release on merge only (push action) - this should run only once, do NOT release already existing releases
+          - name: Publish release
+            if: |
+              github.event_name == 'push' &&
+              ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) &&
+              ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
+            uses: softprops/action-gh-release@1e07f4398721186383de40550babbdf2b84acfc5
+            with:
+              body_path: RELEASE.md
+              tag_name: ${{ env.RELEASE_VER }}
+              name: ${{ env.RELEASE_VER }}
+              prerelease: ${{ env.PRE_RELEASE }}
+              draft: false
+              fail_on_unmatched_files: true
+              files: |
+                ./init.sh
+                ./init.sh.sig
+                ./kira.zip
+                ./kira.zip.sig
+                ./ipfs-cid.txt
+                ./ipfs-cid.txt.sig
+                ./source-code.tar.gz
+                ./source-code.tar.gz.sig
+          # ref.: https://github.com/hmarr/auto-approve-action, v2.1.0
+          - name: Approve pull request on success
+            uses: hmarr/auto-approve-action@5d04a5ca6da9aeb8ca9f31a5239b96fc3e003029
+            if: github.event_name == 'pull_request' 
+            with:
+              github-token: "${{ secrets.GITHUB_TOKEN }}"
+          - name: Cleanup all resources
+            if: always()
+            shell: bash
+            run: |
+              shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
+              rm -fv ../cosign.key
+              rm -rfv ./*
+              echo "(current dir): $PWD" && ls -l ./
+          # Work around https://github.com/actions/checkout/issues/760
+          - name: Add safe.directory
+            run: |
+              git config --global --add safe.directory /usr/lib/flutter
+              git config --global --add safe.directory /github/workspace
+              git config --global --add safe.directory $PWD
+          # ref.: https://github.com/actions/checkout, v3.5.0
+          - name: Checkout repository
+            uses: actions/checkout@8f4b7f84864484a7bf31766abe9204da3cbe65b3
+          - name: Create PR from a version branch to latest
+            # ref. repo-sync/pull-request is broken, using cea2aj/pull-request instead
+            uses: cea2aj/pull-request@84eb0c3478f13651e5649367941b867ca02d7926
+            if: |
+              github.event_name == 'push' &&
+              ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
+            with:
+              github_token: ${{ secrets.REPO_ACCESS }}
+              source_branch: ${{ env.SOURCE_BRANCH }}
+              destination_branch: 'latest'
+              pr_title: "${{ env.SOURCE_BRANCH }} -> latest" 
+              pr_label: "kira-automation,automerge"
+              pr_allow_empty: true
+          #- name: Auto-merge version branch to latest branch
+          #  uses: pascalgn/automerge-action@04dfc9eae2586d19b7362d4f6413c48135d9c25a
+          #  if: github.event_name == 'pull_request' && env.DESTINATION_BRANCH == 'latest' &&
+          #    ( startsWith(env.SOURCE_BRANCH, 'release/v') && contains(env.SOURCE_BRANCH, '.') )
+          #  env:
+          #    MERGE_LABELS: "automerge"
+          #    GITHUB_TOKEN: "${{ secrets.REPO_ACCESS }}"
+          #    LOG: "TRACE"
+          - name: Comment PR's with IPFS
+            # ref.: https://github.com/actions-cool/maintain-one-comment, v3.0.0
+            uses: actions-cool/maintain-one-comment@de04bd2a3750d86b324829a3ff34d47e48e16f4b
+          #  if: github.event_name == 'pull_request' &&
+          #    ( startsWith(env.DESTINATION_BRANCH, 'release/v') && contains(env.DESTINATION_BRANCH, '.') ) &&
+          #    ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
+            with:
+              token: ${{ secrets.REPO_ACCESS }}
+              update-mode: replace
+              body: |
+                KM files were deployed to IPFS: ```${{env.IPFS_HASH}}```
+                * Private Gateway: [ipfs.kira.network/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.kira.network/ipfs/${{env.IPFS_HASH}})
+                * Public Gateway: [ipfs.io/ipfs/${{env.IPFS_HASH_SHORT}}](https://ipfs.io/ipfs/${{env.IPFS_HASH}})
+
+                Quick test setup:
+                ```bash
+                HASH="${{env.IPFS_HASH}}" && \
+                 cd /tmp && wget https://ipfs.kira.network/ipfs/$HASH/init.sh -O ./i.sh && \
+                 chmod +x -v ./i.sh && ./i.sh --infra-src="$HASH" --init-mode="interactive"
+                ````
+          - name: Add IPFS published label
+            # ref.: https://github.com/andymckay/labeler, v1.0.4
+            uses: andymckay/labeler@e6c4322d0397f3240f0e7e30a33b5c5df2d39e90
+            if: github.event_name == 'pull_request' &&
+              ( startsWith(env.DESTINATION_BRANCH, 'release/v') && contains(env.DESTINATION_BRANCH, '.') ) &&
+              ( startsWith(env.SOURCE_BRANCH, 'feature') || startsWith(env.SOURCE_BRANCH, 'bugfix') )
+            with:
+              token: ${{ secrets.REPO_ACCESS }}
+              add-labels: "ipfs-published"
