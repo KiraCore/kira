@@ -97,12 +97,12 @@ jobs:
               cp -fv ./bin/kira.zip ./bin/$IPFS_UPLOAD_NAME
               cp -fv ./bin/init.sh ./bin/$IPFS_UPLOAD_NAME
               echo "$KEY" > ../cosign.key
-              SUCCESS=true
+              SUCCESS="true"
               cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/init.sh.sig ./bin/$IPFS_UPLOAD_NAME/init.sh --yes || SUCCESS="false"
               cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/kira.zip.sig ./bin/$IPFS_UPLOAD_NAME/kira.zip --yes || SUCCESS="false"
               shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
               rm -fv ../cosign.key
-              [ "$SUCCESS" != "true" ] && bu echoErr "ERROR: Signing of IPFS releases failed" && exit 1
+              if [ "$SUCCESS" == "false" ] ; then  bu echoErr "ERROR: Signing of IPFS releases failed" ; exit 1 ; else bu echoInfo "Success, IPFS release signatures created :)" ; fi
           - name: Find or await IPFS files to be pinned
             if: github.event_name == 'pull_request' || 
                 ( env.RELEASE_EXISTS == true || env.RELEASE_EXISTS == 'true' ) || 
