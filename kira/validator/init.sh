@@ -76,7 +76,7 @@ if [ "$(globGet NEW_NETWORK)" == "true" ]; then
     jsonEdit "app_state.customgov.network_properties.mischance_rank_decrease_amount" "\"1\"" $LOCAL_GENESIS $LOCAL_GENESIS
 
     echoInfo "INFO: New network was created, formatting & saving genesis to local directory..."
-    jsonParse "" "$LOCAL_GENESIS" "$LOCAL_GENESIS" --indent=false --sort_keys=true
+    jsonParse "" "$LOCAL_GENESIS" "$LOCAL_GENESIS" --indent=false --sort_keys=false
     cp -afv $LOCAL_GENESIS $COMMON_DIR/genesis.json
 else
     echoInfo "INFO: Network will be stared from a predefined genesis file..."

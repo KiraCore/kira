@@ -266,7 +266,7 @@ while : ; do
             done
 
             echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
-            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || rm -fv $GENESIS_FILE
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=false || rm -fv $GENESIS_FILE
 
             if (! $(isFileEmpty $GENESIS_FILE)) ; then 
                 echoInfo "INFO: Please wait, calculating new checksum..."
@@ -283,7 +283,7 @@ while : ; do
             ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS_FILE
 
             echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
-            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || globDel TRUSTED_NODE_GENESIS_FILE
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=false || globDel TRUSTED_NODE_GENESIS_FILE
             echoInfo "INFO: Please wait, calculating new checksum..."
             GENSUM=$(sha256 $GENESIS_FILE)
         fi

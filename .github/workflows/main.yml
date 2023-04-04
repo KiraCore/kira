@@ -9,14 +9,14 @@ on:
 jobs:
   build:
     name: Repo Build
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     permissions:
       contents: read
       packages: write
       id-token: write
       pull-requests: write
     container:
-      image: ghcr.io/kiracore/docker/base-image:v0.13.4
+      image: ghcr.io/kiracore/docker/base-image:v0.13.7
     steps:
           # Work around https://github.com/actions/checkout/issues/760
           - name: Add safe.directory
@@ -97,9 +97,12 @@ jobs:
               cp -fv ./bin/kira.zip ./bin/$IPFS_UPLOAD_NAME
               cp -fv ./bin/init.sh ./bin/$IPFS_UPLOAD_NAME
               echo "$KEY" > ../cosign.key
-              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/init.sh.sig ./bin/$IPFS_UPLOAD_NAME/init.sh || ( rm -fv ../cosign.key && exit 1 )
-              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/kira.zip.sig ./bin/$IPFS_UPLOAD_NAME/kira.zip || ( rm -fv ../cosign.key && exit 1 )
-              rm -fv ../cosign.key 
+              SUCCESS=true
+              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/init.sh.sig ./bin/$IPFS_UPLOAD_NAME/init.sh --yes || SUCCESS="false"
+              cosign sign-blob --key=../cosign.key --output-signature=./bin/$IPFS_UPLOAD_NAME/kira.zip.sig ./bin/$IPFS_UPLOAD_NAME/kira.zip --yes || SUCCESS="false"
+              shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
+              rm -fv ../cosign.key
+              [ "$SUCCESS" != "true" ] && bu echoErr "ERROR: Signing of IPFS releases failed" && exit 1
           - name: Find or await IPFS files to be pinned
             if: github.event_name == 'pull_request' || 
                 ( env.RELEASE_EXISTS == true || env.RELEASE_EXISTS == 'true' ) || 
@@ -167,7 +170,7 @@ jobs:
             run: |
               set -x
               IPFS_HASH=$(cat ./bin/ipfs-cid.txt)
-              [ -z "$IPFS_HASH" ] && echo "ERROR: Failed to pin or discover pinned web app!" && exit 1 || echo "INFO: Success, files were found or pinned!"
+              [ -z "$IPFS_HASH" ] && bu echoErr "ERROR: Failed to pin or discover pinned web app!" && exit 1 || bu echoInfo "INFO: Success, files were found or pinned!"
               IPFS_HASH_SHORT=${IPFS_HASH::10}...${IPFS_HASH: -3}
               echo "INFO: Updating release file"
               touch ./RELEASE.md
@@ -199,7 +202,7 @@ jobs:
               echo "(current dir): $PWD" && ls -l ./
   release:
     name: Create Release
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-22.04
     needs: [build]
     permissions:
       contents: write
@@ -282,7 +285,8 @@ jobs:
               COSIGN_PASSWORD: ${{ secrets.COSIGN_PASSWORD }}
             run: |
               echo "$KEY" > ../cosign.key
-              for FILE in *; do FILE_NAME=$(basename $FILE); [ -f ./$FILE_NAME ] && cosign sign-blob --key=../cosign.key --output-signature=./${FILE_NAME}.sig ./$FILE_NAME; done
+              for FILE in *; do FILE_NAME=$(basename $FILE); [ -f ./$FILE_NAME ] && cosign sign-blob --key=../cosign.key --output-signature=./${FILE_NAME}.sig ./$FILE_NAME --yes; done
+              shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
               rm -fv ../cosign.key
           # ref: https://github.com/softprops/action-gh-release, v0.1.14
           # Release on merge only (push action) - this should run only once, do NOT release already existing releases
