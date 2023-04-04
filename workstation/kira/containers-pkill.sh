@@ -1,14 +1,13 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e && set -x
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/kira/containers-pkill.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 # e.g. $KIRA_MANAGER/kira/containers-pkill.sh "true" "pause"
-
-SCRIPT_START_TIME="$(date -u +%s)"
 
 AWAIT=$1
 TASK=$2
 UNHALT=$3
+
+timerStart
 
 [ -z "$AWAIT" ] && AWAIT="false"
 [ -z "$UNHALT" ] && UNHALT="true"
@@ -34,7 +33,7 @@ set -x
 if [ ! -z "$CONTAINERS" ] ; then
     for NAME in $CONTAINERS; do
         echoInfo "INFO: Attempting to pkill container $NAME"
-        $KIRA_MANAGER/kira/container-pkill.sh "$NAME" "$AWAIT" "$TASK" "$UNHALT"
+        $KIRA_MANAGER/kira/container-pkill.sh --name="$NAME" --await="$AWAIT" --task="$TASK" --unhalt="$UNHALT"
     done
 else
     echoWarn "WARNING: NO containers found"
@@ -43,6 +42,6 @@ fi
 set +x
 echoWarn "------------------------------------------------"
 echoWarn "| FINISHED: KIRA MULTI-CONTAINER TERMINATOR"
-echoWarn "|  ELAPSED: $(($(date -u +%s) - $SCRIPT_START_TIME)) seconds"
+echoWarn "|  ELAPSED: $(timerSpan) seconds"
 echoWarn "------------------------------------------------"
 set -x

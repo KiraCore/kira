@@ -1,22 +1,20 @@
 
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup/docker.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-$KIRA_SCRIPTS/docker-restart.sh
+$KIRA_COMMON/docker-restart.sh
 sleep 5
 VERSION=$(docker -v || echo "error")
-ACTIVE=$(systemctl is-active docker || echo "inactive")
 
-ESSENTIALS_HASH=$(echo "$KIRA_HOME-" | md5)
+ESSENTIALS_HASH=$(echo "$(globGet KIRA_HOME)-" | md5)
 SETUP_CHECK="$KIRA_SETUP/docker-1-$ESSENTIALS_HASH"
 SETUP_CHECK_REBOOT="$SETUP_CHECK-reboot"
-if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" != "active" ] ; then
+if [ ! -f "$SETUP_CHECK" ] || [ "$VERSION" == "error" ] || (! $(isServiceActive "docker")) ; then
     echoInfo "INFO: Attempting to remove old docker..."
     docker system prune -f || echoWarn "WARNING: failed to prune docker system"
-    $KIRA_SCRIPTS/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
+    $KIRA_COMMON/docker-stop.sh || echoWarn "WARNING: Failed to stop docker servce"
 
     echoInfo "INFO: Removing hanging docker-network interfaces..."
     ifaces_iterate=$(ifconfig | cut -d ' ' -f1 | tr ':' '\n' | awk NF)
@@ -42,8 +40,9 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     apt autoremove -y containerd || echoWarn "WARNING: Failed containerd autoremove"
 
     groupdel docker || echoWarn "WARNING: Failed to delete docker group"
-    rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock"
-    rm -rfv "/var/lib/containerd"
+    umount /var/lib/docker/aufs || echoWarn "WARNING: Failed to unmount /var/lib/docker/aufs"
+    umount /var/lib/docker || echoWarn "WARNING: Failed to unmount /var/lib/docker"
+    rm -rfv "/etc/docker" "/var/lib/docker" "/var/run/docker.sock" "/var/lib/containerd"
 
     if ! timeout 2 ping -c1 "download.docker.com" &>/dev/null ; then
         firewall-cmd --permanent --delete-zone=docker || echoWarn "WARNING: Failed to delete docker zone"
@@ -72,6 +71,12 @@ if [ ! -f "$SETUP_CHECK" ] || [ "${VERSION,,}" == "error" ] || [ "${ACTIVE,,}" !
     DOCKER_SERVICE="/lib/systemd/system/docker.service"
     sed -i "s/fd:/unix:/" $DOCKER_SERVICE  || echoWarn "WARNING: Failed to substitute fd with unix in $DOCKER_SERVICE"
 
+    logOutIndex=$(getLastLineByPrefix "StandardOutput=" "$DOCKER_SERVICE")
+    restartIndex=$(getLastLineByPrefix "Restart=" "$DOCKER_SERVICE")
+    if [[ $logOutIndex -lt 0 ]] && [[ $restartIndex -ge 1 ]]  ; then
+        setLineByNumber $restartIndex "Restart=always\nStandardOutput=append:$KIRA_LOGS/docker.log\nStandardError=append:$KIRA_LOGS/docker.log" $DOCKER_SERVICE
+    fi
+
     DOCKER_DAEMON_JSON="/etc/docker/daemon.json"
     rm -f -v $DOCKER_DAEMON_JSON
     cat >$DOCKER_DAEMON_JSON <<EOL
@@ -83,7 +88,7 @@ EOL
 
     systemctl enable --now docker
     sleep 5
-    $KIRA_SCRIPTS/docker-restart.sh
+    $KIRA_COMMON/docker-restart.sh
     sleep 5
     journalctl -u docker -n 100 --no-pager
     docker -v
@@ -95,4 +100,3 @@ fi
 
 echoInfo "INFO: Cleaning up dangling volumes..."
 docker volume ls -qf dangling=true | xargs -r docker volume rm || echoWarn "WARNING: Failed to remove dangling vomues!"
-

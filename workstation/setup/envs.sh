@@ -1,126 +1,119 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
-# exec >> "$KIRA_DUMP/setup.log" 2>&1 && tail "$KIRA_DUMP/setup.log"
+# quick edit: FILE="$KIRA_MANAGER/setup/envs.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-BASHRC=~/.bashrc
-ETC_PROFILE="/etc/profile"
-
-CARGO_ENV="/home/$KIRA_USER/.cargo/env"
-
-KIRA_STATE=/kira/state
-KIRA_REGISTRY_SUBNET="10.1.0.0/16"
-KIRA_VALIDATOR_SUBNET="10.2.0.0/16"
-KIRA_SENTRY_SUBNET="10.3.0.0/16"
-KIRA_SERVICE_SUBNET="10.4.0.0/16"
-
-KIRA_REGISTRY_NETWORK="regnet"
-KIRA_VALIDATOR_NETWORK="kiranet"
-KIRA_SENTRY_NETWORK="sentrynet"
-KIRA_INTERX_NETWORK="servicenet"
-KIRA_FRONTEND_NETWORK="servicenet"
-
-KIRA_REGISTRY_DNS="registry.${KIRA_REGISTRY_NETWORK}.local"
-KIRA_VALIDATOR_DNS="validator.${KIRA_VALIDATOR_NETWORK}.local"
-KIRA_SENTRY_DNS="sentry.${KIRA_SENTRY_NETWORK}.local"
-KIRA_PRIV_SENTRY_DNS="priv-sentry.${KIRA_SENTRY_NETWORK}.local"
-KIRA_SEED_DNS="seed.${KIRA_SENTRY_NETWORK}.local"
-KIRA_SNAPSHOT_DNS="snapshot.${KIRA_SENTRY_NETWORK}.local"
-KIRA_INTERX_DNS="interx.${KIRA_INTERX_NETWORK}.local"
-KIRA_FRONTEND_DNS="frontend.${KIRA_FRONTEND_NETWORK}.local"
-
-KIRA_REGISTRY="$KIRA_REGISTRY_DNS:$KIRA_REGISTRY_PORT"
-
-KIRA_IMG="$KIRA_INFRA/common/img"
-KIRA_DOCKER="$KIRA_INFRA/docker"
-KIRAMGR_SCRIPTS="$KIRA_MANAGER/scripts"
-
-HOSTS_PATH="/etc/hosts"
-NGINX_SERVICED_PATH="/etc/systemd/system/nginx.service.d"
-NGINX_CONFIG="/etc/nginx/nginx.conf"
-
-RUSTFLAGS="-Ctarget-feature=+aes,+ssse3"
-DOTNET_ROOT="/usr/bin/dotnet"
-SOURCES_LIST="/etc/apt/sources.list.d"
-
-DARTBIN="/usr/lib/dart/bin"
-FLUTTERROOT="/usr/lib/flutter"
-FLUTTERBIN="$FLUTTERROOT/bin"
-
-BREWBIN="/home/$KIRA_USER/.linuxbrew/bin"
-MANPATH="/home/$KIRA_USER/.linuxbrew/share/man:\$MANPATH"
-INFOPATH="/home/$KIRA_USER/.linuxbrew/share/info:\$INFOPATH"
-
-mkdir -p "$KIRA_STATE" "/home/$KIRA_USER/.cargo" "/home/$KIRA_USER/Desktop" "$SOURCES_LIST"
-
-ESSENTIALS_HASH=$(echo "$KIRA_USER-$KIRA_INFRA-$KIRA_MANAGER-$FLUTTERROOT-" | md5)
-SETUP_CHECK="$KIRA_SETUP/kira-env-2-$ESSENTIALS_HASH"
-if [ ! -f "$SETUP_CHECK" ]; then
-    echoInfo "INFO: Setting up kira environment variables"
-    touch $CARGO_ENV
-
-    # remove & disable system crash notifications
-    rm -f /var/crash/*
-    touch /etc/default/apport
-    CDHelper text lineswap --insert="enabled=0" --prefix="enabled=" --path=/etc/default/apport --append-if-found-not=True
-
-    CDHelper text lineswap --insert="KIRA_REGISTRY_DNS=$KIRA_REGISTRY_DNS" --prefix="KIRA_REGISTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_DNS=$KIRA_VALIDATOR_DNS" --prefix="KIRA_VALIDATOR_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_DNS=$KIRA_SENTRY_DNS" --prefix="KIRA_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_DNS=$KIRA_PRIV_SENTRY_DNS" --prefix="KIRA_PRIV_SENTRY_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SEED_DNS=$KIRA_SEED_DNS" --prefix="KIRA_SEED_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SNAPSHOT_DNS=$KIRA_SNAPSHOT_DNS" --prefix="KIRA_SNAPSHOT_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_INTERX_DNS=$KIRA_INTERX_DNS" --prefix="KIRA_INTERX_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_DNS=$KIRA_FRONTEND_DNS" --prefix="KIRA_FRONTEND_DNS=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="KIRA_REGISTRY_SUBNET=$KIRA_REGISTRY_SUBNET" --prefix="KIRA_REGISTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_SUBNET=$KIRA_VALIDATOR_SUBNET" --prefix="KIRA_VALIDATOR_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_SUBNET=$KIRA_SENTRY_SUBNET" --prefix="KIRA_SENTRY_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SERVICE_SUBNET=$KIRA_SERVICE_SUBNET" --prefix="KIRA_SERVICE_SUBNET=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="HOSTS_PATH=$HOSTS_PATH" --prefix="HOSTS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRAMGR_SCRIPTS=$KIRAMGR_SCRIPTS" --prefix="KIRAMGR_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="SOURCES_LIST=$SOURCES_LIST" --prefix="SOURCES_LIST=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_IMG=$KIRA_IMG" --prefix="KIRA_IMG=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_STATE=$KIRA_STATE" --prefix="KIRA_STATE=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="KIRA_REGISTRY_NETWORK=$KIRA_REGISTRY_NETWORK" --prefix="KIRA_REGISTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_VALIDATOR_NETWORK=$KIRA_VALIDATOR_NETWORK" --prefix="KIRA_VALIDATOR_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_SENTRY_NETWORK=$KIRA_SENTRY_NETWORK" --prefix="KIRA_SENTRY_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_INTERX_NETWORK=$KIRA_INTERX_NETWORK" --prefix="KIRA_INTERX_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_FRONTEND_NETWORK=$KIRA_FRONTEND_NETWORK" --prefix="KIRA_FRONTEND_NETWORK=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="KIRA_REGISTRY=$KIRA_REGISTRY" --prefix="KIRA_REGISTRY=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="KIRA_DOCKER=$KIRA_DOCKER" --prefix="KIRA_DOCKER=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NGINX_CONFIG=$NGINX_CONFIG" --prefix="NGINX_CONFIG=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="NGINX_SERVICED_PATH=$NGINX_SERVICED_PATH" --prefix="NGINX_SERVICED_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="RUSTFLAGS=$RUSTFLAGS" --prefix="RUSTFLAGS=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="DOTNET_ROOT=$DOTNET_ROOT" --prefix="DOTNET_ROOT=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="PATH=$PATH" --prefix="PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="DARTBIN=$DARTBIN" --prefix="DARTBIN=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="FLUTTERROOT=$FLUTTERROOT" --prefix="FLUTTERROOT=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="FLUTTERBIN=$FLUTTERBIN" --prefix="FLUTTERBIN=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="BREWBIN=$BREWBIN" --prefix="BREWBIN=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="MANPATH=$MANPATH" --prefix="MANPATH=" --path=$ETC_PROFILE --append-if-found-not=True
-    CDHelper text lineswap --insert="INFOPATH=$INFOPATH" --prefix="INFOPATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    CDHelper text lineswap --insert="INTERX_REFERENCE_DIR=$DOCKER_COMMON/interx/cache/reference" --prefix="INTERX_REFERENCE_DIR=" --path=$ETC_PROFILE --append-if-found-not=True
-
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$DARTBIN" --prefix="PATH=" --and-contains-not=":$DARTBIN" --path=$ETC_PROFILE
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$FLUTTERBIN" --prefix="PATH=" --and-contains-not=":$FLUTTERBIN" --path=$ETC_PROFILE
-    set +e && source "/etc/profile" &>/dev/null && set -e
-    CDHelper text lineswap --insert="PATH=$PATH:$BREWBIN" --prefix="PATH=" --and-contains-not=":$BREWBIN" --path=$ETC_PROFILE
-    set +e && source "/etc/profile" &>/dev/null && set -e
-
-    CDHelper text lineswap --insert="source $ETC_PROFILE" --prefix="source $ETC_PROFILE" --path=$BASHRC --append-if-found-not=True
-    CDHelper text lineswap --insert="source $CARGO_ENV" --prefix="source $CARGO_ENV" --path=$BASHRC --append-if-found-not=True
-    chmod 555 $BASHRC
-
-    touch $SETUP_CHECK
-else
-    echoInfo "INFO: Kira environment variables were already set"
+INFRA_MODE="$(globGet INFRA_MODE)"
+if [ "$INFRA_MODE" != "validator" ] && [ "$INFRA_MODE" != "sentry" ] && [ "$INFRA_MODE" != "seed" ] ; then
+    INFRA_MODE="validator"  && globSet INFRA_MODE "$INFRA_MODE"
 fi
+globSet INFRA_MODE "$INFRA_MODE" $GLOBAL_COMMON_RO
+
+(! $(isPort "$(globGet DEFAULT_SSH_PORT)")) && globSet DEFAULT_SSH_PORT "22"
+
+DEFAULT_INTERX_PORT="11000"             && globSet DEFAULT_INTERX_PORT "$DEFAULT_INTERX_PORT"
+DEFAULT_P2P_PORT="26656"                && globSet DEFAULT_P2P_PORT "$DEFAULT_P2P_PORT"
+DEFAULT_RPC_PORT="26657"                && globSet DEFAULT_RPC_PORT "$DEFAULT_RPC_PORT"
+DEFAULT_PROMETHEUS_PORT="26660"         && globSet DEFAULT_PROMETHEUS_PORT "$DEFAULT_PROMETHEUS_PORT"
+DEFAULT_GRPC_PORT="9090"                && globSet DEFAULT_GRPC_PORT "$DEFAULT_GRPC_PORT"
+DEFAULT_DOCKER_SUBNET="10.1.0.0/16"     && globSet DEFAULT_DOCKER_SUBNET "$DEFAULT_DOCKER_SUBNET"
+DEFAULT_DOCKER_NETWORK="kiranet"        && globSet DEFAULT_DOCKER_NETWORK "$DEFAULT_DOCKER_NETWORK"
+
+if ($(isWSL)) ; then 
+    CUSTOM_PORTS_EXPOSE="$((DEFAULT_INTERX_PORT + 100))-$((DEFAULT_INTERX_PORT + 108))"
+    CUSTOM_PORTS_EXPOSE="$CUSTOM_PORTS_EXPOSE,$((DEFAULT_P2P_PORT + 100))-$((DEFAULT_P2P_PORT + 108))"
+    CUSTOM_PORTS_EXPOSE="$CUSTOM_PORTS_EXPOSE,$((DEFAULT_RPC_PORT + 100))-$((DEFAULT_RPC_PORT + 108))"
+    CUSTOM_PORTS_EXPOSE="$CUSTOM_PORTS_EXPOSE,$((DEFAULT_PROMETHEUS_PORT + 100))-$((DEFAULT_PROMETHEUS_PORT + 108))"
+    CUSTOM_PORTS_EXPOSE="$CUSTOM_PORTS_EXPOSE,$((DEFAULT_GRPC_PORT + 100))-$((DEFAULT_GRPC_PORT + 108))"
+    CUSTOM_PORTS_EXPOSE="80,443,$CUSTOM_PORTS_EXPOSE"
+    globSet CUSTOM_PORTS_EXPOSE "$CUSTOM_PORTS_EXPOSE"
+fi
+
+KIRA_SEED_P2P_PORT="16656"              && globSet KIRA_SEED_P2P_PORT "$KIRA_SEED_P2P_PORT"
+KIRA_SEED_RPC_PORT="16657"              && globSet KIRA_SEED_RPC_PORT "$KIRA_SEED_RPC_PORT"
+KIRA_SEED_GRPC_PORT="19090"             && globSet KIRA_SEED_GRPC_PORT "$KIRA_SEED_GRPC_PORT"
+KIRA_SEED_PROMETHEUS_PORT="16660"       && globSet KIRA_SEED_PROMETHEUS_PORT "$KIRA_SEED_PROMETHEUS_PORT"
+
+KIRA_SENTRY_P2P_PORT="26656"            && globSet KIRA_SENTRY_P2P_PORT "$KIRA_SENTRY_P2P_PORT"
+KIRA_SENTRY_RPC_PORT="26657"            && globSet KIRA_SENTRY_RPC_PORT "$KIRA_SENTRY_RPC_PORT"
+KIRA_SENTRY_GRPC_PORT="29090"           && globSet KIRA_SENTRY_GRPC_PORT "$KIRA_SENTRY_GRPC_PORT"
+KIRA_SENTRY_PROMETHEUS_PORT="26660"     && globSet KIRA_SENTRY_PROMETHEUS_PORT "$KIRA_SENTRY_PROMETHEUS_PORT"
+
+KIRA_VALIDATOR_P2P_PORT="36656"         && globSet KIRA_VALIDATOR_P2P_PORT "$KIRA_VALIDATOR_P2P_PORT"
+KIRA_VALIDATOR_RPC_PORT="36657"         && globSet KIRA_VALIDATOR_RPC_PORT "$KIRA_VALIDATOR_RPC_PORT"
+KIRA_VALIDATOR_GRPC_PORT="39090"        && globSet KIRA_VALIDATOR_GRPC_PORT "$KIRA_VALIDATOR_GRPC_PORT"
+KIRA_VALIDATOR_PROMETHEUS_PORT="36660"  && globSet KIRA_VALIDATOR_PROMETHEUS_PORT "$KIRA_VALIDATOR_PROMETHEUS_PORT"
+
+# reset ports if they are set to incorrect node type (e.g. validator can't use seed node P2P port)
+CUSTOM_P2P_PORT=$(globGet CUSTOM_P2P_PORT)
+CUSTOM_RPC_PORT=$(globGet CUSTOM_RPC_PORT)
+CUSTOM_GRPC_PORT=$(globGet CUSTOM_GRPC_PORT)
+CUSTOM_PROMETHEUS_PORT=$(globGet CUSTOM_PROMETHEUS_PORT)
+if [ "$INFRA_MODE" == "seed" ] ; then
+    ([ "$CUSTOM_P2P_PORT" == "$KIRA_SENTRY_P2P_PORT" ] || [ "$CUSTOM_P2P_PORT" == "$KIRA_VALIDATOR_P2P_PORT" ]) && CUSTOM_P2P_PORT=""
+    ([ "$CUSTOM_RPC_PORT" == "$KIRA_SENTRY_RPC_PORT" ] || [ "$CUSTOM_RPC_PORT" == "$KIRA_VALIDATOR_RPC_PORT" ]) && CUSTOM_RPC_PORT=""
+    ([ "$CUSTOM_GRPC_PORT" == "$KIRA_SENTRY_GRPC_PORT" ] || [ "$CUSTOM_GGRPC_PORT" == "$KIRA_VALIDATOR_GP2P_PORT" ]) && CUSTOM_GRPC_PORT=""
+    ([ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] || [ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ]) && CUSTOM_PROMETHEUS_PORT=""
+elif [ "$INFRA_MODE" == "sentry" ] ; then
+    ([ "$CUSTOM_P2P_PORT" == "$KIRA_SEED_P2P_PORT" ] || [ "$CUSTOM_P2P_PORT" == "$KIRA_VALIDATOR_P2P_PORT" ]) && CUSTOM_P2P_PORT=""
+    ([ "$CUSTOM_RPC_PORT" == "$KIRA_SEED_RPC_PORT" ] || [ "$CUSTOM_RPC_PORT" == "$KIRA_VALIDATOR_RPC_PORT" ]) && CUSTOM_RPC_PORT=""
+    ([ "$CUSTOM_GRPC_PORT" == "$KIRA_SEED_GRPC_PORT" ] || [ "$CUSTOM_GRPC_PORT" == "$KIRA_VALIDATOR_GRPC_PORT" ]) && CUSTOM_GRPC_PORT=""
+    ([ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_SEED_PROMETHEUS_PORT" ] || [ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_VALIDATOR_PROMETHEUS_PORT" ]) && CUSTOM_PROMETHEUS_PORT=""
+elif [ "$INFRA_MODE" == "validator" ] ; then
+    ([ "$CUSTOM_P2P_PORT" == "$KIRA_SENTRY_P2P_PORT" ] || [ "$CUSTOM_P2P_PORT" == "$KIRA_SEED_P2P_PORT" ]) && CUSTOM_P2P_PORT=""
+    ([ "$CUSTOM_RPC_PORT" == "$KIRA_SENTRY_RPC_PORT" ] || [ "$CUSTOM_RPC_PORT" == "$KIRA_SEED_RPC_PORT" ]) && CUSTOM_RPC_PORT=""
+    ([ "$CUSTOM_GRPC_PORT" == "$KIRA_SENTRY_GRPC_PORT" ] || [ "$CUSTOM_GRPC_PORT" == "$KIRA_SEED_GRPC_PORT" ]) && CUSTOM_GRPC_PORT=""
+    ([ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_SENTRY_PROMETHEUS_PORT" ] || [ "$CUSTOM_PROMETHEUS_PORT" == "$KIRA_SEED_PROMETHEUS_PORT" ]) && CUSTOM_PROMETHEUS_PORT=""
+fi
+
+(! $(isPort "$CUSTOM_P2P_PORT"))                && globSet CUSTOM_P2P_PORT "$(globGet "KIRA_${INFRA_MODE}_P2P_PORT")"
+(! $(isPort "$CUSTOM_RPC_PORT"))                && globSet CUSTOM_RPC_PORT "$(globGet "KIRA_${INFRA_MODE}_RPC_PORT")"
+(! $(isPort "$CUSTOM_GRPC_PORT"))               && globSet CUSTOM_GRPC_PORT "$(globGet "KIRA_${INFRA_MODE}_GRPC_PORT")"
+(! $(isPort "$CUSTOM_PROMETHEUS_PORT"))         && globSet CUSTOM_PROMETHEUS_PORT "$(globGet "KIRA_${INFRA_MODE}_PROMETHEUS_PORT")"
+(! $(isPort "$(globGet CUSTOM_INTERX_PORT)"))   && globSet CUSTOM_INTERX_PORT "$(globGet DEFAULT_INTERX_PORT)"
+
+[ -z "$KIRA_DOCKER_SUBNET" ]  && KIRA_DOCKER_SUBNET="$(globGet DEFAULT_DOCKER_SUBNET)"   && globSet KIRA_DOCKER_SUBNET "$KIRA_DOCKER_SUBNET" 
+[ -z "$KIRA_DOCKER_NETWORK" ] && KIRA_DOCKER_NETWORK="$(globGet DEFAULT_DOCKER_NETWORK)" && globSet KIRA_DOCKER_NETWORK "$KIRA_DOCKER_NETWORK" 
+
+KIRA_DOCKER="$KIRA_INFRA/docker"                                    && setGlobEnv KIRA_DOCKER "$KIRA_DOCKER"
+KIRAMGR_SCRIPTS="$KIRA_MANAGER/launch"                              && setGlobEnv KIRAMGR_SCRIPTS "$KIRAMGR_SCRIPTS"
+INTERX_REFERENCE_DIR="$DOCKER_COMMON/interx/cache/reference"        && setGlobEnv INTERX_REFERENCE_DIR "$INTERX_REFERENCE_DIR"
+
+globSet SNAPSHOT_TARGET "$INFRA_MODE"
+globSet FIREWALL_ZONE "$INFRA_MODE"
+
+# defines if node should be able to communicate with other local nodes (true), or only private ones (false)
+[ "$(globGet PRIVATE_MODE)" != "true" ] && globSet PRIVATE_MODE "false"
+
+# defines if node should be making snapshots immediately after launch, by default no snaps on launch
+[ "$(globGet SNAPSHOT_EXECUTE)" != "true" ] && globSet SNAPSHOT_EXECUTE "false"
+
+# by default do NOT sync from snapshoots
+[ "$(globGet SNAPSHOT_SYNC)" != "true" ] && globSet SNAPSHOT_SYNC "false"
+
+# defines if new network should be launched (default false)
+[ "$(globGet NEW_NETWORK)" != "true" ] && globSet NEW_NETWORK "false"
+
+[ -z "(globGet TRUSTED_NODE_ADDR)" ] && globSet TRUSTED_NODE_ADDR "0.0.0.0"
+
+globSet KIRA_SETUP_VER "$(globGet KIRA_SETUP_VER)" $GLOBAL_COMMON_RO
+
+# if new base docker image is not defined then default it to old one
+[ -z "$(globGet NEW_BASE_IMAGE_SRC)" ] && globSet NEW_BASE_IMAGE_SRC "$(globGet BASE_IMAGE_SRC)"
+
+# default network interface
+[ -z "$(globGet IFACE)" ] && globSet IFACE "$(netstat -rn | grep -m 1 UG | awk '{print $8}' | xargs)"
+if [ -z "$(globGet MTU)" ] ; then
+    MTU=$(cat /sys/class/net/$(globGet IFACE)/mtu || echo "1500")
+    (! $(isNaturalNumber $MTU)) && MTU=1500
+    (($MTU < 100)) && MTU=900
+    globSet MTU $MTU
+fi
+
+[ -z "$(globGet PORTS_EXPOSURE)" ] && globSet PORTS_EXPOSURE "enabled"
+
+# remove & disable system crash notifications
+rm -f /var/crash/*
+mkdir -p "/etc/default" && touch /etc/default/apport
+setLastLineByPrefixOrAppend "enabled=" "enabled=0" /etc/default/apport
+

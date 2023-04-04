@@ -1,50 +1,43 @@
 
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup/system.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 set -x
 
-ESSENTIALS_HASH=$(echo "$KIRAMGR_SCRIPTS-" | md5)
-SETUP_CHECK="$KIRA_SETUP/system-4-$ESSENTIALS_HASH" 
-if [ ! -f "$SETUP_CHECK" ] ; then
-    echoInfo "INFO: Update and Intall system tools and dependencies..."
-    apt-get update -y --fix-missing
-    apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-        pm-utils
+echoInfo "INFO: Setting up system pre-requisites..."
 
-    echoInfo "INFO: Setting up system pre-requisites..."
-    CDHelper text lineswap --insert="* hard nofile 999999" --prefix="* hard nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
-    CDHelper text lineswap --insert="* soft nofile 999999" --prefix="* soft nofile" --path="/etc/security/limits.conf" --append-if-found-not=True
+LIMITS_CFG="/etc/security/limits.conf"
+JOURNAL_CFG="/etc/systemd/journald.conf"
+WAKEUP_DIR="/usr/lib/pm-utils/sleep.d"
+WAKEUP_SCRIPT="${WAKEUP_DIR}/99ZZZ_KiraWakeup.sh"
 
-    STATUS_SCAN_PATH="$KIRA_SCAN/status"
+mkdir -p $KIRA_LOGS $WAKEUP_DIR
+touch $KIRA_LOGS/wakeup.log
 
-    WAKEUP_ENTRY="#!/bin/sh
+setLastLineByPrefixOrAppend "* hard nofile" "* hard nofile 999999" $LIMITS_CFG
+setLastLineByPrefixOrAppend "* soft nofile" "* soft nofile 999999" $LIMITS_CFG
+
+setVar "SystemMaxUse" "512M" $JOURNAL_CFG
+setVar "SystemMaxFileSize" "8M" $JOURNAL_CFG
+
+WAKEUP_ENTRY="#!/bin/sh
+exec 1> $KIRA_LOGS/wakeup.log 2>&1
+set -x
 case \"\$1\" in
     resume)
-        rm -fvr $STATUS_SCAN_PATH || echo \"ERROR: Failed to remove old scan data\"
+        rm -fvr $KIRA_SCAN/status || echo \"ERROR: Failed to remove old scan data\"
         systemctl daemon-reload || echo \"ERROR: Failed daemon reload\"
         systemctl start firewalld || echo \"ERROR: Failed firewall restart\"
         firewall-cmd --complete-reload || echo \"ERROR: Failed firewall reload\"
-        systemctl restart docker || echo \"ERROR: Failed to restart docker\"
+        systemctl start docker || echo \"ERROR: Failed to start docker\"
         systemctl restart kirascan || echo \"WARNING: Could NOT restart kira scan service\"
         systemctl restart kiraup || echo \"WARNING: Could NOT restart kira update service\"
         systemctl restart kiraclean || echo \"WARNING: Could NOT restart kira cleanup service\"
+        systemctl restart kiraplan || echo \"WARNING: Could NOT restart kira plan service\"
 esac
 exit 0"
 
-    #$KIRAMGR_SCRIPTS/restart-networks.sh \"true\" || echo \"ERROR: Failed to reinitalize networking\"
-    #esac
-    JOURNAL_CFG="/etc/systemd/journald.conf"
-    CDHelper text lineswap --insert="SystemMaxUse=512M" --contains="SystemMaxUse=" --path=$JOURNAL_CFG --append-if-found-not=True
-    CDHelper text lineswap --insert="SystemMaxFileSize=8M" --contains="SystemMaxFileSize=" --path=$JOURNAL_CFG --append-if-found-not=True
+cat > $WAKEUP_SCRIPT <<< $WAKEUP_ENTRY
+chmod 555 $WAKEUP_SCRIPT $KIRA_LOGS/wakeup.log
 
-    mkdir -p "/usr/lib/pm-utils/sleep.d"
-    WAKEUP_SCRIPT="/usr/lib/pm-utils/sleep.d/99ZZZ_KiraWakeup.sh"
-    cat > $WAKEUP_SCRIPT <<< $WAKEUP_ENTRY
-    chmod 555 $WAKEUP_SCRIPT
-    
-    touch $SETUP_CHECK
-else
-    echoInfo "INFO: Your system has all pre-requisites set"
-fi
+echoInfo "INFO: Your system has all pre-requisites set"

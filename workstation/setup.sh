@@ -1,9 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 set +e && source "/etc/profile" &>/dev/null && set -e
-source $KIRA_MANAGER/utils.sh
 # quick edit: FILE="$KIRA_MANAGER/setup.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
 
-SKIP_UPDATE=$1
+declare -l SKIP_UPDATE=$1
 START_TIME=$2
 
 set +x
@@ -18,23 +17,25 @@ set -x
 [ -z "$START_TIME" ] && START_TIME="$(date -u +%s)"
 [ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
 cd /kira
-if [ "${SKIP_UPDATE,,}" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
-    echoInfo "INFO: Updating kira, Sekai, frontend, INTERX"
-    $KIRA_SCRIPTS/git-pull.sh "$FRONTEND_REPO" "$FRONTEND_BRANCH" "$KIRA_FRONTEND" &
-    $KIRA_SCRIPTS/git-pull.sh "$INTERX_REPO" "$INTERX_BRANCH" "$KIRA_INTERX" &
-    $KIRA_SCRIPTS/git-pull.sh "$SEKAI_REPO" "$SEKAI_BRANCH" "$KIRA_SEKAI" &
-    $KIRA_SCRIPTS/git-pull.sh "$INFRA_REPO" "$INFRA_BRANCH" "$KIRA_INFRA" 555 &
-    wait < <(jobs -p)
 
-    # we must ensure that recovery files can't be destroyed in the update process and cause a deadlock
-    rm -rfv "$KIRA_MANAGER" && mkdir -p "$KIRA_MANAGER"
-    cp -rfv "$KIRA_WORKSTATION/." "$KIRA_MANAGER"
+if [ "$SKIP_UPDATE" == "false" ] || [ ! -d "$KIRA_MANAGER" ] ; then
+    echoInfo "INFO: Updating kira, sekai, INTERX"
+
+    safeWget ./kira.zip "$(globGet INFRA_SRC)" "$(globGet KIRA_COSIGN_PUB)" --timeout="300" --tries="3"
+    rm -rfv $KIRA_INFRA && mkdir -p $KIRA_INFRA
+    unzip ./kira.zip -d $KIRA_INFRA
+    rm -rfv ./kira.zip
+    chmod -R 555 $KIRA_INFRA
+
+    # update old processes
+    rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
+    cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
     chmod -R 555 $KIRA_MANAGER
 
     echoInfo "INFO: Restarting setup and skipping update..."
     $KIRA_MANAGER/setup.sh "true" "$START_TIME"
     exit 0
-elif [ "${SKIP_UPDATE,,}" == "true" ]; then
+elif [ "$SKIP_UPDATE" == "true" ]; then
     echoInfo "INFO: Skipping kira Update..."
 else
     echoErr "ERROR: SKIP_UPDATE propoerty is invalid or undefined"
@@ -47,45 +48,18 @@ rm /bin/kira || echoWarn "WARNING: Failed to remove old KIRA Manager symlink"
 ln -s $KIRA_MANAGER/kira/kira.sh /bin/kira || echo "WARNING: KIRA Manager symlink already exists"
 
 $KIRA_MANAGER/kira/containers-pkill.sh "true" "stop"
-$KIRA_SCRIPTS/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
+$KIRA_COMMON/docker-stop.sh || echoErr "ERROR: Failed to stop docker service"
 timeout 60 systemctl stop kirascan || echoErr "ERROR: Failed to stop kirascan service"
 
 $KIRA_MANAGER/setup/envs.sh
 $KIRA_MANAGER/setup/network.sh
 $KIRA_MANAGER/setup/system.sh
-$KIRA_MANAGER/setup/golang.sh
 $KIRA_MANAGER/setup/tools.sh
 $KIRA_MANAGER/setup/docker.sh
+$KIRA_MANAGER/setup/services.sh
+$KIRA_COMMON/docker-restart.sh
 
-$KIRA_SCRIPTS/docker-restart.sh
-echoInfo "INFO: Waiting for all containers to start..."
-sleep 120
-$KIRA_MANAGER/setup/registry.sh
-
-echoInfo "INFO: Updating kira update service..."
-cat > /etc/systemd/system/kiraup.service << EOL
-[Unit]
-Description=KIRA Update And Setup Service
-After=network.target
-[Service]
-CPUWeight=100
-CPUQuota=100%
-IOWeight=100
-MemorySwapMax=0
-Type=simple
-User=root
-WorkingDirectory=$KIRA_HOME
-ExecStart=/bin/bash $KIRA_MANAGER/update.sh
-Restart=always
-RestartSec=5
-LimitNOFILE=4096
-[Install]
-WantedBy=default.target
-EOL
-
-touch /tmp/rs_manager
-touch /tmp/rs_git_manager
-touch /tmp/rs_container_manager
+touch /tmp/rs_manager /tmp/rs_git_manager /tmp/rs_container_manager
 
 set +x
 echoWarn "------------------------------------------------"

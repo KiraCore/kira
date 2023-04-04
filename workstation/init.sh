@@ -1,10 +1,14 @@
-#!/bin/bash
-ETC_PROFILE="/etc/profile"
-set +e && chmod 555 $ETC_PROFILE && source $ETC_PROFILE &>/dev/null && set -e
+#!/usr/bin/env bash
+set -e
+set -x
 
-INFRA_BRANCH="${1,,}"
-SKIP_UPDATE=$2
-START_TIME_INIT=$3
+# Accepted arguments:
+# --infra-src="<string>"        // source of the KM package: <url>, <CID>, <version>
+# --image-src="<url>"           // source of the base image <url>, <version>
+# --init-mode="<string>"        // initalization mode: noninteractive, interactive, upgrade
+# --infra-mode="<string>"       // infrastructure deployment mode: validator, sentry, seed
+# --master-mnemonic="<string>"  // 24 whitespace separated bip39 words
+# --trusted-node="<ip>"         // IP address of a trusted node to start syncing from
 
 [ ! -z "$SUDO_USER" ] && KIRA_USER=$SUDO_USER
 [ -z "$KIRA_USER" ] && KIRA_USER=$USER
@@ -15,338 +19,264 @@ if [ "$KIRA_USER" == "root" ]; then
     exit 1
 fi
 
-if [ "${USER,,}" != root ]; then
+if [ "$USER" != root ]; then
     echo "ERROR: You have to run this application as root, try 'sudo -s' command first"
     exit 1
 fi
 
-# Used To Initialize essential dependencies, MUST be iterated if essentials require updating
-SETUP_VER="v0.3.2.3"
-CDHELPER_VERSION="v0.6.51"
-INFRA_REPO="https://github.com/KiraCore/kira"
-ARCHITECTURE=$(uname -m)
+# Used To Initialize essential dependencies
+BASE_IMAGE_VERSION="v0.13.5"
+TOOLS_VERSION="v0.3.42"
+COSIGN_VERSION="v2.0.0"
 
-[ -z "$INFRA_BRANCH" ] && INFRA_BRANCH="master"
-[ -z "$START_TIME_INIT" ] && START_TIME_INIT="$(date -u +%s)"
-[ -z "$SKIP_UPDATE" ] && SKIP_UPDATE="false"
+# Force console colour to be black
+tput setab 0
 
-[ -z "$DEFAULT_P2P_PORT" ] && DEFAULT_P2P_PORT="26656"
-[ -z "$DEFAULT_RPC_PORT" ] && DEFAULT_RPC_PORT="26657"
-[ -z "$DEFAULT_GRPC_PORT" ] && DEFAULT_GRPC_PORT="9090"
-[ -z "$DEFAULT_INTERX_PORT" ] && DEFAULT_INTERX_PORT="11000"
-
-[ -z "$KIRA_FRONTEND_PORT" ] && KIRA_FRONTEND_PORT="80"
-[ -z "$KIRA_INTERX_PORT" ] && KIRA_INTERX_PORT="11000"
-[ -z "$KIRA_SENTRY_P2P_PORT" ] && KIRA_SENTRY_P2P_PORT="26656"
-[ -z "$KIRA_PRIV_SENTRY_P2P_PORT" ] && KIRA_PRIV_SENTRY_P2P_PORT="36656"
-
-[ -z "$KIRA_SEED_RPC_PORT" ] && KIRA_SEED_RPC_PORT="16657"
-[ -z "$KIRA_SENTRY_RPC_PORT" ] && KIRA_SENTRY_RPC_PORT="26657"
-[ -z "$KIRA_PRIV_SENTRY_RPC_PORT" ] && KIRA_PRIV_SENTRY_RPC_PORT="36657"
-[ -z "$KIRA_SNAPSHOT_RPC_PORT" ] && KIRA_SNAPSHOT_RPC_PORT="46657"
-[ -z "$KIRA_VALIDATOR_RPC_PORT" ] && KIRA_VALIDATOR_RPC_PORT="56657"
-
-[ -z "$KIRA_SENTRY_GRPC_PORT" ] && KIRA_SENTRY_GRPC_PORT="9090"
-[ -z "$KIRA_SEED_P2P_PORT" ] && KIRA_SEED_P2P_PORT="16656"
-[ -z "$KIRA_REGISTRY_PORT" ] && KIRA_REGISTRY_PORT="5000"
-
-KIRA_HOME="/home/$KIRA_USER"
-KIRA_DUMP="$KIRA_HOME/dump"
-KIRA_SNAP="$KIRA_HOME/snap"
-KIRA_SECRETS="$KIRA_HOME/.secrets"
-KIRA_CONFIGS="$KIRA_HOME/.kira"
-SETUP_LOG="$KIRA_DUMP/setup.log"
-
-echo "------------------------------------------------"
-echo "|      STARTED: INIT $SETUP_VER"
-echo "|-----------------------------------------------"
-echo "|  SKIP UPDATE: $SKIP_UPDATE"
-echo "|   START TIME: $START_TIME_INIT"
-echo "| INFRA BRANCH: $INFRA_BRANCH"
-echo "|   INFRA REPO: $INFRA_REPO"
-echo "|    KIRA USER: $KIRA_USER"
-echo "| ARCHITECTURE: $ARCHITECTURE"
-echo "------------------------------------------------"
-
-rm -rfv $KIRA_DUMP
-mkdir -p "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
-
-set +x
-if [ -z "$SKIP_UPDATE" ]; then
-    echo -e "\e[35;1mMMMMMMMMMWX0kdloxOKNWMMMMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo "MMMMMWNKOxlc::::::cok0XWWMMMMMMMMMMMMMMMMMMMMMMM"
-    echo "MMWX0kdlc::::::::::::clxkOKNMMMMMMMMMMWKkk0NWMMM"
-    echo "MNkoc:::::::::::::::::::::cok0NWMMMMMMWKxlcld0NM"
-    echo "W0l:cllc:::::::::::::::::::::coKWMMMMMMMWKo:;:xN"
-    echo "WOlcxXNKOdlc::::::::::::::::::l0WMMMMMWNKxc;;;oX"
-    echo "W0olOWMMMWX0koc::::::::::::ldOXWMMMWXOxl:;;;;;oX"
-    echo "MWXKNMMMMMMMWNKOdl::::codk0NWMMWNKkdc:;;;;;;;;oX"
-    echo "MMMMMMMMMMMMMMMMWX0kkOKNWMMMWX0xl:;;;;;;;;;;;;oX"
-    echo "MMMMMMMMMWXOkOKNMMMMMMMMMMMW0l:;;;;;;;;;;;;;;;oX"
-    echo "MMMMMMMMMXo:::cox0XWMMMMMMMNx:;;;;;;;;;;;;;;;;oX"
-    echo "MMMMMMMMMKl:::::::ldOXWMMMMNx:;;;;;;;;;;;;;;co0W"
-    echo "MMMMMMMMMKl::::;;;;;:ckWMMMNx:;;;;;;;;;;:ldOKNMM"
-    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMNx:;;;;;;;:ox0XWMMMMM"
-    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMWk:;;;:cdkKNMMMMMMMMM"
-    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMXkoox0XWMMMMMMMMMMMM"
-    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMWWWMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMKl;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMKo;;;;;;;;;;;dXMMMMMMMMMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMWKxl:;;;;;;;;oXMMMWNWMMMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMMMWNKkdc;;;;;:dOOkdlkNMMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMMMMMMMWXOxl:;;;;;cokKWMMMMMMMMMMMMMMMMM"
-    echo "MMMMMMMMMMMMMMMMMMWN0kdxxOKWMMMMMMMMMMMMMMMMMMMM"
-    echo "M         KIRA NETWORK SETUP $SETUP_VER"
-    echo -e "MMMMMMMMMMMMMMMMMMMMMMWWMMMMMMMMMMMMMMMMMMMMMMMM\e[0m\c\n"
-    sleep 3
-else
-    echo "INFO: Initalizing setup script..."
-fi
-
-systemctl stop kiraup || echo "WARNING: KIRA update service could NOT be stopped, service might not exist yet!"
-
-echo -n ""
-set -x
+# this is essential to remove any inpropper output redirections to /dev/null while silencing output
 rm -fv /dev/null && mknod -m 666 /dev/null c 1 3 || :
 
-CPU_CORES=$(cat /proc/cpuinfo | grep processor | wc -l || echo "0")
-RAM_MEMORY=$(grep MemTotal /proc/meminfo | awk '{print $2}' || echo "0")
+declare -l ARCH=$(uname -m)
+declare -l PLATFORM=$(uname)
+[[ "$ARCH" == *"ar"* ]] && ARCH="arm64" || ARCH="amd64"
 
-if [[ $CPU_CORES -lt 2 ]] ; then
-    echo "ERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $CPU_CORES"
-    echo "INFO: Recommended CPU is 4 cores"
-    exit 1
-fi
+KEYS_DIR="/usr/keys"
+KIRA_COSIGN_PUB="$KEYS_DIR/kira-cosign.pub"
+COSIGN_INSTALLED="$(timeout 30 cosign version && echo "true" || echo "false")"
 
-if [[ $RAM_MEMORY -lt 3145728 ]] ; then
-    echo "ERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $RAM_MEMORY kB"
-    echo "INFO: Recommended RAM is 8GB"
-    exit 1
-fi
-
-# All branches should have the same name across all repos to be considered compatible
-if [[ $INFRA_BRANCH == mainnet* ]] || [[ $INFRA_BRANCH == testnet* ]] ; then
-    DEFAULT_BRANCH="$INFRA_BRANCH"
-    SEKAI_BRANCH="$DEFAULT_BRANCH"
-    FRONTEND_BRANCH="$DEFAULT_BRANCH"
-    INTERX_BRANCH="$DEFAULT_BRANCH"
-else
-    DEFAULT_BRANCH="master"
-    [ -z "$SEKAI_BRANCH" ] && SEKAI_BRANCH="$DEFAULT_BRANCH"
-    [ -z "$FRONTEND_BRANCH" ] && FRONTEND_BRANCH="$DEFAULT_BRANCH"
-    [ -z "$INTERX_BRANCH" ] && INTERX_BRANCH="$DEFAULT_BRANCH"
-fi
-
-[ -z "$SEKAI_REPO" ] && SEKAI_REPO="https://github.com/KiraCore/sekai"
-[ -z "$FRONTEND_REPO" ] && FRONTEND_REPO="https://github.com/KiraCore/kira-frontend"
-[ -z "$INTERX_REPO" ] && INTERX_REPO="https://github.com/KiraCore/sekai"
-
-if [ "${SKIP_UPDATE,,}" != "true" ]; then
-    #########################################
-    # START Installing Essentials
-    #########################################
-    KIRA_REPOS=/kira/repos
-
-    KIRA_INFRA="$KIRA_REPOS/kira"
-    KIRA_SEKAI="$KIRA_REPOS/sekai"
-    KIRA_FRONTEND="$KIRA_REPOS/frontend"
-    KIRA_INTERX="$KIRA_REPOS/interx"
-
-    KIRA_SETUP=/kira/setup
-    KIRA_UPDATE=/kira/update
-    KIRA_MANAGER="/kira/manager"
-
-    KIRA_SCRIPTS="${KIRA_INFRA}/common/scripts"
-    KIRA_WORKSTATION="${KIRA_INFRA}/workstation"
-
-    SEKAID_HOME="/root/.simapp"
-
-    DOCKER_COMMON="/docker/shared/common"
-    # read only common directory
-    DOCKER_COMMON_RO="/docker/shared/common_ro"
-
-    mkdir -p $KIRA_INFRA $KIRA_SEKAI $KIRA_FRONTEND $KIRA_INTERX $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO
-    rm -rfv $KIRA_DUMP
-    mkdir -p "$KIRA_DUMP/INFRA/manager"
-
-    ESSENTIALS_HASH=$(echo "$CDHELPER_VERSION-$KIRA_HOME-$INFRA_BRANCH-$INFRA_REPO-$ARCHITECTURE-15" | md5sum | awk '{ print $1 }' || echo -n "")
-    KIRA_SETUP_ESSSENTIALS="$KIRA_SETUP/essentials-$ESSENTIALS_HASH"
-    if [ ! -f "$KIRA_SETUP_ESSSENTIALS" ] ; then
-        echo "INFO: Installing Essential Packages & Env Variables..."
-        rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
-        apt-get update -y
-        apt-get install -y --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages \
-            software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential \
-            nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude \
-            zip unzip p7zip-full 
-        
-        apt update -y
-        apt install -y bc dnsutils psmisc netcat nmap parallel
-
-        ln -s /usr/bin/git /bin/git || echo "WARNING: Git symlink already exists"
-        git config --add --global core.autocrlf input || echo "WARNING: Failed to set global autocrlf"
-        git config --unset --global core.filemode || echo "WARNING: Failed to unset global filemode"
-        git config --add --global core.filemode false || echo "WARNING: Failed to set global filemode"
-        git config --add --global pager.branch false || echo "WARNING: Failed to disable branch pager"
-        git config --add --global http.sslVersion "tlsv1.2" || echo "WARNING: Failed to set ssl version"
-
-        echo "INFO: Base Tools Setup..."
-        export DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1
-        cd /tmp
-
-        if [[ "${ARCHITECTURE,,}" == *"arm"* ]] || [[ "${ARCHITECTURE,,}" == *"aarch"* ]] ; then
-            CDHELPER_ARCH="arm64"
-            EXPECTED_HASH="c2e40c7143f4097c59676f037ac6eaec68761d965bd958889299ab32f1bed6b3"
-        else
-            CDHELPER_ARCH="x64"
-            EXPECTED_HASH="082e05210f93036e0008658b6c6bd37ab055bac919865015124a0d72e18a45b7"
-        fi
-
-        FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }' || echo -n "")
-
-        if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-            rm -f -v ./CDHelper-linux-$CDHELPER_ARCH.zip
-            wget "https://github.com/asmodat/CDHelper/releases/download/$CDHELPER_VERSION/CDHelper-linux-$CDHELPER_ARCH.zip"
-            FILE_HASH=$(sha256sum ./CDHelper-linux-$CDHELPER_ARCH.zip | awk '{ print $1 }')
-
-            if [ "$FILE_HASH" != "$EXPECTED_HASH" ]; then
-                set +x
-                echo -e "\nDANGER: Failed to check integrity hash of the CDHelper tool !!!\nERROR: Expected hash: $EXPECTED_HASH, but got $FILE_HASH\n"
-                SELECT="" && while [ "${SELECT,,}" != "x" ] && [ "${SELECT,,}" != "c" ] ; do echo -en "\e[31;1mPress e[X]it or [C]ontinue to disregard the issue\e[0m\c" && read -d'' -s -n1 ACCEPT && echo ""; done
-                [ "${SELECT,,}" == "x" ] && exit
-                echo "DANGER: You decided to disregard a potential vulnerability !!!"
-                echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-                set -x
-            fi
-        else
-            echo "INFO: CDHelper tool was already downloaded"
-        fi
-
-        INSTALL_DIR="/usr/local/bin/CDHelper"
-        rm -rfv $INSTALL_DIR
-        mkdir -pv $INSTALL_DIR
-        unzip CDHelper-linux-$CDHELPER_ARCH.zip -d $INSTALL_DIR
-        chmod -R -v 555 $INSTALL_DIR
-
-        ls -l /bin/CDHelper || echo "Symlink not found"
-        rm /bin/CDHelper || echo "Removing old symlink"
-        ln -s $INSTALL_DIR/CDHelper /bin/CDHelper || echo "CDHelper symlink already exists"
-
-        CDHelper version
-
-        CDHelper text lineswap --insert="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=1" --prefix="DOTNET_SYSTEM_GLOBALIZATION_INVARIANT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_HOME=$KIRA_HOME" --prefix="KIRA_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_DUMP=$KIRA_DUMP" --prefix="KIRA_DUMP=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAP=$KIRA_SNAP" --prefix="KIRA_SNAP=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SCAN=$KIRA_HOME/kirascan" --prefix="KIRA_SCAN=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SECRETS=$KIRA_SECRETS" --prefix="KIRA_SECRETS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_CONFIGS=$KIRA_CONFIGS" --prefix="KIRA_CONFIGS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PUBLIC_PEERS=$KIRA_CONFIGS/public_peers" --prefix="PUBLIC_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PRIVATE_PEERS=$KIRA_CONFIGS/private_peers" --prefix="PRIVATE_PEERS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PUBLIC_SEEDS=$KIRA_CONFIGS/public_seeds" --prefix="PUBLIC_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="PRIVATE_SEEDS=$KIRA_CONFIGS/private_seeds" --prefix="PRIVATE_SEEDS=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="KIRA_MANAGER=$KIRA_MANAGER" --prefix="KIRA_MANAGER=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_REPOS=$KIRA_REPOS" --prefix="KIRA_REPOS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SETUP=$KIRA_SETUP" --prefix="KIRA_SETUP=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_UPDATE=$KIRA_UPDATE" --prefix="KIRA_UPDATE=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="KIRA_INFRA=$KIRA_INFRA" --prefix="KIRA_INFRA=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SEKAI=$KIRA_SEKAI" --prefix="KIRA_SEKAI=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_FRONTEND=$KIRA_FRONTEND" --prefix="KIRA_FRONTEND=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_INTERX=$KIRA_INTERX" --prefix="KIRA_INTERX=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="KIRA_SCRIPTS=$KIRA_SCRIPTS" --prefix="KIRA_SCRIPTS=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_WORKSTATION=$KIRA_WORKSTATION" --prefix="KIRA_WORKSTATION=" --path=$ETC_PROFILE --append-if-found-not=True
-        
-        CDHelper text lineswap --insert="DOCKER_COMMON=$DOCKER_COMMON" --prefix="DOCKER_COMMON=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="DOCKER_COMMON_RO=$DOCKER_COMMON_RO" --prefix="DOCKER_COMMON_RO=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="LOCAL_GENESIS_PATH=$DOCKER_COMMON_RO/genesis.json" --prefix="LOCAL_GENESIS_PATH=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="ETC_PROFILE=$ETC_PROFILE" --prefix="ETC_PROFILE=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="SEKAID_HOME=$SEKAID_HOME" --prefix="SEKAID_HOME=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="DEFAULT_P2P_PORT=$DEFAULT_P2P_PORT" --prefix="DEFAULT_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="DEFAULT_RPC_PORT=$DEFAULT_RPC_PORT" --prefix="DEFAULT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="DEFAULT_GRPC_PORT=$DEFAULT_GRPC_PORT" --prefix="DEFAULT_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="DEFAULT_INTERX_PORT=$DEFAULT_INTERX_PORT" --prefix="DEFAULT_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="KIRA_FRONTEND_PORT=$KIRA_FRONTEND_PORT" --prefix="KIRA_FRONTEND_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_INTERX_PORT=$KIRA_INTERX_PORT" --prefix="KIRA_INTERX_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SENTRY_P2P_PORT=$KIRA_SENTRY_P2P_PORT" --prefix="KIRA_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_P2P_PORT=$KIRA_PRIV_SENTRY_P2P_PORT" --prefix="KIRA_PRIV_SENTRY_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SENTRY_RPC_PORT=$KIRA_SENTRY_RPC_PORT" --prefix="KIRA_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_PRIV_SENTRY_RPC_PORT=$KIRA_PRIV_SENTRY_RPC_PORT" --prefix="KIRA_PRIV_SENTRY_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SEED_RPC_PORT=$KIRA_SEED_RPC_PORT" --prefix="KIRA_SEED_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SNAPSHOT_RPC_PORT=$KIRA_SNAPSHOT_RPC_PORT" --prefix="KIRA_SNAPSHOT_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_VALIDATOR_RPC_PORT=$KIRA_VALIDATOR_RPC_PORT" --prefix="KIRA_VALIDATOR_RPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        CDHelper text lineswap --insert="KIRA_SENTRY_GRPC_PORT=$KIRA_SENTRY_GRPC_PORT" --prefix="KIRA_SENTRY_GRPC_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_REGISTRY_PORT=$KIRA_REGISTRY_PORT" --prefix="KIRA_REGISTRY_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-        CDHelper text lineswap --insert="KIRA_SEED_P2P_PORT=$KIRA_SEED_P2P_PORT" --prefix="KIRA_SEED_P2P_PORT=" --path=$ETC_PROFILE --append-if-found-not=True
-
-        touch $KIRA_SETUP_ESSSENTIALS
-    else
-        echo "INFO: Essentials were already installed: $(git --version), Curl, Wget..."
+if [ "$COSIGN_INSTALLED" == "false" ] ; then
+    echo "INFO: Installing cosign"
+    FILE_NAME=$(echo "cosign-${PLATFORM}-${ARCH}")
+    wget https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/$FILE_NAME && chmod +x -v ./$FILE_NAME
+    FILE_HASH=$(sha256sum ./$FILE_NAME | awk '{ print $1 }' | xargs || echo -n "")
+    COSIGN_HASH_ARM="8132cb2fb99a4c60ba8e03b079e12462c27073028a5d08c07ecda67284e0c88d"
+    COSIGN_HASH_AMD="169a53594c437d53ffc401b911b7e70d453f5a2c1f96eb2a736f34f6356c4f2b"
+    if [ "$FILE_HASH" != "$COSIGN_HASH_ARM" ] && [ "$FILE_HASH" != "$COSIGN_HASH_AMD" ] ; then
+        echoErr "ERROR: Failed to download cosign tool, expected checksum to be '$COSIGN_HASH', but got '$FILE_HASH'"
+        exit 1
     fi
 
-    #########################################
-    # END Installing Essentials
-    #########################################
+    mv -fv ./$FILE_NAME /usr/local/bin/cosign
+    cosign version
+    
+    mkdir -p $KEYS_DIR
+    cat > $KIRA_COSIGN_PUB << EOL
+-----BEGIN PUBLIC KEY-----
+MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAE/IrzBQYeMwvKa44/DF/HB7XDpnE+
+f+mU9F/Qbfq25bBWV2+NlYMJv3KvKHNtu3Jknt6yizZjUV4b8WGfKBzFYw==
+-----END PUBLIC KEY-----
+EOL
 
-    echo "INFO: Updating kira Repository..."
-    rm -rfv $KIRA_INFRA
-    mkdir -p $KIRA_INFRA
-    git clone --branch $INFRA_BRANCH $INFRA_REPO $KIRA_INFRA
-    cd $KIRA_INFRA
-    git describe --all --always
-    chmod -R 555 $KIRA_INFRA
-
-    # update old processes
-    rm -rfv $KIRA_MANAGER && mkdir -p "$KIRA_MANAGER"
-    cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
-    chmod -R 555 $KIRA_MANAGER
-
-    echo "INFO: ReStarting init script to launch setup menu..."
-    source $KIRA_MANAGER/init.sh "$INFRA_BRANCH" "True" "$START_TIME_INIT"
-    echo "INFO: Init script restart finished."
-    exit 0
 fi
 
-CDHelper text lineswap --insert="KIRA_SETUP_VER=$SETUP_VER" --prefix="KIRA_SETUP_VER=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="KIRA_USER=$KIRA_USER" --prefix="KIRA_USER=" --path=$ETC_PROFILE --append-if-found-not=True
+FILE_NAME="bash-utils.sh" && \
+ wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}" -O ./$FILE_NAME && \
+ wget "https://github.com/KiraCore/tools/releases/download/$TOOLS_VERSION/${FILE_NAME}.sig" -O ./${FILE_NAME}.sig && \
+ cosign verify-blob --key="$KIRA_COSIGN_PUB" --signature=./${FILE_NAME}.sig ./$FILE_NAME && \
+ chmod -v 755 ./$FILE_NAME && ./$FILE_NAME bashUtilsSetup "/var/kiraglob"
 
-CDHelper text lineswap --insert="INFRA_BRANCH=$INFRA_BRANCH" --prefix="INFRA_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_BRANCH=$SEKAI_BRANCH" --prefix="SEKAI_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_BRANCH=$FRONTEND_BRANCH" --prefix="FRONTEND_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_BRANCH=$INTERX_BRANCH" --prefix="INTERX_BRANCH=" --path=$ETC_PROFILE --append-if-found-not=True
+. /etc/profile
 
-CDHelper text lineswap --insert="INFRA_REPO=$INFRA_REPO" --prefix="INFRA_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="SEKAI_REPO=$SEKAI_REPO" --prefix="SEKAI_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="FRONTEND_REPO=$FRONTEND_REPO" --prefix="FRONTEND_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
-CDHelper text lineswap --insert="INTERX_REPO=$INTERX_REPO" --prefix="INTERX_REPO=" --path=$ETC_PROFILE --append-if-found-not=True
+echoInfo "INFO: Installed bash-utils $(bu bashUtilsVersion)"
 
-echo "INFO: Startting cleanup..."
-apt-get autoclean || echo "WARNING: autoclean failed"
-apt-get clean || echo "WARNING: clean failed"
-apt-get autoremove || echo "WARNING: autoremove failed"
-journalctl --vacuum-time=3d || echo "WARNING: journalctl vacuum failed"
+# Ensure variables are stored and no modification takes place after loading envs
+globSet KIRA_USER "$KIRA_USER"
+globSet TOOLS_VERSION "$TOOLS_VERSION"
+globSet COSIGN_VERSION "$COSIGN_VERSION"
+globSet KIRA_COSIGN_PUB "$KIRA_COSIGN_PUB"
 
-find "/var/log" -type f -size +1M -exec truncate --size=1M {} + || echo "WARNING: Failed to truncate system logs"
-find "/var/log/journal" -type f -size +256k -exec truncate --size=128k {} + || echo "WARNING: Failed to truncate journal"
+#######################################################################################
+echoInfo "INFO: Processing input arguments..."
+INFRA_SRC="" && infra_src=""
+IMAGE_SRC="" && image_src=""
+INIT_MODE="" && init_mode=""
+infra_mode=""
+master_mnemonic=""
+trusted_node=""
+getArgs "$1" "$2" "$3" "$4" "$5" --gargs_throw=false --gargs_verbose=true
+[ -z "$INFRA_SRC" ] && INFRA_SRC="$infra_src"
+[ -z "$IMAGE_SRC" ] && IMAGE_SRC="$image_src" && [ -z $IMAGE_SRC ] && IMAGE_SRC="$BASE_IMAGE_VERSION"
+[ -z "$INIT_MODE" ] && INIT_MODE="$init_mode" && [ -z $INIT_MODE ] && INIT_MODE="interactive"
+
+($(isVersion "$INFRA_SRC")) && INFRA_SRC="https://github.com/KiraCore/kira/releases/download/$INFRA_SRC/kira.zip"
+($(isCID "$INFRA_SRC")) && INFRA_SRC="https://ipfs.kira.network/ipfs/$INFRA_SRC/kira.zip"
+(! $(urlExists "$INFRA_SRC")) && echoErr "ERROR: Infrastructure source URL '$INFRA_SRC' does NOT contain source files!" && exit 1
+
+($(isVersion "$IMAGE_SRC")) && IMAGE_SRC="ghcr.io/kiracore/docker/kira-base:$IMAGE_SRC"
+(! $(urlExists "$IMAGE_SRC")) && echoErr "ERROR: Base Image URL '$IMAGE_SRC' does NOT contain image files!" && exit 1
+
+#######################################################################################
+
+if [ $INIT_MODE == "interactive" ] ; then
+    systemctl stop kiraup || echo "WARNING: KIRA Update service could NOT be stopped, service might not exist yet!"
+    systemctl stop kiraplan || echo "WARNING: KIRA Upgrade Plan service could NOT be stopped, service might not exist yet!"
+
+    set +x
+    if [[ $(getCpuCores) -lt 2 ]] ; then
+        echo -en "\e[31;1mERROR: KIRA Manager requires at lest 2 CPU cores but your machine has only $(getCpuCores)\e[0m"
+        echo "INFO: Recommended CPU is 4 cores"
+        echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    fi
+
+    if [[ $(getRamTotal) -lt 3145728 ]] ; then
+        echo -en "\e[31;1mERROR: KIRA Manager requires at lest 4 GB RAM but your machine has only $(getRamTotal) kB\e[0m"
+        echo "INFO: Recommended RAM is 8GB"
+        echo -en "\e[31;1mPress any key to continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
+    fi
+    set -x
+fi
+
+echoInfo "INFO: Veryfying kira base image integrity..."
+cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC || \
+ ( echoErr "ERROR: Base image integrity verification failed, retry will be attempted in 60 seconds..." && sleep 60 && cosign verify --key "$(globGet KIRA_COSIGN_PUB)" $IMAGE_SRC )
+
+echoInfo "INFO: Setting up essential ENV variables & constants..."
+globSet NEW_BASE_IMAGE_SRC "$IMAGE_SRC"
+globSet INFRA_SRC "$INFRA_SRC"
+globSet INIT_MODE "$INIT_MODE"
+(! $(isNullOrWhitespaces $infra_mode)) && globSet INFRA_MODE "$infra_mode"
+(! $(isNullOrWhitespaces $trusted_node)) && globSet TRUSTED_NODE_ADDR "$trusted_node"
+
+# NOTE: Glob envs can be loaded only AFTER init provided variabes are set
+loadGlobEnvs
+
+tput setab 0
+tput setaf 7
 
 set +x
-echo "INFO: Your host environment was initialized"
-echo -e "\e[33;1mTERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change of firewall rules which might make your system vulnerable to various security threats or entirely lock you out of the system. By proceeding you take full responsibility for your own actions and accept that you continue on your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities.\e[0m"
-echo -en "\e[31;1mPress any key to accept terms & continue or Ctrl+C to abort...\e[0m" && read -n 1 -s && echo ""
-echo "INFO: Launching setup menu..."
+echoC ";whi"  " =============================================================================="
+echoC ";whi"  "|$(strFixC "STARTED KIRA INIT SCRIPT" 78)|"   
+echoC ";whi"  "|==============================================================================|"
+echoC ";whi"  "|          KIRA USER:$(strFixL " $(globGet KIRA_USER) " 58)|"
+echoC ";whi"  "|          INIT MODE:$(strFixL " $(globGet INIT_MODE) " 58)|"
+echoC ";whi"  "|       INFRA SOURCE:$(strFixL " $(globGet INFRA_SRC) " 58)|"
+echoC ";whi"  "|   BASE IMG. SOURCE:$(strFixL " $(globGet NEW_BASE_IMAGE_SRC) " 58)|"
+echoC ";whi"  "|      TOOLS VERSION:$(strFixL " $(globGet TOOLS_VERSION) " 58)|"
+echoC ";whi"  "|     COSIGN VERSION:$(strFixL " $(globGet COSIGN_VERSION) " 58)|"
+echoC ";whi"  " =============================================================================="
+sleep 3
+echo -n ""
 set -x
-source $KIRA_MANAGER/menu.sh
+
+KIRA_HOME="/home/$(globGet KIRA_USER)"          && globSet KIRA_HOME "$KIRA_HOME"
+KIRA_LOGS="$(globGet KIRA_HOME)/logs"           && setGlobEnv KIRA_LOGS "$KIRA_LOGS"
+KIRA_DUMP="$(globGet KIRA_HOME)/dump"           && setGlobEnv KIRA_DUMP "$KIRA_DUMP"
+KIRA_SNAP="$(globGet KIRA_HOME)/snap"           && setGlobEnv KIRA_SNAP "$KIRA_SNAP" 
+KIRA_SCAN="$(globGet KIRA_HOME)/kirascan"       && setGlobEnv KIRA_SCAN "$KIRA_SCAN"
+KIRA_SECRETS="$(globGet KIRA_HOME)/.secrets"    && setGlobEnv KIRA_SECRETS "$KIRA_SECRETS"
+KIRA_CONFIGS="$(globGet KIRA_HOME)/.kira"       && setGlobEnv KIRA_CONFIGS "$KIRA_CONFIGS"
+
+PUBLIC_PEERS="$KIRA_CONFIGS/public_peers"       && setGlobEnv PUBLIC_PEERS "$KIRA_CONFIGS/public_peers"
+PUBLIC_SEEDS="$KIRA_CONFIGS/public_seeds"       && setGlobEnv PUBLIC_SEEDS "$KIRA_CONFIGS/public_seeds"
+
+KIRA_INFRA="/kira/repos/kira"       && setGlobEnv KIRA_INFRA "$KIRA_INFRA"
+
+KIRA_BIN="/kira/bin"                && setGlobEnv KIRA_BIN "$KIRA_BIN"
+KIRA_SETUP="/kira/setup"            && setGlobEnv KIRA_SETUP "$KIRA_SETUP"
+KIRA_MANAGER="/kira/manager"        && setGlobEnv KIRA_MANAGER "$KIRA_MANAGER"
+
+KIRA_COMMON="${KIRA_INFRA}/common"              && setGlobEnv KIRA_COMMON "$KIRA_COMMON"
+KIRA_WORKSTATION="${KIRA_INFRA}/workstation"    && setGlobEnv KIRA_WORKSTATION "$KIRA_WORKSTATION"
+
+SEKAID_HOME="/root/.sekai"          && setGlobEnv SEKAID_HOME "$SEKAID_HOME"
+INTERXD_HOME="/root/.interx"        && setGlobEnv INTERXD_HOME "$INTERXD_HOME"
+
+DOCKER_HOME="/docker/shared/home"   && setGlobEnv DOCKER_HOME "$DOCKER_HOME"
+DOCKER_COMMON="/docker/shared/common"   && setGlobEnv DOCKER_COMMON "$DOCKER_COMMON"
+# read only common directory
+DOCKER_COMMON_RO="/docker/shared/common_ro"             && setGlobEnv DOCKER_COMMON_RO "$DOCKER_COMMON_RO"
+GLOBAL_COMMON_RO="/docker/shared/common_ro/kiraglob"    && setGlobEnv GLOBAL_COMMON_RO "$GLOBAL_COMMON_RO"
+LOCAL_GENESIS_PATH="$DOCKER_COMMON_RO/genesis.json"     && setGlobEnv LOCAL_GENESIS_PATH "$LOCAL_GENESIS_PATH"
+
+rm -rfv $KIRA_DUMP
+mkdir -p "$KIRA_LOGS" "$KIRA_DUMP" "$KIRA_SNAP" "$KIRA_CONFIGS" "$KIRA_SECRETS" "/var/kiraglob"
+mkdir -p "$KIRA_DUMP/INFRA/manager" $KIRA_INFRA $KIRA_SETUP $KIRA_MANAGER $DOCKER_COMMON $DOCKER_COMMON_RO $GLOBAL_COMMON_RO
+
+# replace all secrets using new master secret (if specified)
+MNEMONICS="$KIRA_SECRETS/mnemonics.env"
+MASTER_MNEMONIC="$(tryGetVar MASTER_MNEMONIC "$MNEMONICS")"
+if ($(isMnemonic "$master_mnemonic")) && [ "$master_mnemonic" != "$MASTER_MNEMONIC" ] ; then
+    rm -rfv "$KIRA_SECRETS"/*
+    mkdir -p "$KIRA_SECRETS"
+    touch $MNEMONICS
+    setVar MASTER_MNEMONIC "$master_mnemonic" "$MNEMONICS"
+fi
+
+echoInfo "INFO: Installing Essential Packages..."
+rm -fv /var/lib/apt/lists/lock || echo "WARINING: Failed to remove APT lock"
+loadGlobEnvs
+
+apt-get update -y --fix-missing
+apt-get install -y --fix-missing --allow-downgrades --allow-remove-essential --allow-change-held-packages \
+    software-properties-common apt-transport-https ca-certificates gnupg curl wget git build-essential htop ccze sysstat \
+    nghttp2 libnghttp2-dev libssl-dev fakeroot dpkg-dev libcurl4-openssl-dev net-tools jq aptitude zip unzip p7zip-full \
+    python3 python3-pip tar md5deep linux-tools-common linux-tools-generic pm-utils autoconf libtool fuse nasm \
+    perl libdata-validate-ip-perl libio-socket-ssl-perl libjson-perl bc dnsutils psmisc netcat nmap parallel lsof
+
+pip3 install ECPy
+
+echoInfo "INFO: Updating kira Repository..."
+safeWget /tmp/kira.zip "$(globGet INFRA_SRC)" "$(globGet KIRA_COSIGN_PUB)"
+rm -rfv "$KIRA_INFRA" && mkdir -p "$KIRA_INFRA"
+unzip /tmp/kira.zip -d $KIRA_INFRA
+chmod -R 555 $KIRA_INFRA
+
+# update old processes
+rm -rfv $KIRA_MANAGER && mkdir -p $KIRA_MANAGER
+cp -rfv "$KIRA_WORKSTATION/." $KIRA_MANAGER
+chmod -R 555 $KIRA_MANAGER
+
+KIRA_SETUP_VER=$($KIRA_INFRA/scripts/version.sh || echo "")
+(! $(isVersion "$KIRA_SETUP_VER")) && echoErr "ERROR: Invalid setup release version!" && exit 1
+setGlobEnv KIRA_SETUP_VER "$KIRA_SETUP_VER"
+globSet KIRA_SETUP_VER "$KIRA_SETUP_VER"
+
+echoInfo "INFO: Startting cleanup..."
+timeout 60 apt-get autoclean -y || echoWarn "WARNING: autoclean failed"
+timeout 60 apt-get clean -y || echoWarn "WARNING: clean failed"
+timeout 60 apt-get autoremove -y || echoWarn "WARNING: autoremove failed"
+timeout 60 journalctl --vacuum-time=3d || echoWarn "WARNING: journalctl vacuum failed"
+
+$KIRA_MANAGER/setup/tools.sh
+
+if [ "$(globGet INIT_MODE)" == "interactive" ] ; then
+    set +x
+    echo ""
+    echoC ";whi" "        ^&@G!.                                                                 "
+    echoC ";whi" "  .^Y#G7:.:Y#&#Y^                                                              "
+    echoC ";whi" ":G@@@@@@@&5~.^B@@@G:     .:         7?.    .7?^  .?7  .??????~.        ^77^    "
+    echoC ";whi" "  :JB@@@@@@@@@@#Y^    ^J#@&        :@@J   ?@@5   ?@@: .BGGGGB@@B      ~@@@@^   "
+    echoC ";whi" "      ^Y#@@&5~.   :JB@@@@@&        :@@? :&@#:    ?@@:        ~@@7    :@@&@@&   "
+    echoC ";whi" "   ^5^    .     .@@@@@@@@&J        :@@&G@@?      ?@@: .GPPPPG@@G    .@@& ~@@G  "
+    echoC ";whi" "   !@@@#J:      :@@@@&P!...         ::^^^.        ::   ^^^^^^:.     .^^.  5@@7 "
+    echoC ";whi" "   !@&!B@@@B?.  :@@G..:?B@G        .GG^  ~BB!    ^GG. .GG:   5GP   PG5     &@@^"
+    echoC ";whi" "   7@B .@@@@@Y  :@@#B&&G7.         .##~   G#G.   ~##. :##^   !##7 !##!     .BB5"
+    echoC ";whi" "   7@B .@@@@@J  :@&G?.                                                         "
+    echoC ";whi" "   :B5 :@@@@@J   :                                                             "
+ echoC "sto;whi" "       .G@@@@J                  ..3:$(echoC "res;gre" "PUSHING THE LIMITS OF TRUSTLESS COMPUTING"):."
+    echoC ";whi" "          ^Y&?                                                                 "
+    echo ""
+    echoC ";whi;bla" "TERMS & CONDITIONS: Make absolutely sure that you are NOT running this script on your primary PC operating system, it can cause irreversible data loss and change firewall rules which might make your system vulnerable to various security threats or lock you out of the system entirely. By proceeding you take full responsibility for your own actions and accept that you continue at your own risk. You also acknowledge that malfunction of any software you run might potentially cause irreversible loss of assets due to unforeseen issues and circumstances including but not limited to hardware and/or software faults and/or vulnerabilities."
+    echo ""
+    echoNLog "Press [Y]es to accept or [N]o to abort setup: " && pressToContinue y n && [ "$(globGet OPTION)" == "n" ] && exit 1
+    echoInfo "INFO: Launching setup menu..."
+    set -x
+    source $KIRA_MANAGER/menu/launcher.sh
+elif [ "$(globGet INIT_MODE)" == "upgrade" ] ; then
+    echoInfo "INFO: Starting upgrade & restarting update daemon..."
+    globDel "ESSENAILS_UPDATED_$KIRA_SETUP_VER" "CLEANUPS_UPDATED_$KIRA_SETUP_VER" "CONTAINERS_UPDATED_$KIRA_SETUP_VER"
+    rm -fv "$(globGet UPDATE_TOOLS_LOG)" "$(globGet UPDATE_CLEANUP_LOG)" "$(globGet UPDATE_CONTAINERS_LOG)"
+    globSet NEW_NETWORK "false"
+    systemctl daemon-reload
+    timeout 60 systemctl restart kiraup
+elif [ "$(globGet INIT_MODE)" == "noninteractive" ] ; then
+    source $KIRA_MANAGER/menu/launcher.sh
+else
+    echoErr "ERROR: Unknown init-mode flag '$(globGet INIT_MODE)'"
+    exit 1
+fi
 
 set +x
-echo "------------------------------------------------"
-echo "| FINISHED: INIT                               |"
-echo "|  ELAPSED: $(($(date -u +%s) - $START_TIME_INIT)) seconds"
-echo "------------------------------------------------"
+echoC ";whi"  "================================================================================"
+echoC ";whi"  "|$(strFixC "FINISHED KIRA INIT SCRIPT $KIRA_SETUP_VER" 78))|"   
+echoC ";whi"  "================================================================================"
 set -x
-exit 0
