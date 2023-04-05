@@ -439,7 +439,7 @@ while : ; do
     echoC ";whi" "|$(echoC "res;bla" "$(strFixC " $(date '+%d/%m/%Y %H:%M:%S') " 78 "." "-")")|"
     echoC ";whi" "|  CPU USAGE | RAM MEMORY | DISK SPACE |  UP.SPEED  |  DN.SPEED  |  INTERFACE  |"
     echoC ";whi" "|$(echoC "res;$colCPU" "$CPU_UTIL")|$(echoC "res;$colRAM" "$RAM_UTIL")|$(echoC "res;$colDIS" "$DISK_UTIL")|$(echoC "res;$colNIN" "$NET_IN")|$(echoC "res;$colNUT" "$NET_OUT")|$(echoC "res;$colIFA" "$NET_IFACE")|"
-    echoC ";whi" "| VALIDATORS | V.INACTIVE | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
+    echoC ";whi" "| VALIDATORS | VAL. TOTAL | V.WAITING  |   BLOCKS   | BLOCK TIME |   NETWORK   |"
     echoC ";whi" "|$(echoC "res;$colACT" "$VAL_ACT")|$(echoC "res;$colTOT" "$VAL_TOT")|$(echoC "res;$colWAI" "$VAL_WAI")|$(echoC "res;$colNUM" "$BLO_NUM")|$(echoC "res;$colTIM" "$BLO_TIM")|$(echoC "res;$colNAM" "$CHA_NAM")|"
     echoC ";whi" "|$(strFixC " PUBLIC IP " 25 "" "-")|$(strFixC " LOCAL IP " 25 "" "-")|$(strFixC " SUBNET ($DCK_NET) " 26 "" "-")|"
     echoC ";whi" "|$(echoC "res;$colPIP" "$PUB_IPA")|$(echoC "res;$colLIP" "$LOC_IPA")|$(echoC "res;$colDNT" "$DCK_SUB")|"
