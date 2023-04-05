@@ -80,6 +80,8 @@ while : ; do
         AUTO_SNAP_SIZE=0
         wget -q $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/snap_list?ip_only=true -O $TMP_SNAPS || ( echoErr "ERROR: Snapshot discovery scan failed" && sleep 1 )
         if (! $(isFileEmpty "$TMP_SNAPS")) ; then
+            # NOTE: sed will behave unexpectedly without new line at the end of a file
+            echo -e "\n" >> $TMP_SNAPS
             echoInfo "INFO: Snapshot peer was found"
             SNAP_PEER=$(timeout 10 sed "1q;d" $TMP_SNAPS | xargs || echo "")
             AUTO_SNAP_URL="$SNAP_PEER:$DEFAULT_INTERX_PORT/download/snapshot.tar"
@@ -90,20 +92,26 @@ while : ; do
         fi
 
         echo ""
-        if [[ $AUTO_SNAP_SIZE -gt 0 ]] && [ "$AUTO_CHAIN_ID" == "$TRUSTED_CHAIN_ID" ] ; then
-            echoC ";whi" "   Snapshot auto-discovery detected file: '$AUTO_SNAP_URL'"
+        if [[ $AUTO_SNAP_SIZE -gt 0 ]] && [ "$AUTO_CHAIN_ID" == "$TRUSTED_NODE_CHAIN_ID" ] ; then
+            echoC ";whi" "   Snapshot auto-detected file: $AUTO_SNAP_URL"
+            echoC ";whi" "   Snapshot auto-detected file size: $(prettyBytes "$AUTO_SNAP_SIZE")"
         else
             echoC ";whi" "   Snapshot auto-discovery did NOT detected any additional snaps"
         fi
-        echoC ";whi" "   Default trusted node snap URL: '$TRUSTED_NODE_SNAP_URL'"
-        echoC ";whi" "   Default trusted node snapshot size: $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE")"
-        echoC ";whi" "   Auto-discovery public snap. size: $(prettyBytes "$AUTO_SNAP_SIZE")"
-        echo ""
+
+        if [ ! -z "$TRUSTED_NODE_SNAP_URL" ] ; then
+            echoC ";whi" "   Default trusted node snap URL: '$TRUSTED_NODE_SNAP_URL'"
+            echoC ";whi" "   Default trusted node snapshot size: $(prettyBytes "$TRUSTED_NODE_SNAP_SIZE")"
+        else
+            echoC ";whi" "   Trusted node is NOT exposing any snapshots"
+        fi
         
-        echoNC ";gre" "Enter URL to download snapshot or press [ENTER] for default: " && read DOWNLOAD_SNAP_URL
+        echoNC ";gre" "\nEnter URL to download snap, or press [ENTER] for default: " && read DOWNLOAD_SNAP_URL
         echo ""
 
         [ -z "$DOWNLOAD_SNAP_URL" ] && DOWNLOAD_SNAP_URL="$TRUSTED_NODE_SNAP_URL"
+        [ -z "$DOWNLOAD_SNAP_URL" ] && DOWNLOAD_SNAP_URL="$AUTO_SNAP_URL"
+
         echoInfo "INFO: Please wait, testing '$DOWNLOAD_SNAP_URL' URL..."
         DOWNLOAD_SNAP_SIZE=$(urlContentLength "$DOWNLOAD_SNAP_URL")
 
@@ -188,11 +196,11 @@ while : ; do
     [ "$SNAP_CHAIN_ID" != "$TRUSTED_NODE_CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_CHAIN_ID' but got '$TRUSTED_NODE_CHAIN_ID'" && continue
     [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0" && continue
 
-    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS)"
+    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS_FILE)"
     echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
     cp -afv $DATA_GENESIS "$SNAPSHOT_GENESIS_FILE"
     echoInfo "INFO: Please wait, attempting to minimize & sort genesis json of the snap..."
-    jsonParse "" "$SNAPSHOT_GENESIS_FILE" "$SNAPSHOT_GENESIS_FILE" --indent=false --sort_keys=true || :
+    jsonParse "" "$SNAPSHOT_GENESIS_FILE" "$SNAPSHOT_GENESIS_FILE" --indent=false --sort_keys=false || :
     echoInfo "INFO: Calculating snapshot genesis file checksum, be patient, this might take a while..."
     SNAPSHOT_GENESIS_HASH="$(sha256 "$SNAPSHOT_GENESIS_FILE")"
     TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"
