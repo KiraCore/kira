@@ -15,17 +15,20 @@
   * Ubuntu 20.04 LTS installed on the host instance, VM or WSL2
   * Secure SSH configuration with RSA key or strong password
 
-##### 1. Install & Update Ubuntu 20.04
 
-```bash
-apt update
-```
-
-##### 2. Open terminal or SSH console and login as sudo
+##### 1. Open terminal or SSH console and login as sudo
 
 ```bash
 sudo -s
 ```
+
+##### 2. Install dependencies & Update Ubuntu 20.04
+
+```bash
+apt update
+apt-get install wget
+```
+
 
 ##### 3. Execute KM Setup Command
 
@@ -46,13 +49,13 @@ kira
 
 The init script of the KM can be found in the [./workstation/init.sh](./workstation/init.sh) location. It is a standalone bash script and can be either copied from the relevant repository or downloaded from a trusted source.
 
-Main purpose of the init stript is to setup all dependencies needed to install KM, you can think about it as an "installation program" for your KIRA node. By supplying flags to the executable file users can customize the setup process:
+Main purpose of the init stript is to setup all dependencies needed to install KM, you can think about it as an "installation program" for your KIRA node. By supplying flags to the executable file you can customize the setup process:
 
 ```bash
 # init.sh script supported flags
 
 --infra-src="<string>"        // source of the KM package: <url>, <CID>, <version>
---image-src="<url>"           // source of the base image <url>, <version>
+--image-src="<url>"           // source of the base image: <url>, <version>
 --init-mode="<string>"        // initialization mode: noninteractive, interactive, upgrade
 --infra-mode="<string>"       // infrastructure deployment mode: validator, sentry, seed
 --master-mnemonic="<string>"  // 24 whitespace separated bip39 words
