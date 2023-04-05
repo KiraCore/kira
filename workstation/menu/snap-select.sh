@@ -188,7 +188,7 @@ while : ; do
     [ "$SNAP_CHAIN_ID" != "$TRUSTED_NODE_CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_CHAIN_ID' but got '$TRUSTED_NODE_CHAIN_ID'" && continue
     [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0" && continue
 
-    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS)"
+    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS_FILE)"
     echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
     cp -afv $DATA_GENESIS "$SNAPSHOT_GENESIS_FILE"
     echoInfo "INFO: Please wait, attempting to minimize & sort genesis json of the snap..."
