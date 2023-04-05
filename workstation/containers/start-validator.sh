@@ -81,11 +81,22 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/app-toml-68c3c5c890904752a78c63a8b63aaf4a
         # APP [state_sync]
-        globSet app_state_sync_snapshot_interval "0" $GLOBAL_COMMON
-        globSet app_base_pruning "custom" $GLOBAL_COMMON
-        globSet app_base_pruning_keep_recent "100" $GLOBAL_COMMON
-        globSet app_base_pruning_keep_every "0" $GLOBAL_COMMON
-        globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+        if [ "$(globGet NEW_NETWORK)" == "true" ] ; then
+            # genesis validator should always persist full network historry
+            globSet app_state_sync_snapshot_interval "1000" $GLOBAL_COMMON
+            globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning "nothing" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
+        else
+            # valdiators who are not genesis validators can prune old state
+            globSet app_state_sync_snapshot_interval "200" $GLOBAL_COMMON
+            globSet app_state_sync_snapshot_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning "custom" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_recent "2" $GLOBAL_COMMON
+            globSet app_base_pruning_keep_every "100" $GLOBAL_COMMON
+            globSet app_base_pruning_interval "10" $GLOBAL_COMMON
+        fi
         ####################################################################################
         # ref.: https://www.notion.so/kira-network/config-toml-4dc4c7ace16c4316bfc06dad6e2d15c2
         # CFG [base]
@@ -102,15 +113,15 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         globSet cfg_statesync_enable "true" $GLOBAL_COMMON
         globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
         # CFG [CONSENSUS]
-        globSet cfg_consensus_timeout_commit "7500ms" $GLOBAL_COMMON
-        globSet cfg_consensus_create_empty_blocks_interval "10s" $GLOBAL_COMMON
+        globSet cfg_consensus_timeout_commit "10000ms" $GLOBAL_COMMON
+        globSet cfg_consensus_create_empty_blocks_interval "20s" $GLOBAL_COMMON
         globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
         # CFG [INSTRUMENTATION]
         globSet cfg_instrumentation_prometheus "true" $GLOBAL_COMMON
         # CFG [P2P]
         globSet cfg_p2p_pex "true" $GLOBAL_COMMON
         globSet cfg_p2p_private_peer_ids "" $GLOBAL_COMMON
-        globSet cfg_p2p_unconditional_peer_ids "$SENTRY_NODE_ID,$SEED_NODE_ID,$VALIDATOR_NODE_ID" $GLOBAL_COMMON
+        globSet cfg_p2p_unconditional_peer_ids "" $GLOBAL_COMMON
         globSet cfg_p2p_persistent_peers "" $GLOBAL_COMMON
         globSet cfg_p2p_seeds "" $GLOBAL_COMMON
         globSet cfg_p2p_laddr "tcp://0.0.0.0:$(globGet DEFAULT_P2P_PORT)" $GLOBAL_COMMON

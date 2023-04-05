@@ -188,11 +188,11 @@ while : ; do
     [ "$SNAP_CHAIN_ID" != "$TRUSTED_NODE_CHAIN_ID" ] && echoErr "ERROR: Expected chain id '$SNAP_CHAIN_ID' but got '$TRUSTED_NODE_CHAIN_ID'" && continue
     [[ $SNAP_HEIGHT -le 0 ]] && echoErr "ERROR: Snap height is 0" && continue
 
-    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS)"
+    SNAPSHOT_GENESIS_FILE="$(globFile SNAPSHOT_GENESIS_FILE)"
     echoInfo "INFO: Success, snapshot file integrity appears to be valid, saving genesis and calculating checksum..."
     cp -afv $DATA_GENESIS "$SNAPSHOT_GENESIS_FILE"
     echoInfo "INFO: Please wait, attempting to minimize & sort genesis json of the snap..."
-    jsonParse "" "$SNAPSHOT_GENESIS_FILE" "$SNAPSHOT_GENESIS_FILE" --indent=false --sort_keys=true || :
+    jsonParse "" "$SNAPSHOT_GENESIS_FILE" "$SNAPSHOT_GENESIS_FILE" --indent=false --sort_keys=false || :
     echoInfo "INFO: Calculating snapshot genesis file checksum, be patient, this might take a while..."
     SNAPSHOT_GENESIS_HASH="$(sha256 "$SNAPSHOT_GENESIS_FILE")"
     TRUSTED_NODE_GENESIS_HASH="$(globGet TRUSTED_NODE_GENESIS_HASH)"

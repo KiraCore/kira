@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/trusted-node-select.sh" && rm -f $FILE && touch $FILE && nano $FILE && chmod 555 $FILE
+print_summary="true"
 interactive="true"
 show_log="false"
-getArgs "$1" "$2" --gargs_throw=false --gargs_verbose=true
+getArgs "$1" "$2" "$3" --gargs_throw=false --gargs_verbose=true
 [ "$show_log" == "true" ] && ( set +x && set -x ) || ( set -x && set +x && clear )
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
@@ -265,7 +266,7 @@ while : ; do
             done
 
             echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
-            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || rm -fv $GENESIS_FILE
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=false || rm -fv $GENESIS_FILE
 
             if (! $(isFileEmpty $GENESIS_FILE)) ; then 
                 echoInfo "INFO: Please wait, calculating new checksum..."
@@ -282,7 +283,7 @@ while : ; do
             ($(isSHA256 $GENSUM)) && safeWget "$GENESIS_FILE" $TRUSTED_NODE_ADDR:$TRUSTED_NODE_INTERX_PORT/api/genesis $GENSUM || globDel TRUSTED_NODE_GENESIS_FILE
 
             echoInfo "INFO: Please wait, attempting to minimize & sort genesis json..."
-            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=true || globDel TRUSTED_NODE_GENESIS_FILE
+            jsonParse "" "$GENESIS_FILE" "$GENESIS_FILE" --indent=false --sort_keys=false || globDel TRUSTED_NODE_GENESIS_FILE
             echoInfo "INFO: Please wait, calculating new checksum..."
             GENSUM=$(sha256 $GENESIS_FILE)
         fi
@@ -314,7 +315,7 @@ TRUSTED_NODE_CHAIN_ID="$(globGet TRUSTED_NODE_CHAIN_ID)"
 SNAPSHOT_CHAIN_ID="$(globGet SNAPSHOT_CHAIN_ID)"
 
 echoInfo "INFO: Local snapshots lookup..."
-SNAPSHOTS=`ls $KIRA_SNAP/${TRUSTED_NODE_CHAIN_ID}-*-*.tar` || SNAPSHOTS=""
+readarray -t SNAPSHOTS < <(ls $KIRA_SNAP/${TRUSTED_NODE_CHAIN_ID}-*-*.tar) || SNAPSHOTS=()
 SNAPSHOTS_COUNT=${#SNAPSHOTS[@]}
 SNAP_LATEST_PATH="$KIRA_SNAP_PATH"
 
@@ -323,17 +324,19 @@ if [ ! -z "$SNAPSHOTS" ] && [[ $SNAPSHOTS_COUNT -gt 0 ]] && [[ "$SNAPSHOT_CHAIN_
     (! $(isNullOrWhitespaces "$DEFAULT_SNAP")) && $KIRA_MANAGER/menu/snap-select.sh --snap-file="$DEFAULT_SNAP"
 fi
 
-set +x
-echoC ";gre" "Trusted node discovery results:"
-echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
-echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"
-echoC ";whi" "        TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
-echoC ";whi" "          TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
-echoC ";whi" "    TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"
-echoC ";whi" "    TRUSTED_NODE_RPC_PORT: $(globGet TRUSTED_NODE_RPC_PORT)"
-echoC ";whi" " TRUSTED_NODE_INTERX_PORT: $(globGet TRUSTED_NODE_INTERX_PORT)"
-echoC ";whi" "    TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
-echoC ";whi" "      TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
-echoC ";whi" "    TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
-echoC ";whi" "   TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
-
+if [ "$print_summary" == "true" ] ; then
+    set +x
+    echoC ";gre" "Trusted node discovery results:"
+    echoC ";whi" "TRUSTED_NODE_GENESIS_HASH: $(globGet TRUSTED_NODE_GENESIS_HASH)"
+    echoC ";whi" "TRUSTED_NODE_GENESIS_FILE: $(globFile TRUSTED_NODE_GENESIS_FILE)"
+    echoC ";whi" "        TRUSTED_NODE_ADDR: $(globGet TRUSTED_NODE_ADDR)"
+    echoC ";whi" "          TRUSTED_NODE_ID: $(globGet TRUSTED_NODE_ID)"
+    echoC ";whi" "    TRUSTED_NODE_P2P_PORT: $(globGet TRUSTED_NODE_P2P_PORT)"
+    echoC ";whi" "    TRUSTED_NODE_RPC_PORT: $(globGet TRUSTED_NODE_RPC_PORT)"
+    echoC ";whi" " TRUSTED_NODE_INTERX_PORT: $(globGet TRUSTED_NODE_INTERX_PORT)"
+    echoC ";whi" "    TRUSTED_NODE_CHAIN_ID: $(globGet TRUSTED_NODE_CHAIN_ID)"
+    echoC ";whi" "      TRUSTED_NODE_HEIGHT: $(globGet TRUSTED_NODE_HEIGHT)"
+    echoC ";whi" "    TRUSTED_NODE_SNAP_URL: $(globGet TRUSTED_NODE_SNAP_URL)"
+    echoC ";whi" "   TRUSTED_NODE_SNAP_SIZE: $(globGet TRUSTED_NODE_SNAP_SIZE)"
+    set -x
+fi
