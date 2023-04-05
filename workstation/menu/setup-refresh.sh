@@ -1,7 +1,11 @@
 #!/usr/bin/env bash
 ETC_PROFILE="/etc/profile" && set +e && source /etc/profile &>/dev/null && set -e
 # quick edit: FILE="$KIRA_MANAGER/menu/setup-refresh.sh" && rm $FILE && nano $FILE && chmod 555 $FILE
+# e.g.: $KIRA_MANAGER/menu/setup-refresh.sh --update_trusted_node="false"
 set -x
+
+update_trusted_node="true"
+getArgs "$1" --gargs_throw=false --gargs_verbose=true
 
 DEFAULT_INTERX_PORT="$(globGet DEFAULT_INTERX_PORT)"
 TRUSTED_NODE_INTERX_PORT="$(globGet TRUSTED_NODE_INTERX_PORT)"
@@ -125,7 +129,7 @@ if [ "$REINITALIZE_NODE" == "false" ] ; then
     cat "$TMP_PEERS" > "$PUBLIC_SEEDS"
 
     echoInfo "INFO: Updating trusted node info..."
-    $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false" --print-summary="false"
+    [ "$update_trusted_node" == "true" ] && $KIRA_MANAGER/menu/trusted-node-select.sh --interactive="false" --print-summary="false"
 fi
 
 SEEDS_COUNT=$(wc -l < $PUBLIC_SEEDS || echo "0")
