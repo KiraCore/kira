@@ -26,7 +26,7 @@ sudo -s
 
 ```bash
 apt update
-apt-get install wget curl -y
+apt-get install wget -y
 ```
 
 
