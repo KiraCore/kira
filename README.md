@@ -26,7 +26,7 @@ sudo -s
 
 ```bash
 apt update
-apt-get install wget
+apt-get install wget -y
 ```
 
 
