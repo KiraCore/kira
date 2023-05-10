@@ -27,7 +27,7 @@ fi
 # Used To Initialize essential dependencies
 BASE_IMAGE_VERSION="v0.13.18"
 TOOLS_VERSION="v0.3.46"
-COSIGN_VERSION="v2.0.0"
+COSIGN_VERSION="v2.0.2"
 
 # Force console colour to be black
 tput setab 0
