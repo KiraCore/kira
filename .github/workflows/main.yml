@@ -103,31 +103,7 @@ jobs:
               shred -vzn 3 ../cosign.key || echo "WARNING: Failed to shred key file"
               rm -fv ../cosign.key
               if [ "$SUCCESS" == "false" ] ; then  bu echoErr "ERROR: Signing of IPFS releases failed" ; exit 1 ; else bu echoInfo "Success, IPFS release signatures created :)" ; fi
-          - name: Find or await IPFS files to be pinned
-            if: github.event_name == 'pull_request' || 
-                ( env.RELEASE_EXISTS == true || env.RELEASE_EXISTS == 'true' ) || 
-                ( github.event_name == 'push' && !startsWith(env.SOURCE_BRANCH, 'feature') && !startsWith(env.SOURCE_BRANCH, 'refactor') && !startsWith(env.SOURCE_BRANCH, 'bugfix') )
-            shell: bash
-            run: |
-              set -x
-              bu timerStart "pinned-timeout"
-              sleep 120
-              IPFS_HASH=""
-              IPFS_UPLOAD_NAME=kira-$RELEASE_VER
-              CHECK_ELAPSED=0
-              while [[ $CHECK_ELAPSED -lt 900 ]] ; do
-                bu echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
-                rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
-                sleep 10
-                ipfs-api pin $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || bu echoErr "ERROR: Failed to pin files"
-                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
-                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
-                cat ./ipfs-pinned.log
-                [ ! -z "$IPFS_HASH" ] && break 
-                sleep 10
-                CHECK_ELAPSED=$(bu timerSpan "pinned-timeout")
-              done
-              echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
+          
           - name: Pin IPFS files
             if: github.event_name == 'push' && 
                 ( env.RELEASE_EXISTS == false || env.RELEASE_EXISTS == 'false' ) &&
@@ -156,6 +132,30 @@ jobs:
 
                 sleep 10
                 CHECK_ELAPSED=$(bu timerSpan "pin-timeout")
+              done
+              echo "$IPFS_HASH" > ./bin/ipfs-cid.txt 
+          - name: Find or await IPFS files to be pinned
+            if: github.event_name == 'pull_request' || 
+                ( env.RELEASE_EXISTS == true || env.RELEASE_EXISTS == 'true' ) || 
+                ( github.event_name == 'push' && !startsWith(env.SOURCE_BRANCH, 'feature') && !startsWith(env.SOURCE_BRANCH, 'refactor') && !startsWith(env.SOURCE_BRANCH, 'bugfix') )
+            shell: bash
+            run: |
+              set -x
+              bu timerStart "pinned-timeout"
+              sleep 120
+              IPFS_HASH=""
+              IPFS_UPLOAD_NAME=kira-$RELEASE_VER
+              CHECK_ELAPSED=0
+              while [[ $CHECK_ELAPSED -lt 900 ]] ; do
+                bu echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
+                rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
+                sleep 10
+                ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
+                IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
+                cat ./ipfs-pinned.log
+                [ ! -z "$IPFS_HASH" ] && break 
+                sleep 10
+                CHECK_ELAPSED=$(bu timerSpan "pinned-timeout")
               done
               echo "$IPFS_HASH" > ./bin/ipfs-cid.txt
           - name: Publish RELEASE info
