@@ -119,6 +119,7 @@ jobs:
                 bu echoInfo "INFO: Waiting for IPFS files to be pinned, timeout in ${CHECK_ELAPSED}/900s..."
                 rm ./ipfs-pinned.log && touch ./ipfs-pinned.log
                 sleep 10
+                ipfs-api pin $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true || bu echoErr "ERROR: Failed to pin files"
                 ipfs-api pinned $IPFS_UPLOAD_NAME --key=${{secrets.PINATA_API_JWT}} --verbose=true | tee -a ./ipfs-pinned.log || bu echoErr "ERROR: Failed to find pinned files"
                 IPFS_HASH=$(cat ./ipfs-pinned.log | tail -n 1 | bu jsonParse "rows.[0].ipfs_pin_hash" || echo "")
                 cat ./ipfs-pinned.log
