@@ -267,7 +267,7 @@ while : ; do
                     setLastLineBySubStrOrAppend "$nodeId" "$nodeAddress" $FILE
                 else
                     echoInfo "INFO: Removing last address from the ${target} list..."
-                    setLastLineBySubStrOrAppend "$nodeId" "" $files
+                    setLastLineBySubStrOrAppend "$nodeId" "" $FILE
                 fi
                 i=$((i + 1))
             else
