@@ -1,4 +1,3 @@
 Features:
 
-* Update base image version
-* Fix undeclared $files in seeds-edit.sh
+* Update base image version to `v0.13.12`
