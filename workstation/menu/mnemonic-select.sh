@@ -66,7 +66,7 @@ while : ; do
                 echoNLog "Input 24 whitespace-separated bip39 words or press [ENTER] to autogen.: " && read MASTER_MNEMONIC
                 MASTER_MNEMONIC=$(echo "$MASTER_MNEMONIC" | xargs 2> /dev/null || echo -n "")
                 MASTER_MNEMONIC=$(echo ${MASTER_MNEMONIC//,/ })
-                if [ -z $MASTER_MNEMONIC ] ; then
+                if [ -z "$MASTER_MNEMONIC" ] ; then
                     rm -rfv "$KIRA_SECRETS"
                     mkdir -p "$KIRA_SECRETS" && touch $MNEMONICS
                     setVar MASTER_MNEMONIC "autogen" "$MNEMONICS"
