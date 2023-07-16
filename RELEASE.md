@@ -1,4 +1,3 @@
 Features:
 
-* Update base image version
-* Fix undeclared $files in seeds-edit.sh
+* Decreasse commit timeout 10000ms -> 30000ms
