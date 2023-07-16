@@ -1,3 +1,3 @@
 Features:
 
-* Fix unquoted variable in mnemonic-select
+* Decreasse commit timeout 10000ms -> 30000ms
