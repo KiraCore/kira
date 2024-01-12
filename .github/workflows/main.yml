@@ -201,10 +201,14 @@ jobs:
     steps:
           # Install the cosign tool
           # ref.: https://github.com/sigstore/cosign-installer, v3.0.1
+          
           - name: Install cosign
-            uses: sigstore/cosign-installer@c3667d99424e7e6047999fb6246c0da843953c65
+            uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8
             with:
               cosign-release: 'v2.0.0'
+          - name: Confirm installation!
+            run: cosign version
+
           - name: Download artifacts
             uses: actions/download-artifact@v3.0.0
             with:
