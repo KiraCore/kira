@@ -1,3 +1,4 @@
 Features:
 
-* Decreasse commit timeout 10000ms -> 30000ms
+* Upgrade base-image `v0.13.15` -> `v0.14.02`
+  
