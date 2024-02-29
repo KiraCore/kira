@@ -113,7 +113,7 @@ if (! $($KIRA_COMMON/container-healthy.sh "$CONTAINER_NAME")) ; then
         globSet cfg_statesync_enable "true" $GLOBAL_COMMON
         globSet cfg_statesync_temp_dir "/tmp" $GLOBAL_COMMON
         # CFG [CONSENSUS]
-        globSet cfg_consensus_timeout_commit "10000ms" $GLOBAL_COMMON
+        globSet cfg_consensus_timeout_commit "3000ms" $GLOBAL_COMMON
         globSet cfg_consensus_create_empty_blocks_interval "20s" $GLOBAL_COMMON
         globSet cfg_consensus_skip_timeout_commit "false" $GLOBAL_COMMON
         # CFG [INSTRUMENTATION]
