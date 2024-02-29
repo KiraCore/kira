@@ -1,3 +1,4 @@
 Features:
 
-* Fix unquoted variable in mnemonic-select
+* Fix cosign installer
+* Base image update
