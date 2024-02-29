@@ -16,7 +16,7 @@ jobs:
       id-token: write
       pull-requests: write
     container:
-      image: ghcr.io/kiracore/docker/base-image:v0.13.12
+      image: ghcr.io/kiracore/docker/base-image:v0.13.19
     steps:
           # Work around https://github.com/actions/checkout/issues/760
           - name: Add safe.directory
@@ -202,7 +202,7 @@ jobs:
           # Install the cosign tool
           # ref.: https://github.com/sigstore/cosign-installer, v3.0.1
           - name: Install cosign
-            uses: sigstore/cosign-installer@c3667d99424e7e6047999fb6246c0da843953c65
+            uses: sigstore/cosign-installer@1fc5bd396d372bee37d608f955b336615edf79c8
             with:
               cosign-release: 'v2.0.0'
           - name: Download artifacts
