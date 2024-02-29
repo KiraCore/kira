@@ -25,7 +25,7 @@ if [ "$USER" != root ]; then
 fi
 
 # Used To Initialize essential dependencies
-BASE_IMAGE_VERSION="v0.13.14"
+BASE_IMAGE_VERSION="v0.13.19"
 TOOLS_VERSION="v0.3.46"
 COSIGN_VERSION="v2.0.2"
 
