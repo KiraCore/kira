@@ -1,3 +1,4 @@
 Features:
 
-* Decreasse commit timeout 10000ms -> 30000ms
+* Fix cosign installer
+* Base image update
